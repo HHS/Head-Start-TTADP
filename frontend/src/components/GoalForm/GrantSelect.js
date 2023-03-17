@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import {
@@ -23,14 +23,16 @@ export default function GrantSelect({
   goalStatus,
   userCanEdit,
 }) {
+  const cannotEdit = useMemo(() => isOnReport || goalStatus === 'Closed' || possibleGrants.length === 1 || !userCanEdit, [goalStatus, isOnReport, possibleGrants.length, userCanEdit]);
+
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor={inputName} className={isOnReport || goalStatus === 'Closed' ? 'text-bold' : ''}>
+      <Label htmlFor={inputName} className={cannotEdit ? 'text-bold' : ''}>
         {label}
         {' '}
         {!isOnReport ? <Req /> : null }
       </Label>
-      {possibleGrants.length === 1 || isOnReport || !userCanEdit ? (
+      {cannotEdit ? (
         <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
       ) : (
         <>

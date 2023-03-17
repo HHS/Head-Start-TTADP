@@ -54,12 +54,6 @@ const hsesUsers = [
     name: 'Patrice Pascual', hsesUsername: 'test.tta.patrice', hsesUserId: '45594', email: 'patrice.pascual@acf.hhs.gov',
   },
   {
-    name: 'Josh Salisbury', hsesUsername: 'test.tta.josh', hsesUserId: '50490', email: 'josh@adhocteam.us',
-  },
-  {
-    name: 'Rachel Miner', hsesUsername: 'test.tta.rachel', hsesUserId: '51352', email: 'rachel.miner@adhocteam.us',
-  },
-  {
     name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
   },
   {
@@ -72,7 +66,16 @@ const hsesUsers = [
     name: 'C\'era Oliveira-Norris', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
   },
   {
-    name: 'Crystal George', hsesUsername: 'test.tta.crystal', hsesUserId: 'tbd', email: 'crystal.george@adhocteam.us',
+    name: 'Crystal George', hsesUsername: 'test.tta.crystal', hsesUserId: '52057', email: 'crystal.george@adhocteam.us',
+  },
+  {
+    name: 'Jon Pyers', hsesUsername: 'test.tta.jon', hsesUserId: '52829', email: 'jon.pyers@adhocteam.us',
+  },
+  {
+    name: 'Abby Blue', hsesUsername: 'test.tta.abby', hsesUserId: '53043', email: 'abby.blue@adhocteam.us',
+  },
+  {
+    name: 'Patrick Deutsch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
   },
 ];
 
@@ -96,7 +99,7 @@ const processHtml = async (input) => {
   return cheerio.load($.html(), null, false).html(); // html minus the html, head and body tags
 };
 
-const convertEmails = (emails) => {
+export const convertEmails = (emails) => {
   if (!emails) {
     return emails;
   }
@@ -114,7 +117,7 @@ const convertEmails = (emails) => {
   return convertedEmails.join(', ');
 };
 
-const convertName = (name, email) => {
+export const convertName = (name, email) => {
   if (!name) {
     return { name, email };
   }
@@ -140,7 +143,7 @@ const convertName = (name, email) => {
   return foundTransformedUser;
 };
 
-const convertFileName = (fileName) => {
+export const convertFileName = (fileName) => {
   if (fileName === null) {
     return fileName;
   }
@@ -148,7 +151,7 @@ const convertFileName = (fileName) => {
   return `${faker.system.fileName()}${extension}`;
 };
 
-const convertRecipientName = (recipientsGrants) => {
+export const convertRecipientName = (recipientsGrants) => {
   if (recipientsGrants === null) {
     return recipientsGrants;
   }
@@ -316,7 +319,7 @@ export const bootstrapUsers = async () => {
     const newUser = {
       ...hsesUser,
       homeRegionId: 14,
-      role: sequelize.literal(`ARRAY['Central Office']::"enum_Users_role"[]`),
+      role: sequelize.literal('ARRAY[\'Central Office\']::"enum_Users_role"[]'),
       hsesAuthorities: ['ROLE_FEDERAL'],
     };
     if (user) {

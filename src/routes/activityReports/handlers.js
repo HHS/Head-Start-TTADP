@@ -1,4 +1,5 @@
 import stringify from 'csv-stringify/lib/sync';
+import { QueryTypes } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -6,6 +7,8 @@ import {
   Role,
   ActivityReportApprover,
   User as UserModel,
+  ActivityReportGoal,
+  sequelize,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
@@ -24,7 +27,7 @@ import {
 } from '../../services/activityReports';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { goalsForGrants } from '../../services/goals';
+import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import {
   APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
@@ -37,9 +40,11 @@ import {
   changesRequestedNotification,
   reportApprovedNotification,
   collaboratorAssignedNotification,
+  programSpecialistRecipientReportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 import { userSettingOverridesById } from '../../services/userSettings';
+import { currentUserId } from '../../services/currentUser';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -173,6 +178,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Created date',
         },
         {
+          key: 'submittedDate',
+          header: 'Submitted date',
+        },
+        {
           key: 'approvedAt',
           header: 'Approved date',
         },
@@ -247,7 +256,8 @@ export async function getLegacyReport(req, res) {
       res.sendStatus(404);
       return;
     }
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canViewLegacy()) {
@@ -284,7 +294,8 @@ export async function getGoals(req, res) {
  */
 export async function saveOtherEntityObjectivesForReport(req, res) {
   const { objectivesWithoutGoals, activityReportId, region } = req.body;
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const authorization = new User(user);
 
   if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
@@ -310,7 +321,8 @@ export async function saveOtherEntityObjectivesForReport(req, res) {
  */
 export async function getApprovers(req, res) {
   const { region } = req.query;
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const authorization = new User(user);
 
   if (!authorization.canViewUsersInRegion(parseInt(region, DECIMAL_BASE))) {
@@ -327,7 +339,8 @@ export async function getApprovers(req, res) {
 }
 
 /**
- * Checks if author and collaborators are subscribed to the immediate notifications.
+ * Checks if author and collaborators and program specialists
+ * are subscribed to the immediate notifications.
  *
  * @param {*} report - activity report
  * @param {*} setting - a setting object with "key" and "value" keys
@@ -359,7 +372,41 @@ async function checkEmailSettings(report, setting) {
       return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
     }) : [];
 
-  return [authorWithSetting, collabsWithSettings];
+  // FIXME: This should be temporary until we have a solid relationship between
+  // program specialists and grants.
+  // Related: TTAHUB-1253
+  let programSpecialistsToNotify = await sequelize.query(`
+    SELECT DISTINCT u.id
+    FROM "ActivityReports" a
+    JOIN "ActivityRecipients" ar
+    ON a.id = ar."activityReportId"
+    JOIN "Grants" gr
+    ON ar."grantId" = gr.id
+    JOIN "Users" u
+    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
+    WHERE a.id = ${report.id}
+  `, { type: QueryTypes.SELECT });
+
+  // For each program specialist ID number, I want to make sure they
+  // are subscribed to immediate notifications given the `setting` key.
+  programSpecialistsToNotify = await Promise.all(programSpecialistsToNotify.map(async (ps) => {
+    const settingForPS = await userSettingOverridesById(ps.id, setting);
+    if (settingForPS && settingForPS.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
+      return ps;
+    }
+    return null;
+  }));
+
+  // Filter out null values.
+  programSpecialistsToNotify = programSpecialistsToNotify.filter((ps) => ps);
+
+  // The remaining program specialists are subscribed to immediate notifications for this given key.
+  // Convert <Array<{ id: number }>> to <Array<User>>.
+  programSpecialistsToNotify = await Promise.all(
+    programSpecialistsToNotify.map(async (ps) => userById(ps.id)),
+  );
+
+  return [authorWithSetting, collabsWithSettings, programSpecialistsToNotify];
 }
 /**
  * Review a report, setting Approver status to approved or needs action
@@ -371,7 +418,7 @@ export async function reviewReport(req, res) {
   try {
     const { activityReportId } = req.params;
     const { status, note } = req.body;
-    const { userId } = req.session;
+    const userId = await currentUserId(req, res);
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
@@ -389,7 +436,10 @@ export async function reviewReport(req, res) {
       userId,
     });
 
-    const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
+    const [
+      reviewedReport,
+      activityRecipients,
+    ] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
@@ -397,6 +447,19 @@ export async function reviewReport(req, res) {
         USER_SETTINGS.EMAIL.KEYS.APPROVAL,
       );
       reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
+
+      // Notify program specialists of this approval if they
+      // have a grant recipient associated with this report.
+      const [, , programSpecialists] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
+      );
+
+      programSpecialistRecipientReportApprovedNotification(
+        report,
+        programSpecialists,
+        activityRecipients,
+      );
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
@@ -422,7 +485,8 @@ export async function resetToDraft(req, res) {
   try {
     const { activityReportId } = req.params;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
@@ -458,7 +522,8 @@ export async function softDeleteReport(req, res) {
     const { activityReportId } = req.params;
 
     const [report] = await activityReportAndRecipientsById(activityReportId);
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canDelete()) {
@@ -483,7 +548,8 @@ export async function unlockReport(req, res) {
   try {
     const { activityReportId } = req.params;
     const [report] = await activityReportAndRecipientsById(activityReportId);
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUnlock()) {
       res.sendStatus(403);
@@ -512,7 +578,8 @@ export async function submitReport(req, res) {
     const { activityReportId } = req.params;
     const { approverUserIds, additionalNotes, creatorRole } = req.body;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
@@ -551,6 +618,15 @@ export async function submitReport(req, res) {
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update({ status: null }, {
       where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
+      individualHooks: true,
+    });
+
+    // on submit, we should inform the backend that we
+    // are no longer editing any goals (since we are submitting)
+    await ActivityReportGoal.update({
+      isActivelyEdited: false,
+    }, {
+      where: { activityReportId },
       individualHooks: true,
     });
 
@@ -605,7 +681,8 @@ export async function getReport(req, res) {
     res.sendStatus(404);
     return;
   }
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const authorization = new ActivityReport(user, report);
 
   if (!authorization.canGet()) {
@@ -628,8 +705,9 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const query = await setReadRegions(req.query, req.session.userId);
-  const reportsWithCount = await activityReports(query, false, req.session.userId);
+  const userId = await currentUserId(req, res);
+  const query = await setReadRegions(req.query, userId);
+  const reportsWithCount = await activityReports(query, false, userId);
   if (!reportsWithCount) {
     res.sendStatus(404);
   } else {
@@ -644,7 +722,7 @@ export async function getReports(req, res) {
  * @param {*} res - response
  */
 export async function getReportAlerts(req, res) {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   const alertsWithCount = await activityReportAlerts(userId, req.query);
 
   if (!alertsWithCount) {
@@ -665,7 +743,7 @@ export async function getReportAlerts(req, res) {
  * @param {*} res - response
  */
 export async function getReportsForLocalStorageCleanup(req, res) {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   const reportsToCleanup = await activityReportsForCleanup(userId);
 
   if (!reportsToCleanup) {
@@ -688,14 +766,14 @@ export async function saveReport(req, res) {
       res.sendStatus(400);
       return;
     }
-    const userId = parseInt(req.session.userId, 10);
+    const userId = await currentUserId(req, res);
     const { activityReportId } = req.params;
     const [report, activityRecipients] = await activityReportAndRecipientsById(activityReportId);
     if (!report) {
       res.sendStatus(404);
       return;
     }
-    const user = await userById(req.session.userId);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
@@ -758,11 +836,11 @@ export async function createReport(req, res) {
       res.sendStatus(400);
       return;
     }
-    const userId = parseInt(req.session.userId, 10);
+    const userId = await currentUserId(req, res);
     newReport.submissionStatus = REPORT_STATUSES.DRAFT;
     newReport.userId = userId;
     newReport.lastUpdatedById = userId;
-    const user = await userById(req.session.userId);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, newReport);
     if (!authorization.canCreate()) {
       res.sendStatus(403);
@@ -802,7 +880,8 @@ export async function createReport(req, res) {
  */
 export async function downloadReports(req, res) {
   try {
-    const readRegions = await getUserReadRegions(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const readRegions = await getUserReadRegions(userId);
 
     const reports = await getDownloadableActivityReportsByIds(
       readRegions,
@@ -825,12 +904,13 @@ export async function downloadReports(req, res) {
 
 export async function downloadAllReports(req, res) {
   try {
-    const readRegions = await setReadRegions(req.query, req.session.userId);
+    const userId = await currentUserId(req, res);
+    const readRegions = await setReadRegions(req.query, userId);
 
     const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
-      req.session.userId,
+      userId,
     );
 
     await sendActivityReportCSV(reports, res);
@@ -841,11 +921,33 @@ export async function downloadAllReports(req, res) {
 
 export async function downloadAllAlerts(req, res) {
   try {
-    const { userId } = req.session;
+    const userId = await currentUserId(req, res);
     const query = await setReadRegions(req.query, userId);
     const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
     await sendActivityReportCSV(rows, res);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function setGoalAsActivelyEdited(req, res) {
+  try {
+    const { activityReportId } = req.params;
+    const { goalIds } = req.query;
+    const { pageState } = req.body;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId, pageState);
+    res.json(goals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

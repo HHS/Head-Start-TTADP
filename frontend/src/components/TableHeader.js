@@ -39,6 +39,7 @@ export default function TableHeader({
   downloadAllButtonRef,
   downloadSelectedButtonRef,
   paginationName,
+  exportIdPrefix,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -80,6 +81,7 @@ export default function TableHeader({
               isDownloading={isDownloading}
               downloadAllButtonRef={downloadAllButtonRef}
               downloadSelectedButtonRef={downloadSelectedButtonRef}
+              exportIdPrefix={exportIdPrefix}
             />
           )}
         </span>
@@ -120,6 +122,7 @@ export default function TableHeader({
 }
 
 TableHeader.propTypes = {
+  exportIdPrefix: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   numberOfSelected: PropTypes.number,
   toggleSelectAll: PropTypes.func,

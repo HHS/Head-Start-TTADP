@@ -33,10 +33,12 @@ fs
   .forEach((file) => {
     try {
       const modelDef = require(path.join(__dirname, file));
-      const model = modelDef(sequelize, Sequelize);
-      const auditModel = audit.generateAuditModel(sequelize, model);
-      db[model.name] = model;
-      db[auditModel.name] = auditModel;
+      if (modelDef && modelDef.default) {
+        const model = modelDef.default(sequelize, Sequelize);
+        const auditModel = audit.generateAuditModel(sequelize, model);
+        db[model.name] = model;
+        db[auditModel.name] = auditModel;
+      }
     } catch (error) {
       auditLogger.error(JSON.stringify({ error, file }));
       throw error;
@@ -53,3 +55,5 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 module.exports = db;
+
+/* export default db; */

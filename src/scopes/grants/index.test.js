@@ -1,41 +1,58 @@
+import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import filtersToScopes from '../index';
 import {
-  Recipient, Grant, Program, sequelize,
+  Recipient,
+  Grant,
+  Program,
+  User,
+  Group,
+  GroupGrant,
+  sequelize,
 } from '../../models';
 
+const recipientOneName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientTwoName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientThreeName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientFourName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+
+const seed = faker.datatype.number({ min: 28000 });
 const recipients = [
   {
-    id: 13259,
-    uei: 'NNA5N2KHMGN2',
-    name: 'recipient 13259',
+    id: seed,
+    name: recipientOneName,
   },
   {
-    id: 13269,
-    uei: 'NNA5N2KHMBA2',
-    name: 'recipient 13269',
+    id: seed + 1,
+    name: recipientTwoName,
   },
   {
-    id: 13279,
-    uei: 'NNA5N2KHMBC2',
-    name: 'recipient 13279',
+    id: seed + 2,
+    name: recipientThreeName,
   },
   {
-    id: 13289,
-    uei: 'NNA5N2KHMGBV2',
-    name: 'recipient 13279',
+    id: seed + 3,
+    name: recipientFourName,
   },
 ];
 
 const possibleIds = recipients.map((recipient) => recipient.id);
 
 describe('grant filtersToScopes', () => {
+  let mockUser;
+  let group;
+  const groupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+  const specialGrantNumber = String(faker.datatype.number({ min: 2800 }));
+  let grantGroupOne;
+  let grantGroupTwo;
+  let grants;
+
   beforeAll(async () => {
     await Promise.all(recipients.map((g) => Recipient.create(g)));
-    await Promise.all([
+    grants = await Promise.all([
       Grant.create({
         id: recipients[3].id,
-        number: '119559',
+        number: String(faker.datatype.number({ min: 2800 })),
         regionId: 4,
         recipientId: recipients[3].id,
         status: 'Active',
@@ -46,7 +63,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[0].id,
-        number: '1195543',
+        number: specialGrantNumber,
         regionId: 1,
         recipientId: recipients[0].id,
         status: 'Active',
@@ -57,7 +74,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[1].id,
-        number: '1195341',
+        number: String(faker.datatype.number({ min: 2800 })),
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Active',
@@ -68,7 +85,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[2].id,
-        number: '1195343',
+        number: String(faker.datatype.number({ min: 2800 })),
         regionId: 3,
         recipientId: recipients[2].id,
         status: 'Active',
@@ -117,9 +134,49 @@ describe('grant filtersToScopes', () => {
         updatedAt: new Date(),
       },
     ], { validate: true, individualHooks: true });
+
+    mockUser = await User.create({
+      id: faker.datatype.number(),
+      homeRegionId: 1,
+      hsesUsername: faker.datatype.string(),
+      hsesUserId: faker.datatype.string(),
+    });
+
+    group = await Group.create({
+      name: groupName,
+      userId: mockUser.id,
+    });
+
+    grantGroupOne = await GroupGrant.create({
+      groupId: group.id,
+      grantId: grants[0].id,
+    });
+
+    grantGroupTwo = await GroupGrant.create({
+      groupId: group.id,
+      grantId: grants[1].id,
+    });
   });
 
   afterAll(async () => {
+    await GroupGrant.destroy({
+      where: {
+        groupId: group.id,
+      },
+    });
+
+    await Group.destroy({
+      where: {
+        userId: mockUser.id,
+      },
+    });
+
+    await User.destroy({
+      where: {
+        id: mockUser.id,
+      },
+    });
+
     await Program.destroy({
       where: {
         id: possibleIds,
@@ -144,7 +201,7 @@ describe('grant filtersToScopes', () => {
   describe('activeWithin', () => {
     it('before', async () => {
       const filters = { 'startDate.bef': '1997/07/31' };
-      const scope = filtersToScopes(filters, { grant: { subset: true } });
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -155,7 +212,7 @@ describe('grant filtersToScopes', () => {
 
     it('after', async () => {
       const filters = { 'startDate.aft': '1997/07/31' };
-      const scope = filtersToScopes(filters, { grant: { subset: true } });
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -166,7 +223,7 @@ describe('grant filtersToScopes', () => {
 
     it('within', async () => {
       const filters = { 'startDate.win': '1997/07/31-1997/08/02' };
-      const scope = filtersToScopes(filters, { grant: { subset: true } });
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: {
           [Op.and]: [scope.grant, { id: possibleIds }],
@@ -181,7 +238,7 @@ describe('grant filtersToScopes', () => {
   describe('region', () => {
     it('filters by region', async () => {
       const filters = { 'region.in': [3] };
-      const scope = filtersToScopes(filters, 'grant');
+      const scope = await filtersToScopes(filters, 'grant');
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -192,8 +249,8 @@ describe('grant filtersToScopes', () => {
   });
   describe('recipientName', () => {
     it('filters by', async () => {
-      const filters = { 'recipient.ctn': '13269' };
-      const scope = filtersToScopes(filters);
+      const filters = { 'recipient.ctn': recipientTwoName };
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -207,8 +264,8 @@ describe('grant filtersToScopes', () => {
       expect(found.map((f) => f.id)).toContain(recipients[1].id);
     });
     it('filters out', async () => {
-      const filters = { 'recipient.nctn': '13269' };
-      const scope = filtersToScopes(filters);
+      const filters = { 'recipient.nctn': recipientTwoName };
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -229,7 +286,7 @@ describe('grant filtersToScopes', () => {
   describe('programSpecialist', () => {
     it('filters by', async () => {
       const filters = { 'programSpecialist.ctn': 'Darcy' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -238,7 +295,7 @@ describe('grant filtersToScopes', () => {
     });
     it('filters out', async () => {
       const filters = { 'programSpecialist.nctn': 'Darcy' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -252,7 +309,7 @@ describe('grant filtersToScopes', () => {
   describe('programType', () => {
     it('filters by', async () => {
       const filters = { 'programType.in': ['EHS'] };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -267,7 +324,7 @@ describe('grant filtersToScopes', () => {
     });
     it('filters out', async () => {
       const filters = { 'programType.nin': ['EHS'] };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -286,8 +343,8 @@ describe('grant filtersToScopes', () => {
   });
   describe('grantNumber', () => {
     it('filters by', async () => {
-      const filters = { 'grantNumber.ctn': '1195543' };
-      const scope = filtersToScopes(filters);
+      const filters = { 'grantNumber.ctn': specialGrantNumber };
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -295,8 +352,8 @@ describe('grant filtersToScopes', () => {
       expect(found.map((f) => f.id)).toContain(recipients[0].id);
     });
     it('filters out', async () => {
-      const filters = { 'grantNumber.nctn': '1195543' };
-      const scope = filtersToScopes(filters);
+      const filters = { 'grantNumber.nctn': specialGrantNumber };
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -310,13 +367,43 @@ describe('grant filtersToScopes', () => {
   describe('stateCode', () => {
     it('filters by', async () => {
       const filters = { 'stateCode.ctn': 'AZ' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         attributes: ['id', 'stateCode'],
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id)).toContain(recipients[0].id);
+    });
+  });
+
+  describe('group', () => {
+    it('filters by', async () => {
+      const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
+      const filters = { 'group.in': [groupName] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      const foundGrants = found.map((f) => f.id).sort();
+      expect(foundGrants).toEqual(expectedGrants);
+    });
+
+    it('filters out', async () => {
+      const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
+      const filters = { 'group.nin': [groupName] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      const foundGrants = found.map((f) => f.id).sort();
+      expectedGrants.forEach((grant) => {
+        expect(foundGrants).not.toContain(grant);
+      });
     });
   });
 });

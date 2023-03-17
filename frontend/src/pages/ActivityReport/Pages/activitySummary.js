@@ -28,6 +28,7 @@ import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 const ActivitySummary = ({
   recipients,
@@ -121,10 +122,7 @@ const ActivitySummary = ({
       <Helmet>
         <title>Activity summary</title>
       </Helmet>
-      <p className="usa-prose">
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
-        indicates required field
-      </p>
+      <IndicatesRequiredField />
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
@@ -276,9 +274,9 @@ const ActivitySummary = ({
                   name="startDate"
                   value={startDate}
                   setEndDate={setEndDate}
-                  maxDate={endDate}
                   isStartDate
                   inputId="startDate"
+                  endDate={endDate}
                 />
               </FormItem>
             </Grid>
@@ -345,7 +343,7 @@ const ActivitySummary = ({
         <div id="tta" />
         <div className="margin-top-2">
           <FormItem
-            label="What TTA was provided"
+            label="What type of TTA was provided?"
             name="ttaType"
             fieldSetWrapper
           >

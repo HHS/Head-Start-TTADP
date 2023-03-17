@@ -15,12 +15,17 @@ import {
   topicsFilter,
   participantsFilter,
   myReportsFilter,
+  ttaTypeFilter,
+  reportTextFilter,
 } from '../../components/filter/activityReportFilters';
+
+import { groupsFilter } from '../../components/filter/grantFilters';
 
 export const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   myReportsFilter,
   participantsFilter,
   programSpecialistFilter,
@@ -29,8 +34,10 @@ export const DASHBOARD_FILTER_CONFIG = [
   recipientFilter,
   regionFilter,
   reportIdFilter,
+  reportTextFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];

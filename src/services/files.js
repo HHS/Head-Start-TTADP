@@ -13,18 +13,24 @@ import { FILE_STATUSES } from '../constants';
 const { UPLOADING } = FILE_STATUSES;
 const deleteFile = async (id) => File.destroy({
   where: { id },
+  individualHooks: true,
 });
 const deleteActivityReportFile = async (id) => ActivityReportFile.destroy({
   where: { id },
+  individualHooks: true,
 });
+// TODO GH - need to pass hookMetadata
 const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveFile.destroy({
   where: { id },
+  individualHooks: true,
 });
 const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
+  individualHooks: true,
 });
 const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy({
   where: { id },
+  individualHooks: true,
 });
 
 const getFileById = async (id) => File.findOne({

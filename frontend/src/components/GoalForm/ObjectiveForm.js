@@ -135,6 +135,7 @@ export default function ObjectiveForm({
         goalStatus={goalStatus}
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
+        toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
       />
       { title && (
       <ObjectiveFiles

@@ -15,6 +15,7 @@ import DismissingComponentWrapper from '../../../../../components/DismissingComp
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Draft = ({
   availableApprovers,
@@ -71,15 +72,18 @@ const Draft = ({
     status: 'submitted',
   };
 
+  const showRolesDropdown = user && user.roles && user.roles.length > 1;
+
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
+      <IndicatesRequiredField />
+      <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
-          user && user.roles && user.roles.length > 1
+          showRolesDropdown
             ? (
-              <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
+              <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top" legend="Creator Role">
                 <FormItem
                   label="Creator role"
                   name="creatorRole"
@@ -100,7 +104,7 @@ const Draft = ({
             )
             : null
         }
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Additional Notes">
+        <Fieldset className={`smart-hub--report-legend margin-top-4 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`} legend="Additional Notes">
           <FormItem
             label="Creator notes"
             name="additionalNotes"
@@ -136,7 +140,7 @@ const Draft = ({
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
+        <Button disabled={!connectionActive} id="draft-review-submit" type="submit">Submit for approval</Button>
         { !connectionActive && (
         <Alert type="warning" noIcon>
           There&#39;s an issue with your connection.
@@ -151,6 +155,7 @@ const Draft = ({
         </Alert>
         )}
         <Button
+          id="draft-review-save-draft"
           outline
           type="button"
           onClick={async () => {

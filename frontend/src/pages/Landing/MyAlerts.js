@@ -280,6 +280,7 @@ function MyAlerts(props) {
             setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
+            exportIdPrefix="my-alerts-"
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>

@@ -4,11 +4,13 @@ import {
   User,
   ActivityRecipient,
   ActivityReportApprover,
+  ActivityReportGoal,
   Grant,
+  Goal,
   Recipient,
   ActivityReportCollaborator,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
+  Resource,
   Topic,
   Objective,
   File,
@@ -76,6 +78,23 @@ describe('activityReportToCsvRecord', () => {
       timeframe: 'None',
       createdVia: 'activityReport',
     },
+    {
+      name: 'Goal 4',
+      id: 2084,
+      status: 'Not Started',
+      grantId: 3,
+      timeframe: 'None',
+      createdVia: 'activityReport',
+    },
+    // Same goal different recipient.
+    {
+      name: 'Goal 1',
+      id: 2085,
+      status: 'Not Started',
+      grantId: 4,
+      timeframe: 'None',
+      createdVia: 'activityReport',
+    },
   ];
 
   const mockObjectives = [
@@ -128,6 +147,36 @@ describe('activityReportToCsvRecord', () => {
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[2],
     },
+    // Duplicate Objective name for goal 4.
+    {
+      id: 18,
+      title: 'Objective 3.1',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[4],
+    },
+    {
+      id: 19,
+      title: 'Objective 4.2',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[4],
+    },
+    // Same as goal 1 different recipient.
+    {
+      id: 20,
+      title: 'Objective 1.1',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[5],
+    },
+    {
+      id: 21,
+      title: 'Objective 1.2',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[5],
+    },
   ];
 
   const mockApprovers = [
@@ -146,17 +195,14 @@ describe('activityReportToCsvRecord', () => {
       userId: 4,
       User: {
         name: 'Test Approver 3',
-
       },
     },
     {
-
       activityReportId: 209914,
       status: 'approved',
       userId: 5,
       User: {
         name: 'Test Approver 2',
-
       },
     },
   ];
@@ -199,7 +245,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: OBJECTIVE_STATUS.NOT_STARTED,
       topics: [{ name: 'topic 1' }, { name: 'topic 2' }, { name: 'topic 3' }],
-      activityReportObjectiveResources: [{ userProvidedUrl: 'https://test1.gov' }, { userProvidedUrl: 'https://test2.gov' }],
+      resources: [{ url: 'https://test1.gov' }, { url: 'https://test2.gov' }],
       files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.pdf' }],
       objective: mockObjectives[0],
     },
@@ -363,6 +409,7 @@ describe('activityReportToCsvRecord', () => {
           as: 'approvers',
           include: [{ model: User }],
         },
+
         {
           model: ActivityReportObjective,
           as: 'activityReportObjectives',
@@ -372,8 +419,8 @@ describe('activityReportToCsvRecord', () => {
               as: 'objective',
             },
             {
-              model: ActivityReportObjectiveResource,
-              as: 'activityReportObjectiveResources',
+              model: Resource,
+              as: 'resources',
             },
             {
               model: Topic,
@@ -417,13 +464,13 @@ describe('activityReportToCsvRecord', () => {
     const objectives = mockObjectives.map((mo) => ({
       ...mo,
       topics: [{ name: 'Topic 1' }],
-      resources: [{ userProvidedUrl: 'https://test.gov' }],
+      resources: [{ url: 'https://test.gov' }],
       files: [{ originalFileName: 'TestFile.docx' }],
     }));
 
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
-      'goal-1-id': '2080',
+      'goal-1-id': '2080\n2085',
       'goal-1': 'Goal 1',
       'goal-1-status': 'Not Started',
       'goal-1-created-from': 'activityReport',
@@ -471,6 +518,22 @@ describe('activityReportToCsvRecord', () => {
       'objective-3.1-nonResourceLinks': 'TestFile.docx',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': 'Complete',
+      'goal-4-id': '2084',
+      'goal-4': 'Goal 4',
+      'goal-4-status': 'Not Started',
+      'goal-4-created-from': 'activityReport',
+      'objective-4.1': 'Objective 3.1',
+      'objective-4.1-topics': 'Topic 1',
+      'objective-4.1-resourcesLinks': 'https://test.gov',
+      'objective-4.1-nonResourceLinks': 'TestFile.docx',
+      'objective-4.1-ttaProvided': 'Training',
+      'objective-4.1-status': 'Complete',
+      'objective-4.2': 'Objective 4.2',
+      'objective-4.2-topics': 'Topic 1',
+      'objective-4.2-resourcesLinks': 'https://test.gov',
+      'objective-4.2-nonResourceLinks': 'TestFile.docx',
+      'objective-4.2-ttaProvided': 'Training',
+      'objective-4.2-status': 'Complete',
     });
   });
 
@@ -504,6 +567,68 @@ describe('activityReportToCsvRecord', () => {
     expect(validated).toStrictEqual([
       'goal-1-id', 'goal-1', 'objective-1', 'objective-1-topics', 'objective-1-resourcesLinks', 'objective-1-nonResourceLinks', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
     ]);
+  });
+
+  it('adds goals to the CSV when there are no objectives', async () => {
+    const activityReportGoals = [
+      {
+        status: 'Not Started',
+        goal: {
+          id: 1,
+          name: 'Goal 1',
+          createdVia: 'activityReport',
+        },
+      },
+      {
+        status: 'Not Started',
+        goal: {
+          id: 2,
+          name: 'Goal 1',
+          createdVia: 'activityReport',
+        },
+      },
+      {
+        status: 'Not Started',
+        goal: {
+          id: 3,
+          name: 'Goal 3',
+          createdVia: 'activityReport',
+        },
+      },
+    ];
+
+    const report = await ActivityReport.build(
+      {
+        ...mockReport,
+        activityReportGoals,
+      },
+      {
+        include: [
+          {
+            model: ActivityReportGoal,
+            as: 'activityReportGoals',
+            include: [
+              {
+                model: Goal,
+                as: 'goal',
+              },
+            ],
+          },
+        ],
+      },
+    );
+
+    const output = await activityReportToCsvRecord(report);
+    expect(output).toMatchObject(expect.objectContaining({
+      'goal-1-id': '1\n2',
+      'goal-1': 'Goal 1',
+      'goal-1-status': 'Not Started',
+      'goal-1-created-from': 'activityReport',
+      'goal-2-id': '3',
+      'goal-2': 'Goal 3',
+      'goal-2-status': 'Not Started',
+      'goal-2-created-from': 'activityReport',
+    }));
   });
 
   it('does not provide values for builders that are not strings or functions', async () => {

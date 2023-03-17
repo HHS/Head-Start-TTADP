@@ -17,12 +17,36 @@ import cookieSession from './middleware/sessionMiddleware';
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 
+process.on('_fatalException', (err) => {
+  logger.error('Fatal exception', err);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught exception', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error(`Unhandled rejection at: ${promise} reason: ${reason}`);
+
+  if (process.env.CI) {
+    if (reason instanceof Error) {
+      if (reason.message.toLowerCase().includes('maxretriesperrequest')) {
+        return;
+      }
+    }
+  }
+
+  process.exit(1);
+});
+
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
 if (process.env.NODE_ENV === 'production') {
-  index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+  index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
 }
 
 const serveIndex = (req, res) => {
@@ -45,7 +69,7 @@ app.use((req, res, next) => {
       scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
       imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
       connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
-      defaultSrc: ["'self'"],
+      defaultSrc: ["'self'", 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
     },
   });
   cspMiddleware(req, res, next);
@@ -53,7 +77,7 @@ app.use((req, res, next) => {
 
 if (process.env.NODE_ENV === 'production') {
   app.use('/index.html', serveIndex);
-  app.use(express.static(path.join(__dirname, 'client'), { index: false }));
+  app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);

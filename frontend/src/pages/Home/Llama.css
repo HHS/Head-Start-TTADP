@@ -1,0 +1,48 @@
+@media(min-width: 1500px) {
+    .celebratory-llama {
+        display: block;
+        position: absolute;
+    }
+}
+
+.celebratory-llama {
+    animation: walk-on-by 2s cubic-bezier(.47,1.64,.41,.8) forwards;
+    left: 50px;
+    z-index: 1;
+}
+
+.celebratory-llama.the-wiggler {
+    animation: the-wiggler 0.4s cubic-bezier(0.445, 0.050, 0.550, 0.950) forwards;
+}
+
+.statistics-content {
+    z-index: 2;
+}
+.statistics-content p,
+.statistics-content h2 {
+   max-width: 100%;
+}
+
+@media(prefers-reduced-motion: reduce) {
+    .celebratory-llama {
+        animation: none;
+    }
+}
+
+@keyframes the-wiggler {
+    0% {
+        transform: rotate( -10deg );
+    }
+    100% {
+        transform: rotate( 10deg );
+    }
+}
+
+@keyframes walk-on-by {
+    0% {
+        transform: translateX(125%) rotate( -10deg );
+    }
+    100% {
+        transform: translateX(0) rotate( 0deg );
+    }
+}

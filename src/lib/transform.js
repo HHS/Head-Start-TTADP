@@ -170,6 +170,38 @@ function sortObjectives(a, b) {
   return -1;
 }
 
+/**
+ *
+ * @param {Object[]} goalRecords
+ * @returns {Object} { goals: [], objectives: []}
+ */
+function makeGoalsObjectFromActivityReportGoals(goalRecords) {
+  let goalCsvRecordNumber = 1;
+  const goals = {};
+  goalRecords.forEach((goal) => {
+    const {
+      id = null,
+      name = null,
+      status = null,
+      createdVia = null,
+    } = goal || {};
+    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
+    if (goalNameIndex === -1) {
+      goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
+      goals[`goal-${goalCsvRecordNumber}`] = name;
+      goals[`goal-${goalCsvRecordNumber}-status`] = status;
+      goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
+      goalCsvRecordNumber += 1;
+      return;
+    }
+    const goalNameKey = Object.keys(goals)[goalNameIndex];
+    const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
+    const field = `goal-${goalNumber}-id`;
+    goals[field] = `${goals[field]}\n${id}`;
+  });
+  return goals;
+}
+
 /*
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
@@ -180,7 +212,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   let goalNum = 0;
   const goalIds = {};
   let objectiveId;
-  const processedObjectivesTitles = [];
+  const processedObjectivesTitles = new Map();
 
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
@@ -189,17 +221,14 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     } = objective;
     const goalId = goal ? goal.id : null;
     const titleMd5 = md5(title);
-    if (processedObjectivesTitles.includes(titleMd5)) {
-      return accum;
-    }
 
-    processedObjectivesTitles.push(titleMd5);
+    const existingObjectiveTitle = processedObjectivesTitles.get(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
-
+      processedObjectivesTitles.set(titleMd5, goalNum);
       // Goal Id.
       Object.defineProperty(accum, `goal-${goalNum}-id`, {
         value: `${goalId}`,
@@ -227,10 +256,13 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       });
 
       objectiveNum = 1;
-    } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
-      // Update existing ids.
-      goalIds[goalName].push(goalId);
-      accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
+    } else if (existingObjectiveTitle) {
+      // Make sure its not another objective for the same goal.
+      if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
+        accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
+        goalIds[goalName].push(goalId);
+      }
+      return accum;
     }
 
     // goal number should be at least 1
@@ -263,7 +295,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     });
 
     // Activity Report Objective: Resources Links.
-    const objResources = resources.map((r) => r.userProvidedUrl);
+    const objResources = resources.map((r) => r.url);
     Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
       value: objResources.join('\n'),
       enumerable: true,
@@ -283,6 +315,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       value: convert(ttaProvided),
       enumerable: true,
     });
+
+    // Add this objective to the tracked list.
+    processedObjectivesTitles.set(titleMd5, goalNum);
+
     objectiveNum += 1;
 
     return accum;
@@ -296,20 +332,26 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 */
 function transformGoalsAndObjectives(report) {
   let obj = {};
-  const { activityReportObjectives } = report;
-  if (activityReportObjectives) {
+  const { activityReportObjectives, activityReportGoals } = report;
+
+  if (activityReportObjectives && activityReportObjectives.length) {
     const objectiveRecords = activityReportObjectives.map((aro) => (
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
         topics: aro.topics,
         files: aro.files,
-        resources: aro.activityReportObjectiveResources,
+        resources: aro.resources,
       }
     ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
+  } else if (activityReportGoals && activityReportGoals.length) {
+    const goals = activityReportGoals.map((arg) => (
+      { ...(arg.goal.dataValues || arg.goal), status: arg.status }
+    ));
+    obj = makeGoalsObjectFromActivityReportGoals(goals);
   }
 
   return obj;
@@ -346,6 +388,7 @@ const arTransformers = [
   transformHTML('additionalNotes'),
   'lastSaved',
   transformDate('createdAt'),
+  transformDate('submittedDate'),
   transformDate('approvedAt'),
   transformGrantModel('programSpecialistName'),
   transformGrantModel('recipientInfo'),

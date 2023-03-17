@@ -62,4 +62,21 @@ describe('tokenMiddleware', () => {
     expect(mockNext).toHaveBeenCalled();
     expect(auditLogger.info).toHaveBeenCalledWith('User 1 making API request');
   });
+
+  it('catches other errors', async () => {
+    const res = {
+      status: jest.fn(() => ({
+        end: jest.fn(),
+        json: jest.fn(),
+      })),
+    };
+
+    mockRequest.headers.authorization = 'Bearer 1234';
+    retrieveUserDetails.mockRejectedValue(new Error('test error'));
+
+    await tokenMiddleware(mockRequest, res, mockNext);
+
+    expect(mockNext).not.toHaveBeenCalled();
+    expect(auditLogger.error).toHaveBeenCalledWith('Error when retrieving user details from HSES: Error: test error');
+  });
 });

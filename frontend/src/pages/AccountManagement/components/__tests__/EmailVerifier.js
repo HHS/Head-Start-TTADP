@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  fireEvent,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter, Route } from 'react-router';
@@ -68,13 +69,27 @@ describe('AccountManagement', () => {
       });
 
       describe('when visiting /account, show verif. button', () => {
-        beforeAll(async () => {
+        beforeEach(async () => {
           act(() => renderAM(unvalidatedUser, accountUrl));
           await screen.findByText(/account management/i);
         });
 
         it('shows verify button', async () => {
           expect(screen.queryByTestId('send-verification-email-button')).toBeInTheDocument();
+        });
+
+        it('calls the endpoint when clicked', async () => {
+          fetchMock.post('/api/users/send-verification-email', {});
+          expect(screen.queryByTestId('send-verification-email-button')).toBeInTheDocument();
+          await act(async () => {
+            fireEvent.click(screen.getByTestId('send-verification-email-button'));
+          });
+
+          await waitFor(() => {
+            expect(fetchMock.called('/api/users/send-verification-email')).toBe(true);
+          });
+
+          fetchMock.restore();
         });
       });
     });

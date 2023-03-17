@@ -3,6 +3,7 @@ cucumber/
 deployment_config/
 frontend/
 src/
+!build/server/src
 maintenance_page/
 smartsheet_scripts/
 terraform/

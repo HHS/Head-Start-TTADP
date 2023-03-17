@@ -187,7 +187,7 @@ const attachHooksForAuditing = (sequelize) => {
   );
 };
 
-module.exports = {
+export {
   generateAuditModel,
   attachHooksForAuditing,
   addAuditTransactionSettings,

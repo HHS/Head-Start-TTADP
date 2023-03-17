@@ -25,6 +25,7 @@ import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
 import Users from '../../policies/user';
+import { currentUserId } from '../../services/currentUser';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -64,10 +65,11 @@ const hasReportAuthorization = async (user, reportId) => {
 
 const deleteOnlyFile = async (req, res) => {
   const { fileId } = req.params;
+  const userId = await currentUserId(req, res);
 
-  const user = await userById(req.session.userId);
+  const user = await userById(userId);
   const policy = new Users(user);
-  if (!policy.canWriteInAtLeastOneRegion) {
+  if (!policy.canWriteInAtLeastOneRegion()) {
     return res.status(400).send({ error: 'Write permissions required' });
   }
 
@@ -96,7 +98,8 @@ const deleteHandler = async (req, res) => {
     fileId,
   } = req.params;
 
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
 
   try {
     let file = await getFileById(fileId);
@@ -146,11 +149,13 @@ const linkHandler = async (req, res) => {
     reportId,
     reportObjectiveId,
     objectiveId,
-    objectiveTempleteId,
+    objectiveTemplateId,
     fileId,
   } = req.params;
 
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+
+  const user = await userById(userId);
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
 
@@ -161,7 +166,7 @@ const linkHandler = async (req, res) => {
   try {
     const file = await getFileById(fileId);
     if (reportId
-      && !(reportId in file.reportFiles.map((r) => r.activityReportId))) {
+      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
       createActivityReportFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -169,7 +174,10 @@ const linkHandler = async (req, res) => {
         file.size,
       );
     } else if (reportObjectiveId
-      && !(reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId))) {
+      && !(
+        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
+          .includes(reportObjectiveId)
+      )) {
       createActivityReportObjectiveFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -177,19 +185,22 @@ const linkHandler = async (req, res) => {
         file.size,
       );
     } else if (objectiveId
-      && !(objectiveId in file.objectiveFiles.map((r) => r.objectiveId))) {
+      && !(file.objectiveFiles.map((r) => r.objectiveId).includes(objectiveId))) {
       createObjectiveFileMetaData(
         file.originalFilename,
         file.fileName,
         reportId,
         file.size,
       );
-    } else if (objectiveTempleteId
-      && !(objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId))) {
+    } else if (objectiveTemplateId
+      && !(
+        file.objectiveTemplateFiles.map((r) => r.objectiveTemplateId)
+          .includes(objectiveTemplateId)
+      )) {
       createObjectiveTemplateFileMetaData(
         file.originalFilename,
         file.fileName,
-        objectiveTempleteId,
+        objectiveTemplateId,
         file.size,
       );
     }
@@ -237,7 +248,8 @@ const uploadHandler = async (req, res) => {
   let fileName;
   let fileTypeToUse;
 
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
 
   try {
     if (!files.file) {
@@ -260,7 +272,7 @@ const uploadHandler = async (req, res) => {
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
       if (!(await hasReportAuthorization(user, reportId)
-        || (await validateUserAuthForAdmin(req.session.userId)))) {
+        || (await validateUserAuthForAdmin(userId)))) {
         return res.sendStatus(403);
       }
       metadata = await createActivityReportFileMetaData(
@@ -277,7 +289,7 @@ const uploadHandler = async (req, res) => {
         user,
         activityReportObjective.activityReportId,
       )
-      || (await validateUserAuthForAdmin(req.session.userId)))) {
+      || (await validateUserAuthForAdmin(userId)))) {
         return res.sendStatus(403);
       }
       metadata = await createActivityReportObjectiveFileMetaData(
@@ -289,8 +301,8 @@ const uploadHandler = async (req, res) => {
     } else if (objectiveId) {
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!(objectivePolicy.canUpdate()
-      || (await validateUserAuthForAdmin(req.session.userId)))) {
+      if (!(objectivePolicy.canUpload()
+      || (await validateUserAuthForAdmin(userId)))) {
         return res.sendStatus(403);
       }
       metadata = await createObjectiveFileMetaData(
@@ -324,7 +336,7 @@ const uploadHandler = async (req, res) => {
   }
   try {
     await addToScanQueue({ key: metadata.key });
-    return updateStatus(metadata.id, QUEUED);
+    return await updateStatus(metadata.id, QUEUED);
   } catch (err) {
     auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${metadata.originalFileName}. Error: ${err}`);
     return updateStatus(metadata.id, QUEUEING_FAILED);
@@ -335,7 +347,8 @@ const uploadObjectivesFile = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
   let { objectiveIds } = fields;
 
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
 
   objectiveIds = JSON.parse(objectiveIds);
   const scanQueue = [];
@@ -361,8 +374,8 @@ const uploadObjectivesFile = async (req, res) => {
       const authorizations = await Promise.all(objectiveIds.map(async (objectiveId) => {
         const objective = await getObjectiveById(objectiveId);
         const objectivePolicy = new ObjectivePolicy(objective, user);
-        if (!objective || !objectivePolicy.canUpdate()) {
-          const admin = await validateUserAuthForAdmin(req.session.userId);
+        if (!objective || !objectivePolicy.canUpload()) {
+          const admin = await validateUserAuthForAdmin(userId);
           if (!admin) {
             return false;
           }
@@ -407,7 +420,7 @@ const uploadObjectivesFile = async (req, res) => {
         throw new Error('Missing key or id for file status update');
       }
       await addToScanQueue({ key: queueItem.key });
-      return updateStatus(queueItem.id, QUEUED);
+      return await updateStatus(queueItem.id, QUEUED);
     } catch (err) {
       auditLogger.error(`${logContext} ${logContext.namespace}:uploadObjectivesFile Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
       return updateStatus(queueItem.id, QUEUEING_FAILED);
@@ -419,7 +432,8 @@ const deleteObjectiveFileHandler = async (req, res) => {
   const { fileId } = req.params;
   const { objectiveIds } = req.body;
 
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
 
   try {
     let file = await getFileById(parseInt(fileId, DECIMAL_BASE));
@@ -465,7 +479,8 @@ async function deleteActivityReportObjectiveFile(req, res) {
   const { objectiveIds } = req.body;
 
   try {
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(
       parseInt(reportId, DECIMAL_BASE),
     );
@@ -501,6 +516,8 @@ async function deleteActivityReportObjectiveFile(req, res) {
           required: true,
         },
       ],
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
     });
 
     res.status(204).send();

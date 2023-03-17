@@ -22,6 +22,9 @@ import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
 import { withoutParticipants, withParticipants } from './participants';
 import { withMyReports, withoutMyReports } from './myReports';
+import { withReportText, withoutReportText } from './reportText';
+import { withTtaType, withoutTtaType } from './ttaType';
+import { withGroup, withoutGroup } from './group';
 
 export const topicToQuery = {
   reportId: {
@@ -101,6 +104,10 @@ export const topicToQuery = {
   stateCode: {
     ctn: (query) => withStateCode(query),
   },
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
+  },
   createDate: {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
@@ -114,6 +121,14 @@ export const topicToQuery = {
   otherEntities: {
     in: (query) => withOtherEntities(query),
     nin: (query) => withoutOtherEntities(query),
+  },
+  reportText: {
+    ctn: (query) => withReportText(query),
+    nctn: (query) => withoutReportText(query),
+  },
+  ttaType: {
+    in: (query) => withTtaType(query),
+    nin: (query) => withoutTtaType(query),
   },
 };
 

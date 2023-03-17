@@ -41,7 +41,7 @@ export function login(req, res) {
  * @param {*} next - next middleware
  */
 export default async function authMiddleware(req, res, next) {
-  const userId = currentUserId(req, res);
+  const userId = await currentUserId(req, res);
   if (!userId) {
     res.sendStatus(401);
   } else if (await validateUserAuthForAccess(userId)) {

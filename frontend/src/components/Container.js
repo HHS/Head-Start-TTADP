@@ -1,32 +1,36 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
 import Loader from './Loader';
 
 const classes = 'bg-white radius-md shadow-2 margin-bottom-3';
 
-function Container({
-  children,
-  className,
-  skipTopPadding,
-  skipBottomPadding,
-  loading,
-  loadingLabel,
-  paddingX,
-  paddingY,
-}) {
+const Container = forwardRef((props, ref) => {
+  const {
+    children,
+    className,
+    skipTopPadding,
+    skipBottomPadding,
+    loading,
+    loadingLabel,
+    paddingX,
+    paddingY,
+    positionRelative,
+  } = props;
+
   const skipTop = skipTopPadding ? 'padding-top-0' : '';
   const skipBottom = skipBottomPadding ? 'padding-bottom-0' : '';
+  const relative = positionRelative ? 'position-relative' : '';
 
   return (
-    <div className={`${classes} ${className} position-relative`}>
+    <div className={`${classes} ${className}`} ref={ref}>
       <Loader loading={loading} loadingLabel={loadingLabel} />
-      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${skipTop} ${skipBottom}`}>
+      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${relative} ${skipTop} ${skipBottom}`}>
         {children}
       </div>
     </div>
   );
-}
+});
 
 Container.propTypes = {
   children: PropTypes.node.isRequired,
@@ -37,6 +41,7 @@ Container.propTypes = {
   skipBottomPadding: PropTypes.bool,
   loading: PropTypes.bool,
   loadingLabel: PropTypes.string,
+  positionRelative: PropTypes.bool,
 };
 
 Container.defaultProps = {
@@ -47,6 +52,7 @@ Container.defaultProps = {
   skipBottomPadding: false,
   loading: false,
   loadingLabel: 'loading',
+  positionRelative: false,
 };
 
 export default Container;

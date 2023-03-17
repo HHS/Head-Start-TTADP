@@ -1,3 +1,4 @@
+import faker from '@faker-js/faker';
 import { EMAIL_ACTIONS } from '../constants';
 import db, {
   MailerLogs,
@@ -20,7 +21,7 @@ describe('MailerLog DB service', () => {
   });
 
   describe('createMailerLog', () => {
-    it('creates mailer log entry', async () => {
+    it('creates a mailer log entry', async () => {
       const mailerLog = await createMailerLog({
         jobId,
         emailTo,
@@ -39,6 +40,36 @@ describe('MailerLog DB service', () => {
       expect(retrievedMailerLog.id).toEqual(String(mailerLog.id));
       expect(retrievedMailerLog.action).toEqual(action);
       expect(retrievedMailerLog.subject).toEqual(subject);
+      expect(retrievedMailerLog.activityReports).toEqual(activityReports);
+      expect(retrievedMailerLog.success).toEqual(success);
+      expect(retrievedMailerLog.result).toEqual(result);
+      expect(retrievedMailerLog.createdAt).toBeDefined();
+      expect(retrievedMailerLog.updatedAt).toBeDefined();
+      await MailerLogs.destroy({ where: { id: mailerLog.id } });
+    });
+
+    it('abbreviates a long subject', async () => {
+      const longSentence = faker.lorem.sentence(300);
+
+      const mailerLog = await createMailerLog({
+        jobId,
+        emailTo,
+        action,
+        subject: longSentence,
+        activityReports,
+        success,
+        result,
+      });
+      const retrievedMailerLog = await MailerLogs.findOne({
+        where: {
+          id: mailerLog.id,
+        },
+      });
+      expect(retrievedMailerLog).toBeDefined();
+      expect(retrievedMailerLog.id).toEqual(String(mailerLog.id));
+      expect(retrievedMailerLog.action).toEqual(action);
+      expect(retrievedMailerLog.subject.length).toBe(255);
+      expect(retrievedMailerLog.subject.length).toBeLessThan(longSentence.length);
       expect(retrievedMailerLog.activityReports).toEqual(activityReports);
       expect(retrievedMailerLog.success).toEqual(success);
       expect(retrievedMailerLog.result).toEqual(result);

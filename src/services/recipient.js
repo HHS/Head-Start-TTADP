@@ -11,6 +11,8 @@ import {
   Objective,
   ActivityRecipient,
   Topic,
+  Permission,
+  User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -21,7 +23,47 @@ import {
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
-import goalStatusGraph from '../widgets/goalStatusGraph';
+import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+
+/**
+ *
+ * @param {number} userId
+ * @returns {Promise<Model>} recipient results
+ */
+export async function recipientsByUserId(userId) {
+  const user = await User.findOne({
+    attributes: ['id'],
+    where: {
+      id: userId,
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+      },
+    ],
+  });
+
+  if (!user) {
+    return [];
+  }
+
+  const regions = user.permissions.map((p) => p.regionId);
+
+  return Recipient.findAll({
+    order: [['name', 'ASC']],
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId: regions,
+          status: 'Active',
+        },
+      },
+    ],
+  });
+}
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -97,10 +139,11 @@ export async function recipientById(recipientId, grantScopes) {
  * @param {string} query
  * @param {number} regionId
  * @param {string} sortBy
+ * @param {number[]} userRegions
  *
  * @returns {Promise} recipient results
  */
-export async function recipientsByName(query, scopes, sortBy, direction, offset) {
+export async function recipientsByName(query, scopes, sortBy, direction, offset, userRegions) {
   // fix the query
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
@@ -136,6 +179,9 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
       required: true,
       where: [{
         [Op.and]: [
+          {
+            [Op.and]: { regionId: userRegions },
+          },
           { [Op.and]: scopes },
           {
             [Op.or]: [
@@ -201,7 +247,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
       const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
         t: [...a.t, ...report.topics],
         r: [...a.r, ...report.reason],
-        endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
+        endDate: new Date(report.endDate) < new Date(a.endDate) ? a.endDate : report.endDate,
       }), { t: [], r: [], endDate: '' });
 
       // previous added objectives have a regularly accessible attribute, the others
@@ -224,12 +270,20 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
 
+      // Look up grant number by index.
+      let grantNumberToUse = currentModel.grant.number;
+      const indexOfGoal = goal.ids.indexOf(objective.goalId);
+      if (indexOfGoal !== -1 && goal.grantNumbers[indexOfGoal]) {
+        grantNumberToUse = goal.grantNumbers[indexOfGoal];
+      }
+
       return {
         objectives: [...acc.objectives, {
           ...objective.dataValues,
           title: objective.title.trim(),
           endDate,
-          grantNumbers: [currentModel.grant.number],
+          status: objectiveStatus,
+          grantNumbers: [grantNumberToUse],
           reasons: uniq(r),
           activityReports: objective.activityReports || [],
         }],
@@ -251,7 +305,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
 
   return objectives.sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
-      : a.endDate < b.endDate) ? 1 : -1));
+      : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
 
 function calculatePreviousStatus(goal) {
@@ -291,7 +345,7 @@ export async function getGoalsByActivityRecipient(
   },
 ) {
   // Scopes.
-  const { goal: scopes } = filtersToScopes(filters, { goal: { recipientId } });
+  const { goal: scopes } = await filtersToScopes(filters, { goal: { recipientId } });
 
   // Paging.
   const limitNum = parseInt(limit, 10);
@@ -478,7 +532,7 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
-  const statuses = await goalStatusGraph({
+  const statuses = await goalStatusByGoalName({
     goal: {
       id: allGoalIds,
     },

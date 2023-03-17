@@ -1,5 +1,7 @@
 import join from 'url-join';
-import { get, put } from './index';
+import {
+  get, put, post, destroy,
+} from './index';
 import { DECIMAL_BASE } from '../Constants';
 
 export const getUsers = async () => {
@@ -44,4 +46,29 @@ export const getRoles = async () => {
 export const saveRoles = async (roles) => {
   const updatedRoles = await put((join('/', 'api', 'admin', 'roles')), { roles });
   return updatedRoles.json();
+};
+
+export const getSiteAlerts = async () => {
+  const alerts = await get((join('/', 'api', 'admin', 'alerts')));
+  return alerts.json();
+};
+
+export const saveSiteAlert = async (alert) => {
+  const updatedAlert = await put((join('/', 'api', 'admin', 'alerts', String(alert.id))), alert);
+  return updatedAlert.json();
+};
+
+export const deleteSiteAlert = async (alertId) => {
+  const success = await destroy((join('/', 'api', 'admin', 'alerts', String(alertId))));
+  return !!(success.ok);
+};
+
+export const createSiteAlert = async (alert) => {
+  const createdAlert = await post((join('/', 'api', 'admin', 'alerts')), alert);
+  return createdAlert.json();
+};
+
+export const setFeatureFlag = async (data) => {
+  const result = await post((join('/', 'api', 'users', 'feature-flags')), data);
+  return result;
 };

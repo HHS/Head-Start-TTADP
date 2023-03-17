@@ -3,7 +3,6 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
@@ -11,7 +10,8 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
-import { getGoals } from '../../../fetchers/activityReports';
+import { IN_PROGRESS } from '../../../components/Navigator/constants';
+import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
@@ -22,6 +22,9 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+
+const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
 const GoalsObjectives = ({
   reportId,
@@ -38,21 +41,20 @@ const GoalsObjectives = ({
     toggleObjectiveForm,
   } = useContext(GoalFormContext);
 
-  const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
-  const activityReportId = watch('id');
+  const pageState = getValues('pageState');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const grantIds = isRecipientReport ? recipients.map((r) => {
+  const grantIds = isRecipientReport ? activityRecipients.map((r) => {
     if (r.grant) {
       return r.grant.id;
     }
 
     return r.activityRecipientId;
   }) : [];
-  const activityRecipientIds = recipients.map((r) => r.activityRecipientId);
+  const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -133,7 +135,14 @@ const GoalsObjectives = ({
     }
   };
 
-  const onEdit = (goal, index) => {
+  const onEdit = async (goal) => {
+    try {
+      await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('failed to set goal as actively edited with this error:', err);
+    }
+
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
     if (currentlyEditing) {
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
@@ -150,23 +159,31 @@ const GoalsObjectives = ({
         }],
         setError,
       );
+
       if (areGoalsValid !== true) {
         return;
       }
     }
 
+    // clear out the existing value (we need to do this because without it
+    // certain objective fields don't clear out)
+    setValue('goalForEditing', null);
+
     // make this goal the editable goal
     setValue('goalForEditing', goal);
-    const objectives = getValues(`goals[${index}].objectives`) || [];
-
-    setValue('goalForEditing.objectives', objectives);
-    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
+    setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
 
     const rttapaValue = goal.isRttapa;
     setValue('goalIsRttapa', rttapaValue);
-
     toggleGoalForm(false);
+    setValue(
+      'pageState',
+      {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
+      },
+    );
 
     let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     if (currentlyEditing) {
@@ -180,21 +197,16 @@ const GoalsObjectives = ({
   };
 
   // the read only component expects things a little differently
-  const goalsForReview = selectedGoals.map((goal, index) => {
-    const fieldArrayName = `goals[${index}].objectives`;
-    const objectives = getValues(fieldArrayName) || [];
+  const goalsForReview = selectedGoals.map((goal) => {
     return {
       ...goal,
       goalName: goal.name,
       grants: [],
-      objectives,
     };
   });
 
   const oeObjectiveEdit = (objectives) => {
-    // const objWithoutGoals = getValues('objectivesWithoutGoals');
     const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);
-    // const objectivesForEdit = objectives.map((obj) => (
     const objectivesForEdit = objectives.map((obj) => (
       {
         ...obj,
@@ -204,17 +216,26 @@ const GoalsObjectives = ({
     toggleObjectiveForm(false);
   };
 
+  const isFormOpen = (
+    isRecipientReport && !isGoalFormClosed
+  ) || (
+    isOtherEntityReport && !isObjectivesFormClosed
+  );
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      { isFormOpen && (
+      <IndicatesRequiredField />
+      ) }
 
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">
           To add goals and objectives, indicate who the activity was for in
           {' '}
-          <Link to={`/activity-reports/${activityReportId}/activity-summary`}>Activity Summary</Link>
+          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
           .
         </Alert>
       )}
@@ -342,6 +363,13 @@ export default {
     if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
+
+    // if the goal form is open (i.e. the goal for editing is set), the page cannot be complete
+    // at least as far as my thinking goes
+    if (activityRecipientType === 'recipient' && formData.goalForEditing) {
+      return false;
+    }
+
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,

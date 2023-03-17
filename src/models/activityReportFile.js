@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { beforeDestroy, afterDestroy } = require('./hooks/activityReportFile');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportFile extends Model {
     static associate(models) {
       ActivityReportFile.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });

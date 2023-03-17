@@ -7,13 +7,15 @@ import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
-
+import { getSiteAlerts } from './fetchers/siteAlerts';
+import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -42,6 +44,8 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
+import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
   const [user, updateUser] = useState();
@@ -54,6 +58,24 @@ function App() {
   const [announcements, updateAnnouncements] = useState([]);
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
+  const [alert, setAlert] = useState(null);
+
+  useEffect(() => {
+    // fetch alerts
+    async function fetchAlerts() {
+      try {
+        const alertFromApi = await getSiteAlerts();
+        setAlert(alertFromApi);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`There was an error fetching alerts: ${e}`);
+      }
+    }
+
+    if (authenticated) {
+      fetchAlerts();
+    }
+  }, [authenticated]);
 
   useEffect(() => {
     async function cleanupReports() {
@@ -122,7 +144,7 @@ function App() {
         <Route
           path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <LegacyReport
                 match={match}
               />
@@ -133,7 +155,7 @@ function App() {
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
@@ -143,12 +165,16 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => <AppWrapper authenticated logout={logout}><Home /></AppWrapper>}
+          render={() => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <Home />
+            </AppWrapper>
+          )}
         />
         <Route
           path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ApprovedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
@@ -156,7 +182,7 @@ function App() {
         <Route
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ActivityReport location={location} match={match} />
             </AppWrapper>
           )}
@@ -164,8 +190,24 @@ function App() {
         <Route
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} padded={false}>
-              <RecipientRecord location={location} match={match} user={user} />
+            <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
+              <RecipientRecord
+                location={location}
+                match={match}
+                user={user}
+                hasAlerts={!!(alert)}
+              />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/resources-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="resources_dashboard" renderNotFound>
+                <ResourcesDashboard user={user} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -173,14 +215,44 @@ function App() {
           exact
           path="/regional-dashboard"
           render={() => (
-            <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <RegionalDashboard user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/account/my-groups/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <MyGroups match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/my-groups"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <MyGroups match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/regional-goal-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
+                <RegionalGoalDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
           )}
         />
         <Route
           exact
           path="/account"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
@@ -189,7 +261,7 @@ function App() {
           exact
           path="/account/verify-email/:token"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
@@ -203,7 +275,7 @@ function App() {
         <Route
           path="/admin"
           render={() => (
-            <AppWrapper authenticated logout={logout}><Admin /></AppWrapper>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}><Admin /></AppWrapper>
           )}
         />
         )}
@@ -211,13 +283,17 @@ function App() {
           exact
           path="/recipient-tta-records"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
             </AppWrapper>
           )}
         />
         <Route
-          render={() => <AppWrapper authenticated logout={logout}><NotFound /></AppWrapper>}
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <NotFound />
+            </AppWrapper>
+          )}
         />
       </Switch>
     </>
@@ -232,19 +308,25 @@ function App() {
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
           {authenticated && (
-          <>
-            <a className="usa-skipnav" href="#main-content">
-              Skip to main content
-            </a>
+            <>
+              <a className="usa-skipnav" href="#main-content">
+                Skip to main content
+              </a>
 
-            {/* Only show the sidebar when the user is authenticated */}
-            <UserContext.Provider value={{ user, authenticated, logout }}>
-              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
-            </UserContext.Provider>
-          </>
+              {/* Only show the sidebar when the user is authenticated */}
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <SiteNav
+                  admin={admin}
+                  authenticated={authenticated}
+                  logout={logout}
+                  user={user}
+                  hasAlerts={!!(alert)}
+                />
+              </UserContext.Provider>
+            </>
           )}
           <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header />
+            <Header authenticated alert={alert} />
             <AriaLiveContext.Provider value={{ announce }}>
               {!authenticated && (authError === 403
                 ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>

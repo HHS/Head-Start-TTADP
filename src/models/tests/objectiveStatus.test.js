@@ -169,12 +169,12 @@ describe('Objective status update hook', () => {
       grantFour = await Grant.findOne({ where: { id: 476470 } });
 
       // Reports.
-      reportOne = await ActivityReport.create({ ...sampleReport, endDate: '2022-09-30T12:00:00Z' });
+      reportOne = await ActivityReport.create({ ...sampleReport, endDate: '2023-01-01T12:00:00Z' });
       reportTwo = await ActivityReport.create({
         ...sampleReport,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        endDate: '2022-09-29T12:00:00Z',
+        endDate: '2022-09-30T12:00:00Z',
       });
       reportThree = await ActivityReport.create({ ...sampleReport });
 

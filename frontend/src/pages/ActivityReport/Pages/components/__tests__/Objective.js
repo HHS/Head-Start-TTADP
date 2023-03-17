@@ -94,6 +94,15 @@ const RenderObjective = ({
               files: [],
               status: 'Not Started',
               title: '',
+            },
+            {
+              label: 'Existing objective',
+              value: 123,
+              topics: [],
+              resources: [],
+              files: [],
+              status: 'Complete',
+              title: 'Existing objective',
             }]}
           index={1}
           remove={onRemove}
@@ -171,5 +180,18 @@ describe('Objective', () => {
     const { objectives } = values;
     const ttas = objectives.map((o) => o.ttaProvided);
     expect(ttas).toEqual(['<p><ul><li>What</li></ul></p>', '<p><ul><li>What</li></ul></p>']);
+  });
+
+  it('switches the title to read only if the objective changes', async () => {
+    render(<RenderObjective />);
+    await screen.findByText('What');
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
+    expect(await screen.findByText(/Existing objective/i, { selector: 'p' })).toBeVisible();
+    expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
+    expect(Array.from(document.querySelectorAll('textarea'))).toHaveLength(0);
+    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
+    expect(await screen.findByText(/Create a new objective/i)).toBeVisible();
+    expect(Array.from(document.querySelectorAll('textarea'))).toHaveLength(1);
   });
 });

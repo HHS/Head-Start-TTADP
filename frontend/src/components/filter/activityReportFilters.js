@@ -20,7 +20,9 @@ import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
+import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
+import FilterGroups from './FilterGroups';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -120,6 +122,22 @@ export const grantNumberFilter = {
       inputId={`grantNumber-${condition}-${id}`}
       onApply={onApplyQuery}
       label="Enter a grant number"
+    />
+  ),
+};
+
+export const reportTextFilter = {
+  id: 'reportText',
+  display: 'Report text',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`reportText-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter report text"
     />
   ),
 };
@@ -245,6 +263,24 @@ export const regionFilter = {
   ),
 };
 
+export const ttaTypeFilter = {
+  id: 'ttaType',
+  display: 'TTA type',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'training',
+    'is not': 'training',
+  },
+  displayQuery: displayTtaTypeQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterTTAType
+      inputId={`ttaType-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const specialistRoleFilter = {
   id: 'role',
   display: 'Specialist roles',
@@ -314,6 +350,21 @@ export const topicsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTopicSelect
       inputId={`topic-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

@@ -18,11 +18,13 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   CollaboratorRole,
+  Resource,
   Topic,
 } from '../models';
 import {
   cacheObjectiveMetadata,
 } from './reportCache';
+import { processObjectiveForResourcesById } from './resource';
 import { REPORT_STATUSES } from '../constants';
 
 describe('reportCache', () => {
@@ -80,6 +82,7 @@ describe('reportCache', () => {
   };
 
   const mockReport = {
+    id: 900000,
     submissionStatus: REPORT_STATUSES.DRAFT,
     calculatedStatus: REPORT_STATUSES.DRAFT,
     numberOfParticipants: 1,
@@ -104,23 +107,21 @@ describe('reportCache', () => {
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2354.pdf',
     status: 'APPROVED',
     fileSize: 54417,
-  }, {
-    id: 140000003,
-    originalFileName: 'test03.pdf',
-    key: '508bdc9e-8dec-4d64-b83d-59a72a4f2355.pdf',
-    status: 'APPROVED',
-    fileSize: 54417,
+  // }, {
+  //   id: 140000003,
+  //   originalFileName: 'test03.pdf',
+  //   key: '508bdc9e-8dec-4d64-b83d-59a72a4f2355.pdf',
+  //   status: 'APPROVED',
+  //   fileSize: 54417,
   }];
 
   let mockObjectiveTopics;
 
-  const mockObjectiveResources = [{
-    userProvidedUrl: 'https://ttahub.ohs.acf.hhs.gov/',
-  }, {
-    userProvidedUrl: 'https://hses.ohs.acf.hhs.gov/',
-  }, {
-    userProvidedUrl: 'https://eclkc.ohs.acf.hhs.gov/',
-  }];
+  const mockObjectiveResources = [
+    'https://ttahub.ohs.acf.hhs.gov/',
+    'https://hses.ohs.acf.hhs.gov/',
+    'https://eclkc.ohs.acf.hhs.gov/',
+  ];
 
   let user;
   const roles = [];
@@ -163,16 +164,17 @@ describe('reportCache', () => {
     await Promise.all(mockFiles.map(
       async (mockFile) => File.findOrCreate({ where: { ...mockFile } }),
     ));
-    files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) } });
+    files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) }, order: ['id'] });
     objectiveFiles.push(await ObjectiveFile.findOrCreate({
       where: {
         objectiveId: objective.id,
         fileId: files[0].id,
       },
     }));
-    objectiveResources.push(await ObjectiveResource.findOrCreate({
-      where: { objectiveId: objective.id, ...mockObjectiveResources[0] },
-    }));
+    objectiveResources.push(await processObjectiveForResourcesById(
+      objective.id,
+      [mockObjectiveResources[0]],
+    ));
     topics.push((await Topic.findOrCreate({ where: { name: 'Coaching' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Communication' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } })));
@@ -186,8 +188,14 @@ describe('reportCache', () => {
     await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-    await Promise.all(files.map(async (file) => file.destroy()));
-    await activityRecipient.destroy();
+    await ActivityRecipient.destroy({
+      where: {
+        [Op.or]: [
+          { activityReportId: report.id },
+          { grantId: mockGrant.id },
+        ],
+      },
+    });
     await ActivityReportGoal.destroy({ where: { goalId: goal.id } });
     const aroFiles = await ActivityReportObjectiveFile
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
@@ -211,223 +219,233 @@ describe('reportCache', () => {
       where: { roleId: role.id },
     })));
     await Promise.all(roles.map(async (role) => role.destroy()));
+    await Promise.all(files.map(async (file) => file.destroy()));
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
 
   describe('cache', () => {
     it('null', async () => {
-      const arg = await ActivityReportGoal.findOne({ where: { activityReportId: report.id } });
-      const aro = await ActivityReportObjective.findOne({
-        where: { activityReportId: report.id },
-        include: [{
-          model: ActivityReportObjectiveFile,
-          as: 'activityReportObjectiveFiles',
-        }, {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
-        }, {
-          model: ActivityReportObjectiveTopic,
-          as: 'activityReportObjectiveTopics',
-        }],
-      });
+      {
+        const arg = await ActivityReportGoal.findOne({ where: { activityReportId: report.id } });
+        const aro = await ActivityReportObjective.findOne({
+          where: { activityReportId: report.id },
+          include: [{
+            model: ActivityReportObjectiveFile,
+            as: 'activityReportObjectiveFiles',
+          }, {
+            model: ActivityReportObjectiveResource,
+            as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
+          }, {
+            model: ActivityReportObjectiveTopic,
+            as: 'activityReportObjectiveTopics',
+          }],
+        });
 
-      expect(arg).toBeNull();
-      expect(aro).toBeNull();
-    });
-    it('initial set', async () => {
-      await ActivityReportGoal.create({ activityReportId: report.id, goalId: goal.id });
-      await ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: objective.id,
-      });
-      const arg = await ActivityReportGoal.findOne({ where: { activityReportId: report.id } });
-      const aro = await ActivityReportObjective.findOne({
-        where: { activityReportId: report.id },
-        include: [{
-          model: ActivityReportObjectiveFile,
-          as: 'activityReportObjectiveFiles',
-        }, {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
-        }, {
-          model: ActivityReportObjectiveTopic,
-          as: 'activityReportObjectiveTopics',
-        }],
-      });
-      expect(arg).toBeDefined();
-      expect(aro).toBeDefined();
-      expect(aro.activityReportObjectiveFiles).toEqual([]);
-      expect(aro.activityReportObjectiveResources).toEqual([]);
-      expect(aro.activityReportObjectiveTopics).toEqual([]);
-    });
-    it('add to cache', async () => {
-      const filesForThisObjective = await ObjectiveFile.findAll({
-        where: {
+        expect(arg).toBeNull();
+        expect(aro).toBeNull();
+      }
+      // });
+      // i t('initial set', async () => {
+      {
+        await ActivityReportGoal.create({ activityReportId: report.id, goalId: goal.id });
+        await ActivityReportObjective.create({
+          activityReportId: report.id,
           objectiveId: objective.id,
-        },
-      });
+        });
+        const arg = await ActivityReportGoal.findOne({ where: { activityReportId: report.id } });
+        const aro = await ActivityReportObjective.findOne({
+          where: { activityReportId: report.id },
+          include: [{
+            model: ActivityReportObjectiveFile,
+            as: 'activityReportObjectiveFiles',
+          }, {
+            model: ActivityReportObjectiveResource,
+            as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
+          }, {
+            model: ActivityReportObjectiveTopic,
+            as: 'activityReportObjectiveTopics',
+          }],
+        });
+        expect(arg).toBeDefined();
+        expect(aro).toBeDefined();
+        expect(aro.activityReportObjectiveFiles).toEqual([]);
+        expect(aro.activityReportObjectiveResources).toEqual([]);
+        expect(aro.activityReportObjectiveTopics).toEqual([]);
+      }
+      // });
+      // i t('add to cache', async () => {
+      {
+        const filesForThisObjective = await ObjectiveFile.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
 
-      const resources = await ObjectiveResource.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
+        const resources = await ObjectiveResource.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
 
-      const topicsForThisObjective = await ObjectiveTopic.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
+        const topicsForThisObjective = await ObjectiveTopic.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
 
-      const metadata = {
-        files: filesForThisObjective,
-        resources,
-        topics: topicsForThisObjective,
-        ttaProvided: null,
-        order: 1,
-      };
-      await cacheObjectiveMetadata(objective, report.id, metadata);
-      const aro = await ActivityReportObjective.findOne({
-        where: { activityReportId: report.id },
-        include: [{
-          model: ActivityReportObjectiveFile,
-          as: 'activityReportObjectiveFiles',
-        }, {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
-        }, {
-          model: ActivityReportObjectiveTopic,
-          as: 'activityReportObjectiveTopics',
-        }],
-      });
-      expect(aro).toBeDefined();
-      expect(aro.activityReportObjectiveFiles.length).toEqual(1);
-      expect(aro.activityReportObjectiveFiles[0].fileId).toEqual(mockFiles[0].id);
-      expect(aro.activityReportObjectiveResources.length).toEqual(1);
-      expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
-        .toEqual(mockObjectiveResources[0].userProvidedUrl);
+        const metadata = {
+          files: filesForThisObjective,
+          resources,
+          topics: topicsForThisObjective,
+          ttaProvided: null,
+          order: 1,
+        };
+        await cacheObjectiveMetadata(objective, report.id, metadata);
+        const aro = await ActivityReportObjective.findOne({
+          where: { activityReportId: report.id },
+          include: [{
+            model: ActivityReportObjectiveFile,
+            as: 'activityReportObjectiveFiles',
+          }, {
+            model: ActivityReportObjectiveResource,
+            as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
+          }, {
+            model: ActivityReportObjectiveTopic,
+            as: 'activityReportObjectiveTopics',
+          }],
+        });
+        expect(aro).toBeDefined();
+        expect(aro.activityReportObjectiveFiles.length).toEqual(1);
+        expect(aro.activityReportObjectiveFiles[0].fileId).toEqual(mockFiles[0].id);
+        expect(aro.activityReportObjectiveResources.length).toEqual(1);
+        expect(aro.activityReportObjectiveResources[0].resource.dataValues.url)
+          .toEqual(mockObjectiveResources[0]);
 
-      expect(aro.activityReportObjectiveTopics.length).toEqual(1);
-      expect(aro.arOrder).toEqual(2);
-      expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[0].topicId);
-    });
-    it('add and remove from cache', async () => {
+        expect(aro.activityReportObjectiveTopics.length).toEqual(1);
+        expect(aro.arOrder).toEqual(2);
+        expect(aro.activityReportObjectiveTopics[0].topicId)
+          .toEqual(mockObjectiveTopics[0].topicId);
+      }
+      // });
+      // i t('add and remove from cache', async () => {
+      {
       // update added or removed files
-      await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
-      objectiveFiles.push(await ObjectiveFile.findOrCreate({
-        where: {
-          objectiveId: objective.id,
-          fileId: mockFiles[1].id,
-        },
-      }));
-      objectiveResources.push(await ObjectiveResource.findOrCreate({
-        where: { objectiveId: objective.id, ...mockObjectiveResources[1] },
-      }));
-      objectiveTopics.push(await ObjectiveTopic.findOrCreate({
-        where: { objectiveId: objective.id, ...mockObjectiveTopics[1] },
-      }));
+        await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
+        await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
+        await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
+        objectiveFiles.push(await ObjectiveFile.findOrCreate({
+          where: {
+            objectiveId: objective.id,
+            fileId: mockFiles[1].id,
+          },
+        }));
+        objectiveResources.push(await processObjectiveForResourcesById(
+          objective.id,
+          [mockObjectiveResources[1]],
+        ));
+        objectiveTopics.push(await ObjectiveTopic.findOrCreate({
+          where: { objectiveId: objective.id, ...mockObjectiveTopics[1] },
+        }));
 
-      const filesForThisObjective = await ObjectiveFile.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
+        const filesForThisObjective = await ObjectiveFile.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
 
-      const resources = await ObjectiveResource.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
+        const resourcesForThisObjective = await ObjectiveResource.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
 
-      const topicsForThisObjective = await ObjectiveTopic.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
-      const metadata = {
-        files: filesForThisObjective,
-        resources: [...resources, { userProvidedUrl: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }],
-        topics: topicsForThisObjective,
-        ttaProvided: null,
-        order: 0,
-      };
-
-      await cacheObjectiveMetadata(objective, report.id, metadata);
-      const aro = await ActivityReportObjective.findOne({
-        where: { activityReportId: report.id },
-        include: [{
-          model: ActivityReportObjectiveFile,
-          as: 'activityReportObjectiveFiles',
-        }, {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
-        }, {
-          model: ActivityReportObjectiveTopic,
-          as: 'activityReportObjectiveTopics',
-        }],
-      });
-      expect(aro).toBeDefined();
-      expect(aro.activityReportObjectiveFiles.length).toEqual(1);
-      expect(aro.activityReportObjectiveFiles[0].fileId).toEqual(mockFiles[1].id);
-      expect(aro.activityReportObjectiveResources.length).toEqual(1);
-      expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
-        .toEqual(mockObjectiveResources[1].userProvidedUrl);
-      expect(aro.activityReportObjectiveTopics.length).toEqual(1);
-      expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[1].topicId);
-    });
-    it('remove from cache', async () => {
-      await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
-
-      const filesForThisObjective = await ObjectiveFile.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
-      const resources = await ObjectiveResource.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
-      const topicsForThisObjective = await ObjectiveTopic.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
-      const metadata = {
-        files: filesForThisObjective,
-        resources,
-        topics: topicsForThisObjective,
-        ttaProvided: null,
-        order: 0,
-      };
-
-      await cacheObjectiveMetadata(objective, report.id, metadata);
-      const aro = await ActivityReportObjective.findOne({
-        where: { activityReportId: report.id },
-        include: [{
-          model: ActivityReportObjectiveFile,
-          as: 'activityReportObjectiveFiles',
-        }, {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
-        }, {
-          model: ActivityReportObjectiveTopic,
-          as: 'activityReportObjectiveTopics',
-        }],
-      });
-      expect(aro).toBeDefined();
-      expect(aro.activityReportObjectiveFiles).toEqual([]);
-      expect(aro.activityReportObjectiveResources).toEqual([]);
-      expect(aro.activityReportObjectiveTopics).toEqual([]);
+        const topicsForThisObjective = await ObjectiveTopic.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
+        // TODO: GH - fix
+        const metadata = {
+          files: filesForThisObjective,
+          resources: [...resourcesForThisObjective, { url: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }], // TODO: GH - FIX
+          topics: topicsForThisObjective,
+          ttaProvided: null,
+          order: 0,
+        };
+        await cacheObjectiveMetadata(objective, report.id, metadata);
+        const aro = await ActivityReportObjective.findOne({
+          where: { activityReportId: report.id },
+          include: [{
+            model: ActivityReportObjectiveFile,
+            as: 'activityReportObjectiveFiles',
+          }, {
+            model: ActivityReportObjectiveResource,
+            as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
+          }, {
+            model: ActivityReportObjectiveTopic,
+            as: 'activityReportObjectiveTopics',
+          }],
+        });
+        expect(aro).toBeDefined();
+        expect(aro.activityReportObjectiveFiles.length).toEqual(1);
+        expect(aro.activityReportObjectiveFiles[0].fileId).toEqual(mockFiles[1].id);
+        expect(aro.activityReportObjectiveResources.length).toEqual(1);
+        expect(aro.activityReportObjectiveResources[0].resource.dataValues.url)
+          .toEqual(mockObjectiveResources[1]);
+        expect(aro.activityReportObjectiveTopics.length).toEqual(1);
+        expect(aro.activityReportObjectiveTopics[0].topicId)
+          .toEqual(mockObjectiveTopics[1].topicId);
+      }
+      // });
+      // i t('remove from cache', async () => {
+      {
+        const metadata = {
+          files: [],
+          resources: [],
+          topics: [],
+          ttaProvided: null,
+          order: 0,
+        };
+        await cacheObjectiveMetadata(objective, report.id, metadata);
+        const aro = await ActivityReportObjective.findOne({
+          where: { activityReportId: report.id },
+          include: [{
+            model: ActivityReportObjectiveFile,
+            as: 'activityReportObjectiveFiles',
+          }, {
+            model: ActivityReportObjectiveResource,
+            as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
+          }, {
+            model: ActivityReportObjectiveTopic,
+            as: 'activityReportObjectiveTopics',
+          }],
+        });
+        expect(aro).toBeDefined();
+        expect(aro.activityReportObjectiveFiles).toEqual([]);
+        expect(aro.activityReportObjectiveResources).toEqual([]);
+        expect(aro.activityReportObjectiveTopics).toEqual([]);
+      }
     });
   });
 });

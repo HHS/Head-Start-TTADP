@@ -1,10 +1,15 @@
 const { Model } = require('sequelize');
-const { afterCreate, beforeDestroy, afterDestroy } = require('./hooks/objectiveFile');
+const {
+  beforeValidate,
+  afterCreate,
+  beforeDestroy,
+  afterDestroy,
+} = require('./hooks/objectiveFile');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveFile extends Model {
     static associate(models) {
-      ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
+      ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
       ObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
     }
   }
@@ -23,10 +28,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'ObjectiveFile',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),

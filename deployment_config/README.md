@@ -4,7 +4,7 @@ Files within this directory contain variables that are both public and read/subs
 
 **Need to add a public env variable to the application that _does not change_ between envs?** You can add it directly under `env:` in manifest.yml. See `NODE_ENV` as an example.
 
-**Need to add a secrete env variable to the application or a public or secret env variable that _changes_ between envs?** Check out the "Adding environment variables to an application" section in the main README.MD.
+**Need to add a secret env variable to the application or a public or secret env variable that _changes_ between envs?** Check out the ["Adding environment variables to an application" section](../README.md#cicd-with-circleci) in the main README.MD.
 
 ## REDIRECT_URI_HOST
 

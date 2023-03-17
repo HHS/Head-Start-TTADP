@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Button,
@@ -8,7 +8,9 @@ import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { DECIMAL_BASE } from '../../Constants';
+import { DECIMAL_BASE, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
+import { storageAvailable } from '../../hooks/helpers';
+import isAdmin from '../../permissions';
 
 const NUMBER_FIELDS = [
   'homeRegionId',
@@ -22,10 +24,17 @@ const NUMBER_FIELDS = [
  */
 function UserSection({ user, onSave, features }) {
   const [formUser, updateUser] = useState();
+  const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
 
   useEffect(() => {
     updateUser(user);
   }, [user]);
+
+  const impersonateUserId = () => {
+    if (!haveStorage) return;
+    window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, formUser.id);
+    window.location.href = '/';
+  };
 
   const onUserChange = (e) => {
     if (Array.isArray(e)) {
@@ -109,6 +118,15 @@ function UserSection({ user, onSave, features }) {
         user={formUser}
         onUserChange={onUserChange}
       />
+      {process.env.NODE_ENV === 'development' && (
+        <Button
+          className="margin-bottom-6"
+          onClick={impersonateUserId}
+          disabled={isAdmin(user)}
+        >
+          Impersonate user
+        </Button>
+      )}
       <UserPermissions
         userId={user.id}
         globalPermissions={userGlobalPermissions(formUser)}

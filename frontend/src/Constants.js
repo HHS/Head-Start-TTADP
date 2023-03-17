@@ -10,6 +10,11 @@ export const IS_NOT = 'is not';
 export const WHERE_IM_THE = 'where I\'m the';
 export const WHERE_IM_NOT_THE = 'where I\'m not the';
 
+export const EMPTY_MULTI_SELECT = {
+  is: [],
+  'is not': [],
+};
+
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
@@ -174,6 +179,7 @@ export const TOPICS = [
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -181,7 +187,7 @@ export const TOPICS = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
-  'Ongoing Monitoring Management System',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -254,10 +260,12 @@ const LOCAL_STORAGE_CACHE_NUMBER = '0.2';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_STORAGE_CACHE_NUMBER}`;
 
 export const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
   'Recipient request',
+  'Regional Office request',
   'TTA complete',
 ];
 
@@ -306,3 +314,21 @@ export const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
   ...OTHER_ENTITY_PARTICIPANTS,
 ];
+
+// note that if these alert status, size, or variant list is changed, it needs also to be changed in
+// - src/constants.js
+export const ALERT_STATUSES = {
+  UNPUBLISHED: 'Unpublished',
+  PUBLISHED: 'Published',
+};
+
+export const ALERT_VARIANTS = {
+  INFO: 'info',
+  EMERGENCY: 'emergency',
+};
+
+export const ALERT_SIZES = {
+  STANDARD: 'standard',
+  SLIM: 'slim',
+  LARGE: 'large',
+};

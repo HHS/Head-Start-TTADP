@@ -14,10 +14,12 @@ import db, {
   Topic,
   ObjectiveTopic,
   ObjectiveResource,
+  Resource,
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
 import { activityReportAndRecipientsById } from '../activityReports';
+import { processObjectiveForResourcesById } from '../resource';
 
 const mockUser = {
   id: 54253461,
@@ -43,6 +45,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let existingObjective;
   let topic;
   let secondTopic;
+  let rtrObjectiveNotOnReport;
 
   // Adding a recipient.
   let addingRecipientReport;
@@ -53,7 +56,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let objective2;
 
   beforeAll(async () => {
-    await User.create(mockUser);
+    await User.findOrCreate({ where: mockUser });
     const recipientOne = await Recipient.create(
       {
         id: faker.datatype.number({ min: 90000 }),
@@ -270,10 +273,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topicId: topic.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: existingObjective.id,
-      userProvidedUrl: 'http://www.finally-a-url.com',
-    });
+    await processObjectiveForResourcesById(existingObjective.id, ['http://www.finally-a-url.com']);
 
     objective2 = await Objective.create({
       goalId: goal.id,
@@ -295,10 +295,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topicId: topic.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: addingRecipientObjective.id,
-      userProvidedUrl: 'http://www.testgov.com',
-    });
+    await processObjectiveForResourcesById(addingRecipientObjective.id, ['http://www.testgov.com']);
 
     await ActivityReportObjective.create({
       ttaProvided: 'Adding recipient tta',
@@ -317,12 +314,17 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
+    const objectiveIds = [
+      ...arObjectives.map((aro) => aro.objectiveId),
+      rtrObjectiveNotOnReport.id,
+    ];
 
     await ActivityReportObjective.destroy({
       where: {
         activityReportId: reportIds,
       },
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
@@ -500,10 +502,19 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(beforeObjectives.length).toBe(1);
 
+    const objectiveIds = beforeObjectives.map((bo) => bo.objectiveId);
+
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
 
     const goalName = 'This is a brand new goal';
     const [beforeGoal] = beforeGoals;
+
+    rtrObjectiveNotOnReport = await Objective.create({
+      goalId: beforeGoal.goalId,
+      status: 'In Progress',
+      title: 'gabba gabba hey',
+      createdVia: 'rtr',
+    });
 
     const newGoals = [
       {
@@ -541,6 +552,22 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     expect(afterObjectives.length).toBe(0);
+
+    const remainingObjectives = await Objective.findAll({
+      where: {
+        id: objectiveIds,
+      },
+    });
+
+    expect(remainingObjectives.length).toBe(0);
+    const unaffectedObjectives = await Objective.findAll({
+      where: {
+        goalId,
+      },
+    });
+
+    expect(unaffectedObjectives.length).toBe(1);
+    expect(unaffectedObjectives[0].id).toBe(rtrObjectiveNotOnReport.id);
   });
 
   it('you can safely reuse objective text', async () => {
@@ -912,6 +939,22 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const rtrGoal = await Goal.findByPk(existingGoal.id);
     const rtrObjective = await Objective.findByPk(existingObjective.id);
+    // check that our resource are on the objective
+    const beforeObjectiveResources = await ObjectiveResource.findAll({
+      where: {
+        objectiveId: rtrObjective.id,
+      },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        required: true,
+      }],
+    });
+
+    expect(beforeObjectiveResources.length).toBe(1);
+    const beforeUrls = beforeObjectiveResources.map((bor) => bor.resource.dataValues.url);
+    expect(beforeUrls).toContain('http://www.finally-a-url.com');
 
     const newGoals = [
       {
@@ -955,7 +998,6 @@ describe('saveGoalsForReport (more tests)', () => {
                 id: secondTopic.id,
               },
             ],
-
             resources: [
               {
                 key: 'gibberish-i-THINK-thats-obvious',
@@ -1026,21 +1068,32 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         objectiveId: rtrObjective.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        required: true,
+      }],
     });
 
     expect(afterObjectiveResources.length).toBe(2);
-    const userProvidedUrls = afterObjectiveResources.map((ar) => ar.userProvidedUrl);
-    expect(userProvidedUrls).toContain('https://www.google.com');
-    expect(userProvidedUrls).toContain('http://www.finally-a-url.com');
+    const urls = afterObjectiveResources.map((ar) => ar.resource.dataValues.url);
+    expect(urls).toContain('https://www.google.com');
+    expect(urls).toContain('http://www.finally-a-url.com');
 
     const afterActivityReportObjectiveResources = await ActivityReportObjectiveResource.findAll({
       where: {
         activityReportObjectiveId: existingObjectiveARO.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+      }],
     });
 
     expect(afterActivityReportObjectiveResources.length).toBe(1);
-    expect(afterActivityReportObjectiveResources[0].userProvidedUrl).toBe('https://www.google.com');
+    expect(afterActivityReportObjectiveResources[0].resource.dataValues.url).toBe('https://www.google.com');
   });
 
   it('adds a new recipient', async () => {

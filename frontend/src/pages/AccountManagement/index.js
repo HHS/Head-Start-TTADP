@@ -12,6 +12,7 @@ import {
   Link,
   Radio,
 } from '@trussworks/react-uswds';
+
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
@@ -23,7 +24,9 @@ import {
   getEmailSettings,
 } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
+
 import EmailVerifier from './EmailVerifier';
+import Groups from './components/Groups';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -38,24 +41,29 @@ const frequencyValues = [
 
 const emailTypesMap = [
   {
-    name: 'Activity report submitted for review',
-    description: 'We\'ll email you when an activity report is submitted for your approval.',
+    name: '',
+    description: 'Someone submits an activity report for my approval.',
     keyName: 'emailWhenReportSubmittedForReview',
   },
   {
-    name: 'Activity report needs action',
-    description: 'We\'ll email you when an activity report that you created or collaborated on needs action.',
+    name: '',
+    description: 'A manager requests changes to an activity report that I created or collaborated on.',
     keyName: 'emailWhenChangeRequested',
   },
   {
-    name: 'Activity report approved',
-    description: 'We\'ll email you when an activity report that you created or collaborated on is approved.',
+    name: '',
+    description: 'Managers approve an activity report that I created or collaborated on.',
     keyName: 'emailWhenReportApproval',
   },
   {
-    name: 'Added as collaborator',
-    description: 'We\'ll email you when you are added as a collaborator to an activity report.',
+    name: '',
+    description: 'I\'m added as a collaborator on an activity report.',
     keyName: 'emailWhenAppointedCollaborator',
+  },
+  {
+    name: 'Program Specialists only',
+    description: 'One of my recipients\' activity reports is available.',
+    keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
   },
 ];
 
@@ -71,23 +79,25 @@ function CustomizeEmailPreferencesForm({ disabled }) {
     <div>
       <GridContainer>
         <Grid row className="margin-bottom-3">
-          <Grid tablet={{ col: 12 }} desktop={{ col: 8 }} />
-          <Grid tablet={{ col: 12 }} desktop={{ col: 4 }}>
+          <Grid tablet={{ col: 12 }} desktop={{ col: 7 }} className="desktop:display-block display-none">
+            <div className="text-bold">Event</div>
+          </Grid>
+          <Grid tablet={{ col: 12 }} desktop={{ col: 3 }} className="desktop:display-block display-none">
             <div className="text-bold">Frequency</div>
           </Grid>
         </Grid>
 
         {emailTypesMap.map(({ name, description, keyName }) => (
           <Grid row key={keyName}>
-            <Grid tablet={{ col: 12 }} desktop={{ col: 8 }}>
-              <div className="text-bold">
-                {name}
-              </div>
+            <Grid tablet={{ col: 12 }} desktop={{ col: 7 }}>
               <div>
+                { name && <span className="text-italic">{name}</span> }
+              </div>
+              <div className="margin-right-2">
                 {description}
               </div>
             </Grid>
-            <Grid tablet={{ col: 12 }} desktop={{ col: 4 }}>
+            <Grid tablet={{ col: 12 }} desktop={{ col: 3 }}>
               <Dropdown
                 id={keyName}
                 name={keyName}
@@ -301,7 +311,7 @@ function AccountManagement({ updateUser }) {
 
       {/* Profile box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-1">Profile</h1>
+        <h2 className="margin-bottom-1 font-sans-xl">Profile</h2>
 
         {/* Avatar w/ name */}
         <div className="margin-bottom-3">
@@ -318,9 +328,12 @@ function AccountManagement({ updateUser }) {
         </div>
       </div>
 
+      {/* Profile box */}
+      <Groups />
+
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-3">Email preferences</h1>
+        <h2 className="margin-bottom-3 font-sans-xl">Email preferences</h2>
 
         {showVerifier && (
           <EmailVerifier token={token} updateUser={updateUser} />

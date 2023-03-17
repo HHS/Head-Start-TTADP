@@ -4,17 +4,19 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState, reportIsEditable } from '../../../../utils';
-
 import Section from '../Review/ReviewSection';
+import './RecipientReviewSection.scss';
 
 const RecipientReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    goals,
+    goalsAndObjectives,
     calculatedStatus,
   } = watch();
 
   const canEdit = reportIsEditable(calculatedStatus);
+
+  const goals = goalsAndObjectives || [];
 
   return (
     <Section
@@ -36,7 +38,12 @@ const RecipientReviewSection = () => {
                 {goal.name}
                 {goal.goalNumber && ` (${goal.goalNumber})`}
               </div>
-              <div className="margin-top-2">
+              <div className="margin-top-1">
+                <span className="text-bold">Goal type:</span>
+                {' '}
+                {goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
+              </div>
+              <div className="margin-top-1">
                 <>
                   {objectives.map((objective) => (
                     <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">

@@ -11,7 +11,7 @@ import { currentUserId } from '../../services/currentUser';
 const namespace = 'SERVICE:USER_SETTINGS';
 
 const getUserSettings = async (req, res) => {
-  const userId = currentUserId(req, res);
+  const userId = await currentUserId(req, res);
   try {
     const settings = await userSettingsById(userId);
     res.json(settings);
@@ -21,7 +21,7 @@ const getUserSettings = async (req, res) => {
 };
 
 const getUserEmailSettings = async (req, res) => {
-  const userId = currentUserId(req, res);
+  const userId = await currentUserId(req, res);
   try {
     const settings = await userEmailSettingsById(userId);
     res.json(settings);
@@ -40,7 +40,7 @@ const getUserEmailSettings = async (req, res) => {
  * @param {express.Response} res
  */
 const updateSettings = async (req, res) => {
-  const userId = currentUserId(req, res);
+  const userId = await currentUserId(req, res);
   let pairs = req.body;
 
   if (!pairs || !Array.isArray(pairs)) {
@@ -70,7 +70,7 @@ const updateSettings = async (req, res) => {
  * @param {express.Response} res
  */
 const unsubscribe = async (req, res) => {
-  const userId = currentUserId(req, res);
+  const userId = await currentUserId(req, res);
 
   try {
     await unsubscribeAll(userId);
@@ -86,7 +86,7 @@ const unsubscribe = async (req, res) => {
  * @param {express.Response} res
  */
 const subscribe = async (req, res) => {
-  const userId = currentUserId(req, res);
+  const userId = await currentUserId(req, res);
 
   try {
     await subscribeAll(userId);

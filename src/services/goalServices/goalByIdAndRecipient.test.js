@@ -16,9 +16,10 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   File,
+  Resource,
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
-
+import { processObjectiveForResourcesById } from '../resource';
 import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
 import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
 
@@ -82,15 +83,7 @@ describe('goalById', () => {
       objectiveId: objective.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google.com',
-    });
-
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google1.com',
-    });
+    await processObjectiveForResourcesById(objective.id, ['http://www.google.com', 'http://www.google1.com']);
 
     file = await File.create({
       originalFileName: 'gibbery-pibbery.txt',
@@ -139,60 +132,78 @@ describe('goalById', () => {
       where: {
         activityReportObjectiveId: aroIds,
       },
+      hookMetadata: { objectiveId: objective.id },
+      individualHooks: true,
     });
 
     await ActivityReportObjectiveResource.destroy({
       where: {
         activityReportObjectiveId: aroIds,
       },
+      hookMetadata: { objectiveId: objective.id },
+      individualHooks: true,
     });
 
     await ActivityReportObjectiveFile.destroy({
       where: {
         activityReportObjectiveId: aroIds,
       },
+      hookMetadata: { objectiveId: objective.id },
+      individualHooks: true,
     });
 
     await ActivityReportObjective.destroy({
       where: {
         id: aroIds,
       },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await ObjectiveFile.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await File.destroy({
       where: {
         id: [file.id, file2.id],
       },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: ['http://www.google.com', 'http://www.google1.com'] },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goalOnActivityReport.id,
       },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
       where: {
         activityReportId: report.id,
       },
+      individualHooks: true,
     });
 
     await destroyReport(report);
@@ -201,18 +212,21 @@ describe('goalById', () => {
       where: {
         id: goalOnActivityReport.id,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grantForReport.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: grantRecipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
@@ -230,16 +244,16 @@ describe('goalById', () => {
     expect(obj.activityReports.length).toBe(0);
 
     expect(obj.topics.length).toBe(2);
-    expect(obj.topics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.topics.map((t) => `${t.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.topics.map((t) => `${t.onAnyReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.topics.map((t) => `${t.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.resources.length).toBe(2);
-    expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.resources.map((r) => `${r.onAnyReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.resources.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.files.length).toBe(2);
-    expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.files.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
   });
 
   it('lets us know when the associated data is on an activity report', async () => {
@@ -287,16 +301,16 @@ describe('goalById', () => {
     expect(obj.activityReports[0].id).toBe(report.id);
 
     expect(obj.topics.length).toBe(2);
-    expect(obj.topics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.topics.map((t) => `${t.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.topics.map((t) => `${t.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.topics.map((t) => `${t.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.resources.length).toBe(2);
-    expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.resources.map((r) => `${r.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.resources.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.files.length).toBe(2);
-    expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.files.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
   });
 
   it('lets us know when the associated data is on an approved activity report', async () => {
@@ -307,6 +321,7 @@ describe('goalById', () => {
       where: {
         id: report.id,
       },
+      individualHooks: true,
     });
     const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
     expect(goal.dataValues.name).toBe('Goal on activity report');
@@ -319,15 +334,15 @@ describe('goalById', () => {
     expect(obj.activityReports[0].id).toBe(report.id);
 
     expect(obj.topics.length).toBe(2);
-    expect(obj.topics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.topics.map((t) => `${t.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.topics.map((t) => `${t.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.topics.map((t) => `${t.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
 
     expect(obj.resources.length).toBe(2);
-    expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.resources.map((r) => `${r.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.resources.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
 
     expect(obj.files.length).toBe(2);
-    expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.files.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
   });
 });

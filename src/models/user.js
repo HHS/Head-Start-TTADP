@@ -2,11 +2,9 @@ const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
 
-const featureFlags = [
-  'recipient_goals_objectives',
-];
+const featureFlags = ['resources_dashboard', 'rttapa_form', 'anv_statistics', 'regional_goal_dashboard'];
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
@@ -23,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
       User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
+      User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
     }
   }
   User.init({
@@ -81,4 +80,6 @@ module.exports = (sequelize, DataTypes) => {
   return User;
 };
 
-module.exports.featureFlags = featureFlags;
+export {
+  featureFlags,
+};

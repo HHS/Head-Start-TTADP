@@ -8,7 +8,7 @@ const {
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class UserRole extends Model {
     static associate(models) {
       UserRole.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'cascade', as: 'user' });

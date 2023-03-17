@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/quotes */
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
@@ -24,8 +25,8 @@ import {
   Program,
   ActivityReportGoal,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
-  ObjectiveResource,
+  Resource,
+  ActivityReportObjectiveTopic,
   Topic,
   CollaboratorRole,
   Role,
@@ -216,7 +217,10 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     },
   };
   // Remove any notes that are no longer relevant
-  await NextStep.destroy({ where });
+  await NextStep.destroy({
+    where,
+    individualHooks: true,
+  });
 
   if (notes.length > 0) {
     // If a note has an id, and its content has changed, update to the newer content
@@ -454,10 +458,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
             ],
           },
           {
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
           },
@@ -511,11 +515,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
@@ -523,11 +522,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
@@ -583,7 +577,7 @@ export async function activityReports(
   excludeLegacy = false,
   userId = 0,
 ) {
-  const { activityReport: scopes } = filtersToScopes(filters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
   const where = {
     calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -710,29 +704,28 @@ export async function activityReports(
     ],
   });
 
-  const topics = await Topic.findAll({
-    attributes: ['name', 'id'],
+  const arots = await ActivityReportObjectiveTopic.findAll({
     include: [
       {
-        model: Objective,
-        attributes: ['id'],
-        as: 'objectives',
-        required: true,
-        include: {
-          attributes: ['activityReportId', 'objectiveId'],
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          required: true,
-          where: {
-            activityReportId: reportIds,
-          },
+        model: ActivityReportObjective,
+        as: 'activityReportObjective',
+        where: {
+          activityReportId: reportIds,
         },
+        required: true,
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true,
       },
     ],
-    order: [
-      [sequelize.col('name'), sortDir],
-    ],
   });
+
+  const topics = arots.map((arot) => ({
+    activityReportId: arot.activityReportObjective.activityReportId,
+    name: arot.topic.name,
+  }));
 
   // Get all grant programs at once to reduce DB calls.
   const grantIds = recipients.map((a) => a.grantId);
@@ -745,7 +738,9 @@ export async function activityReports(
   // Populate Activity Recipient info.
   await populateRecipientInfo(recipients, grantPrograms);
 
-  return { ...reports, recipients, topics };
+  return {
+    ...reports, recipients, topics,
+  };
 }
 
 export async function activityReportsForCleanup(userId) {
@@ -840,7 +835,7 @@ export async function activityReportAlerts(userId, {
   ...filters
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
-  const { activityReport: scopes } = filtersToScopes(updatedFilters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(updatedFilters, { userId });
   const reports = await ActivityReport.findAndCountAll(
     {
       where: {
@@ -1073,7 +1068,10 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
-  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+  if (
+    recipientsWhoHaveGoalsThatShouldBeRemoved
+    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+  ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
@@ -1085,7 +1083,7 @@ export async function createOrUpdate(newActivityReport, report) {
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
   } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
+    await saveGoalsForReport(goals, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
@@ -1151,7 +1149,7 @@ async function getDownloadableActivityReports(where, separate = true) {
   const query = {
     where,
     attributes: {
-      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'creatorName'],
+      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'creatorName', 'submittedDate'],
       exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
     },
     include: [
@@ -1172,8 +1170,9 @@ async function getDownloadableActivityReports(where, separate = true) {
           attributes: ['id', 'title', 'status'],
         },
         {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
+          model: Resource,
+          as: 'resources',
+          attributes: ['id', 'url'],
         },
         {
           model: Topic,
@@ -1252,11 +1251,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'specialistNextSteps',
         separate,
@@ -1264,11 +1258,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'recipientNextSteps',
         separate,
@@ -1317,7 +1306,7 @@ export async function getAllDownloadableActivityReports(
 ) {
   const regions = readRegions || [];
 
-  const { activityReport: scopes } = filtersToScopes(filters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
   const where = {
     regionId: {
@@ -1331,7 +1320,7 @@ export async function getAllDownloadableActivityReports(
 }
 
 export async function getAllDownloadableActivityReportAlerts(userId, filters) {
-  const { activityReport: scopes } = filtersToScopes(filters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
   const where = {
     [Op.and]: scopes,
     [Op.or]: [
@@ -1399,7 +1388,7 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
       id: {
         [Op.in]: sequelize.literal(
           `(SELECT (new_row_data->'activityReportId')::NUMERIC
-        FROM "ZALActivityReportCollaborators" 
+        FROM "ZALActivityReportCollaborators"
         where dml_timestamp > ${date} AND
         (new_row_data->'userId')::NUMERIC = ${userId})`,
         ),
@@ -1441,7 +1430,7 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports" 
+          FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
             ),
@@ -1479,7 +1468,7 @@ export async function activityReportsSubmittedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports" 
+          FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
             ),
@@ -1513,20 +1502,20 @@ export async function activityReportsApprovedByDate(userId, date) {
         {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
-        {
+        userId && {
           [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
         },
         {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports" 
+          FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
             ),
           },
         },
-      ],
+      ].filter(Boolean),
     },
     include: [
       {

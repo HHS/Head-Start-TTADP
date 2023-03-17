@@ -9,7 +9,7 @@ import App from '../../App';
 import { SCOPE_IDS } from '../../Constants';
 
 describe('HeaderUserMenu', () => {
-  const user = { name: 'harry potter' };
+  const user = { name: 'harry potter', permissions: [] };
   const adminUser = {
     name: 'harry potter',
     permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
@@ -52,6 +52,18 @@ describe('HeaderUserMenu', () => {
       it('displays the admin button', async () => {
         const adminLink = screen.getByRole('link', { name: 'Admin' });
         expect(adminLink).toBeVisible();
+      });
+    });
+
+    describe('when navigating', () => {
+      beforeEach(async () => before(true));
+      afterEach(() => fetchMock.restore());
+
+      it('closes', async () => {
+        const adminLink = screen.getByRole('link', { name: 'Admin' });
+        expect(adminLink).toBeVisible();
+        fireEvent.click(adminLink);
+        expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
       });
     });
 

@@ -4,6 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
 import filtersToScopes from '../../scopes';
+import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:WIDGETS';
 
@@ -22,7 +23,8 @@ export async function getWidget(req, res) {
     }
 
     // This returns the query object with "region" property filtered by user permissions
-    const query = await setReadRegions(req.query, req.session.userId);
+    const userId = await currentUserId(req, res);
+    const query = await setReadRegions(req.query, userId);
 
     // Determine what scopes we need.
     /**
@@ -38,11 +40,11 @@ export async function getWidget(req, res) {
      * The idea is twofold, firstly, that we can expand the options passed to filtersToScopes and
      * also that we can as needed modify the request to add certain objects
      */
-    const scopes = filtersToScopes(
+    const scopes = await filtersToScopes(
       query,
       {
         grant: { subset: true },
-        userId: req.session.userId,
+        userId,
       },
     );
     // filter out any disallowed keys

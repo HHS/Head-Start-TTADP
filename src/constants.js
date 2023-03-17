@@ -18,6 +18,24 @@ export const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
+// note that if this list is changed,
+// it also needs to be changed in frontend/src/Constants.js
+export const ALERT_STATUSES = {
+  UNPUBLISHED: 'Unpublished',
+  PUBLISHED: 'Published',
+};
+
+export const ALERT_VARIANTS = {
+  INFO: 'info',
+  EMERGENCY: 'emergency',
+};
+
+export const ALERT_SIZES = {
+  STANDARD: 'standard',
+  SLIM: 'slim',
+  LARGE: 'large',
+};
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const DECIMAL_BASE = 10;
@@ -52,6 +70,7 @@ export const TOPICS = [
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -59,7 +78,7 @@ export const TOPICS = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
-  'Ongoing Monitoring Management System',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -165,6 +184,11 @@ export const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
+export const NEXTSTEP_NOTETYPE = {
+  SPECIALIST: 'SPECIALIST',
+  RECIPIENT: 'RECIPIENT',
+};
+
 /*
   Please keep in sync with:
   frontend > src > constants.js
@@ -219,6 +243,8 @@ export const USER_SETTINGS = {
       APPROVAL: 'emailWhenReportApproval',
       // Email you when you are added as a collaborator to an activity report.
       COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+      // As a Program Specialist, email you when an AR for one of your grants is approved.
+      RECIPIENT_APPROVAL: 'emailWhenRecipientReportApprovedProgramSpecialist',
     },
     VALUES: {
       NEVER: 'never',
@@ -239,6 +265,14 @@ export const EMAIL_ACTIONS = {
   NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
   SUBMITTED_DIGEST: 'approverAssignedDigest',
   APPROVED_DIGEST: 'reportApprovedDigest',
+  RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
+  RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
+};
+
+export const AWS_ELASTICSEARCH_ACTIONS = {
+  ADD_INDEX_DOCUMENT: 'addIndexDocument',
+  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
+  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
 };
 
 export const EMAIL_DIGEST_FREQ = {
@@ -251,4 +285,53 @@ export const DIGEST_SUBJECT_FREQ = {
   DAILY: 'daily',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
+};
+
+export const SOURCE_FIELD = {
+  REPORT: {
+    NONECLKC: 'nonECLKCResourcesUsed',
+    ECLKC: 'ECLKCResourcesUsed',
+    CONTEXT: 'context',
+    NOTES: 'additionalNotes',
+    RESOURCE: 'resource',
+  },
+  NEXTSTEPS: {
+    NOTE: 'note',
+    RESOURCE: 'resource',
+  },
+  GOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  GOALTEMPLATE: {
+    NAME: 'name',
+    RESOURCE: 'resource',
+  },
+  REPORTGOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVETEMPLATE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  REPORTOBJECTIVE: {
+    TITLE: 'title',
+    TTAPROVIDED: 'ttaProvided',
+    RESOURCE: 'resource',
+  },
+};
+
+export const RESOURCE_DOMAIN = {
+  ECLKC: 'eclkc.ohs.acf.hhs.gov',
+};
+
+export const AWS_ELASTIC_SEARCH_INDEXES = {
+  ACTIVITY_REPORTS: 'activityreports',
 };

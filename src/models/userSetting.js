@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class UserSettings extends Model {
     static associate(models) {
       UserSettings.hasMany(models.UserSettingOverrides, { foreignKey: 'userSettingId', as: 'userSettingOverrides' });

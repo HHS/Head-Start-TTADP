@@ -127,7 +127,7 @@ function ObjectiveCard({
         </ul>
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Grant number </span>
+        <span className="margin-right-3 minw-15">Grant numbers </span>
         {grantNumbers.join(', ')}
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">

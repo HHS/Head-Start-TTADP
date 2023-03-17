@@ -48,6 +48,10 @@ function mockProperty(obj, property, value) {
   });
 }
 
+export function mockDocumentProperty(property, value) {
+  mockProperty(document, property, value);
+}
+
 export function mockNavigatorProperty(property, value) {
   mockProperty(navigator, property, value);
 }

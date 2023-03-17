@@ -2,7 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
-  render, screen, act,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -67,7 +67,7 @@ const RenderGoalsObjectives = ({
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
       <Router history={history}>
         <FormProvider {...hookForm}>
-          {goalsObjectives.render()}
+          {goalsObjectives.render(null, null, 1, null, null)}
         </FormProvider>
       </Router>
     </NetworkContext.Provider>
@@ -101,7 +101,7 @@ const renderGoals = (
 const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWithoutGoals = [] }) => {
   const history = createMemoryHistory();
   const hookForm = useForm({
-    defaultValues: { goals, activityRecipientType, objectivesWithoutGoals },
+    defaultValues: { goalsAndObjectives: goals, activityRecipientType, objectivesWithoutGoals },
   });
   return (
     <Router history={history}>
@@ -133,6 +133,7 @@ describe('goals objectives', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
       expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
+      expect(screen.queryByText(/indicates required field/i)).toBeTruthy();
     });
 
     it('the display goals shows a warning if no grants are selected', async () => {
@@ -168,12 +169,17 @@ describe('goals objectives', () => {
       const isGoalFormClosed = true;
       const throwFetchError = false;
       const toggleGoalForm = jest.fn();
+      fetchMock.restore();
+      // this API call sets the goal as being edited
+      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
 
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
+      expect(screen.queryByText(/indicates required field/i)).toBeNull();
       const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
-      userEvent.click(actions);
+      act(() => userEvent.click(actions));
       const [button] = await screen.findAllByRole('button', { name: 'Edit' });
       act(() => userEvent.click(button));
+      await waitFor(() => expect(fetchMock.called()).toBe(true));
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
@@ -202,6 +208,22 @@ describe('goals objectives', () => {
         expect(spy).toHaveBeenCalledWith(key, '');
       });
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
+    });
+
+    it('does not fetch if there are no grants', async () => {
+      const goals = [{
+        name: 'This is a test goal',
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }];
+
+      expect(fetchMock.called()).toBe(false);
+      renderGoals([], 'recipient', goals);
+      expect(fetchMock.called()).toBe(false);
     });
   });
 
@@ -300,22 +322,57 @@ describe('goals objectives', () => {
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
+
+      it('is false if goalForEditing is true', () => {
+        const goals = [{
+          name: 'Is goal',
+          endDate: '2021-01-01',
+          isRttapa: 'No',
+          objectives: [{
+            id: 1,
+            title: 'title',
+            ttaProvided: 'tta',
+            status: 'In Progress',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
+          }],
+        }];
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals, goalForEditing: { name: 'is goal 2' } });
+        expect(complete).toBeFalsy();
+      });
     });
 
-    it('does not fetch if there are no grants', async () => {
-      const goals = [{
-        name: 'This is a test goal',
-        objectives: [{
+    it('isPageComplete is true', async () => {
+      const objectives = [
+        {
           id: 1,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
-        }],
-      }];
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
+        },
+        {
+          id: 2,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
+        },
+      ];
+      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).toBeTruthy();
+    });
 
-      expect(fetchMock.called()).toBe(false);
-      renderGoals([], 'recipient', goals);
-      expect(fetchMock.called()).toBe(false);
+    it('isPageComplete is false', async () => {
+      const formData = { activityRecipientType: 'recipient', goals: [] };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).not.toBeTruthy();
     });
   });
 
@@ -336,7 +393,7 @@ describe('goals objectives', () => {
             ttaProvided: 'ttaProvided one',
             status: 'Not Started',
             topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
-            resources: [{ userProvidedUrl: 'http://test1.gov' }, { userProvidedUrl: 'http://test2.gov' }, { userProvidedUrl: 'http://test3.gov' }],
+            resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
           },
@@ -384,38 +441,6 @@ describe('goals objectives', () => {
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
-    });
-
-    it('isPageComplete is true', async () => {
-      const objectives = [
-        {
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          topics: ['Hello'],
-          resources: [],
-          roles: ['Chief Inspector'],
-        },
-        {
-          id: 2,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          topics: ['Hello'],
-          resources: [],
-          roles: ['Chief Inspector'],
-        },
-      ];
-      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
-      const isComplete = goalsObjectives.isPageComplete(formData);
-      expect(isComplete).toBeTruthy();
-    });
-
-    it('isPageComplete is false', async () => {
-      const formData = { activityRecipientType: 'recipient', goals: [] };
-      const isComplete = goalsObjectives.isPageComplete(formData);
-      expect(isComplete).not.toBeTruthy();
     });
   });
 });

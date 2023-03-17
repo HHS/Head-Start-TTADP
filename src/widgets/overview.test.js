@@ -163,7 +163,7 @@ describe('Dashboard overview widget', () => {
 
   it('retrieves data', async () => {
     const query = { 'region.in': [REGION_ONE_ID], 'startDate.win': '2021/01/01-2021/01/01' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('4');
@@ -178,7 +178,7 @@ describe('Dashboard overview widget', () => {
 
   it('accounts for different date ranges', async () => {
     const query = { 'region.in': [REGION_ONE_ID], 'startDate.win': '2021/06/01-2021/06/02' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('1');
@@ -193,7 +193,7 @@ describe('Dashboard overview widget', () => {
 
   it('accounts for different regions', async () => {
     const query = { 'region.in': [REGION_TWO_ID] };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('1');

@@ -9,7 +9,9 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
+  Resource,
 } from '../models';
+import { processObjectiveForResourcesById } from './resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
@@ -61,10 +63,7 @@ describe('createOrUpdateGoals', () => {
       status: 'Not Started',
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'https://www.test.gov',
-    });
+    await processObjectiveForResourcesById(objective.id, ['https://www.test.gov']);
   });
 
   afterAll(async () => {
@@ -72,12 +71,19 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: 'https://www.test.gov' },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     const goals = await Goal.findAll({
@@ -92,24 +98,28 @@ describe('createOrUpdateGoals', () => {
       where: {
         goalId: goalIds,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
         id: goalIds,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
@@ -186,7 +196,7 @@ describe('createOrUpdateGoals', () => {
     expect(createdVias).toContain('activityReport');
     expect(createdVias).toContain('rtr');
 
-    const [, updatedGoal] = newGoals;
+    const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
 
@@ -201,16 +211,7 @@ describe('createOrUpdateGoals', () => {
     expect(grantRegions).toContain(1);
     expect(grantRecipients).toContain(recipient.id);
 
-    const objectivesOnUpdatedGoal = await Objective.findAll({
-      where: {
-        goalId: ids,
-      },
-      raw: true,
-    });
-
-    objectivesOnUpdatedGoal.forEach((o, i) => {
-      expect(o.rtrOrder).toBe(i + 1);
-    });
+    const objectivesOnUpdatedGoal = updatedGoal.objectives;
 
     expect(objectivesOnUpdatedGoal.length).toBe(2);
     const titles = objectivesOnUpdatedGoal.map((obj) => obj.title);
@@ -221,6 +222,16 @@ describe('createOrUpdateGoals', () => {
     // should always be in the same order, by rtr order
     const order = objectivesOnUpdatedGoal.map((obj) => obj.rtrOrder);
     expect(order).toStrictEqual([1, 2]);
+
+    const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
+      attributes: ['id', 'createdVia'],
+      where: {
+        id: objectivesOnUpdatedGoal.map((obj) => obj.id),
+      },
+      order: [['id', 'ASC']],
+    });
+    const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
+    expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
@@ -241,11 +252,15 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
-      raw: true,
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+      }],
     });
 
     expect(resource.length).toBe(1);
-    expect(resource[0].userProvidedUrl).toBe('https://www.test.gov');
+    expect(resource[0].resource.dataValues.url).toBe('https://www.test.gov');
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
