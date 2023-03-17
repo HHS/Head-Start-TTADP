@@ -487,6 +487,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
       {
         required: false,
         model: ActivityReportCollaborator,
+        separate: true,
         as: 'activityReportCollaborators',
         include: [
           {
