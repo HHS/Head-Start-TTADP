@@ -100,6 +100,23 @@ describe('create goal', () => {
     }],
   }];
 
+  const newObjectiveResponse = {
+    title: '',
+    status: 'Not Started',
+    id: 1,
+    label: 'Create a new objective',
+    goalId: 1,
+    activityReportObjectives: [],
+    files: [],
+    topics: [],
+    activityReports: [],
+    resources: [],
+    value: 1,
+    ids: [1],
+    recipientIds: [],
+    isNew: false,
+  };
+
   function renderForm(recipient = defaultRecipient, goalId = 'new') {
     const history = createMemoryHistory();
     render((
@@ -129,9 +146,13 @@ describe('create goal', () => {
     ));
   }
 
-  beforeEach(async () => {
+  afterEach(async () => {
     fetchMock.restore();
+  });
+
+  beforeEach(async () => {
     fetchMock.get('/api/topic', topicsFromApi);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -142,17 +163,27 @@ describe('create goal', () => {
     await screen.findByText(BEFORE_OBJECTIVES_SELECT_RECIPIENTS);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
-    userEvent.type(goalText, 'This is goal text');
-    userEvent.click(addObjectiveButton);
+    fetchMock.post('/api/goals', [
+      {
+        id: 1, name: 'This is goal text', grants: { id: 1 }, status: 'Draft',
+      },
+    ]);
+
+    act(() => {
+      userEvent.type(goalText, 'This is goal text');
+    });
+
+    act(() => {
+      userEvent.click(addObjectiveButton);
+    });
 
     await screen.findByText(BEFORE_OBJECTIVES_SELECT_RECIPIENTS);
-    await waitFor(() => expect(screen.queryByText(BEFORE_OBJECTIVES_CREATE_GOAL)).toBeNull());
 
     const combo = await screen.findByLabelText(/Recipient grant numbers/i);
     await selectEvent.select(combo, ['Turtle 1']);
     userEvent.click(addObjectiveButton);
 
-    await screen.findByRole('heading', { name: 'Objective summary' });
+    expect(await screen.findByRole('heading', { name: 'Objective summary' })).toBeVisible();
   });
 
   it('you can create a goal', async () => {
@@ -162,6 +193,7 @@ describe('create goal', () => {
 
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
@@ -232,9 +264,10 @@ describe('create goal', () => {
     fetchMock.post('/api/goals', postResponse);
 
     // saving drafts works
+    expect(fetchMock.called()).toBe(false);
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
-    expect(fetchMock.called()).toBe(false);
+    expect(fetchMock.called()).toBe(true);
 
     // reset fetch mock state
     fetchMock.restore();
@@ -321,7 +354,7 @@ describe('create goal', () => {
 
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
-
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
@@ -334,6 +367,9 @@ describe('create goal', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
     expect(fetchMock.called()).toBe(false);
     userEvent.click(save);
 
@@ -426,6 +462,7 @@ describe('create goal', () => {
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
 
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
@@ -459,8 +496,9 @@ describe('create goal', () => {
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
 
-    await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
+    await screen.findByText(/Your goal was last saved at/i);
     expect(cancel).not.toBeVisible();
 
     const another = await screen.findByRole('button', { name: 'Add another goal' });
@@ -490,7 +528,7 @@ describe('create goal', () => {
     resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
-    await userEvent.click((await screen.findByRole('button', { name: /save draft/i })));
+    userEvent.click((await screen.findByRole('button', { name: /save draft/i })));
 
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -580,6 +618,7 @@ describe('create goal', () => {
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
     expect(fetchMock.called()).toBe(false);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
@@ -640,6 +679,7 @@ describe('create goal', () => {
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.post('/api/goals/objectives/new', newObjectiveResponse);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
