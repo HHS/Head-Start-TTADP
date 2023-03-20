@@ -375,7 +375,7 @@ test.describe('Activity Report', () => {
     // extract text used to locate the topics
     const g2GoalsText = g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : '';
     const rightDivLocator = page.locator(`div:right-of(h3:text("${g2GoalsText}"))`);
-    const firstParagraphLocator = rightDivLocator.first().locator('p').nth(2);
+    const firstParagraphLocator = rightDivLocator.first().locator('p').nth(0);
     const expectedText = 'Behavioral / Mental Health / Trauma, CLASS: Classroom Organization';
     firstParagraphLocator.getByText(expectedText);
 
