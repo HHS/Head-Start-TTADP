@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from 'react';
+import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -17,13 +18,19 @@ import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
-import { expandFilters, filtersToQueryString } from '../../utils';
+import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
 import { fetchResourceData } from '../../fetchers/Resources';
 
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+
+const defaultDate = formatDateRange({
+  forDateTime: true,
+  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  withSpaces: false,
+});
 
 const FILTER_KEY = 'regional-resources-dashboard-filters';
 export default function ResourcesDashboard() {
@@ -48,7 +55,13 @@ export default function ResourcesDashboard() {
 
   const defaultFilters = useMemo(() => {
     if (hasCentralOffice) {
-      return centralOfficeWithAllRegionFilters;
+      return [...centralOfficeWithAllRegionFilters,
+        {
+          id: uuidv4(),
+          topic: 'startDate',
+          condition: 'is within',
+          query: defaultDate,
+        }];
     }
 
     return [
@@ -57,6 +70,12 @@ export default function ResourcesDashboard() {
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
+      },
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
       },
     ];
   }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
@@ -114,6 +133,7 @@ export default function ResourcesDashboard() {
         const data = await fetchResourceData(
           filterQuery,
         );
+        console.log('Data: ', data);
         setResourcesData(data);
         updateError('');
       } catch (e) {
@@ -150,7 +170,7 @@ export default function ResourcesDashboard() {
             </Alert>
           )}
         </Grid>
-        <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+        <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
           <FilterPanel
             applyButtonAria="apply filters for resources dashboard"
             filters={filters}

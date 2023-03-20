@@ -1822,6 +1822,7 @@ export async function getGoalsForReport(reportId) {
         include: [
           {
             required: true,
+            separate: true,
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             where: {

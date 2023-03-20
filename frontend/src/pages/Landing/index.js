@@ -281,7 +281,7 @@ function Landing() {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
+            <h1 className="landing margin-top-0 margin-bottom-3">{`Activity reports - ${regionLabel()}`}</h1>
           </Grid>
           <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
@@ -290,7 +290,7 @@ function Landing() {
               && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
-          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
             <FilterPanel
               applyButtonAria="apply filters for activity reports"
               filters={filters}

@@ -173,8 +173,8 @@ export default function RTTAPA({
           {recipientNameWithRegion}
         </title>
       </Helmet>
-      <h1 className="page-heading margin-left-2 margin-top-3">{recipientNameWithRegion}</h1>
-      <Container className="margin-y-3 margin-left-2" paddingY={4} paddingX={4}>
+      <h1 className="page-heading padding-top-5 margin-top-0 margin-bottom-3">{recipientNameWithRegion}</h1>
+      <Container className="margin-y-3" paddingY={4} paddingX={4}>
         <h2 className="smart-hub-title-big-serif margin-top-0 margin-bottom-4">
           Regional TTA plan agreement (RTTAPA)
         </h2>
