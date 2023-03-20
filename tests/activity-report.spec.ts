@@ -179,10 +179,11 @@ test.describe('Activity Report', () => {
     await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.type('Create a new objective');
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').nth(1).click();
     await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
@@ -230,7 +231,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').nth(1).click();
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -372,9 +373,14 @@ test.describe('Activity Report', () => {
     // e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
     const g2GoalsForObjectives = getGoals(g2GoalsTxt || '');
     // extract text used to locate the topics
-    const g2Topics = page.locator(`div:right-of(h3:text("${g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : ''}"))`).first().locator('p').getByText('Behavioral / Mental Health / Trauma, CLASS: Classroom Organization');
+    const g2GoalsText = g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : '';
+    const rightDivLocator = page.locator(`div:right-of(h3:text("${g2GoalsText}"))`);
+    const firstParagraphLocator = rightDivLocator.first().locator('p').nth(2);
+    const expectedText = 'Behavioral / Mental Health / Trauma, CLASS: Classroom Organization';
+    firstParagraphLocator.getByText(expectedText);
+
     // verify the topics for the previously created goal
-    expect(g2Topics).toBeVisible();
+    expect(firstParagraphLocator).toBeVisible();
 
     // expand objectives for g1
     await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
