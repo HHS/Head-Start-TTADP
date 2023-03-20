@@ -664,6 +664,7 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+      console.log(error);
     } finally {
       setIsAppLoading(false);
     }
