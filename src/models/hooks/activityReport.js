@@ -97,11 +97,9 @@ const createApproval = async (
   sequelize,
   instance,
   options,
-) => sequelize.models.Approval.create(
+) => sequelize.models.ActivityReportApproval.create(
   {
-    entityType: ENTITY_TYPES.REPORT,
-    entityId: instance.id,
-    tier: 0,
+    activityReportId: instance.id,
     ratioRequired: APPROVAL_RATIO.ALL,
     submissionStatus: REPORT_STATUSES.DRAFT,
   },
