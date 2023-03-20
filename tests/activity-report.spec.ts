@@ -645,7 +645,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.locator('.css-125guah-control').click();
+    await page.locator('.css-125guah-control').nth(1).click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
