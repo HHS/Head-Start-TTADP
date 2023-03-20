@@ -71,6 +71,8 @@ export default function Llama({ user }) {
     llamaImage.current.classList.add('the-wiggler');
   };
 
+  const bannerMessage = userCanWrite ? 'To celebrate, let\'s look back on all the work you\'ve done:' : 'To celebrate, let\'s look back on all the work we\'ve done:';
+
   return (
     <Container>
       <div className="position-relative bg-white margin-auto" onClick={addWiggler}>
@@ -85,7 +87,7 @@ export default function Llama({ user }) {
 
         <div className="statistics-content position-relative">
           <h2 className="width-tablet-lg margin-x-auto">The TTA hub is two years old!</h2>
-          <p className="usa-prose width-tablet-lg margin-x-auto">To celebrate, let&apos;s look back on all the work you&apos;ve done:</p>
+          <p className="usa-prose width-tablet-lg margin-x-auto">{bannerMessage}</p>
 
           <GridContainer containerSize="tablet-lg" className="desktop:bg-base-lighter padding-2">
             {userCanWrite ? (
