@@ -591,7 +591,7 @@ export default function GoalForm({
     return null;
   };
 
-  const onSaveDraft = async (callbackForIds) => {
+  const onSaveDraft = async (callbackForIds = false) => {
     if (!isValidDraft()) {
       // attempt to focus on the first invalid field
       const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
@@ -656,7 +656,7 @@ export default function GoalForm({
       const newIds = updatedGoals.flatMap((g) => g.goalIds);
       setIds(newIds);
 
-      if (callbackForIds) {
+      if (callbackForIds && typeof callbackForIds === 'function') {
         await callbackForIds(newIds);
       }
     } catch (error) {
