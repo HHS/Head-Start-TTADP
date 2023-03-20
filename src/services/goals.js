@@ -2037,7 +2037,7 @@ export async function createNewObjectivesForGoals(
     topics: [],
     activityReports: [],
     resources: [],
-    value: 89174,
+    value: objectives[0].id,
     ids: objectives.map((o) => o.id),
     recipientIds: [],
     isNew: false,
