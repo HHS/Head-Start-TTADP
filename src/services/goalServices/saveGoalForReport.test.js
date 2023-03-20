@@ -17,8 +17,8 @@ import db, {
   Resource,
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
-import { saveGoalsForReport } from '../goals';
-import { activityReportAndRecipientsById } from '../activityReports';
+import { saveGoalsForReport, createNewObjectivesForGoals } from '../goals';
+import { activityReportAndRecipientsById, newGoalsForReport } from '../activityReports';
 import { processObjectiveForResourcesById } from '../resource';
 
 const mockUser = {
@@ -425,28 +425,31 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
 
+    // new goal will already exist in the report
+    const newGoal = await newGoalsForReport([grantOne.id]);
+
+    expect(newGoal.goalIds.length).toBe(1);
+    expect(newGoal.grantIds.length).toBe(1);
+    expect(newGoal.grantIds).toContain(grantOne.id);
+
+    const beforeGoalId = newGoal.id;
     const goalName = 'This is a brand new goal';
-    const beforeGoalId = '8768fdd6-99e1-4d21-adb4-032f3413e60e';
 
-    const newObjective = {
-      title: 'This is a brand new objective',
-      ttaProvided: '<p>Test objective TTA</p>\n',
-      status: 'Not Started',
-      id: '02f1ec1d-4163-4a9a-9b32-adddf336f990',
-      isNew: true,
-      topics: [],
-      resources: [],
-      files: [],
-    };
+    // as will a new objective
+    const newObjective = await createNewObjectivesForGoals(beforeGoalId);
 
+    const newObjectiveTTAprovided = '<p>Test objective TTA</p>\n';
+    const newObjectiveTitle = 'This is a brand new objective';
     const newGoals = [
       {
-        id: beforeGoalId,
-        isNew: true,
+        ...newGoal,
         name: goalName,
-        objectives: [newObjective],
+        objectives: [{
+          ...newObjective,
+          title: newObjectiveTitle,
+          ttaProvided: newObjectiveTTAprovided,
+        }],
         grantIds: [grantOne.id],
-        status: 'Not Started',
       }];
 
     await saveGoalsForReport(newGoals, savedReport);
@@ -461,7 +464,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [goalId] = afterGoals.map((ag) => ag.goalId);
 
-    expect(goalId).not.toBe(beforeGoalId);
+    expect(goalId).toBe(beforeGoalId);
 
     const savedGoal = await Goal.findByPk(goalId);
 
@@ -477,11 +480,9 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(afterObjectives.length).toBe(1);
 
     const [afterObjective] = afterObjectives;
-
-    expect(afterObjective.ttaProvided).toBe(newObjective.ttaProvided);
-
+    expect(afterObjective.ttaProvided).toBe(newObjectiveTTAprovided);
     const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
-    expect(savedObjective.title).toBe(newObjective.title);
+    expect(savedObjective.title).toBe(newObjectiveTitle);
     expect(savedObjective.status).toBe(newObjective.status);
   });
 
@@ -591,14 +592,12 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [beforeGoal] = beforeGoals;
     const theGoalThatAlreadyExists = await Goal.findByPk(beforeGoal.goalId);
-
+    const newObjective = await createNewObjectivesForGoals([theGoalThatAlreadyExists.id]);
     const objectiveWithReusedText = {
+      ...newObjective,
       title: objective2.title,
-      isNew: true,
       status: 'In Progress',
-      id: '02f1123ec1d-4163-4a9a-9b32-ad123ddf336f990',
       ttaProvided: '<p>Test objective TTA</p>\n',
-      goalId: theGoalThatAlreadyExists.id,
     };
 
     let newGoals = [
@@ -723,27 +722,22 @@ describe('saveGoalsForReport (more tests)', () => {
     const [savedReport] = await activityReportAndRecipientsById(multiRecipientReport.id);
 
     const goalName = 'This is a brand new goal for a multi recipient report';
-    const beforeGoalId = '8768fdd6-99e1-4d21-adb4-032f3413e60e';
+    const newGoalForMultiRecipientReport = await newGoalsForReport([grantOne.id, grantTwo.id]);
 
-    const newObjective = {
-      title: 'This is a brand new objective for a multi recipient report',
-      ttaProvided: '<p>Test objective TTA</p>\n',
-      status: 'Not Started',
-      id: '02f1ec1d-4163-4a9a-9b32-adddf336f990',
-      isNew: true,
-      topics: [],
-      resources: [],
-      files: [],
-    };
+    const beforeGoalIds = newGoalForMultiRecipientReport.goalIds;
+    expect(beforeGoalIds.length).toBe(2);
+
+    const newObjective = await createNewObjectivesForGoals(beforeGoalIds.ids);
 
     const newGoals = [
       {
-        id: beforeGoalId,
-        isNew: true,
+        ...newGoalForMultiRecipientReport,
         name: goalName,
-        objectives: [newObjective],
-        grantIds: [grantOne.id, grantTwo.id],
-        status: 'Not Started',
+        objectives: [{
+          ...newObjective,
+          title: 'This is a brand new objective for a multi recipient report',
+          ttaProvided: '<p>Test objective TTA</p>\n',
+        }],
       }];
 
     await saveGoalsForReport(newGoals, savedReport);
