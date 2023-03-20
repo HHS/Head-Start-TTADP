@@ -21,7 +21,9 @@ describe('SiteNav', () => {
     const userUrl = join('api', 'user');
 
     beforeEach(() => {
-      const user = { name: 'name' };
+      const user = {
+        name: 'name', id: 1, flags: [], roles: [],
+      };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
 

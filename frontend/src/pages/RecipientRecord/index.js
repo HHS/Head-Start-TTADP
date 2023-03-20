@@ -45,7 +45,7 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-1 margin-left-2`}>
+                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-1`}>
                   {recipientNameWithRegion}
                 </h1>
                 {children}
@@ -68,7 +68,7 @@ PageWithHeading.propTypes = {
 
 PageWithHeading.defaultProps = {
   error: '',
-  backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
+  backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
 };
 
