@@ -1,11 +1,13 @@
 import '@testing-library/jest-dom';
 import {
-  render, screen, waitFor,
+  render, screen, waitFor, act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 import { REPORT_STATUSES } from '../../../../../Constants';
 import Objectives from '../Objectives';
 
@@ -50,21 +52,46 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
-      <Objectives
-        objectiveOptions={objectiveOptions}
-        topicOptions={topicOptions}
-        goalId={goalId}
-        noObjectiveError={<></>}
-        goalStatus="In Progress"
-        reportId={12}
-        onSaveDraft={jest.fn()}
-      />
-      <button type="button">blur me</button>
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <Objectives
+          objectiveOptions={objectiveOptions}
+          topicOptions={topicOptions}
+          goalIds={[goalId]}
+          noObjectiveError={<></>}
+          goalStatus="In Progress"
+          reportId={12}
+          onSaveDraft={jest.fn()}
+          regionId={1}
+        />
+        <button type="button">blur me</button>
+      </AppLoadingContext.Provider>
     </FormProvider>
   );
 };
 
 describe('Objectives', () => {
+  afterEach(async () => {
+    fetchMock.restore();
+  });
+  beforeEach(async () => {
+    fetchMock.post('*', {
+      title: '',
+      status: 'Not Started',
+      id: 1,
+      label: 'Create a new objective',
+      goalId: 2,
+      activityReportObjectives: [],
+      files: [],
+      topics: [],
+      activityReports: [],
+      resources: [],
+      value: 89174,
+      ids: [1],
+      recipientIds: [],
+      isNew: false,
+    });
+  });
+
   it('you can create a new objective', async () => {
     const objectiveOptions = [];
     const collabs = [{ role: 'Snake charmer' }, { role: 'lion tamer' }];
@@ -137,7 +164,8 @@ describe('Objectives', () => {
       topics: [],
       status: 'Not Started',
     }];
-    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+
+    render(<RenderObjectives objectiveOptions={objectiveOptions} goalId={1} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
 
     // Initial objective select.
@@ -146,9 +174,13 @@ describe('Objectives', () => {
 
     // Add second objective.
     const addObjBtn = screen.getByRole('button', { name: /add new objective/i });
-    userEvent.click(addObjBtn);
-    select = screen.queryAllByLabelText(/Select TTA objective/i);
-    await selectEvent.select(select[1], ['Test objective 2']);
+    act(() => {
+      userEvent.click(addObjBtn);
+    });
+
+    select = screen.queryByLabelText(/Select TTA objective/i);
+
+    await selectEvent.select(select, ['Test objective 2']);
 
     // Remove first objective.
     const removeObjBtns = screen.queryAllByRole('button', { name: /remove this objective/i });
