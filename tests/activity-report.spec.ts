@@ -605,7 +605,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
     await expect(page.getByText('A new objective')).toBeVisible();
-    await expect(page.getByText(`Activity reports R01-AR-${arNumber}`)).toBeVisible();
+    await expect(page.getByText(`R01-AR-${arNumber}`)).toBeVisible();
   });
 
 
