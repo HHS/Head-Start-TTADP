@@ -98,7 +98,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const dateJoined = new Date(user.createdAt);
   const todaysDate = new Date();
   const totalHours = Math.abs(todaysDate - dateJoined) / 36e5;
-  const totalDaysSinceJoined = Math.floor(totalHours / 24);
+  const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
 
   // Additional report roles (if not read only).
   let collaboratorReports = [];

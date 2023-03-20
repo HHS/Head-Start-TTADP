@@ -16,6 +16,7 @@ import db, {
   ActivityReportApprover,
 } from '../models';
 import { statisticsByUser } from './users';
+import { formatNumber } from '../widgets/helpers';
 
 jest.mock('bull');
 
@@ -690,7 +691,7 @@ describe('statisticsByUser', () => {
     const todaysDate = new Date();
     const createdDate = new Date(user.createdAt);
     const totalHours = Math.abs(todaysDate - createdDate) / 36e5;
-    const totalDaysSinceJoined = Math.floor(totalHours / 24);
+    const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
@@ -737,7 +738,7 @@ describe('statisticsByUser', () => {
     const todaysDate = new Date();
     const createdDate = new Date(user.createdAt);
     const totalHours = Math.abs(todaysDate - createdDate) / 36e5;
-    const totalDaysSinceJoined = Math.floor(totalHours / 24);
+    const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
