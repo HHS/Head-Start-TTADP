@@ -67,6 +67,8 @@
     padding: 0px;
   }
 
-  .smarthub-horizontal-table-widget .usa-table thead th a {
-    cursor: pointer;
+  .smarthub-horizontal-table-widget .usa-table thead th button {
+    text-decoration: none;
+    font-weight: bold;
+    color: $base-darkest;
   }

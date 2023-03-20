@@ -42,19 +42,19 @@ export default function HorizontalTableWidget(
     }
     return (
       <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left'} scope="col" aria-sort={fullAriaSort}>
-        <a
-          role="button"
+        <button
+          type="button"
           tabIndex={0}
           onClick={() => {
             requestSort(name);
           }}
           onKeyDown={() => requestSort(name)}
-          className={`sortable ${sortClassName}`}
+          className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
           {displayName}
-        </a>
+        </button>
       </th>
     );
   };

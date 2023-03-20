@@ -133,7 +133,6 @@ export default function ResourcesDashboard() {
         const data = await fetchResourceData(
           filterQuery,
         );
-        console.log('Data: ', data);
         setResourcesData(data);
         updateError('');
       } catch (e) {
