@@ -592,6 +592,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [beforeGoal] = beforeGoals;
     const theGoalThatAlreadyExists = await Goal.findByPk(beforeGoal.goalId);
+    expect(objective2.goalId).toBe(theGoalThatAlreadyExists.id);
     const newObjective = await createNewObjectivesForGoals([theGoalThatAlreadyExists.id]);
     const objectiveWithReusedText = {
       ...newObjective,

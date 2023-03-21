@@ -1451,6 +1451,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
     return [];
   }
 
+  console.log({ length: objectives.length });
+
   // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
@@ -1467,22 +1469,33 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      ids,
       ...updatedFields
     } = objective;
 
-    // If the goal set on the objective does not match
-    // the goals passed we need to save the objectives.
-    const createNewObjectives = objective.goalId !== goal.id;
-    const updatedObjective = {
-      ...updatedFields, title, goalId: goal.id,
-    };
+    console.log({
+      objectiveIds: ids,
+      title,
+      objectiveGoalId: objective.goalId,
+      goalId: goal.id,
+    });
 
-    // Check if objective exists.
     let savedObjective;
-    if (!isNew && id && !createNewObjectives) {
-      savedObjective = await Objective.findByPk(id);
+
+    // first we check to see if one of the existing objectives matches
+    // our goal
+    if (ids && ids.length) {
+      savedObjective = await Objective.findOne({
+        where: {
+          id: ids,
+          goalId: goal.id,
+        },
+      });
     }
 
+    console.log(savedObjective);
+
+    // if it does, we can simply edit it
     if (savedObjective) {
       // We should only allow the title to change if we are not on a approved AR.
       if (!savedObjective.onApprovedAR) {
@@ -1490,7 +1503,13 @@ async function createObjectivesForGoal(goal, objectives, report) {
           title,
         }, { individualHooks: true });
       }
+    // otherwise we will do some additional querying by title or create a new one
+    // if we need to
     } else {
+      const updatedObjective = {
+        ...updatedFields, title, goalId: goal.id,
+      };
+
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
       // Reuse an existing Objective:
