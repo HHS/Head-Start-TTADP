@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../utils';
 import './ReadOnlyObjective.scss';
@@ -46,7 +47,7 @@ export default function ReadOnlyObjective({ objective }) {
             <h4 className="margin-0">Resource links</h4>
             <ul className="usa-list usa-list--unstyled">
               { objective.resources.map((resource) => (
-                <li key={resource.key}>{resource.value}</li>
+                <li key={uuidv4()}>{resource.value}</li>
               ))}
             </ul>
           </div>
