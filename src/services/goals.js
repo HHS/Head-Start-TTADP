@@ -1451,8 +1451,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
     return [];
   }
 
-  console.log({ length: objectives.length });
-
   // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
@@ -1473,18 +1471,22 @@ async function createObjectivesForGoal(goal, objectives, report) {
       ...updatedFields
     } = objective;
 
-    console.log({
-      objectiveIds: ids,
-      title,
-      objectiveGoalId: objective.goalId,
-      goalId: goal.id,
-    });
-
     let savedObjective;
 
-    // first we check to see if one of the existing objectives matches
-    // our goal
-    if (ids && ids.length) {
+    // first we check to see if the title is already used on an objective for this goal
+    const objectiveTitle = title;
+
+    if (objectiveTitle) {
+      savedObjective = await Objective.findOne({
+        where: {
+          title: objectiveTitle,
+          goalId: goal.id,
+        },
+      });
+    }
+
+    // if not, we can update an objective based on the ids
+    if (!savedObjective && ids && ids.length) {
       savedObjective = await Objective.findOne({
         where: {
           id: ids,
@@ -1493,47 +1495,30 @@ async function createObjectivesForGoal(goal, objectives, report) {
       });
     }
 
-    console.log(savedObjective);
-
-    // if it does, we can simply edit it
-    if (savedObjective) {
+    // if it does, we can simply edit it (if the title has changed)
+    if (savedObjective && objectiveTitle !== savedObjective.title) {
       // We should only allow the title to change if we are not on a approved AR.
       if (!savedObjective.onApprovedAR) {
         await savedObjective.update({
           title,
         }, { individualHooks: true });
       }
-    // otherwise we will do some additional querying by title or create a new one
-    // if we need to
-    } else {
+    }
+
+    // otherwise, the objective doesn't exist either by title or by id
+    // so we'll have to create it
+    if (!savedObjective) {
       const updatedObjective = {
-        ...updatedFields, title, goalId: goal.id,
+        ...updatedFields,
+        title: objectiveTitle,
+        goalId: goal.id,
       };
 
-      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
-
-      // Reuse an existing Objective:
-      // - It is on the same goal.
-      // - Has the same title.
-      // - And status is not completed.
-      // Note: Values like 'Topics' will be pulled in from the existing objective.
-      const existingObjective = await Objective.findOne({
-        where: {
-          goalId: updatedObjective.goalId,
-          title: objectiveTitle,
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-        },
+      savedObjective = await Objective.create({
+        ...updatedObjective,
+        status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
+        createdVia: 'activityReport',
       });
-      if (!existingObjective) {
-        savedObjective = await Objective.create({
-          ...updatedObjective,
-          title: objectiveTitle,
-          status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
-          createdVia: 'activityReport',
-        });
-      } else {
-        savedObjective = existingObjective;
-      }
     }
 
     // this will save all our objective join table data

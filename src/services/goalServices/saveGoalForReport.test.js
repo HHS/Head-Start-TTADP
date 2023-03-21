@@ -650,6 +650,7 @@ describe('saveGoalsForReport (more tests)', () => {
       isNew: false,
       status: 'In Progress',
       id: objective2.id,
+      ids: [objective2.id],
       ttaProvided: '<p>Test objective TTA updated</p>\n',
       goalId: theGoalThatAlreadyExists.id,
     };
@@ -728,7 +729,10 @@ describe('saveGoalsForReport (more tests)', () => {
     const beforeGoalIds = newGoalForMultiRecipientReport.goalIds;
     expect(beforeGoalIds.length).toBe(2);
 
-    const newObjective = await createNewObjectivesForGoals(beforeGoalIds.ids);
+    const newObjective = await createNewObjectivesForGoals(beforeGoalIds);
+
+    const ttaProvided = '<p>Test objective TTA</p>\n';
+    const objectiveTitle = 'This is a brand new objective for a multi recipient report';
 
     const newGoals = [
       {
@@ -736,8 +740,8 @@ describe('saveGoalsForReport (more tests)', () => {
         name: goalName,
         objectives: [{
           ...newObjective,
-          title: 'This is a brand new objective for a multi recipient report',
-          ttaProvided: '<p>Test objective TTA</p>\n',
+          title: objectiveTitle,
+          ttaProvided,
         }],
       }];
 
@@ -772,16 +776,16 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [afterObjective, afterObjectiveTwo] = afterObjectives;
 
-    expect(afterObjective.ttaProvided).toBe(newObjective.ttaProvided);
+    expect(afterObjective.ttaProvided).toBe(ttaProvided);
 
     const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
-    expect(savedObjective.title).toBe(newObjective.title);
+    expect(savedObjective.title).toBe(objectiveTitle);
     expect(savedObjective.status).toBe(newObjective.status);
 
-    expect(afterObjectiveTwo.ttaProvided).toBe(newObjective.ttaProvided);
+    expect(afterObjectiveTwo.ttaProvided).toBe(ttaProvided);
 
     const savedObjectiveTwo = await Objective.findByPk(afterObjectiveTwo.objectiveId);
-    expect(savedObjectiveTwo.title).toBe(newObjective.title);
+    expect(savedObjectiveTwo.title).toBe(objectiveTitle);
     expect(savedObjectiveTwo.status).toBe(newObjective.status);
 
     expect([savedObjectiveTwo.goalId, savedObjective.goalId]).toContain(goalId);
