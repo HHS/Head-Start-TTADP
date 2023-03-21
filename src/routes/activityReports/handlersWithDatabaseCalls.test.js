@@ -9,9 +9,12 @@ import {
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db, {
-  ActivityReport, Permission, User,
+  ActivityReport,
+  ActivityReportCollaborator,
+  Permission,
+  User,
 } from '../../models';
-import { upsertRatifier } from '../../services/collaborators';
+import { upsertApprover } from '../../services/collaborators';
 import { createOrUpdate } from '../../services/activityReports';
 
 const draftObject = {
@@ -199,14 +202,12 @@ describe('submitReport', () => {
     const needsActionReport = await ActivityReport.findByPk(submittedReport.id);
     expect(needsActionReport.approval.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
 
-    // Verify approving managers are set to NEEDS_ACTION.
-    // FIX: this is all wrong
-    const approvers = await upsertRatifier({
+    // Verify approving managers are set to NEEDS_ACTION.ss
+    const approvers = await ActivityReportCollaborator.findAll({
       attributes: ['status'],
       where: {
-        entityType: ENTITY_TYPES.REPORT,
-        entityId: needsActionReport.id,
-        collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+        activityReportId: needsActionReport.id,
+        collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
       },
     });
 

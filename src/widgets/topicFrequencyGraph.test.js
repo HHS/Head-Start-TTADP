@@ -10,6 +10,9 @@ import db, {
   Objective,
   ActivityReportObjectiveTopic,
   Topic,
+  ActivityReportCollaborator,
+  ActivityRecipient,
+  NextStep,
 } from '../models';
 import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';

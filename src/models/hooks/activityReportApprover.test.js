@@ -6,12 +6,12 @@ import {
   ActivityReportApprover,
 } from '..';
 import {
-  calculateReportStatusFromApprovals,
+  calculateStatusFromApprovals,
   afterDestroy,
   afterRestore,
   afterUpsert,
   afterUpdate,
-} from './activityReportApprover';
+} from './activityReportCollaborator';
 
 import { draftObject, mockApprovers, approverUserIds } from './testHelpers';
 
@@ -28,14 +28,14 @@ describe('activityReportApprover hooks', () => {
     await sequelize.close();
   });
 
-  describe('calculateReportStatusFromApprovals', () => {
+  describe('calculateStatusFromApprovals', () => {
     it('should return APPROVED if all approvers are APPROVED', () => {
       const approverStatuses = [
         APPROVER_STATUSES.APPROVED,
         APPROVER_STATUSES.APPROVED,
         APPROVER_STATUSES.APPROVED,
       ];
-      const result = calculateReportStatusFromApprovals(approverStatuses);
+      const result = calculateStatusFromApprovals(approverStatuses);
       expect(result).toEqual(REPORT_STATUSES.APPROVED);
     });
 
@@ -45,13 +45,13 @@ describe('activityReportApprover hooks', () => {
         APPROVER_STATUSES.NEEDS_ACTION,
         APPROVER_STATUSES.APPROVED,
       ];
-      const result = calculateReportStatusFromApprovals(approverStatuses);
+      const result = calculateStatusFromApprovals(approverStatuses);
       expect(result).toEqual(REPORT_STATUSES.NEEDS_ACTION);
     });
 
     it('should otherwise return submitted', () => {
       const approverStatuses = [APPROVER_STATUSES.SUBMITTED];
-      const result = calculateReportStatusFromApprovals(approverStatuses);
+      const result = calculateStatusFromApprovals(approverStatuses);
       expect(result).toEqual(REPORT_STATUSES.SUBMITTED);
     });
   });

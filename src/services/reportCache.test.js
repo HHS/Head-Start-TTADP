@@ -369,12 +369,18 @@ describe('reportCache', () => {
       // i t('add and remove from cache', async () => {
       {
         // update added or removed files
-        await ObjectiveFile.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+        await ObjectiveFile.destroy({
+          where: { objectiveId: objective.id },
+          individualHooks: true,
+        });
         await ObjectiveResource.destroy({
           where: { objectiveId: objective.id },
           individualHooks: true,
         });
-        await ObjectiveTopic.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+        await ObjectiveTopic.destroy({
+          where: { objectiveId: objective.id },
+          individualHooks: true,
+        });
         objectiveFiles.push(await ObjectiveFile.findOrCreate({
           where: {
             objectiveId: objective.id,

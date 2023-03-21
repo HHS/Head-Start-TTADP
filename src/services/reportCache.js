@@ -269,7 +269,6 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
-    cacheObjectiveCollaborators(activityReportObjectiveId),
   ]);
 };
 
@@ -299,7 +298,6 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
         where: { id: activityReportGoalId },
         individualHooks: true,
       }),
-      await cacheOGoalCollaborators(activityReportGoalId),
       Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
     ]);
   }
@@ -348,14 +346,6 @@ async function destroyActivityReportObjectiveMetadata(
       ActivityReportObjectiveTopic.destroy({
         where: {
           activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-        },
-        hookMetadata: { objectiveIds },
-        individualHooks: true,
-      }),
-      Collaborator.destroy({
-        where: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-          entityId: activityReportObjectiveIdsToRemove,
         },
         hookMetadata: { objectiveIds },
         individualHooks: true,
