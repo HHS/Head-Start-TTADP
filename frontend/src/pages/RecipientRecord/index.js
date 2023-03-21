@@ -45,7 +45,7 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-1`}>
+                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
                   {recipientNameWithRegion}
                 </h1>
                 {children}
@@ -68,7 +68,7 @@ PageWithHeading.propTypes = {
 
 PageWithHeading.defaultProps = {
   error: '',
-  backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
+  backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
 };
 
@@ -188,7 +188,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
               hasAlerts={hasAlerts}
               backLink={(
                 <Link
-                  className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block"
+                  className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-2 display-inline-block"
                   to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives${window.location.search}`}
                 >
                   Back to goals table
@@ -278,7 +278,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientId={recipientId}
                 error={error}
                 recipientNameWithRegion={recipientNameWithRegion}
-                backLink={<></>}
                 slug="rttapa-history"
               >
                 <RTTAPAHistory
