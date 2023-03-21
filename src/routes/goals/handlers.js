@@ -208,7 +208,7 @@ export async function createObjectivesForGoals(req, res) {
     const canCreate = new Goal(user, null, regionId).canCreate();
 
     if (!canCreate) {
-      res.sendStatus(401);
+      res.sendStatus(httpCodes.UNAUTHORIZED);
       return;
     }
 

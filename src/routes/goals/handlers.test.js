@@ -1,4 +1,6 @@
-import { INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST } from 'http-codes';
+import {
+  INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST, UNAUTHORIZED,
+} from 'http-codes';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -8,6 +10,7 @@ import {
   retrieveGoalsByIds,
   deleteGoal,
   createGoalsForReport,
+  createObjectivesForGoals,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -17,6 +20,7 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
+  createNewObjectivesForGoals,
 } from '../../services/goals';
 import { currentUserId } from '../../services/currentUser';
 
@@ -36,6 +40,7 @@ jest.mock('../../services/goals', () => ({
   destroyGoal: jest.fn(),
   createOrUpdateGoalsForActivityReport: jest.fn(),
   goalsByIdsAndActivityReport: jest.fn(),
+  createNewObjectivesForGoals: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -901,5 +906,105 @@ describe('retrieveGoalsByIds', () => {
 
     await retrieveGoalsByIds(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  describe('createObjectivesForGoals', () => {
+    it('handles errors', async () => {
+      const req = {
+        body: {
+          goalIds: [1, 2],
+          regionId: 1,
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      createNewObjectivesForGoals.mockImplementationOnce(() => {
+        throw new Error('a test error for the goals handler');
+      });
+
+      await createObjectivesForGoals(req, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+
+    it('returns unauthorized if user does not have permission', async () => {
+      const req = {
+        body: {
+          goalIds: [1, 2],
+          regionId: 1,
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      createNewObjectivesForGoals.mockResolvedValueOnce([
+        {
+          id: 1,
+          name: 'Objective 1',
+        },
+      ]);
+
+      await createObjectivesForGoals(req, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+    });
+
+    it('success', async () => {
+      const req = {
+        body: {
+          goalIds: [1, 2],
+          regionId: 1,
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      createNewObjectivesForGoals.mockResolvedValueOnce([
+        {
+          id: 1,
+          name: 'Objective 1',
+        },
+      ]);
+
+      await createObjectivesForGoals(req, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith([
+        {
+          id: 1,
+          name: 'Objective 1',
+        },
+      ]);
+    });
   });
 });
