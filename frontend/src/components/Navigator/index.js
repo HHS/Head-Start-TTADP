@@ -489,7 +489,10 @@ const Navigator = ({
 
     if (areGoalsValid !== true) {
       // make an attempt to focus on the first invalid field
-      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input');
+      const invalid = document.querySelector(`         
+        .usa-form-group--error textarea, 
+        .usa-form-group--error input:not(.usa-date-picker__external-input)`);
+
       if (invalid) {
         invalid.focus();
       }

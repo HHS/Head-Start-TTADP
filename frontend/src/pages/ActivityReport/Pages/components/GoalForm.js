@@ -56,9 +56,21 @@ export default function GoalForm({
     name: 'goalEndDate',
     rules: {
       validate: {
-        isValidDate: (value) => activityRecipientType === 'other-entity' || (
-          (value && moment(value, 'MM/DD/YYYY').isValid()) || value === ''
-        ) || GOAL_DATE_ERROR,
+        isValidDate: (value) => {
+          if (!value) {
+            return true;
+          }
+
+          if (activityRecipientType === 'other-entity') {
+            return true;
+          }
+
+          if (value && moment(value, 'MM/DD/YYYY').isValid()) {
+            return true;
+          }
+
+          return GOAL_DATE_ERROR;
+        },
       },
     },
     defaultValue: defaultEndDate || '',

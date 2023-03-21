@@ -81,13 +81,11 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
 export const validateGoals = (goals, setError = () => {}) => {
   if (goals.length < 1) {
-    // debugger;
     return GOALS_EMPTY;
   }
 
   const unfinishedMessage = unfinishedGoals(goals, setError);
   if (unfinishedMessage) {
-    // debugger;
     return unfinishedMessage;
   }
   return true;
