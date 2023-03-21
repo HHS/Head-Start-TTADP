@@ -42,7 +42,27 @@ module.exports = {
 
       // Create tables to manage all user ownership in one place for each table type
       try {
-        await queryInterface.renameTable('ActivityReportCollaborators', 'LegacyActivityReportCollaborators');
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+            PERFORM "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+            PERFORM "ZAFRemoveAuditingOnTable"('ActivityReportCollaborators');
+            DROP TABLE "ZALActivityReportCollaborators";
+            DROP TRIGGER IF EXISTS "ZALNoUpdateTActivityReportCollaborators"
+              ON "ZALActivityReportCollaborators";
+            DROP FUNCTION IF EXISTS "ZALNoUpdateFActivityReportCollaborators";
+            DROP TRIGGER IF EXISTS "ZALNoDeleteTActivityReportCollaborators"
+              ON "ZALActivityReportCollaborators";
+            DROP FUNCTION IF EXISTS "ZALNoDeleteFActivityReportCollaborators";
+            DROP TRIGGER IF EXISTS "ZALNoTruncateTActivityReportCollaborators"
+              ON "ZALActivityReportCollaborators";
+            DROP FUNCTION IF EXISTS "ZALNoTruncateFActivityReportCollaborators";
+             ALTER TABLE "ActivityReportCollaborators"
+              RENAME TO "LegacyActivityReportCollaborators";
+            PERFORM "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+          END$$;`,
+          { transaction },
+        );
         const tablesToCreate = [
           {
             parentTable: 'ActivityReports',
@@ -220,18 +240,16 @@ module.exports = {
             ),
             "ActivityReport_All" AS (
                 SELECT
-                    "entityType",
-                    "entityId",
+                    "activityReportId",
                     "userId",
                     ARRAY_AGG(distinct "collaboratorType" order by "collaboratorType") "collaboratorTypes",
                     (ARRAY_AGG(distinct "status" order by "status" desc))[1] "status",
                     (ARRAY_AGG(distinct nullif("note",'') order by nullif("note",'') desc))[1] "note",
-                    1 "tier",
                     MIN("createdAt") "createdAt",
                     MAX("updatedAt") "updatedAt",
                     MAX("deletedAt") "deletedAt"
                 FROM "ActivityReport_Union"
-                GROUP BY "entityType", "entityId", "userId"
+                GROUP BY "activityReportId", "createdAt", "userId"
             ),
             "Collected_Collaborators" AS (
                 SELECT *
@@ -244,7 +262,6 @@ module.exports = {
               "collaboratorTypes",
               "status",
               "note",
-              "tier",
               "createdAt",
               "updatedAt",
               "deletedAt"
@@ -252,14 +269,13 @@ module.exports = {
             SELECT
               cc."activityReportId",
               cc."userId",
-              cc."collaboratorTypes"::"enum_Collaborators_collaboratorTypes"[],
+              cc."collaboratorTypes"::"enum_ActivityReportCollaborators_collaboratorTypes"[],
               case
-                WHEN  cc."status" = 'approved' THEN '${APPROVAL_STATUSES.APPROVED}'::"enum_Collaborators_status"
-                WHEN  cc."status" = 'needs_action' THEN 'needs_action'::"enum_Collaborators_status"
+                WHEN  cc."status" = 'approved' THEN '${APPROVAL_STATUSES.APPROVED}'::"enum_ActivityReportCollaborators_status"
+                WHEN  cc."status" = 'needs_action' THEN 'needs_action'::"enum_ActivityReportCollaborators_status"
                 ELSE null
               END "status",
               cc."note",
-              cc."tier",
               cc."createdAt",
               cc."updatedAt",
               cc."deletedAt"
@@ -270,181 +286,46 @@ module.exports = {
         );
 
         await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-          WITH
-
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      try {
-        // Update for collaborators
-        await queryInterface.sequelize.query(
-          `UPDATE "CollaboratorRoles" cr
-         SET "collaboratorId" = c.id
-         FROM "Collaborators" c
-         JOIN "ActivityReportCollaborators" arc
-         ON c."entityType" = '${ENTITY_TYPES.REPORT}'
-         AND  c."entityId" = arc."activityReportId"
-         AND c."userId" = arc."userId"
-         WHERE arc.id = cr."activityReportCollaboratorId";`,
-          { transaction },
-        );
-
-        await queryInterface.changeColumn('CollaboratorRoles', 'collaboratorId', {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-        }, { transaction });
-        await queryInterface.removeColumn('CollaboratorRoles', 'activityReportCollaboratorId', { transaction });
-
-        await queryInterface.sequelize.query(
-          `--- CONSTRAINTS
-          ALTER TABLE "CollaboratorRoles"
-          ADD CONSTRAINT "CollaboratorRoles_collaborator_role"
-          UNIQUE ("collaboratorId", "roleId");`,
-          { transaction },
-        );
-
-        // Update for owners
-        await queryInterface.sequelize.query(
-          `INSERT INTO "CollaboratorRoles" ("collaboratorId", "roleId", "createdAt", "updatedAt")
-          SELECT
-            c.id "collaboratorId",
-            r.id "roleId",
-            ar."createdAt",
-            ar."updatedAt"
-         FROM "Collaborators" c
-         JOIN "ActivityReports" ar
-         ON c."entityType" = '${ENTITY_TYPES.REPORT}'
-         AND c."entityId" = ar.id
-         AND c."userId" = ar."userId"
-         AND '${COLLABORATOR_TYPES.OWNER}' = ALL("c"."collaboratorTypes")
-         JOIN "Roles" r
-         ON r."fullName" = ar."creatorRole"::text
-         LEFT OUTER JOIN "CollaboratorRoles" cr
-         ON c.id = cr."collaboratorId"
-         WHERE cr.id is null;`,
-          { transaction },
-        );
-
-        // Update for approvers
-        await queryInterface.sequelize.query(
-          `INSERT INTO "CollaboratorRoles" ("collaboratorId", "roleId", "createdAt", "updatedAt")
-          SELECT
-            c.id "collaboratorId",
-            ur."roleId" "roleId",
-            ur."createdAt",
-            ur."updatedAt"
-         FROM "Collaborators" c
-         JOIN "UserRoles" ur
-         ON c."userId" = ur."userId"
-         LEFT OUTER JOIN "CollaboratorRoles" cr
-         ON c.id = cr."collaboratorId"
-         WHERE c."entityType" = '${ENTITY_TYPES.REPORT}'
-         AND '${COLLABORATOR_TYPES.APPROVER}' = ALL("c"."collaboratorTypes")
-         AND cr.id is null;`,
-          { transaction },
-        );
-
-        await queryInterface.sequelize.query(
-          `WITH
-            "CollaboratorRoles_ReportGoal" as (
-              SELECT
-                c2.id "collaboratorId",
-                cr."roleId",
-                cr."createdAt",
-                cr."updatedAt"
-              FROM "CollaboratorRoles" cr
-              JOIN "Collaborators" c
-              ON cr."collaboratorId" = c.id
-              JOIN "ActivityReportGoals" arg
-              ON c."entityType" = '${ENTITY_TYPES.REPORT}'
-              AND c."entityId" = arg."activityReportId"
-              JOIN "Collaborators" c2
-              ON c2."entityType" = '${ENTITY_TYPES.REPORTGOAL}'
-              AND c2."entityId" = arg.id
-            ),
-            "CollaboratorRoles_ReportObjective" as (
-              SELECT
-                c2.id "collaboratorId",
-                cr."roleId",
-                cr."createdAt",
-                cr."updatedAt"
-              FROM "CollaboratorRoles" cr
-              JOIN "Collaborators" c
-              ON cr."collaboratorId" = c.id
-              JOIN "ActivityReportObjectives" aro
-              ON c."entityType" = '${ENTITY_TYPES.REPORT}'
-              AND c."entityId" = aro."activityReportId"
-              JOIN "Collaborators" c2
-              ON c2."entityType" = '${ENTITY_TYPES.REPORTOBJECTIVE}'
-              AND c2."entityId" = aro.id
-            ),
-            "CollaboratorRoles_Goal" as (
-              SELECT DISTINCT
-                c2.id "collaboratorId",
-                cr."roleId",
-                cr."createdAt",
-                cr."updatedAt"
-              FROM "CollaboratorRoles" cr
-              JOIN "Collaborators" c
-              ON cr."collaboratorId" = c.id
-              JOIN "ActivityReportGoals" arg
-              ON c."entityType" = '${ENTITY_TYPES.REPORT}'
-              AND c."entityId" = arg."activityReportId"
-              JOIN "Collaborators" c2
-              ON c2."entityType" = '${ENTITY_TYPES.GOAL}'
-              AND c2."entityId" = arg."goalId"
-            ),
-            "CollaboratorRoles_Objective" as (
-              SELECT DISTINCT
-                c2.id "collaboratorId",
-                cr."roleId",
-                cr."createdAt",
-                cr."updatedAt"
-              FROM "CollaboratorRoles" cr
-              JOIN "Collaborators" c
-              ON cr."collaboratorId" = c.id
-              JOIN "ActivityReportObjectives" aro
-              ON c."entityType" = '${ENTITY_TYPES.REPORT}'
-              AND c."entityId" = aro."activityReportId"
-              JOIN "Collaborators" c2
-              ON c2."entityType" = '${ENTITY_TYPES.OBJECTIVE}'
-              AND c2."entityId" = aro."objectiveId"
-            ),
-            "CollaboratorRoles_ALL" as (
-              SELECT *
-              FROM "CollaboratorRoles_ReportGoal"
-              UNION
-              SELECT *
-              FROM "CollaboratorRoles_ReportObjective"
-              UNION
-              SELECT *
-              FROM "CollaboratorRoles_Goal"
-              UNION
-              SELECT *
-              FROM "CollaboratorRoles_Objective"
-            )
-          INSERT INTO "CollaboratorRoles"
-          (
-            "collaboratorId",
+          `INSERT INTO "ActivityReportCollaboratorRoles" (
+            "activityReportCollaboratorId",
             "roleId",
             "createdAt",
             "updatedAt"
           )
-         SELECT
-          cra."collaboratorId",
-          cra."roleId",
-          min(cra."createdAt") "createdAt",
-          max(cra."updatedAt") "updatedAt"
-         FROM "CollaboratorRoles_ALL" cra
-         GROUP BY 1, 2
-         ORDER BY 3, 1, 2;`,
+          SELECT
+            arc."id" "activityReportCollaboratorId",
+            cr."roleId",
+            cr."createdAt",
+            cr."updatedAt"
+          FROM "ActivityReportCollaborators" arc
+          JOIN "LegacyActivityReportCollaborators" larc
+          ON arc."activityReportId" = larc."activityReportId"
+          AND arc."userId" = larc."userId"
+          JOIN "CollaboratorRoles" cr
+          ON larc."id" = cr."activityReportCollaboratorId";`,
+          { transaction },
+        );
+
+        await queryInterface.sequelize.query(
+          `INSERT INTO "ActivityReportCollaboratorRoles" (
+            "activityReportCollaboratorId",
+            "roleId",
+            "createdAt",
+            "updatedAt"
+          )
+          SELECT
+            arc."id" "activityReportCollaboratorId",
+            ur."roleId",
+            GREATEST(arc."createdAt", ur."createdAt") "createdAt",
+            GREATEST(arc."updatedAt", ur."updatedAt") "updatedAt"
+          FROM "ActivityReportCollaborators" arc
+          JOIN "Users" u
+          ON arc."userId" = u.id
+          JOIN "UserRoles" ur
+          ON u.id = ur."userId"
+          LEFT JOIN "ActivityReportCollaboratorRoles" arcr
+          ON arc."id" = arcr."activityReportCollaboratorId"
+          WHERE arcr.id is null;`,
           { transaction },
         );
       } catch (err) {
@@ -455,7 +336,7 @@ module.exports = {
       try {
         await queryInterface.removeColumn('ActivityReports', 'creatorRole', { transaction });
         await queryInterface.removeColumn('ActivityReports', 'userId', { transaction });
-        await Promise.all(['ActivityReportApprovers', 'ActivityReportCollaborators'].map(async (table) => {
+        await Promise.all(['ActivityReportApprovers', 'CollaboratorRoles'].map(async (table) => {
           await queryInterface.sequelize.query(
             ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
             { raw: true, transaction },
@@ -470,5 +351,10 @@ module.exports = {
       }
     },
   ),
-  down: async () => {},
+  // down: async (
+  //   queryInterface,
+  //   Sequelize,
+  // ) => queryInterface.sequelize.transaction(async (transaction) => {
+
+  // }),
 };
