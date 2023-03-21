@@ -146,7 +146,7 @@ export default function ResourcesDashboard() {
             </Alert>
           )}
         </Grid>
-        <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+        <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
           <FilterPanel
             applyButtonAria="apply filters for resources dashboard"
             filters={filters}
