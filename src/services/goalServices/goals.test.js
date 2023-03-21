@@ -272,16 +272,17 @@ describe('Goals DB service', () => {
         id: 1,
         name: 'name',
         objectives: [{
-          title: 'title', id: mockObjectiveId, status: 'Closed', goalId: mockGoalId,
+          title: 'title', id: mockObjectiveId, ids: [mockObjectiveId], status: 'Closed', goalId: mockGoalId,
         }],
         update: jest.fn(),
         grantIds: [mockGrantId],
         goalIds: [mockGoalId],
       };
 
-      Objective.findOne.mockResolvedValue({ id: mockObjectiveId });
+      const findOneUpdate = jest.fn();
+      Objective.findOne.mockResolvedValue({ id: mockObjectiveId, update: findOneUpdate });
       await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
-      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
+      expect(findOneUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });
   });
 });
