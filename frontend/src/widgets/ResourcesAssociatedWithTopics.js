@@ -62,8 +62,9 @@ function ResourcesAssociatedWithTopics({
   };
 
   const parseValue = (value) => {
-    const parsedValue = parseInt(value, DECIMAL_BASE);
-    if (Number.isNaN(value)) {
+    const noCommasValue = value.replaceAll(',', '');
+    const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
+    if (Number.isNaN(parsedValue)) {
       return value;
     }
     return parsedValue;
