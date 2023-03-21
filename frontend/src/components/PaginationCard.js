@@ -31,7 +31,7 @@ function PaginationCard({
     <div className="smart-hub--pagination-card display-flex bg-white">
       <div className="display-flex flex-1 flex-align-center margin-left-4">{getPageInfo()}</div>
       <Pagination
-        className="margin-3"
+        className="padding-1"
         currentPage={currentPage}
         totalPages={getTotalPages()}
         onClickNext={() => handlePageChange(currentPage + 1)}
