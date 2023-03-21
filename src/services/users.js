@@ -98,7 +98,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const dateJoined = new Date(user.createdAt);
   const todaysDate = new Date();
   const totalHours = Math.abs(todaysDate - dateJoined) / 36e5;
-  const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
+  const totalDaysSinceJoined = Math.floor(totalHours / 24);
 
   // Additional report roles (if not read only).
   let collaboratorReports = [];
@@ -358,7 +358,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalTTA = totalCreatedTTA + totalCollaboratorTTA + totalApproverTTA;
   const totalTTADays = Math.floor(totalTTA / 24);
   const totalTTAHours = totalTTA - (totalTTADays * 24);
-  const totalTTASentence = `${totalTTADays >= 1 ? totalTTADays : 0} days ${totalTTAHours} hrs`;
+  const totalTTASentence = `${totalTTADays >= 1 ? formatNumber(totalTTADays) : 0} days ${totalTTAHours} hrs`;
 
   // Total participants.
   const totalParticipants = totalCreatedParticipants + totalCollaboratorParticipants + totalApproverParticipants;
@@ -376,7 +376,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalObjectivesIds = new Set([...createdObjectiveIds, ...collaboratorObjectiveIds, ...approverObjectiveIds]);
 
   return {
-    daysSinceJoined: totalDaysSinceJoined,
+    daysSinceJoined: formatNumber(totalDaysSinceJoined),
     arsCreated: formatNumber(createdReports.length),
     arsCollaboratedOn: formatNumber(collaboratorReports.length),
     ttaProvided: totalTTASentence,
