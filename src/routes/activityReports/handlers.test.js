@@ -1,3 +1,4 @@
+import { UNAUTHORIZED, INTERNAL_SERVER_ERROR } from 'http-codes';
 import {
   getReport,
   saveReport,
@@ -20,6 +21,7 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  createNewGoalsForReport,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -33,6 +35,7 @@ import {
   getAllDownloadableActivityReports,
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
+  newGoalsForReport,
 } from '../../services/activityReports';
 import { setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -49,6 +52,11 @@ import db, {
 import * as mailer from '../../lib/mailer';
 import { APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
+import { currentUserId } from '../../services/currentUser';
+
+jest.mock('../../services/currentUser', () => ({
+  currentUserId: jest.fn(),
+}));
 
 jest.mock('../../services/activityReports', () => ({
   activityReportAndRecipientsById: jest.fn(),
@@ -63,6 +71,7 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
   activityReportsForCleanup: jest.fn(),
+  newGoalsForReport: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -969,6 +978,105 @@ describe('Activity Report handlers', () => {
         mockResponse,
       );
       expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
+    });
+  });
+
+  describe('createNewGoalsForReport', () => {
+    it('checks permissions', async () => {
+      const request = {
+        session: {
+          userId: 1,
+        },
+        params: {
+          activityReportId: 1,
+        },
+        body: {
+          grantIds: [1],
+        },
+      };
+
+      const response = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        id: 1,
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      activityReportAndRecipientsById.mockResolvedValueOnce([{ userId: 1, regionId: 1 }]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
+
+      const json = [{ name: 'name', id: 1 }];
+      newGoalsForReport.mockResolvedValueOnce(json);
+
+      await createNewGoalsForReport(
+        request,
+        response,
+      );
+
+      expect(response.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+    });
+    it('handles success', async () => {
+      const request = {
+        session: {
+          userId: 1,
+        },
+        params: {
+          activityReportId: 1,
+        },
+        body: {
+          grantIds: [1],
+        },
+      };
+
+      const response = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        id: 1,
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      activityReportAndRecipientsById.mockResolvedValueOnce([{ userId: 1, regionId: 1 }]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+
+      const json = [{ name: 'name', id: 1 }];
+      newGoalsForReport.mockResolvedValueOnce(json);
+
+      await createNewGoalsForReport(
+        request,
+        response,
+      );
+
+      expect(response.json).toHaveBeenCalledWith(json);
     });
   });
 });

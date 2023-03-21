@@ -1,4 +1,5 @@
 import stringify from 'csv-stringify/lib/sync';
+import { UNAUTHORIZED } from 'http-codes';
 import { QueryTypes } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
@@ -961,15 +962,15 @@ export async function createNewGoalsForReport(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
+
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canUpdate()) {
-      res.sendStatus(403);
+      res.sendStatus(UNAUTHORIZED);
       return;
     }
 
     const goal = await newGoalsForReport(grantIds);
-
     res.json(goal);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
