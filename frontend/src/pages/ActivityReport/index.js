@@ -477,7 +477,7 @@ function ActivityReport({
           {
             ...updatedFields,
             version: 2,
-            approvers, 
+            approvers,
             pageState: data.pageState,
           },
           {},
