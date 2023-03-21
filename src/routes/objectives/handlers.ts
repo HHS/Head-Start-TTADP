@@ -6,6 +6,7 @@ import { createNewObjectivesForOtherEntity } from '../../services/objectives';
 import { currentUserId } from '../../services/currentUser';
 import ObjectivePolicy from '../../policies/objective';
 import { userById } from '../../services/users';
+import { isArrayOrArrayOfNumbers } from '../../lib/helpers';
 
 /**
  *
@@ -28,7 +29,8 @@ export async function createObjectivesForOtherEntity(req: Request, res: Response
 
     // bulk create objectives
     let objective = null;
-    if (otherEntityIds) {
+    const mustNotBeEmpty = true;
+    if (otherEntityIds && isArrayOrArrayOfNumbers(otherEntityIds, mustNotBeEmpty)) {
       objective = await createNewObjectivesForOtherEntity(otherEntityIds);
     }
 
