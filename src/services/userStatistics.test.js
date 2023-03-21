@@ -16,6 +16,7 @@ import db, {
   ActivityReportApprover,
 } from '../models';
 import { statisticsByUser } from './users';
+import { formatNumber } from '../widgets/helpers';
 
 jest.mock('bull');
 
@@ -690,32 +691,32 @@ describe('statisticsByUser', () => {
     const todaysDate = new Date();
     const createdDate = new Date(user.createdAt);
     const totalHours = Math.abs(todaysDate - createdDate) / 36e5;
-    const totalDaysSinceJoined = Math.floor(totalHours / 24);
+    const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
-    expect(response.arsCreated).toBe(9);
+    expect(response.arsCreated).toBe('9');
 
     // Collaborator reports.
-    expect(response.arsCollaboratedOn).toBe(0);
+    expect(response.arsCollaboratedOn).toBe('0');
 
     // TTA provided.
     expect(response.ttaProvided).toBe('7 days 2 hrs');
 
     // Recipients.
-    expect(response.recipientsReached).toBe(4);
+    expect(response.recipientsReached).toBe('4');
 
     // Grants.
-    expect(response.grantsServed).toBe(4);
+    expect(response.grantsServed).toBe('4');
 
     // Participants.
-    expect(response.participantsReached).toBe(10);
+    expect(response.participantsReached).toBe('10');
 
     // Goals.
-    expect(response.goalsApproved).toBe(4);
+    expect(response.goalsApproved).toBe('4');
 
     // Objectives.
-    expect(response.objectivesApproved).toBe(5);
+    expect(response.objectivesApproved).toBe('5');
   });
   /*
   User Statistics:
@@ -737,31 +738,31 @@ describe('statisticsByUser', () => {
     const todaysDate = new Date();
     const createdDate = new Date(user.createdAt);
     const totalHours = Math.abs(todaysDate - createdDate) / 36e5;
-    const totalDaysSinceJoined = Math.floor(totalHours / 24);
+    const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
-    expect(response.arsCreated).toBe(5);
+    expect(response.arsCreated).toBe('5');
 
     // Collaborator reports.
-    expect(response.arsCollaboratedOn).toBe(2);
+    expect(response.arsCollaboratedOn).toBe('2');
 
     // TTA provided.
     expect(response.ttaProvided).toBe('3 days 18 hrs');
 
     // Recipients.
-    expect(response.recipientsReached).toBe(3);
+    expect(response.recipientsReached).toBe('3');
 
     // Grants.
-    expect(response.grantsServed).toBe(3);
+    expect(response.grantsServed).toBe('3');
 
     // Participants.
-    expect(response.participantsReached).toBe(8);
+    expect(response.participantsReached).toBe('8');
 
     // Goals.
-    expect(response.goalsApproved).toBe(4);
+    expect(response.goalsApproved).toBe('4');
 
     // Objectives.
-    expect(response.objectivesApproved).toBe(5);
+    expect(response.objectivesApproved).toBe('5');
   });
 });
