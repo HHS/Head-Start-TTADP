@@ -5,7 +5,7 @@ import db, {
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
-  Approval,
+  ActivityReportApproval,
   Goal,
   Objective,
   User,
@@ -321,10 +321,10 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    await Approval.update(
+    await ActivityReportApproval.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
       {
-        where: { entityType: ENTITY_TYPES.REPORT, entityId: preReport.id, tier: 0 },
+        where: { activityReportId: preReport.id },
         individualHooks: true,
       },
     );
@@ -355,13 +355,11 @@ describe('Activity Reports model', () => {
     expect(objectivesPost[0].objectiveTemplateId).not.toEqual(null);
     expect(objectivesPost[0].objectiveTemplateId).toEqual(objectivesPost[2].objectiveTemplateId);
 
-    await Approval.update(
+    await ActivityReportApproval.update(
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
       {
         where: {
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
-          tier: 0,
+          activityReportId: report.id,
         },
         individualHooks: true,
       },

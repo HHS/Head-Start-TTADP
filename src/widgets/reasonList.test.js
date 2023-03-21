@@ -1,5 +1,10 @@
 import db, {
-  ActivityReport, User, Recipient, Grant, Collaborator, UserRole,
+  ActivityReport,
+  User,
+  Recipient,
+  Grant,
+  ActivityReportCollaborator,
+  UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
@@ -170,7 +175,7 @@ describe('Reason list widget', () => {
     const reports = await ActivityReport.findAll({
       include: [
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: mockUser.id },
           required: true,

@@ -5,7 +5,7 @@ import db, {
   Recipient,
   Grant,
   Region,
-  Collaborator,
+  ActivityReportCollaborator,
   Role,
   UserRole,
 } from '../models';
@@ -119,7 +119,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
     const reports = await ActivityReport
       .findAll({
         include: [{
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: { [Op.in]: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
           required: true,

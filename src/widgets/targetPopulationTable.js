@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ActivityReport, Approval } from '../models';
+import { ActivityReport, ActivityReportApproval } from '../models';
 import { REPORT_STATUSES, TARGET_POPULATIONS } from '../constants';
 import { countBySingleKey } from './helpers';
 import { auditLogger } from '../logger';
@@ -15,7 +15,7 @@ export default async function targetPopulationTable(scopes) {
         { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
       ],
     },
-    include: [{ model: Approval, as: 'approval', required: true }],
+    include: [{ model: ActivityReportApproval, as: 'approval', required: true }],
     raw: true,
   });
   auditLogger.error(JSON.stringify(res));

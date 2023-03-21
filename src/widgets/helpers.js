@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import {
   ActivityReport,
-  Approval,
+  ActivityReportApproval,
   sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
@@ -15,7 +15,7 @@ export async function countOccurrences(scopes, column, possibilities) {
       [Op.and]: [scopes],
     },
     include: [{
-      model: Approval,
+      model: ActivityReportApproval,
       as: 'approval',
       where: { calculatedStatus: REPORT_STATUSES.APPROVED },
       required: true,

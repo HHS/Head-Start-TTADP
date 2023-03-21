@@ -3,7 +3,7 @@ import {
   sequelize,
   ActivityReport,
   ActivityReportFile,
-  Collaborator,
+  ActivityReportCollaborator,
   User,
   Recipient,
   File,
@@ -205,7 +205,7 @@ describe('processData', () => {
     const reports = await ActivityReport.findAll({
       include: [{
         required: true,
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         where: {
           userId: [

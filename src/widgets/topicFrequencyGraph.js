@@ -1,7 +1,7 @@
 import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
-  Approval,
+  ActivityReportApproval,
   Topic,
   ActivityReportObjective,
   sequelize,
@@ -40,7 +40,7 @@ export default async function topicFrequencyGraph(scopes) {
       },
       include: [{
         attributes: [],
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
         required: true,
       }, {

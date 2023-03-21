@@ -8,7 +8,7 @@ import {
   ActivityReport,
   Recipient,
   Grant,
-  Collaborator,
+  ActivityReportCollaborator,
   Goal,
   ActivityReportObjective,
   Objective,
@@ -593,7 +593,7 @@ describe('Goals by Recipient Test', () => {
     // Get Report Ids.
     const reportsToDelete = await ActivityReport.findAll({
       include: [{
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         where: { userId: mockGoalUser.id },
         required: true,

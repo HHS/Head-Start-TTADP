@@ -21,8 +21,8 @@ import {
 } from './collaborators';
 import {
   ActivityReport,
-  Approval,
-  Collaborator,
+  ActivityReportApproval,
+  ActivityReportCollaborator,
   ActivityReportFile,
   sequelize,
   ActivityRecipient,
@@ -120,12 +120,8 @@ async function saveApprovers(activityReportId, collaborators) {
 }
 
 async function saveApproval(activityReportId, approval) {
-  return Approval.update(approval, {
-    where: {
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: activityReportId,
-      tier: 0,
-    },
+  return ActivityReportApproval.update(approval, {
+    where: { activityReportId },
   });
 }
 
@@ -275,7 +271,7 @@ export function activityReportByLegacyId(legacyId) {
         ],
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         attributes: ['id', 'status', 'note'],
         as: 'approvers',
         required: false,
@@ -449,7 +445,7 @@ export async function activityReportAndRecipientsById(
     },
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
       },
       {
@@ -512,7 +508,7 @@ export async function activityReportAndRecipientsById(
             as: 'files',
           },
           {
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
             attributes: [
               ['userProvidedUrl', 'value'],
@@ -522,7 +518,7 @@ export async function activityReportAndRecipientsById(
         ],
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         required: false,
         include: [
@@ -546,7 +542,7 @@ export async function activityReportAndRecipientsById(
         ],
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'collaborators',
         required: false,
         separate: true,
@@ -595,7 +591,7 @@ export async function activityReportAndRecipientsById(
         separate: true,
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'approvers',
         attributes: ['id', 'status', 'note'],
         required: false,
@@ -686,22 +682,20 @@ export async function activityReports(
           `(SELECT
             name as collaboratorName
           FROM "Users"
-          JOIN "Collaborators"
-          ON "Users"."id" = "Collaborators"."userId"
-          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
-          AND "Collaborators"."entityId" = "ActivityReport"."id"
-          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("Collaborators"."collaboratorRoles")
+          JOIN "ActivityReportCollaborators"
+          ON "Users"."id" = "ActivityReportCollaborators"."userId"
+          AND "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("ActivityReportCollaborators"."collaboratorRoles")
           LIMIT 1)`,
         ),
         sequelize.literal(
           `(SELECT
             name as collaboratorName
           FROM "Users"
-          JOIN "Collaborators"
-          ON "Users"."id" = "Collaborators"."userId"
-          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
-          AND "Collaborators"."entityId" = "ActivityReport"."id"
-          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("Collaborators"."collaboratorRoles")
+          JOIN "ActivityReportCollaborators"
+          ON "Users"."id" = "ActivityReportCollaborators"."userId"
+          AND "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("ActivityReportCollaborators"."collaboratorRoles")
           LIMIT 1)`,
         ),
         sequelize.literal(
@@ -715,7 +709,7 @@ export async function activityReports(
       ],
       include: [
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           include: [
             {
@@ -741,7 +735,7 @@ export async function activityReports(
         },
         {
           required: false,
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'collaborators',
           include: [
             {
@@ -766,7 +760,7 @@ export async function activityReports(
           ],
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',
           required: false,
@@ -781,6 +775,14 @@ export async function activityReports(
                   as: 'roles',
                 },
               ],
+              order: [
+                [sequelize.col('user."name"'), 'ASC'],
+              ],
+            },
+            {
+              model: Role,
+              as: 'roles',
+              order: [['name', 'ASC']],
             },
           ],
         },
@@ -887,21 +889,12 @@ export async function activityReportsForCleanup(userId) {
       ],
       include: [
         {
-          model: Approval,
+          model: ActivityReportApproval,
           as: 'approval',
         },
         {
-          model: Collaborator,
-          as: 'owner',
-          include: [{
-            model: User,
-            as: 'user',
-            attributes: ['id'],
-          }],
-        },
-        {
           required: false,
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           include: [
             {
@@ -914,7 +907,7 @@ export async function activityReportsForCleanup(userId) {
         },
         {
           required: false,
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'collaborators',
           include: [
             {
@@ -926,7 +919,7 @@ export async function activityReportsForCleanup(userId) {
           ],
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           attributes: ['id'],
           as: 'approvers',
           required: false,
@@ -1006,22 +999,20 @@ export async function activityReportAlerts(userId, {
           `(SELECT
             name AS collaboratorName
           FROM "Users"
-          JOIN "Collaborators"
-          ON "Users"."id" = "Collaborators"."userId"
-          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
-          AND "Collaborators"."entityId" = "ActivityReport"."id"
-          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("Collaborators"."collaboratorTypes")
+          JOIN "ActivityReportCollaborators"
+          ON "Users"."id" = "ActivityReportCollaborators"."userId"
+          AND "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("ActivityReportCollaborators"."collaboratorTypes")
           LIMIT 1)`,
         ),
         sequelize.literal(
           `(SELECT
             name AS collaboratorName
           FROM "Users"
-          JOIN "Collaborators"
-          ON "Users"."id" = "Collaborators"."userId"
-          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
-          AND "Collaborators"."entityId" = "ActivityReport"."id"
-          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("Collaborators"."collaboratorTypes")
+          JOIN "ActivityReportCollaborators"
+          ON "Users"."id" = "ActivityReportCollaborators"."userId"
+          AND "ActivityReportCollaborators"."entityId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("ActivityReportCollaborators"."collaboratorTypes")
           LIMIT 1)`,
         ),
         sequelize.literal(
@@ -1056,26 +1047,25 @@ export async function activityReportAlerts(userId, {
               THEN '0'
             ELSE  CONCAT(SUM(
               CASE
-                WHEN COALESCE("Collaborators".status,'needs_action') = 'approved'
+                WHEN COALESCE("ActivityReportCollaborators".status,'needs_action') = 'approved'
                   THEN 1
                 ELSE 0
               END), ' of ', COUNT(1))
           END
-        FROM "Collaborators"
-        WHERE "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
-        AND "Collaborators"."entityId" = "ActivityReport"."id"
-        AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY("Collaborators"."collaboratorTypes")
-        AND "Collaborators"."deletedAt" IS NULL
+        FROM "ActivityReportCollaborators"
+        WHERE "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id"
+        AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY("ActivityReportCollaborators"."collaboratorTypes")
+        AND "ActivityReportCollaborators"."deletedAt" IS NULL
         limit 1)`), 'pendingApprovals'],
       ],
       include: [
         {
-          model: Approval,
+          model: ActivityReportApproval,
           as: 'approval',
           attributes: ['calculatedStatus'],
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           include: [{
             model: User,
@@ -1091,7 +1081,7 @@ export async function activityReportAlerts(userId, {
         },
         {
           required: false,
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'collaborators',
           include: [
             {
@@ -1113,7 +1103,7 @@ export async function activityReportAlerts(userId, {
           ],
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',
           required: false,
@@ -1386,8 +1376,8 @@ export async function createOrUpdate(newActivityReport, report) {
 }
 
 export async function setStatus(report, status) {
-  await Approval.update({ submissionStatus: status }, {
-    where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+  await ActivityReportApproval.update({ submissionStatus: status }, {
+    where: { activityReportId: report.id },
     individualHooks: true,
   });
   return activityReportAndRecipientsById(report.id);
@@ -1505,7 +1495,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         required: false,
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         include: [
           {
@@ -1521,7 +1511,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         ],
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'collaborators',
         separate,
         include: [
@@ -1552,7 +1542,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         required: false,
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         attributes: ['userId'],
         as: 'approvers',
         required: false,
@@ -1686,11 +1676,10 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
         {
           id: {
             [Op.in]: sequelize.literal(
-              `(SELECT (new_row_data->'entityId')::NUMERIC
-            FROM "ZALCollaborators"
+              `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
+            FROM "ZALActivityReportCollaborators"
             where dml_timestamp > ${date}
             AND (new_row_data->'userId')::NUMERIC = ${userId}
-            AND (new_row_data->>'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
             AND (new_row_data->>'collaboratorTypes')::TEXT like '%${COLLABORATOR_TYPES.EDITOR}%')`,
             ),
           },
@@ -1699,11 +1688,11 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
     },
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'collaborators',
         where: { userId },
       },
@@ -1736,11 +1725,10 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
         {
           id: {
             [Op.in]: sequelize.literal(
-              `(SELECT (new_row_data->'entityId')::NUMERIC
-                FROM "ZALApprovals"
+              `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
+                FROM "ZALActivityReportApprovals"
                 where dml_timestamp > ${date}
                 AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}'
-                AND (new_row_data->'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
                 AND (new_row_data->'tier')::NUMERIC = 0)`,
             ),
           },
@@ -1749,16 +1737,16 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
     },
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         attributes: ['userId'],
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'collaborators',
         attributes: ['userId'],
         required: false,
@@ -1781,18 +1769,17 @@ export async function activityReportsSubmittedByDate(userId, date) {
     where: {
       id: {
         [Op.in]: sequelize.literal(
-          `(SELECT (new_row_data->'entityId')::NUMERIC
-            FROM "ZALApprovals"
+          `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
+            FROM "ZALActivityReportApprovals"
             where dml_timestamp > ${date}
             AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}'
-            AND (new_row_data->'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
             AND (new_row_data->'tier')::NUMERIC = 0)`,
         ),
       },
     },
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
         where: {
           calculatedStatus: { [Op.notIn]: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.DRAFT] },
@@ -1800,7 +1787,7 @@ export async function activityReportsSubmittedByDate(userId, date) {
         required: true,
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'approvers',
         attributes: ['userId'],
       },
@@ -1830,11 +1817,10 @@ export async function activityReportsApprovedByDate(userId, date) {
         {
           id: {
             [Op.in]: sequelize.literal(
-              `(SELECT (new_row_data->'entityId')::NUMERIC
-                FROM "ZALApprovals"
+              `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
+                FROM "ZALActivityReportApprovals"
                 where dml_timestamp > ${date}
                 AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}'
-                AND (new_row_data->'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
                 AND (new_row_data->'tier')::NUMERIC = 0)`,
             ),
           },
@@ -1843,16 +1829,16 @@ export async function activityReportsApprovedByDate(userId, date) {
     },
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         attributes: ['userId'],
       },
       {
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'collaborators',
         attributes: ['userId'],
         required: false,

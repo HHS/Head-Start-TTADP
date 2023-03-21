@@ -1,8 +1,8 @@
 import { Op } from 'sequelize';
 import db, {
   ActivityReport,
-  Approval,
-  Collaborator,
+  ActivityReportApproval,
+  ActivityReportCollaborator,
   ActivityRecipient,
   User,
   Recipient,
@@ -38,7 +38,6 @@ import {
   APPROVER_STATUSES,
   REPORT_STATUSES,
   ENTITY_TYPES,
-  RATIFIER_STATUSES,
 } from '../constants';
 import { removeReportApprover, upsertReportEditor, upsertReportApprover } from './collaborators';
 import { createReport, destroyReport } from '../testUtils';
@@ -206,7 +205,7 @@ describe('Activity report service', () => {
         mockUserFive.id];
       const reports = await ActivityReport.findAll({
         include: [{
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: { [Op.in]: userIds } },
           required: true,
@@ -423,7 +422,7 @@ describe('Activity report service', () => {
         mockUserFive.id];
       const reports = await ActivityReport.findAll({
         include: [{
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: { [Op.in]: userIds } },
           required: true,
@@ -546,7 +545,7 @@ describe('Activity report service', () => {
       it('creates a new report', async () => {
         const beginningARCount = await ActivityReport.findAll({
           include: [{
-            model: Collaborator,
+            model: ActivityReportCollaborator,
             as: 'owner',
             where: { userId: mockUser.id },
             required: true,
@@ -555,7 +554,7 @@ describe('Activity report service', () => {
         const report = await createOrUpdate(reportObject);
         const endARCount = await ActivityReport.findAll({
           include: [{
-            model: Collaborator,
+            model: ActivityReportCollaborator,
             as: 'owner',
             where: { userId: mockUser.id },
             required: true,
@@ -1160,7 +1159,7 @@ describe('Activity report service', () => {
           ...mockReport,
           approvers: [{
             userId: mockUserTwo.id,
-            status: RATIFIER_STATUSES.APPROVED,
+            status: APPROVER_STATUSES.APPROVED,
           }],
           activityRecipients: [{ grantId: downloadGrant.id }],
         });
@@ -1390,7 +1389,7 @@ describe('Activity report service', () => {
         // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
         await ActivityReport.destroy({
           include: [{
-            model: Collaborator,
+            model: ActivityReportCollaborator,
             as: 'owner',
             where: { userId: mockUser.id },
             required: true,
@@ -1504,7 +1503,7 @@ describe('Activity report service', () => {
         // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
         await ActivityReport.destroy({
           include: [{
-            model: Collaborator,
+            model: ActivityReportCollaborator,
             as: 'owner',
             where: { userId: mockUser.id },
             required: true,
@@ -1525,10 +1524,10 @@ describe('Activity report service', () => {
           ...submittedReport,
           approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
@@ -1559,10 +1558,10 @@ describe('Activity report service', () => {
           ...submittedReport,
           approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
@@ -1616,10 +1615,10 @@ describe('Activity report service', () => {
           ...submittedReport,
           approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
@@ -1656,7 +1655,7 @@ describe('Activity report service', () => {
         // });
         await ActivityReport.destroy({
           include: [{
-            model: Collaborator,
+            model: ActivityReportCollaborator,
             as: 'owner',
             where: { userId: mockUser.id },
             required: true,
@@ -1683,16 +1682,20 @@ describe('Activity report service', () => {
           userId: digestMockApprover.id,
         });
         // Change to Draft
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
         const test = await ActivityReport.findOne({
           where: { id: report.id },
-          include: [{ model: Approval, as: 'approval', attributes: ['calculatedStatus'] }],
+          include: [{
+            model: ActivityReportApproval,
+            as: 'approval',
+            attributes: ['calculatedStatus'],
+          }],
         });
         expect(test.approval.calculatedStatus).toBe('draft');
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1731,10 +1734,10 @@ describe('Activity report service', () => {
           userId: digestMockApprover.id,
         });
         // Change to needs action
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
@@ -1757,10 +1760,10 @@ describe('Activity report service', () => {
           userId: digestMockApprover.id,
         });
         // Change to approved
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
@@ -1786,7 +1789,7 @@ describe('Activity report service', () => {
         // });
         await ActivityReport.destroy({
           include: [{
-            model: Collaborator,
+            model: ActivityReportCollaborator,
             as: 'owner',
             where: { userId: mockUser.id },
             required: true,
@@ -1816,16 +1819,20 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
         // Change to Draft
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
         const test = await ActivityReport.findOne({
           where: { id: report.id },
-          include: [{ model: Approval, as: 'approval', attributes: ['calculatedStatus'] }],
+          include: [{
+            model: ActivityReportApproval,
+            as: 'approval',
+            attributes: ['calculatedStatus'],
+          }],
         });
         expect(test.approval.calculatedStatus).toBe('draft');
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1852,10 +1859,10 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
         // Change to Submitted
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );
@@ -1883,10 +1890,10 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
         // Change to Needs action
-        await Approval.update(
+        await ActivityReportApproval.update(
           { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
           {
-            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            where: { activityReportId: report.id },
             individualHooks: true,
           },
         );

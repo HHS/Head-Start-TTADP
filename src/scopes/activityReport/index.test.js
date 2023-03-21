@@ -6,8 +6,8 @@ import { auditLogger } from '../../logger';
 import db, {
   ActivityReport,
   ActivityRecipient,
-  Approval,
-  Collaborator,
+  ActivityReportApproval,
+  ActivityReportCollaborator,
   User,
   Recipient,
   Grant,
@@ -155,7 +155,7 @@ describe('filtersToScopes', () => {
       excludedUser.id];
     const reports = await ActivityReport.unscoped().findAll({
       include: [{
-        model: Collaborator,
+        model: ActivityReportCollaborator,
         as: 'owner',
         where: { userId: { [Op.in]: userIds } },
         required: true,
@@ -163,7 +163,7 @@ describe('filtersToScopes', () => {
     });
 
     await Promise.allSettled([
-      ...reports.map((id) => destroyReport(report.id)),
+      ...reports.map((report) => destroyReport(report.id)),
       UserRole.destroy({ where: { userId: { [Op.in]: userIds } } }),
       User.destroy({ where: { id: { [Op.in]: userIds } } }),
     ]);
@@ -1276,7 +1276,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        include: [{ model: Approval, as: 'approval' }],
+        include: [{ model: ActivityReportApproval, as: 'approval' }],
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
@@ -1290,7 +1290,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        include: [{ model: Approval, as: 'approval' }],
+        include: [{ model: ActivityReportApproval, as: 'approval' }],
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -1962,11 +1962,7 @@ describe('filtersToScopes', () => {
             grantId: faker.datatype.number(),
           },
         ],
-      });
-
-      await ActivityReportApprover.create({
-        userId: mockUserTwo.id,
-        activityReportId: reportThree.id,
+        approvers: [{ userId: mockUserTwo.id }],
       });
 
       possibleIds = [
@@ -2047,9 +2043,10 @@ describe('filtersToScopes', () => {
         },
       });
 
-      await ActivityReportCollaborator.destroy({ where: { userId: mockUserTwo.id } });
-      await ActivityReportApprover.destroy({
-        where: { activityReportId: reportThree.id }, force: true,
+      await ActivityReportCollaborator.destroy({
+        where: {
+          userId: [mockUserTwo.id, reportThree.id],
+        },
       });
       await destroyReport(reportOne);
       await destroyReport(reportTwo);

@@ -17,7 +17,7 @@ import {
   Resource,
   ActivityReport,
   ActivityReportGoal,
-  Approval,
+  ActivityReportApproval,
   Topic,
   Program,
   File,
@@ -152,7 +152,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           model: ActivityReport,
           as: 'activityReports',
           include: [{
-            model: Approval,
+            model: ActivityReportApproval,
             as: 'approval',
             where: { calculatedStatus: { [Op.not]: REPORT_STATUSES.DELETED } },
             required: true,
@@ -613,7 +613,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             model: ActivityReport,
             as: 'activityReports',
             include: [{
-              model: Approval,
+              model: ActivityReportApproval,
               as: 'approval',
               where: { calculatedStatus: { [Op.not]: REPORT_STATUSES.DELETED } },
               required: true,

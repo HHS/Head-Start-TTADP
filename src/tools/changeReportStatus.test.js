@@ -1,8 +1,8 @@
 import {
   sequelize,
   ActivityReport,
-  Approval,
-  Collaborator,
+  ActivityReportApproval,
+  ActivityReportCollaborator,
   User,
   UserRole,
   Role,
@@ -62,12 +62,12 @@ describe('changeStatus', () => {
       where: { id: report.id },
       include: [
         {
-          model: Approval,
+          model: ActivityReportApproval,
           as: 'approval',
           attributes: ['submissionStatus'],
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: mockUser.id },
           required: true,
@@ -80,7 +80,7 @@ describe('changeStatus', () => {
 
     const deletedReport = await ActivityReport.unscoped().findOne({
       where: { id: report.id },
-      include: [{ model: Approval, as: 'approval', attributes: ['submissionStatus'] }],
+      include: [{ model: ActivityReportApproval, as: 'approval', attributes: ['submissionStatus'] }],
     });
 
     expect(deletedReport.approval.submissionStatus).toBe(REPORT_STATUSES.DELETED);

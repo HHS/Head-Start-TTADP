@@ -6,7 +6,7 @@ import {
   Grant,
   OtherEntity,
   Recipient,
-  Approval,
+  ActivityReportApproval,
   sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
@@ -57,7 +57,7 @@ export default async function overview(scopes) {
     includeIgnoreAttributes: false,
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
         where: { calculatedStatus: REPORT_STATUSES.APPROVED },
         required: true,
@@ -110,7 +110,7 @@ export default async function overview(scopes) {
       [Op.and]: [scopes.activityReport],
     },
     include: [{
-      model: Approval,
+      model: ActivityReportApproval,
       as: 'approval',
       where: { calculatedStatus: REPORT_STATUSES.APPROVED },
       required: true,
@@ -141,7 +141,7 @@ export default async function overview(scopes) {
     includeIgnoreAttributes: false,
     include: [
       {
-        model: Approval,
+        model: ActivityReportApproval,
         as: 'approval',
         where: { calculatedStatus: REPORT_STATUSES.APPROVED },
         required: true,

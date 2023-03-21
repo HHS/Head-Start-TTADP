@@ -10,7 +10,7 @@ import {
   ActivityReport,
   Objective,
   ActivityRecipient,
-  Approval,
+  ActivityReportApproval,
   Topic,
   Permission,
   User,
@@ -431,7 +431,7 @@ export async function getGoalsByActivityRecipient(
             required: false,
             include: [
               {
-                model: Approval,
+                model: ActivityReportApproval,
                 as: 'approval',
                 where: { calculatedStatus: REPORT_STATUSES.APPROVED },
                 required: true,

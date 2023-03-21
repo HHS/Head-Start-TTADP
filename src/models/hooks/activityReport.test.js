@@ -5,7 +5,7 @@ import db, {
   ActivityReportGoal,
   ActivityRecipient,
   ActivityReportObjective,
-  Approval,
+  ActivityReportApproval,
   Goal,
   Objective,
   Recipient,
@@ -184,16 +184,19 @@ describe('activity report model hooks', () => {
     });
 
     it('submitting the report should set the goal status to "Not Started"', async () => {
-      const testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
+      const testReport = await ActivityReport.findByPk(report.id, {
+        include: [{
+          model: ActivityReportApproval,
+          as: 'approval',
+        }],
+      });
 
-      await Approval.update({
+      await ActivityReportApproval.update({
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       }, {
         where: {
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: testReport.id,
-          tier: 0,
+          activityReportId: testReport.id,
         },
       });
 
@@ -205,7 +208,12 @@ describe('activity report model hooks', () => {
       let testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
 
-      let testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
+      let testReport = await ActivityReport.findByPk(report.id, {
+        include: [{
+          model: ActivityReportApproval,
+          as: 'approval',
+        }],
+      });
       expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
       await upsertReportApprover({
@@ -214,7 +222,12 @@ describe('activity report model hooks', () => {
         status: APPROVER_STATUSES.APPROVED,
       });
 
-      testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
+      testReport = await ActivityReport.findByPk(report.id, {
+        include: [{
+          model: ActivityReportApproval,
+          as: 'approval',
+        }],
+      });
       expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
 
       const testGoal = await Goal.findByPk(goal.id);

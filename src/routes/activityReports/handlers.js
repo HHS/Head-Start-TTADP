@@ -4,9 +4,9 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport as ActivityReportModel,
-  Approval,
+  ActivityReportApproval,
   Role,
-  Collaborator,
+  ActivityReportCollaborator,
   User as UserModel,
   ActivityReportGoal,
   sequelize,
@@ -652,11 +652,11 @@ export async function submitReport(req, res) {
       attributes: ['id', ['$approval.calculatedStatus$', 'calculatedStatus']],
       include: [
         {
-          model: Approval,
+          model: ActivityReportApproval,
           as: 'approval',
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',
           required: false,

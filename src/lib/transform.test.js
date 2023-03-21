@@ -3,7 +3,7 @@ import {
   ActivityReport,
   User,
   ActivityRecipient,
-  Collaborator,
+  ActivityReportCollaborator,
   ActivityReportGoal,
   Grant,
   Goal,
@@ -391,7 +391,7 @@ describe('activityReportToCsvRecord', () => {
     const report = await ActivityReport.build(mockReport, {
       include: [
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           include: [{
             model: User,
@@ -401,7 +401,7 @@ describe('activityReportToCsvRecord', () => {
         },
         { model: User, as: 'lastUpdatedBy' },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'collaborators',
           include: [{
             model: User,
@@ -415,7 +415,7 @@ describe('activityReportToCsvRecord', () => {
           include: [{ model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] }],
         },
         {
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'approvers',
           include: [{ model: User, as: 'user' }],
         },
@@ -642,7 +642,12 @@ describe('activityReportToCsvRecord', () => {
   });
 
   it('does not provide values for builders that are not strings or functions', async () => {
-    const report = await ActivityReport.build(mockReport, { include: [{ model: Collaborator, as: 'owner' }, { model: User, as: 'lastUpdatedBy' }] });
+    const report = await ActivityReport.build(mockReport, {
+      include: [
+        { model: ActivityReportCollaborator, as: 'owner' },
+        { model: User, as: 'lastUpdatedBy' },
+      ],
+    });
     const output = await activityReportToCsvRecord(report, [1, true, 'regionId']);
     expect(output).toMatchObject({ regionId: 14 });
   });

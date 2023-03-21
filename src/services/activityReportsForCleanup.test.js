@@ -4,7 +4,7 @@ import {
   User,
   Recipient,
   Grant,
-  Collaborator,
+  ActivityReportCollaborator,
 } from '../models';
 import {
   activityReportsForCleanup,
@@ -156,7 +156,7 @@ describe('Activity report cleanup service', () => {
     try {
       const reportsToDestroy = await ActivityReport.findAll({
         include: [{
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: {
             userId: [mockAuthor.id, mockPhantomUser.id],

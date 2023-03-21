@@ -21,7 +21,7 @@ import {
 import { auditLogger as logger } from '../../logger';
 
 import db, {
-  ActivityReport, Collaborator, User,
+  ActivityReport, ActivityReportCollaborator, User,
 } from '../../models';
 import { usersWithSetting } from '../../services/userSettings';
 import { createOrUpdate } from '../../services/activityReports';
@@ -850,7 +850,7 @@ describe('mailer tests', () => {
       // });
       await ActivityReport.destroy({
         include: [{
-          model: Collaborator,
+          model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: mockUser.id },
           required: true,

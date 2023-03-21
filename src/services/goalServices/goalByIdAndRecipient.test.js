@@ -11,7 +11,7 @@ import db, {
   ObjectiveTopic,
   ObjectiveResource,
   ObjectiveFile,
-  Approval,
+  ActivityReportApproval,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
@@ -324,14 +324,12 @@ describe('goalById', () => {
   });
 
   it('lets us know when the associated data is on an approved activity report', async () => {
-    await Approval.update({
+    await ActivityReportApproval.update({
       submittedStatus: 'approved',
       calculatedStatus: 'approved',
     }, {
       where: {
-        entityType: ENTITY_TYPES.REPORT,
-        entityId: report.id,
-        tier: 0,
+        activityReportId: report.id,
       },
       individualHooks: true,
     });
