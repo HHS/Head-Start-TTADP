@@ -37,7 +37,6 @@ import SCOPES from '../middleware/scopeConstants';
 import {
   APPROVER_STATUSES,
   REPORT_STATUSES,
-  ENTITY_TYPES,
 } from '../constants';
 import { removeReportApprover, upsertReportEditor, upsertReportApprover } from './collaborators';
 import { createReport, destroyReport } from '../testUtils';
@@ -1691,11 +1690,6 @@ describe('Activity report service', () => {
         );
         const test = await ActivityReport.findOne({
           where: { id: report.id },
-          include: [{
-            model: ActivityReportApproval,
-            as: 'approval',
-            attributes: ['calculatedStatus'],
-          }],
         });
         expect(test.approval.calculatedStatus).toBe('draft');
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');

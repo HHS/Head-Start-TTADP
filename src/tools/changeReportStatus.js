@@ -3,7 +3,6 @@ import {
   ActivityReport,
   ActivityReportApproval,
 } from '../models';
-import { ENTITY_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 
 /**

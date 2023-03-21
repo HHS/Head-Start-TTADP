@@ -1,5 +1,5 @@
 const { Op, Model } = require('sequelize');
-const { COLLABORATOR_TYPES, ENTITY_TYPES } = require('../constants');
+const { COLLABORATOR_TYPES } = require('../constants');
 const {
   beforeValidate,
   beforeUpdate,

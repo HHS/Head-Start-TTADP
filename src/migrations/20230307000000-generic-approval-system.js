@@ -1,16 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      const ENTITY_TYPES = {
-        REPORT: 'report',
-        REPORTGOAL: 'report_goal',
-        REPORTOBJECTIVE: 'report_objective',
-        GOAL: 'goal',
-        GOALTEMPLATE: 'goal_template',
-        OBJECTIVE: 'objective',
-        OBJECTIVETEMPLATE: 'objectiveTemplate',
-      };
-
       const APPROVAL_RATIO = {
         ANY: 'any',
         MAJORITY: 'majority',

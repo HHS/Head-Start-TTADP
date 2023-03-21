@@ -100,13 +100,11 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       'duration',
     ],
     where: {
-      [Op.and]: [scopes.activityReport],
+      [Op.and]: [
+        scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
+      ],
     },
-    include: [{
-      model: ActivityReportApproval,
-      as: 'approval',
-      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-    }],
     raw: true,
     includeIgnoreAttributes: false,
     order: [['startDate', 'ASC']],

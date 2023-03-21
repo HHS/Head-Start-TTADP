@@ -6,7 +6,6 @@ import {
   REPORT_STATUSES,
   DECIMAL_BASE,
   REPORTS_PER_PAGE,
-  ENTITY_TYPES,
   COLLABORATOR_TYPES,
   RECIPIENT_TYPE,
 } from '../constants';
@@ -445,10 +444,6 @@ export async function activityReportAndRecipientsById(
     },
     include: [
       {
-        model: ActivityReportApproval,
-        as: 'approval',
-      },
-      {
         attributes: [
           ['id', 'value'],
           ['title', 'label'],
@@ -669,13 +664,13 @@ export async function activityReports(
         'startDate',
         'lastSaved',
         'topics',
-        'calculatedStatus',
+        ['$"activityReportApproval"."calculatedStatus"$', 'calculatedStatus'],
         'regionId',
         'updatedAt',
         'sortedTopics',
         'legacyId',
         'createdAt',
-        'approvedAt',
+        ['$"activityReportApproval"."approvedAt"$', 'approvedAt'],
         'creatorRole',
         'creatorName',
         sequelize.literal(
@@ -889,10 +884,6 @@ export async function activityReportsForCleanup(userId) {
       ],
       include: [
         {
-          model: ActivityReportApproval,
-          as: 'approval',
-        },
-        {
           required: false,
           model: ActivityReportCollaborator,
           as: 'owner',
@@ -962,15 +953,15 @@ export async function activityReportAlerts(userId, {
         [Op.and]: scopes,
         [Op.or]: [
           {
-            '$approval.calculatedStatus$': { [Op.in]: [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION] },
-            '$approvers.userId$': userId,
+            '$activityReportApproval.calculatedStatus$': { [Op.in]: [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION] },
+            '$activityReportApproval.userId$': userId,
           },
           {
             [Op.and]: [
               {
                 [Op.and]: [
                   {
-                    '$approval.calculatedStatus$': { [Op.ne]: REPORT_STATUSES.APPROVED },
+                    '$activityReportApproval.calculatedStatus$': { [Op.ne]: REPORT_STATUSES.APPROVED },
                   },
                 ],
               },
@@ -986,7 +977,7 @@ export async function activityReportAlerts(userId, {
         'id',
         'displayId',
         'startDate',
-        [sequelize.col('approval.calculatedStatus'), 'calculatedStatus'],
+        [sequelize.col('activityReportApproval.calculatedStatus'), 'calculatedStatus'],
         'regionId',
         [sequelize.col('owner.userId'), 'userId'],
         'createdAt',
@@ -1058,7 +1049,7 @@ export async function activityReportAlerts(userId, {
       include: [
         {
           model: ActivityReportApproval,
-          as: 'approval',
+          as: 'activityReportApproval',
           attributes: ['calculatedStatus'],
         },
         {
@@ -1348,7 +1339,6 @@ export async function createOrUpdate(newActivityReport, report) {
   // // Approvers are removed if approverUserIds is an empty array
   // if (approverUserIds) { // TODO: Remove this
   //   await syncRatifiers(
-  //     ENTITY_TYPES.REPORT,
   //     savedReport.id,
   //     approverUserIds.map((id) => { const approver = { userId: id }; return approver; }),
   //   );
@@ -1425,10 +1415,10 @@ async function getDownloadableActivityReports(where, separate = true) {
       include: [
         'displayId',
         'createdAt',
-        'approvedAt',
         'creatorRole',
         'creatorName',
-        ['$"approval"."submittedAt"$', 'submittedDate'],
+        ['$"activityReportApproval"."approvedAt"$', 'approvedAt'],
+        ['$"activityReportApproval"."submittedAt"$', 'submittedDate'],
       ],
       exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
     },

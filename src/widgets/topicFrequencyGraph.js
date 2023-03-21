@@ -40,11 +40,6 @@ export default async function topicFrequencyGraph(scopes) {
       },
       include: [{
         attributes: [],
-        model: ActivityReportApproval,
-        as: 'approval',
-        required: true,
-      }, {
-        attributes: [],
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
         required: false,

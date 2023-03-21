@@ -13,7 +13,7 @@ import db, {
   OtherEntity,
   Grant,
 } from '..';
-import { REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
+import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,

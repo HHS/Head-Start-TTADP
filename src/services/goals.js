@@ -26,7 +26,6 @@ import {
   DECIMAL_BASE,
   REPORT_STATUSES,
   OBJECTIVE_STATUS,
-  ENTITY_TYPES,
   GOAL_STATUS,
   SOURCE_FIELD,
 } from '../constants';

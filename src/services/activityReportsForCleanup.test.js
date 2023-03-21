@@ -9,7 +9,7 @@ import {
 import {
   activityReportsForCleanup,
 } from './activityReports';
-import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
+import { REPORT_STATUSES } from '../constants';
 import {
   upsertReportApprover,
   upsertReportEditor,

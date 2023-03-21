@@ -1,6 +1,5 @@
 import { QueryTypes } from 'sequelize';
 import { sequelize } from '../models';
-import { ENTITY_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 
 const runSelectQuery = (query) => (

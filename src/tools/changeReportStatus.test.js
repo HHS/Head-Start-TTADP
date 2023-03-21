@@ -78,7 +78,7 @@ describe('changeStatus', () => {
 
     const deletedReport = await ActivityReport.unscoped().findOne({
       where: { id: report.id },
-      include: [{ model: ActivityReportApproval, as: 'approval', attributes: ['submissionStatus'] }],
+      include: [{ model: ActivityReportApproval, as: 'activityReportApproval', attributes: ['submissionStatus'] }],
     });
 
     expect(deletedReport.approval.submissionStatus).toBe(REPORT_STATUSES.DELETED);

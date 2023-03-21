@@ -5,16 +5,6 @@ const COLLABORATOR_TYPES = {
   APPROVER: 'approver',
 };
 
-const ENTITY_TYPES = {
-  REPORT: 'report',
-  REPORTGOAL: 'report_goal',
-  REPORTOBJECTIVE: 'report_objective',
-  GOAL: 'goal',
-  GOALTEMPLATE: 'goal_template',
-  OBJECTIVE: 'objective',
-  OBJECTIVETEMPLATE: 'objectiveTemplate',
-};
-
 const ENTITY_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',

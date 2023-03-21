@@ -1,5 +1,5 @@
 const { Op, Model } = require('sequelize');
-const { COLLABORATOR_TYPES, ENTITY_TYPES, CREATION_METHOD } = require('../constants');
+const { COLLABORATOR_TYPES, CREATION_METHOD } = require('../constants');
 const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 

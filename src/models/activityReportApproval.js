@@ -6,7 +6,6 @@ const {
 } = require('./hooks/activityReportApproval');
 // const { validateSubmissionStatus } = require('./validation/approval');
 const {
-  ENTITY_TYPES,
   COLLABORATOR_TYPES,
   APPROVAL_RATIO,
   REPORT_STATUSES,

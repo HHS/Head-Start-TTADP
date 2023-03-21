@@ -21,7 +21,7 @@ import db, {
 import { createReport, destroyReport } from '../../testUtils';
 import { processObjectiveForResourcesById } from '../resource';
 import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
-import { FILE_STATUSES, REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
+import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
 
 describe('goalById', () => {
   let grantRecipient;

@@ -40,7 +40,6 @@ import {
   REPORT_STATUSES,
   DECIMAL_BASE,
   USER_SETTINGS,
-  ENTITY_TYPES,
   COLLABORATOR_TYPES,
 } from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';

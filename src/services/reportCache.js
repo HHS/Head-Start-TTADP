@@ -20,7 +20,6 @@ const {
   ObjectiveResource,
   ObjectiveTopic,
 } = require('../models');
-const { ENTITY_TYPES } = require('../constants');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.fileId);

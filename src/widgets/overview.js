@@ -52,16 +52,13 @@ export default async function overview(scopes) {
     ],
     raw: true,
     where: {
-      [Op.and]: [scopes.activityReport],
+      [Op.and]: [
+        scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
+      ],
     },
     includeIgnoreAttributes: false,
     include: [
-      {
-        model: ActivityReportApproval,
-        as: 'approval',
-        where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-        required: true,
-      },
       {
         model: ActivityRecipient,
         as: 'activityRecipients',
@@ -107,14 +104,11 @@ export default async function overview(scopes) {
       'numberOfParticipants',
     ],
     where: {
-      [Op.and]: [scopes.activityReport],
+      [Op.and]: [
+        scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
+      ],
     },
-    include: [{
-      model: ActivityReportApproval,
-      as: 'approval',
-      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-      required: true,
-    }],
     raw: true,
   });
 
@@ -135,17 +129,14 @@ export default async function overview(scopes) {
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."otherEntityId"'))), 'numOtherEntities'],
     ],
     where: {
-      [Op.and]: [scopes.activityReport],
+      [Op.and]: [
+        scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
+      ],
     },
     raw: true,
     includeIgnoreAttributes: false,
     include: [
-      {
-        model: ActivityReportApproval,
-        as: 'approval',
-        where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-        required: true,
-      },
       {
         model: ActivityRecipient,
         as: 'activityRecipients',

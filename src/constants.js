@@ -14,15 +14,6 @@ export const ENTITY_STATUSES = {
   NEEDS_ACTION: 'needs_action',
 };
 
-export const ENTITY_TYPES = {
-  REPORT: 'report',
-  REPORTGOAL: 'report_goal',
-  REPORTOBJECTIVE: 'report_objective',
-  GOAL: 'goal',
-  GOALTEMPLATE: 'goal_template',
-  OBJECTIVE: 'objective',
-  OBJECTIVETEMPLATE: 'objectiveTemplate',
-};
 export const APPROVAL_RATIO = {
   ANY: 'any',
   MAJORITY: 'majority',

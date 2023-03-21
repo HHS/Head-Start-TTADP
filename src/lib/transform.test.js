@@ -255,7 +255,7 @@ describe('activityReportToCsvRecord', () => {
     regionId: 14,
     reason: ['Test CSV Export'],
     approval: {
-      submissionStatus: 'approved',
+      submissionStatus: REPORT_STATUSES.APPROVED,
       calculatedStatus: REPORT_STATUSES.APPROVED,
       approvedAt: new Date(),
     },

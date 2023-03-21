@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-import { ENTITY_TYPES, COLLABORATOR_TYPES } from '../../constants';
+import { COLLABORATOR_TYPES } from '../../constants';
 
 function userQuery(escapedRoles) {
   return `

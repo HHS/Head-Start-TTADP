@@ -1,5 +1,5 @@
 import { filterAssociation } from './utils';
-import { ENTITY_TYPES, COLLABORATOR_TYPES } from '../../constants';
+import { COLLABORATOR_TYPES } from '../../constants';
 // TODO: fix
 const author = `
 SELECT

@@ -3,7 +3,6 @@ import { submitReport, unlockReport } from './handlers';
 import {
   APPROVER_STATUSES,
   REPORT_STATUSES,
-  ENTITY_TYPES,
   COLLABORATOR_TYPES,
 } from '../../constants';
 import * as mailer from '../../lib/mailer';

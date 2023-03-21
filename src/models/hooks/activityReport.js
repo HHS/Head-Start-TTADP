@@ -2,7 +2,6 @@ const { Op } = require('sequelize');
 const {
   REPORT_STATUSES,
   OBJECTIVE_STATUS,
-  ENTITY_TYPES,
   APPROVAL_RATIO,
   AWS_ELASTIC_SEARCH_INDEXES,
 } = require('../../constants');
@@ -403,13 +402,10 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               model: sequelize.models.ActivityReport,
               as: 'activityReports',
               required: false,
-              include: [{
-                model: sequelize.models.ActivityReportApproval,
-                as: 'approval',
-                required: true,
-                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-              }],
-              where: { id: { [Op.not]: instance.id } },
+              where: {
+                id: { [Op.not]: instance.id },
+                '$"activityReportApproval"."calculatedStatus"$': REPORT_STATUSES.APPROVED,
+              },
             },
           ],
           includeIgnoreAttributes: false,
@@ -564,18 +560,15 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               model: sequelize.models.ActivityReport,
               as: 'activityReports',
               required: false,
-              include: [{
-                model: sequelize.models.ActivityReportApproval,
-                as: 'approval',
-                required: true,
-                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-              }],
-              where: { id: { [Op.not]: instance.id } },
+              where: {
+                id: { [Op.not]: instance.id },
+                '$"activityReportApproval"."calculatedStatus"$': REPORT_STATUSES.APPROVED,
+              },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Goal"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->activityReportApproval"."calculatedStatus") = 0'),
           transaction: options.transaction,
         });
       } catch (e) {

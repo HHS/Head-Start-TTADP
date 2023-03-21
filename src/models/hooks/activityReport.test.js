@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { APPROVER_STATUSES, REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
 import db, {
   ActivityReport,
   ActivityReportGoal,
@@ -184,12 +184,7 @@ describe('activity report model hooks', () => {
     });
 
     it('submitting the report should set the goal status to "Not Started"', async () => {
-      const testReport = await ActivityReport.findByPk(report.id, {
-        include: [{
-          model: ActivityReportApproval,
-          as: 'approval',
-        }],
-      });
+      const testReport = await ActivityReport.findByPk(report.id);
 
       await ActivityReportApproval.update({
         submissionStatus: REPORT_STATUSES.SUBMITTED,
@@ -208,12 +203,7 @@ describe('activity report model hooks', () => {
       let testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
 
-      let testReport = await ActivityReport.findByPk(report.id, {
-        include: [{
-          model: ActivityReportApproval,
-          as: 'approval',
-        }],
-      });
+      let testReport = await ActivityReport.findByPk(report.id);
       expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
       await upsertReportApprover({
@@ -222,12 +212,7 @@ describe('activity report model hooks', () => {
         status: APPROVER_STATUSES.APPROVED,
       });
 
-      testReport = await ActivityReport.findByPk(report.id, {
-        include: [{
-          model: ActivityReportApproval,
-          as: 'approval',
-        }],
-      });
+      testReport = await ActivityReport.findByPk(report.id);
       expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
 
       const testGoal = await Goal.findByPk(goal.id);

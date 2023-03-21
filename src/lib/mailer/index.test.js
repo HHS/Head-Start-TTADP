@@ -107,7 +107,7 @@ const mockRecipient = {
 const reportObject = {
   activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.DRAFT,
-  userId: mockUser.id,
+  owner: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
 };

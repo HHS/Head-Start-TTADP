@@ -2,7 +2,6 @@ const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const {
   COLLABORATOR_TYPES,
-  ENTITY_TYPES,
   REPORT_STATUSES,
   USER_ROLES,
   NEXTSTEP_NOTETYPE,
@@ -148,7 +147,7 @@ export default (sequelize, DataTypes) => {
         include: [{
           attributes: [],
           model: models.ActivityReportApproval,
-          as: 'approval',
+          as: 'activityReportApproval',
           where: {
             submissionStatus: {
               [Op.ne]: 'deleted',
@@ -279,14 +278,13 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         if (this.approval) {
-          const raw = this.owner.get().submittedAt;
+          const raw = this.approval.get().submittedAt;
           if (raw) {
             return moment(raw).format('MM/DD/YYYY');
           }
         }
         return null;
       },
-      allowNull: true,
     },
     updatedAt: {
       allowNull: false,
@@ -308,8 +306,16 @@ export default (sequelize, DataTypes) => {
       },
     },
     approvedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.approval) {
+          const raw = this.approval.get().approvedAt;
+          if (raw) {
+            return raw;
+          }
+        }
+        return null;
+      },
     },
     imported: {
       type: DataTypes.JSONB,
