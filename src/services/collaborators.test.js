@@ -120,15 +120,12 @@ describe('collaborators services', () => {
         const report1 = await createOrUpdate(submittedReport);
         // One approved
         await upsertApprover({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report1.id,
+          activityReportId: report1.id,
           userId: mockManager.id,
           collaboratorTypes: [COLLABORATOR_TYPES.APPROVER],
-          tier: 1,
         });
 
         await setApproverStatus(
-          ENTITY_TYPES.REPORT,
           report1.id,
           mockManager.id,
           APPROVER_STATUSES.APPROVED,
@@ -136,17 +133,14 @@ describe('collaborators services', () => {
 
         // One pending
         await upsertApprover({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report1.id,
+          activityReportId: report1.id,
           userId: secondMockManager.id,
           collaboratorTypes: [COLLABORATOR_TYPES.APPROVER],
-          tier: 1,
         });
         // Works with managed transaction
         await sequelize.transaction(async () => {
           // Pending updated to needs_action
           const approver = await setApproverStatus(
-            ENTITY_TYPES.REPORT,
             report1.id,
             secondMockManager.id,
             APPROVER_STATUSES.NEEDS_ACTION,
@@ -163,10 +157,8 @@ describe('collaborators services', () => {
         const report2 = await createOrUpdate(submittedReport);
         // One pending
         await upsertApprover({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report2.id,
+          activityReportId: report2.id,
           userId: mockManager.id,
-          tier: 1,
         });
         // Pending updated to approved
         const approver = await setApproverStatus(

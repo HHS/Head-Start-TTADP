@@ -15,7 +15,7 @@ const { auditLogger } = require('../../logger');
  */
 const calculateStatusFromApprovals = (statuses, ratioRequired) => {
   const num = statuses.length.toFixed(2);
-  const numRatified = statuses
+  const numApproved = statuses
     .filter((status) => status === RATIFIER_STATUSES.APPROVED).length.toFixed(2);
   const numNeedsAction = statuses
     .filter((status) => status === RATIFIER_STATUSES.NEEDS_ACTION).length.toFixed(2);
@@ -24,16 +24,16 @@ const calculateStatusFromApprovals = (statuses, ratioRequired) => {
   if (num > 0) {
     switch (ratioRequired) {
       case APPROVAL_RATIO.ALL:
-        if (num === numRatified) return ENTITY_STATUSES.APPROVED;
+        if (num === numApproved) return ENTITY_STATUSES.APPROVED;
         break;
       case APPROVAL_RATIO.TWOTHIRDS:
-        if (numRatified / num >= 0.66) return ENTITY_STATUSES.APPROVED;
+        if (numApproved / num >= 0.66) return ENTITY_STATUSES.APPROVED;
         break;
       case APPROVAL_RATIO.MAJORITY:
-        if (numRatified / num >= 0.50) return ENTITY_STATUSES.APPROVED;
+        if (numApproved / num >= 0.50) return ENTITY_STATUSES.APPROVED;
         break;
       case APPROVAL_RATIO.ANY:
-        if (numRatified >= 0.00) return ENTITY_STATUSES.APPROVED;
+        if (numApproved >= 0.00) return ENTITY_STATUSES.APPROVED;
         break;
       default:
     }
@@ -57,31 +57,27 @@ const calculateStatus = (ratifierStatus, statuses, ratioRequired) => {
   return calculateStatusFromApprovals(statuses, ratioRequired);
 };
 
-const getApprovalByEntityTier = async (
+const getApproval = async (
   sequelize,
-  entityType,
-  entityId,
+  activityReportId,
   options,
-) => sequelize.models.Approval.findOne({
+) => sequelize.models.ActivityReportApproval.findOne({
   attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt', 'ratioRequired'],
   where: {
-    entityType,
-    entityId,
+    activityReportId,
   },
   transaction: options.transaction,
 });
 
-const getRatifierStatusesForTier = async (
+const getApproverStatuses = async (
   sequelize,
-  entityType,
-  entityId,
+  activityReportId,
   options,
-) => sequelize.models.Collaborator.findAll({
+) => sequelize.models.ActivityReportCollaborator.findAll({
   attributes: ['status'],
   raw: true,
   where: {
-    entityType,
-    entityId,
+    activityReportId,
     collaboratorTypes: { [Op.contains]: [`${COLLABORATOR_TYPES.APPROVER}`] },
   },
   transaction: options.transaction,
@@ -89,14 +85,12 @@ const getRatifierStatusesForTier = async (
 
 const updateApprovalCalculatedStatus = async (
   sequelize,
-  entityType,
-  entityId,
+  activityReportId,
   updatedFields,
   options,
-) => sequelize.models.Approval.update(updatedFields, {
+) => sequelize.models.ActivityReportApproval.update(updatedFields, {
   where: {
-    entityType,
-    entityId,
+    activityReportId,
   },
   individualHooks: true,
   transaction: options.transaction,
@@ -105,27 +99,25 @@ const updateApprovalCalculatedStatus = async (
 const propagateCalculatedStatus = async (sequelize, instance, options) => {
   auditLogger.debug(JSON.stringify({ name: 'propagateCalculatedStatus', instance }));
   if (instance.collaboratorTypes.includes(COLLABORATOR_TYPES.APPROVER)) {
-    const approval = await getApprovalByEntityTier(
+    const approval = await getApproval(
       sequelize,
-      instance.entityType,
-      instance.entityId,
+      instance.activityReportId,
       options,
     );
-    auditLogger.debug(JSON.stringify({ name: 'getApprovalByEntityTier', approval }));
+    auditLogger.debug(JSON.stringify({ name: 'getApproval', approval }));
     // We allow users to create approvers before submitting the entity.
     // Calculated status should only exist for submitted entities.
     if (approval.submissionStatus === ENTITY_STATUSES.SUBMITTED) {
-      const foundRatifierStatuses = await getRatifierStatusesForTier(
+      const foundApproverStatuses = await getApproverStatuses(
         sequelize,
-        instance.entityType,
-        instance.entityId,
+        instance.activityReportId,
         options,
       );
-      auditLogger.debug(JSON.stringify({ name: 'getRatifierStatusesForTier', foundRatifierStatuses }));
-      const ratifierStatuses = foundRatifierStatuses.map((a) => a.status);
+      auditLogger.debug(JSON.stringify({ name: 'getApproverStatuses', foundApproverStatuses }));
+      const approverStatuses = foundApproverStatuses.map((a) => a.status);
       const newCalculatedStatus = calculateStatus(
         instance.status,
-        ratifierStatuses,
+        approverStatuses,
         approval.ratioRequired,
       );
       auditLogger.debug(JSON.stringify({ name: 'calculateStatus', newCalculatedStatus }));
@@ -141,9 +133,7 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
 
       await updateApprovalCalculatedStatus(
         sequelize,
-        instance.entityType,
-        instance.entityId,
-        instance.tier,
+        instance.activityReportId,
         {
           calculatedStatus: newCalculatedStatus,
           approvedAt,
@@ -155,22 +145,18 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
 };
 
 const deleteUnusedApprovals = async (sequelize, instance, options) => {
-  const collaborators = await sequelize.models.Collaborator.findAll({
+  const collaborators = await sequelize.models.ActivityReportCollaborator.findAll({
     where: {
-      entityType: instance.entityType,
-      entityId: instance.entityId,
-      tier: instance.tier,
+      activityReportId: instance.activityReportId,
       collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
     },
     transaction: options.transaction,
   });
 
   if (collaborators.length === 0) {
-    return sequelize.models.Approval.destroy({
+    return sequelize.models.ActivityReportApproval.destroy({
       where: {
-        entityType: instance.entityType,
-        entityId: instance.entityId,
-        tier: instance.tier,
+        activityReportId: instance.activityReportId,
       },
       individualHooks: true,
       transaction: options.transaction,
@@ -185,7 +171,7 @@ const deleteOnEmptyCollaboratorTypes = async (sequelize, instance, options) => {
     && changed.includes('collaboratorTypes')
     && Array.isArray(instance.collaboratorTypes)
     && instance.collaboratorTypes.length === 0) {
-    await sequelize.models.Collaborator.destroy({
+    await sequelize.models.ActivityReportCollaborator.destroy({
       where: { id: instance.id },
       individualHooks: true,
       transaction: options.transaction,
@@ -199,15 +185,15 @@ const syncRolesForCollaborators = async (sequelize, instance, options) => {
     transaction: options.transaction,
   });
   return Promise.all([
-    ...userRoles.map(async (userRole) => sequelize.models.CollaboratorRole.upsert({
-      collaboratorId: instance.id,
+    ...userRoles.map(async (userRole) => sequelize.models.ActivityReportCollaboratorRole.upsert({
+      activityReportCollaboratorId: instance.id,
       roleId: userRole.roleId,
     }, {
       transaction: options.transaction,
     })),
-    await sequelize.models.CollaboratorRole.destroy({
+    await sequelize.models.ActivityReportCollaboratorRole.destroy({
       where: {
-        collaboratorId: instance.id,
+        activityReportCollaboratorId: instance.id,
         roleId: { [Op.notIn]: userRoles.map((userRole) => userRole.roleId) },
       },
       individualHooks: true,
@@ -222,12 +208,10 @@ const createApproval = async (sequelize, instance, options) => {
     && changed.includes('collaboratorTypes')
     && Array.isArray(instance.collaboratorTypes)
     && instance.collaboratorTypes.includes(COLLABORATOR_TYPES.APPROVER)) {
-    await sequelize.models.Approval.findOrCreate(
+    await sequelize.models.ActivityReportApproval.findOrCreate(
       {
         where: {
-          entityType: instance.entityType,
-          entityId: instance.entityId,
-          tier: instance.tier,
+          activityReportId: instance.activityReportId,
         },
         defaults: {
           ratioRequired: APPROVAL_RATIO.ALL,
@@ -243,8 +227,8 @@ const cleanUpAllCollaboratorRoles = async (
   sequelize,
   instance,
   options,
-) => sequelize.models.CollaboratorRole.destroy({
-  where: { collaboratorId: instance.id },
+) => sequelize.models.ActivityReportCollaboratorRole.destroy({
+  where: { activityReportCollaboratorId: instance.id },
   individualHooks: true,
   transaction: options.transaction,
 });
@@ -306,7 +290,7 @@ const afterUpsert = async (sequelize, created, options) => {
 export {
   calculateStatusFromApprovals,
   calculateStatus,
-  getApprovalByEntityTier,
+  getApproval,
   updateApprovalCalculatedStatus,
   propagateCalculatedStatus,
   cleanUpAllCollaboratorRoles,

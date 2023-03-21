@@ -1728,8 +1728,7 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
               `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
                 FROM "ZALActivityReportApprovals"
                 where dml_timestamp > ${date}
-                AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}'
-                AND (new_row_data->'tier')::NUMERIC = 0)`,
+                AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}'`,
             ),
           },
         },
@@ -1772,8 +1771,7 @@ export async function activityReportsSubmittedByDate(userId, date) {
           `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
             FROM "ZALActivityReportApprovals"
             where dml_timestamp > ${date}
-            AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}'
-            AND (new_row_data->'tier')::NUMERIC = 0)`,
+            AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}'`,
         ),
       },
     },
@@ -1820,8 +1818,7 @@ export async function activityReportsApprovedByDate(userId, date) {
               `(SELECT DISTINCT (new_row_data->'activityReportId')::NUMERIC
                 FROM "ZALActivityReportApprovals"
                 where dml_timestamp > ${date}
-                AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}'
-                AND (new_row_data->'tier')::NUMERIC = 0)`,
+                AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}'`,
             ),
           },
         },

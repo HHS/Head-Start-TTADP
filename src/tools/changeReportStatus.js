@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import {
   ActivityReport,
-  Approval,
+  ActivityReportApproval,
 } from '../models';
 import { ENTITY_TYPES } from '../constants';
 import { auditLogger } from '../logger';
@@ -18,12 +18,12 @@ export default async function changeReportStatus(ids, status) {
 
     if (report) {
       auditLogger.info(`Changing status of report: ${id} to ${status}`);
-      await Approval.update(
+      await ActivityReportApproval.update(
         {
           submissionStatus: status,
         },
         {
-          where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id },
+          where: { activityReportId: report.id },
           individualHooks: true,
         },
       );

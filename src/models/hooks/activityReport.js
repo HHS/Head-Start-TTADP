@@ -47,8 +47,8 @@ const cleanUpAllCollaborators = async (
   sequelize,
   instance,
   options,
-) => sequelize.models.Collaborator.destroy({
-  where: { entityType: ENTITY_TYPES.REPORT, entityId: instance.id },
+) => sequelize.models.ActivityReportCollaborator.destroy({
+  where: { activityReportId: instance.id },
   individualHooks: true,
   transaction: options.transaction,
 });
@@ -57,8 +57,8 @@ const cleanUpAllApprovals = async (
   sequelize,
   instance,
   options,
-) => sequelize.models.Approval.destroy({
-  where: { entityType: ENTITY_TYPES.REPORT, entityId: instance.id },
+) => sequelize.models.ActivityReportApproval.destroy({
+  where: { activityReportId: instance.id },
   individualHooks: true,
   transaction: options.transaction,
 });
@@ -404,7 +404,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               as: 'activityReports',
               required: false,
               include: [{
-                model: sequelize.models.Approval,
+                model: sequelize.models.ActivityReportApproval,
                 as: 'approval',
                 required: true,
                 where: { calculatedStatus: REPORT_STATUSES.APPROVED },
@@ -565,7 +565,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               as: 'activityReports',
               required: false,
               include: [{
-                model: sequelize.models.Approval,
+                model: sequelize.models.ActivityReportApproval,
                 as: 'approval',
                 required: true,
                 where: { calculatedStatus: REPORT_STATUSES.APPROVED },

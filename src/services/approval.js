@@ -1,7 +1,7 @@
 import { ActivityReportApproval } from '../models';
 
-export async function setRatioRequired(entityType, entityId, ratioRequired) {
-  return ActivityReportApproval.update({ ratioRequired }, { where: { entityType, entityId } });
+export async function setRatioRequired(approvalModel, foreignKeyId, genericId, ratioRequired) {
+  return approvalModel.update({ ratioRequired }, { where: { [foreignKeyId]: genericId } });
 }
 
 export async function getRatioRequired(approvalModel, foreignKeyId, genericId) {
@@ -11,6 +11,13 @@ export async function getRatioRequired(approvalModel, foreignKeyId, genericId) {
   });
   return approval.ratioRequired;
 }
+
+export const setReportRatioRequired = async (genericId, ratioRequired) => setRatioRequired(
+  ActivityReportApproval,
+  'activityReportId',
+  genericId,
+  ratioRequired,
+);
 
 export const getReportRatioRequired = async (genericId) => getRatioRequired(
   ActivityReportApproval,

@@ -56,10 +56,8 @@ const dataValidation = async () => {
       "submissionStatus",
       count(*)
     FROM "ActivityReports"
-    INNER JOIN "Approvals"
-    ON "Approvals"."entityType" = '${ENTITY_TYPES.REPORT}'
-    AND "Approvals"."entityId" = "ActivityReports".id
-    AND "Approvals".tier = 0
+    INNER JOIN "ActivityReportApprovals"
+    ON "ActivityReportApprovals"."activityReportId" = "ActivityReports".id
     GROUP BY "regionId", "submissionStatus"
     ORDER BY "regionId", "submissionStatus"`;
   results = await runSelectQuery(query);

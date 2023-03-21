@@ -5,10 +5,9 @@ const author = `
 SELECT
   "Collaborators"."entityId"
 FROM "Users" "Users"
-INNER JOIN "Collaborators" "Collaborators"
+INNER JOIN "ActivityReportCollaborators" "Collaborators"
 ON "Collaborators"."userId" = "Users"."id"
 AND '${COLLABORATOR_TYPES.OWNER}' = ANY ("Collaborators"."collaboratorTypes")
-AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
 WHERE "Users".name`;
 
 export function withAuthor(names) {

@@ -146,7 +146,7 @@ export default (sequelize, DataTypes) => {
       });
       ActivityReport.addScope('defaultScope', {
         include: [{
-          model: models.Approval,
+          model: models.ActivityReportApproval,
           as: 'approval',
           where: {
             submissionStatus: {

@@ -371,145 +371,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
   }
 };
 
-const propagateApprovedCalculatedStatusAcrossTiers = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (instance.tier !== 0
-    && Array.isArray(changed)
-    && changed.includes('calculatedStatus')) {
-    const allApprovalTiers = await sequelize.models.Approval.findAll({
-      attributes: ['tier', 'calculatedStatus'],
-      where: {
-        entityType: instance.entityType,
-        entityId: instance.entityId,
-        tier: { [Op.not]: 0 },
-      },
-      transaction: options.transaction,
-    });
-
-    const [mainApproval] = await sequelize.models.Approval.findOne({
-      attributes: ['calculatedStatus'],
-      where: {
-        entityType: instance.entityType,
-        entityId: instance.entityId,
-        tier: 0,
-      },
-      transaction: options.transaction,
-    });
-
-    const allCalculatedStatuses = allApprovalTiers.map((approval) => approval.calculatedStatus);
-    if (allCalculatedStatuses.any((status) => status === REPORT_STATUSES.NEEDS_ACTION)
-      && mainApproval.calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION) {
-      return sequelize.models.Approval.update({
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-      }, {
-        where: {
-          entityType: instance.entityType,
-          entityId: instance.entityId,
-          tier: 0,
-        },
-        transaction: options.transaction,
-      });
-    }
-
-    if (allCalculatedStatuses.every((status) => status === REPORT_STATUSES.APPROVED)
-      && mainApproval.calculatedStatus !== REPORT_STATUSES.APPROVED) {
-      return sequelize.models.Approval.update({
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-      }, {
-        where: {
-          entityType: instance.entityType,
-          entityId: instance.entityId,
-          tier: 0,
-        },
-        transaction: options.transaction,
-      });
-    }
-
-    if (instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      const tiers = allApprovalTiers.map((approval) => approval.tier);
-      if (instance.tier !== Math.max(...tiers)) {
-        return sequelize.models.Approval.update({
-          submissionStatus: REPORT_STATUSES.SUBMITTED,
-        }, {
-          where: {
-            entityType: instance.entityType,
-            entityId: instance.entityId,
-            tier: Math.min(...tiers.filter((tier) => tier > instance.tier)),
-          },
-          transaction: options.transaction,
-        });
-      }
-    }
-  }
-
-  return Promise.resolve();
-};
-
-const propagateSubmissionStatusAcrossTiers = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (instance.tier === 0
-    && Array.isArray(changed)
-    && changed.includes('submissionStatus')) {
-    switch (instance.submissionStatus) {
-      case REPORT_STATUSES.DRAFT:
-        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.DRAFT }, {
-          where: {
-            entityType: instance.entityType,
-            entityId: instance.entityId,
-            tier: { [Op.not]: 0 },
-          },
-          transaction: options.transaction,
-          individualHooks: true,
-        });
-        break;
-      case REPORT_STATUSES.SUBMITTED: {
-        const [lowestTier] = await sequelize.models.Approval.findAll({
-          where: {
-            entityType: instance.entityType,
-            entityId: instance.entityId,
-            tier: { [Op.not]: 1 },
-          },
-          order: [['tier', 'DESC']],
-          limit: 1,
-          transaction: options.transaction,
-        });
-        if (lowestTier) {
-          await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.SUBMITTED }, {
-            where: { id: lowestTier.id },
-            transaction: options.transaction,
-            individualHooks: true,
-          });
-        } else {
-          await sequelize.models.Approval.update({ calculatedStatus: REPORT_STATUSES.APPROVED }, {
-            where: { id: instance.id },
-            transaction: options.transaction,
-            individualHooks: true,
-          });
-        }
-        break;
-      }
-      case REPORT_STATUSES.NEEDS_ACTION:
-        break;
-      case REPORT_STATUSES.APPROVED:
-        break;
-      case REPORT_STATUSES.DELETED:
-        await sequelize.models.Approval.update({
-          submissionStatus: REPORT_STATUSES.DELETED,
-          calculatedStatus: REPORT_STATUSES.DELETED,
-        }, {
-          where: {
-            entityType: instance.entityType,
-            entityId: instance.entityId,
-          },
-          transaction: options.transaction,
-          individualHooks: true,
-        });
-        break;
-      default:
-    }
-  }
-};
-
 const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
@@ -522,8 +383,6 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatusToGoalsAndObjectives(sequelize, instance, options);
   await propagateApprovedStatusForGoalsAndObjectives(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
-  await propagateApprovedCalculatedStatusAcrossTiers(sequelize, instance, options);
-  await propagateSubmissionStatusAcrossTiers(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options); // TODO
 };
 
@@ -532,7 +391,6 @@ export {
   propagateSubmissionStatusToGoalsAndObjectives,
   propagateApprovedStatusForGoalsAndObjectives,
   automaticStatusChangeOnApprovalForGoals,
-  propagateApprovedCalculatedStatusAcrossTiers,
   moveDraftGoalsToNotStartedOnSubmission,
   beforeCreate,
   beforeUpdate,
