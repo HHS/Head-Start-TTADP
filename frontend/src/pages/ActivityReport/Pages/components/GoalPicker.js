@@ -40,7 +40,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, grantIds, reportId, updateAvailableGoals,
+  availableGoals, grantIds, reportId,
 }) => {
   const {
     control, setValue, watch,
@@ -128,8 +128,6 @@ const GoalPicker = ({
           ...newGoal(grantIds), // just in case we need any default fields overwritten
           ...await createNewGoalsForReport(reportId, grantIds),
         };
-        // we need to insert it as a selection
-        updateAvailableGoals([...availableGoals, newGoalFromApi]);
       } catch (err) {
         // if something goes wrong, we still want to select a goal
         // the backend will do it's best to handle this case
@@ -215,7 +213,6 @@ GoalPicker.propTypes = {
     PropTypes.number,
     PropTypes.string,
   ]).isRequired,
-  updateAvailableGoals: PropTypes.func.isRequired,
 };
 
 export default GoalPicker;

@@ -300,7 +300,6 @@ const GoalsObjectives = ({
                 grantIds={grantIds}
                 availableGoals={availableGoals}
                 reportId={reportId}
-                updateAvailableGoals={updateAvailableGoals}
               />
             </Fieldset>
           </>

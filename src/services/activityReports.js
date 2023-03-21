@@ -1565,13 +1565,14 @@ export async function newGoalsForReport(grantIds) {
 
   // we only want to return one object since that's how the frontend expects it
   return {
+    label: 'New goal',
     createdVia: 'activityReport',
     number: false,
     objectives: [],
     name: DEFAULT_NEW_GOAL.name,
     goalNumber: '',
     isNew: false,
-    endDate: '',
+    endDate: null,
     onApprovedAR: false,
     grantIds,
     goalIds: goals.map((g) => g.id),
