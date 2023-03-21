@@ -2,7 +2,7 @@ const COLLABORATOR_TYPES = {
   EDITOR: 'editor',
   OWNER: 'owner',
   INSTANTIATOR: 'instantiator',
-  RATIFIER: 'ratifier',
+  APPROVER: 'approver',
 };
 
 const ENTITY_TYPES = {
@@ -23,7 +23,7 @@ const ENTITY_STATUSES = {
   NEEDS_ACTION: 'needs_action',
 };
 
-const RATIFIER_STATUSES = {
+const APPROVER_STATUSES = {
   NEEDS_ACTION: 'needs_action',
   APPROVED: 'approved',
 };
@@ -73,8 +73,6 @@ const reports = [
     startDate: new Date('1970/01/01'),
     activityRecipientType: 'recipient',
     requester: 'recipient',
-    calculatedStatus: 'approved',
-    submissionStatus: 'submitted',
     reason: ['Child Incidents'],
     targetPopulations: ['Children with disabilities'],
     participants: ['Regional Head Start Association'],
@@ -82,7 +80,6 @@ const reports = [
     pageState: JSON.stringify({
       1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
     }),
-    userId: 1,
     lastUpdatedById: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -136,8 +133,6 @@ const reports = [
     startDate: new Date('1970/01/01'),
     activityRecipientType: 'recipient',
     requester: 'recipient',
-    calculatedStatus: 'approved',
-    submissionStatus: 'submitted',
     reason: ['Child Incidents'],
     targetPopulations: ['Children with disabilities'],
     participants: ['Regional Head Start Association'],
@@ -145,7 +140,6 @@ const reports = [
     pageState: JSON.stringify({
       1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
     }),
-    userId: 1,
     lastUpdatedById: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -163,17 +157,19 @@ const reports = [
 
 const approvals = [
   {
-    entityType: ENTITY_TYPES.REPORT,
-    entityId: 9999,
-    tier: 0,
+    activityReportId: 9997,
     ratioRequired: APPROVAL_RATIO.ALL,
     calculatedStatus: ENTITY_STATUSES.APPROVED,
     submissionStatus: ENTITY_STATUSES.SUBMITTED,
   },
   {
-    entityType: ENTITY_TYPES.REPORT,
-    entityId: 9999,
-    tier: 1,
+    activityReportId: 9998,
+    ratioRequired: APPROVAL_RATIO.ALL,
+    calculatedStatus: ENTITY_STATUSES.APPROVED,
+    submissionStatus: ENTITY_STATUSES.SUBMITTED,
+  },
+  {
+    activityReportId: 9999,
     ratioRequired: APPROVAL_RATIO.ALL,
     calculatedStatus: ENTITY_STATUSES.APPROVED,
     submissionStatus: ENTITY_STATUSES.SUBMITTED,
@@ -182,27 +178,57 @@ const approvals = [
 
 module.exports = {
   up: async (queryInterface) => {
-    const collaborators = [{
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: 9999,
-      userId: 1,
-      collaboratorTypes: queryInterface.sequelize.literal(`ARRAY['${COLLABORATOR_TYPES.INSTANTIATOR}', '${COLLABORATOR_TYPES.OWNER}', '${COLLABORATOR_TYPES.EDITOR}', '${COLLABORATOR_TYPES.RATIFIER}']::"enum_Collaborators_collaboratorTypes"[]`),
-      tier: 1,
-      status: RATIFIER_STATUSES.APPROVED,
-    }];
+    const collaborators = [
+      {
+        activityReportId: 9997,
+        userId: 1,
+        collaboratorTypes: queryInterface.sequelize.literal(`
+        ARRAY[
+          '${COLLABORATOR_TYPES.INSTANTIATOR}',
+          '${COLLABORATOR_TYPES.OWNER}',
+          '${COLLABORATOR_TYPES.EDITOR}',
+          '${COLLABORATOR_TYPES.APPROVER}'
+        ]::"enum_ActivityReportCollaborators_collaboratorTypes"[]`),
+        status: APPROVER_STATUSES.APPROVED,
+      },
+      {
+        activityReportId: 9998,
+        userId: 1,
+        collaboratorTypes: queryInterface.sequelize.literal(`
+        ARRAY[
+          '${COLLABORATOR_TYPES.INSTANTIATOR}',
+          '${COLLABORATOR_TYPES.OWNER}',
+          '${COLLABORATOR_TYPES.EDITOR}',
+          '${COLLABORATOR_TYPES.APPROVER}'
+        ]::"enum_ActivityReportCollaborators_collaboratorTypes"[]`),
+        status: APPROVER_STATUSES.APPROVED,
+      },
+      {
+        activityReportId: 9999,
+        userId: 1,
+        collaboratorTypes: queryInterface.sequelize.literal(`
+        ARRAY[
+          '${COLLABORATOR_TYPES.INSTANTIATOR}',
+          '${COLLABORATOR_TYPES.OWNER}',
+          '${COLLABORATOR_TYPES.EDITOR}',
+          '${COLLABORATOR_TYPES.APPROVER}'
+        ]::"enum_ActivityReportCollaborators_collaboratorTypes"[]`),
+        status: APPROVER_STATUSES.APPROVED,
+      },
+    ];
 
     await queryInterface.bulkInsert('ActivityReports', reports);
-    await queryInterface.bulkInsert('Approvals', approvals);
+    await queryInterface.bulkInsert('ActivityReportCollaborators', collaborators);
+    await queryInterface.bulkInsert('ActivityReportApprovals', approvals);
     await queryInterface.bulkInsert('ActivityRecipients', recipients);
-    await queryInterface.bulkInsert('Collaborators', collaborators);
     await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
     await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityParticipants_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`);
   },
 
   down: async (queryInterface) => {
     await queryInterface.bulkDelete('ActivityReports', null);
-    await queryInterface.bulkDelete('Approvals', null);
+    await queryInterface.bulkDelete('ActivityReportApprovals', null);
     await queryInterface.bulkDelete('ActivityRecipients', null);
-    await queryInterface.bulkDelete('Collaborators', null);
+    await queryInterface.bulkDelete('ActivityReportCollaborators', null);
   },
 };

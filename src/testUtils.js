@@ -15,7 +15,7 @@ import {
   GoalTemplate,
   Goal,
   Objective,
-  Collaborator,
+  ActivityReportCollaborator,
   // GrantGoal,
 } from './models';
 import { auditLogger } from './logger';
@@ -217,7 +217,7 @@ export async function destroyReport(r) {
   });
 
   // Get all Collaborators so that we can get all Users.
-  const collaborators = await Collaborator.findAll({
+  const collaborators = await ActivityReportCollaborator.findAll({
     where: { entityId: id },
   });
 

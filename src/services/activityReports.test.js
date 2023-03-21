@@ -1414,7 +1414,7 @@ describe('Activity report service', () => {
         });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1437,7 +1437,7 @@ describe('Activity report service', () => {
         });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1458,7 +1458,7 @@ describe('Activity report service', () => {
 
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1479,7 +1479,7 @@ describe('Activity report service', () => {
         });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1533,7 +1533,7 @@ describe('Activity report service', () => {
         );
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1567,7 +1567,7 @@ describe('Activity report service', () => {
         );
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1592,7 +1592,7 @@ describe('Activity report service', () => {
 
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1624,7 +1624,7 @@ describe('Activity report service', () => {
         );
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1813,7 +1813,7 @@ describe('Activity report service', () => {
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1853,7 +1853,7 @@ describe('Activity report service', () => {
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1884,7 +1884,7 @@ describe('Activity report service', () => {
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
@@ -1916,7 +1916,7 @@ describe('Activity report service', () => {
 
         const empty = await activityReportsApprovedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
-        // Add Collaborator.
+        // Add Collaborator
         await upsertReportEditor({
           activityReportId: report.id,
           userId: digestMockCollabOne.id,
