@@ -107,7 +107,7 @@ export default function ResourceRepeater({
             {error.props.children ? OBJECTIVE_LINK_ERROR : null}
             <div className="ttahub-resource-repeater">
               { editableResources.map((r, i) => (
-                <div key={uuidv4()} className="display-flex" id="resources">
+                <div key={r.key || uuidv4()} className="display-flex" id="resources">
                   <Label htmlFor={`resource-${i + 1}`} className="sr-only">
                     Resource
                     {' '}
