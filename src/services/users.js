@@ -2,6 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Op, QueryTypes } from 'sequelize';
 import SCOPES from '../middleware/scopeConstants';
+import { formatNumber } from '../widgets/helpers';
 
 import {
   User,
@@ -357,7 +358,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalTTA = totalCreatedTTA + totalCollaboratorTTA + totalApproverTTA;
   const totalTTADays = Math.floor(totalTTA / 24);
   const totalTTAHours = totalTTA - (totalTTADays * 24);
-  const totalTTASentence = `${totalTTADays >= 1 ? totalTTADays : 0} days ${totalTTAHours} hrs`;
+  const totalTTASentence = `${totalTTADays >= 1 ? formatNumber(totalTTADays) : 0} days ${totalTTAHours} hrs`;
 
   // Total participants.
   const totalParticipants = totalCreatedParticipants + totalCollaboratorParticipants + totalApproverParticipants;
@@ -375,15 +376,15 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalObjectivesIds = new Set([...createdObjectiveIds, ...collaboratorObjectiveIds, ...approverObjectiveIds]);
 
   return {
-    daysSinceJoined: totalDaysSinceJoined,
-    arsCreated: createdReports.length,
-    arsCollaboratedOn: collaboratorReports.length,
+    daysSinceJoined: formatNumber(totalDaysSinceJoined),
+    arsCreated: formatNumber(createdReports.length),
+    arsCollaboratedOn: formatNumber(collaboratorReports.length),
     ttaProvided: totalTTASentence,
-    recipientsReached: totalRecipientIds.size,
-    grantsServed: totalGrantIds.size,
-    participantsReached: totalParticipants,
-    goalsApproved: totalGoalIds.size,
-    objectivesApproved: totalObjectivesIds.size,
+    recipientsReached: formatNumber(totalRecipientIds.size),
+    grantsServed: formatNumber(totalGrantIds.size),
+    participantsReached: formatNumber(totalParticipants),
+    goalsApproved: formatNumber(totalGoalIds.size),
+    objectivesApproved: formatNumber(totalObjectivesIds.size),
   };
 }
 
