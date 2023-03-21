@@ -146,6 +146,7 @@ export default (sequelize, DataTypes) => {
       });
       ActivityReport.addScope('defaultScope', {
         include: [{
+          attributes: [],
           model: models.ActivityReportApproval,
           as: 'approval',
           where: {
@@ -274,9 +275,17 @@ export default (sequelize, DataTypes) => {
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
-    submittedDate: {
-      type: DataTypes.DATEONLY,
-      get: formatDate,
+    submittedAt: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.approval) {
+          const raw = this.owner.get().submittedAt;
+          if (raw) {
+            return moment(raw).format('MM/DD/YYYY');
+          }
+        }
+        return null;
+      },
       allowNull: true,
     },
     updatedAt: {

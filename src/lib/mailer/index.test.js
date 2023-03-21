@@ -848,13 +848,17 @@ describe('mailer tests', () => {
       //   },
       //   force: true,
       // });
-      await ActivityReport.destroy({
+      const reports = await ActivityReport.findAll({
+        attributes: ['id'],
         include: [{
           model: ActivityReportCollaborator,
           as: 'owner',
           where: { userId: mockUser.id },
           required: true,
         }],
+      });
+      await ActivityReport.destroy({
+        where: { id: reports.map((r) => r.id) },
         individualHooks: true,
       });
       await User.destroy({

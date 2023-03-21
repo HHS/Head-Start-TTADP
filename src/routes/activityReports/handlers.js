@@ -652,10 +652,6 @@ export async function submitReport(req, res) {
       attributes: ['id', ['$approval.calculatedStatus$', 'calculatedStatus']],
       include: [
         {
-          model: ActivityReportApproval,
-          as: 'approval',
-        },
-        {
           model: ActivityReportCollaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',

@@ -962,10 +962,7 @@ export async function activityReportAlerts(userId, {
         [Op.and]: scopes,
         [Op.or]: [
           {
-            [Op.or]: [
-              { '$approval.calculatedStatus$': REPORT_STATUSES.SUBMITTED },
-              { '$approval.calculatedStatus$': REPORT_STATUSES.NEEDS_ACTION },
-            ],
+            '$approval.calculatedStatus$': { [Op.in]: [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION] },
             '$approvers.userId$': userId,
           },
           {
@@ -1425,7 +1422,14 @@ async function getDownloadableActivityReports(where, separate = true) {
   const query = {
     where,
     attributes: {
-      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'creatorName', 'submittedDate'],
+      include: [
+        'displayId',
+        'createdAt',
+        'approvedAt',
+        'creatorRole',
+        'creatorName',
+        ['$"approval"."submittedAt"$', 'submittedDate'],
+      ],
       exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
     },
     include: [
@@ -1688,10 +1692,6 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
     },
     include: [
       {
-        model: ActivityReportApproval,
-        as: 'approval',
-      },
-      {
         model: ActivityReportCollaborator,
         as: 'collaborators',
         where: { userId },
@@ -1736,10 +1736,6 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
     },
     include: [
       {
-        model: ActivityReportApproval,
-        as: 'approval',
-      },
-      {
         model: ActivityReportCollaborator,
         as: 'owner',
         attributes: ['userId'],
@@ -1774,16 +1770,9 @@ export async function activityReportsSubmittedByDate(userId, date) {
             AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}'`,
         ),
       },
+      '$approval.calculatedStatus$': { [Op.notIn]: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.DRAFT] },
     },
     include: [
-      {
-        model: ActivityReportApproval,
-        as: 'approval',
-        where: {
-          calculatedStatus: { [Op.notIn]: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.DRAFT] },
-        },
-        required: true,
-      },
       {
         model: ActivityReportCollaborator,
         as: 'approvers',
@@ -1825,10 +1814,6 @@ export async function activityReportsApprovedByDate(userId, date) {
       ].filter(Boolean),
     },
     include: [
-      {
-        model: ActivityReportApproval,
-        as: 'approval',
-      },
       {
         model: ActivityReportCollaborator,
         as: 'owner',

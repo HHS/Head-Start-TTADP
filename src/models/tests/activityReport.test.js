@@ -397,7 +397,9 @@ describe('Activity Reports model', () => {
       { individualHooks: true },
     );
     reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
+      {
+        where: { id: reportToSubmit.id },
+      },
     );
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
@@ -408,7 +410,9 @@ describe('Activity Reports model', () => {
       { where: { id: reportToSubmit.id }, individualHooks: true },
     );
     reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
+      {
+        where: { id: reportToSubmit.id },
+      },
     );
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
@@ -419,7 +423,9 @@ describe('Activity Reports model', () => {
       { where: { id: reportToSubmit.id }, individualHooks: true },
     );
     reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
+      {
+        where: { id: reportToSubmit.id },
+      },
     );
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
@@ -430,7 +436,9 @@ describe('Activity Reports model', () => {
       { where: { id: reportToSubmit.id }, individualHooks: true },
     );
     reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
+      {
+        where: { id: reportToSubmit.id },
+      },
     );
     expect(reportToSubmit.submittedDate).toBeNull();
   });

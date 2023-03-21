@@ -15,7 +15,6 @@ export default async function targetPopulationTable(scopes) {
         { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
       ],
     },
-    include: [{ model: ActivityReportApproval, as: 'approval', required: true }],
     raw: true,
   });
   auditLogger.error(JSON.stringify(res));

@@ -151,12 +151,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: ActivityReport,
           as: 'activityReports',
-          include: [{
-            model: ActivityReportApproval,
-            as: 'approval',
-            where: { calculatedStatus: { [Op.not]: REPORT_STATUSES.DELETED } },
-            required: true,
-          }],
+          where: {
+            '$approval.calculatedStatus$': { [Op.not]: REPORT_STATUSES.DELETED },
+          },
           required: false,
         },
       ],
@@ -612,12 +609,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: ActivityReport,
             as: 'activityReports',
-            include: [{
-              model: ActivityReportApproval,
-              as: 'approval',
-              where: { calculatedStatus: { [Op.not]: REPORT_STATUSES.DELETED } },
-              required: true,
-            }],
+            where: {
+              '$approval.calculatedStatus$': { [Op.not]: REPORT_STATUSES.DELETED },
+            },
             required: false,
           },
         ],

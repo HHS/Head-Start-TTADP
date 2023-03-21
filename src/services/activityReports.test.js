@@ -1828,11 +1828,6 @@ describe('Activity report service', () => {
         );
         const test = await ActivityReport.findOne({
           where: { id: report.id },
-          include: [{
-            model: ActivityReportApproval,
-            as: 'approval',
-            attributes: ['calculatedStatus'],
-          }],
         });
         expect(test.approval.calculatedStatus).toBe('draft');
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');

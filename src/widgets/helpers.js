@@ -9,17 +9,14 @@ import { REPORT_STATUSES } from '../constants';
 export async function countOccurrences(scopes, column, possibilities) {
   const allOccurrences = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('unnest', sequelize.col(column)), column],
+      [sequelize.fn('UNNEST', sequelize.col(column)), column],
     ],
     where: {
-      [Op.and]: [scopes],
+      [Op.and]: [
+        scopes,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
+      ],
     },
-    include: [{
-      model: ActivityReportApproval,
-      as: 'approval',
-      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-      required: true,
-    }],
     nest: true,
     raw: true,
   });

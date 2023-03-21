@@ -16,9 +16,6 @@ export default (sequelize, DataTypes) => {
   class ActivityReportApproval extends Model {
     static associate(models) {
       ActivityReportApproval.belongsTo(models.ActivityReport, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORT,
-        },
         foreignKey: 'activityReportId',
         as: 'report',
         hooks: true,
@@ -26,7 +23,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportApproval.hasMany(models.ActivityReportCollaborator, {
         scope: {
           where: {
-            entityType: COLLABORATOR_TYPES.APPROVER,
+            collaboratorType: COLLABORATOR_TYPES.APPROVER,
           },
         },
         foreignKey: 'activityReportId',

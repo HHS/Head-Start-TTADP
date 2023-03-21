@@ -59,13 +59,11 @@ describe('changeStatus', () => {
     let report = await createOrUpdate(reportObject);
 
     report = await ActivityReport.findOne({
-      where: { id: report.id },
+      where: {
+        id: report.id,
+        '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED,
+      },
       include: [
-        {
-          model: ActivityReportApproval,
-          as: 'approval',
-          attributes: ['submissionStatus'],
-        },
         {
           model: ActivityReportCollaborator,
           as: 'owner',

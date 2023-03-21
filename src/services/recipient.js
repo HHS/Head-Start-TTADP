@@ -429,13 +429,10 @@ export async function getGoalsByActivityRecipient(
             model: ActivityReport,
             as: 'activityReports',
             required: false,
+            where: {
+              '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED,
+            },
             include: [
-              {
-                model: ActivityReportApproval,
-                as: 'approval',
-                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-                required: true,
-              },
               {
                 model: ActivityRecipient,
                 as: 'activityRecipients',

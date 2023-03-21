@@ -336,9 +336,7 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED
-    && instance.entityType === ENTITY_TYPES.REPORT
-    && instance.tier === 0) {
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {

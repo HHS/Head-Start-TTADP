@@ -162,7 +162,6 @@ describe('collaborators services', () => {
         });
         // Pending updated to approved
         const approver = await setApproverStatus(
-          ENTITY_TYPES.REPORT,
           report2.id,
           mockManager.id,
           APPROVER_STATUSES.APPROVED,
@@ -178,15 +177,13 @@ describe('collaborators services', () => {
         const report3 = await createOrUpdate(submittedReport);
         // One approved
         await upsertApprover({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report3.id,
+          activityReportId: report3.id,
           userId: mockManager.id,
           status: APPROVER_STATUSES.APPROVED,
         });
         // One pending
         const approver = await upsertApprover({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report3.id,
+          activityReportId: report3.id,
           userId: secondMockManager.id,
         });
         expect(approver.status).toBeNull();
@@ -197,8 +194,7 @@ describe('collaborators services', () => {
       it('calculatedStatus does not use soft deleted approver, until it is restored', async () => {
         const report4 = await createOrUpdate(submittedReport);
         const needsActionApproval = {
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report4.id,
+          activityReportId: report4.id,
           userId: mockManager.id,
           status: APPROVER_STATUSES.NEEDS_ACTION,
           note: 'make changes a, b, c',
@@ -207,8 +203,7 @@ describe('collaborators services', () => {
         await upsertApprover(needsActionApproval);
         // One pending
         await upsertApprover({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report4.id,
+          activityReportId: report4.id,
           userId: secondMockManager.id,
         });
         const [updatedReport] = await activityReportAndRecipientsById(report4.id);
