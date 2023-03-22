@@ -40,11 +40,7 @@ export default (sequelize, DataTypes) => {
     },
     notes: {
       type: DataTypes.TEXT,
-      allowNull: false,
-      validate: {
-        notNull: true,
-        notEmpty: true,
-      },
+      allowNull: true,
     },
     goals: {
       type: DataTypes.JSONB,
