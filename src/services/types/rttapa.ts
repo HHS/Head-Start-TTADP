@@ -1,6 +1,6 @@
 export interface ARResponse {
   legacyId: string,
-  number: string,
+  displayId: string,
   id: number,
   endDate: string,
 }
