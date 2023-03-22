@@ -20,6 +20,7 @@ export async function createRttapa(req: Request, res: Response) {
 
     if (!policy.canCreate()) {
       res.sendStatus(httpCodes.FORBIDDEN);
+      return;
     }
 
     // create the rttapa
