@@ -238,82 +238,86 @@ export default function Objective({
         options={options}
         onRemove={onRemove}
       />
-      <ObjectiveTitle
-        error={errors.title
-          ? ERROR_FORMAT(errors.title.message)
-          : NO_ERROR}
-        isOnApprovedReport={isOnApprovedReport || false}
-        title={objectiveTitle}
-        onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={onBlurTitle}
-        inputName={objectiveTitleInputName}
-        parentGoal={parentGoal}
-        initialObjectiveStatus={statusForCalculations}
-      />
-      <ObjectiveTopics
-        error={errors.topics
-          ? ERROR_FORMAT(errors.topics.message)
-          : NO_ERROR}
-        savedTopics={savedTopics}
-        topicOptions={topicOptions}
-        validateObjectiveTopics={onBlurTopics}
-        topics={isOnApprovedReport ? [] : objectiveTopics}
-        isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
-        onChangeTopics={onChangeTopics}
-        inputName={objectiveTopicsInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        userCanEdit
-        editingFromActivityReport
-      />
-      <ResourceRepeater
-        resources={isOnApprovedReport ? [] : resourcesForRepeater}
-        isOnReport={isOnReport || false}
-        setResources={onChangeResources}
-        error={errors.resources
-          ? ERROR_FORMAT(errors.resources.message)
-          : NO_ERROR}
-        validateResources={onBlurResources}
-        savedResources={savedResources}
-        inputName={objectiveResourcesInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        userCanEdit
-        editingFromActivityReport
-      />
-      <ObjectiveFiles
-        objective={objective}
-        files={objectiveFiles}
-        onChangeFiles={onChangeFiles}
-        isOnReport={isOnReport || false}
-        onUploadFiles={onUploadFile}
-        index={index}
-        onBlur={onBlurFiles}
-        inputName={objectiveFilesInputName}
-        reportId={reportId}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        label="Did you use any TTA resources that aren't available as link?"
-        selectedObjectiveId={(selectedObjective && selectedObjective.id) || 0}
-        userCanEdit
-        editingFromActivityReport
-      />
-      <ObjectiveTta
-        ttaProvided={objectiveTta}
-        onChangeTTA={onChangeTta}
-        inputName={objectiveTtaInputName}
-        status={objectiveStatus}
-        isOnApprovedReport={isOnApprovedReport || false}
-        error={errors.ttaProvided
-          ? ERROR_FORMAT(errors.ttaProvided.message)
-          : NO_ERROR}
-        validateTta={onBlurTta}
-      />
-      <ObjectiveStatus
-        onBlur={onBlurStatus}
-        inputName={objectiveStatusInputName}
-        status={objectiveStatus}
-        onChangeStatus={onChangeStatus}
-        userCanEdit
-      />
+      {selectedObjective != null && (
+        <>
+          <ObjectiveTitle
+            error={errors.title
+              ? ERROR_FORMAT(errors.title.message)
+              : NO_ERROR}
+            isOnApprovedReport={isOnApprovedReport || false}
+            title={objectiveTitle}
+            onChangeTitle={onChangeTitle}
+            validateObjectiveTitle={onBlurTitle}
+            inputName={objectiveTitleInputName}
+            parentGoal={parentGoal}
+            initialObjectiveStatus={statusForCalculations}
+          />
+          <ObjectiveTopics
+            error={errors.topics
+              ? ERROR_FORMAT(errors.topics.message)
+              : NO_ERROR}
+            savedTopics={savedTopics}
+            topicOptions={topicOptions}
+            validateObjectiveTopics={onBlurTopics}
+            topics={isOnApprovedReport ? [] : objectiveTopics}
+            isOnReport={isOnReport || false}
+            isOnApprovedReport={isOnApprovedReport || false}
+            onChangeTopics={onChangeTopics}
+            inputName={objectiveTopicsInputName}
+            goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+            userCanEdit
+            editingFromActivityReport
+          />
+          <ResourceRepeater
+            resources={isOnApprovedReport ? [] : resourcesForRepeater}
+            isOnReport={isOnReport || false}
+            setResources={onChangeResources}
+            error={errors.resources
+              ? ERROR_FORMAT(errors.resources.message)
+              : NO_ERROR}
+            validateResources={onBlurResources}
+            savedResources={savedResources}
+            inputName={objectiveResourcesInputName}
+            goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+            userCanEdit
+            editingFromActivityReport
+          />
+          <ObjectiveFiles
+            objective={objective}
+            files={objectiveFiles}
+            onChangeFiles={onChangeFiles}
+            isOnReport={isOnReport || false}
+            onUploadFiles={onUploadFile}
+            index={index}
+            onBlur={onBlurFiles}
+            inputName={objectiveFilesInputName}
+            reportId={reportId}
+            goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+            label="Did you use any TTA resources that aren't available as link?"
+            selectedObjectiveId={(selectedObjective && selectedObjective.id) || 0}
+            userCanEdit
+            editingFromActivityReport
+          />
+          <ObjectiveTta
+            ttaProvided={objectiveTta}
+            onChangeTTA={onChangeTta}
+            inputName={objectiveTtaInputName}
+            status={objectiveStatus}
+            isOnApprovedReport={isOnApprovedReport || false}
+            error={errors.ttaProvided
+              ? ERROR_FORMAT(errors.ttaProvided.message)
+              : NO_ERROR}
+            validateTta={onBlurTta}
+          />
+          <ObjectiveStatus
+            onBlur={onBlurStatus}
+            inputName={objectiveStatusInputName}
+            status={objectiveStatus}
+            onChangeStatus={onChangeStatus}
+            userCanEdit
+          />
+        </>
+      )}
     </>
   );
 }
