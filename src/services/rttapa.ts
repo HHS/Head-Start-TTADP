@@ -163,7 +163,7 @@ export async function allRttapas(regionId: number, recipientId: number): Promise
   });
 }
 
-export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse> {
+export async function newRttapa(userId: number, data: NewRttapaRequest): Promise<RttapaResponse> {
   const rttapaData = await RecipientModel.findOne({
     attributes: [
       [sequelize.col('Recipients.id'), 'recipientId'],
@@ -344,7 +344,7 @@ export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse>
   const rttapaReport = await RttapaPilot.create({
     ...rttapaData,
     notes: data.notes,
-    userId: null, // TODO: get userId
+    userId,
   });
 
   return rttapa(rttapaReport.id);
