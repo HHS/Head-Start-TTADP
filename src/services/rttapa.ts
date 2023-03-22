@@ -204,13 +204,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
             FROM (
               SELECT ar.topic
               FROM UNNEST(
-                ARRAY_AGG(
-                  CASE
-                    WHEN array_length(COALESCE(ari."topics",array[]::varchar[]), 1) > 0
-                    THEN COALESCE(ari."topics",array[null]::varchar[])
-                    ELSE array[null]::varchar[]
-                  END
-                  )
+                ARRAY_AGG(ari."topics") filter (WHERE ari."topics" IS NOT NULL AND array_length(ari."topics",1) > 0)
                 )ar(topic)
               UNION ALL
               SELECT aro.topic
@@ -227,13 +221,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
             FROM (
               SELECT DISTINCT rxx.reason
               FROM UNNEST(
-                ARRAY_AGG(
-                  CASE
-                    WHEN array_length(COALESCE(ari."reason",array[]::varchar[]), 1) > 0
-                    THEN COALESCE(ari."reason",array[null]::varchar[])
-                    ELSE array[null]::varchar[]
-                  END
-                  )
+                ARRAY_AGG(ari."reason") filter (WHERE ari."reason" IS NOT NULL AND array_length(ari."reason",1) > 0)
                 )rxx(reason)
             ) rx(reason)
             GROUP BY TRUE
@@ -267,12 +255,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
                   FROM (
                     SELECT DISTINCT rxx.reason
                     FROM UNNEST(
-                      ARRAY_AGG(
-                        CASE
-                          WHEN array_length(COALESCE(arii."reason",array[]::varchar[]), 1) > 0
-                          THEN COALESCE(arii."reason",array[null]::varchar[])
-                          ELSE array[null]::varchar[]
-                        END
+                        ARRAY_AGG(arii."reason") filter (WHERE arii."reason" IS NOT NULL AND array_length(arii."reason",1) > 0)
                         )
                       )rxx(reason)
                   ) rx(reason)
