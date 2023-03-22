@@ -373,6 +373,15 @@ const ActivitySummary = ({
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
             />
+
+            <Radio
+              id="delivery-method-hybrid"
+              name="deliveryMethod"
+              label="Hybrid"
+              value="hybrid"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Select one' })}
+            />
           </FormItem>
           <div aria-live="polite">
             {isVirtual && (

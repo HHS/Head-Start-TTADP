@@ -185,6 +185,15 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
 
+  it('hybrid', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, deliveryMethod: 'hybrid',
+    }}
+    />);
+
+    expect(await screen.findByText('Hybrid')).toBeInTheDocument();
+  });
+
   it('submitted date shown', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: '2023-01-09',
