@@ -58,6 +58,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       'onAnyReport',
     ],
     'onApprovedAR',
+    'rtrOrder',
   ],
   where: {
     id,
@@ -621,7 +622,17 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     ],
   });
 
-  return reduceGoals(goals);
+  const reducedGoals = reduceGoals(goals);
+
+  // sort reduced goals by rtr order
+  reducedGoals.sort((a, b) => {
+    if (a.rtrOrder < b.rtrOrder) {
+      return -1;
+    }
+    return 1;
+  });
+
+  return reducedGoals;
 }
 
 /**
@@ -904,7 +915,7 @@ export async function createOrUpdateGoals(goals) {
   // there can only be one on the goal form (multiple grants maybe, but one recipient)
   let recipient;
   // eslint-disable-next-line max-len
-  const goalIds = await Promise.all(goals.map(async (goalData) => {
+  const goalIds = await Promise.all(goals.map(async (goalData, rtrOrder) => {
     const {
       ids,
       grantId,
@@ -954,6 +965,7 @@ export async function createOrUpdateGoals(goals) {
           name: options.name,
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
+          rtrOrder: rtrOrder + 1,
         });
       }
     }
