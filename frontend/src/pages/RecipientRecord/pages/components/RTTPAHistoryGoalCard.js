@@ -86,14 +86,16 @@ export default function RTTAPAHistoryGoalCard({ report }) {
               )}
               />
               <GoalDataRow label="Goal" value={goal.goalText} />
-              <GoalDataRow label="Topics" value={goal.goalTopics.join(', ')} />
+              {goal.goalTopics ? (
+                <GoalDataRow label="Topics" value={goal.goalTopics.join(', ')} />
+              ) : null}
             </div>
-            {goal.objectives.length ? (
+            {goal.objectives && goal.objectives.length ? (
               <h5 className="font-serif-sm margin-top-0 margin-bottom-2">Objectives</h5>
             ) : null }
-            {goal.objectives.map((objective) => (
+            {goal.objectives ? goal.objectives.map((objective) => (
               <ObjectiveCard objective={objective} objectivesExpanded key={objective.id} />
-            ))}
+            )) : null}
           </article>
         ))
       )}
