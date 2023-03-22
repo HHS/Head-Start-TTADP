@@ -13,7 +13,7 @@ module.exports = {
       { transaction },
     );
 
-    await queryInterface.createTable('RttapaPilot', {
+    await queryInterface.createTable('RttapaPilots', {
       id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -86,7 +86,7 @@ module.exports = {
       `,
       { transaction },
     );
-    await Promise.all(['RttapaPilot'].map(async (table) => {
+    await Promise.all(['RttapaPilots'].map(async (table) => {
       await queryInterface.sequelize.query(
         ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
         { raw: true, transaction },
