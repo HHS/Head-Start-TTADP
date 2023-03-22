@@ -1,8 +1,18 @@
 import faker from '@faker-js/faker';
+import Recipient from '../policies/recipient';
+import db from '../models';
 import {
   NewRttapaRequest,
   RttapaResponse,
 } from './types/rttapa';
+
+const {
+  sequelize,
+  Grant,
+  Recipient: RecipientModel,
+  Goal,
+  RttapaPilot,
+} = db;
 
 const mockGoals = [
   {
@@ -103,23 +113,235 @@ const mockRttapa = (
   },
 });
 
-export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse> {
-  return Promise.resolve({
-    id: 1,
-    ...data,
-    createdAt: new Date(),
-    user: {
-      name: `User ${1}`,
-      id: 1,
-    },
-    goals: mockGoals,
+export async function rttapa(reportId: number): Promise<RttapaResponse> {
+  return RttapaPilot.findOne({
+    attributes: [
+      'id',
+      'goals',
+      'regionId',
+      'recipientId',
+      'notes',
+      [
+        sequelize.fn(
+          'jsonb_build_object',
+          sequelize.literal('\'id\''),
+          sequelize.col('user.id'),
+          sequelize.literal('\'name\''),
+          sequelize.col('user.name'),
+        ),
+        'user',
+      ],
+      'createdAt',
+    ],
+    where: { id: reportId },
+    raw: true,
   });
 }
 
-export async function rttapa(reportId: number): Promise<RttapaResponse> {
-  return Promise.resolve(mockRttapa(reportId));
+export async function allRttapas(regionId: number, recipientId: number): Promise<RttapaResponse[]> {
+  return RttapaPilot.findAll({
+    attributes: [
+      'id',
+      'goals',
+      'regionId',
+      'recipientId',
+      'notes',
+      [
+        sequelize.fn(
+          'jsonb_build_object',
+          sequelize.literal('\'id\''),
+          sequelize.col('user.id'),
+          sequelize.literal('\'name\''),
+          sequelize.col('user.name'),
+        ),
+        'user',
+      ],
+      'createdAt',
+    ],
+    where: { regionId, recipientId },
+    raw: true,
+  });
 }
 
-export async function allRttapas(regionId: number, recipientId: number): Promise<RttapaResponse[]> {
-  return Promise.resolve([mockRttapa(1, regionId, recipientId), mockRttapa(2, regionId)]);
+export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse> {
+  const rttapaData = await RecipientModel.findOne({
+    attributes: [
+      [sequelize.col(), 'recipientId'],
+      [sequelize.col(), 'regionId'],
+      [sequelize.literal(`(
+        SELECT
+        jsonb_agg(DISTINCT jsonb_build_object(
+          'id', gg.id,
+          'ids', gg.ids,
+          'goalStatus', gg."goalStatus",
+          'createdOn', gg."createdOn",
+          'goalText', gg."goalText",
+          'goalNumbers', gg."goalNumbers",
+          'objectiveCount', gg."objectiveCount",
+          'goalTopics', gg."goalTopics",
+          'reasons', gg."reasons",
+          'previousStatus', gg."previousStatus",
+          'isRttapa', gg."isRttapa",
+          'objectives', gg."objectives"
+        ))
+      FROM (
+        SELECT
+          MIN(gi.id) id,
+          ARRAY_AGG(DISTINCT gi.id) ids,
+          (ARRAY_AGG(gi.status ORDER BY gi.id ASC))[1] "goalStatus",
+          MIN(gi."createdAt") "createdOn",
+          TRIM(gi.name) "goalText",
+          ARRAY_AGG(DISTINCT 'G-' || gi.id) "goalNumbers",
+          COUNT(DISTINCT TRIM(oi.title)) "objectiveCount",
+          (
+            SELECT
+              ARRAY_REMOVE(
+                ARRAY_AGG(DISTINCT COALESCE(
+                txy.name,
+                txx.name
+              ) )FILTER (WHERE txx."deletedAt" IS NULL
+                    OR txx."mapsTo" IS NOT NULL), NULL)
+            FROM (
+              SELECT ar.topic
+              FROM UNNEST(
+                ARRAY_AGG(
+                  CASE
+                    WHEN array_length(COALESCE(ari."topics",array[]::varchar[]), 1) > 0
+                    THEN COALESCE(ari."topics",array[null]::varchar[])
+                    ELSE array[null]::varchar[]
+                  END
+                  )
+                )ar(topic)
+              UNION ALL
+              SELECT aro.topic
+              FROM UNNEST(ARRAY_AGG(ti.name)) aro(topic)
+            ) tx(topic)
+            JOIN "Topics" txx
+            ON tx.topic = txx.name
+            LEFT JOIN "Topics" txy
+            ON txx."mapsTo" = txy.id
+            GROUP BY TRUE
+          ) "goalTopics",
+          (
+            SELECT ARRAY_AGG(DISTINCT rx.reason)
+            FROM (
+              SELECT DISTINCT rxx.reason
+              FROM UNNEST(
+                ARRAY_AGG(
+                  CASE
+                    WHEN array_length(COALESCE(ari."reason",array[]::varchar[]), 1) > 0
+                    THEN COALESCE(ari."reason",array[null]::varchar[])
+                    ELSE array[null]::varchar[]
+                  END
+                  )
+                )rxx(reason)
+            ) rx(reason)
+            GROUP BY TRUE
+          ) "reasons",
+          (ARRAY_AGG(gi."previousStatus" ORDER BY gi.id ASC))[1] "previousStatus",
+          (ARRAY_AGG(gi."isRttapa" ORDER BY gi.id ASC))[1] "isRttapa",
+          (
+            SELECT
+              jsonb_agg(DISTINCT jsonb_build_object(
+                'id', oo.id,
+                'ids', oo.ids,
+                'title', oo."title",
+                'arNumber', oo."arNumber",
+                'ttaProvided', oo."ttaProvided",
+                'endDate', oo."endDate",
+                'reasons', oo."reasons",
+                'status', oo."status",
+                'grantNumbers', oo."grantNumbers",
+                'activityReports', oo."activityReports"
+              ))
+            FROM (
+              SELECT
+                MIN(oii.id) id,
+                ARRAY_AGG(DISTINCT oii.id) ids,
+                TRIM(oii.title) title,
+                (ARRAY_AGG('R' || LPAD(arii."regionId"::text, 2, '0') || '-AR-' || arii.id ORDER BY arii.id ASC))[1] "arNumber",
+                ARRAY_AGG(DISTINCT aroii."ttaProvided") "ttaProvided",
+                MAX(arii."endDate") "endDate",
+                (
+                  SELECT ARRAY_AGG(DISTINCT rx.reason)
+                  FROM (
+                    SELECT DISTINCT rxx.reason
+                    FROM UNNEST(
+                      ARRAY_AGG(
+                        CASE
+                          WHEN array_length(COALESCE(arii."reason",array[]::varchar[]), 1) > 0
+                          THEN COALESCE(arii."reason",array[null]::varchar[])
+                          ELSE array[null]::varchar[]
+                        END
+                        )
+                      )rxx(reason)
+                  ) rx(reason)
+                  GROUP BY TRUE
+                ) "reasons",
+                (ARRAY_AGG(oii.status ORDER BY oii.id ASC))[1] "status",
+                ARRAY_AGG(DISTINCT grii.number) "grantNumbers",
+                jsonb_agg(DISTINCT jsonb_build_object(
+                  'legacyId', arii."legacyId",
+                  'number', 'R' || LPAD(arii."regionId"::text, 2, '0') || '-AR-' ||arii.id,
+                  'id', arii.id,
+                  'endDate', arii."endDate"
+                )) "activityReports"
+              FROM "Objectives" oii
+              JOIN UNNEST(ARRAY_AGG(oi.id)) ox(id)
+              ON oii.id = ox.id
+              JOIN "Goals" gii
+              ON oii."goalId" = gii.id
+              JOIN "Grants" grii
+              ON gii."grantId" = grii.id
+              LEFT JOIN "ActivityReportObjectives" aroii
+              ON oii.id = aroii."objectiveId"
+              LEFT JOIN "ActivityReports" arii
+              ON aroii."activityReportId" = arii.id
+              GROUP BY TRIM(oii.title)
+            ) oo
+          ) "objectives"
+        FROM "Goals" gi
+        JOIN UNNEST(ARRAY_AGG(DISTINCT g.id)) gx(id)
+        ON gi.id = gx.id
+        JOIN "Objectives" oi
+        ON gi.id = oi."goalId"
+        LEFT JOIN "ActivityReportObjectives" aroi
+        ON oi.id = aroi."objectiveId"
+        LEFT JOIN "ActivityReports" ari
+        ON aroi."activityReportId" = ari.id
+        LEFT JOIN "ActivityReportObjectiveTopics" aroti
+        ON aroi.id = aroti."activityReportObjectiveId"
+        LEFT JOIN "Topics" ti
+        ON aroti."topicId" = ti.id
+        GROUP BY TRIM(gi.name)
+      ) gg
+      )`), 'goals'],
+    ],
+    where: { id: data.recipientId },
+    include: [
+      {
+        attributes: [],
+        model: Grant,
+        as: 'grants',
+        where: { regionId: data.regionId },
+        include: [
+          {
+            attributes: [],
+            model: Goal,
+            as: 'goals',
+            where: { id: data.goalIds },
+          },
+        ],
+      },
+    ],
+    group: [],
+  });
+
+  const rttapaReport = await RttapaPilot.create({
+    ...rttapaData,
+    notes: data.notes,
+    userId: null,
+  });
+
+  return rttapa(rttapaReport.id);
 }
