@@ -2,7 +2,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
-import Container from '../components/Container';
 import './HorizontalTableWidget.scss';
 
 const trimLongURLs = (url) => {
@@ -16,39 +15,81 @@ const trimLongURLs = (url) => {
 
 export default function HorizontalTableWidget(
   {
-    title,
-    subtitle,
     headers,
     data,
-    loading,
-    loadingLabel,
     firstHeading,
+    enableSorting,
     lastHeading,
+    sortConfig,
+    requestSort,
   },
 ) {
+  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+  const renderSortableColumnHeader = (displayName, name, classValues) => {
+    const sortClassName = getClassNamesFor(name);
+    let fullAriaSort;
+    switch (sortClassName) {
+      case 'asc':
+        fullAriaSort = 'ascending';
+        break;
+      case 'desc':
+        fullAriaSort = 'descending';
+        break;
+      default:
+        fullAriaSort = 'none';
+        break;
+    }
+    return (
+      <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left'} scope="col" aria-sort={fullAriaSort}>
+        <button
+          type="button"
+          tabIndex={0}
+          onClick={() => {
+            requestSort(name);
+          }}
+          onKeyDown={() => requestSort(name)}
+          className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
+        >
+          {displayName}
+        </button>
+      </th>
+    );
+  };
+
   return (
-    <Container className="smarthub-horizontal-table-widget width-full shadow-2 padding-top-0" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
-      <div className="margin-bottom-1 padding-top-3 padding-left-3 margin-bottom-3">
-        <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
-        <p className="usa-prose margin-0">{subtitle}</p>
-      </div>
-      {/* a scrollable element must be keyboard accessible */}
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-      <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
-        <Table stackedStyle="default" fullWidth striped bordered={false}>
-          <thead>
-            <tr className="bg-white border-bottom-0 text-bold">
-              <th className="smarthub-horizontal-table-first-column">
-                {firstHeading}
-              </th>
-              {headers.map((h) => <th key={h.replace(' ', '_')} scope="col" className="text-left">{h}</th>)}
-              <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0">
-                {lastHeading}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+    <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
+      <Table stackedStyle="default" fullWidth striped bordered={false}>
+        <thead>
+          <tr className="bg-white border-bottom-0 text-bold">
             {
+              enableSorting
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-first-column')
+                : (
+                  <th className="smarthub-horizontal-table-first-column">
+                    {firstHeading}
+                  </th>
+                )
+            }
+            {
+            headers.map((h) => (enableSorting
+              ? renderSortableColumnHeader(h, h.replaceAll(' ', '_'))
+              : <th key={h.replace(' ', '_')} scope="col" className="text-left">{h}</th>))
+            }
+            {
+            enableSorting
+              ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+              : (
+                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0">
+                  {lastHeading}
+                </th>
+              )
+}
+          </tr>
+        </thead>
+        <tbody>
+          {
             data.map((r, index) => (
               <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
                 <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column">
@@ -70,10 +111,9 @@ export default function HorizontalTableWidget(
               </tr>
             ))
             }
-          </tbody>
-        </Table>
-      </div>
-    </Container>
+        </tbody>
+      </Table>
+    </div>
   );
 }
 
@@ -87,16 +127,27 @@ HorizontalTableWidget.propTypes = {
       }),
     ), PropTypes.shape({}),
   ]),
-  loading: PropTypes.bool.isRequired,
-  loadingLabel: PropTypes.string.isRequired,
   firstHeading: PropTypes.string.isRequired,
   lastHeading: PropTypes.string,
-  title: PropTypes.string.isRequired,
-  subtitle: PropTypes.string,
+  sortConfig: PropTypes.shape({
+    sortBy: PropTypes.string,
+    direction: PropTypes.string,
+    activePage: PropTypes.number,
+    offset: PropTypes.number,
+  }),
+  requestSort: PropTypes.func,
+  enableSorting: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
   data: [],
   lastHeading: 'Total',
-  subtitle: null,
+  sortConfig: {
+    sortBy: '',
+    direction: 'asc',
+    activePage: 1,
+    offset: 0,
+  },
+  requestSort: () => {},
+  enableSorting: false,
 };
