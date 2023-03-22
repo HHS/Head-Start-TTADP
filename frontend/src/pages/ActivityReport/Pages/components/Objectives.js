@@ -47,12 +47,9 @@ export default function Objectives({
   goalIds,
   regionId,
 }) {
-  const { errors, getValues, setValue } = useFormContext();
+  const { errors, getValues } = useFormContext();
   const { setIsAppLoading } = useContext(AppLoadingContext);
-
-  const fieldArrayName = 'goalForEditing.objectives';
-  const objectivesForGoal = getValues(fieldArrayName);
-  const defaultValues = objectivesForGoal || [];
+  const fieldArrayName = 'objectivesForEditing';
 
   const {
     fields,
@@ -61,7 +58,7 @@ export default function Objectives({
   } = useFieldArray({
     name: fieldArrayName,
     keyName: 'key', // because 'id' is the default key switch it to use 'key'.
-    defaultValues,
+    defaultValues: [],
   });
 
   const [usedObjectiveIds, setUsedObjectiveIds] = useState(
@@ -69,24 +66,11 @@ export default function Objectives({
   );
 
   const setUpdatedUsedObjectiveIds = () => {
-    // If fields have changed get updated list of used Objective ID's.
     const allValues = getValues();
-    const fieldArrayGoals = allValues.goalForEditing || [];
-    const updatedIds = produceSetOfIds(fieldArrayGoals.objectives);
-    setUsedObjectiveIds(updatedIds);
-  };
-
-  const onObjectiveChange = (objective, index) => {
-    // 'id','ids','value', and 'label' are not tracked on the form.
-    // We need to update these with the new Objective ID.
-    const objectiveId = objective.id;
-    setValue(`${fieldArrayName}[${index}].id`, objectiveId);
-    setValue(`${fieldArrayName}[${index}].value`, objectiveId);
-    setValue(`${fieldArrayName}[${index}].label`, objective.label);
-    setValue(`${fieldArrayName}[${index}].ids`, objective.ids);
-
     // If fields have changed get updated list of used Objective ID's.
-    setUpdatedUsedObjectiveIds();
+    const updatedObjectives = allValues.objectivesForEditing || [];
+    const updatedIds = produceSetOfIds(updatedObjectives);
+    setUsedObjectiveIds(updatedIds);
   };
 
   const onAddNew = async () => {
@@ -106,8 +90,6 @@ export default function Objectives({
 
     // when we return, update the form with the new objective
     append({ ...NEW_OBJECTIVE(), ...newObjective });
-
-    onObjectiveChange(newObjective, fields.length - 1);
     setUpdatedUsedObjectiveIds();
   };
 
@@ -123,17 +105,19 @@ export default function Objectives({
         setIsAppLoading(true);
         newObjective = await createObjectiveForGoal(goalIds, regionId);
       } catch (e) {
-        // fail gracefully using boilerplate data
+        // we will fail gracefully below
+        // using boilerplate data
         newObjective = NEW_OBJECTIVE();
       } finally {
         setIsAppLoading(false);
       }
     }
 
-    const objectiveToAppend = newObjective || objective;
+    const objectiveToAppend = {
+      ...(newObjective || objective),
+    };
 
     append(objectiveToAppend);
-    onObjectiveChange(objectiveToAppend, fields.length - 1);
     setUpdatedUsedObjectiveIds();
   };
 
@@ -176,10 +160,9 @@ export default function Objectives({
           />
         )
         : fields.map((objective, index) => {
-          const objectiveErrors = errors.goalForEditing
-          && errors.goalForEditing.objectives
-          && errors.goalForEditing.objectives[index]
-            ? errors.goalForEditing.objectives[index]
+          const objectiveErrors = errors.objectivesForEditing
+          && errors.objectivesForEditing[index]
+            ? errors.objectivesForEditing[index]
             : {};
 
           return (
@@ -192,7 +175,6 @@ export default function Objectives({
               errors={objectiveErrors}
               remove={removeObjective}
               fieldArrayName={fieldArrayName}
-              onObjectiveChange={onObjectiveChange}
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
               reportId={reportId}

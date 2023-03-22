@@ -33,7 +33,6 @@ export default function Objective({
   remove,
   fieldArrayName,
   errors,
-  onObjectiveChange,
   parentGoal,
   initialObjectiveStatus,
   reportId,
@@ -176,7 +175,6 @@ export default function Objective({
     onChangeStatus(newObjective.status);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
-    onObjectiveChange(newObjective, index); // Call parent on objective change.
 
     // set a new initial status, which we went to preserve separately from the dropdown
     // this determines if the title is read only or not
@@ -359,7 +357,6 @@ Objective.propTypes = {
   ).isRequired,
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
-  onObjectiveChange: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     status: PropTypes.string,

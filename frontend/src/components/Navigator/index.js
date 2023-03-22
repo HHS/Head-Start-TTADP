@@ -38,6 +38,8 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
+const OBJECTIVES_FIELD_ARRAY_NAME = 'objectivesForEditing';
+
 const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
     return false;
@@ -93,6 +95,7 @@ const Navigator = ({
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
+  // const objectivesForEditing = watch(OBJECTIVES_FIELD_ARRAY_NAME);
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
@@ -198,8 +201,7 @@ const Navigator = ({
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
-    const objectivesFieldArrayName = 'goalForEditing.objectives';
-    const objectives = getValues(objectivesFieldArrayName);
+    const objectives = getValues(OBJECTIVES_FIELD_ARRAY_NAME);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
@@ -244,8 +246,7 @@ const Navigator = ({
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
-    const objectivesFieldArrayName = 'goalForEditing.objectives';
-    const objectives = getValues(objectivesFieldArrayName);
+    const objectives = getValues(OBJECTIVES_FIELD_ARRAY_NAME);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
@@ -333,7 +334,7 @@ const Navigator = ({
         ...values,
         goals,
         goalForEditing: newGoalForEditing,
-        [objectivesFieldArrayName]: newGoalForEditing ? newGoalForEditing.objectives : null,
+        [OBJECTIVES_FIELD_ARRAY_NAME]: newGoalForEditing ? newGoalForEditing.objectives : [],
       };
 
       if (allowUpdateFormData) {
@@ -346,7 +347,7 @@ const Navigator = ({
       // we have to do this here, after the form data has been updated
       if (isAutoSave && goalForEditing) {
         invalidResourceIndices.forEach((index) => {
-          setError(`${objectivesFieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+          setError(`${OBJECTIVES_FIELD_ARRAY_NAME}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         });
       }
     } catch (error) {
@@ -464,8 +465,7 @@ const Navigator = ({
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
-    const fieldArrayName = 'goalForEditing.objectives';
-    const objectives = getValues(fieldArrayName);
+    const objectives = getValues(OBJECTIVES_FIELD_ARRAY_NAME);
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
@@ -507,7 +507,7 @@ const Navigator = ({
       setValue('goalName', '');
       setValue('goalEndDate', '');
       setValue('goalIsRttapa', '');
-      setValue('goalForEditing.objectives', []);
+      setValue(OBJECTIVES_FIELD_ARRAY_NAME, []);
 
       // set goals to form data as appropriate
       setValue('goals', [

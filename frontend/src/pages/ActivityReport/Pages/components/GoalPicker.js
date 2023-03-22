@@ -52,7 +52,7 @@ const GoalPicker = ({
   const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
   const activityRecipientType = watch('activityRecipientType');
   const regionId = watch('regionId');
-
+  const objectivesForEditing = watch('objectivesForEditing');
   const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
   const allAvailableGoals = availableGoals // excludes already selected goals from the dropdown
@@ -67,7 +67,14 @@ const GoalPicker = ({
     name: 'goalForEditing',
     rules: {
       validate: {
-        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals(g ? [g] : []) === true,
+        validateGoal: (g) => {
+          const goal = {
+            ...g,
+            objectives: objectivesForEditing || [],
+          };
+
+          return activityRecipientType === 'other-entity' || validateGoals(g ? [goal] : []) === true;
+        },
       },
     },
     defaultValue: '',
@@ -111,7 +118,7 @@ const GoalPicker = ({
    */
   const onSelectGoal = async (goal) => {
     // first we clear out the objectives
-    setValue('goalForEditing.objectives', []);
+    setValue('objectivesForEditing', []);
 
     /**
      * if the goal is new, we need to create it on the backend on the fly

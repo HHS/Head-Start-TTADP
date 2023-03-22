@@ -113,6 +113,9 @@ const GoalsObjectives = ({
 
     // newGoal(grantIds) is still passed to the dropdown as part of the `options` prop,
     // so 'create a new goal' will still be an option.
+
+    // we should also add some empty objectives
+    setValue('objectivesForEditing', []);
   };
 
   const onRemove = (goal) => {
@@ -133,6 +136,7 @@ const GoalsObjectives = ({
       setValue('goalName', '');
       setValue('goalEndDate', '');
       setValue('goalIsRttapa', '');
+      setValue('objectivesForEditing', []);
       toggleGoalForm(false);
     }
   };
@@ -147,7 +151,7 @@ const GoalsObjectives = ({
 
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
     if (currentlyEditing) {
-      const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
+      const objectivesForEditing = getValues('objectivesForEditing') ? [...getValues('objectivesForEditing')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
       const isRttapa = getValues('goalIsRttapa');
@@ -157,7 +161,7 @@ const GoalsObjectives = ({
           name,
           endDate,
           isRttapa,
-          objectives: goalForEditingObjectives,
+          objectives: objectivesForEditing,
         }],
         setError,
       );
@@ -175,6 +179,7 @@ const GoalsObjectives = ({
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
+    setValue('objectivesForEditing', goal.objectives);
 
     const rttapaValue = goal.isRttapa;
     setValue('goalIsRttapa', rttapaValue);

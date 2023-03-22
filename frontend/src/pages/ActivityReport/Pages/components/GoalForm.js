@@ -200,8 +200,8 @@ export default function GoalForm({
         topicOptions={topicOptions}
         goalStatus={status}
         goalIds={goal.goalIds}
-        noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
-          ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
+        noObjectiveError={errors.objectivesForEditing
+          ? ERROR_FORMAT(errors.objectivesForEditing.message) : NO_ERROR}
         reportId={parseInt(reportId, DECIMAL_BASE)}
         regionId={regionId}
       />

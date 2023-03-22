@@ -328,7 +328,7 @@ describe('Navigator', () => {
       goalEndDate: '09/01/2020',
       goalIsRttapa: 'Yes',
       goalName: 'goal name',
-      'goalForEditing.objectives': [{
+      objectivesForEditing: [{
         title: 'objective',
         topics: ['test'],
         ttaProvided: 'tta provided',

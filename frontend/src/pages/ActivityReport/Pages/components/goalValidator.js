@@ -13,7 +13,7 @@ export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invali
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
 
-export const unfinishedObjectives = (objectives, setError = () => {}, fieldArrayName = 'goalForEditing.objectives') => {
+export const unfinishedObjectives = (objectives, setError = () => {}, fieldArrayName = 'objectivesForEditing') => {
   const unfinished = objectives.some(
     (objective, index) => {
       let incomplete = false;
@@ -71,7 +71,7 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
         return objectivesUnfinished;
       }
     } else {
-      setError('goalForEditing.objectives', { message: GOAL_MISSING_OBJECTIVE });
+      setError('objectivesForEditing', { message: GOAL_MISSING_OBJECTIVE });
 
       return GOAL_MISSING_OBJECTIVE;
     }
