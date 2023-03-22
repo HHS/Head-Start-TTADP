@@ -101,10 +101,11 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
               ) )FILTER (WHERE txx."deletedAt" IS NULL
                     OR txx."mapsTo" IS NOT NULL), NULL)
             FROM (
-              SELECT ar.topic
-              FROM UNNEST(
-                ARRAY_AGG(ari."topics") filter (WHERE ari."topics" IS NOT NULL AND array_length(ari."topics",1) > 0)
-                )ar(topic)
+              SELECT DISTINCT tart.topic
+              FROM "ActivityReports" tar
+              JOIN UNNEST(ARRAY_AGG(ari.id)) arix(id)
+              ON tar.id = arix.id
+              CROSS JOIN UNNEST(tar.topics) tart(topic)
               UNION ALL
               SELECT aro.topic
               FROM UNNEST(ARRAY_AGG(ti.name)) aro(topic)
@@ -116,14 +117,11 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
             GROUP BY TRUE
           ) "goalTopics",
           (
-            SELECT ARRAY_AGG(DISTINCT rx.reason)
-            FROM (
-              SELECT DISTINCT rxx.reason
-              FROM UNNEST(
-                ARRAY_AGG(ari."reason") filter (WHERE ari."reason" IS NOT NULL AND array_length(ari."reason",1) > 0)
-                )rxx(reason)
-            ) rx(reason)
-            GROUP BY TRUE
+            SELECT ARRAY_AGG(DISTINCT rarr.r)
+            FROM "ActivityReports" rar
+            JOIN UNNEST(ARRAY_AGG(ari.id)) arix(id)
+            ON rar.id = arix.id
+            CROSS JOIN UNNEST(rar.reason) rarr(r)
           ) "reasons",
           (ARRAY_AGG(gi."previousStatus" ORDER BY gi.id ASC))[1] "previousStatus",
           (ARRAY_AGG(gi."isRttapa" ORDER BY gi.id ASC))[1] "isRttapa",
@@ -150,14 +148,11 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
                 ARRAY_AGG(DISTINCT aroii."ttaProvided") "ttaProvided",
                 MAX(arii."endDate") "endDate",
                 (
-                  SELECT ARRAY_AGG(DISTINCT rx.reason)
-                  FROM (
-                    SELECT DISTINCT rxx.reason
-                    FROM UNNEST(
-                        ARRAY_AGG(arii."reason") filter (WHERE arii."reason" IS NOT NULL AND array_length(arii."reason",1) > 0)
-                      )rxx(reason)
-                  ) rx(reason)
-                  GROUP BY TRUE
+                  SELECT ARRAY_AGG(DISTINCT rarr.reason)
+                  FROM "ActivityReports" rar
+                  JOIN UNNEST(ARRAY_AGG(arii.id)) ariix(id)
+                  ON rar.id = ariix.id
+                  CROSS JOIN UNNEST(rar.reason) rarr(reason)
                 ) "reasons",
                 (ARRAY_AGG(oii.status ORDER BY oii.id ASC))[1] "status",
                 ARRAY_AGG(DISTINCT grii.number) "grantNumbers",
@@ -184,7 +179,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
         FROM "Goals" gi
         JOIN UNNEST(ARRAY_AGG(DISTINCT "grants->goals".id)) gx(id)
         ON gi.id = gx.id
-        JOIN "Objectives" oi
+        LEFT JOIN "Objectives" oi
         ON gi.id = oi."goalId"
         LEFT JOIN "ActivityReportObjectives" aroi
         ON oi.id = aroi."objectiveId"
