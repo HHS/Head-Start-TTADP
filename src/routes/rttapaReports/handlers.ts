@@ -23,7 +23,7 @@ export async function createRttapa(req: Request, res: Response) {
     }
 
     // create the rttapa
-    const report = await newRttapa(req.body);
+    const report = await newRttapa(userId, req.body);
     res.json(report);
   } catch (e) {
     await handleErrors(req, res, e, 'createRttapa');
