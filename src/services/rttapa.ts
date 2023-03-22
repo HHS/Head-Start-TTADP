@@ -166,8 +166,8 @@ export async function allRttapas(regionId: number, recipientId: number): Promise
 export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse> {
   const rttapaData = await RecipientModel.findOne({
     attributes: [
-      [sequelize.col(), 'recipientId'],
-      [sequelize.col(), 'regionId'],
+      [sequelize.col('Recipients.id'), 'recipientId'],
+      [sequelize.col('Grants.regionId'), 'regionId'],
       [sequelize.literal(`(
         SELECT
         jsonb_agg(DISTINCT jsonb_build_object(
@@ -334,13 +334,17 @@ export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse>
         ],
       },
     ],
-    group: [],
+    group: [
+      sequelize.col('Recipients.id'),
+      sequelize.col('Grants.regionId'),
+    ],
+    raw: true,
   });
 
   const rttapaReport = await RttapaPilot.create({
     ...rttapaData,
     notes: data.notes,
-    userId: null,
+    userId: null, // TODO: get userId
   });
 
   return rttapa(rttapaReport.id);
