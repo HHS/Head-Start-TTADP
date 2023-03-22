@@ -12,5 +12,6 @@ export async function getResourcesDashboardData(req, res) {
   res.json({
     resourcesDashboardOverview: data.overview,
     resourcesUse: data.use,
+    topicUse: data.topicUse,
   });
 }
