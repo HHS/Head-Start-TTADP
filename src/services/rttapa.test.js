@@ -7,7 +7,7 @@ import {
 describe('rttapa service', () => {
   describe('newRttapa', () => {
     it('includes the correct fields', async () => {
-      const report = await newRttapa({
+      const report = await newRttapa(1, {
         regionId: 1,
         recipientId: 1,
         goals: [],
