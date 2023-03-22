@@ -166,8 +166,8 @@ export async function allRttapas(regionId: number, recipientId: number): Promise
 export async function newRttapa(userId: number, data: NewRttapaRequest): Promise<RttapaResponse> {
   const rttapaData = await RecipientModel.findOne({
     attributes: [
-      [sequelize.col('Recipients.id'), 'recipientId'],
-      [sequelize.col('Grants.regionId'), 'regionId'],
+      [sequelize.col('Recipient.id'), 'recipientId'],
+      [sequelize.col('grants.regionId'), 'regionId'],
       [sequelize.literal(`(
         SELECT
         jsonb_agg(DISTINCT jsonb_build_object(
@@ -256,7 +256,6 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
                     SELECT DISTINCT rxx.reason
                     FROM UNNEST(
                         ARRAY_AGG(arii."reason") filter (WHERE arii."reason" IS NOT NULL AND array_length(arii."reason",1) > 0)
-                        )
                       )rxx(reason)
                   ) rx(reason)
                   GROUP BY TRUE
@@ -284,7 +283,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
             ) oo
           ) "objectives"
         FROM "Goals" gi
-        JOIN UNNEST(ARRAY_AGG(DISTINCT g.id)) gx(id)
+        JOIN UNNEST(ARRAY_AGG(DISTINCT "grants->goals".id)) gx(id)
         ON gi.id = gx.id
         JOIN "Objectives" oi
         ON gi.id = oi."goalId"
@@ -304,7 +303,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
     include: [
       {
         attributes: [],
-        model: Grant,
+        model: Grant.scope(),
         as: 'grants',
         where: { regionId: data.regionId },
         include: [
@@ -318,8 +317,8 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
       },
     ],
     group: [
-      sequelize.col('Recipients.id'),
-      sequelize.col('Grants.regionId'),
+      sequelize.col('Recipient.id'),
+      sequelize.col('grants.regionId'),
     ],
     raw: true,
   });
