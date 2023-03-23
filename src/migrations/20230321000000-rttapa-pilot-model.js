@@ -66,6 +66,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      reviewDate: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
     }, { transaction });
   }),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
