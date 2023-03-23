@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# no more tables
+PGPASSWORD=something_secret psql -U postgres -h localhost -p 5432 -d ttasmarthub -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+# run migrations
+yarn docker:db:migrate && yarn docker:db:seed
