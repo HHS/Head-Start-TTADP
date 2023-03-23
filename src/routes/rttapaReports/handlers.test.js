@@ -179,7 +179,7 @@ describe('Rttapa Reports route handlers', () => {
         },
         body: {
           recipientId: 1,
-          regionId: 1,
+          regionId: 14,
           reviewDate: '2019-01-01',
           notes: 'notes',
           goalIds: [1, 2, 3],
@@ -190,6 +190,7 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
