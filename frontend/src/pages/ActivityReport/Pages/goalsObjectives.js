@@ -23,6 +23,7 @@ import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -57,7 +58,10 @@ const GoalsObjectives = ({
   const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
-  const [availableGoals, updateAvailableGoals] = useState([]);
+  const [availableGoals, updateAvailableGoals] = useState({
+    goals: [],
+    goalTemplates: [],
+  });
   const hasGrants = grantIds.length > 0;
 
   const {
@@ -80,6 +84,7 @@ const GoalsObjectives = ({
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
+          const fetchedGoalTemplates = await getGoalTemplates();
           const formattedGoals = fetchedGoals.map((g) => {
             // if the goal is on an "old" grant, we should
             // treat it like a new goal for now
@@ -91,7 +96,10 @@ const GoalsObjectives = ({
 
             return { ...g, isNew, grantIds };
           });
-          updateAvailableGoals(formattedGoals);
+          updateAvailableGoals({
+            goals: formattedGoals,
+            goalTemplates: fetchedGoalTemplates,
+          });
         }
 
         setFetchError(false);
