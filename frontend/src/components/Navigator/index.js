@@ -161,7 +161,7 @@ const Navigator = ({
     }
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
-    updateFormData(data);
+    /* updateFormData(data); */
 
     if (!saveWhenClean && !isDirty) {
       setIsAppLoading(false);
