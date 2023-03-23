@@ -26,6 +26,12 @@ jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(() => 1),
 }));
 
+jest.mock('../../services/rttapa', () => ({
+  rttapa: jest.fn(() => ({ regionId: 1 })),
+  newRttapa: jest.fn(() => ({ report: 'This could be anything' })),
+  allRttapas: jest.fn(() => []),
+}));
+
 describe('Rttapa Reports route handlers', () => {
   describe('getRttapas', () => {
     it('should return a list of rttapa reports', async () => {
@@ -50,8 +56,7 @@ describe('Rttapa Reports route handlers', () => {
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
       await getRttapas(mockRequest, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalled();
-      // todo - verify response
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
     it('checks permssions', async () => {
@@ -107,6 +112,7 @@ describe('Rttapa Reports route handlers', () => {
         },
         params: {
           reportId: 1,
+          regionId: 1,
         },
       };
       const mockResponse = {
@@ -121,8 +127,7 @@ describe('Rttapa Reports route handlers', () => {
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
       await getRttapa(mockRequest, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalled();
-      // todo - verify response
+      expect(mockResponse.json).toHaveBeenCalledWith({ regionId: 1 });
     });
 
     it('handles errors', async () => {
@@ -179,11 +184,12 @@ describe('Rttapa Reports route handlers', () => {
         },
         body: {
           recipientId: 1,
-          regionId: 14,
+          regionId: 1,
           reviewDate: '2019-01-01',
           notes: 'notes',
           goalIds: [1, 2, 3],
         },
+        params: {},
       };
       const mockResponse = {
         status: jest.fn(() => ({
@@ -197,8 +203,7 @@ describe('Rttapa Reports route handlers', () => {
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
       await createRttapa(mockRequest, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalled();
-      // todo - verify response
+      expect(mockResponse.json).toHaveBeenCalledWith({ report: 'This could be anything' });
     });
 
     it('handles errors', async () => {
@@ -220,7 +225,7 @@ describe('Rttapa Reports route handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
 
-    it('checks permssions', async () => {
+    it('checks permissions', async () => {
       const mockRequest = {
         session: {
           userId: 1,
