@@ -43,6 +43,10 @@ describe('Rttapa Reports route handlers', () => {
           regionId: 1,
           recipientId: 1,
         },
+        query: {
+          sortBy: 'reviewDate',
+          direction: 'asc',
+        },
       };
       const mockResponse = {
         status: jest.fn(() => ({

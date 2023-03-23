@@ -59,6 +59,10 @@ describe('RTTAPAHistory', () => {
       user: {
         name: 'Timmy the Tester',
       },
+      notes: 'This is gooooood soup',
+      reviewDate: '2021-01-01',
+      regionId,
+      recipientId,
       goals: [
         {
           id: 1,
@@ -69,11 +73,33 @@ describe('RTTAPAHistory', () => {
           objectives: [],
           goalNumbers: ['G-1'],
         },
+        {
+          id: 2,
+          goalText: 'Goal 2',
+          goalStatus: 'Not Started',
+          isRttapa: 'Yes',
+          goalTopics: ['Topic 1', 'Topic 2'],
+          goalNumbers: ['G-2'],
+          objectives: [
+            {
+              id: 1,
+              title: 'Objective 1',
+              endDate: '2021-02-01',
+              reasons: [],
+              status: 'Not Started',
+              grantNumbers: ['grant-1'],
+              activityReports: [
+                {
+                  id: 1,
+                  legacyId: 'AR-1',
+                  number: 'AR-1',
+                  endDate: '2021-01-01',
+                },
+              ],
+            },
+          ],
+        },
       ],
-      notes: 'This is gooooood soup',
-      reviewDate: '2021-01-01',
-      regionId,
-      recipientId,
     }]);
 
     act(() => {
@@ -81,12 +107,15 @@ describe('RTTAPAHistory', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Timmy the Tester reviewed 1 goals on January 1, 2021')).toBeInTheDocument();
+      expect(screen.getByText('Timmy the Tester reviewed 2 goals on January 1, 2021')).toBeInTheDocument();
       expect(screen.getByText('This is gooooood soup')).toBeInTheDocument();
     });
 
+    const viewGoals = screen.getAllByText(/View Goals/i);
+    expect(viewGoals.length).toBe(1);
+
     act(() => {
-      userEvent.click(screen.getByText(/View Goal/i));
+      userEvent.click(viewGoals[0]);
     });
 
     await waitFor(() => {
@@ -131,5 +160,25 @@ describe('RTTAPAHistory', () => {
     });
 
     expect(sort.value).toBe('reviewDate-asc');
+  });
+
+  it('handles an error', async () => {
+    const recipientId = '1';
+    const regionId = '1';
+
+    const url = join(
+      rttapaUrl,
+      'region',
+      String(regionId),
+      'recipient',
+      String(recipientId),
+      '?sortBy=reviewDate&direction=desc',
+    );
+    fetchMock.getOnce(url, 500);
+    act(() => {
+      renderRTTAPAHistory(recipientId, regionId, 'Recipient 1 (Region 1)');
+    });
+
+    await waitFor(() => expect(screen.getByText('There was an error fetching your reports')).toBeInTheDocument());
   });
 });
