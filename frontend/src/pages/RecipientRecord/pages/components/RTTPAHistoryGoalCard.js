@@ -27,6 +27,14 @@ GoalDataRow.propTypes = {
 
 export default function RTTAPAHistoryGoalCard({ report }) {
   const [showGoals, setShowGoals] = useState(false);
+  /** *
+   * raw: true on the backend means we can't really format the date we get back
+   * at query time - it'll be an ISO string. So we split on the T and take the first
+   * part of the string, which is the date. Otherwise timezone conversions means we'll get
+   * the wrong date
+   */
+  const [reviewDate] = report.reviewDate.split('T');
+
   return (
     <div className="ttahub-rttapa-list--item usa-card padding-3 radius-lg border smart-hub-border-base-lighter width-full" key={report.id}>
       <div>
@@ -39,7 +47,7 @@ export default function RTTAPAHistoryGoalCard({ report }) {
           {' '}
           goals on
           {' '}
-          {moment(report.createdAt).format(FULL_DATE_FORMAT)}
+          {moment(reviewDate, 'YYYY-MM-DD').format(FULL_DATE_FORMAT)}
           {' '}
         </h3>
         {report.notes && (
@@ -123,6 +131,6 @@ RTTAPAHistoryGoalCard.propTypes = {
       })),
     })).isRequired,
     notes: PropTypes.string,
-    createdAt: PropTypes.string.isRequired,
+    reviewDate: PropTypes.string.isRequired,
   }).isRequired,
 };

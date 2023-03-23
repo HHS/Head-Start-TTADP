@@ -20,6 +20,7 @@ export async function rttapa(reportId: number): Promise<RttapaResponse> {
       'regionId',
       'recipientId',
       'notes',
+      'reviewDate',
       [
         sequelize.fn(
           'jsonb_build_object',
@@ -37,7 +38,11 @@ export async function rttapa(reportId: number): Promise<RttapaResponse> {
   });
 }
 
-export async function allRttapas(regionId: number, recipientId: number): Promise<RttapaResponse[]> {
+export async function allRttapas(
+  regionId: number,
+  recipientId: number,
+  { sortBy, direction }: { sortBy: string; direction: string },
+): Promise<RttapaResponse[]> {
   return RttapaPilot.findAll({
     attributes: [
       'id',
@@ -56,8 +61,10 @@ export async function allRttapas(regionId: number, recipientId: number): Promise
         'user',
       ],
       'createdAt',
+      'reviewDate',
     ],
     where: { regionId, recipientId },
+    order: [[sortBy, direction]],
     raw: true,
   });
 }
@@ -221,6 +228,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
     ...rttapaData,
     notes: data.notes,
     userId,
+    reviewDate: data.reviewDate,
   });
 
   return rttapa(rttapaReport.id);

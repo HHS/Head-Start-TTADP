@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { formatDate } = require('../lib/modelHelpers');
 
 /**
  * @param {} sequelize
@@ -45,6 +46,11 @@ export default (sequelize, DataTypes) => {
     goals: {
       type: DataTypes.JSONB,
       allowNull: false,
+    },
+    reviewDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      get: formatDate,
     },
   }, {
     sequelize,
