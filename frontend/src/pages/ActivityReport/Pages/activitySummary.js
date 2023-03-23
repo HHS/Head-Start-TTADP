@@ -358,18 +358,19 @@ const ActivitySummary = ({
             fieldSetWrapper
           >
             <Radio
-              id="delivery-method-virtual"
-              name="deliveryMethod"
-              label="Virtual"
-              value="virtual"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
-            />
-            <Radio
               id="delivery-method-in-person"
               name="deliveryMethod"
               label="In Person"
               value="in-person"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Select one' })}
+            />
+
+            <Radio
+              id="delivery-method-virtual"
+              name="deliveryMethod"
+              label="Virtual"
+              value="virtual"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
             />
