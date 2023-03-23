@@ -8,9 +8,9 @@ describe('rttapa service', () => {
   describe('newRttapa', () => {
     it('includes the correct fields', async () => {
       const report = await newRttapa(1, {
-        regionId: 1,
+        regionId: 14,
         recipientId: 1,
-        goals: [],
+        goalIds: [1, 2, 3],
         notes: '',
       });
 
@@ -34,7 +34,7 @@ describe('rttapa service', () => {
 
   describe('allRttapas', () => {
     it('includes the correct fields', async () => {
-      const reports = await allRttapas();
+      const reports = await allRttapas(1, 1);
 
       reports.forEach((report) => {
         expect(report).toHaveProperty('regionId');
