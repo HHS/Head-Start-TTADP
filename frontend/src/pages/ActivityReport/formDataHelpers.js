@@ -122,7 +122,9 @@ export const convertGoalsToFormData = (
   ) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = { ...goal, grantIds, objectives: goal.objectives };
+    accumulatedData.goalForEditing = { ...goal, grantIds };
+    // eslint-disable-next-line no-param-reassign
+    accumulatedData.objectivesForEditing = goal.objectives;
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
     // grant ids
@@ -130,7 +132,7 @@ export const convertGoalsToFormData = (
   }
 
   return accumulatedData;
-}, { goals: [], goalForEditing: null });
+}, { goals: [], goalForEditing: null, objectivesForEditing: [] });
 
 const convertObjectivesWithoutGoalsToFormData = (
   objectives, recipientIds,

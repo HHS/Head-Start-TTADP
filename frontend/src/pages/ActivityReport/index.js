@@ -489,7 +489,7 @@ function ActivityReport({
         // format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
         if (updatedReport.activityRecipientType === 'recipient') {
-          const { goalForEditing, goals } = convertGoalsToFormData(
+          const { goalForEditing, goals, objectivesForEditing } = convertGoalsToFormData(
             updatedReport.goalsAndObjectives,
             updatedReport.activityRecipients.map((r) => r.activityRecipientId),
           );
@@ -498,6 +498,7 @@ function ActivityReport({
             ...reportData,
             goalForEditing,
             goals,
+            objectivesForEditing,
           };
         }
         updateFormData(reportData, true);
