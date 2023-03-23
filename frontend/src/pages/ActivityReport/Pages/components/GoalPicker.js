@@ -85,9 +85,12 @@ const GoalPicker = ({
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
 
   // We need options with the number and also we need to add the
-  // "create new goal to the front of all the options"
+  // goal templates and "create new goal" to the front of all the options
   const options = [
-    ...availableGoals.goalTemplates,
+    ...availableGoals.goalTemplates.map((g) => ({
+      ...g,
+      grantIds,
+    })),
     newGoal(grantIds),
     ...uniqueAvailableGoals.map(({
       goalNumber,
