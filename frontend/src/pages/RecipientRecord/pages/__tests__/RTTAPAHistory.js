@@ -52,6 +52,7 @@ describe('RTTAPAHistory', () => {
       String(regionId),
       'recipient',
       String(recipientId),
+      '?sortBy=reviewDate&direction=desc',
     );
     fetchMock.getOnce(url, [{
       id: 1,
@@ -70,7 +71,7 @@ describe('RTTAPAHistory', () => {
         },
       ],
       notes: 'This is gooooood soup',
-      createdAt: '2021-01-01',
+      reviewDate: '2021-01-01',
       regionId,
       recipientId,
     }]);
@@ -104,6 +105,7 @@ describe('RTTAPAHistory', () => {
       String(regionId),
       'recipient',
       String(recipientId),
+      '?sortBy=reviewDate&direction=desc',
     );
     fetchMock.getOnce(url, []);
 
@@ -114,6 +116,16 @@ describe('RTTAPAHistory', () => {
     const sort = screen.getByLabelText('Sort by');
 
     expect(sort.value).toBe('reviewDate-desc');
+
+    fetchMock.getOnce(join(
+      rttapaUrl,
+      'region',
+      String(regionId),
+      'recipient',
+      String(recipientId),
+      '?sortBy=reviewDate&direction=asc',
+    ), []);
+
     act(() => {
       userEvent.selectOptions(sort, 'reviewDate-asc');
     });
