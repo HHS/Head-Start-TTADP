@@ -1614,13 +1614,17 @@ export async function saveGoalsForReport(goals, report) {
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
       newGoals = await Promise.all(grantIds.map(async (grantId) => {
-        let newGoal = await Goal.findOne({
-          where: {
-            name: fields.name,
-            grantId,
-            status: { [Op.not]: GOAL_STATUS.CLOSED },
-          },
-        });
+        let newGoal;
+
+        if (fields.name) {
+          newGoal = await Goal.findOne({
+            where: {
+              name: fields.name,
+              grantId,
+              status: { [Op.not]: GOAL_STATUS.CLOSED },
+            },
+          });
+        }
         if (!newGoal) {
           newGoal = await Goal.create({
             grantId, // If we don't specify the grant it will be created with the old.

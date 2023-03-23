@@ -95,7 +95,6 @@ const Navigator = ({
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
-  // const objectivesForEditing = watch(OBJECTIVES_FIELD_ARRAY_NAME);
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
@@ -198,35 +197,43 @@ const Navigator = ({
    * equivalent to saving a draft. It isn't called if the goal form is closed.
    */
   const onSaveDraftGoalForNavigation = async () => {
-    // the goal form only allows for one goal to be open at a time
-    // but the objectives are stored in a subfield
-    // so we need to access the objectives and bundle them together in order to validate them
-    const objectives = getValues(OBJECTIVES_FIELD_ARRAY_NAME);
-    const name = getValues('goalName');
-    const formEndDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
-
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
-
-    const goal = {
-      ...goalForEditing,
-      isActivelyBeingEditing: true,
-      name,
-      endDate,
-      objectives: objectivesWithValidResourcesOnly(objectives),
-      isRttapa,
-      regionId: formData.regionId,
-      grantIds,
-    };
-
-    // the above logic has packaged all the fields into a tidy goal object and we can now
-    // save it to the server and update the form state
-    const allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
+    if (!goalForEditing) {
+      setIsAppLoading(false);
+      return;
+    }
 
     try {
+      // the goal form only allows for one goal to be open at a time
+      // but the objectives are stored in a subfield
+      // so we need to access the objectives and bundle them together in order to validate them
+      const objectives = getValues(OBJECTIVES_FIELD_ARRAY_NAME);
+      const name = getValues('goalName');
+      const formEndDate = getValues('goalEndDate');
+      const isRttapa = getValues('goalIsRttapa');
+
+      const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+
+      const goal = {
+        ...goalForEditing,
+        isActivelyBeingEditing: true,
+        name,
+        endDate,
+        objectives: objectivesWithValidResourcesOnly(objectives),
+        isRttapa,
+        regionId: formData.regionId,
+        grantIds,
+      };
+
+      // the above logic has packaged all the fields into a tidy goal object and we can now
+      // save it to the server and update the form state
+      const allGoals = [
+        ...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })),
+        goal,
+      ];
+
       setValue('goals', allGoals);
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
@@ -635,10 +642,10 @@ const Navigator = ({
         // this is used to disable the save buttons
         // (we don't use the overlay on auto save)
         setWeAreAutoSaving(true);
-        await draftSaver(true);
+        // await draftSaver(true);
       }
     } finally {
-      setWeAreAutoSaving(false); // enable the save buttons
+      // setWeAreAutoSaving(false); // enable the save buttons
     }
   }, autoSaveInterval);
 
