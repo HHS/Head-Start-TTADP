@@ -240,6 +240,9 @@ test.describe('Activity Report', () => {
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
+
+    await page.waitForTimeout(10000);
+    
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
     // edit the first goal
