@@ -32,11 +32,26 @@ module.exports = {
           '${goalText}',
           null,
           'Curated'::"enum_GoalTemplates_creationMethod",
-          NOW(),
-          NOW(),
+          current_timestamp,
+          current_timestamp,
           NULL,
-          NOW()
+          current_timestamp
         );`,
+        { transaction },
+      );
+
+      // Add new topics,
+      await queryInterface.sequelize.query(
+        `
+            INSERT INTO "Topics"
+            ("name", "createdAt", "updatedAt")
+            VALUES
+            ('FEI - Community Options', current_timestamp, current_timestamp),
+            ('FEI - Community Partnerships', current_timestamp, current_timestamp),
+            ('FEI - Facilities', current_timestamp, current_timestamp),
+            ('FEI - Family Circumstances', current_timestamp, current_timestamp),
+            ('FEI - Workforce', current_timestamp, current_timestamp);
+          `,
         { transaction },
       );
     });
@@ -47,7 +62,20 @@ module.exports = {
         `DELETE FROM "GoalTemplates"
         WHERE hash = MD5SUM(TRIM('${goalText}'))
         AND "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod";
-      `,
+        `,
+        { transaction },
+      );
+      await queryInterface.sequelize.query(
+        `DELETE FROM "Topics"
+        WHERE name IN (
+          'FEI - Community Options',
+          'FEI - Community Partnerships',
+          'FEI - Facilities',
+          'FEI - Family Circumstances',
+          'FEI - Workforce',
+        );
+        `,
+        { transaction },
       );
     });
   },
