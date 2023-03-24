@@ -1,6 +1,5 @@
 import React from 'react';
 import { Alert } from '@trussworks/react-uswds';
-import './TopicsInfoLIst.scss';
 
 const topicInfo = [
   {
@@ -101,14 +100,14 @@ export default function TopicsInfoList() {
       {
      topicInfo.map((t) => (
        <>
-         <span className="smart-hub-topics-info-header margin-bottom-0">{t.title}</span>
-         <p className="smart-hub-topics-info-text margin-top-0" style={{ whiteSpace: 'break-spaces' }}>
+         <span className="margin-bottom-0  usa-prose text-bold">{t.title}</span>
+         <p className="margin-top-0 usa-prose" style={{ whiteSpace: 'break-spaces' }}>
            {t.info}
          </p>
          {
             t.infoAlert
               ? (
-                <Alert className="smart-hub-topics-info-text margin-bottom-2" type="info" headingLevel="h4" slim>
+                <Alert className="margin-bottom-2 usa-prose" type="info" headingLevel="h4" slim>
                   {t.infoAlert}
                 </Alert>
               )
