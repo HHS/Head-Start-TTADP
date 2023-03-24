@@ -72,42 +72,45 @@ export default function RTTAPAHistoryGoalCard({ report }) {
       </Button>
 
       { showGoals && (
-        report.goals.map((goal) => (
-          <article className="ttahub-rttapa-report--goals padding-y-3" key={goal.id}>
-            <h4 className="font-sans-lg margin-top-0 margin-bottom-2">
-              Goal
-              {' '}
-              {goal.goalNumbers.join(', ')}
-              { goal.isRttapa === 'Yes' ? <Tag className="margin-left-1 text-ink" background={colors.baseLighter}>RTTAPA</Tag> : null }
-            </h4>
-            <div className="ttahub-rttapa-report--goals--data margin-bottom-4">
-              <GoalDataRow
-                label="Goal status"
-                value={(
-                  <StatusDropdown
-                    showReadOnlyStatus
-                    onUpdateGoalStatus={() => {}}
-                    status={goal.goalStatus}
-                    regionId={report.regionId}
-                    goalId={goal.id}
-                  />
-              )}
-              />
-              <GoalDataRow label="Goal" value={goal.goalText} />
-              {goal.goalTopics ? (
-                <GoalDataRow label="Topics" value={goal.goalTopics.join(', ')} />
-              ) : null}
-            </div>
-            {goal.objectives && goal.objectives.length ? (
-              <h5 className="font-serif-sm margin-top-0 margin-bottom-2">Objectives</h5>
-            ) : null }
-            {goal.objectives ? goal.objectives.map((objective) => (
-              <ObjectiveCard objective={objective} objectivesExpanded key={objective.id} />
-            )) : null}
-          </article>
-        ))
-      )}
+        report.goals.map((goal) => {
+          const hasObjectives = goal.objectives && goal.objectives.length > 0;
 
+          return (
+            <article className="ttahub-rttapa-report--goals padding-y-3" key={goal.id}>
+              <h4 className="font-sans-lg margin-top-0 margin-bottom-2">
+                Goal
+                {' '}
+                {goal.goalNumbers.join(', ')}
+                { goal.isRttapa === 'Yes' ? <Tag className="margin-left-1 text-ink" background={colors.baseLighter}>RTTAPA</Tag> : null }
+              </h4>
+              <div className="ttahub-rttapa-report--goals--data margin-bottom-4">
+                <GoalDataRow
+                  label="Goal status"
+                  value={(
+                    <StatusDropdown
+                      showReadOnlyStatus
+                      onUpdateGoalStatus={() => {}}
+                      status={goal.goalStatus}
+                      regionId={report.regionId}
+                      goalId={goal.id}
+                    />
+              )}
+                />
+                <GoalDataRow label="Goal" value={goal.goalText} />
+                {goal.goalTopics ? (
+                  <GoalDataRow label="Topics" value={goal.goalTopics.join(', ')} />
+                ) : null}
+              </div>
+              {hasObjectives ? (
+                <h5 className="font-serif-sm margin-top-0 margin-bottom-2">Objectives</h5>
+              ) : null }
+              {hasObjectives ? goal.objectives.map((objective) => (
+                <ObjectiveCard objective={objective} objectivesExpanded key={objective.id} />
+              )) : null}
+            </article>
+          );
+        })
+      )}
     </div>
   );
 }
