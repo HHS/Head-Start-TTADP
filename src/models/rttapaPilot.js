@@ -50,7 +50,6 @@ export default (sequelize, DataTypes) => {
     reviewDate: {
       type: DataTypes.DATE,
       allowNull: false,
-      get: formatDate,
     },
   }, {
     sequelize,
