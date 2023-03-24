@@ -24,14 +24,19 @@ interface GoalTemplate {
 }
 
 export async function getCuratedTemplates(grantIds: number[] | null): Promise<GoalTemplate[]> {
-  const regionIds = await Grant.scope().findAll({
-    attributes: [
-      [Sequelize.fn('DISTINCT', Sequelize.col('regionId')), 'regionId'],
-    ],
-    where: { id: grantIds },
-    raw: true,
-  });
+  // Collect the distinct list of regionIds from the list of passed grantIds
+  const regionIds = grantIds && grantIds.length
+    ? await Grant.scope().findAll({
+      attributes: [
+        [Sequelize.fn('DISTINCT', Sequelize.col('regionId')), 'regionId'],
+      ],
+      where: { id: grantIds },
+      raw: true,
+    })
+    : [];
 
+  // Collect all the templates that either have a null regionId or a regionId from the list
+  // collected above.
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
