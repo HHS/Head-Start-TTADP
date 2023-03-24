@@ -20,7 +20,7 @@ module.exports = {
       await queryInterface.sequelize.query(
         `INSERT INTO "GoalTemplates" (
           hash,
-          templateName,
+          "templateName",
           "regionId",
           "creationMethod",
           "createdAt",
@@ -28,7 +28,7 @@ module.exports = {
           "lastUsed",
           "templateNameModifiedAt"
         ) Values (
-          MD5SUM(TRIM('${goalText}')),
+          MD5(TRIM('${goalText}')),
           '${goalText}',
           null,
           'Curated'::"enum_GoalTemplates_creationMethod",
@@ -45,7 +45,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.sequelize.query(
         `DELETE FROM "GoalTemplates"
-        WHERE hash = MD5SUM(TRIM('${goalText}'))
+        WHERE hash = MD5(TRIM('${goalText}'))
         AND "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod";
       `,
       );
