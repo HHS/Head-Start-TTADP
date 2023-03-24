@@ -166,6 +166,7 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
                 jsonb_agg(DISTINCT jsonb_build_object(
                   'legacyId', arii."legacyId",
                   'number', 'R' || LPAD(arii."regionId"::text, 2, '0') || '-AR-' ||arii.id,
+                  'displayId', 'R' || LPAD(arii."regionId"::text, 2, '0') || '-AR-' ||arii.id,
                   'id', arii.id,
                   'endDate', arii."endDate"
                 )) "activityReports"
