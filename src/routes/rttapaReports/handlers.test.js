@@ -27,9 +27,9 @@ jest.mock('../../services/currentUser', () => ({
 }));
 
 jest.mock('../../services/rttapa', () => ({
-  rttapa: jest.fn(() => ({ regionId: 1 })),
-  newRttapa: jest.fn(() => ({ report: 'This could be anything' })),
-  allRttapas: jest.fn(() => []),
+  findRttapa: jest.fn(() => ({ regionId: 1 })),
+  createRttapa: jest.fn(() => ({ report: 'This could be anything' })),
+  findAllRttapa: jest.fn(() => []),
 }));
 
 describe('Rttapa Reports route handlers', () => {
@@ -59,7 +59,7 @@ describe('Rttapa Reports route handlers', () => {
 
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
-      await getRttapa(mockRequest, mockResponse);
+      await getRttapas(mockRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
