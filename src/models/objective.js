@@ -28,7 +28,13 @@ export default (sequelize, DataTypes) => {
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
+      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
+      Objective.belongsToMany(models.Resource, {
+        through: models.ObjectiveResource,
+        foreignKey: 'objectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
       Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics' });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,

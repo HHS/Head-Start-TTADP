@@ -316,7 +316,14 @@ describe('Activity report service', () => {
     });
   });
 
-  const idsToExclude = [9997, 9998, 9999, 777, 778, 779];
+  const idsToExclude = [
+    'R01-AR-9997',
+    'R01-AR-9998',
+    'R01-AR-9999',
+    '777',
+    '778',
+    '779',
+  ];
 
   describe('Activity Reports DB service', () => {
     beforeAll(async () => {
