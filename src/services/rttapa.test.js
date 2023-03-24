@@ -1,8 +1,8 @@
 import db from '../models';
 import {
-  newRttapa,
-  rttapa,
-  allRttapas,
+  createRttapa,
+  findRttapa,
+  findAllRttapa,
 } from './rttapa';
 
 describe('rttapa service', () => {
@@ -15,7 +15,7 @@ describe('rttapa service', () => {
 
   describe('newRttapa', () => {
     it('includes the correct fields', async () => {
-      const report = await newRttapa(1, {
+      const report = await createRttapa(1, {
         regionId: 14,
         recipientId: 1,
         goalIds: [1, 2, 3],
@@ -23,7 +23,7 @@ describe('rttapa service', () => {
         reviewDate: '2021-01-01',
       });
 
-      reportId = report.id;
+      reportId = await findRttapa(report.id);
 
       expect(report).toHaveProperty('regionId');
       expect(report).toHaveProperty('recipientId');
@@ -35,7 +35,7 @@ describe('rttapa service', () => {
 
   describe('rttapa', () => {
     it('includes the correct fields', async () => {
-      const report = await rttapa(1);
+      const report = await findRttapa(1);
 
       expect(report).toHaveProperty('regionId');
       expect(report).toHaveProperty('recipientId');
@@ -47,7 +47,7 @@ describe('rttapa service', () => {
 
   describe('allRttapas', () => {
     it('includes the correct fields', async () => {
-      const reports = await allRttapas(1, 1, { sortBy: 'reviewDate', direction: 'desc' });
+      const reports = await findAllRttapa(1, 1, { sortBy: 'reviewDate', direction: 'desc' });
 
       reports.forEach((report) => {
         expect(report).toHaveProperty('regionId');
