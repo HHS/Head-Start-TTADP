@@ -16,21 +16,22 @@ const recipientTwoName = `${faker.company.companyName()} - ${faker.animal.cetace
 const recipientThreeName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
 const recipientFourName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
 
+const seed = faker.datatype.number({ min: 28000 });
 const recipients = [
   {
-    id: faker.datatype.number({ min: 2800 }),
+    id: seed,
     name: recipientOneName,
   },
   {
-    id: faker.datatype.number({ min: 2800 }),
+    id: seed + 1,
     name: recipientTwoName,
   },
   {
-    id: faker.datatype.number({ min: 2800 }),
+    id: seed + 2,
     name: recipientThreeName,
   },
   {
-    id: faker.datatype.number({ min: 2800 }),
+    id: seed + 3,
     name: recipientFourName,
   },
 ];

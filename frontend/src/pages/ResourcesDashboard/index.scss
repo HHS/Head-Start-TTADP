@@ -1,0 +1,16 @@
+@use '../../colors.scss' as *;
+
+.grid-container {
+    max-width: 100%;
+}
+
+@media(max-width: 768px) {
+    .ttahub-resources-dashboard--filters {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+.ttahub--resource-dashboard-widget-heading {
+    font-size: 1.25em;
+}

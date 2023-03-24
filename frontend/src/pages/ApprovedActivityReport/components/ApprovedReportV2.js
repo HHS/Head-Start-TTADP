@@ -26,7 +26,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
     return (
       <ul>
         {resources.map((resource) => {
-          const resourceValue = isOtherEntity ? resource.userProvidedUrl : resource.value;
+          const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
             <li key={resourceValue}>
               <a
@@ -177,7 +177,7 @@ export default function ApprovedReportV2({ data }) {
 
   // next steps table
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const nextStepsLabel = recipientType === 'Recipient' ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const nextStepsLabel = recipientType === 'Recipients' ? 'Recipient\'s next steps' : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);

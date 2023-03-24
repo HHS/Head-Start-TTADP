@@ -130,12 +130,12 @@ export default function RegionalDashboard() {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
-        <h1 className="landing">
+        <h1 className="landing margin-top-0 margin-bottom-3">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
           TTA activity dashboard
         </h1>
-        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}

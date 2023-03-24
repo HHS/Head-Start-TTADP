@@ -5,13 +5,15 @@ import {
   ObjectiveTemplate,
   ObjectiveResource,
   ObjectiveTemplateResource,
+  Resource,
 } from '..';
 import { OBJECTIVE_STATUS } from '../../constants';
 import { objectiveTemplateGenerator } from './testHelpers';
 import { beforeValidate } from './objectiveResource';
+import { processObjectiveForResourcesById } from '../../services/resource';
 
 describe('objectiveResource hooks', () => {
-  const userProvidedUrl = faker.internet.url();
+  const url = faker.internet.url();
   let objectiveTemplate;
   let objective;
 
@@ -20,40 +22,44 @@ describe('objectiveResource hooks', () => {
   });
 
   beforeEach(async () => {
-    const transaction = await sequelize.transaction();
-
     objectiveTemplate = await ObjectiveTemplate.create(
       objectiveTemplateGenerator(),
-      { transaction, individualHooks: true },
+      { individualHooks: true },
     );
 
     objective = await Objective.create({
       title: 'Random objective title',
       status: OBJECTIVE_STATUS.APPROVED,
       objectiveTemplateId: objectiveTemplate.id,
-    }, { transaction, individualHooks: true });
+    }, { individualHooks: true });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl,
-    }, { transaction, individualHooks: true });
-
-    await transaction.commit();
+    await processObjectiveForResourcesById(objective.id, [url]);
   });
 
   afterEach(async () => {
     await ObjectiveTemplateResource.destroy({
       where: { objectiveTemplateId: objectiveTemplate.id },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
       where: { objectiveId: objective.id },
+      individualHooks: true,
     });
 
-    await Objective.destroy({ where: { id: objective.id } });
+    await Resource.destroy({
+      where: { url },
+      individualHooks: true,
+    });
+
+    await Objective.destroy({
+      where: { id: objective.id },
+      individualHooks: true,
+    });
 
     await ObjectiveTemplate.destroy({
       where: { id: objectiveTemplate.id },
+      individualHooks: true,
     });
   });
   describe('beforeValidate', () => {
@@ -74,9 +80,13 @@ describe('objectiveResource hooks', () => {
       // confirm that the objectiveTemplateResource was created
       const otr = await ObjectiveTemplateResource.findOne({
         where: {
-          userProvidedUrl,
           objectiveTemplateId: objectiveTemplate.id,
         },
+        include: [{
+          model: Resource,
+          as: 'resource',
+          where: { url },
+        }],
       });
 
       expect(otr).not.toBeNull();

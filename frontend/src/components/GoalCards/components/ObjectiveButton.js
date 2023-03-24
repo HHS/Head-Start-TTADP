@@ -23,9 +23,11 @@ export default function ObjectiveButton({
       type="button"
       className="usa-button--outline usa-button text-no-underline text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
       onClick={() => closeOrOpenObjectives()}
-      aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objectives for goal ${goalNumber}`}
+      aria-label={`${objectivesExpanded ? 'Hide' : 'View'} objectives for goal ${goalNumber}`}
     >
-      View objective
+      {objectivesExpanded ? 'Hide' : 'View'}
+      {' '}
+      objective
       {objectiveCount > 1 ? 's' : ''}
       <strong className="margin-left-1">
         (

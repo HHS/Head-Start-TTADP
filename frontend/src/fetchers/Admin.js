@@ -60,14 +60,15 @@ export const saveSiteAlert = async (alert) => {
 
 export const deleteSiteAlert = async (alertId) => {
   const success = await destroy((join('/', 'api', 'admin', 'alerts', String(alertId))));
-  if (success.ok) {
-    return true;
-  }
-
-  return false;
+  return !!(success.ok);
 };
 
 export const createSiteAlert = async (alert) => {
   const createdAlert = await post((join('/', 'api', 'admin', 'alerts')), alert);
   return createdAlert.json();
+};
+
+export const setFeatureFlag = async (data) => {
+  const result = await post((join('/', 'api', 'users', 'feature-flags')), data);
+  return result;
 };

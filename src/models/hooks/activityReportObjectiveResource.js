@@ -1,5 +1,23 @@
 const { getSingularOrPluralData } = require('../helpers/hookMetadata');
 
+const propagateOnAR = async (sequelize, instance, options) => sequelize.models.ObjectiveResource
+  .update(
+    { onAR: true },
+    {
+      where: { resourceId: instance.resourceId },
+      include: [{
+        model: sequelize.models.Objective,
+        as: 'objective',
+        include: [{
+          model: sequelize.models.ActivityReportObjective,
+          as: 'activityReportObjective',
+          where: { id: instance.activityReportObjectiveId },
+        }],
+      }],
+      transaction: options.transaction,
+    },
+  );
+
 const recalculateOnAR = async (sequelize, instance, options) => {
   // check to see if objectiveId or objectiveIds is validly defined
   // when defined a more efficient search can be used
@@ -19,9 +37,9 @@ const recalculateOnAR = async (sequelize, instance, options) => {
       ON r."objectiveId" = aro."objectiveId"
       JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-      AND r."userProvidedUrl" = aror."userProvidedUrl"
+      AND r."resourceId" = aror."resourceId"
       WHERE r."objectiveId" IN (${objectiveIds.join(',')})
-      AND r."userProvidedUrl" = '${instance.userProvidedUrl}'
+      AND r."resourceId" = ${instance.resourceId}
       AND aro.id != ${instance.activityReportObjectiveId}
       GROUP BY r."id"`;
   } else {
@@ -36,9 +54,9 @@ const recalculateOnAR = async (sequelize, instance, options) => {
       ON r."objectiveId" = aro."objectiveId"
       JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-      AND r."userProvidedUrl" = aror."userProvidedUrl"
+      AND r."resourceId" = aror."resourceId"
       WHERE arox.id = ${instance.activityReportObjectiveId}
-      AND r."userProvidedUrl" = '${instance.userProvidedUrl}'
+      AND r."resourceId" = ${instance.resourceId}
       AND aro.id != ${instance.activityReportObjectiveId}
       GROUP BY r."id"`;
   }
@@ -53,11 +71,17 @@ const recalculateOnAR = async (sequelize, instance, options) => {
   `, { transaction: options.transaction });
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await propagateOnAR(sequelize, instance, options);
+};
+
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
 };
 
 export {
+  propagateOnAR,
   recalculateOnAR,
+  afterCreate,
   afterDestroy,
 };

@@ -95,14 +95,14 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId) {
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, callback, comparator = '~*') {
+export function filterAssociation(baseQuery, searchTerms, exclude, callback, comparator = '~*', escape = true) {
   if (exclude) {
     return {
-      [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator),
+      [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, escape),
     };
   }
 
   return {
-    [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator),
+    [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
   };
 }

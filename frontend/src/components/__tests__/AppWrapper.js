@@ -18,7 +18,7 @@ describe('AppWrapper', () => {
     const heading = await screen.findByRole('heading', { name: 'This is a test' });
     expect(heading).toBeInTheDocument();
     expect(heading.parentElement).toHaveAttribute('role', 'main');
-    expect(heading.parentElement.parentElement).toHaveClass('padding-top-3');
+    expect(heading.parentElement.parentElement).toHaveClass('padding-3 tablet:padding-5');
   });
 
   it('properly renders a non-padded child', async () => {
@@ -26,6 +26,6 @@ describe('AppWrapper', () => {
     const heading = await screen.findByRole('heading', { name: 'This is a test' });
     expect(heading).toBeInTheDocument();
     expect(heading.parentElement).toHaveAttribute('role', 'main');
-    expect(heading.parentElement.parentElement).toHaveClass('padding-top-0');
+    expect(heading.parentElement.parentElement).toHaveClass('padding-x-3 padding-bottom-3 tablet:padding-x-5 tablet:padding-bottom-5');
   });
 });

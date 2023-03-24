@@ -5,6 +5,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import userEvent from '@testing-library/user-event';
 import Flags from '../Flags';
 
 const featuresUrl = join('/', 'api', 'admin', 'users', 'features');
@@ -31,5 +32,27 @@ describe('Flags page', () => {
     render(<Router history={history}><Flags /></Router>);
     const error = await screen.findByText(/Unable to fetch features/i);
     expect(error).toBeVisible();
+  });
+
+  it('displays "Turn on for all button"', async () => {
+    fetchMock.get(featuresUrl, ['anv_statistics']);
+    const history = createMemoryHistory();
+    render(<Router history={history}><Flags /></Router>);
+    const anvStats = await screen.findByText(/anv_statistics/i);
+    expect(anvStats).toBeVisible();
+    const onButton = await screen.findByText(/turn on for all/i);
+    userEvent.click(onButton);
+    expect(onButton).toBeDefined();
+  });
+
+  it('displays "Turn off for all button"', async () => {
+    fetchMock.get(featuresUrl, ['anv_statistics']);
+    const history = createMemoryHistory();
+    render(<Router history={history}><Flags /></Router>);
+    const anvStats = await screen.findByText(/anv_statistics/i);
+    expect(anvStats).toBeVisible();
+    const offButton = await screen.findByText(/turn off for all/i);
+    expect(offButton).toBeVisible();
+    userEvent.click(offButton);
   });
 });

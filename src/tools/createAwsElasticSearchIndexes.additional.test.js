@@ -24,6 +24,9 @@ jest.mock('../lib/awsElasticSearch/datacollector', () => ({
 }));
 
 describe('Create AWS Elastic Search Indexes', () => {
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
   it('happy path w/batching', async () => {
     ActivityReport.findAll = jest.fn().mockResolvedValueOnce([
       { id: 1 },
@@ -39,10 +42,6 @@ describe('Create AWS Elastic Search Indexes', () => {
   describe('error states', () => {
     afterEach(() => {
       jest.clearAllMocks();
-    });
-
-    afterAll(async () => {
-      await db.sequelize.close();
     });
 
     it('no reports to index', async () => {

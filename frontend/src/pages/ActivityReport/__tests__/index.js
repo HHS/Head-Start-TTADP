@@ -242,6 +242,73 @@ describe('ActivityReport', () => {
       expect(result).toEqual({ startDate: null, creatorRole: null });
     });
 
+    it('access correct fields when diffing turns up activity recipients', () => {
+      const old = {
+        activityRecipients: [{
+          activityRecipientId: 1,
+        }],
+        goals: [],
+        goalsAndObjectives: [
+          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }] },
+        ],
+      };
+
+      const young = {
+        activityRecipients: [{
+          activityRecipientId: 2,
+        }, {
+          activityRecipientId: 1,
+        }],
+        goals: [],
+        goalsAndObjectives: [
+          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }] },
+        ],
+      };
+
+      const changed = findWhatsChanged(young, old);
+      expect(changed).toEqual({
+        activityRecipients: [
+          {
+            activityRecipientId: 2,
+          },
+          {
+            activityRecipientId: 1,
+          },
+        ],
+        goals: [
+          {
+            activityReportGoals: [
+              {
+                isActivelyEdited: true,
+              },
+            ],
+            grantIds: [
+              2,
+              1,
+            ],
+            isActivelyEdited: true,
+            name: 'goal 1',
+          },
+          {
+            activityReportGoals: [
+              {
+                isActivelyEdited: false,
+              },
+            ],
+            grantIds: [
+              2,
+              1,
+            ],
+            isActivelyEdited: false,
+            name: 'goal 2',
+          },
+        ],
+        recipientsWhoHaveGoalsThatShouldBeRemoved: [],
+      });
+    });
+
     it('displays the creator name', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       renderActivityReport(1);

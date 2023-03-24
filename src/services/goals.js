@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
+import { processObjectiveForResourcesById } from './resource';
 import {
   Goal,
   Grant,
@@ -13,6 +14,7 @@ import {
   ActivityReportObjectiveResource,
   sequelize,
   Recipient,
+  Resource,
   ActivityReport,
   ActivityReportGoal,
   Topic,
@@ -24,6 +26,7 @@ import {
   REPORT_STATUSES,
   OBJECTIVE_STATUS,
   GOAL_STATUS,
+  SOURCE_FIELD,
 } from '../constants';
 import {
   cacheObjectiveMetadata,
@@ -78,10 +81,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       include: [
         {
           model: ObjectiveResource,
-          as: 'resources',
+          as: 'objectiveResources',
           attributes: [
-            ['userProvidedUrl', 'value'],
-            ['id', 'key'],
             [
               'onAR',
               'onAnyReport',
@@ -91,6 +92,18 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'isOnApprovedReport',
             ],
           ],
+          include: [
+            {
+              model: Resource,
+              as: 'resource',
+              attributes: [
+                ['url', 'value'],
+                ['id', 'key'],
+              ],
+            },
+          ],
+          where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
+          required: false,
         },
         {
           model: ObjectiveTopic,
@@ -223,38 +236,19 @@ export async function saveObjectiveAssociations(
   }
 
   // resources
-  const objectiveResources = await Promise.all(
-    resources.filter(({ value }) => value && isValidResourceUrl(value)).map(
-      async ({ value }) => {
-        let oresource = await ObjectiveResource.findOne({
-          where: {
-            userProvidedUrl: value,
-            objectiveId: objective.id,
-          },
-        });
-        if (!oresource) {
-          oresource = await ObjectiveResource.create({
-            userProvidedUrl: value,
-            objectiveId: objective.id,
-          }, { hooks: !!o.objectiveTemplateId });
-        }
-        return oresource;
-      },
-    ),
+  let objectiveResources = await processObjectiveForResourcesById(
+    objective.id,
+    resources
+      .filter(({ value }) => value)
+      .map(({ value }) => value),
+    [],
+    !deleteUnusedAssociations,
   );
 
-  if (deleteUnusedAssociations) {
-    // cleanup objective resources
-    await ObjectiveResource.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveResources.length
-            ? objectiveResources.map((or) => or.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
+  // filter the returned resources to only those passed to not falsely include prior resources.
+  if (!deleteUnusedAssociations) {
+    objectiveResources = objectiveResources
+      ?.filter((oR) => resources.map((r) => r.value).includes(oR.resource.dataValues.url));
   }
 
   const objectiveFiles = await Promise.all(
@@ -378,7 +372,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.dataValues)
+            .map((r) => r.resource.dataValues)
           : []),
       ], (e) => e.value);
 
@@ -440,7 +434,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       resources: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.dataValues)
+          .map((r) => r.resource.dataValues)
         : [],
       files: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
@@ -579,14 +573,18 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         required: false,
         include: [
           {
-            model: ObjectiveResource,
-            separate: true,
+            model: Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
             required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
           },
           {
             model: ActivityReportObjective,
@@ -672,13 +670,18 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
         required: false,
         include: [
           {
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
             required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
           },
           {
             model: ActivityReportObjective,
@@ -732,7 +735,12 @@ export async function goalByIdAndRecipient(id, recipientId) {
           ...objectiveFile.file.dataValues,
         }))
         .map((f) => ({ ...f, file: undefined })),
-      resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+      resources: objective.objectiveResources
+        .map((objectiveResource) => ({
+          ...objectiveResource.dataValues,
+          ...objectiveResource.resource.dataValues,
+        }))
+        .map((r) => ({ ...r, resource: undefined })),
     }))
     .map((objective) => ({ ...objective, objectiveTopics: undefined, objectiveFiles: undefined }));
   return goal;
@@ -769,7 +777,15 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
               delete of.file;
               return of;
             }),
-          resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+          resources: objective.objectiveResources
+            .map((objectiveResource) => {
+              const oR = {
+                ...objectiveResource.dataValues,
+                ...objectiveResource.resource.dataValues,
+              };
+              delete oR.resource;
+              return oR;
+            }),
         };
         delete o.objectiveTopics;
         delete o.objectiveFiles;
@@ -1841,7 +1857,15 @@ export async function getGoalsForReport(reportId) {
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
-                attributes: [['userProvidedUrl', 'value'], ['id', 'key']],
+                attributes: [['id', 'key']],
+                include: [
+                  {
+                    model: Resource,
+                    as: 'resource',
+                    attributes: [['url', 'value']],
+                  },
+                ],
+                where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
               },
             ],
           },
@@ -1850,10 +1874,15 @@ export async function getGoalsForReport(reportId) {
             as: 'topics',
           },
           {
-            separate: true,
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
-            attributes: [['userProvidedUrl', 'value']],
+            attributes: [['url', 'value']],
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
+            required: false,
           },
           {
             model: File,

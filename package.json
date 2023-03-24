@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "16.18.1"
+    "node": "16.19.1"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -140,7 +140,8 @@
       "linebreak-style": 0,
       "@typescript-eslint/no-var-requires": 0,
       "@typescript-eslint/no-unused-vars": 0,
-      "@typescript-eslint/no-empty-function": 0
+      "@typescript-eslint/no-empty-function": 0,
+      "@typescript-eslint/ban-ts-comment": 0
     }
   },
   "eslint-formatter-multiple": {

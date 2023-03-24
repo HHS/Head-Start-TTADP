@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import Container from '../../components/Container';
-import { getFeatures } from '../../fetchers/Admin';
+import { getFeatures, setFeatureFlag } from '../../fetchers/Admin';
 import './Flags.css';
 
 export default function Flags() {
@@ -21,6 +21,15 @@ export default function Flags() {
 
     fetchFeatures();
   }, []);
+
+  const handleOnOffFeatureFlag = async (feature, isOn) => {
+    try {
+      await setFeatureFlag({ flag: feature, on: isOn });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+    }
+  };
 
   return (
     <div>
@@ -47,6 +56,24 @@ export default function Flags() {
                 {' '}
                 &nbsp; &nbsp;
                 <Link to={`/admin/users?flag=${feature}`} aria-label={`view users with the ${feature} feature flag`}>View active users</Link>
+                {' '}
+                &nbsp; &nbsp;
+                <button
+                  type="button"
+                  className="usa-button usa-button--outline ttahub-export-reports"
+                  onClick={() => handleOnOffFeatureFlag(feature, true)}
+                >
+                  Turn on for all
+                </button>
+                {' '}
+                &nbsp; &nbsp;
+                <button
+                  type="button"
+                  className="usa-button usa-button--outline ttahub-export-reports"
+                  onClick={() => handleOnOffFeatureFlag(feature, false)}
+                >
+                  Turn off for all
+                </button>
               </li>
             ))}
           </ul>

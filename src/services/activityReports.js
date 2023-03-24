@@ -25,8 +25,8 @@ import {
   Program,
   ActivityReportGoal,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
-  ObjectiveResource,
+  Resource,
+  ActivityReportObjectiveTopic,
   Topic,
   CollaboratorRole,
   Role,
@@ -458,10 +458,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
             ],
           },
           {
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
           },
@@ -487,6 +487,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
       {
         required: false,
         model: ActivityReportCollaborator,
+        separate: true,
         as: 'activityReportCollaborators',
         include: [
           {
@@ -515,11 +516,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
@@ -527,11 +523,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
@@ -714,29 +705,28 @@ export async function activityReports(
     ],
   });
 
-  const topics = await Topic.findAll({
-    attributes: ['name', 'id'],
+  const arots = await ActivityReportObjectiveTopic.findAll({
     include: [
       {
-        model: Objective,
-        attributes: ['id'],
-        as: 'objectives',
-        required: true,
-        include: {
-          attributes: ['activityReportId', 'objectiveId'],
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          required: true,
-          where: {
-            activityReportId: reportIds,
-          },
+        model: ActivityReportObjective,
+        as: 'activityReportObjective',
+        where: {
+          activityReportId: reportIds,
         },
+        required: true,
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true,
       },
     ],
-    order: [
-      [sequelize.col('name'), sortDir],
-    ],
   });
+
+  const topics = arots.map((arot) => ({
+    activityReportId: arot.activityReportObjective.activityReportId,
+    name: arot.topic.name,
+  }));
 
   // Get all grant programs at once to reduce DB calls.
   const grantIds = recipients.map((a) => a.grantId);
@@ -749,7 +739,9 @@ export async function activityReports(
   // Populate Activity Recipient info.
   await populateRecipientInfo(recipients, grantPrograms);
 
-  return { ...reports, recipients, topics };
+  return {
+    ...reports, recipients, topics,
+  };
 }
 
 export async function activityReportsForCleanup(userId) {
@@ -1077,7 +1069,10 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
-  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+  if (
+    recipientsWhoHaveGoalsThatShouldBeRemoved
+    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+  ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
@@ -1176,8 +1171,9 @@ async function getDownloadableActivityReports(where, separate = true) {
           attributes: ['id', 'title', 'status'],
         },
         {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
+          model: Resource,
+          as: 'resources',
+          attributes: ['id', 'url'],
         },
         {
           model: Topic,
@@ -1256,11 +1252,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'specialistNextSteps',
         separate,
@@ -1268,11 +1259,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'recipientNextSteps',
         separate,

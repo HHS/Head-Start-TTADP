@@ -179,6 +179,7 @@ export const TOPICS = [
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -186,7 +187,7 @@ export const TOPICS = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
-  'Ongoing Monitoring Management System',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -245,6 +246,7 @@ export const RECIPIENTS_PER_PAGE = 12;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
 export const GOALS_PER_PAGE = 10;
+export const TOPICS_PER_PAGE = 10;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
