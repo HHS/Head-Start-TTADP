@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert } from '@trussworks/react-uswds';
+import './TopicsInfoLIst.scss';
 
 const topicInfo = [
   {
@@ -69,9 +70,7 @@ const topicInfo = [
   },
   {
     title: 'Equity',
-    info: `Select when:
-            (1) TTA was provided on the topic of equity and/or
-            (2) TTA was provided on another topic and intentionally addressed equity.`,
+    info: 'Select when:\n(1) TTA was provided on the topic of equity and/or\n(2) TTA was provided on another topic and intentionally addressed equity.',
     infoAlert: 'In the case of (2), select both the topic box and the equity box. See Equity Topic Guidance for more information.',
   },
   {
@@ -102,14 +101,14 @@ export default function TopicsInfoList() {
       {
      topicInfo.map((t) => (
        <>
-         <h3 className="margin-bottom-0">{t.title}</h3>
-         <p className="margin-top-0" style={{ whiteSpace: 'break-spaces' }}>
+         <span className="smart-hub-topics-info-header margin-bottom-0">{t.title}</span>
+         <p className="smart-hub-topics-info-text margin-top-0" style={{ whiteSpace: 'break-spaces' }}>
            {t.info}
          </p>
          {
             t.infoAlert
               ? (
-                <Alert type="info" headingLevel="h4" slim>
+                <Alert className="smart-hub-topics-info-text margin-bottom-2" type="info" headingLevel="h4" slim>
                   {t.infoAlert}
                 </Alert>
               )
