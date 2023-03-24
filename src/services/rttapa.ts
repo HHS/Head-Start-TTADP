@@ -12,7 +12,7 @@ const {
   RttapaPilot,
 } = db;
 
-export async function rttapa(reportId: number): Promise<RttapaResponse> {
+export async function findRttapa(reportId: number): Promise<RttapaResponse> {
   return RttapaPilot.findOne({
     attributes: [
       'id',
@@ -38,7 +38,7 @@ export async function rttapa(reportId: number): Promise<RttapaResponse> {
   });
 }
 
-export async function allRttapas(
+export async function findAllRttapa(
   regionId: number,
   recipientId: number,
   { sortBy, direction }: { sortBy: string; direction: string } = { sortBy: 'reviewDate', direction: 'desc' },
@@ -69,7 +69,10 @@ export async function allRttapas(
   });
 }
 
-export async function newRttapa(userId: number, data: NewRttapaRequest): Promise<RttapaResponse> {
+export async function createRttapa(
+  userId: number,
+  data: NewRttapaRequest,
+): Promise<RttapaResponse> {
   const rttapaData = await RecipientModel.findOne({
     attributes: [
       [sequelize.col('Recipient.id'), 'recipientId'],
@@ -231,5 +234,5 @@ export async function newRttapa(userId: number, data: NewRttapaRequest): Promise
     reviewDate: data.reviewDate,
   });
 
-  return rttapa(rttapaReport.id);
+  return findRttapa(rttapaReport.id);
 }

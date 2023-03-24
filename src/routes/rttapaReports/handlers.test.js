@@ -59,7 +59,7 @@ describe('Rttapa Reports route handlers', () => {
 
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
-      await getRttapas(mockRequest, mockResponse);
+      await getRttapa(mockRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
