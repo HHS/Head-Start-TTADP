@@ -90,7 +90,7 @@ describe('ObjectiveForm', () => {
     const topicGuidance = await screen.findByRole('button', { name: /view topic guidance/i });
     userEvent.click(topicGuidance);
     expect(await screen.findByText('Topic guidance')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: /behavioral \/ mental health \/ trauma/i })).toBeInTheDocument();
+    expect(await screen.findByText(/behavioral \/ mental health \/ trauma/i)).toBeInTheDocument();
     const closeTopicGuidance = await screen.findByRole('button', { name: /close/i });
     userEvent.click(closeTopicGuidance);
 
