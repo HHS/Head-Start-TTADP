@@ -5,7 +5,8 @@ import { getCuratedTemplates } from '../../services/goalTemplates';
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
-    const templates = await getCuratedTemplates();
+    const { grantIds } = req.body;
+    const templates = await getCuratedTemplates(grantIds);
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');

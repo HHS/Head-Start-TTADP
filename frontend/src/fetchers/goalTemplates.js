@@ -6,8 +6,9 @@ import {
 
 const goalTemplatesUrl = join('/', 'api', 'goal-templates');
 
-export async function getGoalTemplates() {
-  const url = join(goalTemplatesUrl);
+export async function getGoalTemplates(grantIds) {
+  const params = grantIds.map((grantId) => `grantIds=${grantId}`);
+  const url = join(goalTemplatesUrl, `?${params.join('&')}`);
   const response = await get(url);
   return response.json();
 }
