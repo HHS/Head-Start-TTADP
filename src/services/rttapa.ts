@@ -169,6 +169,7 @@ export async function createRttapa(
                 jsonb_agg(DISTINCT jsonb_build_object(
                   'legacyId', arii."legacyId",
                   'number', 'R' || LPAD(arii."regionId"::text, 2, '0') || '-AR-' ||arii.id,
+                  'displayId', 'R' || LPAD(arii."regionId"::text, 2, '0') || '-AR-' ||arii.id,
                   'id', arii.id,
                   'endDate', arii."endDate"
                 )) "activityReports"
