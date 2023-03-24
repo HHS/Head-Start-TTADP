@@ -2448,6 +2448,21 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
+    it('includes multiple delivery methods', async () => {
+      const filters = { 'deliveryMethod.in': ['in-person', 'hybrid'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([
+          includedReport1.id,
+          includedReport2.id,
+          excludedReport.id,
+        ]));
+    });
+
     it('excludes delivery method', async () => {
       const filters = { 'deliveryMethod.nin': ['in-person'] };
       const { activityReport: scope } = await filtersToScopes(filters);
@@ -2457,6 +2472,17 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+
+    it('excludes multiple delivery method', async () => {
+      const filters = { 'deliveryMethod.nin': ['in-person', 'hybrid'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([globallyExcludedReport.id]));
     });
   });
 
