@@ -22,15 +22,9 @@ module.exports = {
         { transaction },
       );
 
-      // -------------
-      // await queryInterface.sequelize.query(
-      //   ' SELECT "ZAFRemoveAuditingOnTable"(\'SiteAlerts\');',
-      //   { raw: true, transaction },
-      // );
-
       // Modify creation function to make creation of audit log table optional
       await queryInterface.sequelize.query(
-        `CREATE OR REPLACE FUNCTION public."ZAFAddAuditingOnTable"(t_name varchar(63), t_create_audit_table boolean DEFAULT true)
+        `CREATE OR REPLACE FUNCTION "ZAFAddAuditingOnTable"(t_name varchar(63), t_create_audit_table boolean DEFAULT true)
           RETURNS VOID
           LANGUAGE plpgsql AS
         $func$
@@ -55,7 +49,7 @@ module.exports = {
 
       // Updating the audit log function to record the impersonation ID.
       await queryInterface.sequelize.query(
-        `CREATE OR REPLACE FUNCTION public."ZAFCreateALFunction"(t_name varchar(63))
+        `CREATE OR REPLACE FUNCTION "ZAFCreateALFunction"(t_name varchar(63))
           RETURNS VOID
           LANGUAGE plpgsql AS
         $func$
@@ -208,7 +202,7 @@ module.exports = {
 
       // Updating the audit log function to record the impersonation ID.
       await queryInterface.sequelize.query(
-        `CREATE OR REPLACE FUNCTION public."ZAFCreateALTable"(t_name varchar(63))
+        `CREATE OR REPLACE FUNCTION "ZAFCreateALTable"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
           $func$
@@ -237,7 +231,7 @@ module.exports = {
 
       // Modify removal function to remove triggers on auditing table
       await queryInterface.sequelize.query(
-        `CREATE OR REPLACE FUNCTION public."ZAFRemoveAuditingOnTable"(t_name varchar(63))
+        `CREATE OR REPLACE FUNCTION "ZAFRemoveAuditingOnTable"(t_name varchar(63))
           RETURNS VOID
           LANGUAGE plpgsql AS
         $func$
@@ -256,11 +250,21 @@ module.exports = {
               DROP TRIGGER IF EXISTS %I
                 ON %I$sql$,
               'ZALTruncateT' || t_name,
-              'ZAL' || t_name);
+              t_name);
 
           EXECUTE format($sql$
               DROP FUNCTION IF EXISTS %I()$sql$,
               'ZALTruncateF' || t_name);
+
+          EXECUTE format($sql$
+              DROP TRIGGER IF EXISTS %I
+                ON %I$sql$,
+              'ZALNoTruncateT' || t_name,
+              'ZAL' || t_name);
+
+          EXECUTE format($sql$
+              DROP FUNCTION IF EXISTS %I()$sql$,
+              'ZALNoTruncateF' || t_name);
 
           EXECUTE format($sql$
               DROP TRIGGER IF EXISTS %I
@@ -298,27 +302,28 @@ module.exports = {
             WHERE table_schema='public'
               AND table_type='BASE TABLE'
               AND table_name != 'SequelizeMeta'
+              AND table_name != 'RequestErrors'
               AND table_name NOT LIKE 'ZAL%'
           LOOP
-            RAISE NOTICE 'Audit Tables: drop %', obj."tableName";
+            RAISE INFO 'Audit Tables: Update auditing on "%"', obj."tableName";
 
             -- Remove auditing from table
-            SELECT public."ZAFRemoveAuditingOnTable"(obj."tableName");
+            PERFORM "ZAFRemoveAuditingOnTable"(obj."tableName"::text);
 
             -- Add new dml_as column
             EXECUTE format($sql$
-              ALTER TABLE %I()
-              ADD COLUMN 'dml_as' bigint $sql$,
-              'ZAL' || t_name);
+              ALTER TABLE %I
+              ADD COLUMN "dml_as" bigint $sql$,
+              'ZAL' || obj."tableName"::text);
 
             -- Fix type of dml_by - was int, should be bigint
             EXECUTE format($sql$
-              ALTER TABLE %I()
-              ALTER COLUMN 'dml_by' TYPE bigint $sql$,
-              'ZAL' || t_name);
+              ALTER TABLE %I
+              ALTER COLUMN "dml_by" TYPE bigint $sql$,
+              'ZAL' || obj."tableName"::text);
 
             -- Restore auditing on table without recreating the table (hence false arg)
-            SELECT public."ZAFAddAuditingOnTable"(obj."tableName", false);
+            PERFORM "ZAFAddAuditingOnTable"(obj."tableName"::text, false);
 
           END LOOP;
         END$$;`,
