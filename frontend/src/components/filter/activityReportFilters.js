@@ -23,6 +23,7 @@ import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
+import FilterDeliveryMethod from './FilterDeliveryMethod';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -181,6 +182,21 @@ export const programTypeFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterProgramType
       inputId={`programType-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const deliveryMethodFilter = {
+  id: 'deliveryMethod',
+  display: 'Delivery method',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDeliveryMethod
+      inputId={`deliveryMethod-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
