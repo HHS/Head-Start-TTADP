@@ -22,6 +22,13 @@ module.exports = {
         { transaction },
       );
 
+      await queryInterface.sequelize.query(
+        `
+        DROP FUNCTION IF EXISTS "ZAFAddAuditingOnTable"(varchar(63));
+        `,
+        { transaction },
+      );
+
       // Modify creation function to make creation of audit log table optional
       await queryInterface.sequelize.query(
         `CREATE OR REPLACE FUNCTION "ZAFAddAuditingOnTable"(t_name varchar(63), t_create_audit_table boolean DEFAULT true)
