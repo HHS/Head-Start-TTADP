@@ -191,7 +191,9 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = document.querySelector('#resource-1');
@@ -328,7 +330,9 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -384,7 +388,9 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -443,7 +449,9 @@ describe('create goal', () => {
     let objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    let topics = await screen.findByLabelText(/topics \*/i);
+    let topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    let topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     let resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -484,7 +492,9 @@ describe('create goal', () => {
     objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    topics = await screen.findByLabelText(/topics \*/i);
+    topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -538,7 +548,9 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -609,7 +621,9 @@ describe('create goal', () => {
 
     await screen.findByText(objectiveTopicsError);
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['Coaching']);
 
     userEvent.click(save);
@@ -657,7 +671,9 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['Coaching']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
