@@ -53,6 +53,9 @@ const ReviewItem = ({
         case 'virtual':
           result = 'Virtual';
           break;
+        case 'hybrid':
+          result = 'Hybrid';
+          break;
         default:
           break;
       }
