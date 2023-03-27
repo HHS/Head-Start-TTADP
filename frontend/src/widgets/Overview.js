@@ -70,10 +70,6 @@ Overview.propTypes = {
   }),
   loading: PropTypes.bool.isRequired,
   tableCaption: PropTypes.string,
-  // gridGap: PropTypes.number,
-  // mobile: PropTypes.string,
-  // tablet: PropTypes.string,
-  // desktop: PropTypes.string,
 };
 
 Overview.defaultProps = {
