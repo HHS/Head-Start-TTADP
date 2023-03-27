@@ -17,6 +17,7 @@ import {
   myReportsFilter,
   ttaTypeFilter,
   reportTextFilter,
+  deliveryMethodFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -24,6 +25,7 @@ import { groupsFilter } from '../../components/filter/grantFilters';
 export const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  deliveryMethodFilter,
   grantNumberFilter,
   groupsFilter,
   myReportsFilter,
