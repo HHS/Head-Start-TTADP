@@ -25,6 +25,7 @@ import { withMyReports, withoutMyReports } from './myReports';
 import { withReportText, withoutReportText } from './reportText';
 import { withTtaType, withoutTtaType } from './ttaType';
 import { withGroup, withoutGroup } from './group';
+import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 
 export const topicToQuery = {
   reportId: {
@@ -129,6 +130,10 @@ export const topicToQuery = {
   ttaType: {
     in: (query) => withTtaType(query),
     nin: (query) => withoutTtaType(query),
+  },
+  deliveryMethod: {
+    in: (query) => withDeliveryMethod(query),
+    nin: (query) => withoutDeliveryMethod(query),
   },
 };
 

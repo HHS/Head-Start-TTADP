@@ -53,6 +53,10 @@ function formatDelivery(method, virtualDeliveryType) {
     return `Virtual: ${virtualDeliveryType}`;
   }
 
+  if (method === 'hybrid') {
+    return 'Hybrid';
+  }
+
   return '';
 }
 
