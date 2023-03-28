@@ -49,7 +49,7 @@ describe('Audit System', () => {
       current_setting('audit.loggedUser', true) as "loggedUser",
       current_setting('audit.transactionId', true) as "transactionId",
       current_setting('audit.sessionSig', true) as "sessionSig",
-      current_setting('audit.auditDescriptor', true) as "auditDescriptor";
+      current_setting('audit.auditDescriptor', true) as "auditDescriptor",
       current_setting('audit.impersonationUserId', true) as "impersonationUserId";
       `;
 
