@@ -425,8 +425,16 @@ jobs:
       - run:
           name: Install Cloud Foundry
           command: |
-            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
-            sudo dpkg -i cf-cli_amd64.deb
+            # curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
+            # sudo dpkg -i cf-cli_amd64.deb
+            
+            # instructions from CF
+            # first add the Cloud Foundry Foundation public key and package repository to your system
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            # then, update your local package index, then finally install the cf CLI
+            sudo apt-get update
+            sudo apt-get install cf7-cli
       - when:  # sandbox: for short-term feature development, see README.md
           condition:
             and:
