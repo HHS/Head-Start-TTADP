@@ -1,5 +1,6 @@
 import { createClient } from 'redis';
 import { generateRedisConfig } from './queue';
+import { auditLogger } from '../logger';
 
 interface CacheOptions {
   EX?: number;
@@ -24,12 +25,27 @@ export default async function getCachedResponse(
     EX: 600,
   },
 ) {
-  let response = await redisClient.get(key);
+  let response: string | null = null;
+  await redisClient.connect();
+
+  try {
+    response = await redisClient.get(key);
+  } catch (err) {
+    auditLogger.error('Error getting cache response', { err });
+  }
 
   if (!response) {
     response = await callback();
-    redisClient.set(key, response, options);
   }
 
+  if (response) {
+    try {
+      redisClient.set(key, response, options);
+    } catch (err) {
+      auditLogger.error('Error setting cache response', { err });
+    }
+  }
+
+  await redisClient.quit();
   return response;
 }
