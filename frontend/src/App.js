@@ -34,6 +34,7 @@ import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
 import Logout from './pages/Logout';
+import FeedTest from './pages/FeedTest';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { storageAvailable } from './hooks/helpers';
@@ -289,8 +290,17 @@ function App() {
           )}
         />
         <Route
+          exact
+          path="/feed-test"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <FeedTest />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          render={() => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <NotFound />
             </AppWrapper>
           )}
