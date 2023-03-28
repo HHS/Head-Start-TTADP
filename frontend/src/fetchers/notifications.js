@@ -6,7 +6,8 @@ const feedUrl = join('/', 'api', 'feeds');
 
 const getNotifications = async () => {
   const url = join(feedUrl, 'whats-new');
-  return get(url);
+  const response = await get(url);
+  return response.text();
 };
 
 export {
