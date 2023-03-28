@@ -1,5 +1,6 @@
 import axios from 'axios';
 import httpCodes from 'http-codes';
+import httpContext from 'express-http-context';
 import isEmail from 'validator/lib/isEmail';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -44,12 +45,6 @@ export async function currentUserId(req, res) {
     return null;
   }
 
-  // TODO: When we figure out how/if we want to do this in production, we can
-  // remove this early return.
-  if (process.env.NODE_ENV === 'production') {
-    return idFromSessionOrLocals();
-  }
-
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
   // If that is the case, we want to use the impersonated user's ID.
   if (req.headers && req.headers['auth-impersonation-id']) {
@@ -72,6 +67,7 @@ export async function currentUserId(req, res) {
           return handleErrors(req, res, e);
         }
 
+        httpContext.set('impersonationUserId', Number(impersonatedUserId));
         return Number(impersonatedUserId);
       }
     } catch (e) {
