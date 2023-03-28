@@ -135,9 +135,14 @@ function GoalCards({
   const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
   const nonRttapaSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.isRttapa === 'No').map((g) => g.id);
 
+  const allSelectedGoalIds = (() => {
+    const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
+    return selection.map((g) => g.ids).flat();
+  })();
+
   const rttapaLink = (() => {
     if (selectedCheckBoxes && selectedCheckBoxes.length) {
-      const selectedGoalIdsQuery = selectedCheckBoxes.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
+      const selectedGoalIdsQuery = allSelectedGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
       return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
     }
 
