@@ -9,14 +9,14 @@ import './Notifications.scss';
 
 export default function Notifications({ notifications }) {
   const params = new URLSearchParams(window.location.search);
-  const referrer = params.get('ref');
+  const referrer = params.get('referrer');
 
   return (
     <div>
       {referrer && (
         <>
           <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-          <Link className=" margin-bottom-2 display-inline-block" to={referrer}>Back</Link>
+          <Link className=" margin-bottom-2 display-inline-block" to={decodeURIComponent(referrer)}>Back</Link>
         </>
       )}
       <h1 className="landing">Notifications</h1>
