@@ -61,7 +61,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     {
       key: 2,
       label: 'Notifications',
-      to: `/notifications?ref=${location.pathname}`,
+      to: `/notifications?ref=${encodeURIComponent(location.pathname)}`,
       badge: areThereUnreadNotifications ? <Pill type="success" className="margin-left-1">new</Pill> : null,
       fn: () => {
         setAreThereUnreadNotifications(false);
