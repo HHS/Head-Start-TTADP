@@ -66,3 +66,19 @@ test('put /settings', async ({ request }) => {
   );
   expect(response.status()).toBe(204);
 });
+
+test('put /settings/email/unsubscribe', async ({ request }) => {
+  const response = await request.put(
+    `${root}/settings/email/unsubscribe`,
+  );
+
+  expect(response.status()).toBe(204);
+});
+
+test('put /settings/email/subscribe', async ({ request }) => {
+  const response = await request.put(
+    `${root}/settings/email/subscribe`,
+  );
+
+  expect(response.status()).toBe(204);
+});
