@@ -22,7 +22,7 @@ describe('Audit System', () => {
       set_config('audit.loggedUser', '${transactionVariables.loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', '${transactionVariables.transactionId}', TRUE) as "transactionId",
       set_config('audit.sessionSig', '${transactionVariables.sessionSig}', TRUE) as "sessionSig",
-      set_config('audit.auditDescriptor', '${transactionVariables.auditDescriptor}', TRUE) as "auditDescriptor";
+      set_config('audit.auditDescriptor', '${transactionVariables.auditDescriptor}', TRUE) as "auditDescriptor",
       set_config('audit.impersonationUserId', '${transactionVariables.impersonationUserId}', TRUE) as "impersonationUserId";
       `;
 
