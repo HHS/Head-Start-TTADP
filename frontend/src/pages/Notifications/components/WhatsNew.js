@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
-import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
+import FeedArticle from './FeedArticle';
 
-const FULL_DATE_FORMAT = 'MMMM D, YYYY';
+const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications';
+
 const CURRENT_YEAR = moment().year();
 const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
 const MONTHS = [
@@ -33,7 +34,7 @@ const formatWhatsNew = (feed) => {
   let alreadyRead = [];
 
   try {
-    const storage = window.localStorage.getItem('whatsnew-read-notifications');
+    const storage = window.localStorage.getItem(LOCAL_STORAGE_KEY);
     if (storage) {
       alreadyRead = JSON.parse(storage);
     }
@@ -41,8 +42,6 @@ const formatWhatsNew = (feed) => {
     // eslint-disable-next-line no-console
     console.log('local storage unavailable', error);
   }
-
-  const toMarkAsRead = [];
 
   // get individual entries
   const entries = dom.querySelectorAll('entry');
@@ -56,13 +55,13 @@ const formatWhatsNew = (feed) => {
     const [month, year] = date.split(/(\d+)/).filter((s) => s);
     const id = entry.querySelector('id').textContent;
     const unread = !alreadyRead.includes(id);
-    toMarkAsRead.push(id);
 
     return {
       title: entry.querySelector('title').textContent,
       content: entry.querySelector('summary').textContent,
       published: moment(entry.querySelector('published').textContent),
       month: month[0].toUpperCase() + month.substring(1), // capitalize the month
+      id,
       year,
       unread,
     };
@@ -92,46 +91,41 @@ const formatWhatsNew = (feed) => {
     }, {});
   });
 
-  try {
-  // set the loaded articles as seen
-    window.localStorage.setItem('whatsnew-read-notifications', JSON.stringify(toMarkAsRead));
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log('local storage unavailable', error);
-  }
-
   return sortedArticles;
 };
 
-const FeedArticle = ({
-  title, content, published, unread,
-}) => {
-  console.log(unread);
-
-  return (
-    <article className={`ttahub-feed-article ttahub-feed-article__whats-new position-relative margin-bottom-3 ${unread ? 'ttahub-feed-article__whats-new--unread' : ''}`}>
-      <span className="ttahub-feed-article__whats-new--date font-body-xs padding-left-4">{published.format(FULL_DATE_FORMAT)}</span>
-      <div className="ttahub-feed-article__whats-new-content position-relative padding-left-4">
-        <h4 className="usa-prose margin-0 padding-0">{title}</h4>
-        <ReadOnlyEditor value={content} ariaLabel={title} />
-      </div>
-    </article>
-  );
-};
-
-FeedArticle.propTypes = {
-  title: PropTypes.string.isRequired,
-  content: PropTypes.string.isRequired,
-  published: PropTypes.instanceOf(moment).isRequired,
-  unread: PropTypes.bool.isRequired,
-};
 export default function WhatsNew({ data }) {
-  const articles = (() => {
+  const articles = useMemo(() => {
     if (!data) {
       return {};
     }
     return formatWhatsNew(data);
-  })();
+  }, [data]);
+
+  useEffect(() => {
+    try {
+      // set the loaded articles as seen
+      const articleIds = articles ? Object.values(articles).reduce((acc, year) => {
+        const months = Object.values(year);
+        months.forEach((month) => {
+          month.forEach((article) => {
+            acc.push(article.id);
+          });
+        });
+        return acc;
+      }, []) : [];
+
+      // we don't need to save anything if there are no articles
+      if (!articleIds.length) {
+        return;
+      }
+
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(articleIds));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('local storage unavailable', error);
+    }
+  }, [articles]);
 
   return (
     <Container>
@@ -147,18 +141,15 @@ export default function WhatsNew({ data }) {
                     {' '}
                     {year}
                   </h3>
-                  {articles[`${year}`][month].map((article) => {
-                    console.log(article.unread);
-                    return (
-                      <FeedArticle
-                        key={article.title}
-                        title={article.title}
-                        content={article.content}
-                        published={article.published}
-                        unread={article.unread}
-                      />
-                    );
-                  })}
+                  {articles[`${year}`][month].map((article) => (
+                    <FeedArticle
+                      key={article.title}
+                      title={article.title}
+                      content={article.content}
+                      published={article.published}
+                      unread={article.unread}
+                    />
+                  ))}
                 </div>
               ))
             )}

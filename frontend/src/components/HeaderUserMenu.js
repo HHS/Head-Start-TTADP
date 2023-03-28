@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Link, Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
 import DropdownMenu from './DropdownMenu';
 import './HeaderUserMenu.scss';
@@ -10,6 +11,7 @@ import NavLink from './NavLink';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import colors from '../colors';
+import Pill from './Pill';
 import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
 import { storageAvailable } from '../hooks/helpers';
 
@@ -34,7 +36,7 @@ UserMenuNav.propTypes = {
   })).isRequired,
 };
 
-function HeaderUserMenu() {
+function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifications }) {
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
@@ -52,9 +54,20 @@ function HeaderUserMenu() {
     );
   };
 
+  const location = useLocation();
+
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
-    { key: 2, label: 'Notifications', to: '/notifications' },
+    {
+      key: 2,
+      label: 'Notifications',
+      to: `/notifications?ref=${location.pathname}`,
+      badge: areThereUnreadNotifications ? <Pill type="success" className="margin-left-1">new</Pill> : null,
+      fn: () => {
+        setAreThereUnreadNotifications(false);
+        onItemClick();
+      },
+    },
     {
       key: 3,
       label: 'User guide',
@@ -88,11 +101,13 @@ function HeaderUserMenu() {
     divider = false,
     space = false,
     showIfAdmin = false,
+    badge,
     fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
     if (divider) return { key, element: <hr /> };
     if (space) return { key, element: <div className="height-6" /> };
+
     if (external) {
       return {
         key,
@@ -100,12 +115,28 @@ function HeaderUserMenu() {
           <Link key={key} className="usa-nav__link" href={to} target="_blank" rel="noopener noreferrer">
             {label}
             <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
+            {badge}
           </Link>
         ),
       };
     }
-    return { key, element: <NavLink key={key} to={to} fn={fn}>{label}</NavLink> };
-  }).filter(Boolean), [userIsAdmin]);
+    return {
+      key,
+      element: (
+        <>
+          <NavLink key={key} to={to} fn={fn}>
+            {label}
+          </NavLink>
+          {badge}
+        </>
+      ),
+    };
+  }).filter(Boolean), [
+    areThereUnreadNotifications,
+    location.pathname,
+    setAreThereUnreadNotifications,
+    userIsAdmin,
+  ]);
 
   /** If we don't have a user context, don't show the user menu. */
   if (!user) {
@@ -126,7 +157,7 @@ function HeaderUserMenu() {
       alt={buttonAriaLabel}
       type="button"
       data-testid="header-avatar"
-      className="unstyled-btn display-flex flex-align-center flex-justify-center"
+      className={`unstyled-btn display-flex flex-align-center flex-justify-center position-relative ${areThereUnreadNotifications ? 'header-avatar-button__with-unread' : ''}`}
       onClick={onClick}
       ref={clickOutsideRef}
     >
@@ -185,5 +216,14 @@ function HeaderUserMenu() {
     </DropdownMenu>
   );
 }
+
+HeaderUserMenu.propTypes = {
+  areThereUnreadNotifications: PropTypes.bool,
+  setAreThereUnreadNotifications: PropTypes.func.isRequired,
+};
+
+HeaderUserMenu.defaultProps = {
+  areThereUnreadNotifications: false,
+};
 
 export default HeaderUserMenu;
