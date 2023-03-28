@@ -196,7 +196,7 @@ function GoalCards({
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
-          selectedGoalIds={selectedCheckBoxes}
+          selectedGoalIds={allSelectedGoalIds}
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
           showRttapaValidation={showRttapaValidation}
