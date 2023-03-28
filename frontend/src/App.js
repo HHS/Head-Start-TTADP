@@ -63,6 +63,25 @@ function App() {
   const [alert, setAlert] = useState(null);
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
+  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState((() => {
+    try {
+      const readNotifications = window.localStorage.getItem('whatsnew-read-notifications');
+
+      if (readNotifications) {
+        const parsedReadNotifications = JSON.parse(readNotifications);
+        const dom = notifications.whatsNew ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml') : '';
+        const ids = dom ? Array.from(dom.querySelectorAll('entry')).map((item) => item.querySelector('id').textContent) : [];
+
+        const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
+        return unreadNotifications.length > 0;
+      }
+    } catch (err) {
+      return true;
+    }
+
+    return true;
+  })());
+
   useEffect(() => {
     // fetch alerts
     async function fetchAlerts() {
@@ -355,7 +374,12 @@ function App() {
             </>
           )}
           <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header authenticated alert={alert} />
+            <Header
+              authenticated
+              alert={alert}
+              areThereUnreadNotifications={areThereUnreadNotifications}
+              setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+            />
             <AriaLiveContext.Provider value={{ announce }}>
               {!authenticated && (authError === 403
                 ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>

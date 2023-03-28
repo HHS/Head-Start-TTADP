@@ -27,22 +27,36 @@ ul.user-menu-nav {
     border-bottom: 0px;
   }
 
-  & > li > a.usa-nav__link {
-    width: 100%;
-    display: block;
-    padding: 0.75rem 1rem;
-    text-decoration: underline;
-    cursor: pointer;
+  & > li {
     border-left: 4px solid transparent;
-    color: $ttahub-medium-blue;
-
-    &:hover {
-      background-color: $gray-two;
-    }
-
-    &.usa-current {
-      border-left: 4px solid $ttahub-medium-blue;
-      text-decoration: none;
-    }
+    padding: 0.75rem 1rem;
   }
+
+  & > li:has(.usa-current)  {
+    border-left: 4px solid $ttahub-medium-blue;
+    text-decoration: none;
+  }
+
+  & > li:hover {
+    background-color: $gray-two;
+  }
+
+  & > li > a.usa-nav__link { 
+    text-decoration: underline;
+    cursor: pointer;    
+    color: $ttahub-medium-blue;
+  }
+}
+
+
+.header-avatar-button__with-unread::after {
+  background-color: $success;
+  border-radius: 50%;
+  content: '';
+  display: inline-block;
+  height: 1rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 1rem;
 }
