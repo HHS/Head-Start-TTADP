@@ -15,7 +15,7 @@ describe('Audit System', () => {
       transactionId: faker.datatype.uuid(),
       sessionSig: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
       auditDescriptor: 'Audit System Test',
-      impersonationUserId: 3,
+      impersonationUserId: '3',
     };
 
     const query = `SELECT
