@@ -103,7 +103,13 @@ const generateAuditModel = (sequelize, model) => {
       type: DataTypes.DATE,
     },
     dml_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: null,
+      comment: null,
+    },
+    dml_as: {
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: null,
       comment: null,
