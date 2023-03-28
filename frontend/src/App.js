@@ -36,6 +36,7 @@ import AccountManagement from './pages/AccountManagement';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
+import { getNotifications } from './fetchers/notifications';
 import { storageAvailable } from './hooks/helpers';
 import {
   LOCAL_STORAGE_DATA_KEY,
@@ -46,6 +47,7 @@ import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import MyGroups from './pages/AccountManagement/MyGroups';
+import NotificationsPage from './pages/Notifications';
 
 function App() {
   const [user, updateUser] = useState();
@@ -59,6 +61,7 @@ function App() {
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
   const [alert, setAlert] = useState(null);
+  const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   useEffect(() => {
     // fetch alerts
@@ -74,6 +77,23 @@ function App() {
 
     if (authenticated) {
       fetchAlerts();
+    }
+  }, [authenticated]);
+
+  useEffect(() => {
+    // fetch alerts
+    async function fetchNotifications() {
+      try {
+        const notificationsFromApi = await getNotifications();
+        setNotifications({ whatsNew: notificationsFromApi });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`There was an error fetching notifications: ${e}`);
+      }
+    }
+
+    if (authenticated) {
+      fetchNotifications();
     }
   }, [authenticated]);
 
@@ -254,6 +274,15 @@ function App() {
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/notifications"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <NotificationsPage notifications={notifications} />
             </AppWrapper>
           )}
         />

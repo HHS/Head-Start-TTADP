@@ -54,28 +54,29 @@ function HeaderUserMenu() {
 
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
+    { key: 2, label: 'Notifications', to: '/notifications' },
     {
-      key: 2,
+      key: 3,
       label: 'User guide',
       to: 'https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/',
       external: true,
     },
     {
-      key: 3,
+      key: 4,
       label: 'Contact support',
       to: 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a',
       external: true,
     },
-    { key: 4, space: true },
+    { key: 5, space: true },
     {
-      key: 5,
+      key: 6,
       label: 'Admin',
       to: '/admin',
       showIfAdmin: true,
     },
-    { key: 6, divider: true, showIfAdmin: false },
+    { key: 7, divider: true, showIfAdmin: false },
     {
-      key: 7,
+      key: 8,
       label: 'Log out',
       to: '/logout',
     },
