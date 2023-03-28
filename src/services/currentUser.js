@@ -27,9 +27,11 @@ import { validateUserAuthForAdmin } from './accessValidation';
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
     if (req.session && req.session.userId) {
+      httpContext.set('impersonationUserId', Number(req.session.userId));
       return Number(req.session.userId);
     }
     if (res.locals && res.locals.userId) {
+      httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
     // bypass authorization, used for cucumber UAT and axe accessibility testing
@@ -40,6 +42,7 @@ export async function currentUserId(req, res) {
         req.session.userId = userId;
         req.session.uuid = uuidv4();
       }
+      httpContext.set('impersonationUserId', Number(userId));
       return Number(userId);
     }
     return null;
