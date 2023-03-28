@@ -17,6 +17,11 @@ module.exports = {
       // Disable allow null and unique.
       await queryInterface.sequelize.query(
         `
+        /*
+        TTAHUB-1130: Delete Orphan Goals
+            This removes any goals created via the Activity Report
+            page that are NOT associated with a report.
+        */
         -- 1.) Create Orphan GOALS Id's Temp Table.
         SELECT
             g."id" AS "goalId"
