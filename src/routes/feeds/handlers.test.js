@@ -1,18 +1,3 @@
-/*
-import { Request, Response } from 'express';
-import { getWhatsNewFeedData } from '../../services/feed';
-import handleErrors from '../../lib/apiErrorHandler';
-
-export async function whatsNewFeedHandler(req: Request, res: Response) {
-  try {
-    const feed = await getWhatsNewFeedData();
-    res.send(feed);
-  } catch (error) {
-    await handleErrors(req, res, error, 'whatsNewFeedHandler');
-  }
-}
-*/
-
 import { whatsNewFeedHandler } from './handlers';
 import { getWhatsNewFeedData } from '../../services/feed';
 
