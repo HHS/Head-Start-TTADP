@@ -34,7 +34,6 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
 import { auditLogger } from '../logger';
-import { isValidResourceUrl } from '../lib/urlUtils';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -60,6 +59,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'onApprovedAR',
     'rtrOrder',
   ],
+  order: [['rtrOrder', 'asc']],
   where: {
     id,
   },
