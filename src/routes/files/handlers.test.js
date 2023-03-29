@@ -19,6 +19,7 @@ import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
+import { generateRedisConfig } from '../../lib/queue';
 
 jest.mock('../../policies/activityReport');
 jest.mock('../../policies/user');
@@ -90,7 +91,6 @@ describe('File Upload', () => {
   let recipient;
 
   beforeAll(async () => {
-    jest.clearAllMocks();
     user = await User.create(mockUser);
     report = await ActivityReport.create(reportObject);
     recipient = await Recipient.create({ ...mockRecipient });
@@ -102,6 +102,11 @@ describe('File Upload', () => {
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
     process.env.CURRENT_USER_ID = '2046';
+
+    generateRedisConfig.mockReturnValue({
+      uri: 'redis://localhost:6379',
+      tlsEnabled: false,
+    });
   });
   afterAll(async () => {
     const files = await File.findAll({
@@ -169,6 +174,7 @@ describe('File Upload', () => {
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
+    jest.clearAllMocks();
     await db.sequelize.close();
   });
   beforeEach(() => {

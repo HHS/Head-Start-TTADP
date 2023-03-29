@@ -6,18 +6,6 @@ interface CacheOptions {
   EX?: number;
 }
 
-const {
-  uri: redisUrl,
-  tlsEnabled,
-} = generateRedisConfig();
-
-const redisClient = createClient({
-  url: redisUrl,
-  socket: {
-    tls: tlsEnabled,
-  },
-});
-
 export default async function getCachedResponse(
   key: string,
   callback: () => Promise<string>,
@@ -25,6 +13,18 @@ export default async function getCachedResponse(
     EX: 600,
   },
 ) {
+  const {
+    uri: redisUrl,
+    tlsEnabled,
+  } = generateRedisConfig();
+
+  const redisClient = createClient({
+    url: redisUrl,
+    socket: {
+      tls: tlsEnabled,
+    },
+  });
+
   let response: string | null = null;
   await redisClient.connect();
 
