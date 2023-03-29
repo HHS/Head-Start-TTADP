@@ -423,7 +423,6 @@ export function mockRSSData() {
       <dc:creator>Anonymous Hub User</dc:creator>
       <dc:date>2023-03-22T21:03:16Z</dc:date>
     </entry>
-  </feed>
-  
+  </feed>  
   `;
 }

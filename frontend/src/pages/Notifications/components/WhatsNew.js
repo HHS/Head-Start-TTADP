@@ -53,7 +53,7 @@ export const formatWhatsNew = (feed) => {
 
     // given a string like january2021, split it into an array of ['january', '2021']
     const [month, year] = date.split(/(\d+)/).filter((s) => s);
-    const id = entry.querySelector('id').textContent;
+    const id = entry.querySelector('id') ? entry.querySelector('id').textContent : null;
     const unread = !alreadyRead.includes(id);
 
     return {
