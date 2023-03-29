@@ -90,6 +90,7 @@ describe('File Upload', () => {
   let recipient;
 
   beforeAll(async () => {
+    jest.clearAllMocks();
     user = await User.create(mockUser);
     report = await ActivityReport.create(reportObject);
     recipient = await Recipient.create({ ...mockRecipient });
