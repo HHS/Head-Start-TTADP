@@ -58,10 +58,7 @@ const GoalsObjectives = ({
   const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
-  const [availableGoals, updateAvailableGoals] = useState({
-    goals: [],
-    goalTemplates: [],
-  });
+  const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
   const {
@@ -96,10 +93,10 @@ const GoalsObjectives = ({
 
             return { ...g, isNew, grantIds };
           });
-          updateAvailableGoals({
-            goals: formattedGoals,
-            goalTemplates: fetchedGoalTemplates,
-          });
+          updateAvailableGoals([
+            ...fetchedGoalTemplates,
+            ...formattedGoals,
+          ]);
         }
 
         setFetchError(false);
