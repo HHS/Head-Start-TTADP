@@ -388,7 +388,7 @@ const ActivitySummary = ({
             {isVirtual && (
             <div className="margin-top-2">
               <FormItem
-                label="Please specify how the virtual event was conducted."
+                label="Optional: Specify how the virtual event was conducted."
                 name="virtualDeliveryType"
                 fieldSetWrapper
                 required={false}
