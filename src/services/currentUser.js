@@ -1,5 +1,6 @@
 import axios from 'axios';
 import httpCodes from 'http-codes';
+import httpContext from 'express-http-context';
 import isEmail from 'validator/lib/isEmail';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,9 +27,11 @@ import { validateUserAuthForAdmin } from './accessValidation';
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
     if (req.session && req.session.userId) {
+      httpContext.set('impersonationUserId', Number(req.session.userId));
       return Number(req.session.userId);
     }
     if (res.locals && res.locals.userId) {
+      httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
     // bypass authorization, used for cucumber UAT and axe accessibility testing
@@ -39,15 +42,10 @@ export async function currentUserId(req, res) {
         req.session.userId = userId;
         req.session.uuid = uuidv4();
       }
+      httpContext.set('impersonationUserId', Number(userId));
       return Number(userId);
     }
     return null;
-  }
-
-  // TODO: When we figure out how/if we want to do this in production, we can
-  // remove this early return.
-  if (process.env.NODE_ENV === 'production') {
-    return idFromSessionOrLocals();
   }
 
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
@@ -72,6 +70,7 @@ export async function currentUserId(req, res) {
           return handleErrors(req, res, e);
         }
 
+        httpContext.set('impersonationUserId', Number(impersonatedUserId));
         return Number(impersonatedUserId);
       }
     } catch (e) {

@@ -258,11 +258,11 @@ describe('Update grants and recipients', () => {
       ],
     });
     const {
-      // eslint-disable-next-line camelcase
-      descriptor_id, dml_by, dml_txid, session_sig,
+      descriptor_id, dml_by, dml_as, dml_txid, session_sig,
     } = grantAuditEntry;
 
-    expect(dml_by).toBe(0);
+    expect(dml_by).toBe('0'); // bigint comes back as a string
+    expect(dml_as).toBe('3'); // bigint comes back as a string
     expect(dml_txid).not.toMatch(/^00000000/);
     expect(session_sig).not.toBeNull();
 
