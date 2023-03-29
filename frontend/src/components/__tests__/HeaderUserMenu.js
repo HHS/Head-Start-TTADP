@@ -7,6 +7,7 @@ import {
 } from '@testing-library/react';
 import App from '../../App';
 import { SCOPE_IDS } from '../../Constants';
+import { mockRSSData } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter', permissions: [] };
@@ -17,6 +18,7 @@ describe('HeaderUserMenu', () => {
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
   const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
+  const feedUrl = join('api', 'feeds', 'whats-new');
 
   const before = async (admin = false) => {
     if (admin) {
@@ -27,6 +29,7 @@ describe('HeaderUserMenu', () => {
 
     fetchMock.get(logoutUrl, 200);
     fetchMock.get(cleanupUrl, []);
+    fetchMock.get(feedUrl, mockRSSData());
 
     render(<App />);
 
