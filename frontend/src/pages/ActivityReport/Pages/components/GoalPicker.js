@@ -55,7 +55,7 @@ const GoalPicker = ({
   const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
   const allAvailableGoals = availableGoals // excludes already selected goals from the dropdown
-    .goals.filter((goal) => goal.goalIds.every((id) => !selectedIds.includes(id)));
+    .filter((goal) => goal.goalIds.every((id) => !selectedIds.includes(id)));
 
   const {
     field: {
@@ -87,10 +87,6 @@ const GoalPicker = ({
   // We need options with the number and also we need to add the
   // goal templates and "create new goal" to the front of all the options
   const options = [
-    ...availableGoals.goalTemplates.map((g) => ({
-      ...g,
-      grantIds,
-    })),
     newGoal(grantIds),
     ...uniqueAvailableGoals.map(({
       goalNumber,
@@ -165,20 +161,10 @@ const GoalPicker = ({
 
 GoalPicker.propTypes = {
   grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  availableGoals: PropTypes.shape({
-    goals: PropTypes.arrayOf(
-      PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.number,
-      }),
-    ),
-    goalTemplates: PropTypes.arrayOf(
-      PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.number,
-      }),
-    ),
-  }).isRequired,
+  availableGoals: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+  })).isRequired,
   reportId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,
