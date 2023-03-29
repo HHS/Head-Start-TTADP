@@ -25,7 +25,7 @@ const MONTHS = [
 
 const parseFeedIntoDom = (feed) => (feed ? new window.DOMParser().parseFromString(feed, 'text/xml') : null);
 
-const formatWhatsNew = (feed) => {
+export const formatWhatsNew = (feed) => {
   const dom = parseFeedIntoDom(feed);
   if (!dom) {
     return null;
