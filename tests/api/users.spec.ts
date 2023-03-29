@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
-import { root } from './common';
+import { validate } from 'uuid';
+import { root, validateSchema } from './common';
 
 test('get /users/collaborators', async ({ request }) => {
   
@@ -23,13 +24,8 @@ test.describe('get /users/collaborators', () => {
       { headers: { 'playwright-user-id': '1' } }
     );
     expect(response.status()).toBe(200);
-    const body = await response.body();
-
     const schema = Joi.array().items(Joi.any());
-
-    const json = JSON.parse(String(body));
-    const { error } = schema.validate(json);
-    expect(error).toBe(undefined);
+    await validateSchema(response, schema, expect);
   });
 });
 
@@ -62,8 +58,7 @@ test.describe('get /users/statistics', () => {
       objectivesApproved: Joi.string().required(),
     });
     expect(response.status()).toBe(200);
-    const { error } = schema.validate(await response.json());
-    expect(error).toBe(undefined);
+    await validateSchema(response, schema, expect);
   });
   test('403', async ({ request }) => {
     const response = await request.get(

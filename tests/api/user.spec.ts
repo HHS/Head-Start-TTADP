@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
-import { root } from './common';
+import { root, validateSchema } from './common';
 
 test('get /user', async ({ request }) => {
   const response = await request.get(`${root}/user`);
@@ -41,7 +41,5 @@ test('get /user', async ({ request }) => {
     validationStatus: Joi.array().items(Joi.any()).required(),
   });
 
-  const json = JSON.parse(String(body));
-  const { error } = schema.validate(json);
-  expect(error).toBe(undefined);
+  await validateSchema(response, schema, expect);
 });
