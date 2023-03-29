@@ -314,6 +314,12 @@ fill: #1B1B1B;
   font-family: Merriweather, serif;
 }
 
+/* ========== some color helpers ========== */
+
 .bg-success-darker {
   background: $success-darker;
+}
+
+.text-ttahub-blue {
+  color: $ttahub-blue;
 }
