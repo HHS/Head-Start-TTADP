@@ -1,5 +1,300 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`formatWhatsNew with localStorage error returns the formatted articles 1`] = `
+Object {
+  "2022": Object {
+    "December": Array [
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Use the calendar widget or manually enter future dates for the “start date” and “end date” fields in the AR.  Learn more about using the date fields when <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/8028189/Entering+a+new+TTA+activity+report\\" data-linked-resource-id=\\"8028189\\" data-linked-resource-version=\\"53\\" data-linked-resource-type=\\"page\\">entering a new TTA activity report</a> in the TTA Hub user guide.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117211265/Set+future+dates+in+ARs+to+plan+future+TTA+visits\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117211265-3",
+        "month": "December",
+        "published": "2023-03-22T22:25:01.000Z",
+        "title": "Set future dates in ARs to plan future TTA visits",
+        "unread": true,
+        "year": "2022",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>See your goals in the same order that they were added to a recipient’s profile. Learn more about <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/38240289/Selecting+goals+in+an+activity+report\\" data-linked-resource-id=\\"38240289\\" data-linked-resource-version=\\"27\\" data-linked-resource-type=\\"page\\">selecting goals in an AR</a> in the TTA Hub user guide.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117244030/View+goals+in+the+AR+by+creation+date\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117244030-3",
+        "month": "December",
+        "published": "2023-03-22T22:21:38.000Z",
+        "title": "View goals in the AR by creation date",
+        "unread": true,
+        "year": "2022",
+      },
+    ],
+    "November": Array [
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Set an anticipated completion date for <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/38666241/Goal+summary\\" data-linked-resource-id=\\"38666241\\" data-linked-resource-version=\\"15\\" data-linked-resource-type=\\"page\\">recipient goals</a> and <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/38240539/Next+steps\\" data-linked-resource-id=\\"38240539\\" data-linked-resource-version=\\"9\\" data-linked-resource-type=\\"page\\">next steps</a> when <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/8028189/Entering+a+new+TTA+activity+report\\" data-linked-resource-id=\\"8028189\\" data-linked-resource-version=\\"53\\" data-linked-resource-type=\\"page\\">entering a new AR</a> or <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/8028231\\" data-linked-resource-id=\\"8028231\\" data-linked-resource-version=\\"28\\" data-linked-resource-type=\\"page\\">managing recipient goals</a>.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117211299/Manage+follow-up+with+the+anticipated+completion+date\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117211299-2",
+        "month": "November",
+        "published": "2023-03-22T22:01:51.000Z",
+        "title": "Manage follow-up with the anticipated completion date",
+        "unread": true,
+        "year": "2022",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Filter the activity reports page and regional dashboard by AR participants. Learn more about using <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/8159323/Filtering\\" data-linked-resource-id=\\"8159323\\" data-linked-resource-version=\\"28\\" data-linked-resource-type=\\"page\\">filters</a> in the TTA Hub user guide.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117211381\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117211381-2",
+        "month": "November",
+        "published": "2023-03-22T21:51:57.000Z",
+        "title": "New \\"Participants\\" filter added to the Regional Dashboard",
+        "unread": true,
+        "year": "2022",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>added</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Access the <a rel=\\"nofollow\\">user guide</a> or <a class=\\"external-link\\" href=\\"https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a\\" rel=\\"nofollow\\">contact support</a> directly from your profile menu in the TTA Hub.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117047745/New+quick+links+to+the+user+guide+and+support+form\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117047745-1",
+        "month": "November",
+        "published": "2023-03-22T21:26:10.000Z",
+        "title": "New quick links to the user guide and support form",
+        "unread": true,
+        "year": "2022",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>added</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Review your profile information, <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/37486933/Verifying+your+email+address\\" data-linked-resource-id=\\"37486933\\" data-linked-resource-version=\\"10\\" data-linked-resource-type=\\"page\\">verify your email</a>, and <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/37748771/Managing+your+email+preferences\\" data-linked-resource-id=\\"37748771\\" data-linked-resource-version=\\"14\\" data-linked-resource-type=\\"page\\">manage email preferences</a> by subscribing/unsubscribing to TTA Hub-related emails. Learn more about <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/37748737/Managing+your+TTA+Hub+account\\" data-linked-resource-id=\\"37748737\\" data-linked-resource-version=\\"11\\" data-linked-resource-type=\\"page\\">managing your TTA Hub account</a> in the TTA Hub user guide.</p><p />
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117539066/New+profile+menu+to+manage+your+TTA+Hub+account\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117539066-1",
+        "month": "November",
+        "published": "2023-03-22T21:21:45.000Z",
+        "title": "New profile menu to manage your TTA Hub account",
+        "unread": true,
+        "year": "2022",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>added</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p><a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/8028231\\" data-linked-resource-id=\\"8028231\\" data-linked-resource-version=\\"28\\" data-linked-resource-type=\\"page\\">Create and manage goals and objectives from the RTR</a> and view the number of goals by status.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/22/117244126\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-117244126-1",
+        "month": "November",
+        "published": "2023-03-22T21:03:16.000Z",
+        "title": "Manage recipient goals and objectives from the Recipient’s TTA Record (RTR)",
+        "unread": true,
+        "year": "2022",
+      },
+    ],
+  },
+  "2023": Object {
+    "February": Array [
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+               - \\"updated with changes made by Patrice on the Whats New page\\"
+          </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Filter by a word, phrase, or sentence and find the Activity Reports where it is used. Visit the knowledge-based articles to learn more about <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/86278145/Filtering+the+Regional+TTA+Dashboard+for+reports+with+specific+text\\" data-linked-resource-id=\\"86278145\\" data-linked-resource-version=\\"11\\" data-linked-resource-type=\\"page\\">filtering the Regional TTA Dashboard </a>or <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/79953921/Filtering+for+Activity+Reports+%28ARs%29+with+specific+text\\" data-linked-resource-id=\\"79953921\\" data-linked-resource-version=\\"10\\" data-linked-resource-type=\\"page\\">filtering Activity Reports (ARs)</a>.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/20/115245168\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-115245168-7",
+        "month": "February",
+        "published": "2023-03-28T22:26:35.000Z",
+        "title": "\\"Report text\\" filter to find text in ARs",
+        "unread": true,
+        "year": "2023",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+               - \\"updated with Patrice's changes in the Whats New page\\"
+          </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Site alerts display critical, time-sensitive warnings or directions across every page in the TTA Hub. The TTA Hub team controls how long displays are seen. Learn more about <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/101449729/Alerts+and+messages+in+the+TTA+Hub\\" data-linked-resource-id=\\"101449729\\" data-linked-resource-version=\\"4\\" data-linked-resource-type=\\"page\\">alerts and messages</a> in the TTA Hub user guide.</p><p />
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/20/115048567/Site+alerts+to+keep+you+informed\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-115048567-7",
+        "month": "February",
+        "published": "2023-03-28T22:24:46.000Z",
+        "title": "Site alerts to keep you informed",
+        "unread": true,
+        "year": "2023",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+               - \\"updated with changes from Patrice in the Whats New page\\"
+          </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Supporting managers' requests to display when an AR was submitted for approval. Displays on an approved AR and when exporting ARs to CSV. Learn more about the submitted date on the <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/99975260/What+s+new#February-2023---5-features\\" rel=\\"nofollow\\">What’s New</a> page.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/20/115146838/Display+an+AR%27s+submitted+date\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-115146838-9",
+        "month": "February",
+        "published": "2023-03-28T22:23:41.000Z",
+        "title": "Display an AR's submitted date",
+        "unread": true,
+        "year": "2023",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+              </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Filter data in the Activity Reports page or Regional TTA Dashboard by selecting “Training”, “Technical Assistance”, or both in the TTA type filter. Learn more about using <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/8159323/Filtering\\" data-linked-resource-id=\\"8159323\\" data-linked-resource-version=\\"28\\" data-linked-resource-type=\\"page\\">filters</a> in the TTA Hub user guide.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/20/114491576\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-114491576-8",
+        "month": "February",
+        "published": "2023-03-22T21:57:22.000Z",
+        "title": "New \\"TTA type\\" filter for the Activity Reports page and Regional Dashboard",
+        "unread": true,
+        "year": "2023",
+      },
+    ],
+    "March": Array [
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+               - \\"updated with changes made by Patrice in the Whats New page\\"
+          </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Each user’s <a class=\\"external-link\\" href=\\"https://ttahub.ohs.acf.hhs.gov/\\" rel=\\"nofollow\\">landing page </a>displays TTA that was reported since TTA Hub launched in March 2021.</p>
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/13/110264579\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-110264579-6",
+        "month": "March",
+        "published": "2023-03-28T22:20:55.000Z",
+        "title": "Celebrate TTA Hub’s two-year anniversary!",
+        "unread": true,
+        "year": "2023",
+      },
+      Object {
+        "content": "<div class=\\"feed\\">    <p>
+          Blog post
+              <b>edited</b> by
+                      <a      href=\\"/wiki/people/625eecc2b8be7c006a447dc5\\"
+    >Anonymous Hub User</a>
+               - \\"updated with changes from Patrice in the What's New page\\"
+          </p>
+          <div style=\\"border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px;\\">
+          <p>Use “My groups” to create a recipient group and filter Activity Reports without selecting recipients individually. Learn more about <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/20/115146811/Create+groups+of+recipients\\">creating groups</a> and using the filter in the TTA Hub user guide.</p><p />
+      </div>
+          <div style=\\"padding: 10px 0;\\">
+         <a href=\\"https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/blog/2023/03/20/115146811/Create+groups+of+recipients\\">View Online</a>
+                    </div>
+  </div>",
+        "id": "tag:acf-ohs.atlassian.net,2009:blogpost-115146811-8",
+        "month": "March",
+        "published": "2023-03-28T22:17:45.000Z",
+        "title": "Create groups of recipients",
+        "unread": true,
+        "year": "2023",
+      },
+    ],
+  },
+}
+`;
+
 exports[`formatWhatsNew with localStorage returns the formatted articles 1`] = `
 Object {
   "2022": Object {
