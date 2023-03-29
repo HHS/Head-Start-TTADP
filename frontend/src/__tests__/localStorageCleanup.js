@@ -6,9 +6,10 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
-import { mockWindowProperty } from '../testHelpers';
+import { mockRSSData, mockWindowProperty } from '../testHelpers';
 
 const cleanupUrl = '/api/activity-reports/storage-cleanup';
+const feedsUrl = '/api/feeds/whats-new';
 
 describe('localStorageCleanup', () => {
   const removeItem = jest.fn();
@@ -41,6 +42,7 @@ describe('localStorageCleanup', () => {
       });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
+      fetchMock.get(feedsUrl, mockRSSData());
       fetchMock.get(alertsUrl, null);
       render(<App />);
       await screen.findByText('Activity Reports');
