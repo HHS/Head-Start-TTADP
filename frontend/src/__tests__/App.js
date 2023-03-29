@@ -11,10 +11,15 @@ import fetchMock from 'fetch-mock';
 import App from '../App';
 
 const storageCleanup = join('api', 'activity-reports', 'storage-cleanup');
+const whatsNew = join('api', 'feeds', 'whats-new');
+
 describe('App', () => {
   const loginText = 'Log In with HSES';
 
-  beforeEach(async () => fetchMock.get(storageCleanup, []));
+  beforeEach(async () => {
+    fetchMock.get(storageCleanup, []);
+    fetchMock.get(whatsNew, '');
+  });
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
 
