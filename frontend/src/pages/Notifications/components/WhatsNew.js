@@ -35,6 +35,7 @@ export const formatWhatsNew = (feed) => {
 
   try {
     const storage = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    console.log('storage', storage);
     if (storage) {
       alreadyRead = JSON.parse(storage);
     }
