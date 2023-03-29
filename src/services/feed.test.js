@@ -23,6 +23,7 @@ jest.mock('../lib/queue', () => ({
 }));
 
 describe('fetchWhatsNewFeedData', () => {
+  afterAll(() => jest.clearAllMocks());
   it('returns the feed data', async () => {
     const response = await getWhatsNewFeedData();
     expect(response).toEqual('value');
