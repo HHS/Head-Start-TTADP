@@ -18,12 +18,21 @@ export default async function getCachedResponse(
     tlsEnabled,
   } = generateRedisConfig();
 
-  const redisClient = createClient({
-    url: redisUrl,
-    socket: {
-      tls: tlsEnabled,
-    },
-  });
+  let redisClient = {
+    connect: () => Promise.resolve(),
+    get: (_k: string) => Promise.resolve(null),
+    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve('set'),
+    quit: () => Promise.resolve(),
+  };
+  
+  if(!process.env.CI) {
+    redisClient = createClient({
+      url: redisUrl,
+      socket: {
+        tls: tlsEnabled,
+      },
+    });
+  }
 
   let response: string | null = null;
   await redisClient.connect();
@@ -40,7 +49,7 @@ export default async function getCachedResponse(
 
   if (response) {
     try {
-      redisClient.set(key, response, options);
+      await redisClient.set(key, response, options);
     } catch (err) {
       auditLogger.error('Error setting cache response', { err });
     }
