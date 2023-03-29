@@ -3,7 +3,7 @@ import { generateRedisConfig } from './queue';
 import { auditLogger } from '../logger';
 
 interface CacheOptions {
-  EX?: number;
+  EX?: number; // time in seconds
 }
 
 export default async function getCachedResponse(
@@ -21,7 +21,7 @@ export default async function getCachedResponse(
   let redisClient = {
     connect: () => Promise.resolve(),
     get: (_k: string) => Promise.resolve(null),
-    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve('set'),
+    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve(''),
     quit: () => Promise.resolve(),
   };
 
