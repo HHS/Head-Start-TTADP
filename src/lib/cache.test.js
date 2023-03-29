@@ -17,8 +17,15 @@ jest.mock('./queue', () => ({
 }));
 
 describe('getCachedResponse', () => {
+  const ORIGINAL_ENV = process.env;
+
+  beforeAll(() => {
+    process.env.CI = false;
+  });
+
   afterAll(() => {
     jest.clearAllMocks();
+    process.env = ORIGINAL_ENV;
   });
 
   it('returns the cached response', async () => {

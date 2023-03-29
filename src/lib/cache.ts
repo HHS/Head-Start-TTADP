@@ -25,7 +25,7 @@ export default async function getCachedResponse(
     quit: () => Promise.resolve(),
   };
 
-  if (!process.env.CI) {
+  if (!process.env.CI || process.env.CI === 'false') {
     redisClient = createClient({
       url: redisUrl,
       socket: {
