@@ -20,7 +20,9 @@ test('my groups', async ({ page }) => {
   await page.getByRole('button', { name: 'Save group' }).click();
 
   // navigate to the recipient search page
+  const recipientPageLoad = page.waitForResponse(/api\/recipient\/search/)
   await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
+  await recipientPageLoad;
   await page.getByRole('button', { name: 'open filters for this page' }).click();
   await page.locator('select[name="topic"]').selectOption('group');
   await page.locator('select[name="condition"]').selectOption('is');

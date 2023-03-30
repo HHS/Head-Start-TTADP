@@ -34,6 +34,7 @@ export default async function getCachedResponse(
     quit: () => Promise.resolve(),
   };
 
+  let clientConnected = false;
   let response: string | null = null;
 
   try {
@@ -45,6 +46,7 @@ export default async function getCachedResponse(
     });
     await redisClient.connect();
     response = await redisClient.get(key);
+    clientConnected = true;
   } catch (err) {
     auditLogger.error('Error creating redis client', { err });
   }
@@ -52,7 +54,7 @@ export default async function getCachedResponse(
     response = await callback();
   }
 
-  if (response) {
+  if (response && clientConnected) {
     try {
       await redisClient.set(key, response, options);
       await redisClient.quit();
