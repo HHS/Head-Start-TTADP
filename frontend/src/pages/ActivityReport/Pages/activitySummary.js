@@ -388,9 +388,10 @@ const ActivitySummary = ({
             {isVirtual && (
             <div className="margin-top-2">
               <FormItem
-                label="Please specify how the virtual event was conducted."
+                label="Optional: Specify how the virtual event was conducted."
                 name="virtualDeliveryType"
                 fieldSetWrapper
+                required={false}
               >
                 <Radio
                   id="virtual-deliver-method-video"
@@ -398,7 +399,8 @@ const ActivitySummary = ({
                   label="Video"
                   value="video"
                   className="smart-hub--report-checkbox"
-                  inputRef={register({ required: 'Please specify how the virtual event was conducted' })}
+                  required={false}
+                  inputRef={register()}
                 />
                 <Radio
                   id="virtual-deliver-method-telephone"
@@ -406,7 +408,8 @@ const ActivitySummary = ({
                   label="Telephone"
                   value="telephone"
                   className="smart-hub--report-checkbox"
-                  inputRef={register({ required: 'Please specify how the virtual event was conducted' })}
+                  required={false}
+                  inputRef={register()}
                 />
               </FormItem>
             </div>
@@ -580,7 +583,6 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
-    virtualDeliveryType,
 
     // arrays
     activityRecipients,
@@ -630,10 +632,6 @@ export const isPageComplete = (formData, formState) => {
   }
 
   if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
-    return false;
-  }
-
-  if (deliveryMethod === 'virtual' && !virtualDeliveryType) {
     return false;
   }
 
