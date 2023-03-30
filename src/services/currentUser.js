@@ -79,6 +79,20 @@ export async function currentUserId(req, res) {
     }
   }
 
+  if (
+    process.env.NODE_ENV !== 'production'
+    && process.env.BYPASS_AUTH === 'true'
+    && req.headers && req.headers['playwright-user-id']
+  ) {
+    const userId = req.headers['playwright-user-id'];
+    auditLogger.warn(`Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`);
+    if (req.session) {
+      req.session.userId = userId;
+      req.session.uuid = uuidv4();
+    }
+    return Number(userId);
+  }
+
   return idFromSessionOrLocals();
 }
 
