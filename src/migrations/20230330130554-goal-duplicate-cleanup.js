@@ -88,7 +88,7 @@ module.exports = {
                   ELSE COALESCE((ARRAY_AGG(g2."previousStatus"))[1], 'Not Started')
                 END "previousStatus",
                 MIN(g."goalTemplateId") "goalTemplateId",
-                BOOL_OR(g2."onApprovedAR" OR g."onApprovedAR") "onApprovedAR",
+                BOOL_OR(COALESCE(g2."onApprovedAR", FALSE) OR g."onApprovedAR") "onApprovedAR",
                 MIN(LEAST(g2."firstNotStartedAt", g."firstNotStartedAt")) "firstNotStartedAt",
                 MAX(GREATEST(g2."lastNotStartedAt", g."lastNotStartedAt")) "lastNotStartedAt",
                 MIN(LEAST(g2."firstInProgressAt", g."firstInProgressAt")) "firstInProgressAt",
@@ -120,7 +120,7 @@ module.exports = {
                   THEN 'No'
                   ELSE NULL
                 END "isRttapa",
-                BOOL_OR(g2."onAR" OR g."onAR") "onAR",
+                BOOL_OR(COALESCE(g2."onAR", FALSE) OR g."onAR") "onAR",
                 ARRAY_AGG(DISTINCT "g".id) "toRemove",
                 (ARRAY_AGG(DISTINCT "g2".id))[1] "toUpdate"
               FROM "Goals" g
@@ -213,7 +213,7 @@ module.exports = {
                 MIN(LEAST("o"."createdAt", "o2"."createdAt")) "createdAt",
                 MAX(GREATEST("o"."updatedAt", "o2"."updatedAt")) "updatedAt",
                 COALESCE(o2."otherEntityId", o."otherEntityId") "otherEntityId",
-                BOOL_OR(o."onApprovedAR" OR o2."onApprovedAR") "onApprovedAR",
+                BOOL_OR(o."onApprovedAR" OR COALESCE(o2."onApprovedAR", FALSE)) "onApprovedAR",
                 MIN(LEAST("o"."firstNotStartedAt", "o2"."firstNotStartedAt")) "firstNotStartedAt",
                 MAX(GREATEST("o"."lastNotStartedAt", "o2"."lastNotStartedAt")) "lastNotStartedAt",
                 MIN(LEAST("o"."firstInProgressAt", "o2"."firstInProgressAt")) "firstInProgressAt",
@@ -232,7 +232,7 @@ module.exports = {
                   THEN 'activityReport'
                   ELSE NULL
                 END "createdVia",
-                BOOL_OR(o."onAR" OR o2."onAR") "onAR",
+                BOOL_OR(o."onAR" OR COALESCE(o2."onAR", FALSE)) "onAR",
                 ARRAY_AGG(DISTINCT "o".id) "toRemove",
                 (ARRAY_AGG(DISTINCT "o2".id))[1] "toUpdate"
               FROM "Objectives" o
@@ -327,8 +327,8 @@ module.exports = {
                 "of"."fileId",
                 MIN(LEAST("of"."createdAt", "of2"."createdAt")) "createdAt",
                 MAX(GREATEST("of"."updatedAt", "of2"."updatedAt")) "updatedAt",
-                BOOL_OR("of"."onAR" OR "of2"."onAR") "onAR",
-                BOOL_OR("of"."onApprovedAR" OR "of2"."onApprovedAR") "onApprovedAR",
+                BOOL_OR("of"."onAR" OR COALESCE("of2"."onAR", FALSE)) "onAR",
+                BOOL_OR("of"."onApprovedAR" OR COALESCE("of2"."onApprovedAR", FALSE)) "onApprovedAR",
                 ARRAY_AGG(DISTINCT "of".id) "toRemove",
                 (ARRAY_AGG(DISTINCT "of2".id))[1] "toUpdate"
               FROM "ObjectiveFiles" "of"
@@ -405,8 +405,8 @@ module.exports = {
                 ) "sourceFields",
                 MIN(LEAST("or"."createdAt", "or2"."createdAt")) "createdAt",
                 MAX(GREATEST("or"."updatedAt", "or2"."updatedAt")) "updatedAt",
-                BOOL_OR("or"."onAR" OR "or2"."onAR") "onAR",
-                BOOL_OR("or"."onApprovedAR" OR "or2"."onApprovedAR") "onApprovedAR",
+                BOOL_OR("or"."onAR" OR COALESCE("or2"."onAR", FALSE)) "onAR",
+                BOOL_OR("or"."onApprovedAR" OR COALESCE("or2"."onApprovedAR", FALSE)) "onApprovedAR",
                 ARRAY_AGG(DISTINCT "or".id) "toRemove",
                 (ARRAY_AGG(DISTINCT "or2".id))[1] "toUpdate"
               FROM "ObjectiveResources" "or"
@@ -478,8 +478,8 @@ module.exports = {
                 "ot"."topicId",
                 MIN(LEAST("ot"."createdAt", "ot2"."createdAt")) "createdAt",
                 MAX(GREATEST("ot"."updatedAt", "ot2"."updatedAt")) "updatedAt",
-                BOOL_OR("ot"."onAR" OR "ot2"."onAR") "onAR",
-                BOOL_OR("ot"."onApprovedAR" OR "ot2"."onApprovedAR") "onApprovedAR",
+                BOOL_OR("ot"."onAR" OR COALESCE("ot2"."onAR", FALSE)) "onAR",
+                BOOL_OR("ot"."onApprovedAR" OR COALESCE("ot2"."onApprovedAR", FALSE)) "onApprovedAR",
                 ARRAY_AGG(DISTINCT "ot".id) "toRemove",
                 (ARRAY_AGG(DISTINCT "ot2".id))[1] "toUpdate"
               FROM "ObjectiveTopics" "ot"
