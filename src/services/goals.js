@@ -1184,8 +1184,10 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
 
   const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
 
+  // Delete ARO Topics, Files, etc.
   await destroyActivityReportObjectiveMetadata(idsToDestroy, objectiveIdsToRemove);
 
+  // Delete ARO's.
   return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
     ? ActivityReportObjective.destroy({
       where: {
@@ -1258,6 +1260,59 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
 
     return [];
   }
+}
+
+async function removeUnusedActivityReportGoals(goalsToRemove, reportId) {
+  // If we don't have goals return.
+  if (!goalsToRemove.length) {
+    return Promise.resolve();
+  }
+
+  // Find all goals.
+  const goals = await Goal.findAll({
+    where: {
+      createdVia: 'activityReport',
+      id: goalsToRemove,
+      onApprovedAR: false,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: reportId,
+          },
+        },
+      },
+      {
+        attributes: ['id', 'goalId', 'title'],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+      },
+    ],
+  });
+
+  // Get goals without Activity Reports.
+  let unusedGoals = goals.filter((g) => !g.activityReports.length);
+
+  // Get Goals without Objectives.
+  unusedGoals = goals.filter((g) => !g.objectives.length);
+
+  // If we have activity report goals without activity reports delete.
+  if (unusedGoals.length) {
+    // Delete goals.
+    return Goal.destroy({
+      where: {
+        id: unusedGoals.map((g) => g.id),
+      },
+    });
+  }
+
+  // else do nothing.
+  return Promise.resolve();
 }
 
 async function removeObjectives(objectivesToRemove, reportId) {
@@ -1433,6 +1488,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
 
+  // Delete ARO and Topics, Resources, etc.
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
 
   // attempt to remove objectives that are no longer associated with any ARs
@@ -1715,11 +1771,28 @@ export async function saveGoalsForReport(goals, report) {
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
 
+  // Get previous DB ARG's.
+  const previousActivityReportGoals = await ActivityReportGoal.findAll({
+    where: {
+      activityReportId: report.id,
+    },
+  });
+
+  const goalsToRemove = previousActivityReportGoals.filter(
+    (arg) => !currentGoalIds.includes(arg.goalId),
+  ).map((r) => r.goalId);
+
+  // Remove ARG's.
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
-  return removeUnusedGoalsObjectivesFromReport(
+
+  // Delete Objective ARO and associated tables.
+  await removeUnusedGoalsObjectivesFromReport(
     report.id,
     currentObjectives.filter((o) => currentGoalIds.includes(o.goalId)),
   );
+
+  // Delete Goal's if not being used and created from AR.
+  return removeUnusedActivityReportGoals(goalsToRemove, report.id);
 }
 
 /**
