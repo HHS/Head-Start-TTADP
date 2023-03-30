@@ -22,6 +22,11 @@ ul.user-menu-nav {
   padding: 0;
   min-width: 250px;
 
+  & > li {
+    display: flex;
+    align-items: center;
+  }
+
   & > li > hr {
     border-top: 1px solid $base-lighter;
     border-bottom: 0px;
@@ -51,12 +56,13 @@ ul.user-menu-nav {
 
 .header-avatar-button__with-unread::after {
   background-color: $success;
+  border: 1px solid white;
   border-radius: 50%;
   content: '';
   display: inline-block;
-  height: 1rem;
+  height: 12px;
   position: absolute;
   right: 0;
   top: 0;
-  width: 1rem;
+  width: 12px;
 }
