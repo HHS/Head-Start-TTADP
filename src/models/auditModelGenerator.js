@@ -36,6 +36,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, d
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
+  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : '';
   // eslint-disable-next-line no-unneeded-ternary
   const auditDescriptor = descriptor ? descriptor : (httpContext.get('auditDescriptor') || '');
   const { type: optionsType } = options || { type: '' };
@@ -47,6 +48,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, d
       pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
       pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
       pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
+      pgSetConfigIfNull('audit.impersonationUserId', impersonationId, 'impersonationUserId'),
     ];
 
     if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
@@ -101,7 +103,13 @@ const generateAuditModel = (sequelize, model) => {
       type: DataTypes.DATE,
     },
     dml_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: null,
+      comment: null,
+    },
+    dml_as: {
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: null,
       comment: null,
