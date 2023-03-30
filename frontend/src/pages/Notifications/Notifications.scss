@@ -20,10 +20,6 @@
     border-radius: 50%;
     background-color: $success;
     position: absolute;
-    top: 0.5rem; // to center the dot given the greater line height
+    top: 5px;
     left: 0;
-}
-
-.ttahub-feed-article__whats-new--date {
-    color: $base-dark;
 }

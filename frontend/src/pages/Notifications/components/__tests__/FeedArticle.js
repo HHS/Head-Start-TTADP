@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import React from 'react';
-import moment from 'moment';
 import { render, screen } from '@testing-library/react';
 import FeedArticle from '../FeedArticle';
 
@@ -10,7 +9,6 @@ describe('FeedArticle', () => {
     const defaultProps = {
       title: 'Title',
       content: 'Content',
-      published: moment('1970-01-01', 'YYYY-MM-DD'),
       unread: false,
     };
     render(<FeedArticle {...defaultProps} {...props} />);
@@ -24,11 +22,6 @@ describe('FeedArticle', () => {
   it('renders the content', () => {
     renderFeedArticle();
     expect(screen.getByText('Content')).toBeInTheDocument();
-  });
-
-  it('renders the published date', () => {
-    renderFeedArticle();
-    expect(screen.getByText('January 1, 1970')).toBeInTheDocument();
   });
 
   it('renders the unread class', () => {
