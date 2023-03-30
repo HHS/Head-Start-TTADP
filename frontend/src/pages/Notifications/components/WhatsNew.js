@@ -59,7 +59,6 @@ export const formatWhatsNew = (feed) => {
     return {
       title: entry.querySelector('title').textContent,
       content: entry.querySelector('summary').textContent,
-      published: moment(entry.querySelector('published').textContent),
       month: month[0].toUpperCase() + month.substring(1), // capitalize the month
       id,
       year,
@@ -146,7 +145,6 @@ export default function WhatsNew({ data }) {
                       key={article.title}
                       title={article.title}
                       content={article.content}
-                      published={article.published}
                       unread={article.unread}
                     />
                   ))}

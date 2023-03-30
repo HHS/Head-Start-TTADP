@@ -62,9 +62,6 @@ describe('Notifications', () => {
 
       Array.from(articles).forEach((article) => {
         expect(article).toBeVisible();
-        const date = article.querySelector('.ttahub-feed-article__whats-new--date');
-        expect(date).not.toBe(null);
-
         const title = article.querySelector('.ttahub-feed-article__whats-new-title');
         expect(title).not.toBe(null);
         expect(title.textContent).toBeTruthy();
