@@ -253,6 +253,7 @@ describe('processData', () => {
       new_row_data: { test: 'test' },
       dml_timestamp: new Date().toISOString(),
       dml_by: 1,
+      dml_as: 3,
       dml_txid: uuidv4(),
     });
 
