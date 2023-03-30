@@ -20,7 +20,7 @@ export default async function overview(scopes) {
     raw: true,
     include: [
       {
-        attributes: [],
+        attributes: ['regionId'], // This is required for scopes.
         model: Grant,
         as: 'grants',
         required: true,
@@ -65,9 +65,7 @@ export default async function overview(scopes) {
           {
             model: Grant,
             as: 'grant',
-            attributes: [
-              'id',
-            ],
+            attributes: ['id'],
             required: true,
             include: [
               {
