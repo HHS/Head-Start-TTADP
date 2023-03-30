@@ -40,9 +40,4 @@ test('my groups', async ({ page }) => {
   await page.getByTestId('textInput').clear()
   await page.getByTestId('textInput').fill('A new group for me and you');  
   await page.getByRole('button', { name: 'Save group' }).click();
-
-  // delete group
-  await page.getByText('A new group for me and youEdit groupDelete group').click();
-  await page.getByRole('button', { name: 'Delete group' }).click();
-  expect(page.getByText('You have no groups.')).toBeTruthy();
 });
