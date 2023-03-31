@@ -49,6 +49,8 @@ import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import MyGroups from './pages/AccountManagement/MyGroups';
 import NotificationsPage from './pages/Notifications';
 
+const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
+
 function App() {
   const [user, updateUser] = useState();
   const [landingLoading, setLandingLoading] = useState(true);
@@ -65,7 +67,7 @@ function App() {
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState((() => {
     try {
-      const readNotifications = window.localStorage.getItem('whatsnew-read-notifications');
+      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY);
 
       if (readNotifications) {
         const parsedReadNotifications = JSON.parse(readNotifications);
