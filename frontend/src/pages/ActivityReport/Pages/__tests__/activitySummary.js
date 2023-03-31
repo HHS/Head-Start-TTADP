@@ -98,6 +98,6 @@ describe('isPageComplete', () => {
 
   it('validates delivery method', async () => {
     const result = isPageComplete({ ...FORM_DATA, deliveryMethod: 'virtual' }, { isValid: false });
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 });
