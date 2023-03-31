@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "jp/ttahub-1462-regional-goal-dashboard"
+    default: "mb/TTAHUB-1208/order-rtr-goals"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-1049/resources-db"
