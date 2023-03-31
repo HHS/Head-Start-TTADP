@@ -24,18 +24,18 @@ module.exports = {
             -- All goals that are duplicats on the same AR
             "DupGoalsOnARs" AS (
               SELECT
-                arg."activityReportId",
+                array_remove(ARRAY_AGG(DISTINCT arg."activityReportId"), NULL) "activityReportIds",
                 g."grantId",
                 COALESCE(gt."hash",MD5(TRIM(g.name))) "goalHash",
-                ARRAY_AGG(g.id ORDER BY g.id) "goalIds",
+                ARRAY_AGG(DISTINCT g.id ORDER BY g.id) "goalIds",
                 COUNT(DISTINCT g.id) "goalCnt",
                 g."status" = 'Closed' "statusClosed"
-              FROM "ActivityReportGoals" arg
-              JOIN "Goals" g
+              FROM "Goals" g
+              LEFT JOIN "ActivityReportGoals" arg
               ON arg."goalId" = g.id
               LEFT JOIN "GoalTemplates" gt
               ON g."goalTemplateId" = gt.id
-              GROUP BY 1,2,3,6
+              GROUP BY 2,3,6
               HAVING ARRAY_LENGTH(ARRAY_AGG(g.id ORDER BY g.id), 1) > 1
               ORDER BY 5 DESC
             ),
@@ -152,30 +152,30 @@ module.exports = {
             -- All objectives that are duplicates on goals that are not duplicates on the same AR
             "DupObjectivesOnNonDupGoalsOnARs" AS (
               SELECT DISTINCT
-                aro."activityReportId",
+                array_remove(ARRAY_AGG(DISTINCT aro."activityReportId"), NULL) "activityReportIds",
                 g."grantId",
                 MD5(TRIM(g.name)) "goalHash",
                 ARRAY[g.id] "goalIds",
                 1 "goalCnt",
-        g."status" = 'Closed' "statusClosed",
+                g."status" = 'Closed' "statusClosed",
                 COALESCE(ot."hash",MD5(TRIM(o.title))) "objectiveHash",
                 ARRAY_AGG(o.id ORDER BY o.id) "objectiveIds",
                 COUNT(DISTINCT o.id) "objectiveCnt"
-              FROM "ActivityReportObjectives" aro
-              JOIN "Objectives" o
+              FROM "Objectives" o
+              LEFT JOIN "ActivityReportObjectives" aro
               ON aro."objectiveId" = o.id
               LEFT JOIN "ObjectiveTemplates" ot
               ON o."objectiveTemplateId" = ot.id
               JOIN "Goals" g
               ON o."goalId" = g.id
               LEFT JOIN "DupObjectivesOnDupGoalsOnARs" doodgoa
-              ON aro."activityReportId" = doodgoa."activityReportId"
+              ON aro."activityReportId" = ANY(doodgoa."activityReportIds")
               AND g."grantId" = doodgoa."grantId"
               AND MD5(TRIM(g.name)) = doodgoa."goalHash"
               AND COALESCE(ot."hash",MD5(TRIM(o.title))) = doodgoa."objectiveHash"
               AND o.id != ANY(doodgoa."objectiveIds")
-              WHERE doodgoa."activityReportId" IS NULL
-              GROUP BY 1,2,3,4,5,6,7
+              WHERE doodgoa."grantId" IS NULL
+              GROUP BY 2,3,4,5,6,7
               HAVING ARRAY_LENGTH(ARRAY_AGG(o.id ORDER BY o.id), 1) > 1
               ORDER BY 8 DESC
             ),
@@ -396,12 +396,12 @@ module.exports = {
                 otmm."toUpdate" "objectiveId",
                 "or"."resourceId",
                 (
-                  SELECT ARRAY_AGG(DISTINCT "sourceField")
-                  FROM (
-                    SELECT * FROM UNNEST("or"."sourceFields") orx("sourceField")
-                    UNION
-                    SELECT * FROM UNNEST("or2"."sourceFields") or2x("sourceField")
-                  ) x
+          SELECT ARRAY_AGG(DISTINCT sfx."sourceField")
+          FROM "ObjectiveResources" "orx"
+          CROSS JOIN UNNEST("orx"."sourceFields") sfx("sourceField")
+          WHERE "or"."resourceId" = orx."resourceId"
+          AND (orx."objectiveId" = ANY(ARRAY_AGG("or"."objectiveId"))
+          OR otmm."toUpdate" = orx."objectiveId")
                 ) "sourceFields",
                 MIN(LEAST("or"."createdAt", "or2"."createdAt")) "createdAt",
                 MAX(GREATEST("or"."updatedAt", "or2"."updatedAt")) "updatedAt",
@@ -415,7 +415,7 @@ module.exports = {
               LEFT JOIN "ObjectiveResources" "or2"
               ON "or2"."objectiveId" = otmm."toUpdate"
               AND "or"."resourceId" = "or2"."resourceId"
-              GROUP BY 1,2,3
+              GROUP BY 1,2
             ),
             "InsertObjectiveResources" AS (
               INSERT INTO "ObjectiveResources"
@@ -550,14 +550,11 @@ module.exports = {
                 aro.status,
                 MIN(LEAST(aro."arOrder", aro2."arOrder")) "arOrder",
                 (
-                  SELECT STRING_AGG(DISTINCT x."ttaProvided", ' ')
-                  FROM (
-                    SELECT "ttaProvided"
-                    FROM UNNEST(ARRAY_AGG(DISTINCT aro."ttaProvided")) tta("ttaProvided")
-                    UNION
-                    SELECT "ttaProvided"
-                    FROM UNNEST(ARRAY_AGG(DISTINCT aro2."ttaProvided")) tta("ttaProvided")
-                  ) x
+          SELECT STRING_AGG(DISTINCT "arox"."ttaProvided", E'\n')
+          FROM "ActivityReportObjectives" "arox"
+          WHERE "aro"."activityReportId" = arox."activityReportId"
+          AND (arox."objectiveId" = ANY(ARRAY_AGG("aro"."objectiveId"))
+          OR otmm."toUpdate" = arox."objectiveId")
                 ) "ttaProvided",
                 MIN(LEAST("aro"."createdAt", "aro2"."createdAt")) "createdAt",
                 MAX(GREATEST("aro"."updatedAt", "aro2"."updatedAt")) "updatedAt",
@@ -685,12 +682,12 @@ module.exports = {
                 arotmm."toUpdate" "activityReportObjectiveId",
                 aror."resourceId",
                 (
-                  SELECT ARRAY_AGG(DISTINCT "sourceField")
-                  FROM (
-                    SELECT * FROM UNNEST(ARRAY_AGG("aror"."sourceFields")) arorx("sourceField")
-                    UNION
-                    SELECT * FROM UNNEST(ARRAY_AGG("aror2"."sourceFields")) aror2x("sourceField")
-                  ) x
+          SELECT ARRAY_AGG(DISTINCT sfx."sourceField")
+          FROM "ActivityReportObjectiveResources" "arorx"
+          CROSS JOIN UNNEST("arorx"."sourceFields") sfx("sourceField")
+          WHERE "aror"."resourceId" = arorx."resourceId"
+          AND (arorx."activityReportObjectiveId" = ANY(ARRAY_AGG("aror"."activityReportObjectiveId"))
+          OR arotmm."toUpdate" = arorx."activityReportObjectiveId")
                 ) "sourceFields",
                 MIN(LEAST("aror"."createdAt", "aror2"."createdAt")) "createdAt",
                 MAX(GREATEST("aror"."updatedAt", "aror2"."updatedAt")) "updatedAt",
@@ -978,12 +975,12 @@ module.exports = {
                 argtmm."toUpdate" "activityReportGoalId",
                 argr."resourceId",
                 (
-                  SELECT ARRAY_AGG(DISTINCT "sourceField")
-                  FROM (
-                    SELECT * FROM UNNEST(ARRAY_AGG("argr"."sourceFields")) argrx("sourceField")
-                    UNION
-                    SELECT * FROM UNNEST(ARRAY_AGG("argr2"."sourceFields")) argr2x("sourceField")
-                  ) x
+          SELECT ARRAY_AGG(DISTINCT sfx."sourceField")
+          FROM "ActivityReportGoalResources" "argrx"
+          CROSS JOIN UNNEST("argrx"."sourceFields") sfx("sourceField")
+          WHERE "argr"."resourceId" = argrx."resourceId"
+          AND (argrx."activityReportGoalId" = ANY(ARRAY_AGG("argr"."activityReportGoalId"))
+          OR argtmm."toUpdate" = argrx."activityReportGoalId")
                 ) "sourceFields",
                 MIN(LEAST("argr"."createdAt", "argr2"."createdAt")) "createdAt",
                 MAX(GREATEST("argr"."updatedAt", "argr2"."updatedAt")) "updatedAt",
