@@ -1262,7 +1262,7 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
   }
 }
 
-async function removeUnusedActivityReportGoals(goalsToRemove, reportId) {
+async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
   // If we don't have goals return.
   if (!goalsToRemove.length) {
     return Promise.resolve();
@@ -1299,7 +1299,7 @@ async function removeUnusedActivityReportGoals(goalsToRemove, reportId) {
   let unusedGoals = goals.filter((g) => !g.activityReports.length);
 
   // Get Goals without Objectives.
-  unusedGoals = goals.filter((g) => !g.objectives.length);
+  unusedGoals = unusedGoals.filter((g) => !g.objectives.length);
 
   // If we have activity report goals without activity reports delete.
   if (unusedGoals.length) {
@@ -1792,7 +1792,7 @@ export async function saveGoalsForReport(goals, report) {
   );
 
   // Delete Goal's if not being used and created from AR.
-  return removeUnusedActivityReportGoals(goalsToRemove, report.id);
+  return removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
 }
 
 /**
