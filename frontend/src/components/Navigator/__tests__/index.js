@@ -125,7 +125,10 @@ const initialData = {
   objectivesWithoutGoals: [],
   activityRecipients: [],
   activityRecipientType: 'recipient',
-  'goalForEditing.objectives': [],
+  objectivesForEditing: [],
+  goalForEditing: {
+    name: 'Goal',
+  },
 };
 
 describe('Navigator', () => {
@@ -372,7 +375,7 @@ describe('Navigator', () => {
       goalEndDate: 'Invalid date',
       goalIsRttapa: 'Yes',
       goalName: 'goal name',
-      'goalForEditing.objectives': [{
+      objectivesForEditing: [{
         title: 'objective',
         topics: ['test'],
         ttaProvided: 'tta provided',
@@ -424,7 +427,7 @@ describe('Navigator', () => {
       goalEndDate: '09/01/2021',
       goalIsRttapa: 'Yes',
       goalName: 'goal name',
-      'goalForEditing.objectives': [{
+      objectivesForEditing: [{
         title: 'objective',
         topics: ['test'],
         ttaProvided: 'tta provided',
@@ -588,6 +591,66 @@ describe('Navigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
   });
 
+  it('does not save when navigating from the G & O page if there is no goal for editing in the form data', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }, {
+      position: 2,
+      path: 'second',
+      label: 'second page',
+      review: false,
+      render: () => (
+        <Input name="second" required />
+      ),
+    },
+    {
+      position: 3,
+      path: 'third',
+      label: 'third page',
+      review: false,
+      render: () => (
+        <Input name="third" required />
+      ),
+    },
+    {
+      position: 4,
+      label: 'review page',
+      path: 'review',
+      review: true,
+      render: (formData, onFormSubmit) => (
+        <div>
+          <Input name="fourth" required />
+          <button type="button" data-testid="review" onClick={onFormSubmit}>Continue</button>
+        </div>
+      ),
+    }];
+    const formData = {
+      ...initialData,
+      goalForEditing: undefined,
+    };
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByRole('textbox', { name: 'Name' }));
+    userEvent.click(await screen.findByRole('button', { name: 'second page Not Started' }));
+
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
+    expect(onSave).not.toBeCalled();
+  });
+
   it('disables the save button', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
@@ -647,7 +710,7 @@ describe('Navigator', () => {
       goalEndDate: '09/01/2020',
       goalIsRttapa: 'Yes',
       goalName: 'goal name',
-      'goalForEditing.objectives': [{
+      objectivesForEditing: [{
         title: 'objective',
         topics: ['test'],
         ttaProvided: 'tta provided',

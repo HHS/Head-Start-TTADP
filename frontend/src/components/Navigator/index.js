@@ -200,6 +200,8 @@ const Navigator = ({
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
+    console.log({ goalForEditing });
+
     if (!goalForEditing) {
       setIsAppLoading(false);
       return;
@@ -594,6 +596,14 @@ const Navigator = ({
       isGoalsObjectivesPage && !isObjectivesFormClosed && !isRecipientReport
     );
 
+    console.log({
+      isAutoSave,
+      isNavigation,
+      saveGoalsDraft,
+      saveObjectivesDraft,
+      isOtherEntityReport,
+    });
+
     if (isOtherEntityReport && saveObjectivesDraft) {
       // Save other-entity draft.
       await onSaveDraftOetObjectives(isAutoSave);
@@ -642,10 +652,10 @@ const Navigator = ({
         // this is used to disable the save buttons
         // (we don't use the overlay on auto save)
         setWeAreAutoSaving(true);
-        // await draftSaver(true);
+        await draftSaver(true);
       }
     } finally {
-      // setWeAreAutoSaving(false); // enable the save buttons
+      setWeAreAutoSaving(false); // enable the save buttons
     }
   }, autoSaveInterval);
 
