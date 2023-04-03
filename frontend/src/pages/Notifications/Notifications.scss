@@ -1,5 +1,8 @@
 @use '../../colors.scss' as *;
 
+/**
+this hides the initial "author inforation" blocks"
+**/
 .ttahub-feed-article__whats-new div[data-contents="true"] > [data-block="true"]:nth-child(1),
 .ttahub-feed-article__whats-new div[data-contents="true"] > [data-block="true"]:nth-child(2),
 .ttahub-feed-article__whats-new div[data-contents="true"] > [data-block="true"]:nth-child(3),
@@ -12,6 +15,18 @@
     border-bottom: 1px solid $base-lighter;
 }
 
+// fix the margins and spacing of the read only editor 
+.ttahub-feed-article__whats-new .public-DraftStyleDefault-block {
+    line-height: 1.5;
+    margin: 0;
+}
+
+// hide the big old link icon that pops up 
+.ttahub-feed-article__whats-new .rdw-link-decorator-icon {
+    display: none;
+}
+
+// this adds the little green circle to the left of the "new" notification
 .ttahub-feed-article__whats-new--unread .ttahub-feed-article__whats-new-content:before {
     content: '';
     display: inline-block;

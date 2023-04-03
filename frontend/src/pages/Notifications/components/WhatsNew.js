@@ -135,7 +135,7 @@ export default function WhatsNew({ data }) {
             {articles[`${year}`] && (
               Object.keys(articles[`${year}`]).map((month) => (
                 <div key={month}>
-                  <h3 className="font-sans-lg">
+                  <h3 className="font-sans-lg margin-bottom-3">
                     {month}
                     {' '}
                     {year}
