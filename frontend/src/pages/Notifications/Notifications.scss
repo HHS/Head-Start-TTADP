@@ -19,11 +19,12 @@ this hides the initial "author inforation" blocks"
 .ttahub-feed-article__whats-new .public-DraftStyleDefault-block {
     line-height: 1.5;
     margin: 0;
+    white-space: normal;
 }
 
 // hide the big old link icon that pops up 
 .ttahub-feed-article__whats-new .rdw-link-decorator-icon {
-    display: none;
+    left: auto;
 }
 
 // this adds the little green circle to the left of the "new" notification
