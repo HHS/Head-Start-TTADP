@@ -1967,7 +1967,18 @@ export async function destroyGoal(goalIds) {
 
     const objectiveIds = objectives.map((o) => o.id);
 
-    const objectiveTopicsDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+    const hasArrayOfObjectiveIds = Array.isArray(objectiveIds) && objectiveIds.length;
+
+    const objectiveFilesDestroyed = hasArrayOfObjectiveIds
+      ? await ObjectiveFile.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+        individualHooks: true,
+      })
+      : await Promise.resolve();
+
+    const objectiveTopicsDestroyed = hasArrayOfObjectiveIds
       ? await ObjectiveTopic.destroy({
         where: {
           objectiveId: { [Op.in]: objectiveIds },
@@ -1976,7 +1987,7 @@ export async function destroyGoal(goalIds) {
       })
       : await Promise.resolve();
 
-    const objectiveResourcesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+    const objectiveResourcesDestroyed = hasArrayOfObjectiveIds
       ? await ObjectiveResource.destroy({
         where: {
           objectiveId: { [Op.in]: objectiveIds },
@@ -1985,7 +1996,7 @@ export async function destroyGoal(goalIds) {
       })
       : await Promise.resolve();
 
-    const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+    const objectivesDestroyed = hasArrayOfObjectiveIds
       ? await Objective.destroy({
         where: {
           id: { [Op.in]: objectiveIds },
@@ -1994,7 +2005,7 @@ export async function destroyGoal(goalIds) {
       })
       : await Promise.resolve();
 
-    const goalsDestroyed = (Array.isArray(goalIds) && goalIds.length)
+    const goalsDestroyed = hasArrayOfObjectiveIds
       ? await Goal.destroy({
         where: {
           id: { [Op.in]: goalIds },
@@ -2008,6 +2019,7 @@ export async function destroyGoal(goalIds) {
       objectiveResourcesDestroyed,
       objectiveTopicsDestroyed,
       objectivesDestroyed,
+      objectiveFilesDestroyed,
     };
   } catch (error) {
     auditLogger.error(

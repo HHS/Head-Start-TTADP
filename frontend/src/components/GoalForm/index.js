@@ -194,14 +194,16 @@ export default function GoalForm({
       setIsAppLoading(true);
       fetchGoal();
     }
-  }, [errors,
+  }, [
+    errors,
     fetchAttempted,
     recipient.id,
     isNew,
     isAppLoading,
     ids,
     setAppLoadingText,
-    setIsAppLoading]);
+    setIsAppLoading,
+  ]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -513,7 +515,6 @@ export default function GoalForm({
   };
 
   const onUploadFiles = async (files, objective, setFileUploadErrorMessage, index) => {
-    // The first thing we need to know is... does this objective need to be created?
     setAppLoadingText('Uploading');
     setIsAppLoading(true);
 
@@ -521,46 +522,6 @@ export default function GoalForm({
     let objectiveIds = objective.ids ? objective.ids : [];
     if (!objectiveIds.length && objective.id) {
       objectiveIds = [objective.id];
-    }
-
-    if (objective.isNew) {
-      // if so, we save the objective to the database first
-      try {
-        // but to do that, we first need to save the goals
-        const newGoals = selectedGrants.map((g) => ({
-          grantId: g.value,
-          name: goalName,
-          status,
-          isRttapa,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives,
-        }));
-
-        // so we save them, as before creating one for each grant
-        const savedGoals = await createOrUpdateGoals(newGoals);
-
-        // and then we pluck out the objectives from the newly saved goals
-        // (there will be only "one")
-        objectiveIds = savedGoals.reduce((p, c) => {
-          const newObjectives = c.objectives.reduce((prev, o) => {
-            if (objective.title === o.title) {
-              return [
-                ...prev,
-                o.id,
-                ...o.ids,
-              ];
-            }
-
-            return prev;
-          }, []);
-
-          return Array.from(new Set([...p, ...newObjectives]));
-        }, []);
-      } catch (err) {
-        setFileUploadErrorMessage('File could not be uploaded');
-      }
     }
 
     try {
@@ -625,6 +586,8 @@ export default function GoalForm({
         ...goal,
       }))).flat();
 
+      const existingIds = mappedCreatedGoals.map((g) => g.goalIds).flat();
+
       const goals = [
         ...mappedCreatedGoals,
         ...newGoals,
@@ -637,10 +600,10 @@ export default function GoalForm({
       // we search the new goals and get the one that wasn't in the existing created goals
       // (only one goal can be edited at a time, and even multi grant goals
       // are deduplicated on the backend)
-      const existingIds = createdGoals.map((g) => g.id);
+      const existingKeys = createdGoals.map((g) => g.id);
       const goalForEditing = updatedGoals.find((goal) => {
         const { id } = goal;
-        return !existingIds.includes(id);
+        return !existingKeys.includes(id);
       });
 
       const updatedObjectives = goalForEditing
@@ -653,10 +616,11 @@ export default function GoalForm({
         type: 'success',
       });
 
-      const newIds = updatedGoals.flatMap((g) => g.goalIds);
-      setIds(newIds);
+      setIds([]);
 
       if (callbackForIds && typeof callbackForIds === 'function') {
+        const updatedGoalIds = updatedGoals.flatMap((g) => g.goalIds);
+        const newIds = updatedGoalIds.filter((id) => !existingIds.includes(id));
         await callbackForIds(newIds);
       }
     } catch (error) {
@@ -680,6 +644,7 @@ export default function GoalForm({
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
+    setIds([]);
   };
 
   const onSaveAndContinue = async (redirect = false) => {

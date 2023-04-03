@@ -436,10 +436,12 @@ const deleteObjectiveFileHandler = async (req, res) => {
   const user = await userById(userId);
 
   try {
-    let file = await getFileById(parseInt(fileId, DECIMAL_BASE));
+    const file = await getFileById(parseInt(fileId, DECIMAL_BASE));
     let canUpdate = true;
 
-    await Promise.all(objectiveIds.map(async (objectiveId) => {
+    const objectiveIdsAsInts = objectiveIds.map((id) => parseInt(id, DECIMAL_BASE));
+
+    await Promise.all(objectiveIdsAsInts.map(async (objectiveId) => {
       if (!canUpdate) {
         return null;
       }
@@ -450,18 +452,19 @@ const deleteObjectiveFileHandler = async (req, res) => {
         res.sendStatus(403);
         return null;
       }
-      const of = file.objectiveFiles.find(
-        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
-      );
-      if (of) {
-        return deleteObjectiveFile(of.id);
+      if (file.objectiveFiles) {
+        const of = file.objectiveFiles.find(
+          (r) => r.objectiveId === objectiveId,
+        );
+        if (of) {
+          return deleteObjectiveFile(of.id);
+        }
       }
       return null;
     }));
 
-    file = await getFileById(fileId);
     if (file.reports.length
-      + file.reportObjectiveFiles.length
+      + file.reportObjectiveFiles.filter((r) => objectiveIdsAsInts.includes(r.objectiveId)).length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
