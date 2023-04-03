@@ -64,3 +64,49 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   await validateSchema(response, schema, expect);
 
 });
+
+test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
+  const response = await request.get(
+    `${root}/goals/4/recipient/2`,
+    { headers: { 'playwright-user-id': '1' } },
+  );
+
+  expect(response.status()).toBe(200);
+
+  const recipientSchema = Joi.object({
+    id: Joi.number()
+  });
+  
+  const programSchema = Joi.object({
+    programType: Joi.string()
+  });
+  
+  const grantSchema = Joi.object({
+    numberWithProgramTypes: Joi.string(),
+    id: Joi.number(),
+    number: Joi.string(),
+    regionId: Joi.number(),
+    recipientId: Joi.number(),
+    recipient: recipientSchema,
+    programs: Joi.array().items(programSchema)
+  });
+  
+  const schema = Joi.object({
+    endDate: Joi.date().allow(null),
+    goalNumber: Joi.string(),
+    id: Joi.number(),
+    name: Joi.string(),
+    status: Joi.string(),
+    regionId: Joi.number(),
+    recipientId: Joi.number(),
+    createdVia: Joi.allow(null),
+    isRttapa: Joi.allow(null),
+    onAnyReport: Joi.boolean(),
+    onApprovedAR: Joi.boolean(),
+    rtrOrder: Joi.number(),
+    objectives: Joi.array(),
+    grant: grantSchema
+  });
+
+  await validateSchema(response, schema, expect);
+});
