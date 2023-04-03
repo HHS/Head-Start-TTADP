@@ -23,17 +23,9 @@ ul.user-menu-nav {
   min-width: 250px;
 
   & > li {
-    display: flex;
     align-items: center;
-  }
-
-  & > li > hr {
-    border-top: 1px solid $base-lighter;
-    border-bottom: 0px;
-  }
-
-  & > li {
     border-left: 4px solid transparent;
+    display: flex;
     padding: 0.75rem 1rem;
   }
 
@@ -46,13 +38,17 @@ ul.user-menu-nav {
     background-color: $gray-two;
   }
 
+  & > li > hr {
+    border-top: 1px solid $base-lighter;
+    border-bottom: 0px;
+  }
+
   & > li > a.usa-nav__link { 
     text-decoration: underline;
     cursor: pointer;    
     color: $ttahub-medium-blue;
   }
 }
-
 
 .header-avatar-button__with-unread::after {
   background-color: $success;

@@ -72,6 +72,7 @@ describe('App', () => {
       act(renderApp);
 
       await waitFor(() => expect(fetchMock.called(alertsUrl)).toBe(true));
+      await waitFor(() => expect(fetchMock.called(whatsNew)).toBe(true));
     });
   });
 });
