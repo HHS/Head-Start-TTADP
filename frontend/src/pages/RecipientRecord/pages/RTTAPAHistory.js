@@ -23,9 +23,9 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
 
   useEffect(() => {
     // fetch RTTAPAS for this recipient/region
-    async function fetchRttapas() {
+    async function fetchRttapas(sort) {
       try {
-        const rttapas = await getRttapas(regionId, recipientId);
+        const rttapas = await getRttapas(regionId, recipientId, sort);
         setReports(rttapas);
       } catch (e) {
         setReports([]);
@@ -33,10 +33,10 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
       }
     }
 
-    if (!reports && recipientId && regionId) {
-      fetchRttapas();
+    if (recipientId && regionId) {
+      fetchRttapas(sortConfig);
     }
-  }, [recipientId, regionId, reports]);
+  }, [recipientId, regionId, sortConfig]);
 
   return (
     <>

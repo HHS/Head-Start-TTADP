@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import ActivityReport from '../../policies/activityReport'; // presumably this is a fine set of policies for us to use as a starting point
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { newRttapa, rttapa, allRttapas } from '../../services/rttapa';
+import { createRttapa as create, findRttapa, findAllRttapa } from '../../services/rttapa';
 
 /**
  *
@@ -20,10 +20,11 @@ export async function createRttapa(req: Request, res: Response) {
 
     if (!policy.canCreate()) {
       res.sendStatus(httpCodes.FORBIDDEN);
+      return;
     }
 
     // create the rttapa
-    const report = await newRttapa(req.body);
+    const report = await create(userId, req.body);
     res.json(report);
   } catch (e) {
     await handleErrors(req, res, e, 'createRttapa');
@@ -39,7 +40,7 @@ export async function getRttapa(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-    const report = await rttapa(Number(req.params.reportId));
+    const report = await findRttapa(Number(req.params.reportId));
     const policy = new ActivityReport(user, report);
 
     if (!policy.canReadInRegion()) {
@@ -68,9 +69,14 @@ export async function getRttapas(req: Request, res: Response) {
       return;
     }
 
+    const { sortBy, direction } = req.query;
+
     const regionId = Number(req.params.regionId);
     const recipientId = Number(req.params.recipientId);
-    const reports = await allRttapas(regionId, recipientId);
+    const reports = await findAllRttapa(regionId, recipientId, {
+      sortBy: String(sortBy),
+      direction: String(direction),
+    });
 
     res.json(reports);
   } catch (e) {
