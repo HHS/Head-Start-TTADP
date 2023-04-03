@@ -11,11 +11,10 @@ There are a number of examples of writing tests in here, but the basic pattern i
 ```typescript
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
-import { root } from './common';
+import { root, validateSchema } from './common';
 
 test('get /endpoint', async ({ request }) => {
   const response = await request.get(`${root}/endpoint`);
-  const body = await response.body();
 
   const schema = Joi.array().items(
     Joi.object({
@@ -28,8 +27,6 @@ test('get /endpoint', async ({ request }) => {
     })
   );
 
-  const json = JSON.parse(String(body));
-  const { error } = schema.validate(json);
-  expect(error).toBe(undefined);
+  await validateSchema(response, schema, expect);
 });
 ```
