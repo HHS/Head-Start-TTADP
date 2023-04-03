@@ -23,8 +23,4 @@ export const goalPropTypes = PropTypes.shape({
   objectives: PropTypes.arrayOf(objectivePropTypes),
   previousStatus: PropTypes.string,
   isRttapa: PropTypes.string,
-  defaultProps: {
-    goalStatus: null,
-    objectives: [],
-  },
 });

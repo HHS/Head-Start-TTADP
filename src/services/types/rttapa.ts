@@ -1,6 +1,6 @@
 export interface ARResponse {
   legacyId: string,
-  number: string,
+  displayId: string,
   id: number,
   endDate: string,
 }
@@ -41,6 +41,7 @@ export interface RttapaResponse {
     id: number;
     name: string;
   }
+  reviewDate: Date;
   createdAt: Date;
 }
 
@@ -49,4 +50,5 @@ export interface NewRttapaRequest {
   recipientId: number;
   regionId: number;
   notes: string;
+  reviewDate: string;
 }
