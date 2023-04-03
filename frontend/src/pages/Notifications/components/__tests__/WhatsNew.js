@@ -79,7 +79,7 @@ describe('WhatsNew', () => {
       expect(screen.getByText('What\'s New')).toBeInTheDocument();
     });
 
-    it('renders the component with data but the entry has no id', () => {
+    it('renders the component with data but the entry has no id', async () => {
       const data = `<?xml version="1.0" encoding="UTF-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
         <title>Whats New</title>
@@ -115,6 +115,11 @@ describe('WhatsNew', () => {
 
       renderWhatsNew(data);
       expect(screen.getByText('What\'s New')).toBeInTheDocument();
+      expect(await screen.findByText('Manage recipient goals and objectives from the Recipient\'s TTA Record (RTR)')).toBeInTheDocument();
+      expect(await screen.findByText('November 2022')).toBeInTheDocument();
+      expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
+      expect(await screen.findByText('and view the number of goals by status.')).toBeInTheDocument();
+      expect(await screen.findByText('View Online')).toBeInTheDocument();
     });
   });
 });
