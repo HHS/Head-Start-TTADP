@@ -22,31 +22,32 @@ ul.user-menu-nav {
   padding: 0;
   min-width: 250px;
 
-  & > li {
-    align-items: center;
-    border-left: 4px solid transparent;
-    display: flex;
-    padding: 0.75rem 1rem;
-  }
-
-  & > li:has(.usa-current)  {
-    border-left: 4px solid $ttahub-medium-blue;
-    text-decoration: none;
-  }
-
-  & > li:hover {
-    background-color: $gray-two;
-  }
-
   & > li > hr {
     border-top: 1px solid $base-lighter;
     border-bottom: 0px;
   }
 
-  & > li > a.usa-nav__link { 
-    text-decoration: underline;
-    cursor: pointer;    
+  & > li > a.usa-nav__link {
+    align-items: center;
+    display: flex;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    cursor: pointer;
+    border-left: 4px solid transparent;
     color: $ttahub-medium-blue;
+
+    span:first-child {
+      text-decoration: underline;
+    }
+
+    &:hover {
+      background-color: $gray-two;
+    }
+
+    &.usa-current {
+      border-left: 4px solid $ttahub-medium-blue;
+      text-decoration: none;
+    }
   }
 }
 

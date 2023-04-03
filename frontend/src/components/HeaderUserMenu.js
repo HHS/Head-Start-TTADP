@@ -19,8 +19,8 @@ function UserMenuNav({ items }) {
   return (
     <div>
       <ul className="user-menu-nav">
-        {items.map(({ key, element }) => (
-          <li key={key}>
+        {items.map(({ key, element, liClass }) => (
+          <li key={key} className={liClass}>
             {element}
           </li>
         ))}
@@ -62,7 +62,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
       key: 2,
       label: 'Notifications',
       to: `/notifications?referrer=${encodeURIComponent(location.pathname)}`,
-      badge: areThereUnreadNotifications ? <Pill type="success" className="margin-left-1">new</Pill> : null,
+      badge: areThereUnreadNotifications ? <Pill type="success" className="margin-left-1">new</Pill> : <></>,
       fn: () => {
         setAreThereUnreadNotifications(false);
         onItemClick();
@@ -101,7 +101,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     divider = false,
     space = false,
     showIfAdmin = false,
-    badge,
+    badge = <></>,
     fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
@@ -113,21 +113,22 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
         key,
         element: (
           <Link key={key} className="usa-nav__link" href={to} target="_blank" rel="noopener noreferrer">
-            {label}
+            <span>{label}</span>
             <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
             {badge}
           </Link>
         ),
       };
     }
+
     return {
       key,
       element: (
         <>
           <NavLink key={key} to={to} fn={fn}>
-            {label}
+            <span>{label}</span>
+            {badge}
           </NavLink>
-          {badge}
         </>
       ),
     };
