@@ -128,14 +128,14 @@ export default function WhatsNew({ data }) {
 
   return (
     <Container>
-      <h2 className="font-serif-xl margin-0">What&apos;s New</h2>
+      <h2 className="font-serif-xl margin-0">What&apos;s new</h2>
       <div className="ttahub-feed">
         {YEARS.map((year) => (
           <div key={year}>
             {articles[`${year}`] && (
               Object.keys(articles[`${year}`]).map((month) => (
                 <div key={month}>
-                  <h3 className="font-sans-lg margin-bottom-3">
+                  <h3 className="font-sans-lg margin-top-4">
                     {month}
                     {' '}
                     {year}
