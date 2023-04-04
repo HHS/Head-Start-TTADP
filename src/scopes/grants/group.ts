@@ -2,7 +2,6 @@ import { Op, WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
 import { idClause } from '../utils';
 
-
 /**
  *
  * @param {string[]} query
