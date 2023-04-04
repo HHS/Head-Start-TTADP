@@ -28,12 +28,10 @@ this hides the initial "author inforation" blocks"
 }
 
 .ttahub-feed-article__whats-new .public-DraftStyleDefault-block a:after {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTQuMDcyIDBIOC45MTVhLjkyNS45MjUgMCAwIDAgMCAxLjg0OWgyLjkyNUw2Ljk2MSA2LjcyN2EuOTE4LjkxOCAwIDAgMC0uMjcuNjU0YzAgLjI0Ny4wOTUuNDguMjcuNjU0YS45MTguOTE4IDAgMCAwIC42NTQuMjcuOTE4LjkxOCAwIDAgMCAuNjUzLS4yN2w0Ljg4LTQuODh2Mi45MjZhLjkyNS45MjUgMCAwIDAgMS44NDggMFYuOTI0QS45MjUuOTI1IDAgMCAwIDE0LjA3MiAweiIvPjxwYXRoIGQ9Ik0xMC42MjMgMTMuNDExSDEuNTg1VjQuMzcyaDYuNzk4bDEuNTg0LTEuNTg0SC43OTJBLjc5Mi43OTIgMCAwIDAgMCAzLjU4djEwLjYyNGMwIC40MzcuMzU1Ljc5Mi43OTIuNzkyaDEwLjYyNGEuNzkyLjc5MiAwIDAgMCAuNzkyLS43OTJWNS4wMjlsLTEuNTg1IDEuNTg0djYuNzk4eiIvPjwvZz48L3N2Zz4=) no-repeat center;
-    content: '';    
+    content: "\f35d";    
     display: inline-block;
-    height: 15px;
+    font: normal normal normal 16px/1 FontAwesome;
     margin: 0 2px;
-    width: 15px;
 }
 
 .ttahub-feed-article__whats-new .public-DraftStyleDefault-block a:hover:after {
