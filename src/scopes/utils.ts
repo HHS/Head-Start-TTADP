@@ -53,7 +53,6 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
   }, []);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createFiltersToScopes(filters, topicToQuery, options, userId) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
