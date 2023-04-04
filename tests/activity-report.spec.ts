@@ -690,6 +690,8 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
+      const heading = page.getByRole('heading', { name: /activity report for region \d/i });
+    const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
     await activitySummary(page);
 
@@ -698,7 +700,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the first goal
+    // create the goal
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
       .click();
     await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
@@ -727,20 +729,47 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-
-    // remove first objective
-    await page.getByRole('button', { name: 'Remove this objective' }).first().click();
-    await page.getByRole('button', { name: 'This button will remove the objective from the activity report' }).click();
-
-    // add second objective tta
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(4).click();
     await page.keyboard.type('g1 o2 tta');
     await blur(page);
 
-    // Save goal
+    // First save goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
-    // Verify we only have one objective
+    // Verify we have both objectives
+    await expect(page.getByText('Recipient TTA goal', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o1 title', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o2 title', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o2 tta', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o1 tta', { exact: true })).toBeVisible();
+
+    // edit goals remove first objective
+    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    .click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+    await page.getByRole('button', { name: 'Remove this objective' }).first().click();
+    await page.getByRole('button', { name: 'This button will remove the objective from the activity report' }).click();
+
+    // Second save goal
+    await page.getByRole('button', { name: 'Save goal' }).click();
+
+    // Verify we only have one objective saved
+    await expect(page.getByText('Recipient TTA goal', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o2 title', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o2 tta', { exact: true })).toBeVisible();
+    await expect(page.getByText('g1 o1 tta', { exact: true })).not.toBeVisible();
+    await expect(page.getByText('g1 o1 tta', { exact: true })).not.toBeVisible();
+
+     // extract the AR number from the URL:
+     const url = page.url();
+     const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
+
+    // Reload ar
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
+    await page.getByRole('button', { name: 'Goals and objectives' }).click();
+
+    // Verify we only have one objective saved after reload
     await expect(page.getByText('Recipient TTA goal', { exact: true })).toBeVisible();
     await expect(page.getByText('g1 o2 title', { exact: true })).toBeVisible();
     await expect(page.getByText('g1 o2 tta', { exact: true })).toBeVisible();
