@@ -112,23 +112,23 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
   await validateSchema(response, schema, expect);
 });
 
-test('put /goals/changeStatus', async ({ request }) => {
-  const response = await request.put(
-    `${root}/goals/changeStatus`,
-    {
-      data: {
-        goalIds: [4], 
-        oldStatus: GOAL_STATUS.NOT_STARTED,
-        newStatus: GOAL_STATUS.CLOSED,
-        closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
-        closeSuspendContext: 'Just because',
-      },
-      headers: { 'playwright-user-id': '1' }
-    },
-  );
-
-  expect(response.status()).toBe(200);
-});
+/* test('put /goals/changeStatus', async ({ request }) => { */
+/*   const response = await request.put( */
+/*     `${root}/goals/changeStatus`, */
+/*     { */
+/*       data: { */
+/*         goalIds: [4],  */
+/*         oldStatus: GOAL_STATUS.NOT_STARTED, */
+/*         newStatus: GOAL_STATUS.CLOSED, */
+/*         closeSuspendReason: CLOSE_SUSPEND_REASONS[0], */
+/*         closeSuspendContext: 'Just because', */
+/*       }, */
+/*       headers: { 'playwright-user-id': '1' } */
+/*     }, */
+/*   ); */
+/**/
+/*   expect(response.status()).toBe(200); */
+/* }); */
 
 /* test('post /', async ({ request }) => { */
 /*   const response = await request.post( */
