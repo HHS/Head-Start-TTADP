@@ -86,6 +86,20 @@ describe('ObjectiveForm', () => {
 
     renderObjectiveForm(objective, removeObjective, setObjectiveError, setObjective);
 
+    // Topic guidance.
+    /*
+    const topicGuidance = await screen.findByRole('button', { name: /view topic guidance/i });
+    userEvent.click(topicGuidance);
+    expect(await screen.findByText('Topic guidance')).toBeInTheDocument();
+    expect(await screen.findByText(/behavioral \/ mental health \/ trauma/i)).toBeInTheDocument();
+    const closeTopicGuidance = await screen.findByRole('button', { name: /close/i });
+    userEvent.click(closeTopicGuidance);
+
+    // Topics.
+    const topicsText = screen.queryAllByLabelText(/topics *i);
+    expect(topicsText.length).toBe(2);
+    const topics = document.querySelector('#topics');
+    */
     const topics = await screen.findByLabelText(/topics \*/i);
     userEvent.click(topics);
 

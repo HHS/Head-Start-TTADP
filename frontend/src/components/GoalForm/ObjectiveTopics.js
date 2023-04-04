@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -7,6 +7,8 @@ import {
 import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import UnusedData from './UnusedData';
+import Drawer from '../Drawer';
+import TopicsInfoList from './TopicsInfoList';
 
 export default function ObjectiveTopics({
   error,
@@ -21,6 +23,7 @@ export default function ObjectiveTopics({
   userCanEdit,
   editingFromActivityReport,
 }) {
+  const drawerTriggerRef = useRef(null);
   const readOnly = useMemo(() => !editingFromActivityReport
   && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit),
   [goalStatus, isOnReport, userCanEdit, editingFromActivityReport]);
@@ -72,7 +75,14 @@ export default function ObjectiveTopics({
           </>
         )
         : null}
-
+      <Drawer
+        triggerRef={drawerTriggerRef}
+        stickyHeader
+        stickyFooter
+        title="Topic guidance"
+      >
+        <TopicsInfoList />
+      </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
           <>

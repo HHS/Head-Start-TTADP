@@ -77,7 +77,7 @@ export default function RTTAPA({
   const reviewDate = watch('reviewDate');
   const history = useHistory();
 
-  const loadingContext = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
    * Get the initial goal ids from the query string
@@ -88,21 +88,15 @@ export default function RTTAPA({
     return params.getAll('goalId[]').map((id) => parseInt(id, DECIMAL_BASE));
   }, [location]);
 
-  const [goalIds, setGoalIds] = useState(initialGoalIds);
   const [goals, setGoals] = useState([]);
   const [fetchError, setFetchError] = useState(null);
   const [showGoals, setShowGoals] = useState(false);
 
-  // update goal ids when goals change
-  useEffect(() => {
-    if (goals && Array.isArray(goals)) {
-      setGoalIds(goals.map((goal) => goal.id));
-    }
-  }, [goals]);
+  const goalIds = goals.map((g) => g.id);
 
   useEffect(() => {
     async function getGoals() {
-      loadingContext.setIsAppLoading(true);
+      setIsAppLoading(true);
       try {
         const sortConfig = {
           sortBy: 'goalName',
@@ -118,31 +112,31 @@ export default function RTTAPA({
           sortConfig.offset,
           false,
           false,
-          goalIds,
+          initialGoalIds,
         );
         setGoals(goalRows);
       } catch (error) {
         setFetchError('There was an error fetching your goals');
       } finally {
-        loadingContext.setIsAppLoading(false);
+        setIsAppLoading(false);
       }
     }
 
     if (!goals || !goals.length) {
-      if (goalIds && goalIds.length) {
+      if (initialGoalIds && initialGoalIds.length) {
         getGoals();
       }
     }
-  }, [goalIds, goals, loadingContext, recipientId, regionId]);
+  }, [initialGoalIds, goals, recipientId, regionId, setIsAppLoading]);
 
   const onSubmit = async (data) => {
-    if (!goalIds || !goalIds.length) {
+    if (!goals || !goals.length) {
       setError('goalIds', { type: 'required', message: 'Please select at least one goal' });
       return;
     }
 
     try {
-      loadingContext.setIsAppLoading(true);
+      setIsAppLoading(true);
       await createRttapa({
         recipientId,
         regionId,
@@ -156,7 +150,7 @@ export default function RTTAPA({
     } catch (error) {
       setFetchError('Sorry, something went wrong');
     } finally {
-      loadingContext.setIsAppLoading(false);
+      setIsAppLoading(false);
     }
   };
 
