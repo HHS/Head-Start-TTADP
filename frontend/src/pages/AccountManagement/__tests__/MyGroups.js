@@ -25,7 +25,7 @@ describe('MyGroups', () => {
 
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
-    fetchMock.get('/api/groups', []);
+    fetchMock.get('/api/groups', [{ id: 1, name: 'group1' }]);
     fetchMock.get('/api/recipient/user', [{
       id: 1,
       name: 'recipient1',
