@@ -1,0 +1,62 @@
+const { Model } = require('sequelize');
+const { PROMPT_FIELD_TYPE } = require('../constants');
+
+export default (sequelize, DataTypes) => {
+  class GoalTemplateFieldPrompt extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate(models) {
+      GoalTemplateFieldPrompt.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', onDelete: 'cascade', as: 'goalTemplate' });
+    }
+  }
+  GoalTemplateFieldPrompt.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    goalTemplateId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    title: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    prompt: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    fieldType: {
+      type: DataTypes.ENUM(Object.values(PROMPT_FIELD_TYPE)),
+    },
+    options: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+    },
+    validations: {
+      type: DataTypes.ARRAY(DataTypes.JSON),
+      allowNull: true,
+    },
+    isRequired: {
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['validations']),
+      get() {
+        const validations = this.get('validations');
+        const isRequired = validations?.find((v) => Object.keys(v).find((k) => k === 'isRequired')) || false;
+        return isRequired;
+      },
+    },
+  }, {
+    sequelize,
+    modelName: 'GoalTemplateFieldPrompt',
+  });
+  return GoalTemplateFieldPrompt;
+};

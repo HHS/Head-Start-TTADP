@@ -287,6 +287,10 @@ export const DIGEST_SUBJECT_FREQ = {
   MONTHLY: 'monthly',
 };
 
+export const PROMPT_FIELD_TYPE = {
+  MULTISELECT: 'multiselect',
+};
+
 export const SOURCE_FIELD = {
   REPORT: {
     NONECLKC: 'nonECLKCResourcesUsed',

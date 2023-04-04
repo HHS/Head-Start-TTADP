@@ -2,7 +2,7 @@
 const goalText = '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)';
 
 module.exports = {
-  async up(queryInterface) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const loggedUser = '0';
       const sessionSig = __filename;
@@ -16,8 +16,99 @@ module.exports = {
         { transaction },
       );
 
+      await queryInterface.createTable('GoalTemplateFieldPrompts', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        goalTemplateId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'GoalTemplates',
+            },
+            key: 'id',
+          },
+        },
+        ordinal: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+        },
+        title: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: false,
+        },
+        prompt: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: false,
+        },
+        fieldType: {
+          type: Sequelize.DataTypes.ENUM(['multiselect']),
+        },
+        options: {
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.TEXT),
+          allowNull: true,
+        },
+        validations: {
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.JSON),
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('GoalFieldResponses', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        goalId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Goals',
+            },
+            key: 'id',
+          },
+        },
+        goalTemplateFieldPromptId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'GoalTemplateFieldPrompts',
+            },
+            key: 'id',
+          },
+        },
+        response: {
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.TEXT),
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
       // Add first curated template
-      await queryInterface.sequelize.query(
+      const [, templateId] = await queryInterface.sequelize.query(
         `INSERT INTO "GoalTemplates" (
           hash,
           "templateName",
@@ -40,18 +131,50 @@ module.exports = {
         { transaction },
       );
 
-      // Add new topics,
+      const fieldTitle = 'FEI root cause';
+      const fieldPrompt = 'Select FEI root cause';
+      const fieldType = 'multiselect';
+      const fieldOptions = [
+        'Community Options',
+        'Community Partnerships',
+        'Facilities',
+        'Family Circumstances',
+        'Workforce',
+      ];
+      const fieldValidations = [
+        {
+          isRequired: true,
+          message: 'Select a root cause',
+        },
+        {
+          maxSelections: 2,
+          message: 'You can only select 2 options',
+        },
+      ];
+
+      // Add prompt to first curated template
       await queryInterface.sequelize.query(
-        `
-            INSERT INTO "Topics"
-            ("name", "createdAt", "updatedAt")
-            VALUES
-            ('FEI - Community Options', current_timestamp, current_timestamp),
-            ('FEI - Community Partnerships', current_timestamp, current_timestamp),
-            ('FEI - Facilities', current_timestamp, current_timestamp),
-            ('FEI - Family Circumstances', current_timestamp, current_timestamp),
-            ('FEI - Workforce', current_timestamp, current_timestamp);
-          `,
+        `INSERT INTO "GoalTemplateFieldPrompts" (
+          "goalTemplateId",
+          ordinal,
+          "title",
+          "prompt",
+          "fieldType",
+          "options",
+          "validations",
+          "createdAt",
+          "updatedAt"
+        ) Values (
+          ${templateId},
+          1,
+          TRIM('${fieldTitle}'),
+          TRIM('${fieldPrompt}'),
+          '${fieldType}',
+          ARRAY[${fieldOptions.map((o) => `'${o}'`).join(',')}],
+          ARRAY[${fieldValidations.map((v) => `'${JSON.stringify(v)}'::JSON`).join(', ')}],
+          current_timestamp,
+          current_timestamp
+        );`,
         { transaction },
       );
     });
@@ -59,21 +182,31 @@ module.exports = {
   down: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.sequelize.query(
-        `DELETE FROM "GoalTemplates"
-        WHERE hash = MD5(TRIM('${goalText}'))
-        AND "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod";
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+        `,
+        { transaction },
+      );
+      await Promise.all(['GoalFieldResponses', 'GoalTemplateFieldPrompts'].map(async (table) => {
+        await queryInterface.sequelize.query(
+          ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
+          { raw: true, transaction },
+        );
+        // Drop old audit log table
+        await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });
+        await queryInterface.dropTable(`ZAL${table}`, { transaction });
+        await queryInterface.dropTable(table, { transaction });
+      }));
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
         `,
         { transaction },
       );
       await queryInterface.sequelize.query(
-        `DELETE FROM "Topics"
-        WHERE name IN (
-          'FEI - Community Options',
-          'FEI - Community Partnerships',
-          'FEI - Facilities',
-          'FEI - Family Circumstances',
-          'FEI - Workforce',
-        );
+        `DELETE FROM "GoalTemplates"
+        WHERE hash = MD5(TRIM('${goalText}'))
+        AND "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod";
         `,
         { transaction },
       );
