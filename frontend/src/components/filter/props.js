@@ -18,7 +18,6 @@ export const filterConfigProp = PropTypes.shape({
   }),
   displayQuery: PropTypes.func,
   renderInput: PropTypes.func,
-  urlDisplayCallback: PropTypes.bool,
 });
 
 // save this to cut down on repeated boilerplate in PropTypes

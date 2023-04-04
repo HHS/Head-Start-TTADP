@@ -17,6 +17,7 @@ describe('localStorageCleanup', () => {
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
   const alertsUrl = join('api', 'alerts');
+  const groupsUrl = join('api', 'groups');
 
   describe('when authenticated, local storage is queried', () => {
     mockWindowProperty('localStorage', {
@@ -42,6 +43,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
       fetchMock.get(alertsUrl, null);
+      fetchMock.get(groupsUrl, []);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
@@ -90,6 +92,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
       fetchMock.get(alertsUrl, null);
+      fetchMock.get(groupsUrl, []);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
@@ -124,6 +127,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, 500);
       fetchMock.get(alertsUrl, null);
+      fetchMock.get(groupsUrl, []);
       render(<App />);
     });
 

@@ -119,10 +119,6 @@ export default function FilterMenu({
       } else {
         toUpdate.query = '';
       }
-
-      if (f.urlDisplayCallback) {
-        toUpdate.urlDisplayCallback = f.urlDisplayCallback;
-      }
     }
 
     if (name === 'topic') {
@@ -132,9 +128,6 @@ export default function FilterMenu({
       toUpdate.condition = '';
       toUpdate.query = defaultQuery;
     }
-
-    console.log(newItems);
-
     setItems(newItems);
 
     if (index !== -1) {
