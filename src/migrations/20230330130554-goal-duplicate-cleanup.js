@@ -428,7 +428,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertObjectiveFiles") "Inserts",
             (SELECT COUNT(*) FROM "UpdateObjectiveFiles") "Updates",
             (SELECT COUNT(*) FROM "DeleteObjectiveFiles") "Deletes",
-            (SELECT COUNT(*) FROM "ObjectiveFiles") "Post Total"
+            (SELECT COUNT(*) FROM "ObjectiveFiles") "post_count"
         );
         -- Handle ObjectiveResources
         
@@ -528,7 +528,7 @@ module.exports = {
                 (SELECT COUNT(*) FROM "InsertObjectiveResources") "Inserts",
                 (SELECT COUNT(*) FROM "UpdateObjectiveResources") "Updates",
                 (SELECT COUNT(*) FROM "DeleteObjectiveResources") "Deletes",
-                (SELECT COUNT(*) FROM "ObjectiveResources" "or") "Post Total"
+                (SELECT COUNT(*) FROM "ObjectiveResources" "or") "post_count"
             );
         
         -- Handle ObjectiveTopics
@@ -615,7 +615,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertObjectiveTopics") "Inserts",
             (SELECT COUNT(*) FROM "UpdateObjectiveTopics") "Updates",
             (SELECT COUNT(*) FROM "DeleteObjectiveTopics") "Deletes",
-            (SELECT COUNT(*) FROM "ObjectiveTopics" ot) "Post Total"
+            (SELECT COUNT(*) FROM "ObjectiveTopics" ot) "post_count"
         );
         -- Handle ActivityReportObjectives
         CREATE TEMP TABLE "ActivityReportObjectivesToModify" AS (
@@ -767,7 +767,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertActivityReportObjectiveFiles") "Inserts",
             (SELECT COUNT(*) FROM "UpdateActivityReportObjectiveFiles") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportObjectiveFiles") "Deletes",
-            (SELECT COUNT(*) FROM "ActivityReportObjectiveFiles" arof) "Post Total"
+            (SELECT COUNT(*) FROM "ActivityReportObjectiveFiles" arof) "post_count"
         );
         -- Handle ActivityReportObjectiveResources
         CREATE TEMP TABLE "ActivityReportObjectiveResourcesToModify" AS (
@@ -855,7 +855,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertActivityReportObjectiveResources") "Inserts",
             (SELECT COUNT(*) FROM "UpdateActivityReportObjectiveResources") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportObjectiveResources") "Deletes",
-            (SELECT COUNT(*) FROM "ActivityReportObjectiveResources" aror) "Post Total"
+            (SELECT COUNT(*) FROM "ActivityReportObjectiveResources" aror) "post_count"
         );
         -- Handle ActivityReportObjectiveTopics
         CREATE TEMP TABLE "ActivityReportObjectiveTopicsToModify" AS (
@@ -929,7 +929,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertActivityReportObjectiveTopics") "Inserts",
             (SELECT COUNT(*) FROM "UpdateActivityReportObjectiveTopics") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportObjectiveTopics") "Deletes",
-            (SELECT COUNT(*) FROM "ActivityReportObjectiveTopics" arot) "Post Total"
+            (SELECT COUNT(*) FROM "ActivityReportObjectiveTopics" arot) "post_count"
         
         );
         -- Continue Handle ActivityReportObjectives
@@ -977,7 +977,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertActivityReportObjectives") "Inserts",
             (SELECT COUNT(*) FROM "UpdateActivityReportObjectives") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportObjectives") "Deletes",
-            (SELECT COUNT(*) FROM "ActivityReportObjectives" aro) "Post Total"
+            (SELECT COUNT(*) FROM "ActivityReportObjectives" aro) "post_count"
         );
         -- Continue Handle Objectives
         CREATE TEMP TABLE "UpdateObjectives" AS 
@@ -1045,7 +1045,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertObjectives") "Inserts",
             (SELECT COUNT(*) FROM "UpdateObjectives") "Updates",
             (SELECT COUNT(*) FROM "DeleteObjectives") "Deletes",
-            (SELECT COUNT(*) FROM "Objectives" o) "Post Total"
+            (SELECT COUNT(*) FROM "Objectives" o) "post_count"
         );
         -- Handle ActivityReportGoals
         -- CREATE TABLE "ActivityReportGoalsToModify" AS (
@@ -1227,7 +1227,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertActivityReportGoalResources") "Inserts",
             (SELECT COUNT(*) FROM "UpdateActivityReportGoalResources") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportGoalResources") "Deletes",
-            (SELECT COUNT(*) FROM "ActivityReportGoalResources" argr) "Post Total"
+            (SELECT COUNT(*) FROM "ActivityReportGoalResources" argr) "post_count"
         );
         -- Continue Handle ActivityReportGoals
         -- CREATE TABLE "UpdateActivityReportGoals" AS 
@@ -1266,7 +1266,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "InsertActivityReportGoals") "Inserts",
             (SELECT COUNT(*) FROM "UpdateActivityReportGoals") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportGoals") "Deletes",
-            (SELECT COUNT(*) FROM "ActivityReports" ar) "Post Total"
+            (SELECT COUNT(*) FROM "ActivityReports" ar) "post_count"
             
         );
         -- Continue Handle Goals
@@ -1350,25 +1350,25 @@ module.exports = {
             'Goals' "table",
             0 "Inserts",
             (SELECT COUNT(*) FROM "UpdateGoals") "Updates",
-            (SELECT COUNT(*) FROM "DeleteGoals") "Deletes"
-            (SELECT COUNT(*) FROM "Goals" g) "Post Total"
+            (SELECT COUNT(*) FROM "DeleteGoals") "Deletes",
+            (SELECT COUNT(*) FROM "Goals" g) "post_count"
         );
         -- CREATE TABLE "CollectStats" AS (
         CREATE TABLE "CollectStats" AS (
             SELECT 1 id, *, 
-                (SELECT "Goal Total" FROM "PreCountStats") AS pre_count
+                (SELECT "GoalsTotal" FROM "PreCountStats") AS pre_count
             FROM "GoalStats"
             UNION
             SELECT 2 id, *, 
-                (SELECT "ActivityReportGoal Total" FROM "PreCountStats") AS pre_count
+                (SELECT "ActivityReportGoalsTotal" FROM "PreCountStats") AS pre_count
             FROM "ActivityReportGoalStats"
             UNION
             SELECT 3 id, *,
-                (SELECT "ActivityReportGoalResource Total" FROM "PreCountStats") AS pre_count
+                (SELECT "ActivityReportGoalResourcesTotal" FROM "PreCountStats") AS pre_count
             FROM "ActivityReportGoalResourceStats"
             UNION
             SELECT 4 id, *,
-                (SELECT "Objective Total" FROM "PreCountStats") AS pre_count
+                (SELECT "ObjectivesTotal" FROM "PreCountStats") AS pre_count
              FROM "ObjectiveStats"
             UNION
             SELECT 5 id, *,
