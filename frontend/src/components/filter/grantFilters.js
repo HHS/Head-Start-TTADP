@@ -10,6 +10,7 @@ export const groupsFilter = {
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
+  urlDisplayCallback: true,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterGroups
       inputId={`group-${condition}-${id}`}
