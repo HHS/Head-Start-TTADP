@@ -112,91 +112,91 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
   await validateSchema(response, schema, expect);
 });
 
-/* test('put /goals/changeStatus', async ({ request }) => { */
-/*   const response = await request.put( */
-/*     `${root}/goals/changeStatus`, */
-/*     { */
-/*       data: { */
-/*         goalIds: [4],  */
-/*         oldStatus: GOAL_STATUS.NOT_STARTED, */
-/*         newStatus: GOAL_STATUS.CLOSED, */
-/*         closeSuspendReason: CLOSE_SUSPEND_REASONS[0], */
-/*         closeSuspendContext: 'Just because', */
-/*       }, */
-/*       headers: { 'playwright-user-id': '1' } */
-/*     }, */
-/*   ); */
-/**/
-/*   expect(response.status()).toBe(200); */
-/* }); */
+test('put /goals/changeStatus', async ({ request }) => {
+  const response = await request.put(
+    `${root}/goals/changeStatus`,
+    {
+      data: {
+        goalIds: [4], 
+        oldStatus: GOAL_STATUS.NOT_STARTED,
+        newStatus: GOAL_STATUS.CLOSED,
+        closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
+        closeSuspendContext: 'Just because',
+      },
+      headers: { 'playwright-user-id': '1' }
+    },
+  );
 
-/* test('post /', async ({ request }) => { */
-/*   const response = await request.post( */
-/*     `${root}/goals`, */
-/*     { */
-/*       data: { */
-/*         goals: [ */
-/*           { */
-/*             name: 'New Goal', */
-/*             recipientId: 2, */
-/*             grantId: 1, */
-/*             regionId: 1, */
-/*             status: GOAL_STATUS.NOT_STARTED, */
-/*             endDate: '2021-12-31', */
-/*             objectives: [ */
-/*               { */
-/*                 resources: [], */
-/*                 topics: [], */
-/*                 title: 'New objective', */
-/*                 files: [], */
-/*                 status: OBJECTIVE_STATUS.DRAFT, */
-/*               } */
-/*             ], */
-/*             goalNumbers: [], */
-/*             goalIds: [], */
-/*             grants: [], */
-/*             grantIds: [], */
-/*             isNew: true, */
-/*           }, */
-/*         ], */
-/*       }, */
-/*       headers: { 'playwright-user-id': '1' } */
-/*     }, */
-/*   ); */
-/**/
-/*   expect(response.status()).toBe(200); */
-/* }); */
+  expect(response.status()).toBe(200);
+});
 
-/* test('delete /', async ({ request }) => { */
-/*   let validId = 5; */
-/**/
-/*   // This is an attempt to ensure these tests can be run locally */
-/*   // without having to drop and reseed the database between each run. */
-/*   // It shouldn't ever run infinitely because if we made it to this test,  */
-/*   // it means we actually created a goal in the previous test, so there *should* */
-/*   // be something to find. */
-/*   while(true) { */
-/*     const response = await request.get( */
-/*       `${root}/goals/${validId}/recipient/2`, */
-/*       { headers: { 'playwright-user-id': '1' } }, */
-/*     ); */
-/**/
-/*     if (response.status() === 200) { */
-/*       break; */
-/*     } */
-/**/
-/*     validId++; */
-/**/
-/*     // Okay, maybe just reseed your local database at this point. */
-/*     if (validId > 100) { */
-/*       throw new Error('Could not find goal id to delete'); */
-/*     } */
-/*   } */
-/**/
-/*   const response = await request.delete( */
-/*     `${root}/goals?goalIds[]=${validId}`, */
-/*     { headers: { 'playwright-user-id': '1' } }, */
-/*   ); */
-/**/
-/*   expect(response.status()).toBe(200); */
-/* }); */
+test('post /', async ({ request }) => {
+  const response = await request.post(
+    `${root}/goals`,
+    {
+      data: {
+        goals: [
+          {
+            name: 'New Goal',
+            recipientId: 2,
+            grantId: 1,
+            regionId: 1,
+            status: GOAL_STATUS.NOT_STARTED,
+            endDate: '2021-12-31',
+            objectives: [
+              {
+                resources: [],
+                topics: [],
+                title: 'New objective',
+                files: [],
+                status: OBJECTIVE_STATUS.DRAFT,
+              }
+            ],
+            goalNumbers: [],
+            goalIds: [],
+            grants: [],
+            grantIds: [],
+            isNew: true,
+          },
+        ],
+      },
+      headers: { 'playwright-user-id': '1' }
+    },
+  );
+
+  expect(response.status()).toBe(200);
+});
+
+test('delete /', async ({ request }) => {
+  let validId = 5;
+
+  // This is an attempt to ensure these tests can be run locally
+  // without having to drop and reseed the database between each run.
+  // It shouldn't ever run infinitely because if we made it to this test, 
+  // it means we actually created a goal in the previous test, so there *should*
+  // be something to find.
+  while(true) {
+    const response = await request.get(
+      `${root}/goals/${validId}/recipient/2`,
+      { headers: { 'playwright-user-id': '1' } },
+    );
+
+    if (response.status() === 200) {
+      break;
+    }
+
+    validId++;
+
+    // Okay, maybe just reseed your local database at this point.
+    if (validId > 100) {
+      throw new Error('Could not find goal id to delete');
+    }
+  }
+
+  const response = await request.delete(
+    `${root}/goals?goalIds[]=${validId}`,
+    { headers: { 'playwright-user-id': '1' } },
+  );
+
+  expect(response.status()).toBe(200);
+});
