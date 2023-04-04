@@ -10,14 +10,22 @@ import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 import MyGroups from '../MyGroups';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 
 describe('MyGroups', () => {
   const renderMyGroups = (groupId = null) => {
-    render(<MemoryRouter><MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <MyGroupsProvider>
+          <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+        </MyGroupsProvider>
+      </MemoryRouter>,
+    );
   };
 
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
+    fetchMock.get('/api/groups', []);
     fetchMock.get('/api/recipient/user', [{
       id: 1,
       name: 'recipient1',
