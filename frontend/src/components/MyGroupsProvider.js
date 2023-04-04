@@ -24,7 +24,7 @@ export default function MyGroupsProvider({ children, authenticated }) {
   }, [authenticated]);
 
   return (
-    <MyGroupsContext.Provider value={{ myGroups }}>
+    <MyGroupsContext.Provider value={{ myGroups, setMyGroups }}>
       {children}
     </MyGroupsContext.Provider>
   );
