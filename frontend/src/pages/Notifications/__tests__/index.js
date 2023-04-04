@@ -25,7 +25,7 @@ describe('Notifications', () => {
     it('renders the page', async () => {
       renderNotifications();
       expect(await screen.findByText('Notifications')).toBeVisible();
-      expect(await screen.findByText('What\'s New')).toBeVisible();
+      expect(await screen.findByText('What\'s new')).toBeVisible();
       expect(screen.queryByText('Back')).toBe(null);
     });
   });
@@ -36,7 +36,7 @@ describe('Notifications', () => {
     it('renders the page', async () => {
       renderNotifications();
       expect(await screen.findByText('Notifications')).toBeVisible();
-      expect(await screen.findByText('What\'s New')).toBeVisible();
+      expect(await screen.findByText('What\'s new')).toBeVisible();
       expect(screen.getByTestId('back-link-icon')).toBeVisible();
 
       expect(setItem).toHaveBeenCalled();
