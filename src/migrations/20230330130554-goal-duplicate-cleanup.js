@@ -21,6 +21,7 @@ module.exports = {
         // Delete duplicate goals based on trimmed_hashes, keeping the one with the lowest id
         await queryInterface.sequelize.query(`
         -- Collect Pre Count Stats
+        --todo list: counts by region pre & post ()
         CREATE TEMP TABLE "PreCountStats" AS (
             SELECT
             'PreCountStats' "table",
@@ -36,7 +37,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "ActivityReportObjectiveResources" aror) "ActivityReportObjectiveResourcesTotal",
             (SELECT COUNT(*) FROM "ActivityReportObjectiveTopics" arot) "ActivityReportObjectiveTopicsTotal"
         );
-        
+         
         -- CREATE TABLE "DupGoalsOnARs" AS (
         CREATE TEMP TABLE "DupGoalsOnARs" AS (
             SELECT
@@ -136,7 +137,7 @@ module.exports = {
                 THEN 'No'
             END "isRttapa",
             BOOL_OR(COALESCE(g2."onAR", FALSE) OR g."onAR") "onAR",
-            ARRAY_AGG(DISTINCT "g".id) "toRemove",
+            ARRAY_AGG(DISTINCT "g".id ORDER by "g".id) "toRemove",
             (ARRAY_AGG(DISTINCT "g2".id))[1] "toUpdate"
             FROM "Goals" g
             JOIN "DupGoalsOnARs" dgoa
@@ -250,7 +251,7 @@ module.exports = {
                 ELSE NULL
             END "createdVia",
             BOOL_OR(o."onAR" OR COALESCE(o2."onAR", FALSE)) "onAR",
-            ARRAY_AGG(DISTINCT "o".id) "toRemove",
+            ARRAY_AGG(DISTINCT "o".id ORDER by "o".id) "toRemove",
             (ARRAY_AGG(DISTINCT "o2".id))[1] "toUpdate"
             FROM "Objectives" o
             JOIN "DupObjectivesOnARs" dooa
@@ -356,7 +357,7 @@ module.exports = {
             MAX(GREATEST("of"."updatedAt", "of2"."updatedAt")) "updatedAt",
             BOOL_OR("of"."onAR" OR COALESCE("of2"."onAR", FALSE)) "onAR",
             BOOL_OR("of"."onApprovedAR" OR COALESCE("of2"."onApprovedAR", FALSE)) "onApprovedAR",
-            ARRAY_AGG(DISTINCT "of".id) "toRemove",
+            ARRAY_AGG(DISTINCT "of".id ORDER by "of".id) "toRemove" ,
             (ARRAY_AGG(DISTINCT "of2".id))[1] "toUpdate"
             FROM "ObjectiveFiles" "of"
             JOIN "ObjectivesToModifyMetadata" otmm
@@ -368,7 +369,7 @@ module.exports = {
         );
         
         BEGIN;
-        SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectives', TRUE) as "auditDescriptor";
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectivesFiles', TRUE) as "auditDescriptor";
         -- CREATE TABLE "InsertObjectiveFiles" AS 
         CREATE TEMP TABLE "InsertObjectiveFiles" AS 
          WITH objective_files AS (
@@ -458,7 +459,7 @@ module.exports = {
             MAX(GREATEST("or"."updatedAt", "or2"."updatedAt")) "updatedAt",
             BOOL_OR("or"."onAR" OR COALESCE("or2"."onAR", FALSE)) "onAR",
             BOOL_OR("or"."onApprovedAR" OR COALESCE("or2"."onApprovedAR", FALSE)) "onApprovedAR",
-            ARRAY_AGG(DISTINCT "or".id) "toRemove",
+            ARRAY_AGG(DISTINCT "or".id ORDER by "or".id) "toRemove",
             (ARRAY_AGG(DISTINCT "or2".id))[1] "toUpdate"
             FROM "ObjectiveResources" "or"
             JOIN "ObjectivesToModifyMetadata" otmm
@@ -559,7 +560,7 @@ module.exports = {
             MAX(GREATEST("ot"."updatedAt", "ot2"."updatedAt")) "updatedAt",
             BOOL_OR("ot"."onAR" OR COALESCE("ot2"."onAR", FALSE)) "onAR",
             BOOL_OR("ot"."onApprovedAR" OR COALESCE("ot2"."onApprovedAR", FALSE)) "onApprovedAR",
-            ARRAY_AGG(DISTINCT "ot".id) "toRemove",
+            ARRAY_AGG(DISTINCT "ot".id ORDER by "ot".id) "toRemove",
             (ARRAY_AGG(DISTINCT "ot2".id))[1] "toUpdate"
             FROM "ObjectiveTopics" "ot"
             JOIN "ObjectivesToModifyMetadata" otmm
@@ -661,7 +662,7 @@ module.exports = {
                 ) "ttaProvided",
                 MIN(LEAST("aro"."createdAt", "aro2"."createdAt")) "createdAt",
                 MAX(GREATEST("aro"."updatedAt", "aro2"."updatedAt")) "updatedAt",
-                ARRAY_AGG(DISTINCT "aro".id) "toRemove",
+                ARRAY_AGG(DISTINCT "aro".id ORDER by "aro".id) "toRemove",
                 (ARRAY_AGG(DISTINCT "aro2".id))[1] "toUpdate"
                 FROM "ActivityReportObjectives" aro
                 JOIN "ObjectivesToModifyMetadata" otmm
@@ -732,7 +733,7 @@ module.exports = {
             arof."fileId",
             MIN(LEAST("arof"."createdAt", "arof2"."createdAt")) "createdAt",
             MAX(GREATEST("arof"."updatedAt", "arof2"."updatedAt")) "updatedAt",
-            ARRAY_AGG(DISTINCT "arof".id) "toRemove",
+            ARRAY_AGG(DISTINCT "arof".id ORDER by "arof".id) "toRemove",
             (ARRAY_AGG(DISTINCT "arof2".id))[1] "toUpdate"
             FROM "ActivityReportObjectiveFiles" arof
             JOIN "ActivityReportObjectivesToModifyMetadata" arotmm
@@ -825,7 +826,7 @@ module.exports = {
             ) "sourceFields",
             MIN(LEAST("aror"."createdAt", "aror2"."createdAt")) "createdAt",
             MAX(GREATEST("aror"."updatedAt", "aror2"."updatedAt")) "updatedAt",
-            ARRAY_AGG(DISTINCT "aror".id) "toRemove",
+            ARRAY_AGG(DISTINCT "aror".id ORDER by "aror".id) "toRemove",
             (ARRAY_AGG(DISTINCT "aror2".id))[1] "toUpdate"
             FROM "ActivityReportObjectiveResources" aror
             JOIN "ActivityReportObjectivesToModifyMetadata" arotmm
@@ -911,7 +912,7 @@ module.exports = {
             arot."topicId",
             MIN(LEAST("arot"."createdAt", "arot2"."createdAt")) "createdAt",
             MAX(GREATEST("arot"."updatedAt", "arot2"."updatedAt")) "updatedAt",
-            ARRAY_AGG(DISTINCT "arot".id) "toRemove",
+            ARRAY_AGG(DISTINCT "arot".id ORDER by "arot".id) "toRemove",
             (ARRAY_AGG(DISTINCT "arot2".id))[1] "toUpdate"
             FROM "ActivityReportObjectiveTopics" arot
             JOIN "ActivityReportObjectivesToModifyMetadata" arotmm
@@ -1136,7 +1137,7 @@ module.exports = {
             BOOL_OR(COALESCE(arg."isActivelyEdited", FALSE) OR COALESCE(arg2."isActivelyEdited", FALSE)) "isActivelyEdited",
             MIN(LEAST("arg"."createdAt", "arg2"."createdAt")) "createdAt",
             MAX(GREATEST("arg"."updatedAt", "arg2"."updatedAt")) "updatedAt",
-            ARRAY_AGG(DISTINCT "arg".id) "toRemove",
+            ARRAY_AGG(DISTINCT "arg".id ORDER by "arg".id) "toRemove",
             (ARRAY_AGG(DISTINCT "arg2".id))[1] "toUpdate"
             FROM "ActivityReportGoals" arg
             JOIN "DupGoalsOnARs" dgoa
@@ -1229,7 +1230,7 @@ module.exports = {
             ) "sourceFields",
             MIN(LEAST("argr"."createdAt", "argr2"."createdAt")) "createdAt",
             MAX(GREATEST("argr"."updatedAt", "argr2"."updatedAt")) "updatedAt",
-            ARRAY_AGG(DISTINCT "argr".id) "toRemove",
+            ARRAY_AGG(DISTINCT "argr".id ORDER by "argr".id) "toRemove",
             (ARRAY_AGG(DISTINCT "argr2".id))[1] "toUpdate"
             FROM "ActivityReportGoalResources" argr
             JOIN "ActivityReportGoalsToModifyMetadata" argtmm
