@@ -129,3 +129,12 @@ test('put /goals/changeStatus', async ({ request }) => {
 
   expect(response.status()).toBe(200);
 });
+
+test('delete /', async ({ request }) => {
+  const response = await request.delete(
+    `${root}/goals?goalIds[]=4`,
+    { headers: { 'playwright-user-id': '1' } },
+  );
+
+  expect(response.status()).toBe(200);
+});
