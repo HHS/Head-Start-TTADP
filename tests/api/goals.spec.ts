@@ -138,3 +138,32 @@ test('delete /', async ({ request }) => {
 
   expect(response.status()).toBe(200);
 });
+
+test('post /', async ({ request }) => {
+  const response = await request.post(
+    `${root}/goals`,
+    {
+      data: {
+        goals: [
+          {
+            name: 'New Goal',
+            recipientId: 2,
+            grantId: 1,
+            regionId: 1,
+            status: GOAL_STATUS.NOT_STARTED,
+            endDate: '2021-12-31',
+            objectives: [],
+            goalNumbers: [],
+            goalIds: [],
+            grants: [],
+            grantIds: [],
+            isNew: true,
+          },
+        ],
+      },
+      headers: { 'playwright-user-id': '1' }
+    },
+  );
+
+  expect(response.status()).toBe(200);
+});
