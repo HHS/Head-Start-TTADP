@@ -5,7 +5,7 @@ import { getUserRegions } from '../permissions';
 import { formatDateRange } from '../utils';
 import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 
-const defaultDate = formatDateRange({
+export const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
 });
