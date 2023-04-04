@@ -148,7 +148,7 @@ export function queryStringToFilters(queryString) {
   }).filter((query) => query);
 }
 
-export function filtersToQueryString(filters, region, callback) {
+export function filtersToQueryString(filters, region) {
   const filtersWithValues = filters.filter((f) => {
     if (f.condition === WITHIN) {
       const [startDate, endDate] = f.query.split('-');
@@ -157,10 +157,6 @@ export function filtersToQueryString(filters, region, callback) {
     return f.query !== '';
   });
   const queryFragments = filtersWithValues.map((filter) => {
-    if (callback) {
-      return callback(filter);
-    }
-
     const con = QUERY_CONDITIONS[filter.condition];
     const q = String(filter.query).trim();
     return `${filter.topic}.${con}=${encodeURIComponent(q)}`;

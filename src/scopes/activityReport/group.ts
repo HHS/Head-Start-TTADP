@@ -1,5 +1,6 @@
 import { Op, WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
+import { idClause } from '../utils';
 
 /**
  *
@@ -9,13 +10,15 @@ import { sequelize } from '../../models';
  * @see withoutGroup
  */
 export function withGroup(query: string[], userId: number): WhereOptions {
-  const nameClause = query
-    .map((name) => sequelize.escape(name)).join(',');
+  const where = idClause(query);
+
+  console.log({ query, idClause });
+
   return {
     id: {
       [Op.in]: sequelize.literal(`(
         SELECT "activityReportId" FROM "ActivityRecipients" WHERE "grantId" IN (
-            SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (SELECT "id" FROM "Groups" WHERE "name" IN (${nameClause}) AND "userId" = ${userId})
+            SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (SELECT "id" FROM "Groups" WHERE "id" IN (${where}) AND "userId" = ${userId})
         )
       )`),
     },
@@ -29,13 +32,12 @@ export function withGroup(query: string[], userId: number): WhereOptions {
  * @see withGroup
  */
 export function withoutGroup(query: string[], userId: number): WhereOptions {
-  const nameClause = query
-    .map((name) => sequelize.escape(name)).join(',');
+  const where = idClause(query);
   return {
     id: {
       [Op.notIn]: sequelize.literal(`(
         SELECT "activityReportId" FROM "ActivityRecipients" WHERE "grantId" IN (
-            SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (SELECT "id" FROM "Groups" WHERE "name" IN (${nameClause}) AND "userId" = ${userId})
+            SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (SELECT "id" FROM "Groups" WHERE "id" IN (${where}) AND "userId" = ${userId})
         )
       )`),
     },
