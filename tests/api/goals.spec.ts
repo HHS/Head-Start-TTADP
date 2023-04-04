@@ -172,7 +172,7 @@ test('delete /', async ({ request }) => {
 
   // This is an attempt to ensure these tests can be run locally
   // without having to drop and reseed the database between each run.
-  // It shouldn't even run infinitely because if we made it to this test, 
+  // It shouldn't ever run infinitely because if we made it to this test, 
   // it means we actually created a goal in the previous test, so there *should*
   // be something to find.
   while(true) {
