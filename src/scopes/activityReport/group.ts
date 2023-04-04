@@ -11,9 +11,6 @@ import { idClause } from '../utils';
  */
 export function withGroup(query: string[], userId: number): WhereOptions {
   const where = idClause(query);
-
-  console.log({ query, idClause });
-
   return {
     id: {
       [Op.in]: sequelize.literal(`(
