@@ -49,8 +49,12 @@ function formatDelivery(method, virtualDeliveryType) {
     return 'In person';
   }
 
-  if (method === 'virtual' && virtualDeliveryType) {
-    return `Virtual: ${virtualDeliveryType}`;
+  if (method === 'virtual') {
+    return virtualDeliveryType ? `Virtual: ${virtualDeliveryType}` : 'Virtual';
+  }
+
+  if (method === 'hybrid') {
+    return 'Hybrid';
   }
 
   return '';

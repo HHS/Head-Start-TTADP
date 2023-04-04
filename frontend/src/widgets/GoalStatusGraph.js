@@ -96,7 +96,7 @@ export function GoalStatusChart({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub--goal-status-graph width-full" paddingX={3} paddingY={3} loading={loading} loadingLabel="goal statuses by number loading">
+    <Container className="ttahub--goal-status-graph width-full" loading={loading} loadingLabel="goal statuses by number loading">
       <Grid row className="position-relative margin-bottom-1">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">
