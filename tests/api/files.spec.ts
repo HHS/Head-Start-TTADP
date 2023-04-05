@@ -32,39 +32,39 @@ test.describe('/files', () => {
     expect(response.status()).toBe(200);
   });
 
-    test('post /objectives', async ({ request }) => {
-      const reportId = 10_000;
-      const reportObjectiveId = 1;
-      const objectiveId = 1;
-      const objectiveTemplateId = 1;
+  test('post /objectives', async ({ request }) => {
+    const reportId = 10_000;
+    const reportObjectiveId = 1;
+    const objectiveId = 1;
+    const objectiveTemplateId = 1;
 
-      const response = await request.post(
-        `${root}/files`,
-        {
-          multipart: {
-            reportId,
-            reportObjectiveId,
-            objectiveId,
-            objectiveTemplateId,
-            file: {
-              name: 'file.txt',
-              mimeType: 'text/plain',
-              buffer: Buffer.from('Hello World'),
-            },
+    const response = await request.post(
+      `${root}/files`,
+      {
+        multipart: {
+          reportId,
+          reportObjectiveId,
+          objectiveId,
+          objectiveTemplateId,
+          file: {
+            name: 'file.txt',
+            mimeType: 'text/plain',
+            buffer: Buffer.from('Hello World'),
           },
-          headers: { 'playwright-user-id': '1' },
         },
-      );
+        headers: { 'playwright-user-id': '1' },
+      },
+    );
 
-      expect(response.status()).toBe(200);
-    });
+    expect(response.status()).toBe(200);
+  });
 
-    test('delete /:fileId', async ({ request }) => {
-      const fileId = 1;
+  test('delete /:fileId', async ({ request }) => {
+    const fileId = 1;
 
-      const response = await request.delete(
-        `${root}/files/${fileId}`,
-        { headers: { 'playwright-user-id': '1', } },
+    const response = await request.delete(
+      `${root}/files/${fileId}`,
+      { headers: { 'playwright-user-id': '1', } },
     );
     expect(response.status()).toBe(204);
   });
