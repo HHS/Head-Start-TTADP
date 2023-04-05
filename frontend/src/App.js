@@ -78,10 +78,10 @@ function App() {
         return unreadNotifications.length > 0;
       }
     } catch (err) {
-      return true;
+      return false;
     }
 
-    return true;
+    return false;
   })());
 
   useEffect(() => {

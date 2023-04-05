@@ -23,7 +23,19 @@ const MONTHS = [
   'December',
 ];
 
-const parseFeedIntoDom = (feed) => (feed ? new window.DOMParser().parseFromString(feed, 'text/xml') : null);
+export const parseFeedIntoDom = (feed) => {
+  if (!feed) {
+    return null;
+  }
+
+  const parsedDom = new window.DOMParser().parseFromString(feed, 'text/xml');
+
+  if (parsedDom.querySelector('parsererror')) {
+    return null;
+  }
+
+  return parsedDom;
+};
 
 export const formatWhatsNew = (feed) => {
   const dom = parseFeedIntoDom(feed);
