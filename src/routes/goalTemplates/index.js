@@ -5,6 +5,6 @@ import { getGoalTemplates, getPrompts } from './handlers';
 
 const router = express.Router();
 router.get('/', authMiddleware, transactionWrapper(getGoalTemplates));
-router.get('/prompts', authMiddleware, transactionWrapper(getPrompts));
+router.get('/:goalTemplateId/prompts/', authMiddleware, transactionWrapper(getPrompts)); // todo - add validation for goalTemplateId
 
 export default router;
