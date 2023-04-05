@@ -11,6 +11,7 @@ import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
+import getCachedResponse from '../../lib/cache';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -36,7 +37,14 @@ export async function getUserStatistics(req, res) {
     const authorization = new UserPolicy(user);
     // Get regions user can write.
     const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
-    const statistics = await statisticsByUser(user, regions, !canWrite);
+    const key = `statisticsByUser?userId=${user.id}`;
+
+    const statistics = await getCachedResponse(
+      key,
+      async () => JSON.stringify(await statisticsByUser(user, regions, !canWrite)),
+      JSON.parse,
+    );
+
     res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
