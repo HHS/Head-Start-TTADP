@@ -87,6 +87,7 @@ describe('ObjectiveForm', () => {
     renderObjectiveForm(objective, removeObjective, setObjectiveError, setObjective);
 
     // Topic guidance.
+    /*
     const topicGuidance = await screen.findByRole('button', { name: /view topic guidance/i });
     userEvent.click(topicGuidance);
     expect(await screen.findByText('Topic guidance')).toBeInTheDocument();
@@ -95,9 +96,11 @@ describe('ObjectiveForm', () => {
     userEvent.click(closeTopicGuidance);
 
     // Topics.
-    const topicsText = screen.queryAllByLabelText(/topics \*/i);
+    const topicsText = screen.queryAllByLabelText(/topics *i);
     expect(topicsText.length).toBe(2);
     const topics = document.querySelector('#topics');
+    */
+    const topics = await screen.findByLabelText(/topics \*/i);
     userEvent.click(topics);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });

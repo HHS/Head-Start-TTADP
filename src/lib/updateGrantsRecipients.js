@@ -47,7 +47,8 @@ export async function processFiles(hashSumHex) {
           set_config('audit.loggedUser', '0', true) as "loggedUser",
           set_config('audit.transactionId', '${uuidv4()}', true) as "transactionId",
           set_config('audit.sessionSig', '${new Date().toISOString()}T${hashSumHex}', true) as "sessionSig",
-          set_config('audit.auditDescriptor', 'Grant data import from HSES', true) as "auditDescriptor";`,
+          set_config('audit.auditDescriptor', 'Grant data import from HSES', true) as "auditDescriptor",
+          set_config('audit.impersonationUserId', '3', true) as "impersonationUserId";`,
         { transaction },
       );
 

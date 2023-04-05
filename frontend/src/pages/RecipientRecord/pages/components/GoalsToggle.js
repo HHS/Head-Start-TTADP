@@ -43,14 +43,14 @@ export default function GoalsToggle({
       { showGoals && (
         <div className="margin-top-3">
           {goals.map((goal) => (
-            <div className="display-flex flex-align-center">
+            <div className="display-flex flex-align-center" key={goal.id}>
               <GoalCard
                 goal={goal}
                 recipientId={recipientId}
                 regionId={regionId}
-                showCloseSuspendGoalModal={false}
-                performGoalStatusUpdate={false}
-                handleGoalCheckboxSelect={false}
+                showCloseSuspendGoalModal={() => {}}
+                performGoalStatusUpdate={() => {}}
+                handleGoalCheckboxSelect={() => {}}
                 hideCheckbox
                 showReadOnlyStatus
                 isChecked={false}

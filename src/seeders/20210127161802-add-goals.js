@@ -64,6 +64,7 @@ module.exports = {
         grantId: 1,
         onAR: false,
         onApprovedAR: false,
+        isRttapa: 'Yes',
       },
       {
         id: 2,

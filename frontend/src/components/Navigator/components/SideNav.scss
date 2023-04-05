@@ -3,7 +3,7 @@
 .smart-hub--navigator-link-active {
   color: $ttahub-medium-blue;
   font-weight: bold;
-  border-left: 2px solid $ttahub-medium-blue;
+  border-left: 4px solid $ttahub-medium-blue;
   text-decoration-line: none;
 }
 
@@ -16,6 +16,11 @@
   font-size: 16px;
   color: $ttahub-blue;
   line-height: 24px;
+}
+
+.smart-hub--navigator-link:hover {
+  background-color: $base-lightest;
+  color: $ttahub-medium-blue;
 }
 
 .smart-hub--navigator-list {
