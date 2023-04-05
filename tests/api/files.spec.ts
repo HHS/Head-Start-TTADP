@@ -25,9 +25,7 @@ test.describe('/files', () => {
             buffer: Buffer.from('Hello World'),
           },
         },
-        headers: {
-          'playwright-user-id': '1',
-        },
+        headers: { 'playwright-user-id': '1' },
       },
     );
 
@@ -58,7 +56,17 @@ test.describe('/files', () => {
         },
       );
 
-    expect(response.status()).toBe(200);
+      expect(response.status()).toBe(200);
+    });
+
+    test('delete /:fileId', async ({ request }) => {
+      const fileId = 1;
+
+      const response = await request.delete(
+        `${root}/files/${fileId}`,
+        { headers: { 'playwright-user-id': '1', } },
+    );
+    expect(response.status()).toBe(204);
   });
 
 });
