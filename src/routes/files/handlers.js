@@ -134,12 +134,12 @@ const deleteHandler = async (req, res) => {
 
     file = await getFileById(fileId);
     if (
-      file &&
-      file.reports &&
-      file.reportObjectiveFiles &&
-      file.objectiveFiles &&
-      file.objectiveTemplateFiles &&
-      (file.reports.length
+      file
+      && file.reports
+      && file.reportObjectiveFiles
+      && file.objectiveFiles
+      && file.objectiveTemplateFiles
+      && (file.reports.length
         + file.reportObjectiveFiles.length
         + file.objectiveFiles.length
         + file.objectiveTemplateFiles.length === 0)) {
