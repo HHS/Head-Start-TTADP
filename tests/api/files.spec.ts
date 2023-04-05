@@ -6,7 +6,7 @@ import { root, validateSchema } from './common';
 test.describe('/files', () => {
 
   test('post /', async ({ request }) => {
-    const reportId = 10_000;
+    const reportId = 10_001;
     const reportObjectiveId = 1;
     const objectiveId = 1;
     const objectiveTemplateId = 1;
@@ -33,7 +33,7 @@ test.describe('/files', () => {
   });
 
   test('post /objectives', async ({ request }) => {
-    const reportId = 10_000;
+    const reportId = 10_001;
     const reportObjectiveId = 1;
     const objectiveId = 1;
     const objectiveTemplateId = 1;
@@ -66,6 +66,18 @@ test.describe('/files', () => {
       `${root}/files/${fileId}`,
       { headers: { 'playwright-user-id': '1', } },
     );
+    expect(response.status()).toBe(204);
+  });
+
+  test('delete /files/r/:reportId/:fileId', async ({ request }) => {
+    const fileId = 2;
+    const reportId = 10_001;
+
+    const response = await request.delete(
+      `${root}/files/r/${reportId}/${fileId}`,
+      { headers: { 'playwright-user-id': '1', } },
+    );
+
     expect(response.status()).toBe(204);
   });
 

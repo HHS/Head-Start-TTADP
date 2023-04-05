@@ -104,37 +104,45 @@ const deleteHandler = async (req, res) => {
   try {
     let file = await getFileById(fileId);
 
-    if (reportId) {
-      if (!await hasReportAuthorization(user, reportId)) {
-        res.sendStatus(403);
-        return;
-      }
-      const rf = file.reportFiles.find(
-        (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE),
-      );
-      if (rf) {
-        await deleteActivityReportFile(rf.id);
-      }
-    } else if (objectiveId) {
-      const objective = await getObjectiveById(objectiveId);
-      const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpdate()) {
-        res.sendStatus(403);
-        return;
-      }
-      const of = file.objectiveFiles.find(
-        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
-      );
-      if (of) {
-        await deleteObjectiveFile(of.id);
+    if (file) {
+      if (reportId) {
+        if (!await hasReportAuthorization(user, reportId)) {
+          res.sendStatus(403);
+          return;
+        }
+        const rf = file.reportFiles && file.reportFiles.find(
+          (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE),
+        );
+        if (rf) {
+          await deleteActivityReportFile(rf.id);
+        }
+      } else if (objectiveId) {
+        const objective = await getObjectiveById(objectiveId);
+        const objectivePolicy = new ObjectivePolicy(objective, user);
+        if (!objectivePolicy.canUpdate()) {
+          res.sendStatus(403);
+          return;
+        }
+        const of = file.objectiveFiles.find(
+          (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
+        );
+        if (of) {
+          await deleteObjectiveFile(of.id);
+        }
       }
     }
 
     file = await getFileById(fileId);
-    if (file.reports.length
-      + file.reportObjectiveFiles.length
-      + file.objectiveFiles.length
-      + file.objectiveTemplateFiles.length === 0) {
+    if (
+      file &&
+      file.reports &&
+      file.reportObjectiveFiles &&
+      file.objectiveFiles &&
+      file.objectiveTemplateFiles &&
+      (file.reports.length
+        + file.reportObjectiveFiles.length
+        + file.objectiveFiles.length
+        + file.objectiveTemplateFiles.length === 0)) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
