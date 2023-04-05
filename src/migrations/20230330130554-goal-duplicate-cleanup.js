@@ -36,7 +36,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "ActivityReportObjectiveResources" aror) "ActivityReportObjectiveResourcesTotal",
             (SELECT COUNT(*) FROM "ActivityReportObjectiveTopics" arot) "ActivityReportObjectiveTopicsTotal"
         );
-        
+
         -- CREATE TABLE "DupGoalsOnARs" AS (
         CREATE TEMP TABLE "DupGoalsOnARs" AS (
             SELECT
@@ -148,7 +148,7 @@ module.exports = {
             AND MD5(TRIM(g.name)) = MD5(TRIM(g2.name))
             GROUP BY 1,2,3,9,10
         );
-        
+
         -- All objectives that are duplicates on goals that are duplicates on the same AR
         CREATE TEMP TABLE "DupObjectivesOnDupGoalsOnARs" AS (
             SELECT
@@ -165,7 +165,7 @@ module.exports = {
             HAVING ARRAY_LENGTH(ARRAY_AGG(o.id ORDER BY o.id), 1) > 1
             ORDER BY 8 DESC
         );
-        
+
         -- All objectives that are duplicates on goals that are not duplicates on the same AR
         CREATE TEMP TABLE "DupObjectivesOnNonDupGoalsOnARs" AS (
             SELECT DISTINCT
@@ -261,11 +261,11 @@ module.exports = {
             AND o."goalId" = o2."goalId"
             GROUP BY 1,2,3,7
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectives" AS 
-        CREATE TEMP TABLE "InsertObjectives" AS 
+        -- CREATE TABLE "InsertObjectives" AS
+        CREATE TEMP TABLE "InsertObjectives" AS
         WITH inserted_objectives  AS (
             INSERT INTO "Objectives"
             (
@@ -346,7 +346,7 @@ module.exports = {
             AND otm."objectiveHash" = "io"."objectiveHash"
         )
         SELECT * FROM objectives_to_modify;
-        
+
         -- Handle ObjectiveFiles
         CREATE TEMP TABLE "ObjectiveFilesToModify" AS (
             SELECT
@@ -366,11 +366,11 @@ module.exports = {
             AND "of"."fileId" = "of2"."fileId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveFiles" AS 
-        CREATE TEMP TABLE "InsertObjectiveFiles" AS 
+        -- CREATE TABLE "InsertObjectiveFiles" AS
+        CREATE TEMP TABLE "InsertObjectiveFiles" AS
          WITH objective_files AS (
             INSERT INTO "ObjectiveFiles"
             (
@@ -396,11 +396,11 @@ module.exports = {
         )
         SELECT * FROM objective_files;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateObjectiveFiles" AS 
-        CREATE TEMP TABLE "UpdateObjectiveFiles" AS 
+        -- CREATE TABLE "UpdateObjectiveFiles" AS
+        CREATE TEMP TABLE "UpdateObjectiveFiles" AS
         WITH update_objective_files AS  (
             UPDATE "ObjectiveFiles" "of"
             SET
@@ -410,13 +410,19 @@ module.exports = {
             "onApprovedAR" = oftm."onApprovedAR"
             FROM "ObjectiveFilesToModify" oftm
             WHERE "of".id = oftm."toUpdate"
+            AND (
+              "of"."createdAt" != oftm."createdAt"
+              OR "of"."updatedAt" != oftm."updatedAt"
+              OR "of"."onAR" != oftm."onAR"
+              OR "of"."onApprovedAR" != oftm."onApprovedAR"
+            )
             RETURNING
             "of".id "objectiveFileId",
             "of"."objectiveId"
         )
         SELECT * FROM update_objective_files;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectiveFiles', TRUE) as "auditDescriptor";
         -- CREATE TABLE "DeleteObjectiveFiles" AS
@@ -430,7 +436,7 @@ module.exports = {
             "of"."objectiveId"
         )
         SELECT * FROM del_objective_files;
-        
+
         -- CREATE TABLE "ObjectiveFileStats" AS (
         CREATE TEMP TABLE "ObjectiveFileStats" AS (
             SELECT
@@ -441,7 +447,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "ObjectiveFiles") "post_count"
         );
         -- Handle ObjectiveResources
-        
+
         CREATE TEMP TABLE "ObjectiveResourcesToModify" AS (
             SELECT
             otmm."toUpdate" "objectiveId",
@@ -468,11 +474,11 @@ module.exports = {
             AND "or"."resourceId" = "or2"."resourceId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveResources" AS 
-        CREATE TEMP TABLE "InsertObjectiveResources" AS 
+        -- CREATE TABLE "InsertObjectiveResources" AS
+        CREATE TEMP TABLE "InsertObjectiveResources" AS
             WITH  insert_objective_resources AS (
                 INSERT INTO "ObjectiveResources"
                 (
@@ -500,11 +506,11 @@ module.exports = {
             )
         SELECT * FROM insert_objective_resources;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateObjectiveResources" AS 
-        CREATE TEMP TABLE "UpdateObjectiveResources" AS 
+        -- CREATE TABLE "UpdateObjectiveResources" AS
+        CREATE TEMP TABLE "UpdateObjectiveResources" AS
             WITH update_objective_resources AS (
                 UPDATE "ObjectiveResources" "or"
                 SET
@@ -515,19 +521,26 @@ module.exports = {
                 "onApprovedAR" = ortm."onApprovedAR"
                 FROM "ObjectiveResourcesToModify" ortm
                 WHERE "or".id = ortm."toUpdate"
+                AND (
+                  "or"."sourceFields" != ortm."sourceFields"
+                  OR "or"."createdAt" != ortm."createdAt"
+                  OR "or"."updatedAt" != ortm."updatedAt"
+                  OR "or"."onAR" != ortm."onAR"
+                  OR "or"."onApprovedAR" != ortm."onApprovedAR"
+                )
                 RETURNING
                 "or".id "objectiveResourceId",
                 "or"."objectiveId"
             )
         SELECT * FROM update_objective_resources;
         END;
-        
-        BEGIN;    
+
+        BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectiveResources', TRUE) as "auditDescriptor";
         -- CREATE TABLE "DeleteObjectiveResources" AS
         CREATE TEMP TABLE "DeleteObjectiveResources" AS
             WITH delete_objective_resources AS
-            ( 
+            (
                 DELETE FROM "ObjectiveResources" "or"
                 USING "ObjectiveResourcesToModify" ortm
                 WHERE "or".id = ANY(ortm."toRemove")
@@ -537,9 +550,9 @@ module.exports = {
             )
         SELECT * FROM delete_objective_resources;
         END;
-        
-        -- CREATE TABLE "ObjectiveResourceStats" AS 
-        CREATE TEMP TABLE "ObjectiveResourceStats" AS 
+
+        -- CREATE TABLE "ObjectiveResourceStats" AS
+        CREATE TEMP TABLE "ObjectiveResourceStats" AS
             (
                 SELECT
                 'ObjectiveResources' "table",
@@ -548,9 +561,9 @@ module.exports = {
                 (SELECT COUNT(*) FROM "DeleteObjectiveResources") "Deletes",
                 (SELECT COUNT(*) FROM "ObjectiveResources" "or") "post_count"
             );
-        
+
         -- Handle ObjectiveTopics
-        
+
         CREATE TEMP TABLE "ObjectiveTopicsToModify" AS (
             SELECT
             otmm."toUpdate" "objectiveId",
@@ -569,11 +582,11 @@ module.exports = {
             AND "ot"."topicId" = "ot2"."topicId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveTopics" AS 
-        CREATE TEMP TABLE "InsertObjectiveTopics" AS 
+        -- CREATE TABLE "InsertObjectiveTopics" AS
+        CREATE TEMP TABLE "InsertObjectiveTopics" AS
         WITH insert_objective_topics AS (
             INSERT INTO "ObjectiveTopics"
             (
@@ -599,11 +612,11 @@ module.exports = {
         )
         SELECT * FROM insert_objective_topics;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateObjectiveTopics" AS 
-        CREATE TEMP TABLE "UpdateObjectiveTopics" AS 
+        -- CREATE TABLE "UpdateObjectiveTopics" AS
+        CREATE TEMP TABLE "UpdateObjectiveTopics" AS
         WITH update_objective_topics AS (
             UPDATE "ObjectiveTopics" "ot"
             SET
@@ -613,17 +626,23 @@ module.exports = {
             "onApprovedAR" = ottm."onApprovedAR"
             FROM "ObjectiveTopicsToModify" ottm
             WHERE "ot".id = ottm."toUpdate"
+            AND (
+              "ot"."createdAt" != ottm."createdAt"
+              OR "ot"."updatedAt" != ottm."updatedAt"
+              OR "ot"."onAR" != ottm."onAR"
+              OR "ot"."onApprovedAR" != ottm."onApprovedAR"
+            )
             RETURNING
             "ot".id "objectiveTopicId",
             "ot"."objectiveId"
         )
         SELECT * FROM update_objective_topics;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteObjectiveTopics" AS 
-        CREATE TEMP TABLE "DeleteObjectiveTopics" AS 
+        -- CREATE TABLE "DeleteObjectiveTopics" AS
+        CREATE TEMP TABLE "DeleteObjectiveTopics" AS
         WITH delete_objective_topics AS (
             DELETE FROM "ObjectiveTopics" "ot"
             USING "ObjectiveTopicsToModify" ottm
@@ -634,7 +653,7 @@ module.exports = {
         )
         SELECT * FROM delete_objective_topics;
         END;
-        
+
         -- CREATE TABLE "ObjectiveTopicStats" AS (
         CREATE TEMP TABLE "ObjectiveTopicStats" AS (
             SELECT
@@ -671,11 +690,11 @@ module.exports = {
                 AND "aro"."activityReportId" = "aro2"."activityReportId"
                 GROUP BY 1,2,3,4
            );
-        
-        BEGIN; 
+
+        BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectives" AS 
-        CREATE TEMP TABLE "InsertActivityReportObjectives" AS 
+        -- CREATE TABLE "InsertActivityReportObjectives" AS
+        CREATE TEMP TABLE "InsertActivityReportObjectives" AS
         WITH insert_activity_report_objectives AS (
             INSERT INTO "ActivityReportObjectives"
             (
@@ -706,7 +725,7 @@ module.exports = {
         )
         SELECT * FROM insert_activity_report_objectives;
         END;
-        
+
         -- Handle ActivityReportObjectives Metadata tables
         CREATE TEMP TABLE "ActivityReportObjectivesToModifyMetadata" AS (
             SELECT
@@ -742,11 +761,11 @@ module.exports = {
             AND arof."fileId" = arof2."fileId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectiveFiles" AS 
-        CREATE TEMP TABLE "InsertActivityReportObjectiveFiles" AS 
+        -- CREATE TABLE "InsertActivityReportObjectiveFiles" AS
+        CREATE TEMP TABLE "InsertActivityReportObjectiveFiles" AS
         WITH insert_activity_report_objective_files AS (
             INSERT INTO "ActivityReportObjectiveFiles"
             (
@@ -768,7 +787,7 @@ module.exports = {
         )
         SELECT * FROM insert_activity_report_objective_files;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectiveFiles', TRUE) as "auditDescriptor";
         -- CREATE TABLE "UpdateActivityReportObjectiveFiles" AS
@@ -780,17 +799,21 @@ module.exports = {
             "updatedAt" = aroftm."updatedAt"
             FROM "ActivityReportObjectiveFilesToModify" aroftm
             WHERE "arof".id = aroftm."toUpdate"
+            AND (
+              "arof"."createdAt" != aroftm."createdAt"
+              OR "arof"."updatedAt" != aroftm."updatedAt"
+            )
             RETURNING
             "arof".id "activityReportObjectiveFileId",
             "arof"."activityReportObjectiveId"
         )
         SELECT * FROM update_activity_report_objective_files;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectiveFiles" AS 
-        CREATE TEMP TABLE "DeleteActivityReportObjectiveFiles" AS 
+        -- CREATE TABLE "DeleteActivityReportObjectiveFiles" AS
+        CREATE TEMP TABLE "DeleteActivityReportObjectiveFiles" AS
         WITH delete_activity_report_objective_files AS (
             DELETE FROM "ActivityReportObjectiveFiles" "arof"
             USING "ActivityReportObjectiveFilesToModify" aroftm
@@ -800,7 +823,7 @@ module.exports = {
             "arof"."activityReportObjectiveId"
         )SELECT * FROM delete_activity_report_objective_files;
         END;
-        
+
         -- CREATE TABLE "ActivityReportObjectiveFileStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveFileStats" AS (
             SELECT
@@ -835,11 +858,11 @@ module.exports = {
             AND aror."resourceId" = aror2."resourceId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectiveResources" AS 
-        CREATE TEMP TABLE "InsertActivityReportObjectiveResources" AS 
+        -- CREATE TABLE "InsertActivityReportObjectiveResources" AS
+        CREATE TEMP TABLE "InsertActivityReportObjectiveResources" AS
         WITH insert_activity_report_objective_resources AS (
             INSERT INTO "ActivityReportObjectiveResources"
             (
@@ -862,11 +885,11 @@ module.exports = {
             "activityReportObjectiveId"
         )SELECT * FROM insert_activity_report_objective_resources;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectiveResources" AS 
-        CREATE TEMP TABLE "UpdateActivityReportObjectiveResources" AS 
+        -- CREATE TABLE "UpdateActivityReportObjectiveResources" AS
+        CREATE TEMP TABLE "UpdateActivityReportObjectiveResources" AS
         WITH update_activity_report_objective_resources AS (
             UPDATE "ActivityReportObjectiveResources" "aror"
             SET
@@ -875,16 +898,21 @@ module.exports = {
             "updatedAt" = arortm."updatedAt"
             FROM "ActivityReportObjectiveResourcesToModify" arortm
             WHERE "aror".id = arortm."toUpdate"
+            AND (
+              "aror"."sourceFields" != arortm."sourceFields"
+              OR "aror"."createdAt" != arortm."createdAt"
+              OR "aror"."updatedAt" != arortm."updatedAt"
+            )
             RETURNING
             "aror".id "activityReportObjectiveResourceId",
             "aror"."activityReportObjectiveId"
         )SELECT * FROM update_activity_report_objective_resources;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectiveResources" AS 
-        CREATE TEMP TABLE "DeleteActivityReportObjectiveResources" AS 
+        -- CREATE TABLE "DeleteActivityReportObjectiveResources" AS
+        CREATE TEMP TABLE "DeleteActivityReportObjectiveResources" AS
         WITH delete_activity_report_objective_resources AS (
             DELETE FROM "ActivityReportObjectiveResources" "aror"
             USING "ActivityReportObjectiveResourcesToModify" arortm
@@ -894,7 +922,7 @@ module.exports = {
             "aror"."activityReportObjectiveId"
         )SELECT * FROM delete_activity_report_objective_resources;
         END;
-        
+
         -- CREATE TABLE "ActivityReportObjectiveResourceStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveResourceStats" AS (
             SELECT
@@ -921,7 +949,7 @@ module.exports = {
             AND arot."topicId" = arot2."topicId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectiveTopics', TRUE) as "auditDescriptor";
         -- CREATE TABLE "InsertActivityReportObjectiveTopics" AS
@@ -946,11 +974,11 @@ module.exports = {
             "activityReportObjectiveId"
         )SELECT * FROM insert_activity_report_objective_topics;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectiveTopics" AS 
-        CREATE TEMP TABLE "UpdateActivityReportObjectiveTopics" AS 
+        -- CREATE TABLE "UpdateActivityReportObjectiveTopics" AS
+        CREATE TEMP TABLE "UpdateActivityReportObjectiveTopics" AS
         WITH update_activity_report_objective_topics AS (
             UPDATE "ActivityReportObjectiveTopics" "arot"
             SET
@@ -958,16 +986,20 @@ module.exports = {
             "updatedAt" = arottm."updatedAt"
             FROM "ActivityReportObjectiveTopicsToModify" arottm
             WHERE "arot".id = arottm."toUpdate"
+            AND (
+              "arot"."createdAt" != arottm."createdAt"
+              OR "arot"."updatedAt" != arottm."updatedAt"
+            )
             RETURNING
             "arot".id "activityReportObjectiveTopicId",
             "arot"."activityReportObjectiveId"
         )SELECT * FROM update_activity_report_objective_topics;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectiveTopics" AS 
-        CREATE TEMP TABLE "DeleteActivityReportObjectiveTopics" AS 
+        -- CREATE TABLE "DeleteActivityReportObjectiveTopics" AS
+        CREATE TEMP TABLE "DeleteActivityReportObjectiveTopics" AS
         WITH delete_activity_report_objective_topics AS (
             DELETE FROM "ActivityReportObjectiveTopics" "arot"
             USING "ActivityReportObjectiveTopicsToModify" arottm
@@ -977,7 +1009,7 @@ module.exports = {
             "arot"."activityReportObjectiveId"
         )SELECT * FROM delete_activity_report_objective_topics;
         END;
-        
+
         -- CREATE TABLE "ActivityReportObjectiveTopicStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveTopicStats" AS (
             SELECT
@@ -986,13 +1018,13 @@ module.exports = {
             (SELECT COUNT(*) FROM "UpdateActivityReportObjectiveTopics") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportObjectiveTopics") "Deletes",
             (SELECT COUNT(*) FROM "ActivityReportObjectiveTopics" arot) "post_count"
-        
+
         );
-        
+
         BEGIN;-- Continue Handle ActivityReportObjectives
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectives" AS 
-        CREATE TEMP TABLE "UpdateActivityReportObjectives" AS 
+        -- CREATE TABLE "UpdateActivityReportObjectives" AS
+        CREATE TEMP TABLE "UpdateActivityReportObjectives" AS
         WITH update_activity_report_objectives AS(
             UPDATE "ActivityReportObjectives" "aro"
             SET
@@ -1002,12 +1034,18 @@ module.exports = {
             "updatedAt" = arotm."updatedAt"
             FROM "ActivityReportObjectivesToModify" arotm
             WHERE "aro".id = arotm."toUpdate"
+            AND (
+              "aro"."arOrder" != arotm."arOrder"
+              OR "aro"."ttaProvided" != arotm."ttaProvided"
+              OR "aro"."createdAt" != arotm."createdAt"
+              OR "aro"."updatedAt" != arotm."updatedAt"
+            )
             RETURNING
             "aro".id "activityReportObjectiveId",
             "aro"."objectiveId"
         )SELECT * FROM update_activity_report_objectives;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectives', TRUE) as "auditDescriptor";
         -- CREATE TABLE "DeleteActivityReportObjectives" AS
@@ -1031,7 +1069,7 @@ module.exports = {
         )
         SELECT * FROM deleted_aro;
         END;
-        
+
         -- CREATE TABLE "ActivityReportObjectiveStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveStats" AS (
             SELECT
@@ -1042,7 +1080,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "ActivityReportObjectives" aro) "post_count"
         );
         -- Continue Handle Objectives
-        CREATE TEMP TABLE "UpdateObjectives" AS 
+        CREATE TEMP TABLE "UpdateObjectives" AS
         WITH update_objectives AS (
             UPDATE "Objectives" "o"
             SET
@@ -1062,10 +1100,26 @@ module.exports = {
             "createdVia" = otmm."createdVia"::"enum_Objectives_createdVia"
             FROM "ObjectivesToModifyMetadata" otmm
             WHERE "o".id = otmm."toUpdate"
+            AND (
+              "o"."createdAt" != otmm."createdAt"
+              OR "o"."updatedAt" != otmm."updatedAt"
+              OR "o"."onAR" != otmm."onAR"
+              OR "o"."onApprovedAR" != otmm."onApprovedAR"
+              OR "o"."firstNotStartedAt" != otmm."firstNotStartedAt"
+              OR "o"."lastNotStartedAt" != otmm."lastNotStartedAt"
+              OR "o"."firstInProgressAt" != otmm."firstInProgressAt"
+              OR "o"."lastInProgressAt" != otmm."lastInProgressAt"
+              OR "o"."firstCompleteAt" != otmm."firstCompleteAt"
+              OR "o"."lastCompleteAt" != otmm."lastCompleteAt"
+              OR "o"."firstSuspendedAt" != otmm."firstSuspendedAt"
+              OR "o"."lastSuspendedAt" != otmm."lastSuspendedAt"
+              OR "o"."rtrOrder" != otmm."rtrOrder"
+              OR "o"."createdVia" != otmm."createdVia"::"enum_Objectives_createdVia"
+            )
             RETURNING
             "o".id "objectiveId"
         )SELECT * FROM update_objectives;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectives', TRUE) as "auditDescriptor";
         -- CREATE TABLE "DeleteObjectives" AS
@@ -1085,7 +1139,7 @@ module.exports = {
             WHERE aro."objectiveId" = ANY(otm."toRemove")
             RETURNING aro."objectiveId"
         ),
-        
+
         deleted_of AS (
             DELETE FROM "ObjectiveFiles" of
             USING "ObjectivesToModify" otm
@@ -1102,7 +1156,7 @@ module.exports = {
         )
         SELECT * FROM deleted_o;
         END;
-        
+
         -- CREATE TABLE "ObjectiveStats" AS (
         CREATE TEMP TABLE "ObjectiveStats" AS (
             SELECT
@@ -1147,11 +1201,11 @@ module.exports = {
             AND "arg"."activityReportId" = "arg2"."activityReportId"
             GROUP BY 1,2,3,4,5,6,7
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportGoals', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportGoals" AS 
-        CREATE TEMP TABLE "InsertActivityReportGoals" AS 
+        -- CREATE TABLE "InsertActivityReportGoals" AS
+        CREATE TEMP TABLE "InsertActivityReportGoals" AS
         WITH insert_activity_report_goals AS (
             INSERT INTO "ActivityReportGoals"
             (
@@ -1189,7 +1243,7 @@ module.exports = {
             "activityReportId"
         )SELECT * FROM insert_activity_report_goals;
         END;
-        
+
         -- Handle ActivityReportGoals Metadata tables
         -- CREATE TABLE "ActivityReportGoalsToModifyMetadata" AS (
         CREATE TEMP TABLE "ActivityReportGoalsToModifyMetadata" AS (
@@ -1239,11 +1293,11 @@ module.exports = {
             AND argr."resourceId" = argr2."resourceId"
             GROUP BY 1,2
         );
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportGoalResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportGoalResources" AS 
-        CREATE TEMP TABLE "InsertActivityReportGoalResources" AS 
+        -- CREATE TABLE "InsertActivityReportGoalResources" AS
+        CREATE TEMP TABLE "InsertActivityReportGoalResources" AS
         WITH insert_activity_report_goals_resources AS (
             INSERT INTO "ActivityReportGoalResources"
             (
@@ -1266,7 +1320,7 @@ module.exports = {
             "activityReportGoalId"
         )SELECT * FROM insert_activity_report_goals_resources;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportGoalResources', TRUE) as "auditDescriptor";
         -- CREATE TABLE "UpdateActivityReportGoalResources" AS
@@ -1279,16 +1333,21 @@ module.exports = {
             "updatedAt" = argrtm."updatedAt"
             FROM "ActivityReportGoalResourcesToModify" argrtm
             WHERE "argr".id = argrtm."toUpdate"
+            AND (
+              "argr"."sourceFields" != argrtm."sourceFields"
+              OR "argr"."createdAt" != argrtm."createdAt"
+              OR "argr"."updatedAt" != argrtm."updatedAt"
+            )
             RETURNING
             "argr".id "activityReportGoalResourceId",
             "argr"."activityReportGoalId"
         )SELECT * FROM update_activity_report_goals_resources;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportGoalResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportGoalResources" AS 
-        CREATE TEMP TABLE "DeleteActivityReportGoalResources" AS 
+        -- CREATE TABLE "DeleteActivityReportGoalResources" AS
+        CREATE TEMP TABLE "DeleteActivityReportGoalResources" AS
         WITH delete_activity_report_goals_resources AS (
             DELETE FROM "ActivityReportGoalResources" "argr"
             USING "ActivityReportGoalResourcesToModify" argrtm
@@ -1298,7 +1357,7 @@ module.exports = {
             "argr"."activityReportGoalId"
         )SELECT * FROM delete_activity_report_goals_resources;
         END;
-        
+
         -- CREATE TABLE "ActivityReportGoalResourceStats" AS (
         CREATE TEMP TABLE "ActivityReportGoalResourceStats" AS (
             SELECT
@@ -1308,11 +1367,11 @@ module.exports = {
             (SELECT COUNT(*) FROM "DeleteActivityReportGoalResources") "Deletes",
             (SELECT COUNT(*) FROM "ActivityReportGoalResources" argr) "post_count"
         );
-        
+
         BEGIN;-- Continue Handle ActivityReportGoals
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportGoals', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportGoals" AS 
-        CREATE TEMP TABLE "UpdateActivityReportGoals" AS 
+        -- CREATE TABLE "UpdateActivityReportGoals" AS
+        CREATE TEMP TABLE "UpdateActivityReportGoals" AS
         WITH update_activity_report_goals AS (
             UPDATE "ActivityReportGoals" "arg"
             SET
@@ -1324,12 +1383,20 @@ module.exports = {
             "updatedAt" = argtm."updatedAt"
             FROM "ActivityReportGoalsToModify" argtm
             WHERE "arg".id = argtm."toUpdate"
+            AND (
+              "arg"."timeframe" != argtm."timeframe"
+              OR "arg"."endDate" != argtm."endDate"
+              OR "arg"."isRttapa" != argtm."isRttapa"::"enum_ActivityReportGoals_isRttapa"
+              OR "arg"."isActivelyEdited" != argtm."isActivelyEdited"
+              OR "arg"."createdAt" != argtm."createdAt"
+              OR "arg"."updatedAt" != argtm."updatedAt"
+            )
             RETURNING
             "arg".id "activityReportGoalId",
             "arg"."goalId"
         )SELECT * FROM update_activity_report_goals;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportGoals', TRUE) as "auditDescriptor";
         -- CREATE TABLE "DeleteActivityReportGoals" AS
@@ -1343,7 +1410,7 @@ module.exports = {
             "arg"."goalId"
         )SELECT * FROM delete_activity_report_goals;
         END;
-        
+
         -- CREATE TABLE "ActivityReportGoalStats" AS (
         CREATE TEMP TABLE "ActivityReportGoalStats" AS (
             SELECT
@@ -1352,11 +1419,11 @@ module.exports = {
             (SELECT COUNT(*) FROM "UpdateActivityReportGoals") "Updates",
             (SELECT COUNT(*) FROM "DeleteActivityReportGoals") "Deletes",
             (SELECT COUNT(*) FROM "ActivityReportGoals" ar) "post_count"
-            
+
         );
         -- Continue Handle Goals
-        
-        CREATE TEMP TABLE "UpdateGoals" AS 
+
+        CREATE TEMP TABLE "UpdateGoals" AS
         WITH update_goals AS (
             UPDATE "Goals" "g"
             SET
@@ -1384,11 +1451,35 @@ module.exports = {
             "createdVia" = gtm."createdVia"::"enum_Goals_createdVia"
             FROM "GoalsToModify" gtm
             WHERE "g".id = gtm."toUpdate"
+            AND (
+              "g"."status" != gtm."status"
+              OR "g"."timeframe" != gtm."timeframe"
+              OR "g"."isFromSmartsheetTtaPlan" != gtm."isFromSmartsheetTtaPlan"
+              OR "g"."createdAt" != gtm."createdAt"
+              OR "g"."updatedAt" != gtm."updatedAt"
+              OR "g"."endDate" != gtm."endDate"
+              OR "g"."previousStatus" != gtm."previousStatus"
+              OR "g"."goalTemplateId" != gtm."goalTemplateId"
+              OR "g"."onAR" != gtm."onAR"
+              OR "g"."onApprovedAR" != gtm."onApprovedAR"
+              OR "g"."firstNotStartedAt" != gtm."firstNotStartedAt"
+              OR "g"."lastNotStartedAt" != gtm."lastNotStartedAt"
+              OR "g"."firstInProgressAt" != gtm."firstInProgressAt"
+              OR "g"."lastInProgressAt" != gtm."lastInProgressAt"
+              OR "g"."firstCeasedSuspendedAt" != gtm."firstCeasedSuspendedAt"
+              OR "g"."lastCeasedSuspendedAt" != gtm."lastCeasedSuspendedAt"
+              OR "g"."firstClosedAt" != gtm."firstClosedAt"
+              OR "g"."lastClosedAt" != gtm."lastClosedAt"
+              OR "g"."firstCompletedAt" != gtm."firstCompletedAt"
+              OR "g"."lastCompletedAt" != gtm."lastCompletedAt"
+              OR "g"."isRttapa" != gtm."isRttapa"::"enum_Goals_isRttapa"
+              OR "g"."createdVia" != gtm."createdVia"::"enum_Goals_createdVia"
+            )
             RETURNING
             "g".id "goalId"
         )SELECT * FROM update_goals;
         END;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteGoals', TRUE) as "auditDescriptor";
         -- CREATE TABLE "DeleteGoals" AS
@@ -1432,7 +1523,7 @@ module.exports = {
         )
         SELECT * FROM deleted_g;
         END;
-        
+
         -- CREATE TABLE "GoalStats" AS (
         CREATE TEMP TABLE "GoalStats" AS (
             SELECT
@@ -1444,11 +1535,11 @@ module.exports = {
         );
         -- CREATE TABLE "CollectStats" AS (
         CREATE TABLE "CollectStats" AS (
-            SELECT 1 id, *, 
+            SELECT 1 id, *,
                 (SELECT "GoalsTotal" FROM "PreCountStats") AS pre_count
             FROM "GoalStats"
             UNION
-            SELECT 2 id, *, 
+            SELECT 2 id, *,
                 (SELECT "ActivityReportGoalsTotal" FROM "PreCountStats") AS pre_count
             FROM "ActivityReportGoalStats"
             UNION
