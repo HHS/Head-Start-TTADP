@@ -153,6 +153,11 @@ export default function WhatsNew({ data }) {
             )}
           </div>
         ))}
+        <div>
+          <a href="https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/99975260/What+s+new" className="ttahub-read-more--external">
+            Read past release notes in the user guide
+          </a>
+        </div>
       </div>
     </Container>
   );
