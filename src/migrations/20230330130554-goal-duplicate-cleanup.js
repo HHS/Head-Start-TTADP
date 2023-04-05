@@ -45,6 +45,8 @@ module.exports = {
             g."grantId",
             COALESCE(gt."hash",MD5(TRIM(g.name))) "goalHash",
             ARRAY_AGG(DISTINCT g.id ORDER BY g.id) "goalIds",
+            array_remove(ARRAY_AGG(DISTINCT g.id ORDER BY g.id),MIN(g.id)) "toRemoveGoals",
+            MIN(g.id) "toUpdateGoal",
             COUNT(DISTINCT g.id) "goalCnt",
             g."status" = 'Closed' "statusClosed"
             FROM "Goals" g
@@ -52,8 +54,8 @@ module.exports = {
             ON arg."goalId" = g.id
             LEFT JOIN "GoalTemplates" gt
             ON g."goalTemplateId" = gt.id
-            GROUP BY 2,3,6
-            HAVING ARRAY_LENGTH(ARRAY_AGG(g.id ORDER BY g.id), 1) > 1
+            GROUP BY 2,3,8
+            HAVING ARRAY_LENGTH(array_remove(ARRAY_AGG(DISTINCT g.id ORDER BY g.id),MIN(g.id)), 1) > 0
             ORDER BY 5 DESC
         );
         -- CREATE TABLE "GoalsToModify" AS (
@@ -137,14 +139,14 @@ module.exports = {
                 THEN 'No'
             END "isRttapa",
             BOOL_OR(COALESCE(g2."onAR", FALSE) OR g."onAR") "onAR",
-            ARRAY_AGG(DISTINCT "g".id ORDER by "g".id) "toRemove",
-            (ARRAY_AGG(DISTINCT "g2".id))[1] "toUpdate"
+            array_remove(ARRAY_AGG(DISTINCT "g".id ORDER by "g".id), MIN("g2".id)) "toRemove",
+            MIN("g2".id) "toUpdate"
             FROM "Goals" g
             JOIN "DupGoalsOnARs" dgoa
-            ON g.id = ANY(dgoa."goalIds")
-            AND g.id != dgoa."goalIds"[1]
+            ON g.id = ANY(dgoa."toRemoveGoals")
+            AND g.id != dgoa."toUpdateGoal"
             JOIN "Goals" g2
-            ON g2.id = dgoa."goalIds"[1]
+            ON g2.id = dgoa."toUpdateGoal"
             AND g."grantId" = dgoa."grantId"
             AND MD5(TRIM(g.name)) = MD5(TRIM(g2.name))
             GROUP BY 1,2,3,9,10
@@ -155,14 +157,16 @@ module.exports = {
             SELECT
             dgoa.*,
             COALESCE(ot."hash",MD5(TRIM(o.title))) "objectiveHash",
-            ARRAY_AGG(o.id ORDER BY o.id) "objectiveIds",
+            ARRAY_AGG(o.id ORDER BY o."goalId", o.id) "objectiveIds",
+            array_remove(ARRAY_AGG(o.id ORDER BY o."goalId", o.id),(ARRAY_AGG(o.id ORDER BY o."goalId", o.id))[1]) "toRemoveObjectives",
+            (ARRAY_AGG(o.id ORDER BY o."goalId", o.id))[1] "toUpdateObjective",
             COUNT(DISTINCT o.id) "objectiveCnt"
             FROM "Objectives" o
             JOIN "DupGoalsOnARs" dgoa
             ON o."goalId" = ANY(dgoa."goalIds")
             LEFT JOIN "ObjectiveTemplates" ot
             ON o."objectiveTemplateId" = ot.id
-            GROUP BY 1,2,3,4,5,6,7
+            GROUP BY 1,2,3,4,5,6,7,8,9
             HAVING ARRAY_LENGTH(ARRAY_AGG(o.id ORDER BY o.id), 1) > 1
             ORDER BY 8 DESC
         );
@@ -174,10 +178,14 @@ module.exports = {
             g."grantId",
             MD5(TRIM(g.name)) "goalHash",
             ARRAY[g.id] "goalIds",
+            ARRAY[]::int[] "toRemove",
+            g.id "toUpdate",
             1 "goalCnt",
             g."status" = 'Closed' "statusClosed",
             COALESCE(ot."hash",MD5(TRIM(o.title))) "objectiveHash",
             ARRAY_AGG(o.id ORDER BY o.id) "objectiveIds",
+            array_remove(ARRAY_AGG(o.id ORDER BY o.id),MIN(o.id)) "toRemoveObjectives",
+            MIN(o.id) "toUpdateObjective",
             COUNT(DISTINCT o.id) "objectiveCnt"
             FROM "Objectives" o
             LEFT JOIN "ActivityReportObjectives" aro
@@ -193,9 +201,9 @@ module.exports = {
             AND COALESCE(ot."hash",MD5(TRIM(o.title))) = doodgoa."objectiveHash"
             AND o.id != ANY(doodgoa."objectiveIds")
             WHERE doodgoa."grantId" IS NULL
-            GROUP BY 2,3,4,5,6,7
+            GROUP BY 2,3,4,5,6,7,8,9
             HAVING ARRAY_LENGTH(ARRAY_AGG(o.id ORDER BY o.id), 1) > 1
-            ORDER BY 8 DESC
+            ORDER BY 11 DESC
         );
         -- All objectives that are duplicates on goals that are (not) duplicates on the same AR
         CREATE TEMP TABLE "DupObjectivesOnARs" AS (
@@ -210,7 +218,7 @@ module.exports = {
         -- Handle Objectives
         CREATE TEMP TABLE "ObjectivesToModify" AS (
             SELECT DISTINCT
-            (dooa."goalIds")[1] "goalId",
+            dooa."toUpdateGoal" "goalId",
             COALESCE(o2."title", o."title") "title",
             dooa."objectiveHash",
             CASE
@@ -255,10 +263,10 @@ module.exports = {
             (ARRAY_AGG(DISTINCT "o2".id))[1] "toUpdate"
             FROM "Objectives" o
             JOIN "DupObjectivesOnARs" dooa
-            ON o.id = ANY(dooa."objectiveIds")
-            AND o.id != dooa."objectiveIds"[1]
+            ON o.id = ANY(dooa."toRemoveObjectives")
+            AND o.id != dooa."toUpdateObjective"
             LEFT JOIN "Objectives" o2
-            ON o2.id != dooa."objectiveIds"[1]
+            ON o2.id != dooa."toUpdateObjective"
             AND o."goalId" = o2."goalId"
             GROUP BY 1,2,3,7
         );
@@ -370,8 +378,8 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectivesFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveFiles" AS 
-        CREATE TEMP TABLE "InsertObjectiveFiles" AS 
+        -- CREATE TABLE "InsertObjectiveFiles" AS
+        CREATE TEMP TABLE "InsertObjectiveFiles" AS
          WITH objective_files AS (
             INSERT INTO "ObjectiveFiles"
             (
@@ -1080,6 +1088,9 @@ module.exports = {
             (SELECT COUNT(*) FROM "DeleteActivityReportObjectives") "Deletes",
             (SELECT COUNT(*) FROM "ActivityReportObjectives" aro) "post_count"
         );
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectives', TRUE) as "auditDescriptor";
         -- Continue Handle Objectives
         CREATE TEMP TABLE "UpdateObjectives" AS
         WITH update_objectives AS (
@@ -1120,6 +1131,7 @@ module.exports = {
             RETURNING
             "o".id "objectiveId"
         )SELECT * FROM update_objectives;
+        END;
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectives', TRUE) as "auditDescriptor";
@@ -1171,7 +1183,7 @@ module.exports = {
         -- CREATE TABLE "ActivityReportGoalsToModify" AS (
         CREATE TEMP TABLE "ActivityReportGoalsToModify" AS (
             SELECT
-            dgoa."goalIds"[1] "goalId",
+            dgoa."toUpdateGoal" "goalId",
             arg."activityReportId",
             arg.name,
             arg.status,
@@ -1195,10 +1207,10 @@ module.exports = {
             (ARRAY_AGG(DISTINCT "arg2".id))[1] "toUpdate"
             FROM "ActivityReportGoals" arg
             JOIN "DupGoalsOnARs" dgoa
-            ON "arg"."goalId" = ANY(dgoa."goalIds")
-            AND "arg"."goalId" != dgoa."goalIds"[1]
+            ON "arg"."goalId" = ANY(dgoa."toRemoveGoals")
+            AND "arg"."goalId" != dgoa."toUpdateGoal"
             LEFT JOIN "ActivityReportGoals" "arg2"
-            ON "arg2"."goalId" = dgoa."goalIds"[1]
+            ON "arg2"."goalId" = dgoa."toUpdateGoal"
             AND "arg"."activityReportId" = "arg2"."activityReportId"
             GROUP BY 1,2,3,4,5,6,7
         );
@@ -1424,6 +1436,8 @@ module.exports = {
         );
         -- Continue Handle Goals
 
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateGoals', TRUE) as "auditDescriptor";
         CREATE TEMP TABLE "UpdateGoals" AS
         WITH update_goals AS (
             UPDATE "Goals" "g"
