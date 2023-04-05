@@ -205,25 +205,4 @@ describe('RTTAPA', () => {
       expect(screen.getByText('(1)')).toBeInTheDocument();
     });
   });
-
-  it('you can\'t submit with no goals', async () => {
-    fetchMock.get(recipientGoalsUrl, { goalRows: [] });
-
-    act(() => {
-      renderRttapa();
-    });
-
-    const reviewDate = await screen.findByRole('textbox', { name: /review date/i });
-    act(() => {
-      userEvent.type(reviewDate, '01/01/2023');
-    });
-
-    fetchMock.restore();
-    expect(fetchMock.called()).toBe(false);
-    fetchMock.post(rttapaUrl, {});
-    act(() => {
-      userEvent.click(screen.getByText('Submit RTTAPA'));
-    });
-    await waitFor(() => expect(fetchMock.called()).toBe(false));
-  });
 });

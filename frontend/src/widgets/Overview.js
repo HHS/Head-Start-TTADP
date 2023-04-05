@@ -6,10 +6,10 @@ import Container from '../components/Container';
 import './Overview.css';
 
 function Field({
-  label, labelExt, data, col,
+  label, labelExt, data,
 }) {
   return (
-    <Grid col={col} className="smart-hub--overview">
+    <Grid className="grid-col smart-hub--overview margin-bottom-2 desktop:margin-bottom-0">
       <span className="text-bold smart-hub--overview-font-size">{data}</span>
       <br />
       {label}
@@ -22,15 +22,10 @@ Field.propTypes = {
   label: PropTypes.string.isRequired,
   labelExt: PropTypes.string,
   data: PropTypes.string,
-  col: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
 };
 
 Field.defaultProps = {
   labelExt: '',
-  col: 2,
   data: '',
 };
 
@@ -49,16 +44,16 @@ function Overview({
   return (
     <Container loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
-        <h2>
+        <h2 className="margin-top-0">
           {title}
         </h2>
       </Grid>
-      <Grid row gap className="smart-hub--overview-data">
-        <Field col="fill" tablet={{ col: true }} label="Grants served " data={data.numGrants} />
-        <Field col="fill" label="Other entities served" data={data.numOtherEntities} />
-        <Field col="fill" label="Activity reports" data={data.numReports} />
-        <Field col="fill" label="Participants" data={data.numParticipants} />
-        <Field col={2} label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
+      <Grid row className="smart-hub--overview-data">
+        <Field label="Grants served" data={data.numGrants} />
+        <Field label="Other entities served" data={data.numOtherEntities} />
+        <Field label="Activity reports" data={data.numReports} />
+        <Field label="Participants" data={data.numParticipants} />
+        <Field label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
       </Grid>
     </Container>
   );

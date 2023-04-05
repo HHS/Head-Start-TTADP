@@ -89,13 +89,6 @@ export default function ObjectiveTopics({
             Topics
             {' '}
             <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled margin-left-1"
-              ref={drawerTriggerRef}
-            >
-              View topic guidance
-            </button>
           </>
         </Label>
         {error}
