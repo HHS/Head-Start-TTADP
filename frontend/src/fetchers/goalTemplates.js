@@ -12,3 +12,10 @@ export async function getGoalTemplates(grantIds) {
   const response = await get(url);
   return response.json();
 }
+
+export async function getGoalTemplatePrompts(templateId, goalIds = []) {
+  const params = goalIds.map((goalId) => `goalIds=${goalId}`).join('&');
+  const url = join(goalTemplatesUrl, templateId, 'prompts', `?${params}`);
+  const response = await get(url);
+  return response.json();
+}

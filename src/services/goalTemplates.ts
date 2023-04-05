@@ -25,6 +25,7 @@ interface GoalTemplate {
   oldGrantIds: [];
   onApprovedAR: true;
   isNew: false;
+  isTemplate: true,
 }
 interface Validation {
   [key: string]: number | string | boolean;
@@ -74,12 +75,13 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       ['templateName', 'name'],
       [Sequelize.literal('ARRAY[]::int[]'), 'goalIds'],
       [Sequelize.literal('NULL::varchar'), 'isRttapa'],
-      [Sequelize.literal(`'${GOAL_STATUS.NOT_STARTED}'`), 'status'],
+      [Sequelize.literal(GOAL_STATUS.NOT_STARTED), 'status'],
       [Sequelize.literal('NULL::varchar'), 'endDate'],
       [Sequelize.literal('ARRAY[]::int[]'), 'grantIds'],
       [Sequelize.literal('ARRAY[]::int[]'), 'oldGrantIds'],
       [Sequelize.literal('TRUE'), 'onApprovedAR'],
       [Sequelize.literal('FALSE'), 'isNew'],
+      [Sequelize.literal('TRUE'), 'isTemplate'], // setting this tells the frontnd to check for conditional prompts
     ],
     where: {
       creationMethod: CURATED_CREATION,
@@ -146,6 +148,9 @@ export async function getFieldPromptsForCuratedTemplate(
       raw: true,
     }),
   ]);
+
+  // todo - add initial value below & add types
+
   // restructure the collected data into one object with all responses for the passed goalIds if
   // any exists
   const restructuredPrompts = responses.reduce(

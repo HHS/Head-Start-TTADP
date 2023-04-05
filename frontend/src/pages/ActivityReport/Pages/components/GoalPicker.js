@@ -6,6 +6,7 @@ import { Label } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form/dist/index.ie11';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
+import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -47,10 +48,8 @@ const GoalPicker = ({
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
   const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
+  const [templatePrompts, setTemplatePrompts] = useState(false);
   const activityRecipientType = watch('activityRecipientType');
-
-  // this is commented out because it's used by the code below, which is pending a todo resolve
-  // const { toggleGoalForm } = useContext(GoalFormContext);
 
   const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
@@ -103,9 +102,14 @@ const GoalPicker = ({
     )),
   ];
 
-  const onSelectGoal = (goal) => {
+  const onSelectGoal = async (goal) => {
     setValue('goalForEditing.objectives', []);
     onChange(goal);
+
+    if (goal.isTemplate) {
+      const prompts = await getGoalTemplatePrompts(goal.id, goal.goalIds);
+      setTemplatePrompts(prompts);
+    }
 
     // update the goal date forcefully
     // also update the date picker key to force a re-render
@@ -150,6 +154,7 @@ const GoalPicker = ({
               goal={goalForEditing}
               reportId={reportId}
               datePickerKey={datePickerKey}
+              templatePrompts={templatePrompts}
             />
           </div>
         ) : null}
