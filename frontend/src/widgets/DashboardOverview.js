@@ -121,7 +121,7 @@ const DASHBOARD_FIELDS = {
       />
     ),
   },
-  'In-person activities': {
+  'In person activities': {
     render: (data, showTooltip) => (
       <Field
         key="in-person-activities"
@@ -130,7 +130,7 @@ const DASHBOARD_FIELDS = {
         tooltipText="Excludes virtual activities"
         iconColor={colors.ttahubMagenta}
         backgroundColor={colors.ttahubMagentaLight}
-        label="In-person activities"
+        label="In person activities"
         data={data.inPerson}
       />
     ),
@@ -195,7 +195,7 @@ DashboardOverviewWidget.defaultProps = {
     'Grants served',
     'Participants',
     'Hours of TTA',
-    'In-person activities',
+    'In person activities',
   ],
 };
 
