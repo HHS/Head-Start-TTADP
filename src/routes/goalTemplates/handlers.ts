@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { Request, Response } from 'express';
+import { AnyFunction } from 'sequelize/types/utils';
 import { DECIMAL_BASE } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
@@ -48,7 +49,7 @@ export async function getPrompts(req: Request, res: Response) {
 
 export async function setPrompt(req: Request, res: Response) {
   try {
-    const { grantIds, promptResponses } = req.params;
+    const { grantIds, promptResponses }:{ grantIds: number[]; promptResponses:{}} = req.params;
 
     // ensure we only pass numbers to the service
     const parsedGrantIds = [grantIds]

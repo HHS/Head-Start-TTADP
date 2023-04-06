@@ -9,6 +9,7 @@ const {
   GoalFieldResponse: GoalFieldResponseModel,
   Goal: GoalModel,
   Grant,
+  Region,
   sequelize,
 } = db;
 
@@ -23,8 +24,8 @@ interface GoalTemplate {
   endDate: string | null;
   grantIds: [];
   oldGrantIds: [];
-  onApprovedAR: true;
   isNew: false;
+  isCurated: true;
 }
 interface Validation {
   [key: string]: number | string | boolean;
@@ -53,38 +54,41 @@ interface PromptResponse {
 }
 
 export async function getCuratedTemplates(grantIds: number[] | null): Promise<GoalTemplate[]> {
-  // Collect the distinct list of regionIds from the list of passed grantIds
-  const regionIds = grantIds && grantIds.length
-    ? await Grant.scope().findAll({
-      attributes: [
-        [Sequelize.fn('DISTINCT', Sequelize.col('regionId')), 'regionId'],
-      ],
-      where: { id: grantIds },
-      raw: true,
-    })
-    : [];
-
-  // Collect all the templates that either have a null regionId or a regionId from the list
-  // collected above.
+  // Collect all the templates that either have a null regionId or a grant within the specified
+  // region.
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
+      ['id', 'goalTemplateId'],
       [Sequelize.literal('ARRAY[]::int[]'), 'goalIds'],
       [Sequelize.literal('NULL::varchar'), 'isRttapa'],
       [Sequelize.literal(`'${GOAL_STATUS.NOT_STARTED}'`), 'status'],
       [Sequelize.literal('NULL::varchar'), 'endDate'],
       [Sequelize.literal('ARRAY[]::int[]'), 'grantIds'],
       [Sequelize.literal('ARRAY[]::int[]'), 'oldGrantIds'],
-      [Sequelize.literal('TRUE'), 'onApprovedAR'],
+      [Sequelize.literal('TRUE'), 'isCurated'],
       [Sequelize.literal('FALSE'), 'isNew'],
     ],
+    include: [{
+      model: Region,
+      as: 'region',
+      attributes: [],
+      required: false,
+      include: [{
+        model: Grant,
+        as: 'grants',
+        attributes: [],
+        required: false,
+        where: { id: grantIds },
+      }],
+    }],
     where: {
       creationMethod: CURATED_CREATION,
       [Op.or]: [
-        { regionId: regionIds },
+        { '$"region.grants"."id"$': { [Op.not]: null } },
         { regionId: null },
       ],
     },
