@@ -71,7 +71,7 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       ['id', 'goalTemplateId'],
       [Sequelize.literal('ARRAY[]::int[]'), 'goalIds'],
       [Sequelize.literal('NULL::varchar'), 'isRttapa'],
-      [Sequelize.literal(GOAL_STATUS.NOT_STARTED), 'status'],
+      [Sequelize.literal(`'${GOAL_STATUS.NOT_STARTED}'`), 'status'],
       [Sequelize.literal('NULL::varchar'), 'endDate'],
       [Sequelize.literal('ARRAY[]::int[]'), 'grantIds'],
       [Sequelize.literal('ARRAY[]::int[]'), 'oldGrantIds'],
