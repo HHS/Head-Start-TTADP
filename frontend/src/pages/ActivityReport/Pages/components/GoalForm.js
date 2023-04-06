@@ -144,7 +144,6 @@ export default function GoalForm({
       setObjectiveOptions([]);
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
-
   return (
     <>
 
@@ -157,7 +156,7 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
         isLoading={isAppLoading}
-        userCanEdit
+        userCanEdit={goal.isCurated ? !goal.isCurated : undefined}
       />
 
       <GoalRttapa
@@ -208,6 +207,7 @@ GoalForm.propTypes = {
     name: PropTypes.string,
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
+    isCurated: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
   }).isRequired,

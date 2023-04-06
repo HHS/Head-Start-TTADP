@@ -3,6 +3,7 @@ import { uniqBy } from 'lodash';
 import { processObjectiveForResourcesById } from './resource';
 import {
   Goal,
+  GoalTemplate,
   Grant,
   Objective,
   ObjectiveResource,
@@ -27,6 +28,7 @@ import {
   OBJECTIVE_STATUS,
   GOAL_STATUS,
   SOURCE_FIELD,
+  CREATION_METHOD,
 } from '../constants';
 import {
   cacheObjectiveMetadata,
@@ -58,6 +60,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       'onAnyReport',
     ],
     'onApprovedAR',
+    [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
   ],
   where: {
     id,
@@ -184,6 +187,12 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           required: true,
         },
       ],
+    },
+    {
+      model: GoalTemplate,
+      as: 'goalTemplate',
+      attributes: [],
+      required: false,
     },
   ],
 });
@@ -1142,6 +1151,7 @@ export async function goalsForGrants(grantIds) {
       'onApprovedAR',
       'endDate',
       'isRttapa',
+      [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
     group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."isRttapa"'],
     where: {
@@ -1158,6 +1168,12 @@ export async function goalsForGrants(grantIds) {
         model: Grant.unscoped(),
         as: 'grant',
         attributes: [],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: false,
       },
     ],
     order: [[sequelize.fn(
@@ -1549,6 +1565,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
 }
 
 export async function saveGoalsForReport(goals, report) {
+  console.log(goals);
   let currentObjectives = [];
 
   // actively edited goals represents the goals that are currently being edited on the frontend
@@ -1801,7 +1818,18 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
+    attributes: {
+      include: [
+        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+      ],
+    },
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: false,
+      },
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
