@@ -1565,7 +1565,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
 }
 
 export async function saveGoalsForReport(goals, report) {
-  console.log(goals);
   let currentObjectives = [];
 
   // actively edited goals represents the goals that are currently being edited on the frontend
