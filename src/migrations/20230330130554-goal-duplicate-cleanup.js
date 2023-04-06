@@ -53,7 +53,7 @@ module.exports = {
         );
         INSERT INTO "PreCountStatsByRegion"
         SELECT
-            -1 "regionId",t
+            -1 "regionId",
             SUM("GoalsTotal"),
             -- SUM("GoalResourcesTotal"),
             SUM("ActivityReportGoalsTotal"),
