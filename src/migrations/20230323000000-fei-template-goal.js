@@ -108,7 +108,7 @@ module.exports = {
       }, { transaction });
 
       // Add first curated template
-      const [, templateId] = await queryInterface.sequelize.query(
+      await queryInterface.sequelize.query(
         `INSERT INTO "GoalTemplates" (
           hash,
           "templateName",
@@ -152,6 +152,8 @@ module.exports = {
         },
       ];
 
+      const goalTextQuery = `SELECT id FROM "GoalTemplates" WHERE "templateName" = '${goalText}'`;
+
       // Add prompt to first curated template
       await queryInterface.sequelize.query(
         `INSERT INTO "GoalTemplateFieldPrompts" (
@@ -165,7 +167,7 @@ module.exports = {
           "createdAt",
           "updatedAt"
         ) Values (
-          ${templateId},
+          (${goalTextQuery}),
           1,
           TRIM('${fieldTitle}'),
           TRIM('${fieldPrompt}'),

@@ -51,6 +51,7 @@ interface FieldPrompts {
 interface PromptResponse {
   promptId: number,
   response: string[] | null;
+  goalIds: number[];
 }
 
 /**
@@ -116,28 +117,29 @@ export async function getFieldPromptsForCuratedTemplate(
   goalIds: number[] | null,
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
+
   const [prompts, responses] = await Promise.all([
     GoalTemplateFieldPromptModel.findAll({
       attributes: [
         ['id', 'promptId'],
         'ordinal',
         'title',
-        'question',
+        'prompt',
         ['fieldType', 'type'],
         'options',
         'validations',
+        'goalTemplateId',
       ],
       where: { goalTemplateId },
-      order: [['"GoalTemplateFieldPromptModel"."ordinal"']],
+      order: [['ordinal', 'asc']],
       raw: true,
     }),
     GoalFieldResponseModel.findAll({
       attributes: [
         ['goalTemplateFieldPromptId', 'promptId'],
-        'ordinal',
         'response',
         [
-          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', 'goalId')),
+          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
           'goalIds',
         ],
       ],
@@ -152,33 +154,28 @@ export async function getFieldPromptsForCuratedTemplate(
           as: 'goalTemplate',
           required: true,
           attributes: [],
-          where: { goalTemplateId },
+          where: { id: goalTemplateId },
         }],
       }],
       group: [
-        '"GoalFieldResponseModel"."goalTemplateFieldPromptId"',
-        '"GoalFieldResponseModel"."ordinal"',
-        '"GoalFieldResponseModel"."response"',
+        '"GoalFieldResponse"."goalTemplateFieldPromptId"',
+        '"GoalFieldResponse"."response"',
       ],
-      order: [['"GoalFieldResponseModel"."ordinal"']],
       raw: true,
     }),
   ]);
-
-  // todo - add initial value below & add types
 
   // restructure the collected data into one object with all responses for the passed goalIds if
   // any exists
   const restructuredPrompts = responses.reduce(
     (
-      promptsWithResponses,
-      response,
+      promptsWithResponses: FieldPrompts[],
+      response: PromptResponse,
     ) => {
       const exists = promptsWithResponses
-        .find((pwr) => pwr.promptId === response.promptId
-        && pwr.ordinal === response.ordinal);
+        .find((pwr) => pwr.promptId === response.promptId);
       if (exists) {
-        exists.response.push({
+        exists.responses.push({
           response: response.response,
           goalIds: response.goalIds,
         });
