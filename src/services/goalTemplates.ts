@@ -42,6 +42,7 @@ interface FieldPrompts {
   ordinal: number,
   title: string,
   question: string;
+  hint: string;
   type: string;
   options: string[] | null;
   validations: Validation[];
@@ -125,6 +126,7 @@ export async function getFieldPromptsForCuratedTemplate(
         'ordinal',
         'title',
         'prompt',
+        'hint',
         ['fieldType', 'type'],
         'options',
         'validations',
