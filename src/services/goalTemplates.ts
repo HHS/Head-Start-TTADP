@@ -75,9 +75,8 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       [Sequelize.literal('NULL::varchar'), 'endDate'],
       [Sequelize.literal('ARRAY[]::int[]'), 'grantIds'],
       [Sequelize.literal('ARRAY[]::int[]'), 'oldGrantIds'],
-      [Sequelize.literal('TRUE'), 'isCurated'],
+      [Sequelize.literal('TRUE'), 'isCurated'], // setting this tells the frontnd to check for conditional prompts
       [Sequelize.literal('FALSE'), 'isNew'],
-      [Sequelize.literal('TRUE'), 'isTemplate'], // setting this tells the frontnd to check for conditional prompts
     ],
     include: [{
       model: Region,

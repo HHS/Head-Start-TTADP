@@ -31,6 +31,7 @@ export const newGoal = (grantIds) => ({
   oldGrantIds: [],
   status: 'Draft',
   isRttapa: '',
+  isCurated: false,
 });
 
 const components = {
@@ -106,7 +107,7 @@ const GoalPicker = ({
     setValue('goalForEditing.objectives', []);
     onChange(goal);
 
-    if (goal.isTemplate) {
+    if (goal.isCurated) {
       const prompts = await getGoalTemplatePrompts(goal.id, goal.goalIds);
       setTemplatePrompts(prompts);
     }
