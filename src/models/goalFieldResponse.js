@@ -1,5 +1,4 @@
 const { Model } = require('sequelize');
-const { SOURCE_FIELD } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class GoalFieldResponse extends Model {
@@ -34,7 +33,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'GoalResource',
+    modelName: 'GoalFieldResponse',
   });
   return GoalFieldResponse;
 };
