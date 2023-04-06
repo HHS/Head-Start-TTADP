@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId', as: 'goals' });
-      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId' });
+      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       GoalTemplate.hasMany(
         models.GoalTemplateObjectiveTemplate,
         { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
@@ -58,7 +58,7 @@ export default (sequelize, DataTypes) => {
     },
     creationMethod: {
       allowNull: false,
-      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+      type: DataTypes.ENUM(Object.values(CREATION_METHOD)),
     },
     lastUsed: {
       allowNull: true,

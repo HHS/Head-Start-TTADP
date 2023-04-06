@@ -163,10 +163,10 @@ export const CLOSE_SUSPEND_REASONS = [
 
 export const AUTOMATIC_CREATION = 'Automatic';
 export const CURATED_CREATION = 'Curated';
-export const CREATION_METHOD = [
-  AUTOMATIC_CREATION,
-  CURATED_CREATION,
-];
+export const CREATION_METHOD = {
+  AUTOMATIC: AUTOMATIC_CREATION,
+  CURATED: CURATED_CREATION,
+};
 
 export const GOAL_STATUS = {
   DRAFT: 'Draft',
