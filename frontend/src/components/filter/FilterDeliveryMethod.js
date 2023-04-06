@@ -2,7 +2,7 @@ import React from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const DELIVERY_METHOD_OPTIONS = ['In-person', 'Virtual', 'Hybrid'].map((label, value) => ({ value, label }));
+const DELIVERY_METHOD_OPTIONS = ['In Person', 'Virtual', 'Hybrid'].map((label, value) => ({ value, label }));
 
 export default function FilterDeliveryMethod({
   onApply,
