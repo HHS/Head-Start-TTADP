@@ -194,11 +194,8 @@ export async function getFieldPromptsForCuratedTemplate(
 Sets the field prompt response for a curated template for a list of goals.
 
 @param {number[]} goalIds - The IDs of the goals to update.
-
 @param {number} promptId - The ID of the field prompt to update.
-
 @param {string[] | null} response - The response to set for the field prompt.
-
 @returns {Promise} A Promise that resolves when the update is complete.
 */
 export async function setFieldPromptForCuratedTemplate(

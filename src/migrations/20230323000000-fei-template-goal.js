@@ -57,7 +57,7 @@ module.exports = {
           allowNull: true,
         },
         validations: {
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.JSON),
+          type: Sequelize.DataTypes.JSON,
           allowNull: true,
         },
         createdAt: {
@@ -145,16 +145,16 @@ module.exports = {
         'Family Circumstances',
         'Workforce',
       ];
-      const fieldValidations = [
-        {
-          isRequired: true,
-          message: 'Select a root cause',
-        },
-        {
-          maxSelections: 2,
-          message: 'You can only select 2 options',
-        },
-      ];
+      const fieldValidations = {
+        required: 'Select a root cause',
+        rules: [
+          {
+            name: 'maxSelections',
+            value: 2,
+            message: 'You can only select 2 options',
+          },
+        ],
+      };
 
       const goalTextQuery = `SELECT id FROM "GoalTemplates" WHERE "templateName" = '${goalText}'`;
 
@@ -179,7 +179,7 @@ module.exports = {
           'Maximum of 2',
           '${fieldType}',
           ARRAY[${fieldOptions.map((o) => `'${o}'`).join(',')}],
-          ARRAY[${fieldValidations.map((v) => `'${JSON.stringify(v)}'::JSON`).join(', ')}],
+          '${JSON.stringify(fieldValidations)}'::JSON,
           current_timestamp,
           current_timestamp
         );`,
