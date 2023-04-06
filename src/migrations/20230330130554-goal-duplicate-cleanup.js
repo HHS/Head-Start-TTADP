@@ -21,24 +21,54 @@ module.exports = {
         // Delete duplicate goals based on trimmed_hashes, keeping the one with the lowest id
         await queryInterface.sequelize.query(`
         -- Collect Pre Count Stats
-        --todo list: counts by region pre & post ()
-        CREATE TEMP TABLE "PreCountStats" AS (
+        CREATE TABLE "PreCountStatsByRegion" AS (
             SELECT
-            'PreCountStats' "table",
-            (SELECT COUNT(*) FROM "Goals" g) "GoalsTotal",
-            (SELECT COUNT(*) FROM "ActivityReportGoals" arg) "ActivityReportGoalsTotal",
-            (SELECT COUNT(*) FROM "ActivityReportGoalResources"argr) "ActivityReportGoalResourcesTotal",
-            (SELECT COUNT(*) FROM "Objectives" oj) "ObjectivesTotal",
-            (SELECT COUNT(*) FROM "ObjectiveFiles" ojf) "ObjectiveFilesTotal",
-            (SELECT COUNT(*) FROM "ObjectiveResources" ojr) "ObjectiveResourcesTotal",
-            (SELECT COUNT(*) FROM "ObjectiveTopics" ojt) "ObjectiveTopicsTotal",
-            (SELECT COUNT(*) FROM "ActivityReportObjectives" aro) "ActivityReportObjectivesTotal",
-            (SELECT COUNT(*) FROM "ActivityReportObjectiveFiles" arof) "ActivityReportObjectiveFilesTotal",
-            (SELECT COUNT(*) FROM "ActivityReportObjectiveResources" aror) "ActivityReportObjectiveResourcesTotal",
-            (SELECT COUNT(*) FROM "ActivityReportObjectiveTopics" arot) "ActivityReportObjectiveTopicsTotal"
+                gr."regionId",
+                COUNT(DISTINCT g."id") "GoalsTotal",
+                -- COUNT(DISTINCT gor."id") "GoalResourcesTotal",
+                COUNT(DISTINCT arg."id") "ActivityReportGoalsTotal",
+                COUNT(DISTINCT argr."id") "ActivityReportGoalResourcesTotal",
+                COUNT(DISTINCT oj."id") "ObjectivesTotal",
+                COUNT(DISTINCT ojf."id") "ObjectiveFilesTotal",
+                COUNT(DISTINCT ojr."id") "ObjectiveResourcesTotal",
+                COUNT(DISTINCT ojt."id") "ObjectiveTopicsTotal",
+                COUNT(DISTINCT aro."id") "ActivityReportObjectivesTotal",
+                COUNT(DISTINCT arof."id") "ActivityReportObjectiveFilesTotal",
+                COUNT(DISTINCT aror."id") "ActivityReportObjectiveResourcesTotal",
+                COUNT(DISTINCT arot."id") "ActivityReportObjectiveTopicsTotal"
+            FROM "Grants" gr
+            LEFT JOIN "Goals" g ON gr."id" = g."grantId"
+            -- LEFT JOIN "GoalResources" gor ON gr."id" = gor."goalId"
+            LEFT JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
+            LEFT JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
+            LEFT JOIN "Objectives" oj ON g."id" = oj."goalId"
+            LEFT JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
+            LEFT JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
+            LEFT JOIN "ObjectiveTopics" ojt ON oj."id" = ojt."objectiveId"
+            LEFT JOIN "ActivityReportObjectives" aro ON oj."id" = aro."objectiveId"
+            LEFT JOIN "ActivityReportObjectiveFiles" arof ON aro."id" = arof."activityReportObjectiveId"
+            LEFT JOIN "ActivityReportObjectiveResources" aror ON aro."id" = aror."activityReportObjectiveId"
+            LEFT JOIN "ActivityReportObjectiveTopics" arot ON aro."id" = arot."activityReportObjectiveId"
+            GROUP BY gr."regionId"
         );
+        INSERT INTO "PreCountStatsByRegion"
+        SELECT
+            -1 "regionId",t
+            SUM("GoalsTotal"),
+            -- SUM("GoalResourcesTotal"),
+            SUM("ActivityReportGoalsTotal"),
+            SUM("ActivityReportGoalResourcesTotal"),
+            SUM("ObjectivesTotal"),
+            SUM("ObjectiveFilesTotal"),
+            SUM("ObjectiveResourcesTotal"),
+            SUM("ObjectiveTopicsTotal"),
+            SUM("ActivityReportObjectivesTotal"),
+            SUM("ActivityReportObjectiveFilesTotal"),
+            SUM("ActivityReportObjectiveResourcesTotal"),
+            SUM("ActivityReportObjectiveTopicsTotal")
+        FROM "PreCountStatsByRegion";
+        SELECT * FROM "PreCountStatsByRegion";
 
-        -- CREATE TABLE "DupGoalsOnARs" AS (
         CREATE TEMP TABLE "DupGoalsOnARs" AS (
             SELECT
             array_remove(ARRAY_AGG(DISTINCT arg."activityReportId"), NULL) "activityReportIds",
@@ -58,7 +88,6 @@ module.exports = {
             HAVING ARRAY_LENGTH(array_remove(ARRAY_AGG(DISTINCT g.id ORDER BY g.id),MIN(g.id)), 1) > 0
             ORDER BY 5 DESC
         );
-        -- CREATE TABLE "GoalsToModify" AS (
         CREATE TEMP TABLE "GoalsToModify" AS (
             SELECT DISTINCT
             g2."grantId",
@@ -273,7 +302,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectives" AS
         CREATE TEMP TABLE "InsertObjectives" AS
         WITH inserted_objectives  AS (
             INSERT INTO "Objectives"
@@ -378,7 +406,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectivesFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveFiles" AS
         CREATE TEMP TABLE "InsertObjectiveFiles" AS
          WITH objective_files AS (
             INSERT INTO "ObjectiveFiles"
@@ -408,7 +435,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateObjectiveFiles" AS
         CREATE TEMP TABLE "UpdateObjectiveFiles" AS
         WITH update_objective_files AS  (
             UPDATE "ObjectiveFiles" "of"
@@ -434,7 +460,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteObjectiveFiles" AS
         CREATE TEMP TABLE "DeleteObjectiveFiles" AS
         WITH del_objective_files AS (
             DELETE FROM "ObjectiveFiles" "of"
@@ -446,7 +471,6 @@ module.exports = {
         )
         SELECT * FROM del_objective_files;
 
-        -- CREATE TABLE "ObjectiveFileStats" AS (
         CREATE TEMP TABLE "ObjectiveFileStats" AS (
             SELECT
             'ObjectiveFiles' "table",
@@ -486,7 +510,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveResources" AS
         CREATE TEMP TABLE "InsertObjectiveResources" AS
             WITH  insert_objective_resources AS (
                 INSERT INTO "ObjectiveResources"
@@ -518,7 +541,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateObjectiveResources" AS
         CREATE TEMP TABLE "UpdateObjectiveResources" AS
             WITH update_objective_resources AS (
                 UPDATE "ObjectiveResources" "or"
@@ -546,7 +568,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteObjectiveResources" AS
         CREATE TEMP TABLE "DeleteObjectiveResources" AS
             WITH delete_objective_resources AS
             (
@@ -560,7 +581,6 @@ module.exports = {
         SELECT * FROM delete_objective_resources;
         END;
 
-        -- CREATE TABLE "ObjectiveResourceStats" AS
         CREATE TEMP TABLE "ObjectiveResourceStats" AS
             (
                 SELECT
@@ -594,7 +614,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertObjectiveTopics" AS
         CREATE TEMP TABLE "InsertObjectiveTopics" AS
         WITH insert_objective_topics AS (
             INSERT INTO "ObjectiveTopics"
@@ -624,7 +643,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateObjectiveTopics" AS
         CREATE TEMP TABLE "UpdateObjectiveTopics" AS
         WITH update_objective_topics AS (
             UPDATE "ObjectiveTopics" "ot"
@@ -650,7 +668,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteObjectiveTopics" AS
         CREATE TEMP TABLE "DeleteObjectiveTopics" AS
         WITH delete_objective_topics AS (
             DELETE FROM "ObjectiveTopics" "ot"
@@ -663,7 +680,6 @@ module.exports = {
         SELECT * FROM delete_objective_topics;
         END;
 
-        -- CREATE TABLE "ObjectiveTopicStats" AS (
         CREATE TEMP TABLE "ObjectiveTopicStats" AS (
             SELECT
             'ObjectiveTopics' "table",
@@ -674,35 +690,39 @@ module.exports = {
         );
         -- Handle ActivityReportObjectives
         CREATE TEMP TABLE "ActivityReportObjectivesToModify" AS (
-            SELECT
+          WITH otmm_recast AS (
+          SELECT *,
+            UNNEST("toRemove") to_remove
+          FROM "ObjectivesToModifyMetadata"
+          )
+          SELECT
             otmm."toUpdate" "objectiveId",
             aro."activityReportId",
             aro.title,
             aro.status,
             MIN(LEAST(aro."arOrder", aro2."arOrder")) "arOrder",
-            (
-            SELECT STRING_AGG(DISTINCT "arox"."ttaProvided", E'\n')
-            FROM "ActivityReportObjectives" "arox"
-            WHERE "aro"."activityReportId" = arox."activityReportId"
-            AND (arox."objectiveId" = ANY(ARRAY_AGG("aro"."objectiveId"))
-            OR otmm."toUpdate" = arox."objectiveId")
-                ) "ttaProvided",
-                MIN(LEAST("aro"."createdAt", "aro2"."createdAt")) "createdAt",
-                MAX(GREATEST("aro"."updatedAt", "aro2"."updatedAt")) "updatedAt",
-                ARRAY_AGG(DISTINCT "aro".id ORDER by "aro".id) "toRemove",
-                (ARRAY_AGG(DISTINCT "aro2".id))[1] "toUpdate"
-                FROM "ActivityReportObjectives" aro
-                JOIN "ObjectivesToModifyMetadata" otmm
-                ON "aro"."objectiveId" = ANY(otmm."toRemove")
-                LEFT JOIN "ActivityReportObjectives" "aro2"
-                ON "aro2"."objectiveId" = otmm."toUpdate"
-                AND "aro"."activityReportId" = "aro2"."activityReportId"
-                GROUP BY 1,2,3,4
-           );
+            STRING_AGG(DISTINCT "arox"."ttaProvided", E'\n') "ttaProvided",
+            MIN(LEAST("aro"."createdAt", "aro2"."createdAt")) "createdAt",
+            MAX(GREATEST("aro"."updatedAt", "aro2"."updatedAt")) "updatedAt",
+            ARRAY_AGG(DISTINCT "aro".id ORDER by "aro".id) "toRemove",
+            (ARRAY_AGG(DISTINCT "aro2".id))[1] "toUpdate"
+          FROM "ActivityReportObjectives" aro
+          JOIN  otmm_recast otmm
+          ON "aro"."objectiveId" = to_remove
+          LEFT JOIN "ActivityReportObjectives" aro2
+          ON "aro2"."objectiveId" = otmm."toUpdate"
+          AND "aro"."activityReportId" = "aro2"."activityReportId"
+          LEFT JOIN "ActivityReportObjectives" arox
+            ON "aro"."activityReportId" = arox."activityReportId"
+            AND (
+              arox."objectiveId" = "aro"."objectiveId"
+              OR otmm."toUpdate" = arox."objectiveId"
+            )
+          GROUP BY 1,2,3,4
+          );
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectives" AS
         CREATE TEMP TABLE "InsertActivityReportObjectives" AS
         WITH insert_activity_report_objectives AS (
             INSERT INTO "ActivityReportObjectives"
@@ -773,7 +793,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectiveFiles" AS
         CREATE TEMP TABLE "InsertActivityReportObjectiveFiles" AS
         WITH insert_activity_report_objective_files AS (
             INSERT INTO "ActivityReportObjectiveFiles"
@@ -799,7 +818,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectiveFiles" AS
         CREATE TEMP TABLE "UpdateActivityReportObjectiveFiles" AS
         WITH update_activity_report_objective_files AS (
             UPDATE "ActivityReportObjectiveFiles" "arof"
@@ -821,7 +839,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectiveFiles', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectiveFiles" AS
         CREATE TEMP TABLE "DeleteActivityReportObjectiveFiles" AS
         WITH delete_activity_report_objective_files AS (
             DELETE FROM "ActivityReportObjectiveFiles" "arof"
@@ -833,7 +850,6 @@ module.exports = {
         )SELECT * FROM delete_activity_report_objective_files;
         END;
 
-        -- CREATE TABLE "ActivityReportObjectiveFileStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveFileStats" AS (
             SELECT
             'ActivityReportObjectiveFiles' "table",
@@ -870,7 +886,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectiveResources" AS
         CREATE TEMP TABLE "InsertActivityReportObjectiveResources" AS
         WITH insert_activity_report_objective_resources AS (
             INSERT INTO "ActivityReportObjectiveResources"
@@ -897,7 +912,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectiveResources" AS
         CREATE TEMP TABLE "UpdateActivityReportObjectiveResources" AS
         WITH update_activity_report_objective_resources AS (
             UPDATE "ActivityReportObjectiveResources" "aror"
@@ -920,7 +934,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectiveResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectiveResources" AS
         CREATE TEMP TABLE "DeleteActivityReportObjectiveResources" AS
         WITH delete_activity_report_objective_resources AS (
             DELETE FROM "ActivityReportObjectiveResources" "aror"
@@ -932,7 +945,6 @@ module.exports = {
         )SELECT * FROM delete_activity_report_objective_resources;
         END;
 
-        -- CREATE TABLE "ActivityReportObjectiveResourceStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveResourceStats" AS (
             SELECT
             'ActivityReportObjectiveResources' "table",
@@ -961,7 +973,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportObjectiveTopics" AS
         CREATE TEMP TABLE "InsertActivityReportObjectiveTopics" AS
         WITH insert_activity_report_objective_topics AS  (
             INSERT INTO "ActivityReportObjectiveTopics"
@@ -986,7 +997,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectiveTopics" AS
         CREATE TEMP TABLE "UpdateActivityReportObjectiveTopics" AS
         WITH update_activity_report_objective_topics AS (
             UPDATE "ActivityReportObjectiveTopics" "arot"
@@ -1007,7 +1017,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectiveTopics', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectiveTopics" AS
         CREATE TEMP TABLE "DeleteActivityReportObjectiveTopics" AS
         WITH delete_activity_report_objective_topics AS (
             DELETE FROM "ActivityReportObjectiveTopics" "arot"
@@ -1019,7 +1028,6 @@ module.exports = {
         )SELECT * FROM delete_activity_report_objective_topics;
         END;
 
-        -- CREATE TABLE "ActivityReportObjectiveTopicStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveTopicStats" AS (
             SELECT
             'ActivityReportObjectiveTopics' "table",
@@ -1032,7 +1040,6 @@ module.exports = {
 
         BEGIN;-- Continue Handle ActivityReportObjectives
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportObjectives" AS
         CREATE TEMP TABLE "UpdateActivityReportObjectives" AS
         WITH update_activity_report_objectives AS(
             UPDATE "ActivityReportObjectives" "aro"
@@ -1057,7 +1064,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportObjectives" AS
         CREATE TEMP TABLE "DeleteActivityReportObjectives" AS
         WITH
         -- Delete related rows from ActivityReportObjectiveFiles table
@@ -1079,7 +1085,6 @@ module.exports = {
         SELECT * FROM deleted_aro;
         END;
 
-        -- CREATE TABLE "ActivityReportObjectiveStats" AS (
         CREATE TEMP TABLE "ActivityReportObjectiveStats" AS (
             SELECT
             'ActivityReportObjectives' "table",
@@ -1135,7 +1140,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectives', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteObjectives" AS
         CREATE TEMP TABLE "DeleteObjectives" AS
         WITH
         -- Delete related rows from ActivityReportObjectiveFiles table
@@ -1170,7 +1174,6 @@ module.exports = {
         SELECT * FROM deleted_o;
         END;
 
-        -- CREATE TABLE "ObjectiveStats" AS (
         CREATE TEMP TABLE "ObjectiveStats" AS (
             SELECT
             'Objectives' "table",
@@ -1180,7 +1183,6 @@ module.exports = {
             (SELECT COUNT(*) FROM "Objectives" o) "post_count"
         );
         -- Handle ActivityReportGoals
-        -- CREATE TABLE "ActivityReportGoalsToModify" AS (
         CREATE TEMP TABLE "ActivityReportGoalsToModify" AS (
             SELECT
             dgoa."toUpdateGoal" "goalId",
@@ -1217,7 +1219,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportGoals', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportGoals" AS
         CREATE TEMP TABLE "InsertActivityReportGoals" AS
         WITH insert_activity_report_goals AS (
             INSERT INTO "ActivityReportGoals"
@@ -1258,7 +1259,6 @@ module.exports = {
         END;
 
         -- Handle ActivityReportGoals Metadata tables
-        -- CREATE TABLE "ActivityReportGoalsToModifyMetadata" AS (
         CREATE TEMP TABLE "ActivityReportGoalsToModifyMetadata" AS (
             SELECT
             argtm."goalId",
@@ -1281,7 +1281,6 @@ module.exports = {
             AND argtm."activityReportId" = iarg."activityReportId"
         );
         -- Handle ActivityReportGoalResources
-        -- CREATE TABLE "ActivityReportGoalResourcesToModify" AS (
         CREATE TEMP TABLE "ActivityReportGoalResourcesToModify" AS (
             SELECT
             argtmm."toUpdate" "activityReportGoalId",
@@ -1309,7 +1308,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertActivityReportGoalResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "InsertActivityReportGoalResources" AS
         CREATE TEMP TABLE "InsertActivityReportGoalResources" AS
         WITH insert_activity_report_goals_resources AS (
             INSERT INTO "ActivityReportGoalResources"
@@ -1336,7 +1334,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportGoalResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportGoalResources" AS
         CREATE TEMP TABLE "UpdateActivityReportGoalResources" AS
         WITH update_activity_report_goals_resources AS  (
             UPDATE "ActivityReportGoalResources" "argr"
@@ -1359,7 +1356,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportGoalResources', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportGoalResources" AS
         CREATE TEMP TABLE "DeleteActivityReportGoalResources" AS
         WITH delete_activity_report_goals_resources AS (
             DELETE FROM "ActivityReportGoalResources" "argr"
@@ -1371,7 +1367,6 @@ module.exports = {
         )SELECT * FROM delete_activity_report_goals_resources;
         END;
 
-        -- CREATE TABLE "ActivityReportGoalResourceStats" AS (
         CREATE TEMP TABLE "ActivityReportGoalResourceStats" AS (
             SELECT
             'ActivityReportGoalResources' "table",
@@ -1383,7 +1378,6 @@ module.exports = {
 
         BEGIN;-- Continue Handle ActivityReportGoals
         SELECT set_config('audit.auditDescriptor', 'dup_goals_UpdateActivityReportGoals', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "UpdateActivityReportGoals" AS
         CREATE TEMP TABLE "UpdateActivityReportGoals" AS
         WITH update_activity_report_goals AS (
             UPDATE "ActivityReportGoals" "arg"
@@ -1412,7 +1406,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteActivityReportGoals', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteActivityReportGoals" AS
         CREATE TEMP TABLE "DeleteActivityReportGoals" AS
         WITH delete_activity_report_goals AS  (
             DELETE FROM "ActivityReportGoals" "arg"
@@ -1424,7 +1417,6 @@ module.exports = {
         )SELECT * FROM delete_activity_report_goals;
         END;
 
-        -- CREATE TABLE "ActivityReportGoalStats" AS (
         CREATE TEMP TABLE "ActivityReportGoalStats" AS (
             SELECT
             'ActivityReportGoals' "table",
@@ -1497,7 +1489,6 @@ module.exports = {
 
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteGoals', TRUE) as "auditDescriptor";
-        -- CREATE TABLE "DeleteGoals" AS
         CREATE TEMP TABLE "DeleteGoals" AS
         WITH
         -- Delete related rows from ActivityReportObjectives table
@@ -1539,7 +1530,6 @@ module.exports = {
         SELECT * FROM deleted_g;
         END;
 
-        -- CREATE TABLE "GoalStats" AS (
         CREATE TEMP TABLE "GoalStats" AS (
             SELECT
             'Goals' "table",
@@ -1548,52 +1538,127 @@ module.exports = {
             (SELECT COUNT(*) FROM "DeleteGoals") "Deletes",
             (SELECT COUNT(*) FROM "Goals" g) "post_count"
         );
-        -- CREATE TABLE "CollectStats" AS (
-        CREATE TABLE "CollectStats" AS (
+        
+        CREATE TEMP TABLE "PostCountStatsByRegion" AS (
+            SELECT
+                gr."regionId",
+                COUNT(DISTINCT g."id") "GoalsTotal",
+                -- COUNT(DISTINCT gor."id") "GoalResourcesTotal",
+                COUNT(DISTINCT arg."id") "ActivityReportGoalsTotal",
+                COUNT(DISTINCT argr."id") "ActivityReportGoalResourcesTotal",
+                COUNT(DISTINCT oj."id") "ObjectivesTotal",
+                COUNT(DISTINCT ojf."id") "ObjectiveFilesTotal",
+                COUNT(DISTINCT ojr."id") "ObjectiveResourcesTotal",
+                COUNT(DISTINCT ojt."id") "ObjectiveTopicsTotal",
+                COUNT(DISTINCT aro."id") "ActivityReportObjectivesTotal",
+                COUNT(DISTINCT arof."id") "ActivityReportObjectiveFilesTotal",
+                COUNT(DISTINCT aror."id") "ActivityReportObjectiveResourcesTotal",
+                COUNT(DISTINCT arot."id") "ActivityReportObjectiveTopicsTotal"
+            FROM "Grants" gr
+            LEFT JOIN "Goals" g ON gr."id" = g."grantId"
+            -- LEFT JOIN "GoalResources" gor ON g."id" = gor."goalId"
+            LEFT JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
+            LEFT JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
+            LEFT JOIN "Objectives" oj ON g."id" = oj."goalId"
+            LEFT JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
+            LEFT JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
+            LEFT JOIN "ObjectiveTopics" ojt ON oj."id" = ojt."objectiveId"
+            LEFT JOIN "ActivityReportObjectives" aro ON oj."id" = aro."objectiveId"
+            LEFT JOIN "ActivityReportObjectiveFiles" arof ON aro."id" = arof."activityReportObjectiveId"
+            LEFT JOIN "ActivityReportObjectiveResources" aror ON aro."id" = aror."activityReportObjectiveId"
+            LEFT JOIN "ActivityReportObjectiveTopics" arot ON aro."id" = arot."activityReportObjectiveId"
+            GROUP BY gr."regionId"
+        );
+        INSERT INTO "PostCountStatsByRegion"
+        SELECT
+            -1 "regionId",
+            SUM("GoalsTotal"),
+            -- SUM("GoalResourcesTotal"),
+            SUM("ActivityReportGoalsTotal"),
+            SUM("ActivityReportGoalResourcesTotal"),
+            SUM("ObjectivesTotal"),
+            SUM("ObjectiveFilesTotal"),
+            SUM("ObjectiveResourcesTotal"),
+            SUM("ObjectiveTopicsTotal"),
+            SUM("ActivityReportObjectivesTotal"),
+            SUM("ActivityReportObjectiveFilesTotal"),
+            SUM("ActivityReportObjectiveResourcesTotal"),
+            SUM("ActivityReportObjectiveTopicsTotal")
+        FROM "PostCountStatsByRegion";
+        SELECT * FROM "PostCountStatsByRegion";
+        
+        WITH "RegionDiffs" AS (
+            SELECT
+                pre."regionId",
+                pre."GoalsTotal" - post."GoalsTotal" AS "GoalsTotalDiff",
+                -- pre."GoalResourcesTotal" - post."GoalResourcesTotal" AS "GoalsTotalDiff",
+                pre."ActivityReportGoalsTotal" - post."ActivityReportGoalsTotal" AS "ActivityReportGoalsTotalDiff",
+                pre."ActivityReportGoalResourcesTotal" - post."ActivityReportGoalResourcesTotal" AS "ActivityReportGoalResourcesTotalDiff",
+                pre."ObjectivesTotal" - post."ObjectivesTotal" AS "ObjectivesTotalDiff",
+                pre."ObjectiveFilesTotal" - post."ObjectiveFilesTotal" AS "ObjectiveFilesTotalDiff",
+                pre."ObjectiveResourcesTotal" - post."ObjectiveResourcesTotal" AS "ObjectiveResourcesTotalDiff",
+                pre."ObjectiveTopicsTotal" - post."ObjectiveTopicsTotal" AS "ObjectiveTopicsTotalDiff",
+                pre."ActivityReportObjectivesTotal" - post."ActivityReportObjectivesTotal" AS "ActivityReportObjectivesTotalDiff",
+                pre."ActivityReportObjectiveFilesTotal" - post."ActivityReportObjectiveFilesTotal" AS "ActivityReportObjectiveFilesTotalDiff",
+                pre."ActivityReportObjectiveResourcesTotal" - post."ActivityReportObjectiveResourcesTotal" AS "ActivityReportObjectiveResourcesTotalDiff",
+                pre."ActivityReportObjectiveTopicsTotal" - post."ActivityReportObjectiveTopicsTotal" AS "ActivityReportObjectiveTopicsTotalDiff"
+                
+            FROM "PreCountStatsByRegion" pre
+            JOIN "PostCountStatsByRegion" post ON pre."regionId" = post."regionId"
+        )
+        SELECT * FROM "RegionDiffs";
+        
+        WITH "CollectStats" AS (
             SELECT 1 id, *,
-                (SELECT "GoalsTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("GoalsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "GoalStats"
+            -- UNION
+            -- SELECT 2 id, *,
+            --     (SELECT SUM("GoalsResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
+            -- FROM "GoalResourcesStats"
             UNION
             SELECT 2 id, *,
-                (SELECT "ActivityReportGoalsTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ActivityReportGoalsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportGoalStats"
             UNION
             SELECT 3 id, *,
-                (SELECT "ActivityReportGoalResourcesTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ActivityReportGoalResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportGoalResourceStats"
             UNION
             SELECT 4 id, *,
-                (SELECT "ObjectivesTotal" FROM "PreCountStats") AS pre_count
-             FROM "ObjectiveStats"
+                (SELECT SUM("ObjectivesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
+            FROM "ObjectiveStats"
             UNION
             SELECT 5 id, *,
-                (SELECT "ObjectiveFilesTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ObjectiveFilesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveFileStats"
             UNION
             SELECT 6 id, *,
-                (SELECT "ObjectiveResourcesTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ObjectiveResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveResourceStats"
             UNION
             SELECT 7 id, *,
-                (SELECT "ObjectiveTopicsTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ObjectiveTopicsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveTopicStats"
             UNION
             SELECT 8 id, *,
-                (SELECT "ActivityReportObjectivesTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ActivityReportObjectivesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveStats"
             UNION
             SELECT 9 id, *,
-                (SELECT "ActivityReportObjectiveFilesTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ActivityReportObjectiveFilesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveFileStats"
             UNION
             SELECT 10 id, *,
-                (SELECT "ActivityReportObjectiveResourcesTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ActivityReportObjectiveResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveResourceStats"
             UNION
             SELECT 11 id, *,
-                (SELECT "ActivityReportObjectiveTopicsTotal" FROM "PreCountStats") AS pre_count
+                (SELECT SUM("ActivityReportObjectiveTopicsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveTopicStats"
         )
+        SELECT *, pre_count - post_count AS diff 
+        FROM "CollectStats"
         ORDER BY id;
           `, { transaction });
       } catch (err) {
