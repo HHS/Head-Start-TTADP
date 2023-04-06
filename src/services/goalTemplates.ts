@@ -252,7 +252,11 @@ export async function setFieldPromptForCuratedTemplate(
   const isRequired = promptRequirements.validations
     .find((v) => Object.keys(v).includes('isRequired'))
     ?.isRequired || false;
-  if (isRequired && !response) {
+  if (isRequired
+    && (response === null
+      || response === undefined
+      || (Array.isArray(response)
+        && response.length === 0))) {
     // fail - is required
   }
 
@@ -269,7 +273,7 @@ export async function setFieldPromptForCuratedTemplate(
       response,
     }));
 
-  await Promise.all([
+  return Promise.all([
     GoalFieldResponseModel.update(
       { response },
       {
