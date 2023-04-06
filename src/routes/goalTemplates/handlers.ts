@@ -5,8 +5,8 @@ import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
   getFieldPromptsForCuratedTemplate,
-  setFieldPromptForCuratedTemplate,
-  setFieldPromptsForCuratedTemplate,
+  // setFieldPromptForCuratedTemplate,
+  // setFieldPromptsForCuratedTemplate,
 } from '../../services/goalTemplates';
 
 export async function getGoalTemplates(req: Request, res: Response) {
