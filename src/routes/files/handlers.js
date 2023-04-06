@@ -502,20 +502,32 @@ async function deleteActivityReportObjectiveFile(req, res) {
       return;
     }
 
-    await ActivityReportObjectiveFile.destroy({
+    // Get ARO files to delete (destroy does NOT support join's).
+    const aroFilesToDelete = await ActivityReportObjectiveFile.findAll({
       where: {
         fileId: parseInt(fileId, DECIMAL_BASE),
       },
       include: [
         {
+          as: 'activityReportObjective',
           model: ActivityReportObjective,
           where: {
             activityReportId: parseInt(reportId, DECIMAL_BASE),
-            objectiveIds,
+            objectiveId: objectiveIds,
           },
           required: true,
         },
       ],
+    });
+
+    // Get ARO file ids.
+    const aroFileIds = aroFilesToDelete.map((arof) => arof.id);
+
+    // Delete ARO files.
+    await ActivityReportObjectiveFile.destroy({
+      where: {
+        id: aroFileIds,
+      },
       hookMetadata: { objectiveIds },
       individualHooks: true,
     });
