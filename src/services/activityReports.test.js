@@ -992,7 +992,7 @@ describe('Activity report service', () => {
         const { rows } = await activityReports({
           sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
         });
-        expect(rows.length).toBe(6);
+        expect(rows.length).toBe(7);
         expect(rows[0].sortedTopics[0]).toBe('topic a');
         expect(rows[0].sortedTopics[1]).toBe('topic b');
         expect(rows[1].sortedTopics[0]).toBe('topic c');
