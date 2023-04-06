@@ -386,6 +386,11 @@ module.exports = {
 
         -- Handle ObjectiveFiles
         CREATE TEMP TABLE "ObjectiveFilesToModify" AS (
+            WITH otmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "ObjectivesToModifyMetadata"
+                )
             SELECT
             otmm."toUpdate" "objectiveId",
             "of"."fileId",
@@ -396,8 +401,8 @@ module.exports = {
             ARRAY_AGG(DISTINCT "of".id ORDER by "of".id) "toRemove" ,
             (ARRAY_AGG(DISTINCT "of2".id))[1] "toUpdate"
             FROM "ObjectiveFiles" "of"
-            JOIN "ObjectivesToModifyMetadata" otmm
-            ON "of"."objectiveId" = ANY(otmm."toRemove")
+            JOIN otmm_recast otmm
+            ON "of"."objectiveId" = to_remove
             LEFT JOIN "ObjectiveFiles" "of2"
             ON "of2"."objectiveId" = otmm."toUpdate"
             AND "of"."fileId" = "of2"."fileId"
@@ -482,6 +487,11 @@ module.exports = {
         -- Handle ObjectiveResources
 
         CREATE TEMP TABLE "ObjectiveResourcesToModify" AS (
+            WITH otmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "ObjectivesToModifyMetadata"
+                )
             SELECT
             otmm."toUpdate" "objectiveId",
             "or"."resourceId",
@@ -500,8 +510,8 @@ module.exports = {
             ARRAY_AGG(DISTINCT "or".id ORDER by "or".id) "toRemove",
             (ARRAY_AGG(DISTINCT "or2".id))[1] "toUpdate"
             FROM "ObjectiveResources" "or"
-            JOIN "ObjectivesToModifyMetadata" otmm
-            ON "or"."objectiveId" = ANY(otmm."toRemove")
+            JOIN otmm_recast otmm
+            ON "or"."objectiveId" = to_remove
             LEFT JOIN "ObjectiveResources" "or2"
             ON "or2"."objectiveId" = otmm."toUpdate"
             AND "or"."resourceId" = "or2"."resourceId"
@@ -593,7 +603,12 @@ module.exports = {
 
         -- Handle ObjectiveTopics
 
-        CREATE TEMP TABLE "ObjectiveTopicsToModify" AS (
+            CREATE TEMP TABLE "ObjectiveTopicsToModify" AS (
+            WITH otmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "ObjectivesToModifyMetadata"
+                )
             SELECT
             otmm."toUpdate" "objectiveId",
             "ot"."topicId",
@@ -604,8 +619,8 @@ module.exports = {
             ARRAY_AGG(DISTINCT "ot".id ORDER by "ot".id) "toRemove",
             (ARRAY_AGG(DISTINCT "ot2".id))[1] "toUpdate"
             FROM "ObjectiveTopics" "ot"
-            JOIN "ObjectivesToModifyMetadata" otmm
-            ON "ot"."objectiveId" = ANY(otmm."toRemove")
+            JOIN  otmm_recast otmm
+            ON "ot"."objectiveId" = to_remove
             LEFT JOIN "ObjectiveTopics" "ot2"
             ON "ot2"."objectiveId" = otmm."toUpdate"
             AND "ot"."topicId" = "ot2"."topicId"
@@ -860,6 +875,11 @@ module.exports = {
         );
         -- Handle ActivityReportObjectiveResources
         CREATE TEMP TABLE "ActivityReportObjectiveResourcesToModify" AS (
+            WITH arotmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "ActivityReportObjectivesToModifyMetadata"
+                )
             SELECT
             arotmm."toUpdate" "activityReportObjectiveId",
             aror."resourceId",
@@ -876,8 +896,8 @@ module.exports = {
             ARRAY_AGG(DISTINCT "aror".id ORDER by "aror".id) "toRemove",
             (ARRAY_AGG(DISTINCT "aror2".id))[1] "toUpdate"
             FROM "ActivityReportObjectiveResources" aror
-            JOIN "ActivityReportObjectivesToModifyMetadata" arotmm
-            ON aror."activityReportObjectiveId" = ANY(arotmm."toRemove")
+            JOIN  arotmm_recast arotmm
+            ON aror."activityReportObjectiveId" = to_remove
             LEFT JOIN "ActivityReportObjectiveResources" aror2
             ON aror2."activityReportObjectiveId" = arotmm."toUpdate"
             AND aror."resourceId" = aror2."resourceId"
@@ -1141,33 +1161,37 @@ module.exports = {
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteObjectives', TRUE) as "auditDescriptor";
         CREATE TEMP TABLE "DeleteObjectives" AS
-        WITH
+        WITH otm_recast AS (
+          SELECT *,
+            UNNEST("toRemove") to_remove
+          FROM "ObjectivesToModify"
+          ),
         -- Delete related rows from ActivityReportObjectiveFiles table
         deleted_arof AS (
             DELETE FROM "ActivityReportObjectiveFiles" arof
-            USING "ActivityReportObjectives" aro, "ObjectivesToModify" otm
-            WHERE aro."objectiveId" = ANY(otm."toRemove") AND arof."activityReportObjectiveId" = aro.id
+            USING "ActivityReportObjectives" aro, otm_recast
+            WHERE aro."objectiveId" = to_remove AND arof."activityReportObjectiveId" = aro.id
             RETURNING arof."activityReportObjectiveId"
         ),
         -- Delete related rows from ActivityReportObjectives table
         deleted_aro AS (
             DELETE FROM "ActivityReportObjectives" aro
-            USING "ObjectivesToModify" otm
-            WHERE aro."objectiveId" = ANY(otm."toRemove")
+            USING otm_recast
+            WHERE aro."objectiveId" = to_remove
             RETURNING aro."objectiveId"
         ),
 
         deleted_of AS (
             DELETE FROM "ObjectiveFiles" of
-            USING "ObjectivesToModify" otm
-            WHERE of."objectiveId" = ANY(otm."toRemove")
+            USING otm_recast
+            WHERE of."objectiveId" = to_remove
             RETURNING of."objectiveId"
         ),
         -- Delete rows from Objectives table
         deleted_o AS (
             DELETE FROM "Objectives" "o"
-            USING "ObjectivesToModify" otm
-            WHERE "o".id = ANY(otm."toRemove")
+            USING otm_recast
+            WHERE "o".id = to_remove
             RETURNING
                 "o".id "objectiveId"
         )
@@ -1490,45 +1514,56 @@ module.exports = {
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_DeleteGoals', TRUE) as "auditDescriptor";
         CREATE TEMP TABLE "DeleteGoals" AS
-        WITH
+        WITH gtm_recast AS (
+          SELECT *,
+            UNNEST("toRemove") to_remove
+          FROM "ObjectivesToModify"
+          ),
         -- Delete related rows from ActivityReportObjectives table
         deleted_arof AS (
             DELETE FROM "ActivityReportObjectiveFiles" arof
-            USING "Objectives" o, "GoalsToModify" gtm, "ActivityReportObjectives" aro
-            WHERE o."goalId" = ANY(gtm."toRemove") AND aro."objectiveId" = o.id AND arof."activityReportObjectiveId" = aro.id
+            USING "Objectives" o, gtm_recast, "ActivityReportObjectives" aro
+            WHERE o."goalId" = to_remove AND aro."objectiveId" = o.id AND arof."activityReportObjectiveId" = aro.id
             RETURNING arof."activityReportObjectiveId"
         ),
         -- Delete related rows from ActivityReportObjectives table
         deleted_aro AS (
             DELETE FROM "ActivityReportObjectives" aro
-            USING "Objectives" o, "GoalsToModify" gtm
-            WHERE o."goalId" = ANY(gtm."toRemove") AND aro."objectiveId" = o.id
+            USING "Objectives" o, gtm_recast
+            WHERE o."goalId" = to_remove AND aro."objectiveId" = o.id
             RETURNING aro."objectiveId"
         ),
         -- Delete related rows from ObjectiveFiles table
         deleted_of AS (
             DELETE FROM "ObjectiveFiles" of
-            USING "Objectives" o, "GoalsToModify" gtm
-            WHERE o."goalId" = ANY(gtm."toRemove") AND of."objectiveId" = o.id
+            USING "Objectives" o, gtm_recast
+            WHERE o."goalId" = to_remove AND of."objectiveId" = o.id
             RETURNING of."objectiveId"
         ),
         -- Delete related rows from Objectives table
         deleted_o AS (
             DELETE FROM "Objectives" o
-            USING "GoalsToModify" gtm
-            WHERE o."goalId" = ANY(gtm."toRemove")
+            USING gtm_recast
+            WHERE o."goalId" = to_remove
             RETURNING o."goalId"
+        ),
+        -- Delete related rows from ActivityReportGoals table
+        deleted_arg AS (
+            DELETE FROM "ActivityReportGoals" arg
+            USING gtm_recast
+            WHERE arg."goalId" = to_remove
+            RETURNING arg."goalId"
         ),
         -- Delete rows from Goals table
         deleted_g AS (
             DELETE FROM "Goals" "g"
-            USING "GoalsToModify" gtm
-            WHERE "g".id = ANY(gtm."toRemove")
+            USING gtm_recast
+            WHERE "g".id = to_remove
             RETURNING
                 "g".id "goalId"
         )
         SELECT * FROM deleted_g;
-        END;
+
 
         CREATE TEMP TABLE "GoalStats" AS (
             SELECT
@@ -1614,7 +1649,7 @@ module.exports = {
             FROM "GoalStats"
             -- UNION
             -- SELECT 2 id, *,
-            --     (SELECT SUM("GoalsResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
+            --     (SELECT SUM("GoalResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             -- FROM "GoalResourcesStats"
             UNION
             SELECT 2 id, *,
