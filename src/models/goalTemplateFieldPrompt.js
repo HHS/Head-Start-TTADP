@@ -43,15 +43,14 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     validations: {
-      type: DataTypes.ARRAY(DataTypes.JSON),
+      type: DataTypes.JSON,
       allowNull: true,
     },
     isRequired: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['validations']),
       get() {
         const validations = this.get('validations');
-        const isRequired = validations?.find((v) => Object.keys(v).find((k) => k === 'isRequired')) || false;
-        return isRequired;
+        return validations && validations.required;
       },
     },
   }, {
