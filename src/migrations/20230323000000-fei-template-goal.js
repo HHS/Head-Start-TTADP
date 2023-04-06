@@ -45,6 +45,10 @@ module.exports = {
           type: Sequelize.DataTypes.TEXT,
           allowNull: false,
         },
+        hint: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: true,
+        },
         fieldType: {
           type: Sequelize.DataTypes.ENUM(['multiselect']),
         },
@@ -161,6 +165,7 @@ module.exports = {
           ordinal,
           "title",
           "prompt",
+          "hint",
           "fieldType",
           "options",
           "validations",
@@ -171,6 +176,7 @@ module.exports = {
           1,
           TRIM('${fieldTitle}'),
           TRIM('${fieldPrompt}'),
+          'Maximum of 2',
           '${fieldType}',
           ARRAY[${fieldOptions.map((o) => `'${o}'`).join(',')}],
           ARRAY[${fieldValidations.map((v) => `'${JSON.stringify(v)}'::JSON`).join(', ')}],
