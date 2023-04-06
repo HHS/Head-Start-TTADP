@@ -83,7 +83,7 @@ export default function ObjectiveTopics({
         </Label>
         {error}
         <Select
-          objectiveTopicsInputName={inputName}
+          inputName={inputName}
           inputId={inputName}
           name={inputName}
           styles={selectOptionsReset}
