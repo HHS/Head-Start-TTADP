@@ -30,8 +30,7 @@ export async function getPrompts(req: Request, res: Response) {
     const { goalIds } = req.query;
 
     // this is a single string param in the url, i.e. the "1" in /goalTemplates/1/prompts/
-    // this will be verified as "canBeNumerical" by some middleware before we get to this point
-    // todo - write middleware
+    // this will be verified as "canBeNumber" by some middleware before we get to this point
     const numericalGoalTemplateId = parseInt(goalTemplateId, DECIMAL_BASE);
 
     // this is a query string, i.e. the "goalIds=1&goalIds=2&goalIds=3"
