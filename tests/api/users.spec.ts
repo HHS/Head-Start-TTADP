@@ -71,10 +71,7 @@ test.describe('get /users/statistics', () => {
 
 test.describe('get /users/active-users', () => {
   test('403', async ({ request }) => {
-    const response = await request.get(
-      `${root}/users/active-users`,
-      { headers: { 'playwright-user-id': '2' } }, // has no home region
-    );
+    const response = await request.get(`${root}/users/active-users`);
     expect(response.status()).toBe(403);
   });
   test('200', async ({ request }) => {
