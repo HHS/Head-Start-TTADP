@@ -28,7 +28,7 @@ function combineNames(firstName, lastName) {
 }
 
 /**
- * Performs a soft delete of grants that no longer come from HSES 
+ * Performs a soft delete of grants that no longer come from HSES
  * and haven't been associated with goals
  * @param {Array<object>} grantsForDb grants to be entered or updated in the db
  * @param {Array<object>} recipientsForDb recipients to be entered or updated in the db
