@@ -7,8 +7,9 @@ import {
   ObjectiveFile,
   ObjectiveTemplate,
   ObjectiveTemplateFile,
+  ActivityReportObjective,
 } from '../models';
-import { FILE_STATUSES } from '../constants';
+import { FILE_STATUSES, DECIMAL_BASE } from '../constants';
 
 const { UPLOADING } = FILE_STATUSES;
 const deleteFile = async (id) => File.destroy({
@@ -278,6 +279,40 @@ const createObjectiveTemplateFileMetaData = async (
   return file.dataValues;
 };
 
+const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
+  // Get ARO files to delete (destroy does NOT support join's).
+  const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
+    raw: true,
+    attributes: ['id'],
+    where: {
+      fileId: parseInt(fileId, DECIMAL_BASE),
+    },
+    include: [
+      {
+        attributes: [],
+        as: 'activityReportObjective',
+        required: true,
+        model: ActivityReportObjective,
+        where: {
+          activityReportId: parseInt(reportId, DECIMAL_BASE),
+          objectiveId: objectiveIds,
+        },
+
+      },
+    ],
+  });
+
+  // Get ARO file ids.
+  const aroFileIdsToDelete = aroFileToDelete.map((arof) => arof.id);
+
+  // Delete ARO files.
+  await ActivityReportObjectiveFile.destroy({
+    where: { id: aroFileIdsToDelete },
+    hookMetadata: { objectiveIds },
+    individualHooks: true,
+  });
+};
+
 export {
   deleteFile,
   deleteActivityReportFile,
@@ -296,4 +331,5 @@ export {
   createObjectiveFileMetaData, // for one objective
   createObjectivesFileMetaData, // for more than one objective
   createObjectiveTemplateFileMetaData,
+  deleteSpecificActivityReportObjectiveFile,
 };
