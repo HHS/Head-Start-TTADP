@@ -175,3 +175,5 @@ export const convertReportToFormData = (fetchedReport) => {
     objectivesWithoutGoals,
   };
 };
+
+export const formatTitleForHtmlAttribute = (title) => title.replace(/\s/g, '-').toLowerCase();

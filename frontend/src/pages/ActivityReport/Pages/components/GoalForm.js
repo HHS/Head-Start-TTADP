@@ -9,6 +9,7 @@ import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
+import ConditionalFields from './ConditionalFields';
 import {
   GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,
@@ -24,6 +25,7 @@ export default function GoalForm({
   topicOptions,
   reportId,
   datePickerKey,
+  templatePrompts,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -156,7 +158,11 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
         isLoading={isAppLoading}
-        userCanEdit={goal.isCurated ? !goal.isCurated : undefined}
+        userCanEdit={goal.isCurated ? !goal.isCurated : false}
+      />
+
+      <ConditionalFields
+        prompts={templatePrompts || []}
       />
 
       <GoalRttapa
@@ -217,4 +223,10 @@ GoalForm.propTypes = {
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
+  templatePrompts: PropTypes.arrayOf(PropTypes.shape({
+    type: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    prompt: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  }.isRequired)).isRequired,
 };

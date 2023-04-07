@@ -38,6 +38,31 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
+/**
+ *
+ * @param {function} getValues
+ * @returns {Array} conditionalFields
+ * {
+ *  promptId: number;
+ *  title: string;
+ *  value: string | string[] | number | number[] | boolean;
+ * }
+ */
+function getConditionalFieldValues(getValues) {
+  const conditionalFieldTitles = getValues('goalConditionalFields');
+
+  let conditionalFields = [];
+  if (conditionalFieldTitles) {
+    conditionalFields = conditionalFieldTitles.map(({ promptId, title, fieldName }) => ({
+      promptId,
+      title,
+      value: getValues(fieldName),
+    }));
+  }
+
+  return conditionalFields;
+}
+
 const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
     return false;
@@ -204,6 +229,7 @@ const Navigator = ({
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
+    const conditionalFields = getConditionalFieldValues(getValues);
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
@@ -218,6 +244,7 @@ const Navigator = ({
       isRttapa,
       regionId: formData.regionId,
       grantIds,
+      conditionalFields,
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
@@ -249,6 +276,7 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
+    const conditionalFields = getConditionalFieldValues(getValues);
 
     let invalidResources = false;
     const invalidResourceIndices = [];
@@ -289,6 +317,7 @@ const Navigator = ({
       isRttapa,
       regionId: formData.regionId,
       grantIds,
+      conditionalFields,
     };
 
     let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
@@ -469,6 +498,7 @@ const Navigator = ({
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
+    const conditionalFields = getConditionalFieldValues(getValues);
 
     const goal = {
       ...goalForEditing,
@@ -478,6 +508,7 @@ const Navigator = ({
       objectives,
       isRttapa,
       regionId: formData.regionId,
+      conditionalFields,
     };
 
     // validate goals will check the form and set errors
@@ -505,6 +536,7 @@ const Navigator = ({
       setValue('goalEndDate', '');
       setValue('goalIsRttapa', '');
       setValue('goalForEditing.objectives', []);
+      setValue('goalConditionalFields', []);
 
       // set goals to form data as appropriate
       setValue('goals', [
