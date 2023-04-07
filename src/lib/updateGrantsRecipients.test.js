@@ -157,7 +157,9 @@ describe('Update grants and recipients', () => {
     expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
-    const totalGrants = await Grant.unscoped().findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    const totalGrants = await Grant.unscoped().findAll({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
     expect(totalGrants.length).toBe(15);
   });
 
@@ -232,8 +234,13 @@ describe('Update grants and recipients', () => {
   it('should update cdi grants', async () => {
     await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KDFGN2' } });
     await Grant.create({
-      status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', recipientId: 1119,
-      startDate: '2019-01-01', endDate: '2021-01-01'
+      status: 'Inactive',
+      regionId: 5,
+      id: 11630,
+      number: '13CDI0001',
+      recipientId: 1119,
+      startDate: '2019-01-01',
+      endDate: '2021-01-01',
     });
     await processFiles();
     const grant = await Grant.unscoped().findOne({ where: { id: 11630 } });
