@@ -40,10 +40,11 @@ export function userRegionalPermissions(user) {
     return regionalPermissions;
   }
 
-  user.permissions.filter((permission) => regionalScopeIds.includes(permission.scopeId))
-    .forEach(({ regionId, scopeId }) => {
-      regionalPermissions[regionId][scopeId] = true;
-    });
+  user.permissions.filter((permission) => (
+    regionalScopeIds.includes(permission.scopeId) && permission.regionId !== 14
+  )).forEach(({ regionId, scopeId }) => {
+    regionalPermissions[regionId][scopeId] = true;
+  });
 
   return regionalPermissions;
 }
