@@ -325,7 +325,7 @@ describe('Landing page table menus & selections', () => {
         };
 
         renderLanding(user);
-        expect(await screen.findByRole('heading', { name: /activity reports - all regions/i })).toBeVisible();
+        expect(await screen.findByRole('heading', { name: /activity reports - your regions/i })).toBeVisible();
       });
     });
   });
