@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
 
       Recipient.addScope('defaultScope', {
         where: {
-          deleted: false
+          deleted: false,
         },
       });
     }
