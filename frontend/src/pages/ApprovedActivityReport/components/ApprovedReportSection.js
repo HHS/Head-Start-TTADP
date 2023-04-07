@@ -23,7 +23,7 @@ export default function ApprovedReportSection({
             {subheadings.map((subheading) => (
               <div className="ttahub-approved-report-section--heading--section-row tablet:display-flex" key={uuidv4()}>
                 <p className="ttahub-approved-report-section--heading--section-row-title text-bold usa-prose margin-0 margin-bottom-1 font-sans-3xs">{subheading}</p>
-                <p className="usa-prose margin-0 margin-bottom-1 font-sans-3xs">{renderData(subheading, section.data[subheading])}</p>
+                <p className="ttahub-approved-report-section--heading--section-row-data usa-prose margin-0 margin-bottom-1 font-sans-3xs">{renderData(subheading, section.data[subheading])}</p>
               </div>
             ))}
           </div>
