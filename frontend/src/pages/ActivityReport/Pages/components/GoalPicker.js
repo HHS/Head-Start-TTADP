@@ -110,6 +110,8 @@ const GoalPicker = ({
     if (goal.isCurated) {
       const prompts = await getGoalTemplatePrompts(goal.id, goal.goalIds);
       setTemplatePrompts(prompts);
+    } else {
+      setTemplatePrompts(false);
     }
 
     // update the goal date forcefully
