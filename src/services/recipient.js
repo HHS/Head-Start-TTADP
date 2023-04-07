@@ -76,7 +76,6 @@ export async function allRecipients() {
   });
 }
 
-
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
     attributes: ['id', 'name', 'recipientType', 'uei'],
@@ -115,7 +114,7 @@ export async function recipientById(recipientId, grantScopes) {
                 },
               ],
             },
-            { deleted: false }
+            { deleted: false },
           ],
         }],
         include: [

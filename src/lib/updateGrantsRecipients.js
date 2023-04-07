@@ -5,12 +5,12 @@ import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Op } from 'sequelize';
 import { fileHash } from './fileUtils';
 import db, {
-  Recipient, Grant, Program, sequelize, Goal
+  Recipient, Grant, Program, sequelize, Goal,
 } from '../models';
 import { logger, auditLogger } from '../logger';
-import { Op } from 'sequelize';
 
 const fs = require('mz/fs');
 
@@ -25,6 +25,88 @@ function combineNames(firstName, lastName) {
   // filter removes null names (if a user has a firstname but no lastname)
   const joinedName = names.filter((name) => name).join(' ');
   return joinedName === '' ? null : joinedName;
+}
+
+/**
+ * Performs a soft delete of grants that no longer come from HSES 
+ * and haven't been associated with goals
+ * @param {Array<object>} grantsForDb grants to be entered or updated in the db
+ * @param {Array<object>} recipientsForDb recipients to be entered or updated in the db
+ * @returns
+ */
+// TODO: Once HSES sends the inactivation date, add that date to the query.
+export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
+  console.log(recipientsForDb.length);
+  const grantIdsArr = grantsForDb.map((g) => g.id);
+  console.log(grantIdsArr[0].length);
+  const uniqueGrantIds = [...new Set(grantIdsArr)];
+  const recipientIdsArr = recipientsForDb.map((r) => r.id);
+  const uniqueRecipientIds = [...new Set(recipientIdsArr)];
+
+  console.log('Recipient ids');
+  console.log(uniqueRecipientIds.legth);
+
+  const grantsToDelete = await Grant.unscoped().findAll({
+    attributes: ['id', 'status'],
+    include: [
+      {
+        attributes: [],
+        model: Goal,
+        as: 'goals',
+        required: false,
+      },
+    ],
+    where: {
+      status: 'Inactive',
+      id: {
+        [Op.notIn]: uniqueGrantIds,
+      },
+      '$goals.id$': null,
+    },
+  });
+  console.log('grants to delete');
+  console.log(grantsToDelete.length);
+  console.log(grantsToDelete.map((d) => d.updatedAt));
+
+  const removedGrantIds = grantsToDelete.map((d) => d.id);
+
+  const removedRecipients = await Recipient.unscoped().findAll({
+    attributes: ['id'],
+    include: [{
+      model: Grant.unscoped(),
+      as: 'grants',
+      attributes: [],
+      include: [{
+        model: Goal,
+        as: 'goals',
+        attributes: [],
+        required: false,
+      }],
+    },
+    ],
+    where: {
+      id: { [Op.notIn]: uniqueRecipientIds },
+      '$grants->goals.id$': null,
+    },
+  });
+  const removedRecipientIds = removedRecipients.map((r) => r.id);
+
+  console.log('removing recipients');
+  console.log(removedRecipientIds.length);
+
+  const delGrants = await Grant.unscoped().update(
+    { deleted: true },
+    { where: { id: { [Op.in]: removedGrantIds }, deleted: false } },
+  );
+
+  const delRecips = await Recipient.unscoped().update(
+    { deleted: true },
+    { where: { id: { [Op.in]: removedRecipientIds }, deleted: false } },
+  );
+  logger.info(`updateGrantsRecipients: removed ${delGrants} grants: ${removedGrantIds}`);
+  logger.info(`updGrRecipients: removed ${delRecips} recipients: ${removedRecipientIds}`);
+  console.log(delGrants);
+  console.log(delRecips);
 }
 
 /**
@@ -225,84 +307,6 @@ export async function processFiles(hashSumHex) {
   }
 }
 
-/**
- * Performs a soft delete of grants that no longer come from HSES and haven't been associated with goals
- * @param {Array<object>} grantsForDb grants to be entered or updated in the db
- * @param {Array<object>} recipientsForDb recipients to be entered or updated in the db
- * @returns
- */
-// TODO: Once HSES sends the inactivation date, add that date to the query.
-export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
-  console.log(recipientsForDb.length);
-  const grantIdsArr = grantsForDb.map(g => g.id);
-  console.log(grantIdsArr[0].length);
-  const uniqueGrantIds = [...new Set(grantIdsArr)];
-  const recipientIdsArr = recipientsForDb.map(r => r.id);
-  const uniqueRecipientIds = [...new Set(recipientIdsArr)];
-
-  console.log('Recipient ids');
-  console.log(uniqueRecipientIds.legth);
-
-  const grantsToDelete = await Grant.unscoped().findAll({
-    attributes: ['id', 'status'],
-    include: [
-      {
-        attributes: [],
-        model: Goal,
-        as: 'goals',
-        required: false,
-      },
-    ],
-    where: {
-      status: 'Inactive',
-      id: {
-        [Op.notIn]: uniqueGrantIds
-      },
-      '$goals.id$': null
-    },
-  });
-  console.log('grants to delete');
-  console.log(grantsToDelete.length);
-  console.log(grantsToDelete.map(d => d.updatedAt));
-
-  const removedGrantIds = grantsToDelete.map(d => d.id);
-
-  const removedRecipients = await Recipient.unscoped().findAll({
-    attributes: ['id'],
-    include: [{
-      model: Grant.unscoped(),
-      as: 'grants',
-      attributes: [],
-      include: [{
-        model: Goal,
-        as: 'goals',
-        attributes: [],
-        required: false,
-      }],
-    }
-    ],
-    where: { 
-      id: { [Op.notIn]: uniqueRecipientIds },
-      '$grants->goals.id$': null,
-     },
-  });
-  const removedRecipientIds = removedRecipients.map(r => r.id);
-
-  console.log('removing recipients');
-  console.log(removedRecipientIds.length);
-
-  const delGrants = await Grant.unscoped().update(
-    { deleted: true },
-    { where: { id: { [Op.in]: removedGrantIds }, deleted: false } });
-  
-  const delRecips = await Recipient.unscoped().update(
-    { deleted: true },
-    { where: { id: { [Op.in]: removedRecipientIds }, deleted: false } });
-  logger.info(`updateGrantsRecipients: removed ${delGrants} grants: ${removedGrantIds}`);
-  logger.info(`updateGrantsRecipients: removed ${delRecips} recipients: ${removedRecipientIds}`);
-  console.log(delGrants);
-  console.log(delRecips);
-}
 /**
  * Downloads the HSES recipient/grant zip, extracts to the "temp" directory
  * and calls processFiles to parse xml data and populate the Smart Hub db
