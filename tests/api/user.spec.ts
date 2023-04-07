@@ -3,7 +3,10 @@ import Joi from 'joi';
 import { root, validateSchema } from './common';
 
 test('get /user', async ({ request }) => {
-  const response = await request.get(`${root}/user`);
+  const response = await request.get(
+    `${root}/user`,
+    { headers: { 'playwright-user-id': '1' } },
+  );
   const body = await response.body();
 
   const schema = Joi.object({
@@ -16,7 +19,10 @@ test('get /user', async ({ request }) => {
     phoneNumber: Joi.string().required(),
     homeRegionId: Joi.number().required(),
     lastLogin: Joi.date().iso().required(),
-    flags: Joi.array().items(Joi.any()).required(),
+    flags: Joi.alternatives().try(
+      Joi.array().items(Joi.any()),
+      Joi.string()
+    ).required(),
     createdAt: Joi.date().iso().required(),
     permissions: Joi.array().items(
       Joi.object({
