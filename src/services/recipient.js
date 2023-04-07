@@ -1,6 +1,5 @@
 import { Op } from 'sequelize';
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import {
   Grant,
   Recipient,
@@ -77,7 +76,6 @@ export async function allRecipients() {
   });
 }
 
-const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
@@ -112,11 +110,12 @@ export async function recipientById(recipientId, grantScopes) {
                 },
                 {
                   endDate: {
-                    [Op.between]: ['2020-09-01', todaysDate],
+                    [Op.gt]: '2020-08-31',
                   },
                 },
               ],
             },
+            { deleted: false }
           ],
         }],
         include: [
@@ -190,11 +189,12 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
               },
               {
                 endDate: {
-                  [Op.between]: ['2020-08-31', todaysDate],
+                  [Op.gt]: '2020-08-31',
                 },
               },
             ],
           },
+          { deleted: false },
         ],
       }],
     }],

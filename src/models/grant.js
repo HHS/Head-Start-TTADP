@@ -1,5 +1,5 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
 
 /**
@@ -25,6 +25,10 @@ export default (sequelize, DataTypes) => {
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
 
       Grant.addScope('defaultScope', {
+        where: {
+          deleted: false,
+          endDate: { [Op.gt]: '2020-08-31' },
+        },
         include: [
           { model: models.Recipient, as: 'recipient' },
         ],
@@ -63,6 +67,9 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     oldGrantId: DataTypes.INTEGER,
+    deleted: {
+      type: DataTypes.BOOLEAN,
+    },
     programTypes: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -98,6 +105,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+  //   defaultScope: {
+  //     where: {
+  //       deleted: false
+  //     }
+  //   },
+  // },
+  // {
     sequelize,
     modelName: 'Grant',
   });
