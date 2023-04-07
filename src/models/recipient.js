@@ -12,6 +12,12 @@ export default (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
+
+      Recipient.addScope('defaultScope', {
+        where: {
+          deleted: false
+        },
+      });
     }
   }
   Recipient.init({
@@ -26,6 +32,9 @@ export default (sequelize, DataTypes) => {
     },
     recipientType: {
       type: DataTypes.STRING,
+    },
+    deleted: {
+      type: DataTypes.BOOLEAN,
     },
   }, {
     sequelize,

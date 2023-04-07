@@ -70,15 +70,15 @@ describe('Update grants and recipients', () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    // await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    // await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    // await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
     await db.sequelize.close();
@@ -247,6 +247,40 @@ describe('Update grants and recipients', () => {
     expect(program.status).toBe('Inactive');
     expect(program.grant.id).toBe(10567);
     expect(program.programType).toBe('HS');
+  });
+
+  it('should delete inactive grants that are no longer sent from HSES', async () => {
+    await Recipient.unscoped().findOrCreate({ where: { id: 2119, name: 'Multi ID Agency Old', uei: 'NMA5N2KHMGM2' } });
+    const [dbGrant] = await Grant.unscoped().findOrCreate({
+      where: {
+        id: 6151, number: '90CI5444', recipientId: 2119, status: 'Inactive', startDate: '2002-01-01', endDate: '2025-06-30'
+      }
+    });
+    expect(dbGrant.deleted).not.toBe(true);
+    await processFiles();
+    const grant = await Grant.unscoped().findOne({ where: { id: 6151 } });
+    expect(grant).not.toBeNull();
+    expect(grant.deleted).toBe(true);
+  });
+
+  it('should not delete inactive grants that are used in the Hub', async () => {
+    await Recipient.unscoped().findOrCreate({ where: { id: 3119, name: 'Multi ID Agency Old 3', uei: 'MMA5N2KHMGM2' } });
+    const [dbGrant] = await Grant.unscoped().findOrCreate({
+      where: {
+        id: 7151, number: '90CI6444', recipientId: 3119, status: 'Inactive', startDate: '2002-01-01', endDate: '2025-06-30'
+      }
+    });
+    const [dbGoal] = await Goal.findOrCreate({
+      where: {
+        id: 7151, grantId: 7151, status: 'Not Started'
+      }
+    });
+    expect(dbGrant.deleted).not.toBe(true);
+    expect(dbGoal.grantId).toBe(7151);
+    await processFiles();
+    const grant = await Grant.unscoped().findOne({ where: { id: 7151 } });
+    expect(grant).not.toBeNull();
+    expect(grant.deleted).toBe(false);
   });
 
   it('sets metadata in audit tables', async () => {
