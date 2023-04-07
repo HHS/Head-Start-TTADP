@@ -14,6 +14,7 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
   createObjectivesFileMetaData,
+  deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
 import { ActivityReportObjective, ActivityReportObjectiveFile } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -502,35 +503,8 @@ async function deleteActivityReportObjectiveFile(req, res) {
       return;
     }
 
-    // Get ARO files to delete (destroy does NOT support join's).
-    const aroFilesToDelete = await ActivityReportObjectiveFile.findAll({
-      where: {
-        fileId: parseInt(fileId, DECIMAL_BASE),
-      },
-      include: [
-        {
-          as: 'activityReportObjective',
-          model: ActivityReportObjective,
-          where: {
-            activityReportId: parseInt(reportId, DECIMAL_BASE),
-            objectiveId: objectiveIds,
-          },
-          required: true,
-        },
-      ],
-    });
-
-    // Get ARO file ids.
-    const aroFileIds = aroFilesToDelete.map((arof) => arof.id);
-
-    // Delete ARO files.
-    await ActivityReportObjectiveFile.destroy({
-      where: {
-        id: aroFileIds,
-      },
-      hookMetadata: { objectiveIds },
-      individualHooks: true,
-    });
+    // Delete specific ARO file.
+    await deleteSpecificActivityReportObjectiveFile(reportId, fileId, objectiveIds);
 
     res.status(204).send();
   } catch (error) {
