@@ -1,9 +1,10 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
+import UserContext from '../UserContext';
 import { allRegionsUserHasPermissionTo } from '../permissions';
 
 const navLinkClasses = [
@@ -29,10 +30,11 @@ const NavLink = (props) => (
 
 const SiteNav = ({
   authenticated,
-  user,
+  // user,
   location,
   hasAlerts,
 }) => {
+  const { user } = useContext(UserContext);
   const siteNavContent = useRef(null);
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -59,12 +61,16 @@ const SiteNav = ({
 
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user).join();
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
   // If user has more than one region, Regions label is plural, else singular
   const regionLabel = () => {
     if (hasMultipleRegions) {
       return `Regions ${regions}`;
+    }
+    if (defaultRegion === 14) {
+      return 'All Regions;';
     }
     return `Region ${regions}`;
   };
