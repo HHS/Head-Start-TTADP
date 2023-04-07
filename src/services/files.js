@@ -8,6 +8,7 @@ import {
   ObjectiveTemplate,
   ObjectiveTemplateFile,
   ActivityReportObjective,
+  sequelize,
 } from '../models';
 import { FILE_STATUSES, DECIMAL_BASE } from '../constants';
 
@@ -283,7 +284,10 @@ const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objec
   // Get ARO files to delete (destroy does NOT support join's).
   const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
     raw: true,
-    attributes: ['id'],
+    attributes: [[
+      sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"ActivityReportObjectiveFile"."id"'))),
+      'ids',
+    ]],
     where: {
       fileId: parseInt(fileId, DECIMAL_BASE),
     },
@@ -303,7 +307,7 @@ const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objec
   });
 
   // Get ARO file ids.
-  const aroFileIdsToDelete = aroFileToDelete.map((arof) => arof.id);
+  const aroFileIdsToDelete = aroFileToDelete[0].ids;
 
   // Delete ARO files.
   await ActivityReportObjectiveFile.destroy({
