@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
+import { allRegionsUserHasPermissionTo } from '../permissions';
 
 const navLinkClasses = [
   'display-block',
@@ -56,6 +57,18 @@ const SiteNav = ({
     }
   }, [hasAlerts]);
 
+  // Determine Default Region.
+  const regions = allRegionsUserHasPermissionTo(user).join();
+  const hasMultipleRegions = regions && regions.length > 1;
+
+  // If user has more than one region, Regions label is plural, else singular
+  const regionLabel = () => {
+    if (hasMultipleRegions) {
+      return `Regions ${regions}`;
+    }
+    return `Region ${regions}`;
+  };
+
   if (!showSidebar) return null;
 
   return (
@@ -75,8 +88,8 @@ const SiteNav = ({
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
               <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
-                <p className="text-bold margin-top-2 desktop:margin-top-5">{user.name}</p>
-                <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5">{user.email}</p>
+                <p className="text-bold margin-top-2 desktop:margin-top-5 margin-bottom-1">{user.name}</p>
+                <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5 margin-top-1">{regionLabel()}</p>
               </div>
             </div>
             <nav className="display-flex flex-column flex-justify flex-1" aria-label="main navigation">
