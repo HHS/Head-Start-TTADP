@@ -107,6 +107,8 @@ describe('Activity report cleanup service', () => {
     ]);
     await Grant.create({
       id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 1, status: 'Active',
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // submitted report
