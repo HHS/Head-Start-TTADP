@@ -1,11 +1,12 @@
 module.exports = {
   up: (queryInterface) => queryInterface.sequelize.transaction((transaction) => Promise.all([
     // Add foreign key indices.
-    // In link tables, add a compound index plus a single-column index for the second key in the compound index. The
-    // compound index works about as well as a single-column index for the first key even when the second is not
-    // referenced. In cases where there's a unique constraint, postgres already supplies an index so we only add the
-    // second key index.
-    // We're also not adding indexes on low-cardinality foreign keys like region, roleId, and topicId
+    // In link tables, add a compound index plus a single-column index for the second key in the
+    // compound index. The compound index works about as well as a single-column index for the
+    // first key even when the second is not referenced. In cases where there's a unique
+    // constraint, postgres already supplies an index so we only add the second key index.
+    // We're also not adding indexes on low-cardinality foreign keys like region, roleId,
+    // and topicId
     queryInterface.addIndex('ActivityReportGoals', ['activityReportId', 'goalId'], { transaction }),
     queryInterface.addIndex('ActivityReportGoals', ['goalId'], { transaction }),
     queryInterface.addIndex('ActivityReportCollaborators', ['userId', 'activityReportId'], { transaction }),
@@ -26,7 +27,7 @@ module.exports = {
     // Skipping creating a userProvidedUrl index because it's just a text field
     queryInterface.addIndex('ObjectiveTemplateResources', ['objectiveTemplateId'], { transaction }),
     queryInterface.addIndex('ObjectiveTemplateTopics', ['objectiveTemplateId'], { transaction }),
-    queryInterface.addIndex('ObjectiveTemplateRoles', ['objectiveTemplateId',], { transaction }),
+    queryInterface.addIndex('ObjectiveTemplateRoles', ['objectiveTemplateId'], { transaction }),
     queryInterface.addIndex('Goals', ['grantId'], { transaction }),
     queryInterface.addIndex('Goals', ['goalTemplateId'], { transaction }),
     queryInterface.addIndex('GoalTemplateObjectiveTemplates', ['goalTemplateId', 'objectiveTemplateId'], { transaction }),
@@ -34,14 +35,13 @@ module.exports = {
     queryInterface.addIndex('GroupGrants', ['groupId', 'grantId'], { transaction }),
     queryInterface.addIndex('GroupGrants', ['grantId'], { transaction }),
 
-    // Add predicate key indices with significant enough cardinality for it to be worthwhile and which we actually use
-    // for filtering.
+    // Add predicate key indices with significant enough cardinality for it to be worthwhile and
+    // which we actually use for filtering.
     queryInterface.addIndex('ActivityReports', ['startDate'], { transaction }),
     queryInterface.addIndex('ActivityReports', ['updatedAt'], { transaction }),
     queryInterface.addIndex('ActivityReports', ['approvedAt'], { transaction }),
     queryInterface.addIndex('ActivityReports', ['createdAt'], { transaction }),
     queryInterface.addIndex('Goals', ['createdAt'], { transaction }),
-    
   ])),
 
   down: (queryInterface) => queryInterface.sequelize.transaction((transaction) => Promise.all([
@@ -64,7 +64,7 @@ module.exports = {
     queryInterface.removeIndex('ObjectiveTemplateFiles', ['fileId'], { transaction }),
     queryInterface.removeIndex('ObjectiveTemplateResources', ['objectiveTemplateId'], { transaction }),
     queryInterface.removeIndex('ObjectiveTemplateTopics', ['objectiveTemplateId'], { transaction }),
-    queryInterface.removeIndex('ObjectiveTemplateRoles', ['objectiveTemplateId',], { transaction }),
+    queryInterface.removeIndex('ObjectiveTemplateRoles', ['objectiveTemplateId'], { transaction }),
     queryInterface.removeIndex('Goals', ['grantId'], { transaction }),
     queryInterface.removeIndex('Goals', ['goalTemplateId'], { transaction }),
     queryInterface.removeIndex('GoalTemplateObjectiveTemplates', ['goalTemplateId', 'objectiveTemplateId'], { transaction }),
