@@ -64,6 +64,7 @@ function Landing() {
   const { user } = useContext(UserContext);
 
   // Determine Default Region.
+  console.log({ user });
   const regions = allRegionsUserHasPermissionTo(user);
   console.log({ regions });
   const defaultRegion = user.homeRegionId || regions[0] || 0;
