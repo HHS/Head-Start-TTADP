@@ -15,7 +15,12 @@ describe('Header', () => {
     render((
       <Router history={history}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <Header authenticated={authenticated} alert={alert} />
+          <Header
+            authenticated={authenticated}
+            alert={alert}
+            areThereUnreadNotifications={false}
+            setAreThereUnreadNotifications={jest.fn()}
+          />
         </UserContext.Provider>
       </Router>
     ));
