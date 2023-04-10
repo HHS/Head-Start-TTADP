@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import join from 'url-join';
 import {
-  screen, render,
+  screen, render, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter, Router } from 'react-router';
@@ -10,6 +10,7 @@ import { createMemoryHistory } from 'history';
 
 import SiteNav from '../SiteNav';
 import UserContext from '../../UserContext';
+import { SCOPE_IDS } from '../../Constants';
 
 const history = createMemoryHistory();
 
@@ -126,6 +127,89 @@ describe('SiteNav', () => {
 
     test('nav items are visible', () => {
       expect(screen.queryAllByRole('link').length).not.toBe(0);
+    });
+  });
+
+  describe('site nav label', () => {
+    afterEach(() => fetchMock.restore());
+
+    const userUrl = join('api', 'user');
+
+    const renderSiteNav = (u) => {
+      const user = { ...u, name: 'name' };
+      fetchMock.get(userUrl, { ...user });
+
+      render(
+        <MemoryRouter>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <header className="smart-hub-header.has-alerts">
+              <SiteNav authenticated user={user} hasAlerts />
+            </header>
+          </UserContext.Provider>
+        </MemoryRouter>,
+      );
+    };
+
+    test('has multiple regions', async () => {
+      const user = {
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 2,
+          },
+        ],
+      };
+
+      act(() => {
+        renderSiteNav(user);
+      });
+
+      expect(await screen.findByText('Regions 1, 2')).toBeVisible();
+    });
+
+    test('has sinle region', async () => {
+      const user = {
+        homeRegionId: 1,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      act(() => {
+        renderSiteNav(user);
+      });
+
+      expect(await screen.findByText('Region 1')).toBeVisible();
+    });
+
+    test('is central office', async () => {
+      const user = {
+        homeRegionId: 14,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 2,
+          },
+        ],
+      };
+
+      act(() => {
+        renderSiteNav(user);
+      });
+
+      expect(await screen.findByText('All Regions')).toBeVisible();
     });
   });
 });

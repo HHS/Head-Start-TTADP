@@ -16,6 +16,7 @@ import activityReports, { activityReportsSorted, generateXFakeReports, overviewR
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString } from '../../../utils';
 import { mockWindowProperty, convertToResponse } from '../../../testHelpers';
+import { SCOPE_IDS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -320,6 +321,42 @@ describe('Landing page table menus & selections', () => {
             {
               scopeId: 2,
               regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        expect(await screen.findByRole('heading', { name: /activity reports - your regions/i })).toBeVisible();
+      });
+
+      it('user with one region shows the correct label', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 1,
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        expect(await screen.findByRole('heading', { name: /activity reports - your region/i })).toBeVisible();
+      });
+
+      it('user with multiple region shows the correct label', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 1,
+          permissions: [
+            {
+              scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+              regionId: 1,
+            },
+            {
+              scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+              regionId: 3,
             },
           ],
         };

@@ -32,7 +32,6 @@ const NavLink = (props) => (
 
 const SiteNav = ({
   authenticated,
-  // user,
   location,
   hasAlerts,
 }) => {
@@ -62,18 +61,20 @@ const SiteNav = ({
   }, [hasAlerts]);
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user).join();
+  const regions = allRegionsUserHasPermissionTo(user).join(', ');
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
   // If user has more than one region, Regions label is plural, else singular
   const regionLabel = () => {
+    if (defaultRegion === 14) {
+      return 'All Regions';
+    }
+
     if (hasMultipleRegions) {
       return `Regions ${regions}`;
     }
-    if (defaultRegion === 14) {
-      return 'All Regions;';
-    }
+
     return `Region ${regions}`;
   };
 
@@ -155,16 +156,11 @@ SiteNav.displayName = 'SiteNav';
 
 SiteNav.propTypes = {
   authenticated: PropTypes.bool,
-  user: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
   location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
   hasAlerts: PropTypes.bool.isRequired,
 };
 
 SiteNav.defaultProps = {
   authenticated: false,
-  user: {
-    name: '',
-    email: '',
-  },
 };
 export default withRouter(SiteNav);
