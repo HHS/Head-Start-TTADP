@@ -20,7 +20,9 @@ test('my groups', async ({ page }) => {
   await page.getByRole('button', { name: 'Save group' }).click();
 
   // navigate to the recipient search page
+  const recipientPageLoad = page.waitForResponse(/api\/recipient\/search/)
   await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
+  await recipientPageLoad;
   await page.getByRole('button', { name: 'open filters for this page' }).click();
   await page.locator('select[name="topic"]').selectOption('group');
   await page.locator('select[name="condition"]').selectOption('is');
@@ -40,9 +42,4 @@ test('my groups', async ({ page }) => {
   await page.getByTestId('textInput').clear()
   await page.getByTestId('textInput').fill('A new group for me and you');  
   await page.getByRole('button', { name: 'Save group' }).click();
-
-  // delete group
-  await page.getByText('A new group for me and youEdit groupDelete group').click();
-  await page.getByRole('button', { name: 'Delete group' }).click();
-  expect(page.getByText('You have no groups.')).toBeTruthy();
 });

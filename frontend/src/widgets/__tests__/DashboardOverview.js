@@ -33,7 +33,7 @@ describe('Dashboard Overview Widget', () => {
     expect(screen.getByText(/10/i)).toBeInTheDocument();
     expect(screen.getByText(/2,623.0/i)).toBeInTheDocument();
     expect(screen.getByText(/hours of tta/i)).toBeInTheDocument();
-    expect(screen.getByText(/in-person activities/i)).toBeInTheDocument();
+    expect(screen.getByText(/in person activities/i)).toBeInTheDocument();
   });
 
   it('renders loading when loading', async () => {

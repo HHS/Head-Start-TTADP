@@ -380,7 +380,7 @@ describe('grant filtersToScopes', () => {
   describe('group', () => {
     it('filters by', async () => {
       const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
-      const filters = { 'group.in': [groupName] };
+      const filters = { 'group.in': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
@@ -393,7 +393,7 @@ describe('grant filtersToScopes', () => {
 
     it('filters out', async () => {
       const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
-      const filters = { 'group.nin': [groupName] };
+      const filters = { 'group.nin': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
