@@ -1,12 +1,11 @@
-/* eslint-disable import/prefer-default-export */
 import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { buildDefaultRegionFilters } from './regionHelpers';
+import { buildDefaultRegionFilters } from '../pages/regionHelpers';
 import { getUserRegions } from '../permissions';
 import { formatDateRange } from '../utils';
-import useSessionFiltersAndReflectInUrl from '../hooks/useSessionFiltersAndReflectInUrl';
+import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 
-const defaultDate = formatDateRange({
+export const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
 });
