@@ -28,8 +28,6 @@ export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
 
   if (!permissions) return [];
 
-  console.log({ permissions });
-
   const minPermissions = [
     SCOPE_IDS.READ_ACTIVITY_REPORTS,
     SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
@@ -43,8 +41,6 @@ export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
       regions.push(perm.regionId);
     }
   });
-
-  console.log({ regions });
 
   return _.uniq(regions);
 };
