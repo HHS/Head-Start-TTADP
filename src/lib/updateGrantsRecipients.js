@@ -36,15 +36,9 @@ function combineNames(firstName, lastName) {
  */
 // TODO: Once HSES sends the inactivation date, add that date to the query.
 export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
-  console.log(recipientsForDb.length);
   const grantIdsArr = grantsForDb.map((g) => g.id);
-  console.log(grantIdsArr[0].length);
-  const uniqueGrantIds = [...new Set(grantIdsArr)];
   const recipientIdsArr = recipientsForDb.map((r) => r.id);
   const uniqueRecipientIds = [...new Set(recipientIdsArr)];
-
-  console.log('Recipient ids');
-  console.log(uniqueRecipientIds.legth);
 
   const grantsToDelete = await Grant.unscoped().findAll({
     attributes: ['id', 'status'],
@@ -59,14 +53,11 @@ export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
     where: {
       status: 'Inactive',
       id: {
-        [Op.notIn]: uniqueGrantIds,
+        [Op.notIn]: grantIdsArr,
       },
       '$goals.id$': null,
     },
   });
-  console.log('grants to delete');
-  console.log(grantsToDelete.length);
-  console.log(grantsToDelete.map((d) => d.updatedAt));
 
   const removedGrantIds = grantsToDelete.map((d) => d.id);
 
@@ -91,9 +82,6 @@ export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
   });
   const removedRecipientIds = removedRecipients.map((r) => r.id);
 
-  console.log('removing recipients');
-  console.log(removedRecipientIds.length);
-
   const delGrants = await Grant.unscoped().update(
     { deleted: true },
     { where: { id: { [Op.in]: removedGrantIds }, deleted: false } },
@@ -105,8 +93,6 @@ export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
   );
   logger.info(`updateGrantsRecipients: removed ${delGrants} grants: ${removedGrantIds}`);
   logger.info(`updGrRecipients: removed ${delRecips} recipients: ${removedRecipientIds}`);
-  console.log(delGrants);
-  console.log(delRecips);
 }
 
 /**
