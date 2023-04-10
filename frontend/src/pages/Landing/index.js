@@ -201,10 +201,7 @@ function Landing() {
   }
 
   const regionLabel = () => {
-    if (hasMultipleRegions) {
-      return 'your regions';
-    }
-    if (defaultRegion === 14) {
+    if (defaultRegion === 14 || hasMultipleRegions) {
       return 'your regions';
     }
     return 'your region';
