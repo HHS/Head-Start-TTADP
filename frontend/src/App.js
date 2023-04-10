@@ -66,24 +66,24 @@ function App() {
   const [alert, setAlert] = useState(null);
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
-  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState((() => {
+  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useEffect(() => {
     try {
-      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY);
+      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY) || '[]';
 
       if (readNotifications) {
         const parsedReadNotifications = JSON.parse(readNotifications);
         const dom = notifications.whatsNew ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml') : '';
         const ids = dom ? Array.from(dom.querySelectorAll('entry')).map((item) => item.querySelector('id').textContent) : [];
-
         const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
-        return unreadNotifications.length > 0;
+
+        setAreThereUnreadNotifications(unreadNotifications.length > 0);
       }
     } catch (err) {
-      return false;
+      setAreThereUnreadNotifications(false);
     }
-
-    return false;
-  })());
+  }, [notifications]);
 
   useEffect(() => {
     // fetch alerts
