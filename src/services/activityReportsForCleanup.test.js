@@ -106,7 +106,11 @@ describe('Activity report cleanup service', () => {
       Recipient.create({ name: faker.word.noun(), id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
     ]);
     await Grant.create({
-      id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 1, status: 'Active',
+      id: RECIPIENT_ID,
+      number: 1,
+      recipientId: RECIPIENT_ID,
+      regionId: 1,
+      status: 'Active',
       startDate: new Date(),
       endDate: new Date(),
     });
