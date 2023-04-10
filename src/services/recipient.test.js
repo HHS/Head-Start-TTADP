@@ -216,9 +216,9 @@ describe('Recipient DB service', () => {
     it('returns all recipients', async () => {
       const foundRecipients = await allRecipients();
       const foundIds = foundRecipients.map((g) => g.id);
-      expect(foundIds).toContain(73);
       expect(foundIds).toContain(74);
       expect(foundIds).toContain(75);
+      expect(foundIds).toContain(76);
     });
   });
 
@@ -279,7 +279,7 @@ describe('Recipient DB service', () => {
       const recipient = await recipientById(76, {});
 
       expect(recipient.name).toBe('recipient 4');
-      expect(recipient.grants.length).toBe(4);
+      expect(recipient.grants.length).toBe(5);
 
       // Active After Cut Off Date.
       expect(recipient.grants[0].id).toBe(76);
@@ -289,13 +289,17 @@ describe('Recipient DB service', () => {
       expect(recipient.grants[1].id).toBe(77);
       expect(recipient.grants[1].status).toBe('Active');
 
-      // Inactive with End Date of Today.
-      expect(recipient.grants[2].id).toBe(81);
+      // Inactive with End Date past Today.
+      expect(recipient.grants[2].id).toBe(80);
       expect(recipient.grants[2].status).toBe('Inactive');
 
-      // Inactive After Cut Off Date.
-      expect(recipient.grants[3].id).toBe(78);
+      // Inactive with End Date of Today.
+      expect(recipient.grants[3].id).toBe(81);
       expect(recipient.grants[3].status).toBe('Inactive');
+
+      // Inactive After Cut Off Date.
+      expect(recipient.grants[4].id).toBe(78);
+      expect(recipient.grants[4].status).toBe('Inactive');
     });
   });
 
@@ -551,7 +555,7 @@ describe('Recipient DB service', () => {
       const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
-      expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
   });
 
@@ -592,6 +596,8 @@ describe('Recipient DB service', () => {
         regionId: region.id,
         number: String(faker.datatype.number({ min: 1000 })),
         status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       await Grant.create({
@@ -600,6 +606,8 @@ describe('Recipient DB service', () => {
         regionId: region.id,
         number: String(faker.datatype.number({ min: 1000 })),
         status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       await Grant.create({
@@ -608,6 +616,8 @@ describe('Recipient DB service', () => {
         regionId: region.id,
         number: String(faker.datatype.number({ min: 1000 })),
         status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
       });
     });
 
