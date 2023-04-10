@@ -9,7 +9,6 @@ module.exports = {
     // and topicId
     queryInterface.addIndex('ActivityReportGoals', ['activityReportId', 'goalId'], { transaction }),
     queryInterface.addIndex('ActivityReportGoals', ['goalId'], { transaction }),
-    queryInterface.addIndex('ActivityReportCollaborators', ['userId', 'activityReportId'], { transaction }),
     queryInterface.addIndex('ActivityReportCollaborators', ['activityReportId'], { transaction }),
     queryInterface.addIndex('ActivityReportObjectives', ['activityReportId', 'objectiveId'], { transaction }),
     queryInterface.addIndex('ActivityReportObjectives', ['objectiveId'], { transaction }),
@@ -48,7 +47,6 @@ module.exports = {
     // Remove foreign key indices.
     queryInterface.removeIndex('ActivityReportGoals', ['activityReportId', 'goalId'], { transaction }),
     queryInterface.removeIndex('ActivityReportGoals', ['goalId'], { transaction }),
-    queryInterface.removeIndex('ActivityReportCollaborators', ['userId', 'activityReportId'], { transaction }),
     queryInterface.removeIndex('ActivityReportCollaborators', ['activityReportId'], { transaction }),
     queryInterface.removeIndex('ActivityReportObjectives', ['activityReportId', 'objectiveId'], { transaction }),
     queryInterface.removeIndex('ActivityReportObjectives', ['objectiveId'], { transaction }),
