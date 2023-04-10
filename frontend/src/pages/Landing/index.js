@@ -204,6 +204,9 @@ function Landing() {
     if (hasMultipleRegions) {
       return 'your regions';
     }
+    if (defaultRegion === 14) {
+      return 'your regions';
+    }
     return 'your region';
   };
 
