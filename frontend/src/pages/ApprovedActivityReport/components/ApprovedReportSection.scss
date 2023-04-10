@@ -1,7 +1,7 @@
 @use '../../../colors.scss' as *;
 
 // these next two style blocks will only apply on desktop
-.ttahub-approved-report-section--heading--section-row > p {
+.ttahub-approved-report-section--heading--section-row-data  {
   flex-basis: max(300px, 75%)
 }
 
