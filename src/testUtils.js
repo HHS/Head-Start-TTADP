@@ -82,6 +82,7 @@ function defaultGrant() {
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
+    endDate: new Date(),
   };
 }
 
