@@ -47,6 +47,7 @@ import AppLoadingContext from './AppLoadingContext';
 import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
+import useAnalytics from './hooks/useAnalytics';
 
 function App() {
   const [user, updateUser] = useState();
@@ -60,6 +61,11 @@ function App() {
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
   const [alert, setAlert] = useState(null);
+  const { trackBrowserSize } = useAnalytics();
+
+  useEffect(() => {
+    trackBrowserSize(`${window.innerWidth}x${window.innerHeight}`);
+  }, [trackBrowserSize]);
 
   useEffect(() => {
     // fetch alerts
