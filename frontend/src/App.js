@@ -33,6 +33,7 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
+import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
@@ -43,9 +44,9 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
+import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
-import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
   const [user, updateUser] = useState();
@@ -326,19 +327,21 @@ function App() {
             </>
           )}
           <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header authenticated alert={alert} />
-            <AriaLiveContext.Provider value={{ announce }}>
-              {!authenticated && (authError === 403
-                ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-                : (
-                  <AppWrapper padded={false} logout={logout}>
-                    <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                  </AppWrapper>
-                )
-              )}
-              {authenticated && renderAuthenticatedRoutes()}
+            <MyGroupsProvider authenticated={authenticated}>
+              <Header authenticated alert={alert} />
+              <AriaLiveContext.Provider value={{ announce }}>
+                {!authenticated && (authError === 403
+                  ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                  : (
+                    <AppWrapper padded={false} logout={logout}>
+                      <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                    </AppWrapper>
+                  )
+                )}
+                {authenticated && renderAuthenticatedRoutes()}
 
-            </AriaLiveContext.Provider>
+              </AriaLiveContext.Provider>
+            </MyGroupsProvider>
           </UserContext.Provider>
         </BrowserRouter>
         <AriaLiveRegion messages={announcements} />

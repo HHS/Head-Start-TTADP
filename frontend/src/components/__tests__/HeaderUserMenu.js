@@ -17,6 +17,7 @@ describe('HeaderUserMenu', () => {
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
   const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
+  const groupsUrl = join('api', 'groups');
 
   const before = async (admin = false) => {
     if (admin) {
@@ -27,6 +28,7 @@ describe('HeaderUserMenu', () => {
 
     fetchMock.get(logoutUrl, 200);
     fetchMock.get(cleanupUrl, []);
+    fetchMock.get(groupsUrl, []);
 
     render(<App />);
 
