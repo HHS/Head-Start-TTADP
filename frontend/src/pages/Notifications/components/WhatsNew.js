@@ -23,7 +23,19 @@ const MONTHS = [
   'December',
 ];
 
-const parseFeedIntoDom = (feed) => (feed ? new window.DOMParser().parseFromString(feed, 'text/xml') : null);
+export const parseFeedIntoDom = (feed) => {
+  if (!feed) {
+    return null;
+  }
+
+  const parsedDom = new window.DOMParser().parseFromString(feed, 'text/xml');
+
+  if (parsedDom.querySelector('parsererror')) {
+    return null;
+  }
+
+  return parsedDom;
+};
 
 export const formatWhatsNew = (feed) => {
   const dom = parseFeedIntoDom(feed);
@@ -153,6 +165,11 @@ export default function WhatsNew({ data }) {
             )}
           </div>
         ))}
+        <div>
+          <a href="https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/99975260/What+s+new" className="ttahub-read-more--external">
+            Read past release notes in the user guide
+          </a>
+        </div>
       </div>
     </Container>
   );

@@ -67,9 +67,14 @@ describe('App', () => {
 
       const alertsUrl = join('api', 'alerts');
       fetchMock.get(alertsUrl, []);
+      const groupsUrl = join('api', 'groups');
+      fetchMock.get(groupsUrl, []);
 
       const renderApp = () => render(<App />);
-      act(renderApp);
+
+      act(() => {
+        renderApp();
+      });
 
       await waitFor(() => expect(fetchMock.called(alertsUrl)).toBe(true));
       await waitFor(() => expect(fetchMock.called(whatsNew)).toBe(true));

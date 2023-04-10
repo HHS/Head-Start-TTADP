@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
-import WhatsNew, { formatWhatsNew } from '../WhatsNew';
+import WhatsNew, { formatWhatsNew, parseFeedIntoDom } from '../WhatsNew';
 import { mockRSSData, mockWindowProperty } from '../../../../testHelpers';
 
 describe('formatWhatsNew', () => {
@@ -42,6 +42,30 @@ describe('formatWhatsNew', () => {
       const articles = formatWhatsNew(mockRSSData());
       expect(articles).toMatchSnapshot();
     });
+  });
+});
+
+describe('parseFeedIntoDom', () => {
+  it('parses a feed', () => {
+    const parsed = parseFeedIntoDom(mockRSSData());
+    expect(parsed).toBeTruthy();
+
+    expect(parsed.querySelectorAll('parsererror').length).toBe(0);
+  });
+
+  it('returns null if the feed is invalid', () => {
+    const parsed = parseFeedIntoDom('invalid');
+    expect(parsed).toBeNull();
+  });
+
+  it('returns null if the feed is null', () => {
+    const parsed = parseFeedIntoDom(null);
+    expect(parsed).toBeNull();
+  });
+
+  it('returns null if the parser throws an error', () => {
+    const parsed = parseFeedIntoDom(1000);
+    expect(parsed).toBeNull();
   });
 });
 
