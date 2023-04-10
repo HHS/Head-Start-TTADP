@@ -1,5 +1,6 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
+import { DECIMAL_BASE } from '../constants';
 
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)
@@ -7,10 +8,10 @@ import { map, pickBy } from 'lodash';
  *
  * @param {String[]} dates
  * @param {String} property
- * @param {Op.gt || Op.lt} Operator (a sequelize date operator)
+ * @param {string} Operator (a sequelize date operator)
  * @returns an array meant to be folded in an Op.and/Op.or sequelize expression
  */
-export function compareDate(dates, property, operator) {
+export function compareDate(dates: string[], property: string, operator: string): WhereOptions[] {
   return dates.reduce((acc, date) => [
     ...acc,
     {
@@ -29,7 +30,7 @@ export function compareDate(dates, property, operator) {
  * @param {String} property
  * @returns an array meant to be folded in an Op.and/Op.or sequelize expression
  */
-export function withinDateRange(dates, property) {
+export function withinDateRange(dates: string[], property: string): WhereOptions[] {
   return dates.reduce((acc, range) => {
     if (!range.split) {
       return acc;
@@ -106,3 +107,5 @@ export function filterAssociation(baseQuery, searchTerms, exclude, callback, com
     [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
   };
 }
+
+export const idClause = (query: string[]) => query.filter((id: string) => !Number.isNaN(parseInt(id, DECIMAL_BASE))).join(',');

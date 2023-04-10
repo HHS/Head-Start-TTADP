@@ -1,23 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
-import { fetchGroups } from '../../fetchers/groups';
+import { MyGroupsContext } from '../MyGroupsProvider';
 
 export default function FilterGroups({
   onApply,
   inputId,
   query,
 }) {
-  const [groups, setGroups] = useState([]);
-
-  useEffect(() => {
-    fetchGroups().then((gr) => {
-      setGroups(gr.map((g) => ({
-        value: g.id,
-        label: g.name,
-      })));
-    });
-  }, []);
+  const { myGroups } = useContext(MyGroupsContext);
+  const groups = myGroups.map((g) => ({
+    value: g.id,
+    label: g.name,
+  }));
 
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -29,6 +24,7 @@ export default function FilterGroups({
       labelText="Select group to filter by"
       options={groups}
       selectedValues={query}
+      mapByValue // this returns the value instead of the label through "selected" via onApplyClick
     />
   );
 }

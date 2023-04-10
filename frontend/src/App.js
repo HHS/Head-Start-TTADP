@@ -33,6 +33,7 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
+import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
@@ -44,9 +45,9 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
+import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
-import MyGroups from './pages/AccountManagement/MyGroups';
 import NotificationsPage from './pages/Notifications';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
@@ -375,26 +376,27 @@ function App() {
               </UserContext.Provider>
             </>
           )}
-          <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header
-              authenticated
-              alert={alert}
-              areThereUnreadNotifications={areThereUnreadNotifications}
-              setAreThereUnreadNotifications={setAreThereUnreadNotifications}
-            />
-            <AriaLiveContext.Provider value={{ announce }}>
-              {!authenticated && (authError === 403
-                ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-                : (
-                  <AppWrapper padded={false} logout={logout}>
-                    <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                  </AppWrapper>
-                )
-              )}
-              {authenticated && renderAuthenticatedRoutes()}
-
-            </AriaLiveContext.Provider>
-          </UserContext.Provider>
+          <AriaLiveContext.Provider value={{ announce }}>
+            <MyGroupsProvider authenticated={authenticated}>
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <Header
+                  authenticated
+                  alert={alert}
+                  areThereUnreadNotifications={areThereUnreadNotifications}
+                  setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+                />
+                {!authenticated && (authError === 403
+                  ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                  : (
+                    <AppWrapper padded={false} logout={logout}>
+                      <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                    </AppWrapper>
+                  )
+                )}
+                {authenticated && renderAuthenticatedRoutes()}
+              </UserContext.Provider>
+            </MyGroupsProvider>
+          </AriaLiveContext.Provider>
         </BrowserRouter>
         <AriaLiveRegion messages={announcements} />
       </AppLoadingContext.Provider>
