@@ -65,6 +65,7 @@ function Landing() {
 
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
+  console.log({ regions });
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
@@ -201,7 +202,7 @@ function Landing() {
   }
 
   const regionLabel = () => {
-    if (hasMultipleRegions) {
+    if (defaultRegion === 14 || hasMultipleRegions) {
       return 'your regions';
     }
     return 'your region';
