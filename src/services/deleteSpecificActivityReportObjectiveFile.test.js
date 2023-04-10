@@ -70,6 +70,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     number: faker.random.alphaNumeric(5),
     cdi: false,
     regionId: 1,
+    startDate: new Date(),
+    endDate: new Date(),
   };
 
   beforeAll(async () => {

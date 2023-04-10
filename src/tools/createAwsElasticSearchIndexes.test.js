@@ -88,6 +88,8 @@ describe('Create AWS Elastic Search Indexes', () => {
         number: 'ES234234',
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Draft Report (excluded).
