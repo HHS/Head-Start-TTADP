@@ -33,6 +33,7 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
+import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
@@ -44,9 +45,9 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
+import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
-import MyGroups from './pages/AccountManagement/MyGroups';
 import NotificationsPage from './pages/Notifications';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
@@ -65,24 +66,24 @@ function App() {
   const [alert, setAlert] = useState(null);
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
-  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState((() => {
+  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useEffect(() => {
     try {
-      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY);
+      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY) || '[]';
 
       if (readNotifications) {
         const parsedReadNotifications = JSON.parse(readNotifications);
         const dom = notifications.whatsNew ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml') : '';
         const ids = dom ? Array.from(dom.querySelectorAll('entry')).map((item) => item.querySelector('id').textContent) : [];
-
         const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
-        return unreadNotifications.length > 0;
+
+        setAreThereUnreadNotifications(unreadNotifications.length > 0);
       }
     } catch (err) {
-      return true;
+      setAreThereUnreadNotifications(false);
     }
-
-    return true;
-  })());
+  }, [notifications]);
 
   useEffect(() => {
     // fetch alerts
@@ -375,26 +376,27 @@ function App() {
               </UserContext.Provider>
             </>
           )}
-          <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header
-              authenticated
-              alert={alert}
-              areThereUnreadNotifications={areThereUnreadNotifications}
-              setAreThereUnreadNotifications={setAreThereUnreadNotifications}
-            />
-            <AriaLiveContext.Provider value={{ announce }}>
-              {!authenticated && (authError === 403
-                ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-                : (
-                  <AppWrapper padded={false} logout={logout}>
-                    <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                  </AppWrapper>
-                )
-              )}
-              {authenticated && renderAuthenticatedRoutes()}
-
-            </AriaLiveContext.Provider>
-          </UserContext.Provider>
+          <AriaLiveContext.Provider value={{ announce }}>
+            <MyGroupsProvider authenticated={authenticated}>
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <Header
+                  authenticated
+                  alert={alert}
+                  areThereUnreadNotifications={areThereUnreadNotifications}
+                  setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+                />
+                {!authenticated && (authError === 403
+                  ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                  : (
+                    <AppWrapper padded={false} logout={logout}>
+                      <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                    </AppWrapper>
+                  )
+                )}
+                {authenticated && renderAuthenticatedRoutes()}
+              </UserContext.Provider>
+            </MyGroupsProvider>
+          </AriaLiveContext.Provider>
         </BrowserRouter>
         <AriaLiveRegion messages={announcements} />
       </AppLoadingContext.Provider>

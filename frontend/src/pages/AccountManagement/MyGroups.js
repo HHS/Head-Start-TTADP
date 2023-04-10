@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
@@ -13,6 +13,7 @@ import Req from '../../components/Req';
 import { getRecipientAndGrantsByUser } from '../../fetchers/recipient';
 import MultiSelect from '../../components/MultiSelect';
 import { createGroup, fetchGroup, updateGroup } from '../../fetchers/groups';
+import { MyGroupsContext } from '../../components/MyGroupsProvider';
 
 const mapGrants = (grants) => grants.map((grant) => ({
   value: grant.id,
@@ -30,6 +31,9 @@ export default function MyGroups({ match }) {
   const [error, setError] = useState(null);
   const history = useHistory();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
+
+  // see the comment above "onSubmit" for, well, context
+  const { myGroups, setMyGroups } = useContext(MyGroupsContext);
 
   const { control, handleSubmit, setValue } = useForm({
     defaultValues: {
@@ -73,21 +77,35 @@ export default function MyGroups({ match }) {
     }
   }, [recipientsFetched]);
 
+  // you'll notice that "setMyGroups" is called below
+  // - since we fetch that data once, way earlier, in App.js, we must update it here
+  // if a user creates or updates a group. Given that we are working in SPA, it's
+  // very possible that a user will create a group, then navigate to the a page and expect to use
+  // it without refreshing, so that data will not be refreshed from the API
   const onSubmit = async (data) => {
     try {
       if (!groupId) {
-        await createGroup({
+        const g = await createGroup({
           grants: data['select-recipients-new-group'].map(({ value }) => (value)),
           name: data['new-group-name'],
         });
+
+        setMyGroups([...myGroups, g]);
       }
 
       if (groupId) {
-        await updateGroup({
+        const g = await updateGroup({
           id: groupId,
           name: data['new-group-name'],
           grants: data['select-recipients-new-group'].map(({ value }) => (value)),
         });
+
+        setMyGroups(myGroups.map((group) => {
+          if (group.id === g.id) {
+            return g;
+          }
+          return group;
+        }));
       }
 
       history.push('/account');

@@ -2,7 +2,7 @@ import axios from 'axios';
 import getCachedResponse from '../lib/cache';
 
 const FEED_URLS = {
-  whatsNew: 'https://acf-ohs.atlassian.net/wiki/createrssfeed.action?types=blogpost&spaces=conf_all&title=Whats+New&labelString=whatsnew&excludedSpaceKeys%3D&sort=modified&maxResults=25&timeSpan=90&showContent=true&confirm=Create+RSS+Feed&os_authType=basic',
+  whatsNew: 'https://acf-ohs.atlassian.net/wiki/createrssfeed.action?types=blogpost&spaces=conf_all&title=Whats+New&labelString=whatsnew&excludedSpaceKeys%3D&sort=modified&maxResults=10&timeSpan=90&showContent=true&confirm=Create+RSS+Feed&os_authType=basic',
 };
 
 export async function fetchFeed(feedAddress: string) {

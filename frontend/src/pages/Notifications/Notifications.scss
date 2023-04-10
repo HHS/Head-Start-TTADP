@@ -27,11 +27,12 @@ this hides the initial "author inforation" blocks"
     display: none;
 }
 
-.ttahub-feed-article__whats-new .public-DraftStyleDefault-block a:after {
+.ttahub-feed-article__whats-new .public-DraftStyleDefault-block a:after,
+.ttahub-read-more--external:after {
     content: "\f35d";    
     display: inline-block;
     font: normal normal normal 16px/1 FontAwesome;
-    margin: 0 2px;
+    margin: 0 8px;
 }
 
 .ttahub-feed-article__whats-new .public-DraftStyleDefault-block a:hover:after {
