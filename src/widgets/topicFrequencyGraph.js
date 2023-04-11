@@ -1,11 +1,11 @@
 import { Op, QueryTypes } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   Topic,
   ActivityReportObjective,
   sequelize,
 } from '../models';
-import { REPORT_STATUSES } from '../constants';
 
 export default async function topicFrequencyGraph(scopes) {
   const [
