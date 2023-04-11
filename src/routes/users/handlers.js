@@ -1,10 +1,10 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import UserPolicy from '../../policies/user';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   userById, usersWithPermissions, statisticsByUser, setFlag,
 } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
-import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';

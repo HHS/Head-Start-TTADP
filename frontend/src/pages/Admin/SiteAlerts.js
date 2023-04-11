@@ -1,8 +1,8 @@
 import { Button, Alert } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import Container from '../../components/Container';
-import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '../../Constants';
 import { deleteSiteAlert, getSiteAlerts } from '../../fetchers/Admin';
 import AlertReview from './components/AlertReview';
 

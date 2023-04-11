@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -9,7 +10,6 @@ import FilterPanel from '../FilterPanel';
 import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
 import { LANDING_FILTER_CONFIG_WITH_REGIONS } from '../../../pages/Landing/constants';
-import { SCOPE_IDS } from '../../../Constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 

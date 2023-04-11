@@ -1,4 +1,4 @@
-import { TOPICS, REASONS } from '../constants';
+import { TOPICS, REASONS } from '@ttahub/common';
 
 import { countOccurrences } from './helpers';
 
