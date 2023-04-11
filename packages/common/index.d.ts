@@ -1,5 +1,3 @@
-declare module '@ttahub/common';
-
 export declare const RECIPIENT_PARTICIPANTS: string[];
 export declare const OTHER_ENTITY_PARTICIPANTS: string[];
 export declare const ALL_PARTICIPANTS: string[];
@@ -43,4 +41,3 @@ export declare const ALERT_SIZES: {
     SLIM: string;
     LARGE: string;
 };
-
