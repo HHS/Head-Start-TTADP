@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportApprover,
@@ -10,8 +11,6 @@ import {
 import {
   activityReportsForCleanup,
 } from './activityReports';
-import { REPORT_STATUSES } from '../constants';
-
 import { createReport, destroyReport } from '../testUtils';
 
 const RECIPIENT_ID = faker.datatype.number({ min: 900 });

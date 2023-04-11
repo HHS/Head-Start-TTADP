@@ -1,6 +1,5 @@
-import { QueryTypes } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  sequelize,
   ActivityReport,
   ActivityRecipient,
   Topic,
@@ -23,7 +22,7 @@ import {
   resourceTopicUse,
   resourceDashboard,
 } from './resource';
-import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
+import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
 
 const RECIPIENT_ID = 46204400;
