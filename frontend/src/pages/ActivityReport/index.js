@@ -16,13 +16,12 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  REPORT_STATUSES,
-  DECIMAL_BASE,
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,

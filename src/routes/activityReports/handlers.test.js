@@ -1,4 +1,7 @@
 import {
+  APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS,
+} from '@ttahub/common';
+import {
   getReport,
   saveReport,
   createReport,
@@ -47,7 +50,6 @@ import db, {
   ActivityReportApprover, ActivityReport as ActivityReportModel, Permission, User as UserModel,
 } from '../../models';
 import * as mailer from '../../lib/mailer';
-import { APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({

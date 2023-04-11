@@ -2,7 +2,8 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';

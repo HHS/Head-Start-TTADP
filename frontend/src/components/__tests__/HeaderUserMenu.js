@@ -1,12 +1,12 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   screen, render, fireEvent,
 } from '@testing-library/react';
 import App from '../../App';
-import { SCOPE_IDS } from '../../Constants';
 import { mockRSSData } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {

@@ -4,6 +4,7 @@
   "private": true,
   "license": "ISC",
   "dependencies": {
+    "@ttahub/common": "file:./../packages/common",
     "@babel/runtime": "^7.12.1",
     "@fortawesome/fontawesome-pro": "^6.1.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",

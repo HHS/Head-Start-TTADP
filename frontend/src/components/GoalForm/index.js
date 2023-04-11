@@ -6,6 +6,7 @@ import React, {
   useContext,
 } from 'react';
 import moment from 'moment';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -30,7 +31,6 @@ import {
   GOAL_RTTAPA_ERROR,
   objectivesWithValidResourcesOnly,
 } from './constants';
-import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
