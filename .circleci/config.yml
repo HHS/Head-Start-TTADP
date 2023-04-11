@@ -241,6 +241,7 @@ jobs:
           paths:
             - node_modules
             - frontend/node_modules
+            - packages/common/node_modules
           key: v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
