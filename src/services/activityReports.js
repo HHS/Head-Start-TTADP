@@ -386,7 +386,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
     include: [
       {
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grant',
       },
     ],
