@@ -72,9 +72,8 @@ export default async function topicFrequencyGraph(scopes) {
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
 
   // Get all DB topics.
-  const topics = dbTopics.map((t) => t.name);
-  const topicsResponse = topics.map((topic) => ({
-    topic,
+  const topicsResponse = dbTopics.map((topic) => ({
+    topic: topic.name,
     count: 0,
   }));
 
