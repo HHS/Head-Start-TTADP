@@ -161,6 +161,7 @@ const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
   'Recipient request',
   'TTA complete',
+  'Regional Office request',
 ];
 exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
 
