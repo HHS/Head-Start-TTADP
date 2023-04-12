@@ -1,5 +1,5 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
 
 /**
@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
 
       Recipient.addScope('defaultScope', {
         where: {
-          deleted: false,
+          deleted: { [Op.ne]: true },
         },
       });
     }

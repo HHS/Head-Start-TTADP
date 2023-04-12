@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
 
       Grant.addScope('defaultScope', {
         where: {
-          deleted: false,
+          deleted: { [Op.ne]: true },
           endDate: { [Op.gt]: '2020-08-31' },
         },
         include: [
