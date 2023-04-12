@@ -386,8 +386,9 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
     include: [
       {
-        model: Grant.unscoped(),
+        model: Grant,
         as: 'grant',
+        required: false,
       },
     ],
   });
@@ -1206,6 +1207,7 @@ async function getDownloadableActivityReports(where, separate = true) {
           {
             model: Grant,
             as: 'grant',
+            required: false,
           },
         ],
       },
