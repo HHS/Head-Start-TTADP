@@ -37,6 +37,7 @@ import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
+import { getNotifications } from './fetchers/notifications';
 import { storageAvailable } from './hooks/helpers';
 import {
   LOCAL_STORAGE_DATA_KEY,
@@ -48,6 +49,9 @@ import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import useAnalytics from './hooks/useAnalytics';
+import NotificationsPage from './pages/Notifications';
+
+const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
 function App() {
   const [user, updateUser] = useState();
@@ -61,11 +65,30 @@ function App() {
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
   const [alert, setAlert] = useState(null);
+  const [notifications, setNotifications] = useState({ whatsNew: '' });
+  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
   const { trackBrowserSize } = useAnalytics();
 
   useEffect(() => {
     trackBrowserSize(`${window.innerWidth}x${window.innerHeight}`);
   }, [trackBrowserSize]);
+
+  useEffect(() => {
+    try {
+      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY) || '[]';
+
+      if (readNotifications) {
+        const parsedReadNotifications = JSON.parse(readNotifications);
+        const dom = notifications.whatsNew ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml') : '';
+        const ids = dom ? Array.from(dom.querySelectorAll('entry')).map((item) => item.querySelector('id').textContent) : [];
+        const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
+
+        setAreThereUnreadNotifications(unreadNotifications.length > 0);
+      }
+    } catch (err) {
+      setAreThereUnreadNotifications(false);
+    }
+  }, [notifications]);
 
   useEffect(() => {
     // fetch alerts
@@ -81,6 +104,23 @@ function App() {
 
     if (authenticated) {
       fetchAlerts();
+    }
+  }, [authenticated]);
+
+  useEffect(() => {
+    // fetch alerts
+    async function fetchNotifications() {
+      try {
+        const notificationsFromApi = await getNotifications();
+        setNotifications({ whatsNew: notificationsFromApi });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`There was an error fetching notifications: ${e}`);
+      }
+    }
+
+    if (authenticated) {
+      fetchNotifications();
     }
   }, [authenticated]);
 
@@ -266,6 +306,15 @@ function App() {
         />
         <Route
           exact
+          path="/notifications"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <NotificationsPage notifications={notifications} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/account/verify-email/:token"
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
@@ -297,7 +346,7 @@ function App() {
         />
         <Route
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <NotFound />
             </AppWrapper>
           )}
@@ -332,10 +381,15 @@ function App() {
               </UserContext.Provider>
             </>
           )}
-          <UserContext.Provider value={{ user, authenticated, logout }}>
+          <AriaLiveContext.Provider value={{ announce }}>
             <MyGroupsProvider authenticated={authenticated}>
-              <Header authenticated alert={alert} />
-              <AriaLiveContext.Provider value={{ announce }}>
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <Header
+                  authenticated
+                  alert={alert}
+                  areThereUnreadNotifications={areThereUnreadNotifications}
+                  setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+                />
                 {!authenticated && (authError === 403
                   ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
                   : (
@@ -345,10 +399,9 @@ function App() {
                   )
                 )}
                 {authenticated && renderAuthenticatedRoutes()}
-
-              </AriaLiveContext.Provider>
+              </UserContext.Provider>
             </MyGroupsProvider>
-          </UserContext.Provider>
+          </AriaLiveContext.Provider>
         </BrowserRouter>
         <AriaLiveRegion messages={announcements} />
       </AppLoadingContext.Provider>
