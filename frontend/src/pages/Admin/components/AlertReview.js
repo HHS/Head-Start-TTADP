@@ -241,7 +241,7 @@ export default function AlertReview({ alert, onDelete }) {
               tabIndex="0"
               editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
               toolbar={{
-                options: ['list', 'link'],
+                options: ['inline', 'list', 'link'],
                 inline: {
                   options: ['bold', 'italic'],
                 },
