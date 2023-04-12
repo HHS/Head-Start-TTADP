@@ -861,6 +861,9 @@ describe('Activity report service', () => {
           endDate: 'tomorrow',
         });
 
+        expect(recipientWithProgram.name).toBe('recipient with program');
+        const createdGrant = await Grant.findOne({ where: { number: 'recipgrantnumber695' } });
+        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695 ');
         const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
         expect(foundReport).not.toBeNull();
         expect(activityRecipients.length).toBe(1);
