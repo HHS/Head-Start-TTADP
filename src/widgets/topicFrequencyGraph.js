@@ -106,7 +106,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
       attributes: [
         [
           sequelize.literal(`(
-            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic), null)
+            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic ORDER BY x.topic), null)
             FROM (
               SELECT ar.topic
               FROM UNNEST(COALESCE("objectives->activityReportObjectives->activityReports"."topics",array[]::varchar[])) ar(topic)
