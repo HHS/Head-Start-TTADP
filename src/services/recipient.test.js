@@ -373,6 +373,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Ben',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 52,
@@ -383,6 +385,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Cassie',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 53,
@@ -393,6 +397,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'David',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 54,
@@ -403,6 +409,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Eric',
         annualFundingMonth: 'January',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 55,
@@ -413,6 +421,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Frank',
         annualFundingMonth: null,
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 56,
@@ -423,6 +433,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Brom',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 57,
@@ -432,6 +444,8 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Jim',
         status: 'Inactive',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 58,
