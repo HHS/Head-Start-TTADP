@@ -117,7 +117,7 @@ test('put /goals/changeStatus', async ({ request }) => {
     `${root}/goals/changeStatus`,
     {
       data: {
-        goalIds: [4], 
+        goalIds: [3], 
         oldStatus: GOAL_STATUS.NOT_STARTED,
         newStatus: GOAL_STATUS.NOT_STARTED,
         closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
