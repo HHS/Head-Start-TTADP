@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   Checkbox, Button, Dropdown, Alert,
 } from '@trussworks/react-uswds';
@@ -8,7 +9,6 @@ import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
-import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 import FeatureFlag from '../FeatureFlag';
