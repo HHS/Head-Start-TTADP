@@ -4,7 +4,6 @@
   "private": true,
   "license": "ISC",
   "dependencies": {
-    "@ttahub/common": "file:./../packages/common",
     "@babel/runtime": "^7.12.1",
     "@fortawesome/fontawesome-pro": "^6.1.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
@@ -16,6 +15,7 @@
     "@fortawesome/pro-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
+    "@ttahub/common": "file:./../packages/common",
     "@trussworks/react-uswds": "4.1.1",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
