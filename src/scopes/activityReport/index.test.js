@@ -3,8 +3,8 @@ import faker from '@faker-js/faker';
 import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
-  AWS_ELASTIC_SEARCH_INDEXES,
 } from '@ttahub/common';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 

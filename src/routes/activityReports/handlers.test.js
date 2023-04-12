@@ -1,5 +1,5 @@
 import {
-  APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS,
+  APPROVER_STATUSES, REPORT_STATUSES,
 } from '@ttahub/common';
 import {
   getReport,
@@ -51,6 +51,7 @@ import db, {
 } from '../../models';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
+import { USER_SETTINGS } from '../../constants';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportAndRecipientsById: jest.fn(),
