@@ -119,7 +119,7 @@ test('put /goals/changeStatus', async ({ request }) => {
       data: {
         goalIds: [4], 
         oldStatus: GOAL_STATUS.NOT_STARTED,
-        newStatus: GOAL_STATUS.CLOSED,
+        newStatus: GOAL_STATUS.NOT_STARTED,
         closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
         closeSuspendContext: 'Just because',
       },
