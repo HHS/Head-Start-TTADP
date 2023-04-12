@@ -1,13 +1,14 @@
-import { TOPICS, REASONS } from '../constants';
+import { REASONS } from '../constants';
 
 import { countOccurrences } from './helpers';
+import topicFrequencyGraph from './topicFrequencyGraph';
 
 export default async function frequencyGraph(scopes) {
-  const topics = await countOccurrences(scopes.activityReport, 'topics', TOPICS);
+  const topics = await topicFrequencyGraph(scopes);
   const reasons = await countOccurrences(scopes.activityReport, 'reason', REASONS);
 
   return {
-    topics,
+    topics: topics.map((t) => ({ category: t.topic, count: t.count })),
     reasons,
   };
 }
