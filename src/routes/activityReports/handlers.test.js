@@ -1,5 +1,6 @@
 import {
-  APPROVER_STATUSES, REPORT_STATUSES,
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
 } from '@ttahub/common';
 import {
   getReport,
