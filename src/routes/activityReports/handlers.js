@@ -1,8 +1,11 @@
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
 import {
-  APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+  DECIMAL_BASE,
 } from '@ttahub/common';
+import { USER_SETTINGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
