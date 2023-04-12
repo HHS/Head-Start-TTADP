@@ -173,7 +173,7 @@ describe('Approved Activity Report V2 component', () => {
     }}
     />);
 
-    expect(await screen.findByText(/In person/i)).toBeInTheDocument();
+    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
   it('virtual', async () => {
