@@ -1,4 +1,6 @@
-export const RECIPIENT_PARTICIPANTS = [
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const RECIPIENT_PARTICIPANTS = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
   'Coach',
@@ -14,8 +16,9 @@ export const RECIPIENT_PARTICIPANTS = [
   'Teacher / Infant-Toddler Caregiver',
   'Volunteer',
 ];
+exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
-export const OTHER_ENTITY_PARTICIPANTS = [
+const OTHER_ENTITY_PARTICIPANTS = [
   'HSCO',
   'Local/State Agency(ies)',
   'OCC Regional Office',
@@ -26,13 +29,15 @@ export const OTHER_ENTITY_PARTICIPANTS = [
   'State Head Start Association',
   'Other',
 ];
+exports.OTHER_ENTITY_PARTICIPANTS = OTHER_ENTITY_PARTICIPANTS;
 
-export const ALL_PARTICIPANTS = [
+const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
   ...OTHER_ENTITY_PARTICIPANTS,
 ];
+exports.ALL_PARTICIPANTS = ALL_PARTICIPANTS;
 
-export const TOPICS = [
+const TOPICS = [
   'Behavioral / Mental Health / Trauma',
   'Child Screening and Assessment',
   'CLASS: Classroom Organization',
@@ -74,8 +79,9 @@ export const TOPICS = [
   'Transition Practices',
   'Transportation',
 ];
+exports.TOPICS = TOPICS;
 
-export const REASONS = [
+const REASONS = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
@@ -94,16 +100,18 @@ export const REASONS = [
   'Monitoring | Noncompliance',
   'Monitoring | Deficiency',
 ];
+exports.REASONS = REASONS;
 
-export const REPORT_STATUSES = {
+const REPORT_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',
   SUBMITTED: 'submitted',
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
 };
+exports.REPORT_STATUSES = REPORT_STATUSES;
 
-export const TARGET_POPULATIONS = [
+const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool (ages 3-5)',
   'Pregnant Women',
@@ -115,8 +123,9 @@ export const TARGET_POPULATIONS = [
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
 ];
+exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
-export const USER_ROLES = [
+const USER_ROLES = [
   'Central Office',
   'Other Federal Staff',
   'National Center',
@@ -136,8 +145,9 @@ export const USER_ROLES = [
   'Health Specialist',
   'System Specialist',
 ];
+exports.USER_ROLES = USER_ROLES;
 
-export const CLOSE_SUSPEND_REASONS = [
+const CLOSE_SUSPEND_REASONS = [
   'Duplicate goal',
   'Recipient request',
   'TTA complete',
@@ -145,26 +155,30 @@ export const CLOSE_SUSPEND_REASONS = [
   'Recipient is not responding',
   'Regional Office request',
 ];
+exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
-export const GOAL_CLOSE_REASONS = [
+const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
   'Recipient request',
   'TTA complete',
 ];
+exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
 
-export const GOAL_SUSPEND_REASONS = [
+const GOAL_SUSPEND_REASONS = [
   'Key staff turnover / vacancies',
   'Recipient request',
   'Recipient is not responding',
   'Regional Office request',
 ];
+exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
-export const APPROVER_STATUSES = {
+const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
 };
+exports.APPROVER_STATUSES = APPROVER_STATUSES;
 
-export const SCOPE_IDS = {
+const SCOPE_IDS = {
   SITE_ACCESS: 1,
   ADMIN: 2,
   READ_WRITE_ACTIVITY_REPORTS: 3,
@@ -172,19 +186,26 @@ export const SCOPE_IDS = {
   APPROVE_ACTIVITY_REPORTS: 5,
   UNLOCK_APPROVED_REPORTS: 6,
 };
+exports.SCOPE_IDS = SCOPE_IDS;
 
-export const DECIMAL_BASE = 10;
+const DECIMAL_BASE = 10;
+exports.DECIMAL_BASE = DECIMAL_BASE;
 
-export const ALERT_STATUSES = {
+const ALERT_STATUSES = {
     UNPUBLISHED: 'Unpublished',
     PUBLISHED: 'Published'
 };
-export const ALERT_VARIANTS = {
+exports.ALERT_STATUSES = ALERT_STATUSES;
+
+const ALERT_VARIANTS = {
     INFO: 'info',
     EMERGENCY: 'emergency'
 };
-export const ALERT_SIZES = {
+exports.ALERT_VARIANTS = ALERT_VARIANTS;
+
+const ALERT_SIZES = {
     STANDARD: 'standard',
     SLIM: 'slim',
     LARGE: 'large'
 };
+exports.ALERT_SIZES = ALERT_SIZES;
