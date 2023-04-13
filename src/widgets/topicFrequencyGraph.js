@@ -69,6 +69,7 @@ export async function topicFrequencyGraph(scopes) {
     `, { type: QueryTypes.SELECT }),
     Topic.findAll({
       attributes: ['id', 'name', 'deletedAt'],
+      where: { deletedAt: null },
       order: [['name', 'ASC']],
     }),
   ]);
@@ -107,17 +108,34 @@ export async function topicFrequencyGraphViaGoals(scopes) {
       attributes: [
         [
           sequelize.literal(`(
-            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic ORDER BY x.topic), null)
-            FROM (
-              SELECT ar.topic
-              FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
-              JOIN "ActivityReports" art
-              ON ars.id = art.id
-              CROSS JOIN UNNEST(COALESCE("art"."topics",array[]::varchar[])) ar(topic)
-              UNION ALL
-              SELECT aro.topic
-              FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
-            ) x(topic)
+            WITH
+              "all_topics_with_reports" AS (
+                SELECT
+                  ar.topic,
+                  ars.id "activityReportId"
+                FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
+                JOIN "ActivityReports" art
+                ON ars.id = art.id
+                CROSS JOIN UNNEST(COALESCE("art"."topics",array[]::varchar[])) ar(topic)
+                UNION ALL
+                SELECT
+                  aro.topic,
+                  ars.id "activityReportId"
+                FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
+                CROSS JOIN UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
+              ),
+              "all_topics_with_report_array" AS (
+                SELECT
+                  topic,
+                  ARRAY_AGG("activityReportId") "reportIds"
+                FROM all_topics_with_reports atwr
+                GROUP BY topic
+              )
+            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT jsonb_build_object(
+              'topic', x.topic,
+              'reportIds', x."reportIds"
+            )), null)
+            FROM "all_topics_with_report_array" x(topic, "reportIds")
             GROUP BY TRUE
           )`),
           'topics',
@@ -174,6 +192,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     `, { type: QueryTypes.SELECT }),
     Topic.findAll({
       attributes: ['id', 'name', 'deletedAt'],
+      where: { deletedAt: null },
       order: [['name', 'ASC']],
     }),
   ]);
@@ -186,19 +205,22 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     count: 0,
   }));
 
-  return topicsAndParticipants.reduce((acc, goal) => {
-    // Get array of all topics from this goal's objectives and the reports the objectives
-    // where use on.
-    const allTopics = goal.get('topics').map((t) => lookUpTopic.get(t));
+  return topicsAndParticipants
+    .reduce((acc, goal) => {
+      // Get array of all topics from this goal's objectives and the reports the objectives
+      // where use on.
+      const allTopics = goal
+        .get('topics')
+        .map(({ topic, reportIds }) => ({ topic: lookUpTopic.get(topic), reportIds }));
 
-    // Loop all topics array and update totals.
-    allTopics.forEach((topic) => {
-      const topicIndex = acc.findIndex((t) => t.topic === topic);
-      if (topicIndex !== -1) {
-        acc[topicIndex].count += 1;
-      }
-    });
+      // Loop all topics array and update totals.
+      allTopics.forEach(({ topic, reportIds }) => {
+        const topicIndex = acc.findIndex((t) => t.topic === topic);
+        if (topicIndex !== -1) {
+          acc[topicIndex].count += reportIds.length;
+        }
+      });
 
-    return acc;
-  }, topicsResponse);
+      return acc;
+    }, topicsResponse);
 }
