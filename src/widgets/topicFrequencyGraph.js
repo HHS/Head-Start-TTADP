@@ -1,10 +1,12 @@
+/* eslint-disable max-len */
+/* eslint-disable import/prefer-default-export */
 import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
   Topic,
   ActivityReportObjective,
-  Objective,
-  Goal,
+  // Objective,
+  // Goal,
   sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
@@ -54,21 +56,6 @@ export async function topicFrequencyGraph(scopes) {
         ],
       }],
     }),
-    // Get mappings.
-    sequelize.query(`
-    SELECT
-      DISTINCT
-      TT."name",
-      COALESCE(TT2."name", TT."name") AS final_name
-    FROM "Topics" TT
-    LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
-    WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
-    ORDER BY TT."name"
-    `, { type: QueryTypes.SELECT }),
-    Topic.findAll({
-      attributes: ['id', 'name', 'deletedAt'],
-      order: [['name', 'ASC']],
-    }),
   ]);
 
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
@@ -95,108 +82,108 @@ export async function topicFrequencyGraph(scopes) {
   }, topicsResponse);
 }
 
-export async function topicFrequencyGraphViaGoals(scopes) {
-  const [
-    topicsAndParticipants,
-    topicMappings,
-    dbTopics,
-  ] = await Promise.all([
-    Goal.findAll({
-      attributes: [
-        [
-          sequelize.literal(`(
-            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic ORDER BY x.topic), null)
-            FROM (
-              SELECT ar.topic
-              FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
-              JOIN "ActivityReports" ar
-              ON ars.id = ar.id
-              CROSS JOIN UNNEST(COALESCE("ar""."topics",array[]::varchar[])) ar(topic)
-              UNION ALL
-              SELECT aro.topic
-              FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
-            ) x(topic)
-            GROUP BY TRUE
-          )`),
-          'topics',
-        ],
-      ],
-      group: [
-        '"Goal".id',
-      ],
-      where: {
-        [Op.and]: [scopes.goal],
-      },
-      include: [
-        {
-          attributes: [],
-          model: Objective,
-          as: 'objectives',
-          required: false,
-          include: [{
-            attributes: [],
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            required: true,
-            include: [
-              {
-                attributes: [],
-                model: Topic,
-                as: 'topics',
-                through: {
-                  attributes: [],
-                },
-              },
-              {
-                attributes: [],
-                model: ActivityReport,
-                as: 'activityReport',
-                required: true,
-                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-              },
-            ],
-          }],
-        },
-      ],
-    }),
-    // Get mappings.
-    sequelize.query(`
-    SELECT
-      DISTINCT
-      TT."name",
-      COALESCE(TT2."name", TT."name") AS final_name
-    FROM "Topics" TT
-    LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
-    WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
-    ORDER BY TT."name"
-    `, { type: QueryTypes.SELECT }),
-    Topic.findAll({
-      attributes: ['id', 'name', 'deletedAt'],
-      order: [['name', 'ASC']],
-    }),
-  ]);
+// export async function topicFrequencyGraphViaGoals(scopes) {
+//   const [
+//     topicsAndParticipants,
+//     topicMappings,
+//     dbTopics,
+//   ] = await Promise.all([
+//     Goal.findAll({
+//       attributes: [
+//         [
+//           sequelize.literal(`(
+//             SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic ORDER BY x.topic), null)
+//             FROM (
+//               SELECT ar.topic
+//               FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
+//               JOIN "ActivityReports" art
+//               ON ars.id = art.id
+//               CROSS JOIN UNNEST(COALESCE("art"."topics",array[]::varchar[])) ar(topic)
+//               UNION ALL
+//               SELECT aro.topic
+//               FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
+//             ) x(topic)
+//             GROUP BY TRUE
+//           )`),
+//           'topics',
+//         ],
+//       ],
+//       group: [
+//         '"Goal".id',
+//       ],
+//       where: {
+//         [Op.and]: [scopes.goal],
+//       },
+//       include: [
+//         {
+//           attributes: [],
+//           model: Objective,
+//           as: 'objectives',
+//           required: false,
+//           include: [{
+//             attributes: [],
+//             model: ActivityReportObjective,
+//             as: 'activityReportObjectives',
+//             required: true,
+//             include: [
+//               {
+//                 attributes: [],
+//                 model: Topic,
+//                 as: 'topics',
+//                 through: {
+//                   attributes: [],
+//                 },
+//               },
+//               {
+//                 attributes: [],
+//                 model: ActivityReport,
+//                 as: 'activityReport',
+//                 required: true,
+//                 where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+//               },
+//             ],
+//           }],
+//         },
+//       ],
+//     }),
+//     // Get mappings.
+//     sequelize.query(`
+//     SELECT
+//       DISTINCT
+//       TT."name",
+//       COALESCE(TT2."name", TT."name") AS final_name
+//     FROM "Topics" TT
+//     LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
+//     WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
+//     ORDER BY TT."name"
+//     `, { type: QueryTypes.SELECT }),
+//     Topic.findAll({
+//       attributes: ['id', 'name', 'deletedAt'],
+//       order: [['name', 'ASC']],
+//     }),
+//   ]);
 
-  const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
+//   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
 
-  // Get all DB topics.
-  const topicsResponse = dbTopics.map((topic) => ({
-    topic: topic.name,
-    count: 0,
-  }));
+//   // Get all DB topics.
+//   const topicsResponse = dbTopics.map((topic) => ({
+//     topic: topic.name,
+//     count: 0,
+//   }));
 
-  return topicsAndParticipants.reduce((acc, goal) => {
-    // Get array of all topics from this goal's objectives and the reports the objectives
-    // where use on.
-    const allTopics = goal.topics.map((t) => lookUpTopic.get(t));
+//   return topicsAndParticipants.reduce((acc, goal) => {
+//     // Get array of all topics from this goal's objectives and the reports the objectives
+//     // where use on.
+//     const allTopics = goal.get('topics').map((t) => lookUpTopic.get(t));
 
-    // Loop all topics array and update totals.
-    allTopics.forEach((topic) => {
-      const topicIndex = acc.findIndex((t) => t.topic === topic);
-      if (topicIndex !== -1) {
-        acc[topicIndex].count += 1;
-      }
-    });
+//     // Loop all topics array and update totals.
+//     allTopics.forEach((topic) => {
+//       const topicIndex = acc.findIndex((t) => t.topic === topic);
+//       if (topicIndex !== -1) {
+//         acc[topicIndex].count += 1;
+//       }
+//     });
 
-    return acc;
-  }, topicsResponse);
-}
+//     return acc;
+//   }, topicsResponse);
+// }

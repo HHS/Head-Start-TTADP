@@ -21,7 +21,6 @@ describe('createOrUpdateGoals', () => {
   let goal;
   let topic;
   let objective;
-  let updatedObjective;
   let recipient;
   let newGoals;
   let grants = [
@@ -70,7 +69,7 @@ describe('createOrUpdateGoals', () => {
   afterAll(async () => {
     await ObjectiveResource.destroy({
       where: {
-        objectiveId: [objective.id, updatedObjective.id],
+        objectiveId: objective.id,
       },
       individualHooks: true,
     });
@@ -82,7 +81,7 @@ describe('createOrUpdateGoals', () => {
 
     await ObjectiveTopic.destroy({
       where: {
-        objectiveId: [objective.id, updatedObjective.id],
+        objectiveId: objective.id,
       },
       individualHooks: true,
     });
@@ -306,7 +305,7 @@ describe('createOrUpdateGoals', () => {
     expect(updatedGoals).toHaveLength(1);
     const [updatedGoal] = updatedGoals;
     expect(updatedGoal.objectives).toHaveLength(1);
-    [updatedObjective] = updatedGoal.objectives;
+    const [updatedObjective] = updatedGoal.objectives;
     expect(updatedObjective.status).toBe('Not Started');
 
     const updatedGoals2 = await createOrUpdateGoals([

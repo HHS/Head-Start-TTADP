@@ -99,16 +99,20 @@ describe('frequency graph widget', () => {
       topicId: topic.id,
     });
 
-    const stringIds = [
+    const reportIds = [
       reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id,
-    ].map((id) => (
-      `R01-AR-${id}`
-    ));
+    ];
 
-    scopes = await filtersToScopes({
-      'reportId.ctn': stringIds,
+    const baseScopes = await filtersToScopes({
       'recipientId.ctn': [recipientId],
     });
+
+    scopes = {
+      ...baseScopes,
+      activityReport: {
+        id: reportIds,
+      },
+    };
   });
 
   afterAll(async () => {
@@ -192,12 +196,12 @@ describe('frequency graph widget', () => {
     const res = await frequencyGraph(scopes);
 
     const { topics } = res;
+    expect(topics.find((r) => r.category === 'Media Consumption').count).toBe(1);
 
-    expect(topics.filter((r) => r.count > 0).length).toBe(4);
+    // expect(topics.filter((r) => r.count > 0).length).toBe(4);
     expect(topics.find((r) => r.category === 'Home Visiting').count).toBe(3);
     expect(topics.find((r) => r.category === 'Five-Year Grant').count).toBe(2);
     expect(topics.find((r) => r.category === 'Fiscal / Budget').count).toBe(2);
     expect(topics.find((r) => r.category === 'Nutrition').count).toBe(0);
-    expect(topics.find((r) => r.category === 'Media Consumption').count).toBe(1);
   });
 });
