@@ -12,7 +12,7 @@ ActivityReportsPresenter.prototype.attributes = function attributes(instance) {
       id: attrs.author.id.toString(),
       name: attrs.author.fullName,
     },
-    collaborators: attrs.collaborators.map((collab) => ({
+    collaborators: attrs.activityReportCollaborators.map((collab) => ({
       id: collab.id.toString(),
       name: collab.fullName,
     })),
