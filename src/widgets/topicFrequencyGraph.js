@@ -56,6 +56,21 @@ export async function topicFrequencyGraph(scopes) {
         ],
       }],
     }),
+    // Get mappings.
+    sequelize.query(`
+    SELECT
+      DISTINCT
+      TT."name",
+      COALESCE(TT2."name", TT."name") AS final_name
+    FROM "Topics" TT
+    LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
+    WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
+    ORDER BY TT."name"
+    `, { type: QueryTypes.SELECT }),
+    Topic.findAll({
+      attributes: ['id', 'name', 'deletedAt'],
+      order: [['name', 'ASC']],
+    }),
   ]);
 
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
