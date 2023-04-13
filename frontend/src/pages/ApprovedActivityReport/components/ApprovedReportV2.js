@@ -46,11 +46,15 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
 
 function formatDelivery(method, virtualDeliveryType) {
   if (method === 'in-person') {
-    return 'In person';
+    return 'In Person';
   }
 
-  if (method === 'virtual' && virtualDeliveryType) {
-    return `Virtual: ${virtualDeliveryType}`;
+  if (method === 'virtual') {
+    return virtualDeliveryType ? `Virtual: ${virtualDeliveryType}` : 'Virtual';
+  }
+
+  if (method === 'hybrid') {
+    return 'Hybrid';
   }
 
   return '';

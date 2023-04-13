@@ -118,15 +118,13 @@ function UserSection({ user, onSave, features }) {
         user={formUser}
         onUserChange={onUserChange}
       />
-      {process.env.NODE_ENV === 'development' && (
-        <Button
-          className="margin-bottom-6"
-          onClick={impersonateUserId}
-          disabled={isAdmin(user)}
-        >
-          Impersonate user
-        </Button>
-      )}
+      <Button
+        className="margin-bottom-6"
+        onClick={impersonateUserId}
+        disabled={isAdmin(user)}
+      >
+        Impersonate user
+      </Button>
       <UserPermissions
         userId={user.id}
         globalPermissions={userGlobalPermissions(formUser)}

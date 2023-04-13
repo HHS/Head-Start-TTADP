@@ -142,6 +142,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
       allowNull: true,
     },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Goal',

@@ -64,9 +64,6 @@ export default function Llama({ user }) {
   }, [user.id]);
 
   const addWiggler = () => {
-    if (!llamaImage.current) {
-      return;
-    }
     if (llamaImage.current.classList.contains('the-wiggler')) return;
     llamaImage.current.classList.add('the-wiggler');
   };
