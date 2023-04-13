@@ -108,7 +108,10 @@ export async function topicFrequencyGraphViaGoals(scopes) {
             SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic ORDER BY x.topic), null)
             FROM (
               SELECT ar.topic
-              FROM UNNEST(COALESCE("objectives->activityReportObjectives->activityReport"."topics",array[]::varchar[])) ar(topic)
+              FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
+              JOIN "ActivityReports" ar
+              ON ars.id = ar.id
+              CROSS JOIN UNNEST(COALESCE("ar""."topics",array[]::varchar[])) ar(topic)
               UNION ALL
               SELECT aro.topic
               FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
