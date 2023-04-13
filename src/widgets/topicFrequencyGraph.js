@@ -134,7 +134,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
           attributes: [],
           model: Objective,
           as: 'objectives',
-          required: false,
+          required: true,
           include: [{
             attributes: [],
             model: ActivityReportObjective,
