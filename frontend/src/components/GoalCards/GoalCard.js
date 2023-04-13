@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
 import moment from 'moment';
@@ -114,6 +115,7 @@ function GoalCard({
             aria-label={`Select goal ${goalText}`}
             className="margin-right-1"
             data-testid="selectGoalTestId"
+            data-goalIds={ids}
           />
           )}
           <StatusDropdown
@@ -173,7 +175,7 @@ function GoalCard({
       </div>
       {objectives.map((obj) => (
         <ObjectiveCard
-          key={`objective_${obj.id}`}
+          key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
         />

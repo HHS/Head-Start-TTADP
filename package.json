@@ -115,7 +115,8 @@
     "luxon": "^1.23.1",
     "qs": "^6.9.7",
     "cookiejar": "^2.1.4",
-    "http-cache-semantics": "^4.1.1"
+    "http-cache-semantics": "^4.1.1",
+    "xml2js": "^0.5.0"
   },
   "eslintConfig": {
     "extends": [
@@ -253,6 +254,7 @@
     "jest": "26.6.0",
     "jest-cli": "26.4.2",
     "jest-junit": "^12.0.0",
+    "joi": "^17.9.1",
     "nodemon": "^2.0.4",
     "playwright": "^1.28.0",
     "puppeteer": "^13.1.1",

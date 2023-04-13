@@ -173,7 +173,7 @@ describe('Approved Activity Report V2 component', () => {
     }}
     />);
 
-    expect(await screen.findByText(/In person/i)).toBeInTheDocument();
+    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
   it('virtual', async () => {
@@ -183,6 +183,15 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
+  });
+
+  it('hybrid', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, deliveryMethod: 'hybrid',
+    }}
+    />);
+
+    expect(await screen.findByText('Hybrid')).toBeInTheDocument();
   });
 
   it('submitted date shown', async () => {
