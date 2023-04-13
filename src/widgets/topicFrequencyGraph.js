@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 /* eslint-disable import/prefer-default-export */
 import { Op, QueryTypes } from 'sequelize';
 import {
@@ -10,6 +9,23 @@ import {
   sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
+
+const getTopicMappings = async () => sequelize.query(`
+SELECT
+  DISTINCT
+  TT."name",
+  COALESCE(TT2."name", TT."name") AS final_name
+FROM "Topics" TT
+LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
+WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
+ORDER BY TT."name"
+`, { type: QueryTypes.SELECT });
+
+const getAllTopics = async () => Topic.findAll({
+  attributes: ['id', 'name', 'deletedAt'],
+  where: { deletedAt: null },
+  order: [['name', 'ASC']],
+});
 
 export async function topicFrequencyGraph(scopes) {
   const [
@@ -57,21 +73,8 @@ export async function topicFrequencyGraph(scopes) {
       }],
     }),
     // Get mappings.
-    sequelize.query(`
-    SELECT
-      DISTINCT
-      TT."name",
-      COALESCE(TT2."name", TT."name") AS final_name
-    FROM "Topics" TT
-    LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
-    WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
-    ORDER BY TT."name"
-    `, { type: QueryTypes.SELECT }),
-    Topic.findAll({
-      attributes: ['id', 'name', 'deletedAt'],
-      where: { deletedAt: null },
-      order: [['name', 'ASC']],
-    }),
+    getTopicMappings(),
+    getAllTopics(),
   ]);
 
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
@@ -180,21 +183,8 @@ export async function topicFrequencyGraphViaGoals(scopes) {
       ],
     }),
     // Get mappings.
-    sequelize.query(`
-    SELECT
-      DISTINCT
-      TT."name",
-      COALESCE(TT2."name", TT."name") AS final_name
-    FROM "Topics" TT
-    LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
-    WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
-    ORDER BY TT."name"
-    `, { type: QueryTypes.SELECT }),
-    Topic.findAll({
-      attributes: ['id', 'name', 'deletedAt'],
-      where: { deletedAt: null },
-      order: [['name', 'ASC']],
-    }),
+    getTopicMappings(),
+    getAllTopics(),
   ]);
 
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
