@@ -89,6 +89,7 @@ describe('frequency graph widget', () => {
     olderObjective = await Objective.create({
       title: 'Destroy expensive electronics',
       status: 'In Progress',
+      goalId: olderGoal.id,
     });
 
     await ObjectiveTopic.create({
