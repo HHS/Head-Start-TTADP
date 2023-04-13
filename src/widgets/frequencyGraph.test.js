@@ -20,7 +20,9 @@ describe('frequency graph widget', () => {
   let reportFour;
   let reportFive;
   let goal;
+  let olderGoal;
   let objective;
+  let olderObjective;
   let topic;
   let scopes;
 
@@ -72,10 +74,21 @@ describe('frequency graph widget', () => {
       grantId: 555,
     });
 
+    olderGoal = await Goal.create({
+      name: 'Watch no television to improve concentration',
+      status: 'In Progress',
+      grantId: 555,
+    });
+
     objective = await Objective.create({
       title: 'Find a new show',
       status: 'In Progress',
       goalId: goal.id,
+    });
+
+    olderObjective = await Objective.create({
+      title: 'Destroy expensive electronics',
+      status: 'In Progress',
     });
 
     await ObjectiveTopic.create({
@@ -93,6 +106,20 @@ describe('frequency graph widget', () => {
       goalId: goal.id,
       status: goal.status,
     });
+
+    await ActivityReportGoal.bulkCreate([
+      reportOne.id, reportTwo.id, reportThree.id, reportFour.id,
+    ].map((id) => ({
+      activityReportId: id,
+      goalId: olderGoal.id,
+    })));
+
+    await ActivityReportObjective.bulkCreate([
+      reportOne.id, reportTwo.id, reportThree.id, reportFour.id,
+    ].map((id) => ({
+      activityReportId: id,
+      objectiveId: olderObjective.id,
+    })));
 
     await ActivityReportObjectiveTopic.create({
       activityReportObjectiveId: aro.id,
@@ -124,13 +151,13 @@ describe('frequency graph widget', () => {
 
     await ActivityReportGoal.destroy({
       where: {
-        goalId: goal.id,
+        goalId: [goal.id, olderGoal.id],
       },
     });
 
     await ActivityReportObjective.destroy({
       where: {
-        objectiveId: objective.id,
+        objectiveId: [objective.id, olderObjective.id],
       },
     });
 
@@ -142,13 +169,13 @@ describe('frequency graph widget', () => {
 
     await Objective.destroy({
       where: {
-        id: objective.id,
+        id: [objective.id, olderObjective.id],
       },
     });
 
     await Goal.destroy({
       where: {
-        id: goal.id,
+        id: [goal.id, olderGoal.id],
       },
     });
 
