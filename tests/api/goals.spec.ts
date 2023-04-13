@@ -138,18 +138,21 @@ test('post /', async ({ request }) => {
         goals: [
           {
             name: 'New Goal',
-            recipientId: 2,
+            recipientId: 1,
             grantId: 1,
-            regionId: 1,
+            regionId: 14,
             status: GOAL_STATUS.NOT_STARTED,
             endDate: '2021-12-31',
             objectives: [
               {
+                id: 'new-999',
                 resources: [],
                 topics: [],
                 title: 'New objective',
                 files: [],
                 status: OBJECTIVE_STATUS.DRAFT,
+                ttaProvided: "",
+                isNew: true,
               }
             ],
             goalNumbers: [],
@@ -170,6 +173,11 @@ test('post /', async ({ request }) => {
 test('delete /', async ({ request }) => {
   let validId = 5;
 
+  // So this test fails when it's run too quickly after the previous /post
+  // because it hasn't finished committing the new goal to the
+  // database?
+  await new Promise((res) => setTimeout(res, 1000));
+
   // This is an attempt to ensure these tests can be run locally
   // without having to drop and reseed the database between each run.
   // It shouldn't ever run infinitely because if we made it to this test, 
@@ -177,7 +185,7 @@ test('delete /', async ({ request }) => {
   // be something to find.
   while(true) {
     const response = await request.get(
-      `${root}/goals/${validId}/recipient/2`,
+      `${root}/goals/${validId}/recipient/11`,
       { headers: { 'playwright-user-id': '1' } },
     );
 
