@@ -4,12 +4,14 @@ import db, {
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
+  Grant,
   Objective,
   ObjectiveTopic,
+  Recipient,
   Topic,
-
 } from '../models';
 import { createReport, destroyReport } from '../testUtils';
+import filtersToScopes from '../scopes';
 
 describe('frequency graph widget', () => {
   let reportOne;
@@ -20,6 +22,7 @@ describe('frequency graph widget', () => {
   let goal;
   let objective;
   let topic;
+  let scopes;
 
   beforeAll(async () => {
     reportOne = await createReport({
@@ -47,6 +50,17 @@ describe('frequency graph widget', () => {
       topics: [],
       activityRecipients: [{ grantId: 555 }],
     });
+
+    const recipient = await Recipient.findOne({
+      attributes: ['id'],
+      include: {
+        model: Grant,
+        as: 'grants',
+        where: { id: 555 },
+      },
+    });
+
+    const recipientId = recipient.id;
 
     topic = await Topic.create({
       name: 'Media Consumption',
@@ -83,6 +97,17 @@ describe('frequency graph widget', () => {
     await ActivityReportObjectiveTopic.create({
       activityReportObjectiveId: aro.id,
       topicId: topic.id,
+    });
+
+    const stringIds = [
+      reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id,
+    ].map((id) => (
+      `R01-AR-${id}`
+    ));
+
+    scopes = await filtersToScopes({
+      'reportId.ctn': stringIds,
+      'recipientId.ctn': [recipientId],
     });
   });
 
@@ -142,11 +167,7 @@ describe('frequency graph widget', () => {
   });
 
   it('returns count of topics', async () => {
-    const res = await frequencyGraph({
-      activityReport: {
-        id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
-      },
-    });
+    const res = await frequencyGraph(scopes);
 
     const { topics } = res;
 
@@ -157,11 +178,7 @@ describe('frequency graph widget', () => {
   });
 
   it('returns count of reasons', async () => {
-    const res = await frequencyGraph({
-      activityReport: {
-        id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id],
-      },
-    });
+    const res = await frequencyGraph(scopes);
 
     const { reasons } = res;
 
@@ -172,11 +189,7 @@ describe('frequency graph widget', () => {
   });
 
   it('returns count of topics with additional associated report', async () => {
-    const res = await frequencyGraph({
-      activityReport: {
-        id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id],
-      },
-    });
+    const res = await frequencyGraph(scopes);
 
     const { topics } = res;
 

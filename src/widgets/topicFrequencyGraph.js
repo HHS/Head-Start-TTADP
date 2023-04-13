@@ -3,12 +3,11 @@ import {
   ActivityReport,
   Topic,
   ActivityReportObjective,
-  Goals,
+  Objective,
+  Goal,
   sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
-import Objective from '../policies/objective';
-import { activityReports } from '../services/activityReports';
 
 export async function topicFrequencyGraph(scopes) {
   const [
@@ -102,56 +101,60 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     topicMappings,
     dbTopics,
   ] = await Promise.all([
-    Goals.findAll({
+    Goal.findAll({
       attributes: [
         [
           sequelize.literal(`(
             SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic ORDER BY x.topic), null)
             FROM (
               SELECT ar.topic
-              FROM UNNEST(COALESCE("objectives->activityReportObjectives->activityReports"."topics",array[]::varchar[])) ar(topic)
+              FROM UNNEST(COALESCE("objectives->activityReportObjectives->activityReport"."topics",array[]::varchar[])) ar(topic)
               UNION ALL
               SELECT aro.topic
-              FROM UNNEST(ARRAY_AGG("objective->activityReportObjectives->topics".name)) aro(topic)
+              FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
             ) x(topic)
             GROUP BY TRUE
           )`),
           'topics',
         ],
       ],
-      group: ['"Goal".id'],
+      group: [
+        '"Goal".id',
+      ],
       where: {
         [Op.and]: [scopes.goal],
       },
-      include: [{
-        attributes: [],
-        model: Objective,
-        as: 'objectives',
-        required: false,
-        include: [{
+      include: [
+        {
           attributes: [],
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          required: true,
-          include: [
-            {
-              attributes: [],
-              model: Topic,
-              as: 'topics',
-              through: {
+          model: Objective,
+          as: 'objectives',
+          required: false,
+          include: [{
+            attributes: [],
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            required: true,
+            include: [
+              {
                 attributes: [],
+                model: Topic,
+                as: 'topics',
+                through: {
+                  attributes: [],
+                },
               },
-            },
-            {
-              attributes: [],
-              model: ActivityReport,
-              as: 'activityReports',
-              required: true,
-              where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-            },
-          ],
-        }],
-      }],
+              {
+                attributes: [],
+                model: ActivityReport,
+                as: 'activityReport',
+                required: true,
+                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+              },
+            ],
+          }],
+        },
+      ],
     }),
     // Get mappings.
     sequelize.query(`
