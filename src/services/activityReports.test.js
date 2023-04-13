@@ -1081,7 +1081,7 @@ describe('Activity report service', () => {
       it('returns all approved reports', async () => {
         const rows = await getAllDownloadableActivityReports([14]);
         const ids = rows.map((row) => row.id);
-        expect(ids.length).toEqual(3);
+        expect(ids.length).toEqual(4);
         expect(ids).toContain(approvedReport.id);
         expect(ids).toContain(legacyReport.id);
 
