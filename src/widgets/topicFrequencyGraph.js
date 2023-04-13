@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
