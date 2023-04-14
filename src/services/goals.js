@@ -1361,13 +1361,52 @@ async function removeObjectives(objectivesToRemove, reportId) {
     return Promise.resolve();
   }
 
+  // Objectives to destroy.
+  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
+  /*
+  // Get files and resources to be orphaned.
+  const filesLinkedToObjective = await ObjectiveFile.findAll({
+    attributes: ['fileId'],
+    where: {
+      where: {
+        objectiveId: objectivesIdsToDestroy,
+      },
+    }
+  });
+
+  const resourcesLinkedToObjective = await ObjectiveResource.findAll({
+    attributes: ['resourceId'],
+    where: {
+      where: {
+        objectiveId: objectivesIdsToDestroy,
+      },
+    }
+  });
+  */
+
   // cleanup any ObjectiveFiles that are no longer needed
   await ObjectiveFile.destroy({
     where: {
-      objectiveId: objectivesToDefinitelyDestroy.map((o) => o.id),
+      objectiveId: objectivesIdsToDestroy,
     },
   });
 
+  // Delete objective files and resources now orphaned.
+  /*
+  await Resource.destroy({
+    where: {
+      id: ,
+    },
+  });
+
+  await File.destroy({
+    where: {
+      id: ,
+    },
+  });
+  */
+
+  // Delete objective.
   return Objective.destroy({
     where: {
       id: objectivesToDefinitelyDestroy.map((o) => o.id),
