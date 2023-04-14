@@ -16,8 +16,5 @@ export async function getWhatsNewFeedData() {
   return getCachedResponse(
     FEED_URLS.whatsNew,
     callback,
-    {
-      EX: 60,
-    },
   );
 }

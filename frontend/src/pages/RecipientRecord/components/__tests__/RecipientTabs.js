@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { SCOPE_IDS } from '@ttahub/common';
 import RecipientTabs from '../RecipientTabs';
 import UserContext from '../../../../UserContext';
-import { SCOPE_IDS } from '../../../../Constants';
 
 const DEFAULT_USER = {
   name: 'test@test.com',

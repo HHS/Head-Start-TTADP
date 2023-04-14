@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -16,8 +17,7 @@ import db, {
   Topic,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { REPORT_STATUSES } from '../constants';
-import topicFrequencyGraph from './topicFrequencyGraph';
+import { topicFrequencyGraph } from './topicFrequencyGraph';
 
 jest.mock('bull');
 

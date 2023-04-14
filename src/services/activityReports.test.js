@@ -1,3 +1,4 @@
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportApprover,
@@ -33,7 +34,6 @@ import {
   activityReportsApprovedByDate,
 } from './activityReports';
 import SCOPES from '../middleware/scopeConstants';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 import { createReport, destroyReport } from '../testUtils';
 import { auditLogger } from '../logger';
@@ -1081,7 +1081,7 @@ describe('Activity report service', () => {
       it('returns all approved reports', async () => {
         const rows = await getAllDownloadableActivityReports([14]);
         const ids = rows.map((row) => row.id);
-        expect(ids.length).toEqual(3);
+        expect(ids.length).toEqual(4);
         expect(ids).toContain(approvedReport.id);
         expect(ids).toContain(legacyReport.id);
 
