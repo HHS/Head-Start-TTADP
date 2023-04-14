@@ -383,11 +383,19 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'name',
       'activityRecipientId',
       'grantId',
+      'otherEntityId',
     ],
     include: [
       {
         model: Grant,
         as: 'grant',
+        required: false,
+      },
+    ],
+    include: [
+      {
+        model: OtherEntity,
+        as: 'otherEntity',
         required: false,
       },
     ],

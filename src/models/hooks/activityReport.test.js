@@ -57,6 +57,8 @@ describe('activity report model hooks', () => {
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       goal = await Goal.create({
@@ -67,8 +69,6 @@ describe('activity report model hooks', () => {
         onApprovedAR: false,
         grantId: grant.id,
         createdVia: 'rtr',
-        startDate: new Date(),
-        endDate: new Date(),
       });
 
       report = await ActivityReport.create({
