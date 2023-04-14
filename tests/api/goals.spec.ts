@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
-import { CLOSE_SUSPEND_REASONS, GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
 
 test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   const response = await request.get(

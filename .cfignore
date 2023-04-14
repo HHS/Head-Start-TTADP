@@ -4,6 +4,7 @@ deployment_config/
 frontend/
 src/
 !build/server/src
+!packages
 maintenance_page/
 smartsheet_scripts/
 terraform/

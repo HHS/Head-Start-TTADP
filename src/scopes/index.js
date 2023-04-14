@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable dot-notation */
 import { _ } from 'lodash';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
-import { AWS_ELASTIC_SEARCH_INDEXES, DECIMAL_BASE } from '../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 import { search } from '../lib/awsElasticSearch/index';
 import { auditLogger } from '../logger';
 
