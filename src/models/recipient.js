@@ -13,11 +13,11 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
 
-      // Recipient.addScope('defaultScope', {
-      //   where: {
-      //     deleted: { [Op.ne]: true },
-      //   },
-      // });
+      Recipient.addScope('defaultScope', {
+        where: {
+          deleted: { [Op.ne]: true },
+        },
+      });
     }
   }
   Recipient.init({
