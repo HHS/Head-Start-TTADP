@@ -1,4 +1,7 @@
 const { Model } = require('sequelize');
+const {
+  beforeValidate,
+} = require('./hooks/goalFieldResponse');
 
 export default (sequelize, DataTypes) => {
   class GoalFieldResponse extends Model {
@@ -31,9 +34,20 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.TEXT),
       allowNull: true,
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalFieldResponse',
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+    },
   });
   return GoalFieldResponse;
 };

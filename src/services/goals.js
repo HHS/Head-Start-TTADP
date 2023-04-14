@@ -3,7 +3,9 @@ import { uniqBy } from 'lodash';
 import { processObjectiveForResourcesById } from './resource';
 import {
   Goal,
+  GoalFieldResponse,
   GoalTemplate,
+  GoalTemplateFieldPrompt,
   Grant,
   Objective,
   ObjectiveResource,
@@ -464,6 +466,86 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
   return objectivesToSort;
 }
 
+function reducePrompts(forReport, newPrompts, promptsToReduce, goalId, activityReportId) {
+  return [...(newPrompts || [])]
+    .filter((prompts) => prompts && Array.isArray(prompts) && prompts.length > 0)
+    .reduce((previousPrompts, currentPrompt) => {
+      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
+      if (existingPrompt) {
+        existingPrompt.responses = [currentPrompt.response].reduce((
+          previousResponses,
+          currentResponse,
+        ) => {
+          const existingResponse = previousResponses
+            .find((pr) => pr.response === currentResponse.response);
+          if (existingResponse) {
+            existingResponse.goalIds = [...new Set([
+              ...existingResponse.goalIds,
+              goalId,
+            ])];
+            return previousResponses;
+          }
+          return [
+            ...previousResponses,
+            {
+              response: currentResponse.response,
+              goalIds: [goalId],
+            },
+          ];
+        }, existingPrompt.responses);
+        if (forReport) {
+          existingPrompt.reportResponses = [currentPrompt.reportResponse].reduce((
+            previousResponses,
+            currentResponse,
+          ) => {
+            const existingResponse = previousResponses
+              .find((pr) => pr.response === currentResponse.response);
+            if (existingResponse) {
+              existingResponse.activityReportGoalIds = [...new Set([
+                ...existingResponse.activityReportGoalIds,
+                activityReportId,
+              ])];
+              return previousResponses;
+            }
+            return [
+              ...previousResponses,
+              {
+                response: currentResponse.response,
+                activityReportGoalIds: [activityReportId],
+              },
+            ];
+          }, existingPrompt.reportResponses);
+        }
+        return previousPrompts;
+      }
+
+      const newPrompt = {
+        promptId: currentPrompt.promptId,
+        ordinal: currentPrompt.ordinal,
+        title: currentPrompt.title,
+        prompt: currentPrompt.prompt,
+        type: currentPrompt.type,
+        options: currentPrompt.options,
+        validations: currentPrompt.validations,
+        responses: [{
+          response: currentPrompt.response,
+          goalIds: [goalId],
+        }],
+      };
+
+      if (forReport) {
+        newPrompt.reportResponses = [{
+          response: currentPrompt.reportResponse,
+          activityReportGoalIds: [activityReportId],
+        }];
+      }
+      return [
+        ...previousPrompts,
+        newPrompt,
+      ];
+    }, promptsToReduce);
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -481,6 +563,9 @@ function reduceGoals(goals, forReport = false) {
 
   const r = goals.reduce((previousValues, currentValue) => {
     try {
+      const activityReportGoalId = forReport
+        ? currentValue.activityReportGoals[0].dataValues.id
+        : null;
       const existingGoal = previousValues.find((g) => where(g, currentValue));
       if (existingGoal) {
         existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
@@ -499,6 +584,13 @@ function reduceGoals(goals, forReport = false) {
         existingGoal.objectives = objectivesReducer(
           currentValue.objectives,
           existingGoal.objectives,
+        );
+        existingGoal.prompts = reducePrompts(
+          forReport,
+          currentValue.dataValues.prompts,
+          existingGoal.prompts,
+          currentValue.dataValues.id,
+          activityReportGoalId,
         );
         return previousValues;
       }
@@ -519,6 +611,13 @@ function reduceGoals(goals, forReport = false) {
         grantIds: [currentValue.grant.id],
         objectives: objectivesReducer(
           currentValue.objectives,
+        ),
+        prompts: reducePrompts(
+          forReport,
+          currentValue.dataValues.prompts,
+          [],
+          currentValue.dataValues.id,
+          activityReportGoalId,
         ),
         isNew: false,
         endDate: currentValue.endDate,
@@ -1905,6 +2004,29 @@ export async function getGoalsForReport(reportId) {
     attributes: {
       include: [
         [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+        [sequelize.literal(`(
+          SELECT
+            jsonb_agg( DISTINCT jsonb_build_object(
+              'promptId', gtfp.id ,
+              'ordinal', gtfp.ordinal,
+              'title', gtfp.title,
+              'prompt', gtfp.prompt,
+              'type', gtfp."fieldType",
+              'options', gtfp.options,
+              'validations', gtfp.validations,
+              'response', gfr.response,
+              'reportResponse', argfr.response
+            ))
+          FROM "GoalTemplateFieldPrompts" gtfp
+          LEFT JOIN "GoalFieldResponses" gfr
+          ON gtfp.id = gfr."goalTemplateFieldPromptId"
+          AND gft."goalId" = "Goal".id
+          LEFT JOIN "ActivityReportGoalFieldResponses" argfr
+          ON gtfp.id = argfr."goalTemplateFieldPromptId"
+          AND argft."activityReportGoalId" = "activityReportGoals".id
+          WHERE "goalTemplate".id = gtfp."goalTemplateId"
+          GROUP BY TRUE
+        )`), 'prompts'],
       ],
     },
     include: [
