@@ -391,8 +391,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
         as: 'grant',
         required: false,
       },
-    ],
-    include: [
       {
         model: OtherEntity,
         as: 'otherEntity',
