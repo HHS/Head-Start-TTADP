@@ -208,38 +208,44 @@ describe('Objectives DB service', () => {
     await ObjectiveResource.create({
       objectiveId: thirdObjective.id,
       resourceId: resource.id,
+      sourceFields: ['resource'],
     });
     await ObjectiveResource.create({
       objectiveId: thirdObjective.id,
       resourceId: keepResource.id,
+      sourceFields: ['resource'],
     });
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: thirdAro.id,
       resourceId: resource.id,
+      sourceFields: ['resource'],
     });
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: thirdAro.id,
       resourceId: keepResource.id,
+      sourceFields: ['resource'],
     });
 
     // Create objective keep resource.
     await ObjectiveResource.create({
       objectiveId: objective.id,
       resourceId: keepResource.id,
+      sourceFields: ['resource'],
     });
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: keepAro.id,
       resourceId: keepResource.id,
+      sourceFields: ['resource'],
     });
 
     let checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
     });
-    console.log('\n\n\nFirst Check ARO: ', checkARO);
+
     let checkAROR = await ActivityReportObjectiveResource.findOne({
       where: { activityReportObjectiveId: checkARO.id },
     });
-    console.log('\n\n\nFirst Check ARO RESOURCE123: ', checkAROR);
+
     await sequelize.transaction(async () => {
       await saveObjectivesForReport([...objectives, {
         id: objective.id,
@@ -249,26 +255,17 @@ describe('Objectives DB service', () => {
         recipientIds: [1],
         ids: [objective.id],
         files: [{ id: keepFile.id }],
-        resources: [
-          {
-            // id: keepResource.id,
-            // genericId: keepResource.id,
-            // sourceFields: ['resource'],
-            // resourceId: keepResource.id,
-            // value: 'https://keep-obj-resource.gov',
-            value: 'https://keep-obj-resource.gov',
-          },
-        ],
+        resources: [{ value: 'https://keep-obj-resource.gov' }],
       }], report);
     });
     checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
     });
-    console.log('\n\n\nSecond Check ARO: ', checkARO);
+
     checkAROR = await ActivityReportObjectiveResource.findOne({
       where: { activityReportObjectiveId: checkARO.id },
     });
-    console.log('\n\n\nSecond Check ARO RESOURCE123: ', checkAROR);
+
     otherEntity = await OtherEntity.create({ ...mockOtherEntity, id: 685497 });
     recipientInfo = await Recipient.create({ ...mockRecipient });
     grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });

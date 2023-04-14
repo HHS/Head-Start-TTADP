@@ -261,9 +261,7 @@ const filterResourcesForSync = (
       destroy: [],
     };
   }
-  console.log("\n\n\nMFF1: ", incomingResources);
-  console.log("\n\n\nMFF1a: ", currentResources);
-  console.log("\n\n\nMFF1b: ", ignoreDestroy);
+
   // pull all of the new and expanded resources in a single pass over the incomingResources.
   const newExpandedResources = incomingResources
     .reduce((resources, resource) => {
@@ -291,7 +289,7 @@ const filterResourcesForSync = (
           expanded: resources.expanded,
         };
       }
-      console.log("\n\n\nMFF2: ", matchingFromFields);
+
       const isExpanded = matchingFromFields
         .filter((mff) => resource.sourceFields
           .filter((l) => mff.sourceFields.includes(l))
