@@ -5,12 +5,12 @@ import React, {
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
 import { Grid, Alert } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
-import { DECIMAL_BASE } from '../../Constants';
 
 function GoalCards({
   recipientId,

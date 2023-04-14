@@ -1,4 +1,5 @@
 import { Op, QueryTypes } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportObjective,
@@ -7,7 +8,6 @@ import {
   Topic,
   sequelize,
 } from '../models';
-import { REPORT_STATUSES } from '../constants';
 
 const getTopicMappings = async () => sequelize.query(`
 SELECT

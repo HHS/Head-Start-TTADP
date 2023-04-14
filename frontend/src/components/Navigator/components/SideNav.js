@@ -6,6 +6,7 @@
 import React, {
   useState, useEffect,
 } from 'react';
+import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
@@ -16,7 +17,6 @@ import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
 import Container from '../../Container';
 import './SideNav.scss';
-import { REPORT_STATUSES } from '../../../Constants';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../constants';

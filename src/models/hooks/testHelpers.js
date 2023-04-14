@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
 
 export const draftObject = {
   activityRecipientType: 'recipient',
