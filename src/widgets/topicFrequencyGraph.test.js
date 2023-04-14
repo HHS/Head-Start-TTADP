@@ -17,7 +17,7 @@ import db, {
 } from '../models';
 import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
-import topicFrequencyGraph from './topicFrequencyGraph';
+import { topicFrequencyGraph } from './topicFrequencyGraph';
 
 jest.mock('bull');
 
