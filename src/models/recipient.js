@@ -14,9 +14,9 @@ export default (sequelize, DataTypes) => {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
 
       Recipient.addScope('defaultScope', {
-        where: {
-          deleted: { [Op.ne]: true },
-        },
+        // where: {
+        //   deleted: { [Op.ne]: true },
+        // },
       });
     }
   }
