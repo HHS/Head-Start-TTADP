@@ -509,7 +509,9 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
-      await Grant.unscoped().destroy({ where: { recipientId: recipientsToSearch.map((g) => g.id) } });
+      await Grant.unscoped().destroy({
+        where: { recipientId: recipientsToSearch.map((g) => g.id) }
+      });
       await Recipient.unscoped().destroy({ where: { id: recipientsToSearch.map((g) => g.id) } });
     });
 
