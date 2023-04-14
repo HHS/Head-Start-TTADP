@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -8,7 +8,6 @@ import {
   Recipient,
   sequelize,
 } from '../models';
-import { REPORT_STATUSES } from '../constants';
 import { formatNumber } from './helpers';
 
 export default async function overview(scopes) {

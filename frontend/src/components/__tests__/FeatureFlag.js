@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
 } from '@testing-library/react';
@@ -7,7 +8,6 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
-import { SCOPE_IDS } from '../../Constants';
 
 const { ADMIN } = SCOPE_IDS;
 

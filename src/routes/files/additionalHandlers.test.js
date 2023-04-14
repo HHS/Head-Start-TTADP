@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   deleteOnlyFile,
   linkHandler,
@@ -17,7 +18,6 @@ import {
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../../constants';
 import { getObjectiveById } from '../../services/objectives';
 
 jest.mock('../../services/files', () => ({
