@@ -17,9 +17,6 @@ export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
       const { topics, files, resources } = objective;
-      console.log("\n\n\n-----123FIles: ", files);
-
-      console.log("\n\n\n-----resources: ", resources);
 
       // Determine if this objective already exists.
       let existingObjective;
