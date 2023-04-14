@@ -67,6 +67,8 @@ describe('activity report model hooks', () => {
         onApprovedAR: false,
         grantId: grant.id,
         createdVia: 'rtr',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       report = await ActivityReport.create({
@@ -144,13 +146,13 @@ describe('activity report model hooks', () => {
         },
       });
 
-      await Grant.destroy({
+      await Grant.unscoped().destroy({
         where: {
           id: grant.id,
         },
       });
 
-      await Recipient.destroy({
+      await Recipient.unscoped().destroy({
         where: {
           id: recipient.id,
         },
