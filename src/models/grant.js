@@ -25,10 +25,10 @@ export default (sequelize, DataTypes) => {
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
 
       Grant.addScope('defaultScope', {
-        // where: {
-        //   deleted: { [Op.ne]: true },
-        //   endDate: { [Op.gt]: '2020-08-31' },
-        // },
+        where: {
+          deleted: { [Op.ne]: true },
+          endDate: { [Op.gt]: '2020-08-31' },
+        },
         include: [
           { model: models.Recipient, as: 'recipient' },
         ],
