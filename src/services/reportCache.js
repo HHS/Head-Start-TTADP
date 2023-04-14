@@ -4,6 +4,7 @@ import {
   getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
+import { cachePrompts } from './goalTemplates';
 
 const { Op } = require('sequelize');
 const {
@@ -277,27 +278,22 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
   // if it does, then we update it with the new values
   if (arg) {
     const activityReportGoalId = arg.id;
-    return Promise.all([
-      ActivityReportGoal.update({
-        name: goal.name,
-        status: goal.status,
-        timeframe: goal.timeframe,
-        closeSuspendReason: goal.closeSuspendReason,
-        closeSuspendContext: goal.closeSuspendContext,
-        endDate: goal.endDate,
-        isRttapa: isRttapa || null,
-        isActivelyEdited: isActivelyBeingEditing || false,
-      }, {
-        where: { id: activityReportGoalId },
-        individualHooks: true,
-      }),
-      Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    ]);
-  }
-
-  // otherwise, we create a new one
-  return Promise.all([
-    ActivityReportGoal.create({
+    await ActivityReportGoal.update({
+      name: goal.name,
+      status: goal.status,
+      timeframe: goal.timeframe,
+      closeSuspendReason: goal.closeSuspendReason,
+      closeSuspendContext: goal.closeSuspendContext,
+      endDate: goal.endDate,
+      isRttapa: isRttapa || null,
+      isActivelyEdited: isActivelyBeingEditing || false,
+    }, {
+      where: { id: activityReportGoalId },
+      individualHooks: true,
+    });
+  } else {
+    // otherwise, we create a new one
+    await ActivityReportGoal.create({
       goalId: goal.id,
       activityReportId: reportId,
       name: goal.name,
@@ -310,8 +306,12 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
       isActivelyEdited: isActivelyBeingEditing || false,
     }, {
       individualHooks: true,
-    }),
+    });
+  }
+
+  return Promise.all([
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
+    cachePrompts([goal.id], reportId),
   ]);
 };
 

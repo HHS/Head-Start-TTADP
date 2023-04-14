@@ -109,6 +109,55 @@ module.exports = {
           allowNull: false,
           type: Sequelize.DATE,
         },
+        onAR: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        onApprovedAR: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ActivityReportGoalFieldResponses', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        activityReportGoalId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ActivityReportGoals',
+            },
+            key: 'id',
+          },
+        },
+        goalTemplateFieldPromptId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'GoalTemplateFieldPrompts',
+            },
+            key: 'id',
+          },
+        },
+        response: {
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.TEXT),
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       // Add first curated template
@@ -195,16 +244,17 @@ module.exports = {
         `,
         { transaction },
       );
-      await Promise.all(['GoalFieldResponses', 'GoalTemplateFieldPrompts'].map(async (table) => {
-        await queryInterface.sequelize.query(
-          ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
-          { raw: true, transaction },
-        );
-        // Drop old audit log table
-        await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });
-        await queryInterface.dropTable(`ZAL${table}`, { transaction });
-        await queryInterface.dropTable(table, { transaction });
-      }));
+      await Promise.all(['ActivityReportGoalFieldResponses', 'GoalFieldResponses', 'GoalTemplateFieldPrompts']
+        .map(async (table) => {
+          await queryInterface.sequelize.query(
+            ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
+            { raw: true, transaction },
+          );
+          // Drop old audit log table
+          await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });
+          await queryInterface.dropTable(`ZAL${table}`, { transaction });
+          await queryInterface.dropTable(table, { transaction });
+        }));
       await queryInterface.sequelize.query(
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');

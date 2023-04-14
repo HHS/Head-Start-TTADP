@@ -10,6 +10,7 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       GoalTemplateFieldPrompt.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', onDelete: 'cascade', as: 'goalTemplate' });
+      GoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, { foreignKey: 'goalTemplateId', as: 'promptResponses' });
     }
   }
   GoalTemplateFieldPrompt.init({
