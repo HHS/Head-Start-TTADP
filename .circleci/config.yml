@@ -353,7 +353,43 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright/
+          path: playwright/e2e
+    resource_class: large
+  test_api:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:api
+      - store_artifacts:
+          path: playwright/api
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
@@ -609,6 +645,9 @@ workflows:
       - test_e2e:
           requires:
             - build_and_lint
+      - test_api:
+          requires:
+            - build_and_lint
       - cucumber_test:
           requires:
             - build_and_lint
@@ -620,6 +659,7 @@ workflows:
             - test_backend
             - test_frontend
             - test_e2e
+            - test_api
             - cucumber_test
             - dynamic_security_scan
           filters:
@@ -648,6 +688,9 @@ workflows:
           requires:
             - build_and_lint
       - test_e2e:
+          requires:
+            - build_and_lint
+      - test_api:
           requires:
             - build_and_lint
       - dynamic_security_scan:
