@@ -7,16 +7,16 @@ import { devices } from '@playwright/test';
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   testDir: '.',
-  outputDir: './playwright/e2e/test-results',
+  outputDir: './test-results',
   workers: 3, // this was originally set to 3, but changed to 2 when I saw data collisions, but tests have been improved since then so I think it's safe to go back to 3
   expect: {
     timeout: 20000,
   },
   fullyParallel: true,
-  reporter: [['html', { outputFolder: './playwright/e2e/report', open: 'never' }]],
+  reporter: [['html', { outputFolder: './report', open: 'never' }]],
   timeout: 300000,
   globalTimeout: 900000,
-  globalSetup: './tests/e2e/init/globalSetup.ts',
+  globalSetup: './init/globalSetup.ts',
   projects: [
     {
       name: 'Desktop Chrome',
