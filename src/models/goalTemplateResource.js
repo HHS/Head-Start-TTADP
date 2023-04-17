@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-// const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/goalResource');
+const { afterDestroy } = require('./hooks/goalTemplateResource');
 
 export default (sequelize, DataTypes) => {
   class GoalTemplateResource extends Model {
@@ -44,11 +44,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'GoalTemplateResource',
-    // hooks: {
-    //   beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
-    //   afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    // },
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return GoalTemplateResource;
 };
