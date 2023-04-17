@@ -7,7 +7,12 @@ import logo2x from '../images/eclkc-blocks-logo-86x111.png';
 import ReadOnlyEditor from './ReadOnlyEditor';
 import SiteAlert from './SiteAlert';
 
-function Header({ authenticated, alert }) {
+function Header({
+  authenticated,
+  alert,
+  areThereUnreadNotifications,
+  setAreThereUnreadNotifications,
+}) {
   const headerClassNames = [
     'smart-hub-header',
     'pin-top',
@@ -45,7 +50,10 @@ function Header({ authenticated, alert }) {
           </div>
         </div>
         <div className="flex-column flex-align-self-center">
-          <HeaderUserMenu />
+          <HeaderUserMenu
+            areThereUnreadNotifications={areThereUnreadNotifications}
+            setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+          />
         </div>
       </div>
     </header>
@@ -60,6 +68,8 @@ Header.propTypes = {
     variant: PropTypes.string,
     size: PropTypes.string,
   }),
+  areThereUnreadNotifications: PropTypes.bool.isRequired,
+  setAreThereUnreadNotifications: PropTypes.func.isRequired,
 };
 
 Header.defaultProps = {
