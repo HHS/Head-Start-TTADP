@@ -246,6 +246,12 @@ describe('Objectives DB service', () => {
       where: { activityReportObjectiveId: checkARO.id },
     });
 
+    // Clean up unused objective resource.
+    await ObjectiveResource.destroy({
+      where: { resourceId: [resource.id] },
+      individualHooks: true,
+    });
+
     await sequelize.transaction(async () => {
       await saveObjectivesForReport([...objectives, {
         id: objective.id,
@@ -314,12 +320,12 @@ describe('Objectives DB service', () => {
     await Objective.destroy({
       where: {
         id:
-      [...objectiveIds,
-        objective.id,
-        secondObjective.id,
-        thirdObjective.id,
-        findObjectiveById.id,
-        findObjectiveByTitle.id],
+          [...objectiveIds,
+            objective.id,
+            secondObjective.id,
+            thirdObjective.id,
+            findObjectiveById.id,
+            findObjectiveByTitle.id],
       },
     });
     await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
@@ -435,7 +441,7 @@ describe('Objectives DB service', () => {
 
       // Check file was deleted.
       const deletedResource = await Resource.findOne({
-        where: { id: file.id },
+        where: { id: resource.id },
       });
       expect(deletedResource).toBeNull();
     });
