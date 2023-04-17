@@ -1,6 +1,6 @@
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  testDir: './tests/api',
+  testDir: '.',
   outputDir: './playwright/api/test-results',
   reporter: [['html', { outputFolder: './playwright/api/report', open: 'never' }]],
 };

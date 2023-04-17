@@ -6,7 +6,7 @@ import { devices } from '@playwright/test';
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  testDir: './tests/e2e',
+  testDir: '.',
   outputDir: './playwright/e2e/test-results',
   workers: 3, // this was originally set to 3, but changed to 2 when I saw data collisions, but tests have been improved since then so I think it's safe to go back to 3
   expect: {
