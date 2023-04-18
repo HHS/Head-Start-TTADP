@@ -37,18 +37,18 @@ module.exports = {
                 COUNT(DISTINCT aror."id") "ActivityReportObjectiveResourcesTotal",
                 COUNT(DISTINCT arot."id") "ActivityReportObjectiveTopicsTotal"
             FROM "Grants" gr
-            LEFT JOIN "Goals" g ON gr."id" = g."grantId"
-            -- LEFT JOIN "GoalResources" gor ON gr."id" = gor."goalId"
-            LEFT JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
-            LEFT JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
-            LEFT JOIN "Objectives" oj ON g."id" = oj."goalId"
-            LEFT JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
-            LEFT JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
-            LEFT JOIN "ObjectiveTopics" ojt ON oj."id" = ojt."objectiveId"
-            LEFT JOIN "ActivityReportObjectives" aro ON oj."id" = aro."objectiveId"
-            LEFT JOIN "ActivityReportObjectiveFiles" arof ON aro."id" = arof."activityReportObjectiveId"
-            LEFT JOIN "ActivityReportObjectiveResources" aror ON aro."id" = aror."activityReportObjectiveId"
-            LEFT JOIN "ActivityReportObjectiveTopics" arot ON aro."id" = arot."activityReportObjectiveId"
+            FULL OUTER JOIN "Goals" g ON gr."id" = g."grantId"
+            -- FULL OUTER JOIN "GoalResources" gor ON gr."id" = gor."goalId"
+            FULL OUTER JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
+            FULL OUTER JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
+            FULL OUTER JOIN "Objectives" oj ON g."id" = oj."goalId"
+            FULL OUTER JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
+            FULL OUTER JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
+            FULL OUTER JOIN "ObjectiveTopics" ojt ON oj."id" = ojt."objectiveId"
+            FULL OUTER JOIN "ActivityReportObjectives" aro ON oj."id" = aro."objectiveId"
+            FULL OUTER JOIN "ActivityReportObjectiveFiles" arof ON aro."id" = arof."activityReportObjectiveId"
+            FULL OUTER JOIN "ActivityReportObjectiveResources" aror ON aro."id" = aror."activityReportObjectiveId"
+            FULL OUTER JOIN "ActivityReportObjectiveTopics" arot ON aro."id" = arot."activityReportObjectiveId"
             GROUP BY gr."regionId"
         );
         INSERT INTO "PreCountStatsByRegion"
@@ -239,7 +239,7 @@ module.exports = {
             ORDER BY 11 DESC
         );
         SELECT * FROM "DupObjectivesOnNonDupGoalsOnARs";
-        
+
         -- All objectives that are duplicates on goals that are (not) duplicates on the same AR
         CREATE TEMP TABLE "DupObjectivesOnARs" AS (
             SELECT
@@ -308,6 +308,34 @@ module.exports = {
         );
         SELECT * FROM "ObjectivesToModify";
 
+        --somehow there's duplicates in here, so dedupe
+        CREATE TEMP TABLE "DeduplicatedObjectivesToModify" AS (
+            SELECT DISTINCT ON ("goalId", "objectiveHash")
+                "goalId",
+                "title",
+                "status",
+                "createdAt",
+                "updatedAt",
+                "otherEntityId",
+                "onApprovedAR",
+                "firstNotStartedAt",
+                "lastNotStartedAt",
+                "firstInProgressAt",
+                "lastInProgressAt",
+                "firstCompleteAt",
+                "lastCompleteAt",
+                "firstSuspendedAt",
+                "lastSuspendedAt",
+                "rtrOrder",
+                "createdVia",
+                "toRemove",
+                "toUpdate",
+                "objectiveHash",
+                "onAR"
+            FROM "ObjectivesToModify"
+            ORDER BY "goalId", "objectiveHash", "createdAt"
+        );
+
         -- BEGIN;
         -- SELECT set_config('audit.auditDescriptor', 'dup_goals_InsertObjectives', TRUE) as "auditDescriptor";
         CREATE TEMP TABLE "InsertObjectives" AS
@@ -363,6 +391,16 @@ module.exports = {
         SELECT * FROM "InsertObjectives";
         -- END;
 
+        -- somehow there's duplicates in here, so dedupe
+        CREATE TEMP TABLE "DeduplicatedInsertObjectives" AS (
+            SELECT DISTINCT ON ("goalId", "objectiveHash")
+                "objectiveId",
+                "goalId",
+                "objectiveHash"
+            FROM "InsertObjectives"
+            ORDER BY "goalId", "objectiveHash"
+        );
+
         -- Handle ActivityReportObjectives Metadata tables
         CREATE TEMP TABLE "ObjectivesToModifyMetadata" AS
         WITH objectives_to_modify AS (
@@ -387,13 +425,63 @@ module.exports = {
             otm."createdVia",
             otm."toRemove",
             COALESCE(otm."toUpdate", "io"."objectiveId") "toUpdate"
-            FROM "ObjectivesToModify" otm
-            LEFT JOIN "InsertObjectives" "io"
+            FROM "DeduplicatedObjectivesToModify" otm
+            LEFT JOIN "DeduplicatedInsertObjectives" "io"
             ON otm."goalId" = "io"."goalId"
             AND otm."objectiveHash" = "io"."objectiveHash"
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM "DeduplicatedInsertObjectives" i
+                WHERE i."objectiveHash" = otm."objectiveHash"
+            )
         )
         SELECT * FROM objectives_to_modify;
         SELECT * FROM "ObjectivesToModifyMetadata";
+        
+        --Check for Extra Objectives 
+
+        SELECT "grantId", "goalHash", "objectiveHash", COUNT(*)
+        FROM "DupObjectivesOnDupGoalsOnARs"
+        GROUP BY "grantId", "goalHash", "objectiveHash"
+        HAVING COUNT(*) > 1;
+
+        SELECT "grantId", "goalHash", "objectiveHash", COUNT(*)
+        FROM "DupObjectivesOnNonDupGoalsOnARs"
+        GROUP BY "grantId", "goalHash", "objectiveHash"
+        HAVING COUNT(*) > 1;
+
+        SELECT "goalId", "objectiveHash", COUNT(*)
+        FROM "ObjectivesToModify"
+        GROUP BY "goalId", "objectiveHash"
+        HAVING COUNT(*) > 1;
+
+        SELECT "goalId", "objectiveHash", COUNT(*)
+        FROM "InsertObjectives"
+        GROUP BY "goalId", "objectiveHash"
+        HAVING COUNT(*) > 1;
+
+        SELECT "goalId", "objectiveHash", COUNT(*)
+        FROM "DeduplicatedObjectivesToModify"
+        GROUP BY "goalId", "objectiveHash"
+        HAVING COUNT(*) > 1;
+
+        SELECT "goalId", "objectiveHash", COUNT(*)
+        FROM "DeduplicatedInsertObjectives"
+        GROUP BY "goalId", "objectiveHash"
+        HAVING COUNT(*) > 1;
+
+        SELECT "goalId", "toRemove", "toUpdate", COUNT(*)
+        FROM "ObjectivesToModifyMetadata"
+        GROUP BY "goalId", "toRemove", "toUpdate"
+        HAVING COUNT(*) > 1;
+
+        SELECT o1."goalId", o1."title", o1."objectiveHash", o2."title", o2."objectiveHash"
+        FROM "ObjectivesToModify" o1
+        JOIN "ObjectivesToModify" o2
+        ON o1."goalId" = o2."goalId"
+        AND o1."title" ILIKE o2."title"
+        AND o1."objectiveHash" != o2."objectiveHash";
+
 
         -- Handle ObjectiveFiles
         CREATE TEMP TABLE "ObjectiveFilesToModify" AS (
@@ -730,35 +818,35 @@ module.exports = {
         -- Handle ActivityReportObjectives
         CREATE TEMP TABLE "ActivityReportObjectivesToModify" AS (
             WITH otmm_recast AS (
-                SELECT *,
-                  UNNEST("toRemove") to_remove
+            SELECT *,
+                UNNEST("toRemove") to_remove
                 FROM "ObjectivesToModifyMetadata"
                 )
                 SELECT
-                  otmm."toUpdate" "objectiveId",
-                  aro."activityReportId",
-                  aro.title,
-                  aro.status,
-                  MIN(LEAST(aro."arOrder", aro2."arOrder")) "arOrder",
-                  STRING_AGG(DISTINCT "arox"."ttaProvided", E'\n') "ttaProvided",
-                  MIN(LEAST("aro"."createdAt", "aro2"."createdAt")) "createdAt",
-                  MAX(GREATEST("aro"."updatedAt", "aro2"."updatedAt")) "updatedAt",
-                  ARRAY_AGG(DISTINCT "aro".id ORDER by "aro".id) "toRemove",
-                  (ARRAY_AGG(DISTINCT "aro2".id))[1] "toUpdate"
-                FROM "ActivityReportObjectives" aro
-                JOIN  otmm_recast otmm
-                ON "aro"."objectiveId" = to_remove
-                LEFT JOIN "ActivityReportObjectives" aro2
-                ON "aro2"."objectiveId" = otmm."toUpdate"
-                AND "aro"."activityReportId" = "aro2"."activityReportId"
-                LEFT JOIN "ActivityReportObjectives" arox
-                  ON "aro"."activityReportId" = arox."activityReportId"
-                  AND (
-                    arox."objectiveId" = "aro"."objectiveId"
-                    OR otmm."toUpdate" = arox."objectiveId"
-                  )
-                GROUP BY 1,2,3,4
-                );
+                    otmm."toUpdate" "objectiveId",
+                    aro."activityReportId",
+                    aro.title,
+                    aro.status,
+                    MIN(LEAST(aro."arOrder", aro2."arOrder")) "arOrder",
+                    STRING_AGG(DISTINCT "arox"."ttaProvided", E'\n') "ttaProvided",
+                    MIN(LEAST("aro"."createdAt", "aro2"."createdAt")) "createdAt",
+                    MAX(GREATEST("aro"."updatedAt", "aro2"."updatedAt")) "updatedAt",
+                    ARRAY_AGG(DISTINCT "aro".id ORDER by "aro".id) "toRemove",
+                    (ARRAY_AGG(DISTINCT "aro2".id))[1] "toUpdate"
+                    FROM "ActivityReportObjectives" aro
+                    JOIN  otmm_recast otmm
+                    ON "aro"."objectiveId" = to_remove
+                    LEFT JOIN "ActivityReportObjectives" aro2
+                    ON "aro2"."objectiveId" = otmm."toUpdate"
+                    AND "aro"."activityReportId" = "aro2"."activityReportId"
+                    LEFT JOIN "ActivityReportObjectives" arox
+                        ON "aro"."activityReportId" = arox."activityReportId"
+                        AND (
+                            arox."objectiveId" = "aro"."objectiveId"
+                            OR otmm."toUpdate" = arox."objectiveId"
+                        )
+                    GROUP BY 1,2,3,4
+                    );
         SELECT * FROM "ActivityReportObjectivesToModify";
 
         -- BEGIN;
@@ -1669,18 +1757,18 @@ module.exports = {
                 COUNT(DISTINCT aror."id") "ActivityReportObjectiveResourcesTotal",
                 COUNT(DISTINCT arot."id") "ActivityReportObjectiveTopicsTotal"
             FROM "Grants" gr
-            LEFT JOIN "Goals" g ON gr."id" = g."grantId"
-            -- LEFT JOIN "GoalResources" gor ON g."id" = gor."goalId"
-            LEFT JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
-            LEFT JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
-            LEFT JOIN "Objectives" oj ON g."id" = oj."goalId"
-            LEFT JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
-            LEFT JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
-            LEFT JOIN "ObjectiveTopics" ojt ON oj."id" = ojt."objectiveId"
-            LEFT JOIN "ActivityReportObjectives" aro ON oj."id" = aro."objectiveId"
-            LEFT JOIN "ActivityReportObjectiveFiles" arof ON aro."id" = arof."activityReportObjectiveId"
-            LEFT JOIN "ActivityReportObjectiveResources" aror ON aro."id" = aror."activityReportObjectiveId"
-            LEFT JOIN "ActivityReportObjectiveTopics" arot ON aro."id" = arot."activityReportObjectiveId"
+            FULL OUTER JOIN "Goals" g ON gr."id" = g."grantId"
+            -- FULL OUTER JOIN "GoalResources" gor ON g."id" = gor."goalId"
+            FULL OUTER JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
+            FULL OUTER JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
+            FULL OUTER JOIN "Objectives" oj ON g."id" = oj."goalId"
+            FULL OUTER JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
+            FULL OUTER JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
+            FULL OUTER JOIN "ObjectiveTopics" ojt ON oj."id" = ojt."objectiveId"
+            FULL OUTER JOIN "ActivityReportObjectives" aro ON oj."id" = aro."objectiveId"
+            FULL OUTER JOIN "ActivityReportObjectiveFiles" arof ON aro."id" = arof."activityReportObjectiveId"
+            FULL OUTER JOIN "ActivityReportObjectiveResources" aror ON aro."id" = aror."activityReportObjectiveId"
+            FULL OUTER JOIN "ActivityReportObjectiveTopics" arot ON aro."id" = arot."activityReportObjectiveId"
             GROUP BY gr."regionId"
         );
         INSERT INTO "PostCountStatsByRegion"
@@ -1771,7 +1859,10 @@ module.exports = {
                 (SELECT SUM("ActivityReportObjectiveTopicsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveTopicStats"
         )
-        SELECT *, pre_count - post_count AS diff 
+        SELECT *, 
+            pre_count - post_count AS diff,
+            post_count - (pre_count - "Deletes" + "Inserts") AS adjusted_diff
+
         FROM "CollectStats"
         ORDER BY id;
           `, { transaction });
