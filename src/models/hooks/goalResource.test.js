@@ -4,7 +4,6 @@ import {
   Goal,
   GoalResource,
 } from '..';
-import goal from '../goal';
 
 jest.mock('bull');
 

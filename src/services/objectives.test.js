@@ -422,7 +422,7 @@ describe('Objectives DB service', () => {
       expect(keepObjectiveResource).not.toBeNull();
 
       // Check keep resource wasn't deleted.
-      const keepResourceExists = await File.findOne({
+      const keepResourceExists = await Resource.findOne({
         where: { id: keepResource.id },
       });
       expect(keepResourceExists).not.toBeNull();
@@ -439,7 +439,7 @@ describe('Objectives DB service', () => {
       });
       expect(deletedObjectiveResource).toBeNull();
 
-      // Check file was deleted.
+      // Check resource was deleted.
       const deletedResource = await Resource.findOne({
         where: { id: resource.id },
       });
