@@ -28,7 +28,7 @@ export default async function overview(scopes) {
           [Op.and]: [
             scopes.grant,
             { endDate: { [Op.gt]: '2020-08-31' } },
-            { deleted: { [Op.ne]: true } }
+            { deleted: { [Op.ne]: true } },
           ],
         },
       },
