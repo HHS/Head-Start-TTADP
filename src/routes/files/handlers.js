@@ -325,12 +325,6 @@ const uploadHandler = async (req, res) => {
     return handleErrors(req, res, err, logContext);
   }
   try {
-    // Because we're not running minio in CI, just act as though the s3 upload
-    // succeeded. We're not testing s3, we're testing this handler.
-    if (process.env.CI) {
-      return res.status(200);
-    }
-
     const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
     const url = getPresignedURL(uploadedFile.key);
     await updateStatus(metadata.id, UPLOADED);
