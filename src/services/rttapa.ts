@@ -91,7 +91,8 @@ export async function createRttapa(
           'reasons', gg."reasons",
           'previousStatus', gg."previousStatus",
           'isRttapa', gg."isRttapa",
-          'objectives', gg."objectives"
+          'objectives', gg."objectives",
+          'fieldResponses', gg."fieldResponses"
         ))
       FROM (
         SELECT
@@ -186,7 +187,26 @@ export async function createRttapa(
               ON aroii."activityReportId" = arii.id
               GROUP BY TRIM(oii.title)
             ) oo
-          ) "objectives"
+          ) "objectives",
+          (
+            SELECT
+              jsonb_agg(DISTINCT jsonb_build_object(
+                'fieldPromptId', gtfp.id,
+                'ordinal', gtfp.ordinal,
+                'title', gtfp.title,
+                'hint', gtfp.hint,
+                'fieldType', gtfp."fieldType",
+                'options', gtfp.options,
+                'validations', gtfp.validations,
+                'response', gfr.response,
+              )) "fieldPromptResponse"
+            FROM "GoalFieldResponses" gfr
+            JOIN UNNEST(ARRAY_AGG(DISTINCT "gi".id)) gix(id)
+            ON gfr.id = gix.id
+            JOIN "GoalTemplateFieldPrompts" gtfp
+            ON gfr."goalTemplateFieldPromptId" = gtfp.id
+            GROUP BY gtfp.id
+          ) "fieldPromptResponses"
         FROM "Goals" gi
         JOIN UNNEST(ARRAY_AGG(DISTINCT "grants->goals".id)) gx(id)
         ON gi.id = gx.id

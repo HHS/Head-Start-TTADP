@@ -302,6 +302,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     }
   }
 };
+
 const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
@@ -508,6 +509,30 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       }
 
       if (goals && goals.length > 0) {
+        await Promise.all([
+          sequelize.models.Goal.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                id: { [Op.in]: goals.map((g) => g.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+          sequelize.models.GoalFieldResponse.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                goalId: { [Op.in]: goals.map((g) => g.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+        ]);
         await sequelize.models.Goal.update(
           { onApprovedAR: false },
           {
@@ -617,17 +642,30 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       /*  Determine Objective Statuses (Other > Approved) */
       await determineObjectiveStatus(instance.id, sequelize, false);
 
-      await sequelize.models.Goal.update(
-        { onApprovedAR: true },
-        {
-          where: {
-            id: objectivesAndGoals.map((o) => o.goalId),
-            onApprovedAR: false,
+      await Promise.all([
+        sequelize.models.Goal.update(
+          { onApprovedAR: true },
+          {
+            where: {
+              id: objectivesAndGoals.map((o) => o.goalId),
+              onApprovedAR: false,
+            },
+            transaction: options.transaction,
+            individualHooks: true,
           },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
+        ),
+        sequelize.models.GoalFieldResponse.update(
+          { onApprovedAR: true },
+          {
+            where: {
+              goalId: objectivesAndGoals.map((o) => o.goalId),
+              onApprovedAR: false,
+            },
+            transaction: options.transaction,
+            individualHooks: true,
+          },
+        ),
+      ]);
     }
   }
 };
