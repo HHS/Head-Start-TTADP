@@ -123,7 +123,6 @@ const beforeDestroy = async (sequelize, instance, options) => {
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
-  await propagateDestroyToTemplate(sequelize, instance, options);
   await propagateDestroyToFile(sequelize, instance, options);
   await cleanupOrphanFiles(sequelize, instance.fileId);
 };
