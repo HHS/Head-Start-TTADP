@@ -4,12 +4,12 @@ import {
   getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
-import { cachePrompts } from './goalTemplates';
 
 const { Op } = require('sequelize');
 const {
   sequelize,
   ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
@@ -266,9 +266,82 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   ]);
 };
 
-const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditing) => {
+const cachePrompts = async (
+  goalId,
+  activityReportGoalId,
+  promptResponses,
+) => {
+  const originalARGResponses = await ActivityReportGoalFieldResponse.findAll({
+    attributes: [
+      ['goalTemplateFieldPromptId', 'promptId'],
+      'response',
+    ],
+    where: { goalId, activityReportGoalId },
+    raw: true,
+  });
+
+  const [
+    newPromptResponses,
+    updatedPromptResponses,
+  ] = promptResponses.reduce((acc, promptResponse) => {
+    const currentPromptResponse = originalARGResponses
+      .find(({ promptId }) => promptResponse.goalTemplateFieldPromptId === promptId);
+    if (!currentPromptResponse) {
+      // Record is in newData but not in currentData
+      acc.newRecords.push(promptResponse);
+    } else if (!promptResponse.responses
+      .every((response, index) => response === currentPromptResponse.responses[index])) {
+      // Record is in both newData and currentData, but with different responses
+      acc.updatedResponses.push(promptResponse);
+    }
+    return acc;
+  });
+
+  // Find records in currentData but not in newData
+  const removedPromptResponses = originalARGResponses.filter(({ promptId }) => (
+    !promptResponses
+      .some((promptResponse) => promptId === promptResponses.goalTemplateFieldPromptId)
+  ))
+    .find(({ promptId }) => promptId);
+
+  return Promise.all([
+    ...newPromptResponses.map(async ({
+      goalTemplateFieldPromptId,
+      response,
+    }) => ActivityReportGoalFieldResponse.create({
+      activityReportGoalId,
+      goalTemplateFieldPromptId,
+      response,
+    })),
+    ...updatedPromptResponses.map(async ({
+      goalTemplateFieldPromptId,
+      response,
+    }) => ActivityReportGoalFieldResponse.update({ response }, {
+      activityReportGoalId,
+      goalTemplateFieldPromptId,
+    })),
+    removedPromptResponses.length > 0
+      ? ActivityReportObjectiveFile.destroy({
+        where: {
+          activityReportGoalId,
+          goalTemplateFieldPromptId: { [Op.in]: removedPromptResponses },
+        },
+        individualHooks: true,
+        hookMetadata: { goalId },
+      })
+      : Promise.resolve(),
+  ]);
+};
+
+const cacheGoalMetadata = async (
+  goal,
+  reportId,
+  isRttapa,
+  isActivelyBeingEditing,
+  prompts,
+) => {
   // first we check to see if the activity report -> goal link already exists
-  const arg = await ActivityReportGoal.findOne({
+  let arg = await ActivityReportGoal.findOne({
     where: {
       goalId: goal.id,
       activityReportId: reportId,
@@ -293,7 +366,7 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
     });
   } else {
     // otherwise, we create a new one
-    await ActivityReportGoal.create({
+    arg = await ActivityReportGoal.create({
       goalId: goal.id,
       activityReportId: reportId,
       name: goal.name,
@@ -306,12 +379,16 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
       isActivelyEdited: isActivelyBeingEditing || false,
     }, {
       individualHooks: true,
+      returning: true,
+      plain: true,
     });
   }
 
   return Promise.all([
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    cachePrompts([goal.id], reportId),
+    prompts && prompts.length > 0
+      ? cachePrompts(goal.id, arg.id, prompts)
+      : Promise.resolve(),
   ]);
 };
 

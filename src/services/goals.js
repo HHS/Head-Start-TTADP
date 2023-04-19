@@ -39,6 +39,7 @@ import {
   cacheGoalMetadata,
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
+import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { auditLogger } from '../logger';
 import { isValidResourceUrl } from '../lib/urlUtils';
 
@@ -1901,7 +1902,13 @@ export async function saveGoalsForReport(goals, report) {
           await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
         }
 
-        await cacheGoalMetadata(newGoal, report.id, isRttapa || null, isActivelyBeingEditing);
+        await cacheGoalMetadata(
+          newGoal,
+          report.id,
+          isRttapa || null,
+          isActivelyBeingEditing,
+          prompts || null,
+        );
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
