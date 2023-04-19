@@ -51,7 +51,7 @@ commands:
     steps:
       - run:
           name: Combine package-lock.json files to single file
-          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+          command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-1208/order-rtr-goals"
+    default: "mb/TTAHUB-1020/resurrect-shared-packages"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-1049/resources-db"
@@ -233,15 +233,16 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v7-yarn-deps-
+            - v8-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - packages/common/node_modules
+          key: v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci

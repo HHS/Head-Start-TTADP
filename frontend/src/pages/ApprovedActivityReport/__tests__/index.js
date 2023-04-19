@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   fireEvent,
   render,
@@ -11,7 +12,6 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
 import ApprovedActivityReport from '../index';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('Activity report print and share view', () => {
   const report = {

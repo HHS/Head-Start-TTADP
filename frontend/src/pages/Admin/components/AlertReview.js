@@ -8,6 +8,7 @@ import {
   DatePicker,
   Alert,
 } from '@trussworks/react-uswds';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import draftToHtml from 'draftjs-to-html';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../utils';
@@ -15,7 +16,6 @@ import SiteAlert from '../../../components/SiteAlert';
 import Req from '../../../components/Req';
 import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
 import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
-import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '../../../Constants';
 import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
@@ -241,7 +241,7 @@ export default function AlertReview({ alert, onDelete }) {
               tabIndex="0"
               editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
               toolbar={{
-                options: ['list', 'link'],
+                options: ['inline', 'list', 'link'],
                 inline: {
                   options: ['bold', 'italic'],
                 },

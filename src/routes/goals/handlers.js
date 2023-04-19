@@ -1,4 +1,5 @@
 import httpCodes from 'http-codes';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
@@ -11,7 +12,6 @@ import {
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
-import { DECIMAL_BASE } from '../../constants';
 import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:GOALS';
