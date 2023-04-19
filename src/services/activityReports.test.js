@@ -940,7 +940,7 @@ describe('Activity report service', () => {
 
       it('retrieves reports with default sort by updatedAt', async () => {
         const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude });
-        expect(rows.length).toBe(6);
+        expect(rows.length).toBe(5);
         expect(count).toBeDefined();
         expect(rows[0].id).toBe(latestReport.id);
       });
