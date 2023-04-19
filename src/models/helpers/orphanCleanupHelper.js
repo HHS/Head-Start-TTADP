@@ -43,7 +43,7 @@ const cleanupOrphanResources = async (sequelize, resourceId) => {
 
 const cleanupOrphanFiles = async (sequelize, fileId) => {
   // Delete file if it's not being used anywhere.
-  const deletedFiles = await sequelize.models.File.destroy({
+  await sequelize.models.File.destroy({
     where: {
       id: {
         [Op.in]: sequelize.literal(`(
