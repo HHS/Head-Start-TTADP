@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import {
   Form, Button,
 } from '@trussworks/react-uswds';
-
+import { DECIMAL_BASE } from '@ttahub/common';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { DECIMAL_BASE, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import { storageAvailable } from '../../hooks/helpers';
 import isAdmin from '../../permissions';
 
@@ -118,15 +118,13 @@ function UserSection({ user, onSave, features }) {
         user={formUser}
         onUserChange={onUserChange}
       />
-      {process.env.NODE_ENV === 'development' && (
-        <Button
-          className="margin-bottom-6"
-          onClick={impersonateUserId}
-          disabled={isAdmin(user)}
-        >
-          Impersonate user
-        </Button>
-      )}
+      <Button
+        className="margin-bottom-6"
+        onClick={impersonateUserId}
+        disabled={isAdmin(user)}
+      >
+        Impersonate user
+      </Button>
       <UserPermissions
         userId={user.id}
         globalPermissions={userGlobalPermissions(formUser)}

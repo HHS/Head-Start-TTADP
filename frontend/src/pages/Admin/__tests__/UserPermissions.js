@@ -1,11 +1,10 @@
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { SCOPE_IDS, DECIMAL_BASE } from '@ttahub/common';
 import { render, screen, within } from '@testing-library/react';
-
 import UserPermissions from '../UserPermissions';
 import { withText } from '../../../testHelpers';
-import { SCOPE_IDS, DECIMAL_BASE } from '../../../Constants';
 
 const {
   READ_ACTIVITY_REPORTS,

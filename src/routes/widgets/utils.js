@@ -1,5 +1,5 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import { topicToQuery } from '../../scopes/activityReport';
-import { DECIMAL_BASE } from '../../constants';
 
 /**
  *

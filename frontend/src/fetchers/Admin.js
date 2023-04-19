@@ -1,8 +1,8 @@
 import join from 'url-join';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   get, put, post, destroy,
 } from './index';
-import { DECIMAL_BASE } from '../Constants';
 
 export const getUsers = async () => {
   const users = await get((join('/', 'api', 'admin', 'users')));

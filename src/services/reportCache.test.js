@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -25,7 +26,6 @@ import {
   cacheObjectiveMetadata,
 } from './reportCache';
 import { processObjectiveForResourcesById } from './resource';
-import { REPORT_STATUSES } from '../constants';
 
 describe('reportCache', () => {
   const mockUser = {

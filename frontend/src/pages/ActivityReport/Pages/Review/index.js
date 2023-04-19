@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react';
+import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
-import { REPORT_STATUSES } from '../../../../Constants';
 import './index.scss';
 import { Accordion } from '../../../../components/Accordion';
 import AppLoadingContext from '../../../../AppLoadingContext';

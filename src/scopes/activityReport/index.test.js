@@ -1,5 +1,10 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
+import {
+  REPORT_STATUSES,
+  APPROVER_STATUSES,
+} from '@ttahub/common';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 
@@ -23,7 +28,6 @@ import db, {
   Group,
   GroupGrant,
 } from '../../models';
-import { REPORT_STATUSES, APPROVER_STATUSES, AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
 import {
   getClient,
@@ -224,7 +228,7 @@ describe('filtersToScopes', () => {
     });
 
     it('filters by group', async () => {
-      const filters = { 'group.in': [group.name] };
+      const filters = { 'group.in': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
@@ -235,7 +239,7 @@ describe('filtersToScopes', () => {
     });
 
     it('filters out by group', async () => {
-      const filters = { 'group.nin': [group.name] };
+      const filters = { 'group.nin': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },

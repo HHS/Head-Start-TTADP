@@ -15,7 +15,7 @@ test.describe('Account Management', () => {
 
     await page.getByTestId('send-verification-email-button').click();
     await page.keyboard.press('Enter');
-    await page.getByText('Verification email sent');
+    page.getByText('Verification email sent');
 
     const page1 = await page.context().newPage();
     await page1.goto('http://localhost:1080/');
@@ -27,6 +27,6 @@ test.describe('Account Management', () => {
       page1.frameLocator('iframe').getByRole('link', { name: /http:\/\/localhost:3000\/account\/verify*/ }).click()
     ]);
 
-    expect(await page2.getByText('Your email has been verified!')).toBeTruthy();
+    expect(page2.getByText('Your email has been verified!')).toBeTruthy();
   });
 });
