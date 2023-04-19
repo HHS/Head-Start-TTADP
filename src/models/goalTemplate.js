@@ -28,6 +28,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'objectiveTemplateId',
         as: 'goalTemplates',
       });
+      GoalTemplate.hasMany(models.GoalTemplateFieldPrompt, { foreignKey: 'goalTemplateId', as: 'prompts' });
       GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
       GoalTemplate.belongsToMany(models.Resource, {
         through: models.GoalTemplateResource,

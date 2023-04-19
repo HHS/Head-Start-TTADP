@@ -20,9 +20,11 @@ import {
   Resource,
   ActivityReport,
   ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
   Topic,
   Program,
   File,
+  Sequelize,
 } from '../models';
 import {
   DECIMAL_BASE,
@@ -38,6 +40,7 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
 import { auditLogger } from '../logger';
+import { isValidResourceUrl } from '../lib/urlUtils';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -196,6 +199,45 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       as: 'goalTemplate',
       attributes: [],
       required: false,
+    },
+    {
+      model: GoalTemplateFieldPrompt,
+      as: 'prompts',
+      attributes: [
+        'id',
+        'ordinal',
+        'title',
+        'prompt',
+        'hint',
+        'fieldType',
+        'options',
+        'validations',
+      ],
+      required: false,
+      include: [
+        {
+          model: GoalFieldResponse,
+          as: 'responses',
+          attributes: [
+            'response',
+          ],
+          required: false,
+          where: { goalId: id },
+        },
+        {
+          model: ActivityReportGoalFieldResponse,
+          as: 'reportResponses',
+          attributes: ['response'],
+          required: false,
+          include: [{
+            model: ActivityReportGoal,
+            as: 'activityReportGoal',
+            attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+            required: true,
+            where: { goalId: id },
+          }],
+        },
+      ],
     },
   ],
 });
@@ -466,78 +508,78 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
   return objectivesToSort;
 }
 
+function reduceResponses(responses, existingResponses, attributeName, attributeValue) {
+  return (responses || []).reduce((
+    previousResponses,
+    currentResponse,
+  ) => {
+    const existingResponse = previousResponses
+      .find((pr) => pr.response === currentResponse.dataValues.response);
+    if (existingResponse) {
+      existingResponse[`${attributeName}s`] = [...new Set([
+        ...existingResponse[`${attributeName}s`],
+        attributeValue || currentResponse.activityReportGoal.dataValues.activityReportGoalId,
+      ])];
+      return previousResponses;
+    }
+    return [
+      ...previousResponses,
+      {
+        response: currentResponse.dataValues.response,
+        [`${attributeName}s`]: [attributeValue || currentResponse.activityReportGoal.dataValues.activityReportGoalId],
+      },
+    ];
+  }, existingResponses);
+}
+
 function reducePrompts(forReport, newPrompts, promptsToReduce, goalId, activityReportId) {
   return [...(newPrompts || [])]
     .filter((prompts) => prompts && Array.isArray(prompts) && prompts.length > 0)
     .reduce((previousPrompts, currentPrompt) => {
       const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
       if (existingPrompt) {
-        existingPrompt.responses = [currentPrompt.response].reduce((
-          previousResponses,
-          currentResponse,
-        ) => {
-          const existingResponse = previousResponses
-            .find((pr) => pr.response === currentResponse.response);
-          if (existingResponse) {
-            existingResponse.goalIds = [...new Set([
-              ...existingResponse.goalIds,
-              goalId,
-            ])];
-            return previousResponses;
-          }
-          return [
-            ...previousResponses,
-            {
-              response: currentResponse.response,
-              goalIds: [goalId],
-            },
-          ];
-        }, existingPrompt.responses);
+        existingPrompt.responses = reduceResponses(
+          currentPrompt.responses,
+          existingPrompt.responses,
+          'goalId',
+          goalId,
+        );
+
         if (forReport) {
-          existingPrompt.reportResponses = [currentPrompt.reportResponse].reduce((
-            previousResponses,
-            currentResponse,
-          ) => {
-            const existingResponse = previousResponses
-              .find((pr) => pr.response === currentResponse.response);
-            if (existingResponse) {
-              existingResponse.activityReportGoalIds = [...new Set([
-                ...existingResponse.activityReportGoalIds,
-                activityReportId,
-              ])];
-              return previousResponses;
-            }
-            return [
-              ...previousResponses,
-              {
-                response: currentResponse.response,
-                activityReportGoalIds: [activityReportId],
-              },
-            ];
-          }, existingPrompt.reportResponses);
+          existingPrompt.reportResponses = reduceResponses(
+            currentPrompt.reportResponses,
+            existingPrompt.reportResponses,
+            'activityReportGoalId',
+            null,
+          );
         }
         return previousPrompts;
       }
 
       const newPrompt = {
-        promptId: currentPrompt.promptId,
-        ordinal: currentPrompt.ordinal,
-        title: currentPrompt.title,
-        prompt: currentPrompt.prompt,
-        type: currentPrompt.type,
-        options: currentPrompt.options,
-        validations: currentPrompt.validations,
-        responses: [{
-          response: currentPrompt.response,
-          goalIds: [goalId],
-        }],
+        promptId: currentPrompt.dataValues.id,
+        ordinal: currentPrompt.dataValues.ordinal,
+        title: currentPrompt.dataValues.title,
+        prompt: currentPrompt.dataValues.prompt,
+        hint: currentPrompt.dataValues.hint,
+        type: currentPrompt.dataValues.type,
+        options: currentPrompt.dataValues.options,
+        validations: currentPrompt.dataValues.validations,
+        responses: reduceResponses(
+          currentPrompt.responses,
+          [],
+          'goalId',
+          goalId,
+        ),
       };
 
       if (forReport) {
-        newPrompt.reportResponses = [{
-          response: currentPrompt.reportResponse,
-          activityReportGoalIds: [activityReportId],
-        }];
+        newPrompt.reportResponse = reduceResponses(
+          currentPrompt.reportResponses,
+          [],
+          'activityReportGoalId',
+          null,
+        );
       }
       return [
         ...previousPrompts,
@@ -587,7 +629,7 @@ function reduceGoals(goals, forReport = false) {
         );
         existingGoal.prompts = reducePrompts(
           forReport,
-          currentValue.dataValues.prompts,
+          currentValue.prompts,
           existingGoal.prompts,
           currentValue.dataValues.id,
           activityReportGoalId,
@@ -614,7 +656,7 @@ function reduceGoals(goals, forReport = false) {
         ),
         prompts: reducePrompts(
           forReport,
-          currentValue.dataValues.prompts,
+          currentValue.prompts,
           [],
           currentValue.dataValues.id,
           activityReportGoalId,
@@ -724,6 +766,45 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               },
             },
             required: false,
+          },
+        ],
+      },
+      {
+        model: GoalTemplateFieldPrompt,
+        as: 'prompts',
+        attributes: [
+          'id',
+          'ordinal',
+          'title',
+          'prompt',
+          'hint',
+          'fieldType',
+          'options',
+          'validations',
+        ],
+        required: false,
+        include: [
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+            attributes: [
+              'response',
+            ],
+            required: false,
+            where: { goalId: id },
+          },
+          {
+            model: ActivityReportGoalFieldResponse,
+            as: 'reportResponses',
+            attributes: ['response'],
+            required: false,
+            include: [{
+              model: ActivityReportGoal,
+              as: 'activityReportGoal',
+              attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+              required: true,
+              where: { goalId: id, activityReportId },
+            }],
           },
         ],
       },
@@ -1784,6 +1865,7 @@ export async function saveGoalsForReport(goals, report) {
         createdVia,
         endDate: discardedEndDate,
         isRttapa,
+        prompts,
         ...fields
       } = goal;
 
@@ -1810,8 +1892,13 @@ export async function saveGoalsForReport(goals, report) {
           });
         }
 
+        // TODO: This check should also see if the incoming vallue is diffrent then the current
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
           await newGoal.update({ endDate }, { individualHooks: true });
+        }
+
+        if (!newGoal.onApprovedAR && prompts) {
+          await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
         }
 
         await cacheGoalMetadata(newGoal, report.id, isRttapa || null, isActivelyBeingEditing);
