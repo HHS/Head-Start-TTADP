@@ -5,7 +5,7 @@ import { root, validateSchema } from './common';
 
 test.describe('/files', () => {
 
-  test('post /', async ({ request }) => {
+  test('post /files', async ({ request }) => {
     const reportId = 10_000;
     const reportObjectiveId = 1;
     const objectiveId = 1;
@@ -32,19 +32,19 @@ test.describe('/files', () => {
     expect(response.status()).toBe(200);
   });
 
-  test('post /objectives', async ({ request }) => {
+  test('post /files/objectives', async ({ request }) => {
     const reportId = 10_000;
     const reportObjectiveId = 1;
-    const objectiveId = 1;
+    const objectiveIds = JSON.stringify([1]);
     const objectiveTemplateId = 1;
 
     const response = await request.post(
-      `${root}/files`,
+      `${root}/files/objectives`,
       {
         multipart: {
           reportId,
           reportObjectiveId,
-          objectiveId,
+          objectiveIds,
           objectiveTemplateId,
           file: {
             name: 'file.txt',
@@ -59,7 +59,7 @@ test.describe('/files', () => {
     expect(response.status()).toBe(200);
   });
 
-  test('delete /:fileId', async ({ request }) => {
+  test('delete /files/:fileId', async ({ request }) => {
     const fileId = 1;
 
     const response = await request.delete(
