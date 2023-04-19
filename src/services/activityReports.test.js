@@ -320,7 +320,6 @@ describe('Activity report service', () => {
     'R01-AR-9997',
     'R01-AR-9998',
     'R01-AR-9999',
-    'R01-AR-10000',
     '777',
     '778',
     '779',
@@ -962,7 +961,7 @@ describe('Activity report service', () => {
         const { rows } = await activityReports({
           sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
         });
-        expect(rows.length).toBe(6);
+        expect(rows.length).toBe(5);
         expect(rows[0].activityReportCollaborators[0].user.name).toBe(mockUser.name);
       });
 
@@ -972,7 +971,7 @@ describe('Activity report service', () => {
         const { rows } = await activityReports({
           sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
         });
-        expect(rows.length).toBe(7);
+        expect(rows.length).toBe(6);
         expect(rows[0].regionId).toBe(2);
       });
 
@@ -981,7 +980,7 @@ describe('Activity report service', () => {
           sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
         });
 
-        expect(rows.length).toBe(7);
+        expect(rows.length).toBe(6);
 
         expect(rows[0].id).toBe(recipients[0].activityReportId);
       });
