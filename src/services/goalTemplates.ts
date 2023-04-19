@@ -2,6 +2,7 @@
 import { Sequelize, Op } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
+import activityReportGoalResource from '../models/activityReportGoalResource';
 
 const {
   GoalTemplate: GoalTemplateModel,
