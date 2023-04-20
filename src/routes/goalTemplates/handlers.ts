@@ -5,8 +5,6 @@ import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
   getFieldPromptsForCuratedTemplate,
-  // setFieldPromptForCuratedTemplate,
-  // setFieldPromptsForCuratedTemplate,
 } from '../../services/goalTemplates';
 
 export async function getGoalTemplates(req: Request, res: Response) {
@@ -47,23 +45,3 @@ export async function getPrompts(req: Request, res: Response) {
     await handleErrors(req, res, err, 'goalTemplates.getPrompts');
   }
 }
-
-// export async function setPrompt(req: Request, res: Response) {
-//   try {
-//     const { grantIds, promptResponses } = req.params;
-
-//     // ensure we only pass numbers to the service
-//     const parsedGrantIds = [grantIds]
-//       .flat()
-//       .map((id: string) => parseInt(id, DECIMAL_BASE))
-//       .filter((id: number) => !Number.isNaN(id));
-
-//     const prompts = await setFieldPromptsForCuratedTemplate(
-//       parsedGrantIds,
-//       [promptResponses],
-//     );
-//     res.json(prompts);
-//   } catch (err) {
-//     await handleErrors(req, res, err, 'goalTemplates.getPrompts');
-//   }
-// }
