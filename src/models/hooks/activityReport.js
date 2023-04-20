@@ -533,17 +533,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             },
           ),
         ]);
-        await sequelize.models.Goal.update(
-          { onApprovedAR: false },
-          {
-            where: {
-              id: { [Op.in]: goals.map((g) => g.id) },
-              onApprovedAR: true,
-            },
-            transaction: options.transaction,
-            individualHooks: true,
-          },
-        );
       }
     } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
     && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {

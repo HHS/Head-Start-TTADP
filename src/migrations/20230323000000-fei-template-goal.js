@@ -111,11 +111,11 @@ module.exports = {
         },
         onAR: {
           allowNull: false,
-          type: Sequelize.DATE,
+          type: Sequelize.BOOLEAN,
         },
         onApprovedAR: {
           allowNull: false,
-          type: Sequelize.DATE,
+          type: Sequelize.BOOLEAN,
         },
       }, { transaction });
 
