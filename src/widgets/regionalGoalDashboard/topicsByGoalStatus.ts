@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
-import { TOPICS, GOAL_STATUS } from '../../constants';
+import { TOPICS } from '@ttahub/common';
+import { GOAL_STATUS } from '../../constants';
 import {
   // @ts-ignore
   Goal, Objective, Topic, ActivityReportObjective, ActivityReportObjectiveTopic,

@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportResource,
@@ -39,11 +40,6 @@ import {
   syncResourcesForGoal,
   // processGoalForResources,
   processGoalForResourcesById,
-  // ActivityReportGoal Resource Processing
-  calculateIsAutoDetectedForActivityReportGoal,
-  syncResourcesForActivityReportGoal,
-  // processActivityReportGoalForResources,
-  processActivityReportGoalForResourcesById,
   // Objective Resource processing
   calculateIsAutoDetectedForObjective,
   syncResourcesForObjective,
@@ -56,7 +52,6 @@ import {
   processActivityReportObjectiveForResourcesById,
 } from './resource';
 import {
-  REPORT_STATUSES,
   SOURCE_FIELD,
   NEXTSTEP_NOTETYPE,
   OBJECTIVE_STATUS,

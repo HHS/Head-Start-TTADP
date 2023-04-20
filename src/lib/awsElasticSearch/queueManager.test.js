@@ -1,10 +1,11 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   awsElasticsearchQueue,
   scheduleAddIndexDocumentJob,
   scheduleUpdateIndexDocumentJob,
   scheduleDeleteIndexDocumentJob,
 } from './queueManager';
-import { REPORT_STATUSES, AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 
 import db, {
   ActivityReport,

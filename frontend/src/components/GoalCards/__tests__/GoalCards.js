@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
@@ -11,7 +12,7 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalCards from '../GoalCards';
-import { DECIMAL_BASE, SCOPE_IDS } from '../../../Constants';
+
 import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
