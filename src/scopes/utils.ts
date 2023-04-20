@@ -1,6 +1,6 @@
 import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
-import { DECIMAL_BASE } from '../constants';
+import { DECIMAL_BASE } from '@ttahub/common';
 
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)

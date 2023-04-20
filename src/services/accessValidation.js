@@ -1,8 +1,8 @@
 import { Op } from 'sequelize';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { Permission } from '../models';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
-import { DECIMAL_BASE } from '../constants';
 import { userById } from './users';
 
 const { SITE_ACCESS, ADMIN } = SCOPES;

@@ -1,8 +1,8 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   beforeDestroy,
   afterDestroy,
 } from './activityReportFile';
-import { REPORT_STATUSES } from '../../constants';
 import {
   sequelize,
   User,

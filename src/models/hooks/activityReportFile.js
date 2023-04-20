@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '../../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { propagateDestroyToFile } from './genericFile';
 
 const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');

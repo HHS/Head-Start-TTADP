@@ -1,3 +1,4 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportFile,
@@ -10,7 +11,7 @@ import {
   ActivityReportObjective,
   sequelize,
 } from '../models';
-import { FILE_STATUSES, DECIMAL_BASE } from '../constants';
+import { FILE_STATUSES } from '../constants';
 
 const { UPLOADING } = FILE_STATUSES;
 const deleteFile = async (id) => File.destroy({

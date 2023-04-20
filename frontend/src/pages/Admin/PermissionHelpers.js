@@ -1,9 +1,9 @@
 import _ from 'lodash';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   REGIONAL_SCOPES,
   GLOBAL_SCOPES,
   REGIONS,
-  DECIMAL_BASE,
 } from '../../Constants';
 
 const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));

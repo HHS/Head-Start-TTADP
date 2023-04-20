@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import moment from 'moment';
 import join from 'url-join';
+import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
@@ -12,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
 import ResourcesDashboard from '../index';
-import { SCOPE_IDS } from '../../../Constants';
+
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { formatDateRange } from '../../../utils';

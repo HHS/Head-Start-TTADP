@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from './resource';
 import {
   Goal,
@@ -22,8 +23,6 @@ import {
   File,
 } from '../models';
 import {
-  DECIMAL_BASE,
-  REPORT_STATUSES,
   OBJECTIVE_STATUS,
   GOAL_STATUS,
   SOURCE_FIELD,
