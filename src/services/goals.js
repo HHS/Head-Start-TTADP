@@ -1854,10 +1854,8 @@ export async function saveGoalsForReport(goals, report) {
       });
     }
 
-    // we have a param to determine if goals are new
-    if (goal.isNew || !existingGoals.length) {
+    if (!existingGoals.length) {
       const {
-        isNew,
         objectives,
         id,
         grantIds,
@@ -1893,12 +1891,13 @@ export async function saveGoalsForReport(goals, report) {
           });
         }
 
-        // TODO: This check should also see if the incoming vallue is diffrent then the current
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
-          await newGoal.update({ endDate }, { individualHooks: true });
+          if (newGoal.endDate && newGoal.endDate !== endDate) {
+            await newGoal.update({ endDate }, { individualHooks: true });
+          }
         }
 
-        if (!newGoal.onApprovedAR && prompts) {
+        if (!newGoal.onApprovedAR && prompts && prompts.length) {
           await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
         }
 
@@ -1922,12 +1921,13 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         grant,
         grantId,
-        id, // this is unique and we can't trying to set this
+        id, // this is unique and we can't be trying to set this
         onApprovedAR, // we don't want to set this manually
         endDate: discardedEndDate, // get this outta here
         createdVia,
         goalIds: discardedGoalIds,
         isRttapa,
+        prompts,
         ...fields
       } = goal;
 
@@ -1943,7 +1943,17 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id, isRttapa, isActivelyBeingEditing);
+        if (!existingGoal.onApprovedAR && prompts && prompts.length) {
+          await setFieldPromptsForCuratedTemplate([existingGoal.id], prompts);
+        }
+
+        await cacheGoalMetadata(
+          existingGoal,
+          report.id,
+          isRttapa,
+          isActivelyBeingEditing,
+          prompts || null,
+        );
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1973,7 +1983,17 @@ export async function saveGoalsForReport(goals, report) {
           ...fields, status, endDate, createdVia: createdVia || 'activityReport',
         }, { individualHooks: true });
 
-        await cacheGoalMetadata(newGoal, report.id, isRttapa);
+        if (!newGoal.onApprovedAR && prompts && prompts.length) {
+          await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
+        }
+
+        await cacheGoalMetadata(
+          newGoal,
+          report.id,
+          isRttapa,
+          isActivelyBeingEditing,
+          prompts || null,
+        );
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -2223,6 +2243,7 @@ export async function getGoalsForReport(reportId) {
       [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
     ],
   });
+
   // dedupe the goals & objectives
   const forReport = true;
   return reduceGoals(goals, forReport);
