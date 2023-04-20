@@ -11,7 +11,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       GoalTemplateFieldPrompt.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', onDelete: 'cascade', as: 'goalTemplate' });
       GoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, { foreignKey: 'goalTemplateFieldPromptId', as: 'responses' });
-      GoalTemplateFieldPrompt.hasMany(models.ActivityReportGoalFieldResponse, { foreignKey: 'goalTemplateId', as: 'reportResponses' });
+      GoalTemplateFieldPrompt.hasMany(models.ActivityReportGoalFieldResponse, { foreignKey: 'goalTemplateFieldPromptId', as: 'reportResponses' });
     }
   }
   GoalTemplateFieldPrompt.init({
