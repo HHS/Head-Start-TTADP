@@ -300,7 +300,7 @@ const cachePrompts = async (
   // Find records in currentData but not in newData
   const removedPromptResponses = originalARGResponses.filter(({ promptId }) => (
     !promptResponses
-      .some((promptResponse) => promptId === promptResponses.goalTemplateFieldPromptId)
+      .some((promptResponse) => promptId === promptResponse.goalTemplateFieldPromptId)
   ))
     .find(({ promptId }) => promptId);
 
