@@ -212,20 +212,20 @@ export async function setFieldPromptForCuratedTemplate(
         [sequelize.col('prompts.ordinal'), 'ordinal'],
         [sequelize.col('responses.response'), 'response'],
         [
-          sequelize.literal(`"GoalFieldResponseModel"."response" != ARRAY[${response
+          sequelize.literal(`COALESCE("GoalFieldResponseModel"."response",array[]::text[]) != ARRAY[${response
             ?.map((r) => sequelize
               .getQueryInterface()
               .queryGenerator
               .escape(r))
-            .join(',')}]`),
+            .join(',')}]::text[]`),
           'isChanged',
         ],
       ],
       where: {
         id: goalIds,
         [Op.or]: [
-          { '$"prompts"."id"$': '$"fieldResponses"."goalTemplateFieldPromptId"$' },
-          { '$"prompts"."goalTemplateFieldPromptId"$': null },
+          { '$"prompts"."id"$': '$"responses"."goalTemplateFieldPromptId"$' },
+          { '$"responses"."id"$': null },
         ],
       },
       include: [{
@@ -325,7 +325,7 @@ export async function setFieldPromptForCuratedTemplate(
           },
         },
       ),
-      ...recordsToCreate.map((rtc) => GoalFieldResponseModel.create(rtc)),
+      ...recordsToCreate.map(async (rtc) => GoalFieldResponseModel.create(rtc)),
     ]);
   }
 
