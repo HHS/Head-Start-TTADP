@@ -92,7 +92,7 @@ export async function createRttapa(
           'previousStatus', gg."previousStatus",
           'isRttapa', gg."isRttapa",
           'objectives', gg."objectives",
-          'fieldResponses', gg."fieldResponses"
+          'fieldPromptResponses', gg."fieldPromptResponses"
         ))
       FROM (
         SELECT
@@ -198,7 +198,7 @@ export async function createRttapa(
                 'fieldType', gtfp."fieldType",
                 'options', gtfp.options,
                 'validations', gtfp.validations,
-                'response', gfr.response,
+                'response', gfr.response
               )) "fieldPromptResponse"
             FROM "GoalFieldResponses" gfr
             JOIN UNNEST(ARRAY_AGG(DISTINCT "gi".id)) gix(id)
