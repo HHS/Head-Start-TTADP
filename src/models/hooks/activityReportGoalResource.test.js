@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReport,
@@ -8,7 +9,6 @@ import {
   User,
   Resource,
 } from '..';
-import { REPORT_STATUSES } from '../../constants';
 
 const draftObject = {
   activityRecipientType: 'recipient',
