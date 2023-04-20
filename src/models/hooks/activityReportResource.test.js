@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReport,
@@ -6,7 +7,6 @@ import {
   Resource,
   User,
 } from '..';
-import { REPORT_STATUSES } from '../../constants';
 import { draftObject } from './testHelpers';
 
 jest.mock('bull');
