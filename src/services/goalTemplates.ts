@@ -224,7 +224,7 @@ export async function setFieldPromptForCuratedTemplate(
       where: {
         id: goalIds,
         [Op.or]: [
-          { '$"prompts"."id"$': sequelize.col('responses.goalTemplateFieldPromptId') },
+          { '$prompts.id$': { [Op.eq]: sequelize.col('responses.goalTemplateFieldPromptId') } },
           { '$"responses"."id"$': null },
         ],
       },
