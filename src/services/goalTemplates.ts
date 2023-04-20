@@ -2,7 +2,6 @@
 import { Sequelize, Op } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
-import activityReportGoalResource from '../models/activityReportGoalResource';
 
 const {
   GoalTemplate: GoalTemplateModel,
@@ -208,10 +207,10 @@ export async function setFieldPromptForCuratedTemplate(
   const [currentResponses, promptRequirements] = await Promise.all([
     GoalModel.findAll({
       attributes: [
-        ['$"Goal"."id"$', 'goalId'],
-        ['$"fieldPrompt"."id"$', 'promptId'],
-        ['$"fieldPrompt"."ordinal"$', 'ordinal'],
-        ['$"fieldResponses"."response"$', 'response'],
+        [sequelize.col('Goal.id'), 'goalId'],
+        [sequelize.col('prompts.id'), 'promptId'],
+        [sequelize.col('prompts.ordinal'), 'ordinal'],
+        [sequelize.col('responses.response'), 'response'],
         [
           sequelize.literal(`"GoalFieldResponseModel"."response" != ARRAY[${response
             ?.map((r) => sequelize
@@ -225,14 +224,14 @@ export async function setFieldPromptForCuratedTemplate(
       where: {
         id: goalIds,
         [Op.or]: [
-          { '$"fieldPrompt"."id"$': '$"fieldResponses"."goalTemplateFieldPromptId"$' },
-          { '$"fieldResponses"."goalTemplateFieldPromptId"$': null },
+          { '$"prompts"."id"$': '$"fieldResponses"."goalTemplateFieldPromptId"$' },
+          { '$"prompts"."goalTemplateFieldPromptId"$': null },
         ],
       },
       include: [{
         attributes: [],
         model: GoalFieldResponseModel,
-        as: 'fieldResponses',
+        as: 'responses',
         required: false,
         where: {
           goalTemplateFieldPromptId: promptId,
@@ -240,7 +239,7 @@ export async function setFieldPromptForCuratedTemplate(
       }, {
         attributes: [],
         model: GoalTemplateFieldPromptModel,
-        as: 'fieldPrompt',
+        as: 'prompts',
         required: true,
         where: { id: promptId },
       }],
