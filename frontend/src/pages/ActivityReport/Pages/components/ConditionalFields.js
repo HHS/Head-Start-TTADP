@@ -19,20 +19,20 @@ const FIELD_DICTIONARY = {
 export default function ConditionalFields({ prompts }) {
   const {
     field: {
-      onChange: onUpdateGoalConditionalFields,
+      onChange: onUpdateGoalPrompts,
     },
   } = useController({
-    name: 'goalConditionalFields',
+    name: 'goalPrompts',
     defaultValue: [],
   });
 
   useEffect(() => {
     // on mount, update the goal conditional fields
     // with the prompt data
-    onUpdateGoalConditionalFields(prompts.map(({ promptId, title }) => ({
+    onUpdateGoalPrompts(prompts.map(({ promptId, title }) => ({
       promptId, title, fieldName: formatTitleForHtmlAttribute(title),
     })));
-  }, [onUpdateGoalConditionalFields, prompts]);
+  }, [onUpdateGoalPrompts, prompts]);
 
   const fields = prompts.map((prompt) => {
     if (FIELD_DICTIONARY) {

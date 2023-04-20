@@ -41,26 +41,26 @@ import { objectivesWithValidResourcesOnly, validateListOfResources } from '../Go
 /**
  *
  * @param {function} getValues
- * @returns {Array} conditionalFields
+ * @returns {Array} prompts
  * {
  *  promptId: number;
  *  title: string;
  *  value: string | string[] | number | number[] | boolean;
  * }
  */
-function getConditionalFieldValues(getValues) {
-  const conditionalFieldTitles = getValues('goalConditionalFields');
+function getPrompts(getValues) {
+  const promptTitles = getValues('goalPrompts');
 
-  let conditionalFields = [];
-  if (conditionalFieldTitles) {
-    conditionalFields = conditionalFieldTitles.map(({ promptId, title, fieldName }) => ({
+  let prompts = [];
+  if (promptTitles) {
+    prompts = promptTitles.map(({ promptId, title, fieldName }) => ({
       promptId,
       title,
-      value: getValues(fieldName),
+      response: getValues(fieldName),
     }));
   }
 
-  return conditionalFields;
+  return prompts;
 }
 
 const shouldUpdateFormData = (isAutoSave) => {
@@ -229,7 +229,7 @@ const Navigator = ({
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
-    const conditionalFields = getConditionalFieldValues(getValues);
+    const prompts = getPrompts(getValues);
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
@@ -244,7 +244,7 @@ const Navigator = ({
       isRttapa,
       regionId: formData.regionId,
       grantIds,
-      conditionalFields,
+      prompts,
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
@@ -276,7 +276,7 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
-    const conditionalFields = getConditionalFieldValues(getValues);
+    const prompts = getPrompts(getValues);
 
     let invalidResources = false;
     const invalidResourceIndices = [];
@@ -317,7 +317,7 @@ const Navigator = ({
       isRttapa,
       regionId: formData.regionId,
       grantIds,
-      conditionalFields,
+      prompts,
     };
 
     let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
@@ -498,17 +498,18 @@ const Navigator = ({
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
-    const conditionalFields = getConditionalFieldValues(getValues);
+    const prompts = getPrompts(getValues);
 
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: false,
+      grantIds,
       name,
       endDate,
       objectives,
       isRttapa,
       regionId: formData.regionId,
-      conditionalFields,
+      prompts,
     };
 
     // validate goals will check the form and set errors
@@ -536,7 +537,7 @@ const Navigator = ({
       setValue('goalEndDate', '');
       setValue('goalIsRttapa', '');
       setValue('goalForEditing.objectives', []);
-      setValue('goalConditionalFields', []);
+      setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
       setValue('goals', [
