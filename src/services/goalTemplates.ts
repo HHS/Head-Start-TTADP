@@ -212,7 +212,7 @@ export async function setFieldPromptForCuratedTemplate(
         [sequelize.col('prompts.ordinal'), 'ordinal'],
         [sequelize.col('responses.response'), 'response'],
         [
-          sequelize.literal(`COALESCE("GoalFieldResponseModel"."response",array[]::text[]) != ARRAY[${response
+          sequelize.literal(`COALESCE("responses"."response",array[]::text[]) != ARRAY[${response
             ?.map((r) => sequelize
               .getQueryInterface()
               .queryGenerator
