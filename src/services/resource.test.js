@@ -2,8 +2,6 @@ import { Op } from 'sequelize';
 import db, {
   ActivityReport,
   ActivityReportResource,
-  ActivityReportGoal,
-  ActivityReportGoalResource,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   Goal,
@@ -1061,6 +1059,8 @@ describe('resource', () => {
     describe('syncResourcesForActivityReport', () => {
       let resources;
       beforeAll(async () => {
+      });
+      beforeEach(async () => {
         const urls = [
           'http://google.com',
           'http://github.com',
@@ -1068,9 +1068,6 @@ describe('resource', () => {
           'https://adhocteam.us/',
         ];
         resources = await findOrCreateResources(urls);
-      });
-      beforeEach(async () => {
-
       });
       afterEach(async () => {
         await ActivityReportResource.destroy({
@@ -1318,7 +1315,6 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
-        resources = await findOrCreateResources(urls);
         [activityReport, deleteReport] = await ActivityReport.findOrCreate({
           where: {
             id: 99999,
@@ -1341,6 +1337,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await ActivityReportResource.destroy({
@@ -1513,15 +1510,13 @@ describe('resource', () => {
     describe('syncResourcesForNextStep', () => {
       let resources;
       let nextStep;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
       beforeAll(async () => {
-        const urls = [
-          'http://google.com',
-          'http://github.com',
-          'http://cloud.gov',
-          'https://adhocteam.us/',
-        ];
-        resources = await findOrCreateResources(urls);
-
         [nextStep] = await NextStep.findOrCreate({
           where: {
             activityReportId: 9999,
@@ -1533,7 +1528,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
-
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await NextStepResource.destroy({
@@ -1779,7 +1774,6 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
-        resources = await findOrCreateResources(urls);
         [nextStep] = await NextStep.findOrCreate({
           where: {
             activityReportId: 9999,
@@ -1791,6 +1785,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await NextStepResource.destroy({
@@ -1959,14 +1954,13 @@ describe('resource', () => {
     describe('syncResourcesForGoal', () => {
       let resources;
       let goal;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
       beforeAll(async () => {
-        const urls = [
-          'http://google.com',
-          'http://github.com',
-          'http://cloud.gov',
-          'https://adhocteam.us/',
-        ];
-        resources = await findOrCreateResources(urls);
         [goal] = await Goal.findOrCreate({
           where: {
             grantId: 315,
@@ -1980,7 +1974,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
-
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await GoalResource.destroy({
@@ -2225,7 +2219,6 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
-        resources = await findOrCreateResources(urls);
         [goal] = await Goal.findOrCreate({
           where: {
             grantId: 315,
@@ -2239,6 +2232,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await GoalResource.destroy({
@@ -2408,14 +2402,13 @@ describe('resource', () => {
     describe('syncResourcesForObjective', () => {
       let resources;
       let objective;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
       beforeAll(async () => {
-        const urls = [
-          'http://google.com',
-          'http://github.com',
-          'http://cloud.gov',
-          'https://adhocteam.us/',
-        ];
-        resources = await findOrCreateResources(urls);
         [objective] = await Objective.findOrCreate({
           where: {
             goalId: 1,
@@ -2429,7 +2422,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
-
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await ObjectiveResource.destroy({
@@ -2674,7 +2667,6 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
-        resources = await findOrCreateResources(urls);
         [objective] = await Objective.findOrCreate({
           where: {
             goalId: 1,
@@ -2688,6 +2680,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await ObjectiveResource.destroy({
@@ -2917,14 +2910,13 @@ describe('resource', () => {
       let resources;
       let objective;
       let reportObjective;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
       beforeAll(async () => {
-        const urls = [
-          'http://google.com',
-          'http://github.com',
-          'http://cloud.gov',
-          'https://adhocteam.us/',
-        ];
-        resources = await findOrCreateResources(urls);
         [objective] = await Objective.findOrCreate({
           where: {
             goalId: 1,
@@ -2949,7 +2941,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
-
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await ActivityReportObjectiveResource.destroy({
@@ -3205,7 +3197,6 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
-        resources = await findOrCreateResources(urls);
         [objective] = await Objective.findOrCreate({
           where: {
             goalId: 1,
@@ -3230,6 +3221,7 @@ describe('resource', () => {
         });
       });
       beforeEach(async () => {
+        resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
         await ActivityReportObjectiveResource.destroy({
