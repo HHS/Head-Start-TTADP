@@ -29,7 +29,6 @@ export default (sequelize, DataTypes) => {
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
       Goal.belongsToMany(models.GoalTemplateFieldPrompt, {
         through: models.GoalFieldResponse,
         foreignKey: 'goalId',
