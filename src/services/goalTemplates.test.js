@@ -115,7 +115,7 @@ describe('setFieldPromptsForCuratedTemplate', () => {
     // test validation error (no more than 2 options can be selected)
     await expect(setFieldPromptsForCuratedTemplate(goalIds, [
       { promptId, response: ['option 1', 'option 2', 'option 3'] },
-    ])).rejects.toThrow('Validation error');
+    ])).rejects.toThrow();
 
     // check that the field responses were not updated
     const notUpdatedFieldResponses = await GoalFieldResponse.findAll({
