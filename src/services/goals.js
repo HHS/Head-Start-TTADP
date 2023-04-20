@@ -2114,10 +2114,10 @@ export async function getGoalsForReport(reportId) {
           FROM "GoalTemplateFieldPrompts" gtfp
           LEFT JOIN "GoalFieldResponses" gfr
           ON gtfp.id = gfr."goalTemplateFieldPromptId"
-          AND gft."goalId" = "Goal".id
+          AND gfr."goalId" = "Goal".id
           LEFT JOIN "ActivityReportGoalFieldResponses" argfr
           ON gtfp.id = argfr."goalTemplateFieldPromptId"
-          AND argft."activityReportGoalId" = "activityReportGoals".id
+          AND argfr."activityReportGoalId" = "activityReportGoals".id
           WHERE "goalTemplate".id = gtfp."goalTemplateId"
           GROUP BY TRUE
         )`), 'prompts'],
