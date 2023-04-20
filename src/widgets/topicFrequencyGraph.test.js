@@ -484,28 +484,6 @@ describe('Topics and frequency graph widget', () => {
         topic: 'Fatherhood / Male Caregiving',
         count: 0,
       },
-      //----------------------------------------------------------------
-      {
-        topic: 'FEI - Community Options',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Community Partnerships',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Facilities',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Family Circumstances',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Workforce',
-        count: 0,
-      },
-      //----------------------------------------------------------------
       {
         topic: 'Fiscal / Budget',
         count: 0,
@@ -679,28 +657,6 @@ describe('Topics and frequency graph widget', () => {
         topic: 'Fatherhood / Male Caregiving',
         count: 0,
       },
-      //----------------------------------------------------------------
-      {
-        topic: 'FEI - Community Options',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Community Partnerships',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Facilities',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Family Circumstances',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Workforce',
-        count: 0,
-      },
-      //----------------------------------------------------------------
       {
         topic: 'Fiscal / Budget',
         count: 0,
@@ -874,28 +830,6 @@ describe('Topics and frequency graph widget', () => {
         topic: 'Fatherhood / Male Caregiving',
         count: 0,
       },
-      //----------------------------------------------------------------
-      {
-        topic: 'FEI - Community Options',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Community Partnerships',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Facilities',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Family Circumstances',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Workforce',
-        count: 0,
-      },
-      //----------------------------------------------------------------
       {
         topic: 'Fiscal / Budget',
         count: 0,
@@ -1068,28 +1002,6 @@ describe('Topics and frequency graph widget', () => {
         topic: 'Fatherhood / Male Caregiving',
         count: 0,
       },
-      //----------------------------------------------------------------
-      {
-        topic: 'FEI - Community Options',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Community Partnerships',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Facilities',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Family Circumstances',
-        count: 0,
-      },
-      {
-        topic: 'FEI - Workforce',
-        count: 0,
-      },
-      //----------------------------------------------------------------
       {
         topic: 'Fiscal / Budget',
         count: 0,
