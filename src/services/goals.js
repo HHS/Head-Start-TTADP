@@ -533,7 +533,7 @@ function reduceResponses(responses, existingResponses, attributeName, attributeV
   }, existingResponses);
 }
 
-function reducePrompts(forReport, newPrompts, promptsToReduce, goalId, activityReportId) {
+function reducePrompts(forReport, newPrompts, promptsToReduce, goalId) {
   return [...(newPrompts || [])]
     .filter((prompts) => prompts && Array.isArray(prompts) && prompts.length > 0)
     .reduce((previousPrompts, currentPrompt) => {
@@ -1892,12 +1892,11 @@ export async function saveGoalsForReport(goals, report) {
         }
 
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
-          if (newGoal.endDate && newGoal.endDate !== endDate) {
-            await newGoal.update({ endDate }, { individualHooks: true });
-          }
+          // todo - compare values to see if it's changed before we update
+          await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        if (!newGoal.onApprovedAR && prompts && prompts.length) {
+        if (!newGoal.onApprovedAR && prompts) {
           await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
         }
 
@@ -1943,7 +1942,7 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        if (!existingGoal.onApprovedAR && prompts && prompts.length) {
+        if (!existingGoal.onApprovedAR && prompts) {
           await setFieldPromptsForCuratedTemplate([existingGoal.id], prompts);
         }
 
@@ -1983,7 +1982,7 @@ export async function saveGoalsForReport(goals, report) {
           ...fields, status, endDate, createdVia: createdVia || 'activityReport',
         }, { individualHooks: true });
 
-        if (!newGoal.onApprovedAR && prompts && prompts.length) {
+        if (!newGoal.onApprovedAR && prompts) {
           await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
         }
 

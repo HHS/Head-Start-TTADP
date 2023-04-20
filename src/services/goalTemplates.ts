@@ -258,16 +258,18 @@ export async function setFieldPromptForCuratedTemplate(
     }),
   ]);
 
+  if (!promptRequirements) {
+    throw new Error(`No prompt found with ID ${promptId}`);
+  }
+
   const goalIdsToUpdate = currentResponses
     .filter((r) => r.isChanged && r.response)
     .map((r) => r.goalId);
 
-  const recordsToCreate = currentResponses
-    .filter((r) => r.isChanged && !r.response)
-    .map((r) => ({
-      goalId: r.goalId,
+  const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
+    .map((goalId) => ({
+      goalId,
       goalTemplateFieldPromptId: promptId,
-      ordinal: r.ordinal,
       response,
     }));
 
@@ -287,32 +289,35 @@ export async function setFieldPromptForCuratedTemplate(
         ));
       }
 
-      const maxSelections = promptRequirements.validations
-        .find((v) => Object.keys(v).includes('maxSelections'))
-        ?.maxSelections || Number.MAX_VALUE;
-      if (response && response.length <= maxSelections) {
-        return Promise.reject(new Error(
-          `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
-        ));
-      }
+      if (promptRequirements.validations) {
+        const maxSelections = (() => {
+          if (Object.keys(promptRequirements.validations).includes('maxSelections')) {
+            return promptRequirements.validations.maxSelections;
+          }
+          return Number.MAX_VALUE;
+        })();
 
-      const minSelections = promptRequirements.validations
-        .find((v) => Object.keys(v).includes('minSelections'))
-        ?.minSelections || 0;
-      if (response && response.length >= minSelections) {
-        return Promise.reject(new Error(`Response for '${promptRequirements.title}' contains less than min selections. ${response.length} found, ${maxSelections} or more expected.`));
-      }
-    }
+        if (response && response.length > maxSelections) {
+          throw new Error(
+            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
+          );
+        }
 
-    const isRequired = promptRequirements.validations
-      .find((v) => Object.keys(v).includes('isRequired'))
-      ?.isRequired || false;
-    if (isRequired
+        const isRequired = (() => {
+          if (Object.keys(promptRequirements.validations).includes('isRequired')) {
+            return promptRequirements.validations.isRequired;
+          }
+          return false;
+        })();
+
+        if (isRequired
       && (response === null
         || response === undefined
         || (Array.isArray(response)
           && response.length === 0))) {
-      return Promise.reject(new Error(`Response for '${promptRequirements.title}' is required.`));
+          return Promise.reject(new Error(`Response for '${promptRequirements.title}' is required.`));
+        }
+      }
     }
 
     return Promise.all([

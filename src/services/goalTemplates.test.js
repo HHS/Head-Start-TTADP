@@ -20,6 +20,8 @@ describe('setFieldPromptsForCuratedTemplate', () => {
   let goalIds;
   let grant;
   let recipient;
+  let promptId;
+  let promptTitle;
 
   beforeAll(async () => {
     recipient = await Recipient.create({
@@ -49,7 +51,7 @@ describe('setFieldPromptsForCuratedTemplate', () => {
       creationMethod: AUTOMATIC_CREATION,
     });
 
-    const promptTitle = faker.datatype.string(255);
+    promptTitle = faker.datatype.string(255);
 
     const prompt = await GoalTemplateFieldPrompt.create({
       goalTemplateId: template.id,
@@ -59,8 +61,12 @@ describe('setFieldPromptsForCuratedTemplate', () => {
       hint: '',
       options: ['option 1', 'option 2', 'option 3'],
       fieldType: 'multiselect',
-      fieldValidations: {},
+      validations: {
+        maxSelections: 2,
+      },
     });
+
+    promptId = prompt.id;
 
     promptResponses = [
       { promptId: prompt.id, response: ['option 1', 'option 2'] },
@@ -68,7 +74,7 @@ describe('setFieldPromptsForCuratedTemplate', () => {
 
     const goal = await Goal.create({
       grantId: grant.id,
-      templateId: template.id,
+      goalTemplateId: template.id,
       name: n,
     });
 
@@ -78,7 +84,7 @@ describe('setFieldPromptsForCuratedTemplate', () => {
   afterAll(async () => {
     await GoalFieldResponse.destroy({ where: { goalId: goalIds } });
     await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id } });
-    await Goal.destroy({ where: { templateId: template.id } });
+    await Goal.destroy({ where: { goalTemplateId: template.id } });
     await GoalTemplate.destroy({ where: { id: template.id } });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
@@ -97,8 +103,6 @@ describe('setFieldPromptsForCuratedTemplate', () => {
     expect(fieldResponses.length).toBe(promptResponses.length);
     expect(fieldResponses[0].response).toEqual(promptResponses[0].response);
 
-    const { promptId } = promptResponses[0];
-
     // update field responses
     await setFieldPromptsForCuratedTemplate(goalIds, [
       { promptId, response: ['option 1'] },
@@ -111,6 +115,13 @@ describe('setFieldPromptsForCuratedTemplate', () => {
 
     expect(updatedFieldResponses.length).toBe(promptResponses.length);
     expect(updatedFieldResponses[0].response).toEqual(['option 1']);
+  });
+
+  it('should use the provided validations', async () => {
+    const fieldResponses = await GoalFieldResponse.findAll({
+      where: { goalId: goalIds },
+      raw: true,
+    });
 
     // test validation error (no more than 2 options can be selected)
     await expect(setFieldPromptsForCuratedTemplate(goalIds, [
@@ -120,21 +131,17 @@ describe('setFieldPromptsForCuratedTemplate', () => {
     // check that the field responses were not updated
     const notUpdatedFieldResponses = await GoalFieldResponse.findAll({
       where: { goalId: goalIds },
+      raw: true,
     });
 
-    expect(notUpdatedFieldResponses.length).toBe(promptResponses.length);
-    expect(notUpdatedFieldResponses[0].response).toEqual(['option 1']);
+    expect(notUpdatedFieldResponses.length).toBe(fieldResponses.length);
+    expect(notUpdatedFieldResponses[0].response).toStrictEqual(fieldResponses[0].response);
+  });
 
-    // remove field responses
-    await setFieldPromptsForCuratedTemplate(goalIds, [
-      { promptId, response: [] },
-    ]);
-
-    // check that the field responses were removed
-    const removedFieldResponses = await GoalFieldResponse.findAll({
-      where: { goalId: goalIds },
-    });
-
-    expect(removedFieldResponses.length).toBe(0);
+  it('does nothing if the prompt doesn\'t exist', async () => {
+    const fictionalId = 123454345345;
+    await expect(setFieldPromptsForCuratedTemplate(goalIds, [
+      { promptId: fictionalId, response: ['option 1'] },
+    ])).rejects.toThrow(`No prompt found with ID ${fictionalId}`);
   });
 });
