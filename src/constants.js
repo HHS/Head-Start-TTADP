@@ -335,3 +335,10 @@ export const RESOURCE_DOMAIN = {
 export const AWS_ELASTIC_SEARCH_INDEXES = {
   ACTIVITY_REPORTS: 'activityreports',
 };
+
+export const GRANT_INACTIVATION_REASONS = {
+  REPLACED: 'Replaced',
+  TERMINATED: 'Terminated',
+  RELINQUISHED: 'Relinquished',
+  UNKNOWN: 'Unknown',
+};
