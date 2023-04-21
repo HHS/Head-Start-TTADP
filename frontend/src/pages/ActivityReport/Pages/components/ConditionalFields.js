@@ -6,11 +6,12 @@ import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 
 const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations = []) => (
+    render: (field, validations = [], value = []) => (
       <ConditionalMultiselect
         fieldData={field}
         validations={validations}
         fieldName={formatTitleForHtmlAttribute(field.title)}
+        defaultValue={value}
       />
     ),
   },
@@ -36,7 +37,11 @@ export default function ConditionalFields({ prompts }) {
 
   const fields = prompts.map((prompt) => {
     if (FIELD_DICTIONARY) {
-      return FIELD_DICTIONARY[prompt.type].render(prompt, prompt.validations);
+      return FIELD_DICTIONARY[prompt.type].render(
+        prompt,
+        prompt.validations,
+        prompt.response,
+      );
     }
 
     return null;

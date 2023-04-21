@@ -6,6 +6,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { uniqBy } from 'lodash';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
@@ -20,6 +21,19 @@ import { NO_ERROR, ERROR_FORMAT } from './constants';
 
 import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 import AppLoadingContext from '../../../../AppLoadingContext';
+
+const combinePrompts = (templatePrompts = [], goalPrompts = []) => uniqBy([
+  ...(templatePrompts || []),
+  ...(goalPrompts || []).map((prompt) => ({
+    title: prompt.title,
+    prompt: prompt.prompt,
+    options: prompt.options,
+    type: prompt.type,
+    validations: prompt.validations,
+    promptId: prompt.promptId,
+    response: prompt.response,
+  })),
+], 'title');
 
 export default function GoalForm({
   goal,
@@ -147,9 +161,13 @@ export default function GoalForm({
       setObjectiveOptions([]);
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
+
+  const prompts = combinePrompts(templatePrompts, goal.prompts);
+
+  const isCurated = goal.isCurated || false;
+
   return (
     <>
-
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -159,11 +177,11 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
         isLoading={isAppLoading}
-        userCanEdit={goal.isCurated ? !goal.isCurated : false}
+        userCanEdit={!isCurated}
       />
 
       <ConditionalFields
-        prompts={templatePrompts || []}
+        prompts={prompts}
       />
 
       <GoalRttapa
@@ -217,6 +235,12 @@ GoalForm.propTypes = {
     isCurated: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
+    prompts: PropTypes.arrayOf(PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      prompt: PropTypes.string.isRequired,
+      options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    }.isRequired)),
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,

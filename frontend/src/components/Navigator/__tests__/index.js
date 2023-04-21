@@ -581,6 +581,7 @@ describe('Navigator', () => {
           name: '',
           objectives: [],
           regionId: 1,
+          prompts: [],
         },
       ],
       pageState: { 1: COMPLETE, 2: NOT_STARTED },
