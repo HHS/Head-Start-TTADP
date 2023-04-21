@@ -77,8 +77,6 @@ describe('Update grants and recipients', () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
     await db.sequelize.close();
@@ -311,5 +309,29 @@ describe('Update grants and recipients', () => {
     // eslint-disable-next-line camelcase
     const res = await sequelize.query(`SELECT descriptor FROM "ZADescriptor" WHERE id = ${descriptor_id}`, { type: QueryTypes.SELECT });
     expect(res[0].descriptor).toEqual('Grant data import from HSES');
+  });
+
+  it('includes the inactivated date', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 8317 } });
+    // simulate updating an existing grant with null inactivatedDate
+    await grant.update({ inactivatedDate: null }, { individualHooks: true });
+    const grantWithNullInactivatedDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullInactivatedDate.inactivatedDate).toBeNull();
+    await processFiles();
+    const grantWithInactivatedDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithInactivatedDate.inactivatedDate).toEqual(new Date('2022-07-31'));
+  });
+
+  it('includes the inactivated reason', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 8317 } });
+    // simulate updating an existing grant with null inactivatedReason
+    await grant.update({ inactivatedReason: null }, { individualHooks: true });
+    const grantWithNullInactivatedReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullInactivatedReason.inactivatedReason).toBeNull();
+    await processFiles();
+    const grantWithInactivatedReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithInactivatedReason.inactivatedReason).toEqual('Replaced');
   });
 });

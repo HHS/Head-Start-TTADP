@@ -71,6 +71,17 @@ export async function allRecipients() {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
+        deleted: { [Op.ne]: true },
+        [Op.and]: [
+          {
+            endDate: {
+              [Op.gt]: '2020-08-31',
+            },
+          },
+          {
+            [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
+          },
+        ],
       },
     ],
   });
@@ -99,6 +110,7 @@ export async function recipientById(recipientId, grantScopes) {
         ],
         model: Grant.unscoped(),
         as: 'grants',
+        deleted: { [Op.ne]: true },
         where: [{
           [Op.and]: [
             { [Op.and]: grantScopes },
@@ -108,13 +120,19 @@ export async function recipientById(recipientId, grantScopes) {
                   status: 'Active',
                 },
                 {
-                  endDate: {
-                    [Op.gt]: '2020-08-31',
-                  },
+                  [Op.and]: [
+                    {
+                      endDate: {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
+                    {
+                      [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
+                    },
+                  ],
                 },
               ],
             },
-            { deleted: false },
           ],
         }],
         include: [
@@ -174,6 +192,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
       attributes: [],
       model: Grant.unscoped(),
       as: 'grants',
+      deleted: { [Op.ne]: true },
       required: true,
       where: [{
         [Op.and]: [
@@ -187,13 +206,19 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
                 status: 'Active',
               },
               {
-                endDate: {
-                  [Op.gt]: '2020-08-31',
-                },
+                [Op.and]: [
+                  {
+                    endDate: {
+                      [Op.gt]: '2020-08-31',
+                    },
+                  },
+                  {
+                    [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
+                  },
+                ],
               },
             ],
           },
-          { deleted: false },
         ],
       }],
     }],

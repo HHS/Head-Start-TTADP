@@ -389,12 +389,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       {
         model: Grant,
         as: 'grant',
-        required: false,
-      },
-      {
-        model: OtherEntity,
-        as: 'otherEntity',
-        required: false,
       },
     ],
   });
@@ -970,9 +964,6 @@ export async function activityReportAlerts(userId, {
       activityReportId: reports.rows.map(({ id }) => id),
     },
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
-    include: [{
-      model: Grant, as: 'grant', required: false,
-    }],
   });
 
   return { ...reports, recipients };
@@ -1219,7 +1210,6 @@ async function getDownloadableActivityReports(where, separate = true) {
           {
             model: Grant,
             as: 'grant',
-            required: false,
           },
         ],
       },
