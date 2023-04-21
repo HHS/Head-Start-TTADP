@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -8,7 +9,6 @@ import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import FilterStateSelect from '../FilterStateSelect';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 
 const { findByText } = screen;
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;

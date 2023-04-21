@@ -1,6 +1,6 @@
 import React from 'react';
+import { TOPICS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
-import { TOPICS } from '../../Constants';
 import { filterSelectProps } from './props';
 
 const TOPIC_OPTIONS = TOPICS.map((label, value) => ({ value, label }));

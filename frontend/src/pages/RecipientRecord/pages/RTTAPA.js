@@ -13,7 +13,7 @@ import {
 import { Link, useHistory } from 'react-router-dom';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
-import { DECIMAL_BASE } from '../../../Constants';
+import { DECIMAL_BASE } from '@ttahub/common';
 import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
