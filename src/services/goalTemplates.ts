@@ -46,7 +46,7 @@ interface FieldPrompts {
   type: string;
   options: string[] | null;
   validations: Validation[];
-  responses: ResponseSet[];
+  response: ResponseSet[];
 }
 
 interface PromptResponse {
@@ -177,7 +177,7 @@ export async function getFieldPromptsForCuratedTemplate(
       const exists = promptsWithResponses
         .find((pwr) => pwr.promptId === response.promptId);
       if (exists) {
-        exists.responses.push({
+        exists.response.push({
           response: response.response,
           goalIds: response.goalIds,
         });

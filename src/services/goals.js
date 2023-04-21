@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniqBy } from 'lodash';
+import { uniqBy, uniq } from 'lodash';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from './resource';
 import {
@@ -216,9 +216,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: GoalFieldResponse,
           as: 'responses',
-          attributes: [
-            'response',
-          ],
+          attributes: ['response'],
           required: false,
           where: { goalId: id },
         },
@@ -506,79 +504,55 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
   return objectivesToSort;
 }
 
-function reduceResponses(responses, existingResponses, attributeName, attributeValue) {
-  return (responses || []).reduce((
-    previousResponses,
-    currentResponse,
-  ) => {
-    const existingResponse = previousResponses
-      .find((pr) => pr.response === currentResponse.dataValues.response);
-    if (existingResponse) {
-      existingResponse[`${attributeName}s`] = [...new Set([
-        ...existingResponse[`${attributeName}s`],
-        attributeValue || currentResponse.activityReportGoal.dataValues.activityReportGoalId,
-      ])];
-      return previousResponses;
-    }
-    return [
-      ...previousResponses,
-      {
-        response: currentResponse.dataValues.response,
-        [`${attributeName}s`]: [attributeValue || currentResponse.activityReportGoal.dataValues.activityReportGoalId],
-      },
-    ];
-  }, existingResponses);
-}
-
-function reducePrompts(forReport, newPrompts, promptsToReduce, goalId) {
-  return [...(newPrompts || [])]
-    .filter((prompts) => prompts && Array.isArray(prompts) && prompts.length > 0)
+/**
+ *
+ * @param {Boolean} forReport
+ * @param {Array} newPrompts
+ * @param {Array} promptsToReduce
+ * @returns Array of reduced prompts
+ */
+function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
+  return newPrompts
     .reduce((previousPrompts, currentPrompt) => {
       const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
       if (existingPrompt) {
-        existingPrompt.responses = reduceResponses(
-          currentPrompt.responses,
-          existingPrompt.responses,
-          'goalId',
-          goalId,
-        );
+        if (!forReport) {
+          existingPrompt.response = uniq(
+            [...existingPrompt.response, ...currentPrompt.responses.flatMap((r) => r.response)],
+          );
+        }
 
         if (forReport) {
-          existingPrompt.reportResponses = reduceResponses(
-            currentPrompt.reportResponses,
-            existingPrompt.reportResponses,
-            'activityReportGoalId',
-            null,
+          existingPrompt.response = uniq(
+            [...existingPrompt.response, ...currentPrompt.response],
+          );
+          existingPrompt.reportResponse = uniq(
+            [...existingPrompt.reportResponse, ...currentPrompt.reportResponse],
           );
         }
         return previousPrompts;
       }
 
       const newPrompt = {
-        promptId: currentPrompt.dataValues.id,
-        ordinal: currentPrompt.dataValues.ordinal,
-        title: currentPrompt.dataValues.title,
-        prompt: currentPrompt.dataValues.prompt,
-        hint: currentPrompt.dataValues.hint,
-        type: currentPrompt.dataValues.type,
-        options: currentPrompt.dataValues.options,
-        validations: currentPrompt.dataValues.validations,
-        responses: reduceResponses(
-          currentPrompt.responses,
-          [],
-          'goalId',
-          goalId,
-        ),
+        promptId: currentPrompt.promptId,
+        ordinal: currentPrompt.ordinal,
+        title: currentPrompt.title,
+        prompt: currentPrompt.prompt,
+        hint: currentPrompt.hint,
+        type: currentPrompt.type,
+        options: currentPrompt.options,
+        validations: currentPrompt.validations,
       };
 
       if (forReport) {
-        newPrompt.reportResponse = reduceResponses(
-          currentPrompt.reportResponses,
-          [],
-          'activityReportGoalId',
-          null,
-        );
+        newPrompt.response = currentPrompt.response;
+        newPrompt.reportResponse = currentPrompt.reportResponse;
       }
+
+      if (!forReport) {
+        newPrompt.response = uniq(currentPrompt.responses.flatMap((r) => r.response));
+      }
+
       return [
         ...previousPrompts,
         newPrompt,
@@ -603,9 +577,6 @@ function reduceGoals(goals, forReport = false) {
 
   const r = goals.reduce((previousValues, currentValue) => {
     try {
-      const activityReportGoalId = forReport
-        ? currentValue.activityReportGoals[0].dataValues.id
-        : null;
       const existingGoal = previousValues.find((g) => where(g, currentValue));
       if (existingGoal) {
         existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
@@ -627,10 +598,8 @@ function reduceGoals(goals, forReport = false) {
         );
         existingGoal.prompts = reducePrompts(
           forReport,
-          currentValue.prompts,
+          currentValue.dataValues.prompts,
           existingGoal.prompts,
-          currentValue.dataValues.id,
-          activityReportGoalId,
         );
         return previousValues;
       }
@@ -654,10 +623,8 @@ function reduceGoals(goals, forReport = false) {
         ),
         prompts: reducePrompts(
           forReport,
-          currentValue.prompts,
+          currentValue.dataValues.prompts || [],
           [],
-          currentValue.dataValues.id,
-          activityReportGoalId,
         ),
         isNew: false,
         endDate: currentValue.endDate,
@@ -670,6 +637,7 @@ function reduceGoals(goals, forReport = false) {
 
       return [...previousValues, goal];
     } catch (err) {
+      auditLogger.error('Error reducing goal in services/goals reduceGoals, exiting reducer early', err);
       return previousValues;
     }
   }, []);
@@ -990,6 +958,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
         return o;
       }),
   }));
+
   return reduceGoals(goals);
 }
 
