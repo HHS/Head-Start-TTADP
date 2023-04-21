@@ -7,7 +7,7 @@ import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
 import { deleteFileFromS3Job } from './lib/s3';
 import { awsElasticsearchQueue } from './lib/awsElasticSearch/queueManager';
-import { s3Queue } from './lib/s3QueueManager';
+import { s3Queue } from './services/s3Queue';
 import processFile from './workers/files';
 import {
   notifyApproverAssigned,
@@ -79,7 +79,7 @@ async function start() {
     }
   });
   // Delete S3 file.
-  awsElasticsearchQueue.process(
+  s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
     deleteFileFromS3Job,
   );

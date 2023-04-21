@@ -1,9 +1,9 @@
 /* eslint-disable import/prefer-default-export */
-const { deleteFileJob } = require('../../lib/s3QueueManager');
+const { addDeleteFileToQueue } = require('../../services/s3Queue');
 
 const afterDestroy = async (sequelize, instance, options) => {
   // Add delete job S3 queue.
-  deleteFileJob(instance.key, instance.id);
+  await addDeleteFileToQueue(instance.key, instance.id);
 };
 
 export {

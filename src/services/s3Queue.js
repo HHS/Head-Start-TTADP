@@ -1,26 +1,20 @@
 import newQueue from '../lib/queue';
+import { S3_ACTIONS } from '../constants';
 
 const s3Queue = newQueue('s3');
-const addToS3Queue = (fileKey) => {
-  const retries = process.env.FILE_SCAN_RETRIES || 5;
-  const delay = process.env.FILE_SCAN_BACKOFF_DELAY || 10000;
-  const backOffOpts = {
-    type: 'exponential',
-    delay,
-  };
 
-  return s3Queue.add(
-    fileKey,
-    {
-      attempts: retries,
-      backoff: backOffOpts,
-      removeOnComplete: true,
-      removeOnFail: true,
-    },
-  );
+const addDeleteFileToQueue = (id, key) => {
+  // Add delete file job to queue.
+  const data = {
+    fileId: id,
+    fileKey: key,
+    key: S3_ACTIONS.DELETE_FILE,
+  };
+  s3Queue.add(S3_ACTIONS.DELETE_FILE, data);
+  return data;
 };
 
 export {
   s3Queue,
+  addDeleteFileToQueue,
 };
-export default addToS3Queue;
