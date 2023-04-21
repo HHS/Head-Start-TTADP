@@ -1,5 +1,3 @@
-import { Sequelize } from 'sequelize';
-import { isValidResourceUrl } from '../lib/urlUtils';
 import {
   getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
@@ -7,7 +5,6 @@ import {
 
 const { Op } = require('sequelize');
 const {
-  sequelize,
   ActivityReportGoal,
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
@@ -266,43 +263,54 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   ]);
 };
 
-const cachePrompts = async (
+export const cachePrompts = async (
   goalId,
   activityReportGoalId,
   promptResponses,
 ) => {
   const originalARGResponses = await ActivityReportGoalFieldResponse.findAll({
     attributes: [
-      ['goalTemplateFieldPromptId', 'promptId'],
+      'id',
+      'goalTemplateFieldPromptId',
       'response',
     ],
-    where: { goalId, activityReportGoalId },
+    where: { activityReportGoalId },
     raw: true,
   });
 
-  const [
+  const {
     newPromptResponses,
     updatedPromptResponses,
-  ] = promptResponses.reduce((acc, promptResponse) => {
-    const currentPromptResponse = originalARGResponses
-      .find(({ promptId }) => promptResponse.goalTemplateFieldPromptId === promptId);
-    if (!currentPromptResponse) {
+    promptIds,
+  } = promptResponses
+    // first we transform to match the correct column names
+    .map(({ response, promptId }) => ({ response, goalTemplateFieldPromptId: promptId }))
+    // then we reduce, separating the new and updated records
+    .reduce((acc, promptResponse) => {
+      const currentPromptResponse = originalARGResponses
+        .find(({ goalTemplateFieldPromptId }) => (
+          promptResponse.goalTemplateFieldPromptId === goalTemplateFieldPromptId
+        ));
+
+      if (!currentPromptResponse) {
       // Record is in newData but not in currentData
-      acc.newRecords.push(promptResponse);
-    } else if (!promptResponse.responses
-      .every((response, index) => response === currentPromptResponse.responses[index])) {
+        acc.newPromptResponses.push(promptResponse);
+      } else if (
+        // we check to see if the old response the new
+        JSON.stringify(promptResponse.response) !== JSON.stringify(currentPromptResponse.response)
+      ) {
       // Record is in both newData and currentData, but with different responses
-      acc.updatedResponses.push(promptResponse);
-    }
-    return acc;
-  });
+        acc.updatedPromptResponses.push(promptResponse);
+      }
+
+      acc.promptIds.push(promptResponse.goalTemplateFieldPromptId);
+
+      return acc;
+    }, { newPromptResponses: [], updatedPromptResponses: [], promptIds: [] });
 
   // Find records in currentData but not in newData
-  const removedPromptResponses = originalARGResponses.filter(({ promptId }) => (
-    !promptResponses
-      .some((promptResponse) => promptId === promptResponse.goalTemplateFieldPromptId)
-  ))
-    .find(({ promptId }) => promptId);
+  const removedPromptResponses = originalARGResponses
+    .filter(({ goalTemplateFieldPromptId }) => !promptIds.includes(goalTemplateFieldPromptId));
 
   return Promise.all([
     ...newPromptResponses.map(async ({
@@ -317,14 +325,15 @@ const cachePrompts = async (
       goalTemplateFieldPromptId,
       response,
     }) => ActivityReportGoalFieldResponse.update({ response }, {
-      activityReportGoalId,
-      goalTemplateFieldPromptId,
+      where: {
+        activityReportGoalId,
+        goalTemplateFieldPromptId,
+      },
     })),
     removedPromptResponses.length > 0
-      ? ActivityReportObjectiveFile.destroy({
+      ? ActivityReportGoalFieldResponse.destroy({
         where: {
-          activityReportGoalId,
-          goalTemplateFieldPromptId: { [Op.in]: removedPromptResponses },
+          id: removedPromptResponses.map(({ id }) => id),
         },
         individualHooks: true,
         hookMetadata: { goalId },
@@ -386,7 +395,7 @@ const cacheGoalMetadata = async (
 
   return Promise.all([
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    prompts && prompts.length > 0
+    prompts && prompts.length
       ? cachePrompts(goal.id, arg.id, prompts)
       : Promise.resolve(),
   ]);

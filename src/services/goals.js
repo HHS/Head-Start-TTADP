@@ -25,7 +25,6 @@ import {
   Topic,
   Program,
   File,
-  Sequelize,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -40,7 +39,6 @@ import {
 } from './reportCache';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { auditLogger } from '../logger';
-import { isValidResourceUrl } from '../lib/urlUtils';
 
 const namespace = 'SERVICE:GOALS';
 
