@@ -40,6 +40,7 @@ services:
     volumes:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
+      - "./packages:/packages:ro"
     environment:
       - BACKEND_PROXY=http://backend:8080
       - FONTAWESOME_NPM_AUTH_TOKEN

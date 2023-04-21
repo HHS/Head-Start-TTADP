@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 import { v4 as uuidv4 } from 'uuid';
 import { Op, QueryTypes } from 'sequelize';
+import { DECIMAL_BASE } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import { formatNumber } from '../widgets/helpers';
-
 import {
   User,
   Permission,
@@ -11,7 +11,6 @@ import {
   sequelize,
   UserValidationStatus,
 } from '../models';
-import { DECIMAL_BASE } from '../constants';
 
 const { SITE_ACCESS } = SCOPES;
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '../../Constants';
+import { SCOPE_IDS } from '@ttahub/common';
 import { mockWindowProperty } from '../../testHelpers';
 import useDefaultFilters, { defaultDate } from '../useDefaultFilters';
 

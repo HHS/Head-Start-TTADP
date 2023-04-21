@@ -1,4 +1,5 @@
 import { Sequelize, Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -14,7 +15,7 @@ import {
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
-import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
+import { RESOURCE_DOMAIN } from '../../constants';
 
 /**
  * @typedef {Object} RecipientPrimitive
