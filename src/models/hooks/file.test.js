@@ -2,11 +2,13 @@ import {
   sequelize,
   File,
 } from '..';
-import { deleteFileJob } from '../../lib/s3QueueManager';
+import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { FILE_STATUSES } from '../../constants';
 
-jest.mock('../../lib/s3QueueManager', () => ({
-  deleteFileJob: jest.fn(),
+jest.mock('bull');
+
+jest.mock('../../services/s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
 }));
 
 describe('file hooks', () => {
@@ -32,7 +34,7 @@ describe('file hooks', () => {
         where: { id: file.id },
         individualHooks: true,
       });
-      expect(deleteFileJob).toHaveBeenCalledWith(fileName, file.id);
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(fileName, file.id);
     });
   });
 });
