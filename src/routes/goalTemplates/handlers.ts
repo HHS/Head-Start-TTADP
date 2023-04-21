@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { Request, Response } from 'express';
-import { DECIMAL_BASE } from '../../constants';
+import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
