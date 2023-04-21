@@ -36,7 +36,12 @@ const transformValidationsIntoRules = (validations) => validations.rules.reduce(
   } : {},
 });
 
-export default function ConditionalMultiselect({ fieldData, validations, fieldName }) {
+export default function ConditionalMultiselect({
+  fieldData,
+  validations,
+  fieldName,
+  defaultValue,
+}) {
   const rules = transformValidationsIntoRules(validations);
   const {
     field: {
@@ -48,7 +53,7 @@ export default function ConditionalMultiselect({ fieldData, validations, fieldNa
   } = useController({
     name: fieldName,
     rules,
-    defaultValue: [],
+    defaultValue,
   });
 
   const { errors } = useFormContext();
@@ -108,4 +113,5 @@ ConditionalMultiselect.propTypes = {
     required: PropTypes.bool,
     message: PropTypes.string,
   }).isRequired,
+  defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

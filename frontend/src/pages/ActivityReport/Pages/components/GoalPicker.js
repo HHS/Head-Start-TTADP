@@ -53,9 +53,28 @@ const GoalPicker = ({
   const activityRecipientType = watch('activityRecipientType');
 
   const selectedGoals = useWatch({ name: 'goals' });
-  const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
-  const allAvailableGoals = availableGoals // excludes already selected goals from the dropdown
-    .filter((goal) => goal.goalIds.every((id) => !selectedIds.includes(id)));
+  // const select
+  // const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
+
+  const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
+    const { id, name } = goal;
+    const newSelectedIds = [...acc.selectedIds, id];
+    const newSelectedNames = [...acc.selectedNames, name];
+
+    return {
+      selectedIds: newSelectedIds,
+      selectedNames: newSelectedNames,
+    };
+  }, {
+    selectedIds: [],
+    selectedNames: [],
+  });
+
+  // excludes already selected goals from the dropdown by name and ID
+  const allAvailableGoals = availableGoals
+    .filter((goal) => goal.goalIds.every((id) => (
+      !selectedIds.includes(id)
+    )) && !selectedNames.includes(goal.name));
 
   const {
     field: {

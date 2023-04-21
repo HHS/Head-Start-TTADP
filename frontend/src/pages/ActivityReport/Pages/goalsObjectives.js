@@ -191,15 +191,15 @@ const GoalsObjectives = ({
     );
 
     let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    // add the goal that was being edited to the "selected goals"
     if (currentlyEditing) {
       copyOfSelectedGoals.push(currentlyEditing);
     }
 
-    // remove the goal from the "selected goals"
+    // remove the goal we are now editing from the "selected goals"
     copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
-
     onUpdateGoals(copyOfSelectedGoals);
-  };
+  }; // end onEdit
 
   // the read only component expects things a little differently
   const goalsForReview = selectedGoals.map((goal) => {
