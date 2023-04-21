@@ -76,6 +76,7 @@ const deleteOnlyFile = async (req, res) => {
   }
 
   try {
+    //
     const file = await getFileById(fileId);
     if (!file) {
       return res.status(404).send({ error: 'File not found' });

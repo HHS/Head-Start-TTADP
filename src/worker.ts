@@ -5,7 +5,9 @@ import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
+import { deleteFileFromS3Job } from './lib/s3';
 import { awsElasticsearchQueue } from './lib/awsElasticSearch/queueManager';
+import { s3Queue } from './lib/s3QueueManager';
 import processFile from './workers/files';
 import {
   notifyApproverAssigned,
@@ -23,7 +25,7 @@ import {
   updateIndexDocument,
   deleteIndexDocument,
 } from './lib/awsElasticSearch';
-import { EMAIL_ACTIONS, AWS_ELASTICSEARCH_ACTIONS } from './constants';
+import { EMAIL_ACTIONS, AWS_ELASTICSEARCH_ACTIONS, S3_ACTIONS } from './constants';
 import logEmailNotification, { logDigestEmailNotification } from './lib/mailer/logNotifications';
 
 // Number of workers to spawn
@@ -65,6 +67,21 @@ async function start() {
   awsElasticsearchQueue.process(
     AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
     deleteIndexDocument,
+  );
+
+  // S3 Queue.
+  s3Queue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
+  s3Queue.on('completed', (job, result) => {
+    if (result.status === 200 || result.status === 201 || result.status === 202) {
+      logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    } else {
+      auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    }
+  });
+  // Delete S3 file.
+  awsElasticsearchQueue.process(
+    S3_ACTIONS.DELETE_FILE,
+    deleteFileFromS3Job,
   );
 
   // Notifications
