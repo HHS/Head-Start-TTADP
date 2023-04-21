@@ -1,5 +1,3 @@
-import activityReportGoalResource from '../activityReportGoalResource';
-
 const { Sequelize } = require('sequelize');
 
 const propagateOnAR = async (
@@ -11,7 +9,6 @@ const propagateOnAR = async (
   {
     where: {
       goalTemplateFieldPromptId: instance.goalTemplateFieldPromptId,
-      goalId: Sequelize.col('"goal->activityReportGoal"."goalId"'),
     },
     include: [{
       model: sequelize.models.Goal,
@@ -33,7 +30,6 @@ const propagateOnAR = async (
 const recalculateOnAR = async (
   sequelize,
   instance,
-  options,
 ) => sequelize.models.GoalFieldResponse.update(
   {
     onAR: Sequelize.literal(`(
@@ -44,7 +40,7 @@ const recalculateOnAR = async (
       ON g.id = arg."goalId"
       LEFT JOIN "ActivityReportGoalFieldResponses" argfr
       ON arg.id = argfr."activityReportGoalId"
-      WHERE g.id = "GoalFieldResponse"."goalId"
+      WHERE g.id = "GoalFieldResponses"."goalId"
       AND arg."id" != ${instance.activityReportGoalId}
       AND argfr."goalTemplateFieldPromptId" = ${instance.goalTemplateFieldPromptId}
       GROUP BY TRUE

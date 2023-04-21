@@ -61,9 +61,7 @@ describe('setFieldPromptsForCuratedTemplate', () => {
       hint: '',
       options: ['option 1', 'option 2', 'option 3'],
       fieldType: 'multiselect',
-      validations: {
-        maxSelections: 2,
-      },
+      validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
     });
 
     promptId = prompt.id;
