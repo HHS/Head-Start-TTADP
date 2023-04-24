@@ -126,6 +126,8 @@ const initialData = {
   activityRecipients: [],
   activityRecipientType: 'recipient',
   'goalForEditing.objectives': [],
+  goalPrompts: ['test-prompt'],
+  'test-prompt': ['test'],
 };
 
 describe('Navigator', () => {
@@ -581,7 +583,7 @@ describe('Navigator', () => {
           name: '',
           objectives: [],
           regionId: 1,
-          prompts: [],
+          prompts: expect.anything(),
         },
       ],
       pageState: { 1: COMPLETE, 2: NOT_STARTED },

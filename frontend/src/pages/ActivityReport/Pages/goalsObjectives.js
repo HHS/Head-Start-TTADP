@@ -32,7 +32,7 @@ const GoalsObjectives = ({
   onSaveDraftOetObjectives,
 }) => {
   const {
-    watch, setValue, getValues, setError,
+    watch, setValue, getValues, setError, trigger,
   } = useFormContext();
 
   const {
@@ -168,11 +168,22 @@ const GoalsObjectives = ({
       if (areGoalsValid !== true) {
         return;
       }
+
+      const promptTitles = getValues('goalPrompts');
+
+      // attempt to validate prompts
+      if (promptTitles && promptTitles.length) {
+        const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
+        if (outputs.some((output) => output === false)) {
+          return;
+        }
+      }
     }
 
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
+    setValue('goalPrompts', []);
 
     // make this goal the editable goal
     setValue('goalForEditing', goal);

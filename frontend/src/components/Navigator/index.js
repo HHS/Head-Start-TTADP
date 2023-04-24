@@ -40,6 +40,7 @@ import { objectivesWithValidResourcesOnly, validateListOfResources } from '../Go
 
 /**
  *
+ * @param {String[]} promptTitles
  * @param {function} getValues
  * @returns {Array} prompts
  * {
@@ -48,9 +49,7 @@ import { objectivesWithValidResourcesOnly, validateListOfResources } from '../Go
  *  value: string | string[] | number | number[] | boolean;
  * }
  */
-function getPrompts(getValues) {
-  const promptTitles = getValues('goalPrompts');
-
+function getPrompts(promptTitles, getValues) {
   let prompts = [];
   if (promptTitles) {
     prompts = promptTitles.map(({ promptId, title, fieldName }) => ({
@@ -113,6 +112,7 @@ const Navigator = ({
     setValue,
     setError,
     watch,
+    trigger,
   } = hookForm;
 
   const pageState = watch('pageState');
@@ -228,8 +228,8 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
-
-    const prompts = getPrompts(getValues);
+    const promptTitles = getValues('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
@@ -276,7 +276,8 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
-    const prompts = getPrompts(getValues);
+    const promptTitles = watch('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
 
     let invalidResources = false;
     const invalidResourceIndices = [];
@@ -498,7 +499,8 @@ const Navigator = ({
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
-    const prompts = getPrompts(getValues);
+    const promptTitles = getValues('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
 
     const goal = {
       ...goalForEditing,
@@ -527,6 +529,14 @@ const Navigator = ({
       }
 
       return;
+    }
+
+    // attempt to validate prompts
+    if (promptTitles && promptTitles.length) {
+      const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
+      if (outputs.some((output) => output === false)) {
+        return;
+      }
     }
 
     // save goal to api, come back with new ids for goal and objectives
