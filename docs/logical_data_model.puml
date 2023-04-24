@@ -1,0 +1,708 @@
+@startuml
+  ' avoid problems with angled crows feet
+  skinparam linetype ortho
+  skinparam class {
+    BorderColor #336A90
+    BorderThickness 2
+  }
+  ' Classes
+  class ActivityRecipients{
+ * <color:#d54309>id</color>: integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ grantId : integer : REFERENCES "Grants".id
+ otherEntityId : integer : REFERENCES "OtherEntities".id
+}
+
+class ActivityReportApprovers{
+ * id : integer : <generated>
+ status : enum
+ note : text
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * userId : integer : REFERENCES "Users".id
+}
+
+class ActivityReportCollaborators{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * userId : integer : REFERENCES "Users".id
+}
+
+class ActivityReportFiles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * fileId : integer : REFERENCES "Files".id
+}
+
+class ActivityReportGoalResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportGoalId : integer : REFERENCES "ActivityReportGoals".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ActivityReportGoals{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ name : text
+ status : varchar(255)
+ timeframe : <color:#d54309>text</color>
+ closeSuspendReason : enum
+ closeSuspendContext : text
+ endDate : <color:#d54309>timestamp with time zone</color>
+ isRttapa : enum
+ isActivelyEdited : boolean
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * goalId : integer : REFERENCES "Goals".id
+}
+
+class ActivityReportObjectiveFiles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
+ * fileId : integer : REFERENCES "Files".id
+}
+
+class ActivityReportObjectiveResources{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ sourceFields : enum[]
+ * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ActivityReportObjectiveTopics{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
+ * topicId : integer : REFERENCES "Topics".id
+}
+
+class ActivityReportObjectives{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ ttaProvided : text
+ title : text
+ status : varchar(255)
+ arOrder : integer : 1
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * objectiveId : integer : REFERENCES "Objectives".id
+}
+
+class ActivityReportResources{
+ * <color:#d54309>id</color>: integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ActivityReports{
+ * id : integer : <generated>
+ additionalNotes : text
+ numberOfParticipants : integer
+ deliveryMethod : varchar(255)
+ duration : decimal(3,1)
+ endDate : date
+ startDate : date
+ activityRecipientType : varchar(255)
+ requester : varchar(255)
+ submissionStatus : enum
+ <color:#d54309>programTypes</color>: varchar(255)[]
+ targetPopulations : varchar(255)[]
+ reason : varchar(255)[]
+ participants : varchar(255)[]
+ topics : varchar(255)[]
+ ttaType : varchar(255)[]
+ pageState : json
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ context : text
+ nonECLKCResourcesUsed : text[]
+ ECLKCResourcesUsed : text[]
+ virtualDeliveryType : varchar(255)
+ legacyId : varchar(255)
+ imported : jsonb
+ calculatedStatus : enum
+ approvedAt : timestamp with time zone
+ creatorRole : enum
+ * version : integer : 1
+ submittedDate : date
+ userId : integer : REFERENCES "Users".id
+ lastUpdatedById : integer : REFERENCES "Users".id
+ regionId : integer : REFERENCES "Regions".id
+}
+
+class CollaboratorRoles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportCollaboratorId : integer : REFERENCES "ActivityReportCollaborators".id
+ roleId : integer : REFERENCES "Roles".id
+}
+
+class DisconnectedGoals #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * name : text
+ status : varchar(255)
+ timeframe : varchar(255)
+ isFromSmartsheetTtaPlan : boolean
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closeSuspendReason : enum
+ closeSuspendContext : text
+ endDate : timestamp with time zone
+ previousStatus : varchar(255)
+}
+
+class Files{
+ * id : integer : <generated>
+ * originalFileName : varchar(255)
+ * key : varchar(255)
+ * status : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * fileSize : integer
+}
+
+class GoalResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * <color:#d54309>onAR</color>: boolean : false
+ * <color:#d54309>onApprovedAR</color>: boolean : false
+ * goalId : integer : REFERENCES "Goals".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class GoalTemplateObjectiveTemplates{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+}
+
+class GoalTemplateResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class GoalTemplates{
+ * id : integer : <generated>
+ * hash : text
+ * templateName : text
+ * creationMethod : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ lastUsed : timestamp with time zone
+ * templateNameModifiedAt : timestamp with time zone
+ regionId : integer : REFERENCES "Regions".id
+}
+
+class Goals{
+ * id : integer : <generated>
+ name : text
+ status : varchar(255)
+ timeframe : <color:#d54309>text</color>
+ isFromSmartsheetTtaPlan : boolean
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closeSuspendReason : enum
+ closeSuspendContext : text
+ endDate : date
+ previousStatus : <color:#d54309>text</color>
+ * onApprovedAR : boolean
+ firstNotStartedAt : timestamp with time zone
+ lastNotStartedAt : timestamp with time zone
+ firstInProgressAt : timestamp with time zone
+ lastInProgressAt : timestamp with time zone
+ firstCeasedSuspendedAt : timestamp with time zone
+ lastCeasedSuspendedAt : timestamp with time zone
+ firstClosedAt : timestamp with time zone
+ lastClosedAt : timestamp with time zone
+ firstCompletedAt : timestamp with time zone
+ lastCompletedAt : timestamp with time zone
+ createdVia : enum
+ isRttapa : enum
+ * onAR : boolean : false
+ rtrOrder : integer : 1
+ goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * grantId : integer : REFERENCES "Grants".id
+}
+
+class Grants{
+ * id : integer
+ * number : varchar(255)
+ status : varchar(255)
+ startDate : timestamp with time zone
+ endDate : timestamp with time zone
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ cdi : boolean : false
+ programSpecialistName : varchar(255)
+ programSpecialistEmail : varchar(255)
+ grantSpecialistName : varchar(255)
+ grantSpecialistEmail : varchar(255)
+ stateCode : varchar(255)
+ annualFundingMonth : varchar(255)
+ regionId : integer : REFERENCES "Regions".id
+ * recipientId : integer : REFERENCES "Recipients".id
+ oldGrantId : integer : REFERENCES "Grants".id
+}
+
+class GroupGrants{
+ * <color:#d54309>id</color>: integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * grantId : integer : REFERENCES "Grants".id
+ * groupId : integer : REFERENCES "Groups".id
+}
+
+class Groups{
+ * id : integer : <generated>
+ name : <color:#d54309>text</color>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * userId : <color:#d54309>integer</color> : REFERENCES "Users".id
+}
+
+class MailerLogs{
+ * id : bigint : <generated>
+ * jobId : varchar(255)
+ * emailTo : varchar(255)[]
+ * action : enum
+ * subject : varchar(255)
+ * activityReports : integer[]
+ success : boolean
+ result : json
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
+class NextStepResources{
+ * <color:#d54309>id</color>: integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * nextStepId : integer : REFERENCES "NextSteps".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class NextSteps{
+ * id : integer : <generated>
+ * note : text
+ * noteType : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ completeDate : date
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+}
+
+class ObjectiveFiles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * onAR : boolean : false
+ * onApprovedAR : boolean : false
+ * objectiveId : integer : REFERENCES "Objectives".id
+ * fileId : integer : REFERENCES "Files".id
+}
+
+class ObjectiveResources{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * onAR : boolean : false
+ * onApprovedAR : boolean : false
+ sourceFields : enum[]
+ * objectiveId : integer : REFERENCES "Objectives".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ObjectiveTemplateFiles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+ * fileId : integer : REFERENCES "Files".id
+}
+
+class ObjectiveTemplateResources{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ sourceFields : enum[]
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ObjectiveTemplateRoles #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+ * roleId : integer : REFERENCES "Roles".id
+}
+
+class ObjectiveTemplateTopics{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+ * topicId : integer : REFERENCES "Topics".id
+}
+
+class ObjectiveTemplates{
+ * id : integer : <generated>
+ * hash : text
+ * templateTitle : text
+ * creationMethod : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ lastUsed : timestamp with time zone
+ * templateTitleModifiedAt : timestamp with time zone
+ regionId : integer : REFERENCES "Regions".id
+}
+
+class ObjectiveTopics{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * onAR : boolean : false
+ * onApprovedAR : boolean : false
+ * objectiveId : integer : REFERENCES "Objectives".id
+ * topicId : integer : REFERENCES "Topics".id
+}
+
+class Objectives{
+ * id : integer : <generated>
+ title : text
+ status : varchar(255)
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * onApprovedAR : boolean
+ firstNotStartedAt : timestamp with time zone
+ lastNotStartedAt : timestamp with time zone
+ firstInProgressAt : timestamp with time zone
+ lastInProgressAt : timestamp with time zone
+ firstCompleteAt : timestamp with time zone
+ lastCompleteAt : timestamp with time zone
+ firstSuspendedAt : timestamp with time zone
+ lastSuspendedAt : timestamp with time zone
+ rtrOrder : integer : 1
+ createdVia : enum
+ * onAR : boolean : false
+ goalId : integer : REFERENCES "Goals".id
+ objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+ otherEntityId : integer : REFERENCES "OtherEntities".id
+}
+
+class OtherEntities{
+ * id : integer : <generated>
+ * name : varchar(255)
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
+class Permissions{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * userId : integer : REFERENCES "Users".id
+ * regionId : integer : REFERENCES "Regions".id
+ * scopeId : integer : REFERENCES "Scopes".id
+}
+
+class Programs{
+ * id : integer
+ programType : varchar(255)
+ startYear : varchar(255)
+ startDate : varchar(255)
+ endDate : varchar(255)
+ status : varchar(255)
+ name : varchar(255)
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * grantId : integer : REFERENCES "Grants".id
+}
+
+class Recipients{
+ * id : integer
+ name : varchar(255)
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ recipientType : varchar(255)
+ uei : varchar(255) : ''::character varying
+}
+
+class Regions{
+ * id : integer : <generated>
+ * name : varchar(255)
+}
+
+class RequestErrors{
+ * id : bigint : <generated>
+ operation : varchar(255)
+ uri : varchar(255)
+ method : varchar(255)
+ requestBody : json
+ responseBody : json
+ responseCode : varchar(255)
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
+class Resources{
+ * id : integer : <generated>
+ * url : text
+ * domain : text
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
+class RoleTopics{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * roleId : integer : REFERENCES "Roles".id
+ * topicId : integer : REFERENCES "Topics".id
+}
+
+class Roles{
+ * id : integer : <generated>
+ * name : varchar(255)
+ fullName : varchar(255)
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * isSpecialist : boolean
+ deletedAt : timestamp with time zone
+ mapsTo : integer
+}
+
+class RttapaPilots{
+ * id : integer : <generated>
+ notes : text
+ goals : jsonb
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reviewDate : timestamp with time zone
+ * userId : integer : REFERENCES "Users".id
+ * recipientId : integer : REFERENCES "Recipients".id
+ * regionId : integer : REFERENCES "Regions".id
+}
+
+class Scopes{
+ * id : integer : <generated>
+ * name : varchar(255)
+ * description : varchar(255)
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
+class SiteAlerts{
+ * id : integer : <generated>
+ * startDate : timestamp with time zone
+ * endDate : timestamp with time zone
+ * title : text
+ * message : text
+ status : enum
+ variant : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * size : enum : 'standard'::"enum_SiteAlerts_size"
+ * userId : integer : REFERENCES "Users".id
+}
+
+class Topics{
+ * id : integer : <generated>
+ * name : varchar(255)
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ mapsTo : integer
+}
+
+class UserRoles{
+ * <color:#d54309>id</color>: integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * userId : integer : REFERENCES "Users".id
+ * roleId : integer : REFERENCES "Roles".id
+}
+
+class UserSettingOverrides{
+ * id : integer : <generated>
+ * value : <color:#d54309>jsonb</color>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * userId : integer : REFERENCES "Users".id
+ * userSettingId : integer : REFERENCES "UserSettings".id
+}
+
+class UserSettings{
+ * id : integer : <generated>
+ * <color:#d54309>class</color>: varchar(255)
+ * key : varchar(255)
+ * default : <color:#d54309>jsonb</color>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
+class UserValidationStatus{
+ * id : integer : <generated>
+ * type : varchar(255)
+ token : varchar(255)
+ validatedAt : timestamp with time zone
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * userId : integer : REFERENCES "Users".id
+}
+
+class Users{
+ * id : integer : <generated>
+ hsesUserId : varchar(255)
+ name : varchar(255)
+ phoneNumber : varchar(255)
+ email : varchar(255)
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * lastLogin : timestamp with time zone : now()
+ * hsesUsername : varchar(255)
+ hsesAuthorities : varchar(255)[]
+ flags : enum[] : ARRAY[]::"enum_Users_flags"[]
+ homeRegionId : integer : REFERENCES "Regions".id
+}
+
+
+' Associations
+
+ActivityRecipients "1" --[#d54309,plain,thickness=2]-- "1" OtherEntities : activityRecipients
+ActivityReportCollaborators "1" --[#d54309,plain,thickness=2]-- "1" CollaboratorRoles : activityReportCollaborator
+ObjectiveTemplates "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveTemplateFiles : objectiveTemplate
+ObjectiveTemplates "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveTemplateTopics : objectiveTemplate
+OtherEntities "1" --[#d54309,plain,thickness=2]-- "1" ActivityRecipients : otherEntity
+OtherEntities "1" --[#d54309,plain,thickness=2]-- "1" Objectives : otherEntity
+Recipients "1" --[#d54309,plain,thickness=2]-- "1" RttapaPilots : recipient
+Regions "1" --[#d54309,plain,thickness=2]-- "1" ActivityReports : region
+Regions "1" --[#d54309,plain,thickness=2]-- "1" GoalTemplates : <color:#d54309>Region</color>
+Regions "1" --[#d54309,plain,thickness=2]-- "1" Grants : <color:#d54309>Region</color>
+Regions "1" --[#d54309,plain,thickness=2]-- "1" RttapaPilots : region
+Roles "1" --[#d54309,plain,thickness=2]-- "1" UserRoles : role
+Topics "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveTopics : topic
+Topics "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveTopics : topic
+Users "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportApprovers : <color:#d54309>User</color>
+Users "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportCollaborators : user
+Users "1" --[#d54309,plain,thickness=2]-- "1" RttapaPilots : user
+Users "1" --[#d54309,plain,thickness=2]-- "1" SiteAlerts : creator
+Users "1" --[#d54309,plain,thickness=2]-- "1" UserRoles : user
+
+ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
+ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : activityReportObjective, activityReportObjectiveFiles
+ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : activityReportObjective, activityReportObjectiveResources
+ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : activityReportObjective, activityReportObjectiveTopics
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : <color:#d54309>ActivityReport</color>, activityRecipients
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : activityReport, approvers
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : activityReport, activityReportCollaborators
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : activityReport, reportFiles
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : activityReport, activityReportGoals
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, <color:#d54309>ActivityReport</color>
+Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
+Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
+Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
+Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, <color:#d54309>GoalTemplate</color>
+Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, activityReportGoals
+Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
+Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
+Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
+Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
+Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
+Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
+ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
+ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : objectiveTemplate, resources
+ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
+Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, activityReportObjectives
+Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
+Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
+Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
+Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : <color:#d54309>Users</color>, homeRegion
+Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : resource, activityReportGoalResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : resource, activityReportObjectiveResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : resource, activityReportResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : resource, goalResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : resource, goalTemplateResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : resource, nextStepResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : resource, objectiveResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : resource, objectiveTemplateResources
+Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
+UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
+Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
+Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
+Users "1" --[#d54309,dashed,thickness=2]--{  "n" Permissions : permissions
+Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
+Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : <color:#d54309>User</color>, validationStatus
+
+ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : collaboratorRoles
+ActivityReportGoals "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
+ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Topics : topics
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, activityReports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
+ActivityReports "n" }--[#d54309,dotted,thickness=2]--{ "n" OtherEntities : activityReports
+ActivityReports "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+Files "n" }--[#d54309,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates
+Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
+GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
+GoalTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+Goals "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
+NextSteps "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+ObjectiveTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Topics : topics
+Objectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectives
+Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : <color:#d54309>Scopes</color>, <color:#d54309>Regions</color>
+Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
+Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
+Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : scopes
+
+Grants o--[#yellow,bold,thickness=2]--o Grants : <color:#2491FF>missing-from-model</color>
+ObjectiveTemplates o--[#yellow,bold,thickness=2]--o ObjectiveTemplateRoles : <color:#2491FF>missing-from-model</color>
+Regions o--[#yellow,bold,thickness=2]--o ObjectiveTemplates : <color:#2491FF>missing-from-model</color>
+Regions o--[#yellow,bold,thickness=2]--o Permissions : <color:#2491FF>missing-from-model</color>
+Roles o--[#yellow,bold,thickness=2]--o CollaboratorRoles : <color:#2491FF>missing-from-model</color>
+Roles o--[#yellow,bold,thickness=2]--o ObjectiveTemplateRoles : <color:#2491FF>missing-from-model</color>
+Roles o--[#yellow,bold,thickness=2]--o RoleTopics : <color:#2491FF>missing-from-model</color>
+Scopes o--[#yellow,bold,thickness=2]--o Permissions : <color:#2491FF>missing-from-model</color>
+Topics o--[#yellow,bold,thickness=2]--o RoleTopics : <color:#2491FF>missing-from-model</color>
+@enduml
