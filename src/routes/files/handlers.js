@@ -132,15 +132,6 @@ const deleteHandler = async (req, res) => {
         await deleteObjectiveFile(of.id);
       }
     }
-
-    file = await getFileById(fileId);
-    if (file.reports.length
-      + file.reportObjectiveFiles.length
-      + file.objectiveFiles.length
-      + file.objectiveTemplateFiles.length === 0) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
@@ -461,16 +452,6 @@ const deleteObjectiveFileHandler = async (req, res) => {
       }
       return null;
     }));
-
-    file = await getFileById(fileId);
-    if (file.reports.length
-      + file.reportObjectiveFiles.length
-      + file.objectiveFiles.length
-      + file.objectiveTemplateFiles.length === 0) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
-
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
