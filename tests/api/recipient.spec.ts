@@ -177,6 +177,16 @@ test.describe('get /recipient', () => {
       Joi.object({
         id: Joi.number(),
         isCurated: Joi.boolean(),
+        prompts: Joi.array().items(
+          Joi.object({
+            id: Joi.number(),
+            title: Joi.string(),
+            response: Joi.array().items(
+              Joi.string()
+            ),
+            prompt: Joi.string(),     
+           }),
+          ),                  
         name: Joi.string(),
         status: Joi.string(),
         regionId: Joi.number(),

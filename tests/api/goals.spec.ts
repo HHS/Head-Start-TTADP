@@ -114,7 +114,17 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     rtrOrder: Joi.number(),
     isCurated: Joi.boolean(),
     objectives: Joi.array(),
-    grant: grantSchema
+    grant: grantSchema,
+    prompts: Joi.array().items(
+      Joi.object({
+        id: Joi.number(),
+        title: Joi.string(),
+        response: Joi.array().items(
+          Joi.string()
+        ),
+        prompt: Joi.string(),     
+       }),
+      ),  
   });
 
   await validateSchema(response, schema, expect);
