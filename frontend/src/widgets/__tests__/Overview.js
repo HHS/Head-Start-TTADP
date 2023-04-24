@@ -4,7 +4,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import { Overview } from '../Overview';
+import { OverviewWidget as Overview } from '../Overview';
 
 describe('Overview', () => {
   const data = {
