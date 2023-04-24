@@ -105,7 +105,7 @@ const deleteHandler = async (req, res) => {
   const user = await userById(userId);
 
   try {
-    const file = await getFileById(fileId);
+    let file = await getFileById(fileId);
 
     if (reportId) {
       if (!await hasReportAuthorization(user, reportId)) {
@@ -131,6 +131,15 @@ const deleteHandler = async (req, res) => {
       if (of) {
         await deleteObjectiveFile(of.id);
       }
+    }
+
+    file = await getFileById(fileId);
+    if (file.reports.length
+      + file.reportObjectiveFiles.length
+      + file.objectiveFiles.length
+      + file.objectiveTemplateFiles.length === 0) {
+      await deleteFileFromS3(file.key);
+      await deleteFile(fileId);
     }
     res.status(204).send();
   } catch (error) {
@@ -430,7 +439,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
   const user = await userById(userId);
 
   try {
-    const file = await getFileById(parseInt(fileId, DECIMAL_BASE));
+    let file = await getFileById(parseInt(fileId, DECIMAL_BASE));
     let canUpdate = true;
 
     await Promise.all(objectiveIds.map(async (objectiveId) => {
@@ -452,6 +461,15 @@ const deleteObjectiveFileHandler = async (req, res) => {
       }
       return null;
     }));
+
+    file = await getFileById(fileId);
+    if (file && file.reports.length
+      + file.reportObjectiveFiles.length
+      + file.objectiveFiles.length
+      + file.objectiveTemplateFiles.length === 0) {
+      await deleteFileFromS3(file.key);
+      await deleteFile(fileId);
+    }
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
