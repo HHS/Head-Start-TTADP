@@ -37,7 +37,7 @@ Field.defaultProps = {
   API. Note the `example` passed as a 2nd parameter to `withWidgetData` must match the widget
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
-function Overview({
+export function Overview({
   data, loading, tableCaption,
 }) {
   const title = !tableCaption ? 'TTA overview' : tableCaption;
