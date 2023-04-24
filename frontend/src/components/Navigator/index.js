@@ -276,7 +276,7 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
-    const promptTitles = watch('goalPrompts');
+    const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
 
     let invalidResources = false;
