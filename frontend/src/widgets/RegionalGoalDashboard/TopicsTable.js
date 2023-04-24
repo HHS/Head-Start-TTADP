@@ -63,8 +63,6 @@ export function TopicsTableWidget({ data, loading }) {
   useEffect(() => {
     if (!data || !data.length) return;
 
-    console.log({ sortConfig });
-
     const sortedData = data.sort((a, b) => {
       const { sortBy, direction } = sortConfig;
       let prop = sortBy;
