@@ -188,10 +188,10 @@ module.exports = {
       const fieldPrompt = 'Select FEI root cause';
       const fieldType = 'multiselect';
       const fieldOptions = [
-        'Community Options',
         'Community Partnerships',
         'Facilities',
         'Family Circumstances',
+        'Other ECE Care Options',
         'Workforce',
       ];
       const fieldValidations = {
