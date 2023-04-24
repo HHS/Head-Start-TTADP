@@ -194,7 +194,9 @@ describe('s3Uploader.deleteFileFromJobS3', () => {
   it('calls deleteFileFromS3Job() with correct parameters', async () => {
     const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve({ status: 200, data: {} }) }));
     const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
-    await expect(got).resolves.toStrictEqual({ status: 200, data: {} });
+    await expect(got).resolves.toStrictEqual({
+      status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
+    });
     expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
   });
   it('throws an error if promise rejects', async () => {
