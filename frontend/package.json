@@ -95,7 +95,8 @@
     "decode-uri-component": "^0.2.1",
     "tough-cookie": "4.0.0",
     "ua-parser-js": "^0.7.33",
-    "webpack": "^5.76.1"
+    "webpack": "^5.76.1",
+    "yaml": "^2.2.2"
   },
   "eslintConfig": {
     "root": true,
