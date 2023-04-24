@@ -1,10 +1,14 @@
 import React from 'react';
 import {
-  render, screen, act, waitFor,
+  render,
+  screen,
+  act,
+  waitFor,
 } from '@testing-library/react';
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
+import { ALERT_SIZES, ALERT_VARIANTS } from '@ttahub/common';
 import SiteAlerts from '../SiteAlerts';
 
 describe('SiteAlerts', () => {
@@ -39,9 +43,7 @@ describe('SiteAlerts', () => {
       userEvent.click(screen.getByRole('button', { name: 'Create new alert' }));
     });
 
-    await waitFor(async () => {
-      expect(await screen.findByRole('checkbox')).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByRole('checkbox')).toBeInTheDocument());
   });
 
   it('renders the alerts', async () => {
@@ -53,6 +55,8 @@ describe('SiteAlerts', () => {
         message: 'Alert 1 message',
         startDate: '2020-01-01',
         endDate: '2020-01-02',
+        variant: ALERT_VARIANTS.INFO,
+        size: ALERT_SIZES.STANDARD,
       },
     ];
 
@@ -72,6 +76,8 @@ describe('SiteAlerts', () => {
         message: 'Alert 1 message',
         startDate: '2020-01-01',
         endDate: '2020-01-02',
+        variant: ALERT_VARIANTS.INFO,
+        size: ALERT_SIZES.STANDARD,
       },
     ];
 
@@ -102,6 +108,8 @@ describe('SiteAlerts', () => {
         message: 'Alert 1 message',
         startDate: '2020-01-01',
         endDate: '2020-01-02',
+        variant: ALERT_VARIANTS.INFO,
+        size: ALERT_SIZES.STANDARD,
       },
     ];
 
