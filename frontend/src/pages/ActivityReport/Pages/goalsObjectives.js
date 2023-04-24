@@ -27,6 +27,18 @@ import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
+export const validatePrompts = async (promptTitles, trigger) => {
+  // attempt to validate prompts
+  if (promptTitles && promptTitles.length) {
+    const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
+    if (outputs.some((output) => output === false)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const GoalsObjectives = ({
   reportId,
   onSaveDraftOetObjectives,
@@ -171,12 +183,9 @@ const GoalsObjectives = ({
 
       const promptTitles = getValues('goalPrompts');
 
-      // attempt to validate prompts
-      if (promptTitles && promptTitles.length) {
-        const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
-        if (outputs.some((output) => output === false)) {
-          return;
-        }
+      const arePromptsValid = await validatePrompts(promptTitles, trigger);
+      if (!arePromptsValid) {
+        return;
       }
     }
 
