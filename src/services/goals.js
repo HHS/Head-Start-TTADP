@@ -1371,6 +1371,14 @@ async function removeObjectives(objectivesToRemove, reportId) {
     individualHooks: true,
   });
 
+  // cleanup any ObjectiveResources that are no longer needed
+  await ObjectiveResource.destroy({
+    where: {
+      objectiveId: objectivesIdsToDestroy,
+    },
+    individualHooks: true,
+  });
+
   // Delete objective.
   return Objective.destroy({
     where: {
