@@ -20,7 +20,7 @@ exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
 const OTHER_ENTITY_PARTICIPANTS = [
   'HSCO',
-  'Local/State Agency(ies)',
+  'Local or State Agency',
   'OCC Regional Office',
   'OHS Regional Office',
   'Regional Head Start Association',
