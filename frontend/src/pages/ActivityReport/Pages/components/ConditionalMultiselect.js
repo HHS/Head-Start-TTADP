@@ -68,7 +68,7 @@ export default function ConditionalMultiselect({
     .find((option) => option.label === label));
 
   return (
-    <FormGroup error={error.props.children}>
+    <FormGroup error={error.props.children} key={name}>
       <Label htmlFor={name}>
         <>
           { fieldData.prompt }
