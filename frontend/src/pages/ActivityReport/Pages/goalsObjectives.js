@@ -161,6 +161,7 @@ const GoalsObjectives = ({
     }
 
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
+    console.log({ currentlyEditing });
     if (currentlyEditing) {
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
