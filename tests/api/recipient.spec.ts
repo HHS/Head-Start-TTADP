@@ -176,6 +176,7 @@ test.describe('get /recipient', () => {
     const schema = Joi.array().items(
       Joi.object({
         id: Joi.number(),
+        isCurated: Joi.boolean(),
         name: Joi.string(),
         status: Joi.string(),
         regionId: Joi.number(),
