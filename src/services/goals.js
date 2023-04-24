@@ -2062,6 +2062,15 @@ export async function destroyGoal(goalIds) {
       })
       : await Promise.resolve();
 
+    const objectiveFilesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveFile.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+        individualHooks: true,
+      })
+      : await Promise.resolve();
+
     const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
       ? await Objective.destroy({
         where: {
@@ -2085,6 +2094,7 @@ export async function destroyGoal(goalIds) {
       objectiveResourcesDestroyed,
       objectiveTopicsDestroyed,
       objectivesDestroyed,
+      objectiveFilesDestroyed,
     };
   } catch (error) {
     auditLogger.error(
