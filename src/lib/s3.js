@@ -47,7 +47,7 @@ const deleteFileFromS3Job = async (job) => {
   let res;
   try {
     res = await deleteFileFromS3(fileKey, bucket);
-    return ({ status: res.status, data: res.data });
+    return ({ status: 200, data: { fileId, fileKey, res } });
   } catch (error) {
     auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
     return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
