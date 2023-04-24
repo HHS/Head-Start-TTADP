@@ -105,7 +105,7 @@ const deleteHandler = async (req, res) => {
   const user = await userById(userId);
 
   try {
-    let file = await getFileById(fileId);
+    const file = await getFileById(fileId);
 
     if (reportId) {
       if (!await hasReportAuthorization(user, reportId)) {
@@ -430,7 +430,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
   const user = await userById(userId);
 
   try {
-    let file = await getFileById(parseInt(fileId, DECIMAL_BASE));
+    const file = await getFileById(parseInt(fileId, DECIMAL_BASE));
     let canUpdate = true;
 
     await Promise.all(objectiveIds.map(async (objectiveId) => {
