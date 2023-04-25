@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { SCOPE_IDS } from './Constants';
+import { SCOPE_IDS } from '@ttahub/common';
 
 /**
  * Search the user's permissions for an ADMIN scope

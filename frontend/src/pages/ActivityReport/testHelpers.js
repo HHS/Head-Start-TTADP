@@ -1,13 +1,13 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import React from 'react';
 import { Router } from 'react-router';
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import {
   render,
 } from '@testing-library/react';
 import moment from 'moment';
 import ActivityReport from './index';
-import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 

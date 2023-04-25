@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable no-underscore-dangle */
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -18,7 +19,7 @@ import {
   search,
 } from '../lib/awsElasticSearch/index';
 import { processActivityReportObjectiveForResourcesById } from '../services/resource';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 import { auditLogger } from '../logger';
 
 const mockUser = {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useSessionSort from '../hooks/useSessionSort';
-import { TOPICS_PER_PAGE, DECIMAL_BASE } from '../Constants';
+import { TOPICS_PER_PAGE } from '../Constants';
 
 function ResourcesAssociatedWithTopics({
   data,

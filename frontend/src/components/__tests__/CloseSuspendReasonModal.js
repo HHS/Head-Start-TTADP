@@ -4,10 +4,10 @@ import React, { useRef } from 'react';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import { ModalToggleButton } from '@trussworks/react-uswds';
 import userEvent from '@testing-library/user-event';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../../Constants';
 
 describe('Close Suspend Goal Reason', () => {
   const ModalComponent = (

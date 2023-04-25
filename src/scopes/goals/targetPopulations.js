@@ -1,5 +1,5 @@
-import filterArray, { filterAssociation } from './utils';
-import { TARGET_POPULATIONS } from '../../constants';
+import { TARGET_POPULATIONS } from '@ttahub/common';
+import { filterAssociation } from './utils';
 
 const baseQuery = `
   SELECT DISTINCT "ActivityReportGoals"."goalId"

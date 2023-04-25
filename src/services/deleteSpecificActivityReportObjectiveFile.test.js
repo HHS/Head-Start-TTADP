@@ -1,6 +1,7 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, FILE_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { FILE_STATUSES } from '../constants';
 import db, {
   Goal,
   Grant,
