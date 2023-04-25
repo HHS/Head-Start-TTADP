@@ -281,6 +281,7 @@ export function activityReportByLegacyId(legacyId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -538,6 +539,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -671,6 +673,7 @@ export async function activityReports(
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -809,6 +812,7 @@ export async function activityReportsForCleanup(userId) {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id'],
             },
           ],
@@ -936,6 +940,7 @@ export async function activityReportAlerts(userId, {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -1274,6 +1279,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['name'],
           },
         ],
