@@ -1297,7 +1297,7 @@ class ZALUsers{
  dml_as : bigint
 }
 
-class ZALZADescriptor #pink;line:red;line.bold;text:red {
+class ZALZADescriptor{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_type : enum
@@ -1311,7 +1311,7 @@ class ZALZADescriptor #pink;line:red;line.bold;text:red {
  dml_as : bigint
 }
 
-class ZALZAFilter #pink;line:red;line.bold;text:red {
+class ZALZAFilter{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_type : enum

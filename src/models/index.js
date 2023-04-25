@@ -10,7 +10,6 @@ const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config')[env];
 const audit = require('./auditModelGenerator');
-const auditModels = require('./auditModels');
 const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
@@ -47,18 +46,25 @@ fs
     }
   });
 
-const ddlModel = auditModels.generateZALDDL(sequelize);
-db[ddlModel.name] = ddlModel;
+// make models for remaining audit system tables
+{
+  const model = audit.generateZALDDL(sequelize);
+  db[model.name] = model;
+}
 
-const descriptorModel = auditModels.generateZADescriptor(sequelize);
-const descriptorAuditModel = audit.generateAuditModel(sequelize, descriptorModel);
-db[ddlModel.name] = ddlModel;
-db[descriptorAuditModel.name] = descriptorAuditModel;
+{
+  const model = audit.generateZADescriptor(sequelize);
+  const auditModel = audit.generateAuditModel(sequelize, model);
+  db[model.name] = model;
+  db[auditModel.name] = auditModel;
+}
 
-const filterModel = auditModels.generateZAFilter(sequelize);
-const filterAuditModel = audit.generateAuditModel(sequelize, filterModel);
-db[ddlModel.name] = ddlModel;
-db[filterAuditModel.name] = filterAuditModel;
+{
+  const model = audit.generateZAFilter(sequelize);
+  const auditModel = audit.generateAuditModel(sequelize, model);
+  db[model.name] = model;
+  db[auditModel.name] = auditModel;
+}
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
