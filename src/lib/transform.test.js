@@ -408,7 +408,7 @@ describe('activityReportToCsvRecord', () => {
         {
           model: ActivityReportApprover,
           as: 'approvers',
-          include: [{ model: User }],
+          include: [{ model: User, as: 'user' }],
         },
 
         {
