@@ -105,7 +105,7 @@ function transformApproversModel(prop) {
       const distinctValues = [
         ...new Set(
           values.filter(
-            (approver) => approver.User && approver.User[prop] !== null,
+            (approver) => approver.user && approver.user[prop] !== null,
           ).map((r) => r.User[prop]).flat(),
         ),
       ];

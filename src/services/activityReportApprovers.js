@@ -27,7 +27,7 @@ export async function upsertApprover(values) {
       where: { id: approver.userId },
     });
     if (user) {
-      approver.User = user.get({ plain: true });
+      approver.user = user.get({ plain: true });
     }
   }
 
@@ -83,6 +83,7 @@ export async function syncApprovers(activityReportId, userIds = []) {
     include: [
       {
         model: User,
+        as: 'user',
         attributes: ['id', 'name', 'email'],
         raw: true,
       },
