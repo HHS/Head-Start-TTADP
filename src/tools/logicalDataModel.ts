@@ -314,7 +314,7 @@ async function generateUML(schemas, tables, root) {
   uml += '\n@enduml\n';
 
   writeUml(uml, root);
-  return writeSvg(uml, root);
+  await writeSvg(uml, root);
 }
 
 export default async function generateUMLFromDB() {
@@ -358,6 +358,7 @@ export default async function generateUMLFromDB() {
     --AND table_name NOT LIKE 'ZA%'
     GROUP BY 1,2
   `, { type: QueryTypes.SELECT });
+
   const tables = db.sequelize.models;
   const schemas = tableData.map((td) => ({
     table: td.table,
@@ -371,5 +372,5 @@ export default async function generateUMLFromDB() {
       ?.associations,
   }));
 
-  return generateUML(schemas, tables, 'docs');
+  await generateUML(schemas, tables, 'docs');
 }
