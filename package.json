@@ -82,7 +82,7 @@
     "reconcile:legacy": "node ./build/server/src/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
-    "ldm": "tsx watch ./src/tools/logicalDataModelCLI.ts",
+    "ldm": "tsx ./src/tools/logicalDataModelCLI.ts",
     "changeReportStatus": "node ./build/server/src/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "makecolors": "node ./src/makecolors.js",
