@@ -1,5 +1,6 @@
 /* eslint-disable no-useless-computed-key */
 const { QueryTypes } = require('sequelize');
+const http = require('http'); // or 'https' for https:// URLs
 const fs = require('fs');
 const path = require('path');
 const plantumlEncoder = require('plantuml-encoder');
@@ -272,6 +273,20 @@ function writeUml(uml, dbRoot) {
 async function writeSvg(uml, dbRoot) {
   const encoded = plantumlEncoder.encode(uml);
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.encoded'), encoded);
+  let file;
+  try {
+    file = fs.createWriteStream(path.join(dbRoot, 'logical_data_model.svg'));
+    const request = http.get(`${process.env.PLANTUML_ENDPOINT}/svg/${encoded}`, (response) => {
+      response.pipe(file);
+
+      // after download completed close filestream
+      file.on('finish', () => {
+        file.close();
+      });
+    });
+  } catch (err) {
+    if (file) file.close();
+  }
 }
 
 async function generateUML(schemas, tables, root) {
@@ -299,7 +314,7 @@ async function generateUML(schemas, tables, root) {
   uml += '\n@enduml\n';
 
   writeUml(uml, root);
-  await writeSvg(uml, root);
+  return writeSvg(uml, root);
 }
 
 export default async function generateUMLFromDB() {
@@ -356,5 +371,5 @@ export default async function generateUMLFromDB() {
       ?.associations,
   }));
 
-  generateUML(schemas, tables, 'docs');
+  return generateUML(schemas, tables, 'docs');
 }

@@ -45,7 +45,7 @@ services:
       - "6379:6379"
   mailcatcher:
     image: schickling/mailcatcher
-    ports: 
+    ports:
       - "1025:1025"
       - "1080:1080"
   opensearch-node1:
@@ -61,6 +61,11 @@ services:
     ports:
       - 9200:9200
       - 9600:9600 # required for Performance Analyzer
+  plantuml:
+    image: plantuml/plantuml-server:jetty
+    container_name: plantuml
+    ports:
+      - "8181:8080"
 volumes:
   dbdata: {}
   miniodata: {}
