@@ -185,7 +185,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 3,
-      User: {
+      user: {
         name: 'Test Approver 1',
 
       },
@@ -194,7 +194,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 4,
-      User: {
+      user: {
         name: 'Test Approver 3',
       },
     },
@@ -202,7 +202,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 5,
-      User: {
+      user: {
         name: 'Test Approver 2',
       },
     },
@@ -435,7 +435,6 @@ describe('activityReportToCsvRecord', () => {
         },
       ],
     });
-
     const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,
