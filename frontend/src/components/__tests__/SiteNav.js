@@ -49,7 +49,17 @@ describe('SiteNav', () => {
     const userUrl = join('api', 'user');
 
     beforeEach(() => {
-      const user = { name: 'name' };
+      const user = {
+        // since I have no home region id, the `defaultRegion` falls back
+        // to `regions.split(', ')[0] (or however else you want to implement this fix)
+        homeRegionId: null,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 10,
+          },
+        ],
+      };
       fetchMock.get(userUrl, { ...user });
 
       render(
@@ -63,6 +73,12 @@ describe('SiteNav', () => {
 
     test('nav items are visible', () => {
       expect(screen.queryAllByRole('link').length).not.toBe(0);
+    });
+    test('has no home region', async () => {
+      // this verifies `hasMultipleRegions` works as expected
+      // because the heading is `Region` and not `Regions`, as we
+      // only have one region.
+      expect(await screen.findByText('Region 10')).toBeVisible();
     });
   });
 

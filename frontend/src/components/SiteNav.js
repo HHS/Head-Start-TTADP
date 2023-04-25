@@ -61,9 +61,11 @@ const SiteNav = ({
   }, [hasAlerts]);
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user).join(', ');
+  const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
+
+  const regionDisplay = regions.join(', ');
 
   // If user has more than one region, Regions label is plural, else singular
   const regionLabel = () => {
@@ -72,10 +74,10 @@ const SiteNav = ({
     }
 
     if (hasMultipleRegions) {
-      return `Regions ${regions}`;
+      return `Regions ${regionDisplay}`;
     }
 
-    return `Region ${regions}`;
+    return `Region ${regionDisplay}`;
   };
 
   if (!showSidebar) return null;
