@@ -15,9 +15,9 @@ const options = [
 ];
 
 const customOptions = [
-  { id: 1, name: 'Approver 1', User: { id: 1, fullName: 'Approver 1' } },
-  { id: 2, name: 'Approver 2', User: { id: 2, fullName: 'Approver 2' } },
-  { id: 3, name: 'Approver 3', User: { id: 3, fullName: 'Approver 3' } },
+  { id: 1, name: 'Approver 1', user: { id: 1, fullName: 'Approver 1' } },
+  { id: 2, name: 'Approver 2', user: { id: 2, fullName: 'Approver 2' } },
+  { id: 3, name: 'Approver 3', user: { id: 3, fullName: 'Approver 3' } },
 ];
 
 describe('MultiSelect', () => {
@@ -116,7 +116,7 @@ describe('MultiSelect', () => {
     await act(async () => {
       userEvent.click(screen.getByTestId('submit'));
     });
-    expect(onSubmit).toHaveBeenCalledWith({ name: [{ value: 1, label: 'Approver 1', User: { id: 1, fullName: 'Approver 1' } }] });
+    expect(onSubmit).toHaveBeenCalledWith({ name: [{ value: 1, label: 'Approver 1', user: { id: 1, fullName: 'Approver 1' } }] });
   });
 
   it('sorts correctly!', () => {
