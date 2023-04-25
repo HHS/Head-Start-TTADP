@@ -30,7 +30,7 @@ const DisplayApproverNotes = ({
 DisplayApproverNotes.propTypes = {
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     note: PropTypes.string,
-    User: PropTypes.shape({
+    user: PropTypes.shape({
       fullName: PropTypes.string,
     }),
   })).isRequired,
