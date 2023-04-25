@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
 import moment from 'moment';
 import {
@@ -18,7 +19,6 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
-  REPORT_STATUSES,
   GOAL_STATUS,
 } from '../constants';
 import filtersToScopes from '../scopes';

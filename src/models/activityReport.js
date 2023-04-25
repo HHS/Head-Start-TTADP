@@ -1,6 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { REPORT_STATUSES, USER_ROLES, NEXTSTEP_NOTETYPE } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeCreate,

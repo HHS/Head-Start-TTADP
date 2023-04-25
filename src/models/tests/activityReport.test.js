@@ -1,5 +1,6 @@
 /* eslint-disable dot-notation */
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -12,7 +13,6 @@ import db, {
   OtherEntity,
   Grant,
 } from '..';
-import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
