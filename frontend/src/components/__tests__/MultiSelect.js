@@ -111,7 +111,7 @@ describe('MultiSelect', () => {
 
   it('expects multi select to maintain original options structure', async () => {
     const onSubmit = jest.fn();
-    render(<CustomOptionMultiSelect onSubmit={onSubmit} valueLabel="User.fullName" valueProperty="User.id" />);
+    render(<CustomOptionMultiSelect onSubmit={onSubmit} valueLabel="user.fullName" valueProperty="user.id" />);
     await selectEvent.select(screen.getByLabelText('label'), ['Approver 1']);
     await act(async () => {
       userEvent.click(screen.getByTestId('submit'));
