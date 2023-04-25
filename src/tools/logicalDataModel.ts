@@ -270,7 +270,7 @@ function writeUml(uml, dbRoot) {
   }
 }
 
-async function writeSvg(uml, dbRoot) {  
+async function writeSvg(uml, dbRoot) {
   const encoded = plantumlEncoder.encode(uml);
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.encoded'), encoded);
 
