@@ -72,12 +72,6 @@ const RenderObjective = ({
     hookForm.setValue('objectives', [obj]);
   };
 
-  fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <title>Whats New</title>
-  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
-  <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
-
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
@@ -134,6 +128,12 @@ const RenderObjective = ({
 
 describe('Objective', () => {
   afterEach(() => fetchMock.restore());
+  beforeEach(() => fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Whats New</title>
+  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+  <subtitle>Confluence Syndication Feed</subtitle>
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`));
+
   it('renders an objective', async () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
