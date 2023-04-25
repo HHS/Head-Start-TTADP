@@ -340,7 +340,7 @@ export default async function generateUMLFromDB() {
     AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY ("' || col.column_name || '") REFERENCES %'
     WHERE table_schema = 'public'
     AND table_name != 'SequelizeMeta'
-    AND table_name NOT LIKE 'ZA%'
+    --AND table_name NOT LIKE 'ZA%'
     GROUP BY 1,2
   `, { type: QueryTypes.SELECT });
   const tables = db.sequelize.models;

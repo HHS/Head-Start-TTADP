@@ -28,7 +28,7 @@ export default (sequelize, DataTypes) => {
       });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplates' });
       Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
       Goal.belongsToMany(models.Resource, {
         through: models.GoalResource,
@@ -41,7 +41,7 @@ export default (sequelize, DataTypes) => {
   Goal.init({
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
     endDate: {
       type: DataTypes.DATEONLY,
@@ -84,7 +84,7 @@ export default (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
     },
     previousStatus: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     onAR: {
       type: DataTypes.BOOLEAN,

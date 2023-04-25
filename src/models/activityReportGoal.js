@@ -38,7 +38,7 @@ export default (sequelize, DataTypes) => {
     },
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     closeSuspendReason: {
       allowNull: true,
       type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),

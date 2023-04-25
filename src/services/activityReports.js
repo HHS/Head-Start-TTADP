@@ -500,7 +500,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           },
           {
             model: Role,
-            as: 'collaboratorRoles',
+            as: 'roles',
             order: [['name', 'ASC']],
           },
         ],
@@ -659,7 +659,7 @@ export async function activityReports(
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -924,7 +924,7 @@ export async function activityReportAlerts(userId, {
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -1248,7 +1248,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         },
         {
           model: Role,
-          as: 'collaboratorRoles',
+          as: 'roles',
         }],
       },
       {

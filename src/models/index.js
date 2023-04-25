@@ -10,6 +10,7 @@ const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config')[env];
 const audit = require('./auditModelGenerator');
+const auditModels = require('./auditModels');
 const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
@@ -29,6 +30,7 @@ fs
   .filter((file) => (file.indexOf('.') !== 0)
     && (file !== basename)
     && (file !== 'auditModelGenerator.js')
+    && (file !== 'auditModels.js')
     && (file.slice(-3) === '.js'))
   .forEach((file) => {
     try {
@@ -44,6 +46,19 @@ fs
       throw error;
     }
   });
+
+const ddlModel = auditModels.generateZALDDL(sequelize);
+db[ddlModel.name] = ddlModel;
+
+const descriptorModel = auditModels.generateZADescriptor(sequelize);
+const descriptorAuditModel = audit.generateAuditModel(sequelize, descriptorModel);
+db[ddlModel.name] = ddlModel;
+db[descriptorAuditModel.name] = descriptorAuditModel;
+
+const filterModel = auditModels.generateZAFilter(sequelize);
+const filterAuditModel = audit.generateAuditModel(sequelize, filterModel);
+db[ddlModel.name] = ddlModel;
+db[filterAuditModel.name] = filterAuditModel;
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
