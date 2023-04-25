@@ -9,6 +9,7 @@ import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { v4 as uuidv4 } from 'uuid';
+import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import Landing, { getAppliedRegion } from '../index';
@@ -16,7 +17,6 @@ import activityReports, { activityReportsSorted, generateXFakeReports, overviewR
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString } from '../../../utils';
 import { mockWindowProperty, convertToResponse } from '../../../testHelpers';
-import { SCOPE_IDS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 
