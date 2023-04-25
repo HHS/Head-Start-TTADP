@@ -506,13 +506,13 @@ describe('Activity report service', () => {
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
-        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(2);
-        activityReportCollaborator[0].collaboratorRoles.sort(
+        expect(activityReportCollaborator[0].roles.length).toBe(2);
+        activityReportCollaborator[0].roles.sort(
           (a, b) => ((a.role > b.role) ? 1 : -1),
         );
         expect(activityReportCollaborator[0].fullName).toBe('user1115665161, GS, HS');
-        expect(activityReportCollaborator[0].collaboratorRoles.map((r) => r.fullName)).toContain('Grants Specialist');
-        expect(activityReportCollaborator[0].collaboratorRoles.map((r) => r.fullName)).toContain('Health Specialist');
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Grants Specialist');
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Health Specialist');
 
         // Mock User 2.
         activityReportCollaborator = report.activityReportCollaborators.filter(
@@ -521,8 +521,8 @@ describe('Activity report service', () => {
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].fullName).toBe('user265157914, COR');
-        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(1);
-        expect(activityReportCollaborator[0].collaboratorRoles[0].fullName).toBe('COR');
+        expect(activityReportCollaborator[0].roles.length).toBe(1);
+        expect(activityReportCollaborator[0].roles[0].fullName).toBe('COR');
 
         // Mock User 3.
         activityReportCollaborator = report.activityReportCollaborators.filter(
@@ -531,7 +531,7 @@ describe('Activity report service', () => {
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].fullName).toBe('user39861962');
-        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(0);
+        expect(activityReportCollaborator[0].roles.length).toBe(0);
       });
 
       it('updates collaborator roles on a already saved report', async () => {
@@ -570,12 +570,12 @@ describe('Activity report service', () => {
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
-        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(2);
-        activityReportCollaborator[0].collaboratorRoles.sort(
+        expect(activityReportCollaborator[0].roles.length).toBe(2);
+        activityReportCollaborator[0].roles.sort(
           (a, b) => ((a.role > b.role) ? 1 : -1),
         );
-        expect(activityReportCollaborator[0].collaboratorRoles.map((r) => r.fullName)).toContain('Grants Specialist');
-        expect(activityReportCollaborator[0].collaboratorRoles.map((r) => r.fullName)).toContain('Health Specialist');
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Grants Specialist');
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Health Specialist');
 
         // Mock User 3.
         activityReportCollaborator = updatedReport.activityReportCollaborators.filter(
@@ -583,8 +583,8 @@ describe('Activity report service', () => {
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
-        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(1);
-        expect(activityReportCollaborator[0].collaboratorRoles[0].fullName).toBe('System Specialist'); // Updated role.
+        expect(activityReportCollaborator[0].roles.length).toBe(1);
+        expect(activityReportCollaborator[0].roles[0].fullName).toBe('System Specialist'); // Updated role.
       });
 
       it('handles notes being created', async () => {
