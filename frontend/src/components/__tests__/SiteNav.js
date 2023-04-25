@@ -8,9 +8,9 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 
+import { SCOPE_IDS } from '@ttahub/common';
 import SiteNav from '../SiteNav';
 import UserContext from '../../UserContext';
-import { SCOPE_IDS } from '../../Constants';
 
 const history = createMemoryHistory();
 
