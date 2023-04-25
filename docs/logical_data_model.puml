@@ -60,7 +60,7 @@ class ActivityReportGoals{
  timeframe : text
  closeSuspendReason : enum
  closeSuspendContext : text
- endDate : date
+ endDate : <color:#d54309>timestamp with time zone</color>
  isRttapa : enum
  isActivelyEdited : boolean
  * activityReportId : integer : REFERENCES "ActivityReports".id
@@ -155,6 +155,20 @@ class CollaboratorRoles{
  * updatedAt : timestamp with time zone
  * activityReportCollaboratorId : integer : REFERENCES "ActivityReportCollaborators".id
  roleId : integer : REFERENCES "Roles".id
+}
+
+class DisconnectedGoals #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * name : text
+ status : varchar(255)
+ timeframe : varchar(255)
+ isFromSmartsheetTtaPlan : boolean
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closeSuspendReason : enum
+ closeSuspendContext : text
+ endDate : timestamp with time zone
+ previousStatus : varchar(255)
 }
 
 class Files{
@@ -342,6 +356,14 @@ class ObjectiveTemplateResources{
  sourceFields : enum[]
  * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
  * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ObjectiveTemplateRoles #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+ * roleId : integer : REFERENCES "Roles".id
 }
 
 class ObjectiveTemplateTopics{
@@ -590,7 +612,7 @@ class ZALActivityRecipients{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -604,7 +626,7 @@ class ZALActivityReportApprovers{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -618,7 +640,7 @@ class ZALActivityReportCollaborators{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -632,7 +654,7 @@ class ZALActivityReportFiles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -646,7 +668,7 @@ class ZALActivityReportGoalResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -660,7 +682,7 @@ class ZALActivityReportGoals{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -674,7 +696,7 @@ class ZALActivityReportObjectiveFiles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -688,7 +710,7 @@ class ZALActivityReportObjectiveResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -702,7 +724,7 @@ class ZALActivityReportObjectiveTopics{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -716,7 +738,7 @@ class ZALActivityReportObjectives{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -730,7 +752,7 @@ class ZALActivityReportResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -744,7 +766,7 @@ class ZALActivityReports{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -758,7 +780,7 @@ class ZALCollaboratorRoles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -779,13 +801,27 @@ class ZALDDL{
  descriptor_id : integer
 }
 
+class ZALDisconnectedGoals #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp without time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
 class ZALFiles{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -799,7 +835,7 @@ class ZALGoalResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -813,7 +849,7 @@ class ZALGoalTemplateObjectiveTemplates{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -827,7 +863,7 @@ class ZALGoalTemplateResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -841,7 +877,7 @@ class ZALGoalTemplates{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -855,12 +891,25 @@ class ZALGoals{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALGrantGoals #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp without time zone
+ * dml_by : integer
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALGrants{
@@ -869,7 +918,7 @@ class ZALGrants{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -883,7 +932,7 @@ class ZALGroupGrants{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -897,7 +946,7 @@ class ZALGroups{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -911,7 +960,7 @@ class ZALMailerLogs{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -925,7 +974,7 @@ class ZALNextStepResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -939,7 +988,7 @@ class ZALNextSteps{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -953,7 +1002,7 @@ class ZALObjectiveFiles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -967,7 +1016,7 @@ class ZALObjectiveResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -981,7 +1030,7 @@ class ZALObjectiveTemplateFiles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -995,7 +1044,21 @@ class ZALObjectiveTemplateResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveTemplateRoles #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp without time zone
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1009,7 +1072,7 @@ class ZALObjectiveTemplateTopics{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1023,7 +1086,7 @@ class ZALObjectiveTemplates{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1037,7 +1100,7 @@ class ZALObjectiveTopics{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1051,7 +1114,7 @@ class ZALObjectives{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1065,7 +1128,7 @@ class ZALOtherEntities{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1079,7 +1142,7 @@ class ZALPermissions{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1093,7 +1156,7 @@ class ZALPrograms{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1107,7 +1170,7 @@ class ZALRecipients{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1121,7 +1184,7 @@ class ZALRegions{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1135,7 +1198,7 @@ class ZALResources{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1149,7 +1212,7 @@ class ZALRoleTopics{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1163,7 +1226,7 @@ class ZALRoles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1177,7 +1240,7 @@ class ZALRttapaPilots{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1191,7 +1254,7 @@ class ZALScopes{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1205,12 +1268,25 @@ class ZALSiteAlerts{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALTopicGoals #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp without time zone
+ * dml_by : integer
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALTopics{
@@ -1219,7 +1295,7 @@ class ZALTopics{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1233,7 +1309,7 @@ class ZALUserRoles{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1247,7 +1323,7 @@ class ZALUserSettingOverrides{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1261,7 +1337,7 @@ class ZALUserSettings{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1275,7 +1351,7 @@ class ZALUserValidationStatus{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1289,7 +1365,7 @@ class ZALUsers{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1303,7 +1379,7 @@ class ZALZADescriptor{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1317,7 +1393,7 @@ class ZALZAFilter{
  * dml_type : enum
  old_row_data : jsonb
  new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
+ * dml_timestamp : <color:#d54309>timestamp without time zone</color>
  * dml_by : bigint
  * dml_txid : uuid
  session_sig : text
@@ -1435,5 +1511,6 @@ Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 
-
+ObjectiveTemplates o--[#yellow,bold,thickness=2]--o ObjectiveTemplateRoles : <color:#2491FF>missing-from-model</color>
+Roles o--[#yellow,bold,thickness=2]--o ObjectiveTemplateRoles : <color:#2491FF>missing-from-model</color>
 @enduml
