@@ -16,6 +16,7 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+          PLANTUML_ENDPOINT: http://plantuml:8080
   docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:16.19.1-browsers
