@@ -22,7 +22,7 @@ const processResourceInfo = async (resourceId) => {
         await Resource.update({
           title: titleToUpdate,
         }, {
-          where: { id: resource.dataValues.id },
+          where: { id: resource.id },
           individualHooks: false,
         });
       }

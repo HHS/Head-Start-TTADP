@@ -35,7 +35,7 @@ const axiosNotFoundError = new Error();
 axiosNotFoundError.response = { status: 404 };
 
 const mockFindOne = jest.spyOn(Resource, 'findOne').mockImplementation(
-  () => Promise.resolve({ dataValues: { id: 1, url: 'https://eclkc.ohs.acf.hhs.gov' } }),
+  () => Promise.resolve({ id: 1, url: 'https://eclkc.ohs.acf.hhs.gov' }),
 );
 const mockUpdate = jest.spyOn(Resource, 'update').mockImplementation(() => Promise.resolve());
 
@@ -58,7 +58,7 @@ describe('resource worker tests', () => {
     expect(mockFindOne).toBeCalledWith({ where: { id: 1 } });
     expect(mockUpdate).toBeCalledWith(
       { title: 'Head Start | ECLKC' },
-      { where: { id: 1 }, individualHooks: true },
+      { where: { id: 1 }, individualHooks: false },
     );
   });
 

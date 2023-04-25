@@ -3,7 +3,7 @@ import { addToResourceQueue } from '../../services/resourceQueue';
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if ((instance.domain === undefined
+  if (instance.url && (instance.domain === undefined
     || instance.domain === null)) {
     const [{ groups: { host, ip } }] = instance.url.matchAll(VALID_URL_REGEX);
     const domain = host || ip;
