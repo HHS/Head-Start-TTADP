@@ -7,7 +7,7 @@
   }
   ' Classes
   class ActivityRecipients{
- * <color:#d54309>id</color>: integer : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  * activityReportId : integer : REFERENCES "ActivityReports".id
@@ -57,10 +57,10 @@ class ActivityReportGoals{
  * updatedAt : timestamp with time zone
  name : text
  status : varchar(255)
- timeframe : <color:#d54309>text</color>
+ timeframe : text
  closeSuspendReason : enum
  closeSuspendContext : text
- endDate : <color:#d54309>timestamp with time zone</color>
+ endDate : date
  isRttapa : enum
  isActivelyEdited : boolean
  * activityReportId : integer : REFERENCES "ActivityReports".id
@@ -105,7 +105,7 @@ class ActivityReportObjectives{
 }
 
 class ActivityReportResources{
- * <color:#d54309>id</color>: integer : <generated>
+ * id : integer : <generated>
  sourceFields : enum[]
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -124,7 +124,7 @@ class ActivityReports{
  activityRecipientType : varchar(255)
  requester : varchar(255)
  submissionStatus : enum
- <color:#d54309>programTypes</color>: varchar(255)[]
+ programTypes : varchar(255)[]
  targetPopulations : varchar(255)[]
  reason : varchar(255)[]
  participants : varchar(255)[]
@@ -157,20 +157,6 @@ class CollaboratorRoles{
  roleId : integer : REFERENCES "Roles".id
 }
 
-class DisconnectedGoals #pink;line:red;line.bold;text:red {
- * id : integer : <generated>
- * name : text
- status : varchar(255)
- timeframe : varchar(255)
- isFromSmartsheetTtaPlan : boolean
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- closeSuspendReason : enum
- closeSuspendContext : text
- endDate : timestamp with time zone
- previousStatus : varchar(255)
-}
-
 class Files{
  * id : integer : <generated>
  * originalFileName : varchar(255)
@@ -186,8 +172,8 @@ class GoalResources{
  sourceFields : enum[]
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- * <color:#d54309>onAR</color>: boolean : false
- * <color:#d54309>onApprovedAR</color>: boolean : false
+ * onAR : boolean : false
+ * onApprovedAR : boolean : false
  * goalId : integer : REFERENCES "Goals".id
  * resourceId : integer : REFERENCES "Resources".id
 }
@@ -225,14 +211,14 @@ class Goals{
  * id : integer : <generated>
  name : text
  status : varchar(255)
- timeframe : <color:#d54309>text</color>
+ timeframe : text
  isFromSmartsheetTtaPlan : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  closeSuspendReason : enum
  closeSuspendContext : text
  endDate : date
- previousStatus : <color:#d54309>text</color>
+ previousStatus : text
  * onApprovedAR : boolean
  firstNotStartedAt : timestamp with time zone
  lastNotStartedAt : timestamp with time zone
@@ -273,7 +259,7 @@ class Grants{
 }
 
 class GroupGrants{
- * <color:#d54309>id</color>: integer : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * grantId : integer : REFERENCES "Grants".id
@@ -282,10 +268,10 @@ class GroupGrants{
 
 class Groups{
  * id : integer : <generated>
- name : <color:#d54309>text</color>
+ name : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- * userId : <color:#d54309>integer</color> : REFERENCES "Users".id
+ * userId : integer : REFERENCES "Users".id
 }
 
 class MailerLogs{
@@ -302,7 +288,7 @@ class MailerLogs{
 }
 
 class NextStepResources{
- * <color:#d54309>id</color>: integer : <generated>
+ * id : integer : <generated>
  sourceFields : enum[]
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -356,14 +342,6 @@ class ObjectiveTemplateResources{
  sourceFields : enum[]
  * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
  * resourceId : integer : REFERENCES "Resources".id
-}
-
-class ObjectiveTemplateRoles #pink;line:red;line.bold;text:red {
- * id : integer : <generated>
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * roleId : integer : REFERENCES "Roles".id
 }
 
 class ObjectiveTemplateTopics{
@@ -545,7 +523,7 @@ class Topics{
 }
 
 class UserRoles{
- * <color:#d54309>id</color>: integer : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * userId : integer : REFERENCES "Users".id
@@ -554,7 +532,7 @@ class UserRoles{
 
 class UserSettingOverrides{
  * id : integer : <generated>
- * value : <color:#d54309>jsonb</color>
+ * value : jsonb
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * userId : integer : REFERENCES "Users".id
@@ -563,9 +541,9 @@ class UserSettingOverrides{
 
 class UserSettings{
  * id : integer : <generated>
- * <color:#d54309>class</color>: varchar(255)
+ * class : varchar(255)
  * key : varchar(255)
- * default : <color:#d54309>jsonb</color>
+ * default : jsonb
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
@@ -595,66 +573,813 @@ class Users{
  homeRegionId : integer : REFERENCES "Regions".id
 }
 
+class ZADescriptor{
+ * id : integer : <generated>
+ * descriptor : text
+}
+
+class ZAFilter{
+ * id : integer : <generated>
+ tableName : varchar(255)
+ * columnName : varchar(255)
+}
+
+class ZALActivityRecipients{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportApprovers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportCollaborators{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportGoalResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportObjectiveFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportObjectiveResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportObjectiveTopics{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportObjectives{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReportResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALActivityReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALCollaboratorRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALDDL{
+ * id : bigint : <generated>
+ command_tag : varchar(255)
+ object_type : varchar(255)
+ schema_name : varchar(255)
+ object_identity : varchar(255)
+ * ddl_timestamp : timestamp with time zone
+ ddl_by : integer
+ * ddl_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGoalResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGoalTemplateObjectiveTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGoalTemplateResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGoalTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGroupGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALGroups{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALMailerLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALNextStepResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALNextSteps{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveTemplateFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveTemplateResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveTemplateTopics{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectiveTopics{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALObjectives{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALOtherEntities{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALPermissions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALPrograms{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALRecipients{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALRegions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALRoleTopics{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALRttapaPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALScopes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALSiteAlerts{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALTopics{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALUserRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALUserSettingOverrides{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALUserSettings{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALUserValidationStatus{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALUsers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALZADescriptor #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
+class ZALZAFilter #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+ dml_as : bigint
+}
+
 
 ' Associations
 
-ActivityRecipients "1" --[#d54309,plain,thickness=2]-- "1" OtherEntities : activityRecipients
-ActivityReportCollaborators "1" --[#d54309,plain,thickness=2]-- "1" CollaboratorRoles : activityReportCollaborator
-ObjectiveTemplates "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveTemplateFiles : objectiveTemplate
-ObjectiveTemplates "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveTemplateTopics : objectiveTemplate
-OtherEntities "1" --[#d54309,plain,thickness=2]-- "1" ActivityRecipients : otherEntity
-OtherEntities "1" --[#d54309,plain,thickness=2]-- "1" Objectives : otherEntity
-Recipients "1" --[#d54309,plain,thickness=2]-- "1" RttapaPilots : recipient
-Regions "1" --[#d54309,plain,thickness=2]-- "1" ActivityReports : region
-Regions "1" --[#d54309,plain,thickness=2]-- "1" GoalTemplates : <color:#d54309>Region</color>
-Regions "1" --[#d54309,plain,thickness=2]-- "1" Grants : <color:#d54309>Region</color>
-Regions "1" --[#d54309,plain,thickness=2]-- "1" RttapaPilots : region
-Roles "1" --[#d54309,plain,thickness=2]-- "1" UserRoles : role
-Topics "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveTopics : topic
-Topics "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveTopics : topic
-Users "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportApprovers : <color:#d54309>User</color>
-Users "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportCollaborators : user
-Users "1" --[#d54309,plain,thickness=2]-- "1" RttapaPilots : user
-Users "1" --[#d54309,plain,thickness=2]-- "1" SiteAlerts : creator
-Users "1" --[#d54309,plain,thickness=2]-- "1" UserRoles : user
 
+
+ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : activityReportObjective, activityReportObjectiveFiles
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : activityReportObjective, activityReportObjectiveResources
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : activityReportObjective, activityReportObjectiveTopics
-ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : <color:#d54309>ActivityReport</color>, activityRecipients
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : activityReport, activityRecipients
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : activityReport, approvers
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : activityReport, activityReportCollaborators
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : activityReport, reportFiles
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : activityReport, activityReportGoals
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
-ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, <color:#d54309>ActivityReport</color>
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
-GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, <color:#d54309>GoalTemplate</color>
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplates
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, activityReportGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
+Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
-ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : objectiveTemplate, resources
+ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles
+ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : objectiveTemplate, objectiveTemplateResources
+ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : objectiveTemplate, objectiveTemplateTopics
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, activityReportObjectives
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
+OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
+OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
-Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : <color:#d54309>Users</color>, homeRegion
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
+Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
+Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
+Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
+Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates
+Regions "1" --[#black,dashed,thickness=2]--{  "n" Permissions : region, permissions
+Regions "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, region
+Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : users, homeRegion
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : resource, activityReportGoalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : resource, activityReportObjectiveResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : resource, activityReportResources
@@ -663,46 +1388,52 @@ Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : reso
 Resources "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : resource, nextStepResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : resource, objectiveResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : resource, objectiveTemplateResources
+Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collaboratorRoles
+Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
+Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
+Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
+Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
+Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics
+Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
+Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
+Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
-Users "1" --[#d54309,dashed,thickness=2]--{  "n" Permissions : permissions
+Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
+Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
+Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
+Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
-Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : <color:#d54309>User</color>, validationStatus
+Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus
 
-ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : collaboratorRoles
-ActivityReportGoals "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : roles, collaborators
+ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportGoals
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
-ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
-ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Topics : topics
+ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportObjectives
+ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, activityReportObjectives
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, activityReports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
-ActivityReports "n" }--[#d54309,dotted,thickness=2]--{ "n" OtherEntities : activityReports
-ActivityReports "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
-Files "n" }--[#d54309,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
+Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
-GoalTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
-Goals "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
+Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
-NextSteps "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
-ObjectiveTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Topics : topics
-Objectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
+ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectiveTemplates
+ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectiveTemplates
+Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectives
 Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectives
-Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : <color:#d54309>Scopes</color>, <color:#d54309>Regions</color>
+Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
-Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : scopes
+Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 
-Grants o--[#yellow,bold,thickness=2]--o Grants : <color:#2491FF>missing-from-model</color>
-ObjectiveTemplates o--[#yellow,bold,thickness=2]--o ObjectiveTemplateRoles : <color:#2491FF>missing-from-model</color>
-Regions o--[#yellow,bold,thickness=2]--o ObjectiveTemplates : <color:#2491FF>missing-from-model</color>
-Regions o--[#yellow,bold,thickness=2]--o Permissions : <color:#2491FF>missing-from-model</color>
-Roles o--[#yellow,bold,thickness=2]--o CollaboratorRoles : <color:#2491FF>missing-from-model</color>
-Roles o--[#yellow,bold,thickness=2]--o ObjectiveTemplateRoles : <color:#2491FF>missing-from-model</color>
-Roles o--[#yellow,bold,thickness=2]--o RoleTopics : <color:#2491FF>missing-from-model</color>
-Scopes o--[#yellow,bold,thickness=2]--o Permissions : <color:#2491FF>missing-from-model</color>
-Topics o--[#yellow,bold,thickness=2]--o RoleTopics : <color:#2491FF>missing-from-model</color>
+
 @enduml

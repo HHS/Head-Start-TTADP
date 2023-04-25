@@ -83,18 +83,18 @@ const generateAuditModel = (sequelize, model) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    data_id: { type: DataTypes.INTEGER },
+    data_id: { type: DataTypes.BIGINT },
     dml_type: {
       type: DataTypes.ENUM(...dmlType),
       allowNull: false,
     },
     old_row_data: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSONB,
       allowNull: true,
       get() { return tryJsonParse(this.getDataValue('old_row_data')); },
     },
     new_row_data: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSONB,
       allowNull: true,
       get() { return tryJsonParse(this.getDataValue('new_row_data')); },
     },
@@ -113,6 +113,11 @@ const generateAuditModel = (sequelize, model) => {
       allowNull: true,
       defaultValue: null,
       comment: null,
+    },
+    session_sig: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
     },
     dml_txid: {
       type: DataTypes.UUID,

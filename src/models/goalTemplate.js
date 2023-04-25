@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId', as: 'goals' });
-      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId' });
+      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       GoalTemplate.hasMany(
         models.GoalTemplateObjectiveTemplate,
         { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
