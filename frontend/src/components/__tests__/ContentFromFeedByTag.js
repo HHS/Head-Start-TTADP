@@ -45,14 +45,26 @@ const DEFAULT_RESPONSE = `<?xml version="1.0" encoding="UTF-8"?>
 describe('ContentFromFeedByTag', () => {
   afterEach(() => fetchMock.restore());
 
-  const renderContentFromFeed = (tag = 'tag', content = DEFAULT_RESPONSE) => {
+  const renderContentFromFeed = (tag = 'tag', content = DEFAULT_RESPONSE, selector = null) => {
     fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
-    render(<ContentFromFeedByTag tagName={tag} />);
+    render(<ContentFromFeedByTag tagName={tag} contentSelector={selector} />);
   };
 
   it('renders a feed', async () => {
     act(() => {
       renderContentFromFeed();
+    });
+
+    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
+  });
+
+  it('renders an extract from a feed', async () => {
+    act(() => {
+      renderContentFromFeed(
+        'tag',
+        DEFAULT_RESPONSE,
+        '[data-linked-resource-id="8028231"]',
+      );
     });
 
     expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
