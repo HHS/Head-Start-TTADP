@@ -1,6 +1,6 @@
 import { REASONS } from '@ttahub/common';
 import { countOccurrences } from './helpers';
-import { topicFrequencyGraphViaGoals } from './topicFrequencyGraph';
+import topicFrequencyGraphViaGoals from './topicFrequencyGraph';
 
 export default async function frequencyGraph(scopes) {
   const reasons = await countOccurrences(scopes.activityReport, 'reason', REASONS);
