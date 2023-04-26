@@ -62,6 +62,26 @@ function getPrompts(promptTitles, getValues) {
   return prompts;
 }
 
+/**
+ *
+ * @param {} isAutoSave
+ * @returns
+ */
+function getPromptErrors(promptTitles, errors) {
+  let promptErrors = false;
+
+  // break if there are errors in the prompts
+  (promptTitles || []).map((f) => f.fieldName).forEach((fieldName) => {
+    if (errors[fieldName]) {
+      const invalid = document.querySelector("label[for='fei-root-cause']");
+      if (invalid) invalid.focus();
+      promptErrors = true;
+    }
+  });
+
+  return promptErrors;
+}
+
 const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
     return false;
@@ -229,8 +249,14 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
+
     const promptTitles = getValues('goalPrompts');
-    const prompts = getPrompts(promptTitles, getValues);
+    let prompts = [];
+    const promptErrors = getPromptErrors(promptTitles, errors);
+    if (!promptErrors) {
+      prompts = getPrompts(promptTitles, getValues);
+    }
+
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
@@ -279,15 +305,7 @@ const Navigator = ({
     const isRttapa = getValues('goalIsRttapa');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
-
-    let promptErrors = false;
-    // break if there are errors in the prompts
-    promptTitles.map((f) => f.fieldName).forEach((fieldName) => {
-      if (errors[fieldName]) {
-        document.querySelector("label[for='fei-root-cause']").focus();
-        promptErrors = true;
-      }
-    });
+    const promptErrors = getPromptErrors(promptTitles, errors);
 
     if (promptErrors) {
       return;
