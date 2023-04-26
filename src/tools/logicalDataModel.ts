@@ -274,12 +274,14 @@ async function writeSvg(uml, dbRoot) {
   const encoded = plantumlEncoder.encode(uml);
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.encoded'), encoded);
 
-  let file;
-  try {
-    const response = await axios.get(`${process.env.PLANTUML_ENDPOINT}/svg/${encoded}`);
-    file = fs.writeFileSync(path.join(dbRoot, 'logical_data_model.svg'), response.data);
-  } catch (err) {
-    if (file) file.close();
+  if (process.env.PLANTUML_ENDPOINT) {
+    let file;
+    try {
+      const response = await axios.get(`${process.env.PLANTUML_ENDPOINT}/svg/${encoded}`);
+      file = fs.writeFileSync(path.join(dbRoot, 'logical_data_model.svg'), response.data);
+    } catch (err) {
+      if (file) file.close();
+    }
   }
 }
 
