@@ -61,7 +61,7 @@ const resourcesDefault = {
           },
           {
             title: 'total',
-            value: '26',
+            value: '25',
           },
         ],
       },
@@ -293,7 +293,7 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/25/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -391,7 +391,7 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/25/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -479,7 +479,7 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/25/i)).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -553,7 +553,7 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/25/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
