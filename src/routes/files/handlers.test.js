@@ -15,6 +15,7 @@ import db, {
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as scanQueue from '../../services/scanQueue';
+import * as resourceQueue from '../../services/resourceQueue';
 import { FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
@@ -22,6 +23,7 @@ import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
 
+jest.mock('bull');
 jest.mock('../../policies/activityReport');
 jest.mock('../../policies/user');
 jest.mock('../../policies/objective');
@@ -35,6 +37,7 @@ const request = require('supertest');
 const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3');
+jest.mock('../../services/resourceQueue');
 jest.mock('../../lib/queue');
 
 const mockUser = {
@@ -48,6 +51,7 @@ const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
 
 const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation(() => jest.fn());
+jest.spyOn(resourceQueue, 'addToResourceQueue').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'recipient',
