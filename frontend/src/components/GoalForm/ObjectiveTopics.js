@@ -10,6 +10,7 @@ import UnusedData from './UnusedData';
 import Drawer from '../Drawer';
 import Req from '../Req';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
+import './ObjectiveTopics.scss';
 
 export default function ObjectiveTopics({
   error,
@@ -82,7 +83,7 @@ export default function ObjectiveTopics({
         stickyFooter
         title="Topic guidance"
       >
-        <ContentFromFeedByTag tagName="topic" contentSelector="table" />
+        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>

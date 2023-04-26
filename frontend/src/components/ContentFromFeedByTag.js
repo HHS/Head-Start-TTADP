@@ -4,9 +4,22 @@ import { getSingleFeedItemByTag } from '../fetchers/feed';
 import { parseFeedIntoDom } from '../utils';
 import FeedArticle from './FeedArticle';
 
+/**
+ * This component fetches a single item from the Confluence RSS feed, the first matching item
+ * You can optionally pass it a (CSS) contentSelector, which will be used to select a specific
+ * element within the item (if you don't pass a selector, or the selector finds nothing, the
+ * entire item will be displayed)
+ *
+ * You can also pass a className prop, which is intended to help add bespoke styles (help us all)
+ * to these items retrieved from the RSS feeds
+ *
+ * @param {props} props
+ * @returns <ReactStuff (*tm) />
+ */
 export default function ContentFromFeedByTag({
   tagName,
   contentSelector,
+  className,
 }) {
   const [content, setContent] = useState('');
 
@@ -45,10 +58,10 @@ export default function ContentFromFeedByTag({
     fetchSingleItemByTag();
   }, [tagName, contentSelector]);
 
-  const className = `ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
+  const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
 
   return (
-    <div className={className}>
+    <div className={classNames}>
       <FeedArticle title="" content={content} unread={false} key={content} partial />
     </div>
   );
@@ -57,8 +70,10 @@ export default function ContentFromFeedByTag({
 ContentFromFeedByTag.propTypes = {
   tagName: PropTypes.string.isRequired,
   contentSelector: PropTypes.string,
+  className: PropTypes.string,
 };
 
 ContentFromFeedByTag.defaultProps = {
   contentSelector: '',
+  className: '',
 };
