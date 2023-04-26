@@ -983,7 +983,7 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(goalIds).toContain(alreadyExtantGoal.id);
 
     // Verify goal and objective are deleted.
-    const objectiveIsDeleted = await Goal.findByPk(objectiveToRemoveId);
+    const objectiveIsDeleted = await Objective.findByPk(objectiveToRemoveId);
     expect(objectiveIsDeleted).toBeNull();
     const goalIsDeleted = await Goal.findByPk(goalToRemoveId);
     expect(goalIsDeleted).toBeNull();
