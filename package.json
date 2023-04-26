@@ -82,7 +82,7 @@
     "reconcile:legacy": "node ./build/server/src/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
-    "ldm:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub PLANTUML_ENDPOINT:http://plantuml:8080 tsx ./src/tools/logicalDataModelCLI.ts",
+    "ldm:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub tsx ./src/tools/logicalDataModelCLI.ts",
     "ldm": "tsx ./src/tools/logicalDataModelCLI.ts",
     "changeReportStatus": "node ./build/server/src/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
