@@ -1,10 +1,10 @@
 /* eslint-disable no-useless-computed-key */
 const { QueryTypes } = require('sequelize');
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const plantumlEncoder = require('plantuml-encoder');
 const db = require('../models');
+const { auditLogger } = require('../logger');
 
 const colors = {
   ttahubBlue: '#264a64',
@@ -270,19 +270,9 @@ function writeUml(uml, dbRoot) {
   }
 }
 
-async function writeSvg(uml, dbRoot) {
+async function writeEncoded(uml, dbRoot) {
   const encoded = plantumlEncoder.encode(uml);
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.encoded'), encoded);
-
-  if (process.env.PLANTUML_ENDPOINT) {
-    let file;
-    try {
-      const response = await axios.get(`${process.env.PLANTUML_ENDPOINT}/svg/${encoded}`);
-      file = fs.writeFileSync(path.join(dbRoot, 'logical_data_model.svg'), response.data);
-    } catch (err) {
-      if (file) file.close();
-    }
-  }
 }
 
 async function generateUML(schemas, tables, root) {
@@ -310,63 +300,70 @@ async function generateUML(schemas, tables, root) {
   uml += '\n@enduml\n';
 
   writeUml(uml, root);
-  await writeSvg(uml, root);
+  await writeEncoded(uml, root);
 }
 
 export default async function generateUMLFromDB() {
-  const tableData = await db.sequelize.query(`
-    SELECT
-      table_schema,
-      table_name "table",
-      json_agg(
-        json_build_object(
-          'ordinal', ordinal_position,
-          'name', column_name,
-          'type', CASE
-                WHEN data_type = 'USER-DEFINED' THEN 'enum'
-                WHEN data_type = 'character varying' THEN 'varchar(255)'
-                WHEN data_type = 'ARRAY' THEN
-                  CASE
-                    WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'varchar' THEN 'varchar(255)'
-                    WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
-                    ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
-                  END || '[]'
-                WHEN data_type = 'numeric' THEN 'decimal(3,1)'
-                WHEN data_type = 'int4' THEN 'integer'
-                ELSE data_type
-              END,
-          'subtype', SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?'),
-          'default', CASE
-                WHEN column_default LIKE 'nextval%' THEN '<generated>'
-                ELSE column_default
-              END,
-          'allowNull', is_nullable = 'YES',
-          'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])')
-        )
-        ORDER BY ordinal_position ASC
-      ) "fields"
-    FROM information_schema.columns col
-    LEFT JOIN pg_constraint con
-    ON col.table_name = regexp_replace(con.conrelid::regclass::TEXT,'"','','g')
-    AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY ("' || col.column_name || '") REFERENCES %'
-    WHERE table_schema = 'public'
-    AND table_name != 'SequelizeMeta'
-    --AND table_name NOT LIKE 'ZA%'
-    GROUP BY 1,2
-  `, { type: QueryTypes.SELECT });
+  try {
+    const tableData = await db.sequelize.query(`
+      SELECT
+        table_schema,
+        table_name "table",
+        json_agg(
+          json_build_object(
+            'ordinal', ordinal_position,
+            'name', column_name,
+            'type', CASE
+                  WHEN data_type = 'USER-DEFINED' THEN 'enum'
+                  WHEN data_type = 'character varying' THEN 'varchar(255)'
+                  WHEN data_type = 'ARRAY' THEN
+                    CASE
+                      WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'varchar' THEN 'varchar(255)'
+                      WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
+                      ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
+                    END || '[]'
+                  WHEN data_type = 'numeric' THEN 'decimal(3,1)'
+                  WHEN data_type = 'int4' THEN 'integer'
+                  ELSE data_type
+                END,
+            'subtype', SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?'),
+            'default', CASE
+                  WHEN column_default LIKE 'nextval%' THEN '<generated>'
+                  ELSE column_default
+                END,
+            'allowNull', is_nullable = 'YES',
+            'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])')
+          )
+          ORDER BY ordinal_position ASC
+        ) "fields"
+      FROM information_schema.columns col
+      LEFT JOIN pg_constraint con
+      ON col.table_name = regexp_replace(con.conrelid::regclass::TEXT,'"','','g')
+      AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY ("' || col.column_name || '") REFERENCES %'
+      WHERE table_schema = 'public'
+      AND table_name != 'SequelizeMeta'
+      --AND table_name NOT LIKE 'ZA%'
+      GROUP BY 1,2
+    `, {
+      type: QueryTypes.SELECT,
+    });
 
-  const tables = db.sequelize.models;
-  const schemas = tableData.map((td) => ({
-    table: td.table,
-    model: (db.sequelize.models[td.table]
-      || db.sequelize.models[td.table.slice(0, -1)]
-      || db.sequelize.models[td.table.replace('ies', 'y')]),
-    attributes: td.fields,
-    associations: (db.sequelize.models[td.table]
-      || db.sequelize.models[td.table.slice(0, -1)]
-      || db.sequelize.models[td.table.replace('ies', 'y')])
-      ?.associations,
-  }));
+    const tables = db.sequelize.models;
+    const schemas = tableData.map((td) => ({
+      table: td.table,
+      model: (db.sequelize.models[td.table]
+        || db.sequelize.models[td.table.slice(0, -1)]
+        || db.sequelize.models[td.table.replace('ies', 'y')]),
+      attributes: td.fields,
+      associations: (db.sequelize.models[td.table]
+        || db.sequelize.models[td.table.slice(0, -1)]
+        || db.sequelize.models[td.table.replace('ies', 'y')])
+        ?.associations,
+    }));
 
-  await generateUML(schemas, tables, 'docs');
+    await generateUML(schemas, tables, 'docs');
+  } catch (err) {
+    auditLogger.error(err);
+    throw err;
+  }
 }

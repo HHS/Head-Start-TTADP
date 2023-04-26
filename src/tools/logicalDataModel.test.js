@@ -1,29 +1,37 @@
 import fs from 'fs';
 import logicalDataModel from './logicalDataModel';
+import { auditLogger } from '../logger';
 
 describe('logicalDataModel', () => {
   it('logicalDataModel', async () => {
     const encoded = [];
     const puml = [];
-    const svg = [];
 
     const callBack = (err, stats, fileSet) => {
-      if (!err) fileSet.push(stats);
+      if (stats != null) {
+        fileSet.push(stats);
+        return;
+      }
+      auditLogger.error(err);
+      throw err;
     };
 
-    fs.stat('./docs/logical_data_model.encoded', (err, stats) => callBack(err, stats, encoded));
-    fs.stat('./docs/logical_data_model.puml', (err, stats) => callBack(err, stats, puml));
-    fs.stat('./docs/logical_data_model.svg', (err, stats) => callBack(err, stats, svg));
+    const getStats = (path, target) => fs.stat(path, (err, stats) => callBack(err, stats, target));
 
-    await logicalDataModel();
+    getStats('./docs/logical_data_model.encoded', encoded);
+    getStats('./docs/logical_data_model.puml', puml);
 
-    fs.stat('./docs/logical_data_model.encoded', (err, stats) => callBack(err, stats, encoded));
-    fs.stat('./docs/logical_data_model.puml', (err, stats) => callBack(err, stats, puml));
-    fs.stat('./docs/logical_data_model.svg', (err, stats) => callBack(err, stats, svg));
+    try {
+      await logicalDataModel();
+    } catch (err) {
+      auditLogger.error(err);
+      throw err;
+    }
 
-    console.log(encoded);
+    getStats('./docs/logical_data_model.encoded', encoded);
+    getStats('./docs/logical_data_model.puml', puml);
+
     expect(encoded[0].mtime).not.toEqual(encoded[1].mtime);
     expect(puml[0].mtime).not.toEqual(puml[1].mtime);
-    expect(svg[0].mtime).not.toEqual(svg[1].mtime);
   });
 });
