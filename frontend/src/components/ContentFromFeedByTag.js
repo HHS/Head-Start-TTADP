@@ -43,7 +43,7 @@ export default function ContentFromFeedByTag({
     }
 
     fetchSingleItemByTag();
-  }, [tagName]);
+  }, [tagName, contentSelector]);
 
   const className = `ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
 
