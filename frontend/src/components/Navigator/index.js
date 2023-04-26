@@ -73,7 +73,7 @@ export function getPromptErrors(promptTitles, errors) {
   // break if there are errors in the prompts
   (promptTitles || []).map((f) => f.fieldName).forEach((fieldName) => {
     if (errors[fieldName]) {
-      const invalid = document.querySelector("label[for='fei-root-cause']");
+      const invalid = document.querySelector(`label[for='${fieldName}']`);
       if (invalid) invalid.focus();
       promptErrors = true;
     }
@@ -91,6 +91,8 @@ const shouldUpdateFormData = (isAutoSave) => {
   const selection = document.getSelection();
   return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
 };
+
+export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
 
 const Navigator = ({
   editable,
@@ -132,7 +134,6 @@ const Navigator = ({
     setValue,
     setError,
     watch,
-    trigger,
     errors,
   } = hookForm;
 
@@ -260,7 +261,7 @@ const Navigator = ({
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+    const endDate = formatEndDate(formEndDate);
 
     const goal = {
       ...goalForEditing,
@@ -339,7 +340,7 @@ const Navigator = ({
       setSavingLoadScreen(isAutoSave);
     }
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+    const endDate = formatEndDate(formEndDate);
 
     const goal = {
       ...goalForEditing,
@@ -563,12 +564,9 @@ const Navigator = ({
       return;
     }
 
-    // attempt to validate prompts
-    if (promptTitles && promptTitles.length) {
-      const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
-      if (outputs.some((output) => output === false)) {
-        return;
-      }
+    const promptErrors = getPromptErrors(promptTitles, errors);
+    if (promptErrors) {
+      return;
     }
 
     // save goal to api, come back with new ids for goal and objectives
