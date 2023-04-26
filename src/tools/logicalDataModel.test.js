@@ -8,12 +8,7 @@ describe('logicalDataModel', () => {
     const svg = [];
 
     const callBack = (err, stats, fileSet) => {
-      if (err) {
-        console.log(err);
-      }
-      const { mtime } = stats;
-      // console.log(mtime);
-      fileSet.push(stats);
+      if (!err) fileSet.push(stats);
     };
 
     fs.stat('./docs/logical_data_model.encoded', (err, stats) => callBack(err, stats, encoded));
