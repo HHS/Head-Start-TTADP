@@ -191,7 +191,7 @@ parameters:
     type: string
   dev_git_url:
     description: "URL of github repo that will deploy to dev"
-    default: "https://github.com/HHS/Head-Start-TTADP"
+    default: "https://github.com/HHS/Head-Start-TTADP/tree/TTAHUB-224/newrelic-config-update"
     type: string
   sandbox_git_url:
     description: "URL of github repo that will deploy to sandbox"
