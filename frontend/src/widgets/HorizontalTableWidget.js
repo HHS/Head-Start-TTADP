@@ -22,6 +22,7 @@ export default function HorizontalTableWidget(
     lastHeading,
     sortConfig,
     requestSort,
+    id,
   },
 ) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
@@ -59,7 +60,7 @@ export default function HorizontalTableWidget(
   };
 
   return (
-    <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
+    <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0" id={id}>
       <Table stackedStyle="default" fullWidth striped bordered={false}>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
@@ -137,9 +138,11 @@ HorizontalTableWidget.propTypes = {
   }),
   requestSort: PropTypes.func,
   enableSorting: PropTypes.bool,
+  id: PropTypes.string,
 };
 
 HorizontalTableWidget.defaultProps = {
+  id: '',
   data: [],
   lastHeading: 'Total',
   sortConfig: {
