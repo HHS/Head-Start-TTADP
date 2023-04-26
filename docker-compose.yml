@@ -61,11 +61,6 @@ services:
     ports:
       - 9200:9200
       - 9600:9600 # required for Performance Analyzer
-  plantuml:
-    image: plantuml/plantuml-server:jetty
-    container_name: plantuml
-    ports:
-      - "8181:8080"
 volumes:
   dbdata: {}
   miniodata: {}
