@@ -37,6 +37,9 @@ exports.config = {
     level: 'info',
     filepath: 'stdout',
   },
+  audit_log: {
+    enabled: true,
+  },
   /**
    * When true, all request headers except for those listed in attributes.exclude
    * will be captured for all traces, unless otherwise specified in a destination's
@@ -85,5 +88,12 @@ exports.config = {
       '401',
       '403',
     ],
+  },
+  transaction_tracer: {
+    record_sql: 'raw',
+  },
+  slow_sql: {
+    enabled: true,
+    max_samples: 100,
   },
 };
