@@ -67,7 +67,7 @@ function getPrompts(promptTitles, getValues) {
  * @param {} isAutoSave
  * @returns
  */
-function getPromptErrors(promptTitles, errors) {
+export function getPromptErrors(promptTitles, errors) {
   let promptErrors = false;
 
   // break if there are errors in the prompts
