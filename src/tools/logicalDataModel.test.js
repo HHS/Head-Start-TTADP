@@ -31,7 +31,12 @@ describe('logicalDataModel', () => {
     getStats('./docs/logical_data_model.encoded', encoded);
     getStats('./docs/logical_data_model.puml', puml);
 
-    expect(encoded[0].mtime).not.toEqual(encoded[1].mtime);
-    expect(puml[0].mtime).not.toEqual(puml[1].mtime);
+    expect(encoded[0]).not.toBeNull();
+    expect(encoded[1]).not.toBeNull();
+    expect(encoded[0].mtime).not.toEqual(encoded[1]?.mtime);
+
+    expect(puml[0]).not.toBeNull();
+    expect(puml[1]).not.toBeNull();
+    expect(puml[0].mtime).not.toEqual(puml[1]?.mtime);
   });
 });
