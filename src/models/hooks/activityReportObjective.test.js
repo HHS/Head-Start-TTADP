@@ -16,6 +16,8 @@ import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy } from './activityReportObjective';
 import { processObjectiveForResourcesById, processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
+jest.mock('bull');
+
 describe('activityReportObjective hooks', () => {
   let ar;
   let topic;

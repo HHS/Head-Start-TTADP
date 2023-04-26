@@ -12,6 +12,8 @@ import { objectiveTemplateGenerator } from './testHelpers';
 import { beforeValidate } from './objectiveResource';
 import { processObjectiveForResourcesById } from '../../services/resource';
 
+jest.mock('bull');
+
 describe('objectiveResource hooks', () => {
   const url = faker.internet.url();
   let objectiveTemplate;

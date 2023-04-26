@@ -27,6 +27,8 @@ import {
 } from './reportCache';
 import { processObjectiveForResourcesById } from './resource';
 
+jest.mock('bull');
+
 describe('reportCache', () => {
   const mockUser = {
     name: 'Joe Green',

@@ -13,6 +13,8 @@ import db, {
 } from '../models';
 import { processObjectiveForResourcesById } from './resource';
 
+jest.mock('bull');
+
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
     jest.clearAllMocks();

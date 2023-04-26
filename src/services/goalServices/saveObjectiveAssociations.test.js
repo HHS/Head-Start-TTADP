@@ -10,6 +10,8 @@ import db, {
 import { saveObjectiveAssociations } from '../goals';
 import { OBJECTIVE_STATUS } from '../../constants';
 
+jest.mock('bull');
+
 describe('saveObjectiveAssociations', () => {
   describe('should save objective associations', () => {
     let existingObjective;

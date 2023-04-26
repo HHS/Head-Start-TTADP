@@ -58,6 +58,8 @@ import {
   GOAL_STATUS,
 } from '../constants';
 
+jest.mock('bull');
+
 describe('resource', () => {
   afterAll(async () => {
     await db.sequelize.close();

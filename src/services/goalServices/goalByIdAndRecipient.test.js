@@ -24,6 +24,8 @@ import { processObjectiveForResourcesById } from '../resource';
 import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from '../goals';
 import { FILE_STATUSES } from '../../constants';
 
+jest.mock('bull');
+
 describe('goalById', () => {
   let grantRecipient;
   let grantForReport;

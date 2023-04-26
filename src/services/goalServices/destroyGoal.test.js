@@ -13,6 +13,8 @@ import { processObjectiveForResourcesById } from '../resource';
 import { auditLogger } from '../../logger';
 import resource from '../../models/resource';
 
+jest.mock('bull');
+
 describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
 

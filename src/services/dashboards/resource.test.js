@@ -25,6 +25,8 @@ import {
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
 
+jest.mock('bull');
+
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
 const REGION_ID = 14;

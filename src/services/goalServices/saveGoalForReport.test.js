@@ -29,6 +29,8 @@ const mockUser = {
   hsesUserId: '5426861',
 };
 
+jest.mock('bull');
+
 describe('saveGoalsForReport (more tests)', () => {
   let activityReportForNewGoal;
   let multiRecipientReport;
