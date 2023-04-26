@@ -47,8 +47,8 @@ async function start() {
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
 
   // Resource Info
-  scanQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
-  scanQueue.on('completed', (job, result) => {
+  resourceQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
+  resourceQueue.on('completed', (job, result) => {
     if (result.status === 200) {
       logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
     } else {
