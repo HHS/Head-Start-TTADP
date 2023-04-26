@@ -30,7 +30,7 @@ const processResourceInfo = async (resourceId) => {
   } catch (error) {
     return { status: error.response.status, data: error.response.data };
   }
-  return ({ status: res.status, data: res.data });
+  return ({ status: res ? res.status : 404, data: res ? res.data : {} });
 };
 
 export default processResourceInfo;

@@ -35,8 +35,11 @@ const axiosNotFoundError = new Error();
 axiosNotFoundError.response = { status: 404 };
 
 const mockFindOne = jest.spyOn(Resource, 'findOne').mockImplementation(
-  () => Promise.resolve({ id: 1, url: 'https://eclkc.ohs.acf.hhs.gov' }),
+  () => Promise.resolve(),
 );
+
+const mockFindOneExists = { id: 1, url: 'https://eclkc.ohs.acf.hhs.gov' };
+const mockFindOneNotExists = {};
 const mockUpdate = jest.spyOn(Resource, 'update').mockImplementation(() => Promise.resolve());
 
 describe('resource worker tests', () => {
@@ -49,6 +52,7 @@ describe('resource worker tests', () => {
     jest.clearAllMocks();
   });
   it('tests a clean resource get', async () => {
+    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneExists));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
     const got = await processResourceInfo(1);
     expect(got.status).toBe(200);
@@ -63,6 +67,7 @@ describe('resource worker tests', () => {
   });
 
   it('tests a resource without a title', async () => {
+    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneExists));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
     const got = await processResourceInfo(1);
     expect(got.status).toBe(200);
@@ -72,7 +77,8 @@ describe('resource worker tests', () => {
     expect(mockUpdate).not.toBeCalled();
   });
 
-  it('tests a resource not found', async () => {
+  it('tests a resource url not found', async () => {
+    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneExists));
     mockAxios.mockImplementationOnce(() => Promise.reject(axiosNotFoundError));
     const got = await processResourceInfo(1);
     expect(got.status).toBe(404);
@@ -80,5 +86,13 @@ describe('resource worker tests', () => {
     expect(mockAxios).toBeCalled();
     expect(mockFindOne).toBeCalledWith({ where: { id: 1 } });
     expect(mockUpdate).not.toBeCalledWith();
+  });
+
+  it('tests a resource not found', async () => {
+    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneNotExists));
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosNotFoundError));
+    const got = await processResourceInfo(1);
+    expect(mockUpdate).not.toBeCalledWith();
+    expect(got.status).toBe(404);
   });
 });
