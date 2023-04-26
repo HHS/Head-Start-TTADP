@@ -113,6 +113,7 @@ const Navigator = ({
     setError,
     watch,
     trigger,
+    errors,
   } = hookForm;
 
   const pageState = watch('pageState');
@@ -278,6 +279,19 @@ const Navigator = ({
     const isRttapa = getValues('goalIsRttapa');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
+
+    let promptErrors = false;
+    // break if there are errors in the prompts
+    promptTitles.map((f) => f.fieldName).forEach((fieldName) => {
+      if (errors[fieldName]) {
+        document.querySelector("label[for='fei-root-cause']").focus();
+        promptErrors = true;
+      }
+    });
+
+    if (promptErrors) {
+      return;
+    }
 
     let invalidResources = false;
     const invalidResourceIndices = [];
