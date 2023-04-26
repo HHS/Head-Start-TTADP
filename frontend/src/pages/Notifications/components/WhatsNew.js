@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import FeedArticle from '../../../components/FeedArticle';
 import { parseFeedIntoDom } from '../../../utils';
+import './WhatsNew.scss';
 
 const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications';
 
@@ -128,7 +129,7 @@ export default function WhatsNew({ data }) {
   return (
     <Container>
       <h2 className="font-serif-xl margin-0">What&apos;s new</h2>
-      <div className="ttahub-feed">
+      <div className="ttahub-feed ttahub-feed-whats-new">
         {YEARS.map((year) => (
           <div key={year}>
             {articles[`${year}`] && (

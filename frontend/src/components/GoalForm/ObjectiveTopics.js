@@ -82,7 +82,7 @@ export default function ObjectiveTopics({
         stickyFooter
         title="Topic guidance"
       >
-        <ContentFromFeedByTag tagName="topic" />
+        <ContentFromFeedByTag tagName="topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>

@@ -3,21 +3,19 @@
 /**
 this hides the initial "author inforation" blocks"
 **/
-.ttahub-feed-article div[data-contents="true"] > [data-block="true"]:nth-child(1),
-.ttahub-feed-article div[data-contents="true"] > [data-block="true"]:nth-child(2),
-.ttahub-feed-article div[data-contents="true"] > [data-block="true"]:nth-child(3),
-.ttahub-feed-article div[data-contents="true"] > [data-block="true"]:last-child,
+.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:nth-child(1),
+.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:nth-child(2),
+.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:nth-child(3),
+.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:last-child,
 .ttahub-feed-article div[data-contents="true"] > [data-block="true"]:empty,
 .ttahub-feed-article h4:empty {
     display: none;
 }
 
-.ttahub-feed-article {
-    border-bottom: 1px solid $base-lighter;
-}
 
 // fix the margins and spacing of the read only editor 
 .ttahub-feed-article .public-DraftStyleDefault-block {
+    font-size: 1.06rem;
     line-height: 1.5;
     margin: 0;
     white-space: normal;
@@ -38,17 +36,4 @@ this hides the initial "author inforation" blocks"
 
 .ttahub-feed-article .public-DraftStyleDefault-block a:hover:after {
     opacity: 0.75;
-}
-
-// this adds the little green circle to the left of the "new" notification
-.ttahub-feed-article--unread .ttahub-feed-article-content:before {
-    content: '';
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 50%;
-    background-color: $success;
-    position: absolute;
-    top: 5px;
-    left: 0;
 }
