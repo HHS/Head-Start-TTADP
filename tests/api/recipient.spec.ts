@@ -25,7 +25,7 @@ test.describe('get /recipient', () => {
       regionId: Joi.number().required(),
       id: Joi.number().required(),
       name: Joi.string().required(),
-      deleted: Joi.boolean(),
+      deleted: Joi.boolean().allow(null),
       recipientType: Joi.any().allow(null)
     })).required()
   });
@@ -85,12 +85,12 @@ test.describe('get /recipient', () => {
       createdAt: Joi.string().isoDate(),
       updatedAt: Joi.string().isoDate(),
       regionId: Joi.number().integer().positive(),
-      deleted: Joi.boolean(),
+      deleted: Joi.boolean().allow(null),
       recipient: Joi.object({
         id: Joi.number().integer().positive(),
         uei: Joi.any().allow(null),
         name: Joi.string(),
-        deleted: Joi.boolean(),
+        deleted: Joi.boolean().allow(null),
         recipientType: Joi.any().allow(null),
         createdAt: Joi.string().isoDate(),
         updatedAt: Joi.string().isoDate(),
@@ -104,7 +104,7 @@ test.describe('get /recipient', () => {
       recipientType: Joi.any().allow(null),
       createdAt: Joi.string().isoDate(),
       updatedAt: Joi.string().isoDate(),
-      deleted: Joi.boolean(),
+      deleted: Joi.boolean().allow(null),
       grants: Joi.array().items(grantSchema),
     });
     
