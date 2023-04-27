@@ -83,7 +83,7 @@ export async function allRecipients() {
               [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
             },
           ],
-        }
+        },
       },
     ],
   });
