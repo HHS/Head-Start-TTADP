@@ -268,8 +268,6 @@ export async function setFieldPromptForCuratedTemplate(
       response,
     }));
 
-  console.log({ goalIdsToUpdate, recordsToCreate });
-
   if (goalIdsToUpdate.length || recordsToCreate.length) {
     if (promptRequirements.type === PROMPT_FIELD_TYPE.MULTISELECT) {
       if (response
