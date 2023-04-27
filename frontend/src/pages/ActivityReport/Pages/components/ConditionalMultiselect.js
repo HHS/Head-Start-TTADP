@@ -3,9 +3,10 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { FormGroup, Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { ERROR_FORMAT } from './constants';
+import useRegisterFormField from '../../../../hooks/useRegisterFormField';
 
 const VALIDATION_DICTIONARY = {
   maxSelections: (validation) => (selectedOptions) => (
@@ -45,18 +46,17 @@ export default function ConditionalMultiselect({
   isEditable,
 }) {
   const rules = transformValidationsIntoRules(validations);
+
   const {
-    field: {
-      onChange,
-      onBlur,
-      value: fieldValue,
-      name,
-    },
-  } = useController({
-    name: fieldName,
+    onChange,
+    onBlur,
+    fieldValue,
+    name,
+  } = useRegisterFormField(
+    fieldName,
     rules,
     defaultValue,
-  });
+  );
 
   const { errors } = useFormContext();
   const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
