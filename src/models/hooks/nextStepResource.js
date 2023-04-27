@@ -2,7 +2,7 @@
 const { cleanupOrphanResources } = require('../helpers/orphanCleanupHelper');
 
 const afterDestroy = async (sequelize, instance, options) => {
-  await cleanupOrphanResources(sequelize, instance.resourceId);
+  cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
 export {

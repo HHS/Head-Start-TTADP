@@ -7,6 +7,8 @@ import db, {
 } from '..';
 import { OBJECTIVE_STATUS } from '../../constants';
 
+jest.mock('bull');
+
 describe('objective model hooks', () => {
   let recipient;
   let grant;
