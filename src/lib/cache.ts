@@ -62,16 +62,18 @@ export default async function getCachedResponse(
   } catch (err) {
     auditLogger.error('Error creating & connecting to redis client', { err });
   }
+
+  // if we do not have a response, we need to call the callback
   if (!response) {
     response = await reponseCallback();
-  }
-
-  if (response && clientConnected) {
-    try {
-      await redisClient.set(key, response, options);
-      await redisClient.quit();
-    } catch (err) {
-      auditLogger.error('Error setting cache response', { err });
+    // and then, if we have a response and we are connected to redis, we need to set the cache
+    if (response && clientConnected) {
+      try {
+        await redisClient.set(key, response, options);
+        await redisClient.quit();
+      } catch (err) {
+        auditLogger.error('Error setting cache response', { err });
+      }
     }
   }
 
