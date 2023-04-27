@@ -408,7 +408,10 @@ describe('Activity Reports model', () => {
             grantId: activityRecipient.grantId,
             otherEntityId: activityRecipient.otherEntityId,
           },
+          attributes: ['name'],
+          include: [{ model: Grant, as: 'grant', required: false }],
         })));
+
       expect(arr[0].name).toEqual(grants[0].name);
       expect(arr[1].name).toEqual(grants[1].name);
       expect(arr[2].name).toEqual(otherEntity.name);
