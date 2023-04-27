@@ -316,24 +316,24 @@ describe('Update grants and recipients', () => {
   it('includes the inactivated date', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 8317 } });
-    // simulate updating an existing grant with null inactivatedDate
-    await grant.update({ inactivatedDate: null }, { individualHooks: true });
-    const grantWithNullInactivatedDate = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithNullInactivatedDate.inactivatedDate).toBeNull();
+    // simulate updating an existing grant with null inactivationDate
+    await grant.update({ inactivationDate: null }, { individualHooks: true });
+    const grantWithNullinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullinactivationDate.inactivationDate).toBeNull();
     await processFiles();
-    const grantWithInactivatedDate = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithInactivatedDate.inactivatedDate).toEqual(new Date('2022-07-31'));
+    const grantWithinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithinactivationDate.inactivationDate).toEqual(new Date('2022-07-31'));
   });
 
   it('includes the inactivated reason', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 8317 } });
-    // simulate updating an existing grant with null inactivatedReason
-    await grant.update({ inactivatedReason: null }, { individualHooks: true });
-    const grantWithNullInactivatedReason = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithNullInactivatedReason.inactivatedReason).toBeNull();
+    // simulate updating an existing grant with null inactivationReason
+    await grant.update({ inactivationReason: null }, { individualHooks: true });
+    const grantWithNullinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullinactivationReason.inactivationReason).toBeNull();
     await processFiles();
-    const grantWithInactivatedReason = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithInactivatedReason.inactivatedReason).toEqual('Replaced');
+    const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
   });
 });

@@ -13,15 +13,15 @@ module.exports = {
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
         { transaction },
       );
-      const inactivatedReasons = ['Replaced', 'Terminated', 'Relinquished', 'Unknown'];
+      const inactivationReasons = ['Replaced', 'Terminated', 'Relinquished', 'Unknown'];
 
-      await queryInterface.addColumn('Grants', 'inactivatedDate', {
+      await queryInterface.addColumn('Grants', 'inactivationDate', {
         type: Sequelize.DATE,
         allowNull: true,
       }, { transaction });
 
-      await queryInterface.addColumn('Grants', 'inactivatedReason', {
-        type: Sequelize.ENUM(inactivatedReasons),
+      await queryInterface.addColumn('Grants', 'inactivationReason', {
+        type: Sequelize.ENUM(inactivationReasons),
         allowNull: true,
       }, { transaction });
     });
@@ -41,9 +41,9 @@ module.exports = {
         { transaction },
       );
 
-      await queryInterface.removeColumn('Grants', 'inactivatedDate', { transaction });
-      await queryInterface.removeColumn('Grants', 'inactivatedReason', { transaction });
-      await queryInterface.sequelize.query('DROP TYPE public."enum_Grants_inactivatedReason";', { transaction });
+      await queryInterface.removeColumn('Grants', 'inactivationDate', { transaction });
+      await queryInterface.removeColumn('Grants', 'inactivationReason', { transaction });
+      await queryInterface.sequelize.query('DROP TYPE public."enum_Grants_inactivationReason";', { transaction });
     });
   },
 };

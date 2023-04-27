@@ -179,11 +179,11 @@ export async function processFiles(hashSumHex) {
       const grantsForDb = grant.grant_awards.grant_award.map((g) => {
         let {
           grant_start_date: startDate, grant_end_date: endDate,
-          inactivated_date: inactivatedDate,
+          inactivation_date: inactivationDate,
         } = g;
         if (typeof startDate === 'object') { startDate = null; }
         if (typeof endDate === 'object') { endDate = null; }
-        if (typeof inactivatedDate === 'object') { inactivatedDate = null; }
+        if (typeof inactivationDate === 'object') { inactivationDate = null; }
 
         const programSpecialistName = combineNames(
           g.program_specialist_first_name,
@@ -205,7 +205,7 @@ export async function processFiles(hashSumHex) {
           stateCode: valueFromXML(g.grantee_state),
           startDate,
           endDate,
-          inactivatedDate,
+          inactivationDate,
           regionId,
           cdi,
           programSpecialistName,
@@ -213,7 +213,7 @@ export async function processFiles(hashSumHex) {
           grantSpecialistName,
           grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
           annualFundingMonth: valueFromXML(g.annual_funding_month),
-          inactivatedReason: valueFromXML(g.inactivated_reason),
+          inactivationReason: valueFromXML(g.inactivation_reason),
         };
       });
 
@@ -245,7 +245,7 @@ export async function processFiles(hashSumHex) {
       await Grant.unscoped().bulkCreate(
         nonCdiGrants,
         {
-          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivatedDate', 'inactivatedReason'],
+          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
@@ -253,7 +253,7 @@ export async function processFiles(hashSumHex) {
       await Grant.unscoped().bulkCreate(
         cdiGrants,
         {
-          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivatedDate', 'inactivatedReason'],
+          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );

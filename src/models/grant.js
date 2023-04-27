@@ -4,7 +4,7 @@ const {
 
 const { GRANT_INACTIVATION_REASONS } = require('../constants');
 
-const inactivatedReasons = Object.values(GRANT_INACTIVATION_REASONS);
+const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
 
 /**
  * Grants table. Stores grants.
@@ -62,8 +62,8 @@ export default (sequelize, DataTypes) => {
     stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
-    inactivatedDate: DataTypes.DATE,
-    inactivatedReason: DataTypes.ENUM(inactivatedReasons),
+    inactivationDate: DataTypes.DATE,
+    inactivationReason: DataTypes.ENUM(inactivationReasons),
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,

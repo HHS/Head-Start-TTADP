@@ -30,7 +30,7 @@ export default async function overview(scopes) {
             { endDate: { [Op.gt]: '2020-08-31' } },
             { deleted: { [Op.ne]: true } },
             {
-              [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
             },
           ],
         },
