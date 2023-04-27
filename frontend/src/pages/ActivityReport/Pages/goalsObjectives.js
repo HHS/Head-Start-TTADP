@@ -105,8 +105,11 @@ const GoalsObjectives = ({
 
             return { ...g, isNew, grantIds };
           });
+
+          const goalNames = formattedGoals.map((g) => g.name);
+
           updateAvailableGoals([
-            ...fetchedGoalTemplates,
+            ...fetchedGoalTemplates.filter((g) => !goalNames.includes(g.name)),
             ...formattedGoals,
           ]);
         }
