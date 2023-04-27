@@ -86,6 +86,8 @@ test.describe('get /recipient', () => {
       updatedAt: Joi.string().isoDate(),
       regionId: Joi.number().integer().positive(),
       deleted: Joi.boolean().allow(null),
+      inactivationDate: Joi.any().allow(null),
+      inactivationReason: Joi.any().allow(null),
       recipient: Joi.object({
         id: Joi.number().integer().positive(),
         uei: Joi.any().allow(null),
