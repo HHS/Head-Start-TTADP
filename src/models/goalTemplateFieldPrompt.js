@@ -21,6 +21,14 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
+    caution: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    hint: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     goalTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,

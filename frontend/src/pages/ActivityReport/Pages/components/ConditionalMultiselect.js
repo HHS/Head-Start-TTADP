@@ -70,6 +70,10 @@ export default function ConditionalMultiselect({
     .find((option) => option.label === label));
 
   if (!isEditable) {
+    if (!fieldValue || fieldValue.length === 0) {
+      return null;
+    }
+
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-0">

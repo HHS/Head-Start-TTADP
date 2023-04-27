@@ -32,17 +32,13 @@ interface Validation {
   message: string;
 }
 
-interface ResponseSet {
-  response: string[] | null;
-  goalIds: number[];
-}
-
 interface FieldPrompts {
   promptId: number,
   ordinal: number,
   title: string,
   question: string;
   hint: string;
+  caution: string;
   type: string;
   options: string[] | null;
   validations: Validation[];
@@ -127,6 +123,7 @@ export async function getFieldPromptsForCuratedTemplate(
         'title',
         'prompt',
         'hint',
+        'caution',
         ['fieldType', 'type'],
         'options',
         'validations',
