@@ -100,6 +100,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -107,6 +109,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -115,6 +119,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: addingRecipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: addingRecipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     addingRecipientGrantTwo = await Grant.create(
@@ -122,6 +128,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: addingRecipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: addingRecipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -983,7 +991,7 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(goalIds).toContain(alreadyExtantGoal.id);
 
     // Verify goal and objective are deleted.
-    const objectiveIsDeleted = await Goal.findByPk(objectiveToRemoveId);
+    const objectiveIsDeleted = await Objective.findByPk(objectiveToRemoveId);
     expect(objectiveIsDeleted).toBeNull();
     const goalIsDeleted = await Goal.findByPk(goalToRemoveId);
     expect(goalIsDeleted).toBeNull();

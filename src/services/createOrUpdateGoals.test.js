@@ -29,12 +29,16 @@ describe('createOrUpdateGoals', () => {
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
     {
       id: faker.datatype.number(),
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
   ];
 
