@@ -71,17 +71,19 @@ export async function allRecipients() {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
-        deleted: { [Op.ne]: true },
-        [Op.and]: [
-          {
-            endDate: {
-              [Op.gt]: '2020-08-31',
+        where: {
+          [Op.and]: [
+            { deleted: { [Op.ne]: true } },
+            {
+              endDate: {
+                [Op.gt]: '2020-08-31',
+              },
             },
-          },
-          {
-            [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
-          },
-        ],
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
+          ],
+        }
       },
     ],
   });
@@ -110,10 +112,10 @@ export async function recipientById(recipientId, grantScopes) {
         ],
         model: Grant.unscoped(),
         as: 'grants',
-        deleted: { [Op.ne]: true },
         where: [{
           [Op.and]: [
             { [Op.and]: grantScopes },
+            { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
                 {
@@ -127,7 +129,7 @@ export async function recipientById(recipientId, grantScopes) {
                       },
                     },
                     {
-                      [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
+                      [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
                     },
                   ],
                 },
@@ -192,10 +194,10 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
       attributes: [],
       model: Grant.unscoped(),
       as: 'grants',
-      deleted: { [Op.ne]: true },
       required: true,
       where: [{
         [Op.and]: [
+          { deleted: { [Op.ne]: true } },
           {
             [Op.and]: { regionId: userRegions },
           },
@@ -213,7 +215,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
                     },
                   },
                   {
-                    [Op.or]: [{ inactivatedDate: null }, { inactivatedDate: { [Op.gt]: '2020-08-31' } }],
+                    [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
                   },
                 ],
               },
