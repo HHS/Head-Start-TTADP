@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import axios from 'axios';
 import { Resource } from '../models';
 
@@ -28,8 +29,10 @@ const processResourceInfo = async (resourceId) => {
       }
     }
   } catch (error) {
+    console.log('\n\n\n----AXIOS ERROR:', error);
     return { status: error.response.status, data: error.response.data };
   }
+  console.log('\n\n\n----AXIOS ERROR2:', res);
   return ({ status: res ? res.status : 404, data: res ? res.data : {} });
 };
 
