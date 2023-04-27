@@ -524,10 +524,17 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
 
         if (forReport) {
           existingPrompt.response = uniq(
-            [...existingPrompt.response, ...currentPrompt.response],
+            [
+              ...existingPrompt.response,
+              ...(currentPrompt.response || []),
+              ...(currentPrompt.reportResponse || []),
+            ],
           );
           existingPrompt.reportResponse = uniq(
-            [...existingPrompt.reportResponse, ...currentPrompt.reportResponse],
+            [
+              ...(existingPrompt.reportResponse || []),
+              ...(currentPrompt.reportResponse || []),
+            ],
           );
         }
         return previousPrompts;
@@ -545,8 +552,13 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
       };
 
       if (forReport) {
-        newPrompt.response = currentPrompt.response;
-        newPrompt.reportResponse = currentPrompt.reportResponse;
+        newPrompt.response = uniq(
+          [
+            ...(currentPrompt.response || []),
+            ...(currentPrompt.reportResponse || []),
+          ],
+        );
+        newPrompt.reportResponse = (currentPrompt.reportResponse || []);
       }
 
       if (!forReport) {
@@ -604,7 +616,7 @@ function reduceGoals(goals, forReport = false) {
         return previousValues;
       }
 
-      const goal = {
+        const goal = {
         ...currentValue.dataValues,
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
         goalIds: [currentValue.dataValues.id],
@@ -964,7 +976,13 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status', 'createdVia', 'previousStatus'],
+    attributes: [
+      'name',
+      'id',
+      'status',
+      'createdVia',
+      'previousStatus',
+    ],
     where: {
       id: goalId,
     },
@@ -1914,7 +1932,7 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        if (!existingGoal.onApprovedAR && prompts) {
+        if (prompts) {
           await setFieldPromptsForCuratedTemplate([existingGoal.id], prompts);
         }
 
@@ -2096,6 +2114,8 @@ export async function getGoalsForReport(reportId) {
               'ordinal', gtfp.ordinal,
               'title', gtfp.title,
               'prompt', gtfp.prompt,
+              'hint', gtfp.hint,
+              'caution', gtfp.caution,
               'type', gtfp."fieldType",
               'options', gtfp.options,
               'validations', gtfp.validations,

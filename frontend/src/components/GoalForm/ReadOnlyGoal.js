@@ -4,10 +4,11 @@ import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
 
-const formatPrompts = (prompts) => prompts.filter((prompt) => prompt.response).map((prompt) => ({
+const formatPrompts = (prompts) => prompts.filter((prompt) => (
+  prompt.response && prompt.response.length)).map((prompt) => ({
   key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
   title: prompt.title,
-  response: Array.isArray(prompt.response) ? prompt.response.join(', ') : prompt.response,
+  response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
 }));
 
 export default function ReadOnlyGoal({

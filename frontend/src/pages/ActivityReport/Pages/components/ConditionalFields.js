@@ -7,7 +7,7 @@ import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 
 const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations = [], value = [], isEditable) => (
+    render: (field, validations, value = [], isEditable) => (
       <ConditionalMultiselect
         fieldData={field}
         validations={validations}
@@ -42,19 +42,26 @@ export default function ConditionalFields({ prompts, isOnReport, isMultiRecipien
 
   const fields = prompts.map((prompt) => {
     if (isMultiRecipientReport) {
-      return (
-        <Alert variant="warning">
-          {prompt.caution}
-        </Alert>
-      );
+      if (prompt.caution) {
+        return (
+          <Alert variant="warning" key={prompt.title}>
+            {prompt.caution}
+          </Alert>
+        );
+      }
+
+      return null;
     }
 
-    if (FIELD_DICTIONARY) {
+    const responseIncomplete = !prompt.response || prompt.response.length < 2;
+    const isEditable = !isOnReport || responseIncomplete;
+
+    if (FIELD_DICTIONARY[prompt.type]) {
       return FIELD_DICTIONARY[prompt.type].render(
         prompt,
         prompt.validations,
         prompt.response,
-        !isOnReport,
+        isEditable,
       );
     }
 
