@@ -616,7 +616,7 @@ function reduceGoals(goals, forReport = false) {
         return previousValues;
       }
 
-        const goal = {
+      const goal = {
         ...currentValue.dataValues,
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
         goalIds: [currentValue.dataValues.id],
