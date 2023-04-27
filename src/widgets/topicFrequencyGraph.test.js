@@ -186,6 +186,7 @@ describe('Topics and frequency graph widget', () => {
       regionId: 17,
       status: 'Active',
       startDate: new Date('2000/01/01'),
+      endDate: new Date(),
     });
 
     // Create Goals.

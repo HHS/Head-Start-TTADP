@@ -51,6 +51,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -58,6 +60,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
