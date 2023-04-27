@@ -191,7 +191,7 @@ parameters:
     type: string
   dev_git_url:
     description: "URL of github repo that will deploy to dev"
-    default: "https://github.com/HHS/Head-Start-TTADP/tree/TTAHUB-224/newrelic-config-update"
+    default: "https://github.com/HHS/Head-Start-TTADP"
     type: string
   sandbox_git_url:
     description: "URL of github repo that will deploy to sandbox"
@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-1020/resurrect-shared-packages"
+    default: "TTAHUB-224/newrelic-config-update"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-1049/resources-db"
