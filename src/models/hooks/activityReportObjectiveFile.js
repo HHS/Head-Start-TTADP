@@ -56,7 +56,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
-  await cleanupOrphanFiles(sequelize, instance.fileId);
+  cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
 export {

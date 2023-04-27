@@ -78,7 +78,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
-  await cleanupOrphanResources(sequelize, instance.resourceId);
+  cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
 export {

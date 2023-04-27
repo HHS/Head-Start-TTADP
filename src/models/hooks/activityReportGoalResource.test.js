@@ -30,6 +30,8 @@ const draftObject = {
   creatorRole: 'TTAC',
 };
 
+jest.mock('bull');
+
 describe('activityReportGoalResource hooks', () => {
   let mockUser;
   let arToDestroy;
