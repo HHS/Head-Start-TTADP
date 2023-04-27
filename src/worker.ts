@@ -59,7 +59,7 @@ async function start() {
     });
     resourceQueue.process(maxJobsPerWorker, (job) => processResourceInfo(job.data));
   } catch (err) {
-    console.log('\n\n\n--Worker: ', err);
+    auditLogger.error('\n\n\n--Worker: ', err);
   }
 
   // AWS Elasticsearch

@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import newQueue from '../lib/queue';
+import { auditLogger } from '../logger';
 
 const resourceQueue = newQueue('resource');
 const addToResourceQueue = (resourceId) => {
@@ -21,7 +22,7 @@ const addToResourceQueue = (resourceId) => {
       },
     );
   } catch (err) {
-    console.log('\n\n\n--ADD TO QUEUE: ', err);
+    auditLogger.error('\n\n\n--ADD TO QUEUE: ', err);
   }
 
   return returnV;

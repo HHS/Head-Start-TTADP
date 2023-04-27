@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import axios from 'axios';
+import { auditLogger } from '../logger';
 import { Resource } from '../models';
 
 const processResourceInfo = async (resourceId) => {
@@ -31,13 +32,13 @@ const processResourceInfo = async (resourceId) => {
         }
       }
     } catch (error) {
-      console.log('\n\n\n----AXIOS ERROR:', error);
+      auditLogger.error('\n\n\n----AXIOS ERROR:', error);
       return { status: error.response.status, data: error.response.data };
     }
-    console.log('\n\n\n----AXIOS ERROR2:', res);
+    auditLogger.error('\n\n\n----AXIOS ERROR2:', res);
     returnV = { status: res ? res.status : 404, data: res ? res.data : {} };
   } catch (error) {
-    console.log('\n\n\n----AXIOS ERROR3:', error);
+    auditLogger.error('\n\n\n----AXIOS ERROR3:', error);
   }
   return returnV;
 };
