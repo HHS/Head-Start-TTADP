@@ -2,6 +2,8 @@ import axios from 'axios';
 import processResourceInfo from './resource';
 import db, { Resource } from '../models';
 
+jest.mock('bull');
+
 const urlReturn = `
 <!DOCTYPE html>
 <html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
@@ -28,18 +30,10 @@ test
 
 const mockAxios = jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve());
 const axiosCleanResponse = { status: 200, data: urlReturn };
-
 const axiosNoTitleResponse = { status: 200, data: urlMissingTitle };
-
+const axiosResourceNotFound = { status: 404, data: 'Not Found' };
 const axiosNotFoundError = new Error();
-axiosNotFoundError.response = { status: 404 };
-
-const mockFindOne = jest.spyOn(Resource, 'findOne').mockImplementation(
-  () => Promise.resolve(),
-);
-
-const mockFindOneExists = { id: 1, url: 'https://eclkc.ohs.acf.hhs.gov' };
-const mockFindOneNotExists = {};
+axiosNotFoundError.response = { status: 500, data: 'Error' };
 const mockUpdate = jest.spyOn(Resource, 'update').mockImplementation(() => Promise.resolve());
 
 describe('resource worker tests', () => {
@@ -52,47 +46,40 @@ describe('resource worker tests', () => {
     jest.clearAllMocks();
   });
   it('tests a clean resource get', async () => {
-    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneExists));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
-    const got = await processResourceInfo(1);
+    const got = await processResourceInfo({ data: { url: 'http://www.test.gov' } });
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual(urlReturn);
 
     expect(mockAxios).toBeCalled();
-    expect(mockFindOne).toBeCalledWith({ where: { id: 1 } });
     expect(mockUpdate).toBeCalledWith(
       { title: 'Head Start | ECLKC' },
-      { where: { id: 1 }, individualHooks: false },
+      { where: { url: 'http://www.test.gov' }, individualHooks: false },
     );
   });
 
   it('tests a resource without a title', async () => {
-    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneExists));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
-    const got = await processResourceInfo(1);
+    const got = await processResourceInfo({ data: { url: 'http://www.test.gov' } });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual(urlMissingTitle);
+    expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
     expect(mockAxios).toBeCalled();
-    expect(mockFindOne).toBeCalledWith({ where: { id: 1 } });
     expect(mockUpdate).not.toBeCalled();
   });
 
   it('tests a resource url not found', async () => {
-    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneExists));
-    mockAxios.mockImplementationOnce(() => Promise.reject(axiosNotFoundError));
-    const got = await processResourceInfo(1);
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
+    const got = await processResourceInfo({ data: { url: 'http://www.test.gov' } });
     expect(got.status).toBe(404);
-    expect(got.data).toStrictEqual(undefined);
+    expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
     expect(mockAxios).toBeCalled();
-    expect(mockFindOne).toBeCalledWith({ where: { id: 1 } });
     expect(mockUpdate).not.toBeCalledWith();
   });
 
-  it('tests a resource not found', async () => {
-    mockFindOne.mockImplementationOnce(() => Promise.resolve(mockFindOneNotExists));
+  it('tests a resource retrieve error', async () => {
     mockAxios.mockImplementationOnce(() => Promise.reject(axiosNotFoundError));
-    const got = await processResourceInfo(1);
+    const got = await processResourceInfo({ data: { url: 'http://www.test.gov' } });
     expect(mockUpdate).not.toBeCalledWith();
-    expect(got.status).toBe(404);
+    expect(got.status).toBe(500);
   });
 });

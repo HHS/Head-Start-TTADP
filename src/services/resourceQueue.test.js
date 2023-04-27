@@ -10,7 +10,7 @@ describe('queue tests', () => {
   });
 
   it('calls resourceQueue.add', async () => {
-    await addToResourceQueue(1);
+    await addToResourceQueue(1, 'http://meta-title.com');
     expect(Queue).toHaveBeenCalledWith('resource', 'redis://undefined:6379', { redis: { password: undefined } });
     expect(resourceQueue.add).toHaveBeenCalled();
   });

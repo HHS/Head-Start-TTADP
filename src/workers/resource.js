@@ -1,46 +1,37 @@
-/* eslint-disable no-console */
 import axios from 'axios';
-import { auditLogger } from '../logger';
 import { Resource } from '../models';
+import { auditLogger, logger } from '../logger';
 
-const processResourceInfo = async (resourceId) => {
-  let returnV;
+const processResourceInfo = async (job) => {
+  const { url } = job.data;
+  let res;
   try {
-    let res;
-    try {
-    // Get Url from DB.
-      const resource = await Resource.findOne({ where: { id: resourceId } });
+    // Use axios to get url info.
+    res = await axios.get(url);
+    // Get page title.
+    const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
 
-      if (resource && resource.url) {
-      // Use axios to get url info.
-        res = await axios.get(resource.url);
+    if (foundTitle && foundTitle.length >= 1) {
+      // Get title.
+      const titleToUpdate = foundTitle[1];
 
-        // Get page title.
-        const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
-
-        if (foundTitle && foundTitle.length >= 1) {
-        // Get title.
-          const titleToUpdate = foundTitle[1];
-
-          // update URL in DB.
-          await Resource.update({
-            title: titleToUpdate,
-          }, {
-            where: { id: resource.id },
-            individualHooks: false,
-          });
-        }
-      }
-    } catch (error) {
-      auditLogger.error('\n\n\n----AXIOS ERROR:', error);
-      return { status: error.response.status, data: error.response.data };
+      // update URL in DB.
+      await Resource.update({
+        title: titleToUpdate,
+      }, {
+        where: { url },
+        individualHooks: false,
+      });
+    } else {
+      auditLogger.info(`Resource Queue: Warning, unable to retrieve resource metadata for resource '${url}'.`);
+      return ({ status: res.status, data: { url } });
     }
-    auditLogger.error('\n\n\n----AXIOS ERROR2:', res);
-    returnV = { status: res ? res.status : 404, data: res ? res.data : {} };
   } catch (error) {
-    auditLogger.error('\n\n\n----AXIOS ERROR3:', error);
+    auditLogger.error(`Resource Queue: Error, unable to retrieve resource metadata for resource '${url}': ${error.message}`);
+    return { status: 500, data: error.message };
   }
-  return returnV;
+  logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${url}'`);
+  return ({ status: res.status, data: res.data });
 };
 
 export default processResourceInfo;
