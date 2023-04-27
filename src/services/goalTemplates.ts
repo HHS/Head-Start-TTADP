@@ -215,15 +215,6 @@ export async function setFieldPromptForCuratedTemplate(
         [sequelize.col('prompts.id'), 'promptId'],
         [sequelize.col('prompts.ordinal'), 'ordinal'],
         [sequelize.col('responses.response'), 'response'],
-        [
-          sequelize.literal(`COALESCE("responses"."response",array[]::text[]) != ARRAY[${response
-            ?.map((r) => sequelize
-              .getQueryInterface()
-              .queryGenerator
-              .escape(r))
-            .join(',')}]::text[]`),
-          'isChanged',
-        ],
       ],
       where: {
         id: goalIds,
@@ -267,7 +258,7 @@ export async function setFieldPromptForCuratedTemplate(
   }
 
   const goalIdsToUpdate = currentResponses
-    .filter((r) => r.isChanged && r.response)
+    .filter((r) => r.response)
     .map((r) => r.goalId);
 
   const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
@@ -276,6 +267,8 @@ export async function setFieldPromptForCuratedTemplate(
       goalTemplateFieldPromptId: promptId,
       response,
     }));
+
+  console.log({ goalIdsToUpdate, recordsToCreate });
 
   if (goalIdsToUpdate.length || recordsToCreate.length) {
     if (promptRequirements.type === PROMPT_FIELD_TYPE.MULTISELECT) {

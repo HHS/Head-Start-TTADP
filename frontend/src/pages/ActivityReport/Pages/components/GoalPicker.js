@@ -128,7 +128,7 @@ const GoalPicker = ({
 
     if (goal.isCurated) {
       const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
-      if (prompts && !isMultiRecipientReport) {
+      if (prompts) {
         setTemplatePrompts(prompts);
       }
     } else {
