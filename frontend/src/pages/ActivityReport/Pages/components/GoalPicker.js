@@ -53,6 +53,8 @@ const GoalPicker = ({
   const activityRecipientType = watch('activityRecipientType');
 
   const selectedGoals = useWatch({ name: 'goals' });
+  const activityRecipients = watch('activityRecipients');
+  const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
   const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
     const { id, name } = goal;
@@ -126,7 +128,9 @@ const GoalPicker = ({
 
     if (goal.isCurated) {
       const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
-      setTemplatePrompts(prompts);
+      if (prompts && !isMultiRecipientReport) {
+        setTemplatePrompts(prompts);
+      }
     } else {
       setTemplatePrompts(false);
     }
@@ -175,6 +179,7 @@ const GoalPicker = ({
               reportId={reportId}
               datePickerKey={datePickerKey}
               templatePrompts={templatePrompts}
+              isMultiRecipientReport={isMultiRecipientReport}
             />
           </div>
         ) : null}

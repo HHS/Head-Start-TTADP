@@ -32,6 +32,8 @@ const combinePrompts = (templatePrompts = [], goalPrompts = []) => uniqBy([
     validations: prompt.validations,
     promptId: prompt.promptId,
     response: prompt.response,
+    caution: prompt.caution,
+    hint: prompt.hint,
   })),
 ], 'title');
 
@@ -41,6 +43,7 @@ export default function GoalForm({
   reportId,
   datePickerKey,
   templatePrompts,
+  isMultiRecipientReport,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -183,6 +186,7 @@ export default function GoalForm({
       <ConditionalFields
         prompts={prompts}
         isOnReport={goal.onApprovedAR || false}
+        isMultiRecipientReport={isMultiRecipientReport}
       />
 
       <GoalRttapa
@@ -255,4 +259,9 @@ GoalForm.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
+  isMultiRecipientReport: PropTypes.bool,
+};
+
+GoalForm.defaultProps = {
+  isMultiRecipientReport: false,
 };

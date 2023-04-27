@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Alert } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form/dist/index.ie11';
 import ConditionalMultiselect from './ConditionalMultiselect';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
@@ -18,7 +19,7 @@ const FIELD_DICTIONARY = {
   },
 };
 
-export default function ConditionalFields({ prompts, isOnReport }) {
+export default function ConditionalFields({ prompts, isOnReport, isMultiRecipientReport }) {
   const {
     field: {
       onChange: onUpdateGoalPrompts,
@@ -31,12 +32,23 @@ export default function ConditionalFields({ prompts, isOnReport }) {
   useEffect(() => {
     // on mount, update the goal conditional fields
     // with the prompt data
-    onUpdateGoalPrompts(prompts.map(({ promptId, title }) => ({
+
+    const goalPrompts = prompts.map(({ promptId, title }) => ({
       promptId, title, fieldName: formatTitleForHtmlAttribute(title),
-    })));
-  }, [onUpdateGoalPrompts, prompts]);
+    }));
+
+    onUpdateGoalPrompts(isMultiRecipientReport ? [] : goalPrompts);
+  }, [onUpdateGoalPrompts, isMultiRecipientReport, prompts]);
 
   const fields = prompts.map((prompt) => {
+    if (isMultiRecipientReport) {
+      return (
+        <Alert variant="warning">
+          {prompt.caution}
+        </Alert>
+      );
+    }
+
     if (FIELD_DICTIONARY) {
       return FIELD_DICTIONARY[prompt.type].render(
         prompt,
@@ -60,4 +72,5 @@ ConditionalFields.propTypes = {
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
   isOnReport: PropTypes.bool.isRequired,
+  isMultiRecipientReport: PropTypes.bool.isRequired,
 };
