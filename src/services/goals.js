@@ -1304,7 +1304,13 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('"Goal"."createdAt"'),
         ),
       ), 'created'],
-
+      [sequelize.fn(
+        'MAX',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"Goal"."goalTemplateId"'),
+        ),
+      ), 'goalTemplateId'],
       'name',
       'status',
       'onApprovedAR',

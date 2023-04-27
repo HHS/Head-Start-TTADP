@@ -53,8 +53,6 @@ const GoalPicker = ({
   const activityRecipientType = watch('activityRecipientType');
 
   const selectedGoals = useWatch({ name: 'goals' });
-  // const select
-  // const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
 
   const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
     const { id, name } = goal;
@@ -127,7 +125,7 @@ const GoalPicker = ({
     onChange(goal);
 
     if (goal.isCurated) {
-      const prompts = await getGoalTemplatePrompts(goal.id, goal.goalIds);
+      const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
       setTemplatePrompts(prompts);
     } else {
       setTemplatePrompts(false);

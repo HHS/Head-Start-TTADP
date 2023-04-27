@@ -9,7 +9,7 @@ import {
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
-    const { grantIds } = req.params;
+    const { grantIds } = req.query;
 
     // ensure we only pass numbers to the service
     const parsedGrantIds = [grantIds].flat().map((id: string) => parseInt(id, DECIMAL_BASE))

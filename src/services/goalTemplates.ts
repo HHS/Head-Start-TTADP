@@ -46,7 +46,7 @@ interface FieldPrompts {
   type: string;
   options: string[] | null;
   validations: Validation[];
-  response: ResponseSet[];
+  response: string[];
 }
 
 interface PromptResponse {
@@ -169,6 +169,7 @@ export async function getFieldPromptsForCuratedTemplate(
 
   // restructure the collected data into one object with all responses for the passed goalIds if
   // any exists
+
   const restructuredPrompts = responses.reduce(
     (
       promptsWithResponses: FieldPrompts[],
@@ -176,15 +177,21 @@ export async function getFieldPromptsForCuratedTemplate(
     ) => {
       const exists = promptsWithResponses
         .find((pwr) => pwr.promptId === response.promptId);
+
       if (exists) {
-        exists.response.push({
-          response: response.response,
-          goalIds: response.goalIds,
-        });
+        exists.response = [...exists.response, ...response.response];
       }
       return promptsWithResponses;
     },
-    prompts,
+    // the inital set of prompts, including the
+    // response key if not already present
+    prompts.map((p: FieldPrompts) => {
+      if (p.response) {
+        return p;
+      }
+
+      return { ...p, response: [] };
+    }),
   );
   return restructuredPrompts;
 }
