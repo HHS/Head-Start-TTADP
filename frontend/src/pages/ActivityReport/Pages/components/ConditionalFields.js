@@ -6,18 +6,19 @@ import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 
 const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations = [], value = []) => (
+    render: (field, validations = [], value = [], isEditable) => (
       <ConditionalMultiselect
         fieldData={field}
         validations={validations}
         fieldName={formatTitleForHtmlAttribute(field.title)}
         defaultValue={value}
+        isEditable={isEditable}
       />
     ),
   },
 };
 
-export default function ConditionalFields({ prompts }) {
+export default function ConditionalFields({ prompts, isOnReport }) {
   const {
     field: {
       onChange: onUpdateGoalPrompts,
@@ -41,6 +42,7 @@ export default function ConditionalFields({ prompts }) {
         prompt,
         prompt.validations,
         prompt.response,
+        !isOnReport,
       );
     }
 
@@ -57,4 +59,5 @@ ConditionalFields.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
+  isOnReport: PropTypes.bool.isRequired,
 };
