@@ -10,10 +10,13 @@ import {
 import ConditionalMultiselect from '../ConditionalMultiselect';
 
 describe('ConditionalMultiselect', () => {
-  const Rt = () => {
+  // eslint-disable-next-line react/prop-types
+  const Rt = ({ isEditable = true }) => {
     const hookForm = useForm({
       mode: 'onChange',
-      defaultValues: {},
+      defaultValues: {
+        testField: ['run'],
+      },
     });
 
     const fieldData = {
@@ -21,6 +24,7 @@ describe('ConditionalMultiselect', () => {
       hint: 'hint',
       options: [
         'test',
+        'run',
       ],
       title: 'Riddle',
     };
@@ -46,14 +50,20 @@ describe('ConditionalMultiselect', () => {
             validations={validations}
             fieldName="testField"
             defaultValue={[]}
+            isEditable={isEditable}
           />
         </FormProvider>
       </div>
     );
   };
 
-  it('renders the prompt', () => {
+  it('renders the prompt if editable', () => {
     render(<Rt />);
     expect(screen.getByText('answer my riddle')).toBeInTheDocument();
+  });
+
+  it('renders the prompt if read only', () => {
+    render(<Rt isEditable={false} />);
+    expect(screen.getByText('Riddle')).toBeInTheDocument();
   });
 });

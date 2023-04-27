@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { FormGroup, Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
@@ -41,6 +42,7 @@ export default function ConditionalMultiselect({
   validations,
   fieldName,
   defaultValue,
+  isEditable,
 }) {
   const rules = transformValidationsIntoRules(validations);
   const {
@@ -66,6 +68,21 @@ export default function ConditionalMultiselect({
   const options = fieldData.options.map((label, value) => ({ label, value }));
   const selectedOptions = (fieldValue || []).map((label) => options
     .find((option) => option.label === label));
+
+  if (!isEditable) {
+    return (
+      <>
+        <p className="usa-prose text-bold margin-bottom-0">
+          {fieldData.title}
+        </p>
+        <ul className="usa-list usa-list--unstyled">
+          {(fieldValue || []).map((option) => (
+            <li key={uuidv4()}>{option}</li>
+          ))}
+        </ul>
+      </>
+    );
+  }
 
   return (
     <FormGroup error={error.props.children} key={name}>
@@ -114,4 +131,5 @@ ConditionalMultiselect.propTypes = {
     message: PropTypes.string,
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
+  isEditable: PropTypes.bool.isRequired,
 };

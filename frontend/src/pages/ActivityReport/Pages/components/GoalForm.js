@@ -182,6 +182,7 @@ export default function GoalForm({
 
       <ConditionalFields
         prompts={prompts}
+        isOnReport={goal.onApprovedAR || false}
       />
 
       <GoalRttapa
