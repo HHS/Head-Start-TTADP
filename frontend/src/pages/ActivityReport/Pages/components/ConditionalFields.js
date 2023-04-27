@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useController } from 'react-hook-form/dist/index.ie11';
 import ConditionalMultiselect from './ConditionalMultiselect';
@@ -6,19 +6,17 @@ import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 
 const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations = [], value = [], isEditable) => (
+    render: (field, isEditable) => (
       <ConditionalMultiselect
         fieldData={field}
-        validations={validations}
         fieldName={formatTitleForHtmlAttribute(field.title)}
-        defaultValue={value}
         isEditable={isEditable}
       />
     ),
   },
 };
 
-export default function ConditionalFields({ prompts, isOnReport }) {
+export default function ConditionalFields({ prompts, isOnReport, recipients }) {
   const {
     field: {
       onChange: onUpdateGoalPrompts,
@@ -28,20 +26,30 @@ export default function ConditionalFields({ prompts, isOnReport }) {
     defaultValue: [],
   });
 
+  // this is temporary until the backend is worked out
+  const promptValues = useMemo(() => recipients.map(({ id: grantId, name }) => (
+    prompts.map((prompt) => ({
+      ...prompt,
+      prompt: `${prompt.prompt} - (${name})`,
+      title: `${prompt.title} - ${name}`,
+      responseData: {
+        response: prompt.response,
+        grantId,
+      },
+    })))).flat(), [prompts, recipients]);
+
   useEffect(() => {
     // on mount, update the goal conditional fields
     // with the prompt data
-    onUpdateGoalPrompts(prompts.map(({ promptId, title }) => ({
+    onUpdateGoalPrompts(promptValues.map(({ promptId, title }) => ({
       promptId, title, fieldName: formatTitleForHtmlAttribute(title),
     })));
-  }, [onUpdateGoalPrompts, prompts]);
+  }, [onUpdateGoalPrompts, promptValues]);
 
-  const fields = prompts.map((prompt) => {
+  const fields = promptValues.map((prompt) => {
     if (FIELD_DICTIONARY) {
       return FIELD_DICTIONARY[prompt.type].render(
         prompt,
-        prompt.validations,
-        prompt.response,
         !isOnReport,
       );
     }
@@ -60,4 +68,8 @@ ConditionalFields.propTypes = {
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
   isOnReport: PropTypes.bool.isRequired,
+  recipients: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  })).isRequired,
 };

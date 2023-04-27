@@ -60,6 +60,7 @@ export default function GoalForm({
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
+  const recipients = watch('activityRecipients');
 
   const {
     field: {
@@ -183,6 +184,7 @@ export default function GoalForm({
       <ConditionalFields
         prompts={prompts}
         isOnReport={goal.onApprovedAR || false}
+        recipients={recipients}
       />
 
       <GoalRttapa
@@ -226,6 +228,7 @@ GoalForm.propTypes = {
       PropTypes.number,
       PropTypes.string,
     ]),
+    grantIds: PropTypes.arrayOf(PropTypes.number),
     isRttapa: PropTypes.string,
     initialRttapa: PropTypes.string,
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),

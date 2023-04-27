@@ -176,4 +176,5 @@ export const convertReportToFormData = (fetchedReport) => {
   };
 };
 
-export const formatTitleForHtmlAttribute = (title) => title.replace(/\s/g, '-').toLowerCase();
+// regex to remove all non alphanumeric characters and convert to lower case
+export const formatTitleForHtmlAttribute = (title) => title.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();

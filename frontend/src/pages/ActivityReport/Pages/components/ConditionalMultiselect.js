@@ -40,11 +40,10 @@ const transformValidationsIntoRules = (validations) => validations.rules.reduce(
 
 export default function ConditionalMultiselect({
   fieldData,
-  validations,
   fieldName,
-  defaultValue,
   isEditable,
 }) {
+  const { validations, responseData } = fieldData;
   const rules = transformValidationsIntoRules(validations);
 
   const {
@@ -55,7 +54,7 @@ export default function ConditionalMultiselect({
   } = useRegisterFormField(
     fieldName,
     rules,
-    defaultValue,
+    responseData.response,
   );
 
   const { errors } = useFormContext();
@@ -104,7 +103,6 @@ export default function ConditionalMultiselect({
           DropdownIndicator: null,
         }}
         className="usa-select"
-        isMulti
         options={options}
         onBlur={() => {
           onBlur(selectedOptions);
@@ -113,6 +111,7 @@ export default function ConditionalMultiselect({
         onChange={handleOnChange}
         closeMenuOnSelect={false}
         isDisabled={false}
+        isMulti
       />
     </FormGroup>
   );
@@ -125,11 +124,14 @@ ConditionalMultiselect.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
     hint: PropTypes.string,
+    validations: PropTypes.shape({
+      required: PropTypes.bool,
+      message: PropTypes.string,
+    }),
+    responseData: PropTypes.shape({
+      response: PropTypes.arrayOf(PropTypes.string).isRequired,
+      grantId: PropTypes.number,
+    }),
   }).isRequired,
-  validations: PropTypes.shape({
-    required: PropTypes.bool,
-    message: PropTypes.string,
-  }).isRequired,
-  defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
   isEditable: PropTypes.bool.isRequired,
 };
