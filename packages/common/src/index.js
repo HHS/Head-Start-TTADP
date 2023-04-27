@@ -147,7 +147,15 @@ const USER_ROLES = [
 ];
 exports.USER_ROLES = USER_ROLES;
 
-const CLOSE_SUSPEND_REASONS = [ "Duplicate goal", "Key staff turnover / vacancies", "Recipient is not responding", "Recipient request", "Regional Office request", "TTA complete" ];
+const CLOSE_SUSPEND_REASONS = [ 
+  'Duplicate goal', 
+  'Key staff turnover / vacancies', 
+  'Recipient is not responding', 
+  'Recipient request', 
+  'Regional Office request',
+  'TTA complete',
+];
+
 exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
 const GOAL_CLOSE_REASONS = [
