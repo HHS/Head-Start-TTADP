@@ -57,6 +57,8 @@ describe('activity report model hooks', () => {
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       goal = await Goal.create({
@@ -144,13 +146,13 @@ describe('activity report model hooks', () => {
         },
       });
 
-      await Grant.destroy({
+      await Grant.unscoped().destroy({
         where: {
           id: grant.id,
         },
       });
 
-      await Recipient.destroy({
+      await Recipient.unscoped().destroy({
         where: {
           id: recipient.id,
         },
