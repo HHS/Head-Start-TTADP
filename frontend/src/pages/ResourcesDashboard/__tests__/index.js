@@ -7,13 +7,16 @@ import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
-  act, render, screen, fireEvent, waitFor, within,
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
 import ResourcesDashboard from '../index';
-
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { formatDateRange } from '../../../utils';
@@ -61,7 +64,7 @@ const resourcesDefault = {
           },
           {
             title: 'total',
-            value: '26',
+            value: '262',
           },
         ],
       },
@@ -290,11 +293,10 @@ describe('Resources Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
-    let resourceUse = document.querySelector('#resourceUse');
-    expect(within(resourceUse).getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/177/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -389,11 +391,10 @@ describe('Resources Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
-    resourceUse = document.querySelector('#resourceUse');
-    expect(within(resourceUse).getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/177/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -478,11 +479,10 @@ describe('Resources Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
-    resourceUse = document.querySelector('#resourceUse');
-    expect(within(resourceUse).getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/177/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -553,11 +553,10 @@ describe('Resources Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
-    resourceUse = document.querySelector('#resourceUse');
-    expect(within(resourceUse).getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/177/i)).toBeInTheDocument();
-    expect(within(resourceUse).getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
