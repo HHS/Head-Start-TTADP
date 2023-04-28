@@ -108,6 +108,7 @@ function calculateGoalsAndObjectives(report) {
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
       striped = !striped;
+
       const goalSection = {
         heading: 'Goal summary',
         data: {
@@ -122,6 +123,15 @@ function calculateGoalsAndObjectives(report) {
         },
         striped,
       };
+
+      const { prompts } = goal;
+      if (prompts && prompts.length) {
+        const promptData = {};
+        prompts.forEach((prompt) => {
+          promptData[prompt.title] = prompt.response.join(', ');
+        });
+        goalSection.data = { ...goalSection.data, ...promptData };
+      }
 
       sections.push(goalSection);
 

@@ -303,6 +303,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     }
   }
 };
+
 const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
@@ -509,17 +510,30 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       }
 
       if (goals && goals.length > 0) {
-        await sequelize.models.Goal.update(
-          { onApprovedAR: false },
-          {
-            where: {
-              id: { [Op.in]: goals.map((g) => g.id) },
-              onApprovedAR: true,
+        await Promise.all([
+          sequelize.models.Goal.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                id: { [Op.in]: goals.map((g) => g.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
             },
-            transaction: options.transaction,
-            individualHooks: true,
-          },
-        );
+          ),
+          sequelize.models.GoalFieldResponse.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                goalId: { [Op.in]: goals.map((g) => g.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+        ]);
       }
     } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
     && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
@@ -618,17 +632,30 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       /*  Determine Objective Statuses (Other > Approved) */
       await determineObjectiveStatus(instance.id, sequelize, false);
 
-      await sequelize.models.Goal.update(
-        { onApprovedAR: true },
-        {
-          where: {
-            id: objectivesAndGoals.map((o) => o.goalId),
-            onApprovedAR: false,
+      await Promise.all([
+        sequelize.models.Goal.update(
+          { onApprovedAR: true },
+          {
+            where: {
+              id: objectivesAndGoals.map((o) => o.goalId),
+              onApprovedAR: false,
+            },
+            transaction: options.transaction,
+            individualHooks: true,
           },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
+        ),
+        sequelize.models.GoalFieldResponse.update(
+          { onApprovedAR: true },
+          {
+            where: {
+              goalId: objectivesAndGoals.map((o) => o.goalId),
+              onApprovedAR: false,
+            },
+            transaction: options.transaction,
+            individualHooks: true,
+          },
+        ),
+      ]);
     }
   }
 };
@@ -673,39 +700,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
         goal.set('previousStatus', goal.status);
         goal.set('status', status);
       }
-      return goal.save({ transaction: options.transaction, individualHooks: true });
-    })));
-  }
-};
-
-const automaticIsRttapaChangeOnApprovalForGoals = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('calculatedStatus')
-    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
-    const goals = await sequelize.models.Goal.findAll(
-      {
-        where: {
-          isRttapa: { [Op.or]: [null, 'No'] },
-        },
-        include: [
-          {
-            model: sequelize.models.ActivityReportGoal,
-            as: 'activityReportGoals',
-            required: true,
-            where: { activityReportId: instance.id },
-          },
-        ],
-        transaction: options.transaction,
-      },
-    );
-
-    await Promise.all((goals.map((goal) => {
-      if (['Yes', 'No'].includes(goal.activityReportGoals[0].isRttapa)) {
-        goal.set('isRttapa', goal.activityReportGoals[0].isRttapa);
-      }
-
       return goal.save({ transaction: options.transaction, individualHooks: true });
     })));
   }
@@ -829,7 +823,6 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
-  await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);
 };

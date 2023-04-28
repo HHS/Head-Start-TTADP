@@ -9,6 +9,7 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
+import GoalPrompts from './GoalPrompts';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -24,6 +25,7 @@ export default function Form({
   selectedGrants,
   setSelectedGrants,
   goalName,
+  prompts,
   setGoalName,
   endDate,
   setEndDate,
@@ -138,6 +140,10 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
+      <GoalPrompts
+        prompts={prompts}
+      />
+
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
         isOnApprovedReport={isOnApprovedReport}
@@ -239,6 +245,10 @@ Form.propTypes = {
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
+  prompts: PropTypes.arrayOf(PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    response: PropTypes.arrayOf(PropTypes.string).isRequired,
+  })).isRequired,
 };
 
 Form.defaultProps = {
