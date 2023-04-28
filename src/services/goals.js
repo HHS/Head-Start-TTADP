@@ -1100,6 +1100,8 @@ export async function createOrUpdateGoals(goals) {
       isRttapa,
       endDate,
       status,
+      prompts,
+      isCurated,
       ...options
     } = goalData;
 
@@ -1142,6 +1144,10 @@ export async function createOrUpdateGoals(goals) {
           rtrOrder: rtrOrder + 1,
         });
       }
+    }
+
+    if (isCurated) {
+      await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
     }
 
     // we can't update this stuff if the goal is on an approved AR

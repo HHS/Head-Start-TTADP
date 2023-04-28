@@ -74,6 +74,7 @@ export default function GoalForm({
     onApprovedAR: false,
     isRttapa: '',
     prompts: [],
+    isCurated: false,
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -88,6 +89,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
+  const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [isRttapa, setIsRttapa] = useState(goalDefaults.isRttapa);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
@@ -148,6 +150,7 @@ export default function GoalForm({
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
+        setIsCurated(goal.isCurated);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -616,6 +619,8 @@ export default function GoalForm({
           name: goalName,
           status,
           isRttapa,
+          isCurated,
+          prompts,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -682,6 +687,8 @@ export default function GoalForm({
     setIsRttapa(goalDefaults.isRttapa);
     initialRttapa.current = goalDefaults.isRttapa;
     setSelectedGrants(goalDefaults.grants);
+    setIsCurated(goalDefaults.isCurated);
+    setPrompts(goalDefaults.prompts);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -703,6 +710,8 @@ export default function GoalForm({
         grantId: g.value,
         name: goalName,
         status,
+        prompts,
+        isCurated,
         endDate,
         isRttapa,
         regionId: parseInt(regionId, DECIMAL_BASE),
@@ -716,6 +725,8 @@ export default function GoalForm({
           const g = goal.grants.map((grant) => ({
             grantId: grant.id,
             name: goal.name,
+            isCurated: goal.isCurated,
+            prompts: goal.prompts,
             status,
             endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
@@ -774,6 +785,8 @@ export default function GoalForm({
     setSelectedGrants(goal.grants);
     setIsRttapa(goal.isRttapa);
     initialRttapa.current = goal.isRttapa;
+    setIsCurated(goal.isCurated);
+    setPrompts(goal.prompts);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs

@@ -2,24 +2,25 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form/dist/index.ie11';
-import ConditionalMultiselect from './ConditionalMultiselect';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
+import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
 
-const FIELD_DICTIONARY = {
+export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations, value = [], isEditable) => (
-      <ConditionalMultiselect
-        fieldData={field}
+    render: (field, validations, value = [], isOnReport) => (
+      <ConditionalMultiselectForHookForm
         validations={validations}
         fieldName={formatTitleForHtmlAttribute(field.title)}
         defaultValue={value}
-        isEditable={isEditable}
+        isOnReport={isOnReport}
       />
     ),
   },
 };
 
-export default function ConditionalFields({ prompts, isOnReport, isMultiRecipientReport }) {
+export default function ConditionalFieldsForHookForm({
+  prompts, isOnReport, isMultiRecipientReport,
+}) {
   const {
     field: {
       onChange: onUpdateGoalPrompts,
@@ -53,15 +54,12 @@ export default function ConditionalFields({ prompts, isOnReport, isMultiRecipien
       return null;
     }
 
-    const responseIncomplete = !prompt.response || prompt.response.length < 2;
-    const isEditable = !isOnReport || responseIncomplete;
-
     if (FIELD_DICTIONARY[prompt.type]) {
       return FIELD_DICTIONARY[prompt.type].render(
         prompt,
         prompt.validations,
         prompt.response,
-        isEditable,
+        isOnReport,
       );
     }
 
@@ -71,7 +69,7 @@ export default function ConditionalFields({ prompts, isOnReport, isMultiRecipien
   return fields;
 }
 
-ConditionalFields.propTypes = {
+ConditionalFieldsForHookForm.propTypes = {
   prompts: PropTypes.arrayOf(PropTypes.shape({
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
