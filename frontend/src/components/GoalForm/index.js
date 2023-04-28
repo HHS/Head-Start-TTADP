@@ -70,6 +70,7 @@ export default function GoalForm({
     objectives: [],
     id: 'new',
     onApprovedAR: false,
+    prompts: [],
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -83,6 +84,7 @@ export default function GoalForm({
   const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
+  const [prompts, setPrompts] = useState(goalDefaults.prompts);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
 
@@ -134,6 +136,7 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
+        setPrompts(goal.prompts);
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
@@ -841,6 +844,7 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
+              prompts={prompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}

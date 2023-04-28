@@ -1,9 +1,12 @@
 import { Op } from 'sequelize';
-import { uniqBy } from 'lodash';
+import { uniqBy, uniq } from 'lodash';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from './resource';
 import {
   Goal,
+  GoalFieldResponse,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
   Grant,
   Objective,
   ObjectiveResource,
@@ -18,6 +21,7 @@ import {
   Resource,
   ActivityReport,
   ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
   Topic,
   Program,
   File,
@@ -26,12 +30,14 @@ import {
   OBJECTIVE_STATUS,
   GOAL_STATUS,
   SOURCE_FIELD,
+  CREATION_METHOD,
 } from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
+import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { auditLogger } from '../logger';
 
 const namespace = 'SERVICE:GOALS';
@@ -55,6 +61,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       'onAnyReport',
     ],
     'onApprovedAR',
+    [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
     'rtrOrder',
   ],
   order: [['rtrOrder', 'asc']],
@@ -181,6 +188,49 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             id: recipientId,
           },
           required: true,
+        },
+      ],
+    },
+    {
+      model: GoalTemplate,
+      as: 'goalTemplate',
+      attributes: [],
+      required: false,
+    },
+    {
+      model: GoalTemplateFieldPrompt,
+      as: 'prompts',
+      attributes: [
+        'id',
+        'ordinal',
+        'title',
+        'prompt',
+        'hint',
+        'fieldType',
+        'options',
+        'validations',
+      ],
+      required: false,
+      include: [
+        {
+          model: GoalFieldResponse,
+          as: 'responses',
+          attributes: ['response'],
+          required: false,
+          where: { goalId: id },
+        },
+        {
+          model: ActivityReportGoalFieldResponse,
+          as: 'reportResponses',
+          attributes: ['response'],
+          required: false,
+          include: [{
+            model: ActivityReportGoal,
+            as: 'activityReportGoal',
+            attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+            required: true,
+            where: { goalId: id },
+          }],
         },
       ],
     },
@@ -454,6 +504,74 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 }
 
 /**
+ *
+ * @param {Boolean} forReport
+ * @param {Array} newPrompts
+ * @param {Array} promptsToReduce
+ * @returns Array of reduced prompts
+ */
+function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
+  return newPrompts
+    .reduce((previousPrompts, currentPrompt) => {
+      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
+      if (existingPrompt) {
+        if (!forReport) {
+          existingPrompt.response = uniq(
+            [...existingPrompt.response, ...currentPrompt.responses.flatMap((r) => r.response)],
+          );
+        }
+
+        if (forReport) {
+          existingPrompt.response = uniq(
+            [
+              ...existingPrompt.response,
+              ...(currentPrompt.response || []),
+              ...(currentPrompt.reportResponse || []),
+            ],
+          );
+          existingPrompt.reportResponse = uniq(
+            [
+              ...(existingPrompt.reportResponse || []),
+              ...(currentPrompt.reportResponse || []),
+            ],
+          );
+        }
+        return previousPrompts;
+      }
+
+      const newPrompt = {
+        promptId: currentPrompt.promptId,
+        ordinal: currentPrompt.ordinal,
+        title: currentPrompt.title,
+        prompt: currentPrompt.prompt,
+        hint: currentPrompt.hint,
+        type: currentPrompt.type,
+        options: currentPrompt.options,
+        validations: currentPrompt.validations,
+      };
+
+      if (forReport) {
+        newPrompt.response = uniq(
+          [
+            ...(currentPrompt.response || []),
+            ...(currentPrompt.reportResponse || []),
+          ],
+        );
+        newPrompt.reportResponse = (currentPrompt.reportResponse || []);
+      }
+
+      if (!forReport) {
+        newPrompt.response = uniq(currentPrompt.responses.flatMap((r) => r.response));
+      }
+
+      return [
+        ...previousPrompts,
+        newPrompt,
+      ];
+    }, promptsToReduce);
+}
+
+/**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
@@ -488,6 +606,11 @@ function reduceGoals(goals, forReport = false) {
           currentValue.objectives,
           existingGoal.objectives,
         );
+        existingGoal.prompts = reducePrompts(
+          forReport,
+          currentValue.dataValues.prompts,
+          existingGoal.prompts,
+        );
         return previousValues;
       }
 
@@ -508,12 +631,18 @@ function reduceGoals(goals, forReport = false) {
         objectives: objectivesReducer(
           currentValue.objectives,
         ),
+        prompts: reducePrompts(
+          forReport,
+          currentValue.dataValues.prompts || [],
+          [],
+        ),
         isNew: false,
         endDate: currentValue.endDate,
       };
 
       return [...previousValues, goal];
     } catch (err) {
+      auditLogger.error('Error reducing goal in services/goals reduceGoals, exiting reducer early', err);
       return previousValues;
     }
   }, []);
@@ -608,6 +737,45 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               },
             },
             required: false,
+          },
+        ],
+      },
+      {
+        model: GoalTemplateFieldPrompt,
+        as: 'prompts',
+        attributes: [
+          'id',
+          'ordinal',
+          'title',
+          'prompt',
+          'hint',
+          'fieldType',
+          'options',
+          'validations',
+        ],
+        required: false,
+        include: [
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+            attributes: [
+              'response',
+            ],
+            required: false,
+            where: { goalId: id },
+          },
+          {
+            model: ActivityReportGoalFieldResponse,
+            as: 'reportResponses',
+            attributes: ['response'],
+            required: false,
+            include: [{
+              model: ActivityReportGoal,
+              as: 'activityReportGoal',
+              attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+              required: true,
+              where: { goalId: id, activityReportId },
+            }],
           },
         ],
       },
@@ -795,12 +963,19 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
         return o;
       }),
   }));
+
   return reduceGoals(goals);
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status', 'createdVia', 'previousStatus'],
+    attributes: [
+      'name',
+      'id',
+      'status',
+      'createdVia',
+      'previousStatus',
+    ],
     where: {
       id: goalId,
     },
@@ -1132,11 +1307,18 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('"Goal"."createdAt"'),
         ),
       ), 'created'],
-
+      [sequelize.fn(
+        'MAX',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"Goal"."goalTemplateId"'),
+        ),
+      ), 'goalTemplateId'],
       'name',
       'status',
       'onApprovedAR',
       'endDate',
+      [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
     group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
     where: {
@@ -1153,6 +1335,12 @@ export async function goalsForGrants(grantIds) {
         model: Grant.unscoped(),
         as: 'grant',
         attributes: [],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: false,
       },
     ],
     order: [[sequelize.fn(
@@ -1640,10 +1828,8 @@ export async function saveGoalsForReport(goals, report) {
       });
     }
 
-    // we have a param to determine if goals are new
-    if (goal.isNew || !existingGoals.length) {
+    if (!existingGoals.length) {
       const {
-        isNew,
         objectives,
         id,
         grantIds,
@@ -1651,6 +1837,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR,
         createdVia,
         endDate: discardedEndDate,
+        prompts,
         ...fields
       } = goal;
 
@@ -1678,10 +1865,20 @@ export async function saveGoalsForReport(goals, report) {
         }
 
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
+          // todo - compare values to see if it's changed before we update
           await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        await cacheGoalMetadata(newGoal, report.id, isActivelyBeingEditing);
+        if (!newGoal.onApprovedAR && prompts) {
+          await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
+        }
+
+        await cacheGoalMetadata(
+          newGoal,
+          report.id,
+          isActivelyBeingEditing,
+          prompts || null,
+        );
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1695,11 +1892,12 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         grant,
         grantId,
-        id, // this is unique and we can't trying to set this
+        id, // this is unique and we can't be trying to set this
         onApprovedAR, // we don't want to set this manually
         endDate: discardedEndDate, // get this outta here
         createdVia,
         goalIds: discardedGoalIds,
+        prompts,
         ...fields
       } = goal;
 
@@ -1715,7 +1913,16 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id, isActivelyBeingEditing);
+        if (prompts) {
+          await setFieldPromptsForCuratedTemplate([existingGoal.id], prompts);
+        }
+
+        await cacheGoalMetadata(
+          existingGoal,
+          report.id,
+          isActivelyBeingEditing,
+          prompts || null,
+        );
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1745,7 +1952,16 @@ export async function saveGoalsForReport(goals, report) {
           ...fields, status, endDate, createdVia: createdVia || 'activityReport',
         }, { individualHooks: true });
 
-        await cacheGoalMetadata(newGoal, report.id);
+        if (!newGoal.onApprovedAR && prompts) {
+          await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
+        }
+
+        await cacheGoalMetadata(
+          newGoal,
+          report.id,
+          isActivelyBeingEditing,
+          prompts || null,
+        );
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1867,7 +2083,43 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
+    attributes: {
+      include: [
+        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+        [sequelize.literal(`(
+          SELECT
+            jsonb_agg( DISTINCT jsonb_build_object(
+              'promptId', gtfp.id ,
+              'ordinal', gtfp.ordinal,
+              'title', gtfp.title,
+              'prompt', gtfp.prompt,
+              'hint', gtfp.hint,
+              'caution', gtfp.caution,
+              'type', gtfp."fieldType",
+              'options', gtfp.options,
+              'validations', gtfp.validations,
+              'response', gfr.response,
+              'reportResponse', argfr.response
+            ))
+          FROM "GoalTemplateFieldPrompts" gtfp
+          LEFT JOIN "GoalFieldResponses" gfr
+          ON gtfp.id = gfr."goalTemplateFieldPromptId"
+          AND gfr."goalId" = "Goal".id
+          LEFT JOIN "ActivityReportGoalFieldResponses" argfr
+          ON gtfp.id = argfr."goalTemplateFieldPromptId"
+          AND argfr."activityReportGoalId" = "activityReportGoals".id
+          WHERE "goalTemplate".id = gtfp."goalTemplateId"
+          GROUP BY TRUE
+        )`), 'prompts'],
+      ],
+    },
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: false,
+      },
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
@@ -1961,6 +2213,7 @@ export async function getGoalsForReport(reportId) {
       [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
     ],
   });
+
   // dedupe the goals & objectives
   const forReport = true;
   return reduceGoals(goals, forReport);

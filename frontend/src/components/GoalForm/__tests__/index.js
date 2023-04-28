@@ -803,6 +803,7 @@ describe('create goal', () => {
       endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: '',
+      prompts: [],
       grants: [{
         id: 1,
         number: '1',
@@ -841,6 +842,7 @@ describe('create goal', () => {
       endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
+      prompts: [],
       grants: [{
         id: 1,
         number: '1',
@@ -879,6 +881,7 @@ describe('create goal', () => {
       endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
+      prompts: [],
       grants: [{
         id: 1,
         number: '1',
@@ -927,6 +930,7 @@ describe('create goal', () => {
       endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
+      prompts: [],
       grants: [{
         id: 1,
         number: '1',
