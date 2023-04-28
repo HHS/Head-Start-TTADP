@@ -1,4 +1,5 @@
 import { VALID_URL_REGEX } from '../../lib/urlUtils';
+import { resourceQueue } from '../../services/resourceQueue';
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
@@ -26,6 +27,7 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
+  await resourceQueue.addGetResourceMetadataToQueue(instance.id, instance.url);
 };
 
 export {

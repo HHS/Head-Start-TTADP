@@ -5,7 +5,7 @@ import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
-import { deleteFileFromS3Job } from './lib/resource';
+import { getResourceMetaDataJob } from './lib/resource';
 import { resourceQueue } from './services/resourceQueue';
 import { awsElasticsearchQueue } from './lib/awsElasticSearch/queueManager';
 import processFile from './workers/files';
@@ -81,7 +81,7 @@ async function start() {
   // Get resource metadata.
   resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
-    deleteFileFromS3Job,
+    getResourceMetaDataJob,
   );
 
   // Notifications

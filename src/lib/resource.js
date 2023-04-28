@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const deleteFileFromS3Job = async (job) => {
+const getResourceMetaDataJob = async (job) => {
   const {
     resourceId, resourceUrl,
   } = job.data;
@@ -15,5 +15,5 @@ const deleteFileFromS3Job = async (job) => {
 
 export {
   axios,
-  deleteFileFromS3Job,
+  getResourceMetaDataJob,
 };
