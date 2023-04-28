@@ -84,7 +84,6 @@ describe('Approved Activity Report V2 component', () => {
       name: 'Goal 2',
       goalNumbers: ['2'],
       objectives: mockObjectives,
-      isRttapa: 'Yes',
     }],
     objectivesWithoutGoals: [],
     additionalNotes: '',
@@ -93,9 +92,7 @@ describe('Approved Activity Report V2 component', () => {
   it('renders a report with multiple goals', async () => {
     render(<ApprovedReportV2 data={report} />);
     expect(await screen.findByText(/Goal 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/non-rttapa/i)).toBeInTheDocument();
     expect(await screen.findByText(/Goal 2/i)).toBeInTheDocument();
-    expect(screen.queryAllByText(/rttapa/i).length).toBe(2);
   });
 
   it('renders a report with multiple steps', async () => {
