@@ -41,9 +41,10 @@ export const FORM_FIELD_INDEXES = {
   IS_RTTAPA: 3,
   OBJECTIVES_EMPTY: 4,
   OBJECTIVES: 5,
+  GOAL_PROMPTS: 6,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>, []];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>, [], {}];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',

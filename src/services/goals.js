@@ -546,7 +546,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         title: currentPrompt.title,
         prompt: currentPrompt.prompt,
         hint: currentPrompt.hint,
-        type: currentPrompt.type,
+        fieldType: currentPrompt.fieldType,
         options: currentPrompt.options,
         validations: currentPrompt.validations,
       };
@@ -2122,7 +2122,7 @@ export async function getGoalsForReport(reportId) {
               'prompt', gtfp.prompt,
               'hint', gtfp.hint,
               'caution', gtfp.caution,
-              'type', gtfp."fieldType",
+              'fieldType', gtfp."fieldType",
               'options', gtfp.options,
               'validations', gtfp.validations,
               'response', gfr.response,

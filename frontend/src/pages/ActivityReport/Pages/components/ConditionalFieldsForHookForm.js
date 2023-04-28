@@ -55,8 +55,8 @@ export default function ConditionalFieldsForHookForm({
       return null;
     }
 
-    if (FIELD_DICTIONARY[prompt.type]) {
-      return FIELD_DICTIONARY[prompt.type].render(
+    if (FIELD_DICTIONARY[prompt.fieldType]) {
+      return FIELD_DICTIONARY[prompt.fieldType].render(
         prompt,
         prompt.validations,
         prompt.response,
@@ -72,7 +72,7 @@ export default function ConditionalFieldsForHookForm({
 
 ConditionalFieldsForHookForm.propTypes = {
   prompts: PropTypes.arrayOf(PropTypes.shape({
-    type: PropTypes.string.isRequired,
+    fieldType: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
