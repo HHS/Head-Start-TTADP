@@ -1,5 +1,5 @@
 import axios from 'axios';
-import processResourceInfo from './resource';
+import { processResourceInfo } from './resource';
 import db, { Resource } from '../models';
 
 jest.mock('bull');

@@ -1,4 +1,4 @@
-// import axios from 'axios';
+import axios from 'axios';
 import { Resource } from '../models';
 import { auditLogger, logger } from '../logger';
 
@@ -7,22 +7,8 @@ const processResourceInfo = async (job) => {
   let res;
   try {
     // Use axios to get url info.
-    // res = await axios.get(url);
-    res = {
-      data: `
-    <!DOCTYPE html>
-      <html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
-      <head>
-      <meta charset="utf-8" />
-      <script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
-      <link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
-      <link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
-      <title>Head Start | ECLKC</title>
-      <body>
-      test
-      </body>
-      </html>`,
-    };
+    res = await axios.get(url);
+
     // Get page title.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
 
@@ -49,4 +35,7 @@ const processResourceInfo = async (job) => {
   return ({ status: res.status, data: res.data });
 };
 
-export default processResourceInfo;
+export {
+  axios,
+  processResourceInfo,
+};

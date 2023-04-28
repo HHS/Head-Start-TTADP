@@ -1,4 +1,5 @@
 import newQueue from '../lib/queue';
+import { RESOURCE_ACTIONS } from '../constants';
 
 const resourceQueue = newQueue('resource');
 const addToResourceQueue = (id, url) => {
@@ -9,11 +10,11 @@ const addToResourceQueue = (id, url) => {
     delay,
   };
   return resourceQueue.add(
-    'resourceMetadata',
+    RESOURCE_ACTIONS.GET_METADATA,
     {
       id,
       url,
-      key: 'resourceMetadata',
+      key: RESOURCE_ACTIONS.GET_METADATA,
       attempts: retries,
       backoff: backOffOpts,
       removeOnComplete: true,
