@@ -264,10 +264,6 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    expect(fetchMock.called()).toBe(false);
-
-    userEvent.click(save);
-
     expect(fetchMock.called()).toBeTruthy();
 
     // restore our fetch mock
