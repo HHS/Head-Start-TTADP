@@ -30,7 +30,7 @@ test
 
 const mockAxios = jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve());
 const axiosCleanResponse = { status: 200, data: urlReturn };
-const axiosNoTitleResponse = { status: 200, data: urlMissingTitle };
+const axiosNoTitleResponse = { status: 404, data: urlMissingTitle };
 const axiosResourceNotFound = { status: 404, data: 'Not Found' };
 const axiosNotFoundError = new Error();
 axiosNotFoundError.response = { status: 500, data: 'Error' };
@@ -61,7 +61,7 @@ describe('resource worker tests', () => {
   it('tests a resource without a title', async () => {
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
     const got = await processResourceInfo({ data: { url: 'http://www.test.gov' } });
-    expect(got.status).toBe(200);
+    expect(got.status).toBe(404);
     expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
     expect(mockAxios).toBeCalled();
     expect(mockUpdate).not.toBeCalled();

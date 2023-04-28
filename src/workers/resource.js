@@ -4,10 +4,10 @@ import { auditLogger, logger } from '../logger';
 
 const processResourceInfo = async (job) => {
   const { url } = job.data;
-  let res;
+
   try {
     // Use axios to get url info.
-    res = await axios.get(url);
+    const res = await axios.get(url);
 
     // Get page title.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
@@ -25,14 +25,15 @@ const processResourceInfo = async (job) => {
       });
     } else {
       auditLogger.info(`Resource Queue: Warning, unable to retrieve resource metadata for resource '${url}'.`);
-      return ({ status: res.status, data: { url } });
+      return ({ status: 404, data: { url } });
     }
+
+    logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${url}'`);
+    return ({ status: 200, data: res && res.data ? res.data : { url } });
   } catch (error) {
     auditLogger.error(`Resource Queue: Error, unable to retrieve resource metadata for resource '${url}': ${error.message}`);
     return { status: 500, data: error.message };
   }
-  logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${url}'`);
-  return ({ status: res.status, data: res.data });
 };
 
 export {
