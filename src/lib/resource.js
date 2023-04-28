@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 const getResourceMetaDataJob = async (job) => {
   const {
     resourceId, resourceUrl,
