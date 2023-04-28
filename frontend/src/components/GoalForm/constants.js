@@ -30,7 +30,6 @@ export const objectivesWithValidResourcesOnly = (objectives) => {
 
 export const GOAL_NAME_ERROR = 'Enter the recipient\'s goal';
 export const GOAL_DATE_ERROR = 'Enter a valid date';
-export const GOAL_RTTAPA_ERROR = 'Select yes or no';
 export const SELECT_GRANTS_ERROR = 'Select at least one recipient grant number';
 export const OBJECTIVES_EMPTY = 'Every report must have at least one objective';
 

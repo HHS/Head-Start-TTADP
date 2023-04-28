@@ -265,7 +265,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   ]);
 };
 
-const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditing) => {
+const cacheGoalMetadata = async (goal, reportId, isActivelyBeingEditing) => {
   // first we check to see if the activity report -> goal link already exists
   const arg = await ActivityReportGoal.findOne({
     where: {
@@ -285,7 +285,7 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
         closeSuspendReason: goal.closeSuspendReason,
         closeSuspendContext: goal.closeSuspendContext,
         endDate: goal.endDate,
-        isRttapa: isRttapa || null,
+        isRttapa: null,
         isActivelyEdited: isActivelyBeingEditing || false,
       }, {
         where: { id: activityReportGoalId },
@@ -306,7 +306,7 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
-      isRttapa: isRttapa || null,
+      isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
     }, {
       individualHooks: true,
