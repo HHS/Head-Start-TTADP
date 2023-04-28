@@ -7,15 +7,15 @@ import React from 'react';
 import {
   FormProvider, useForm,
 } from 'react-hook-form/dist/index.ie11';
-import ConditionalMultiselect from '../ConditionalMultiselect';
+import ConditionalMultiselectForHookForm from '../ConditionalMultiselectForHookForm';
 
-describe('ConditionalMultiselect', () => {
+describe('ConditionalMultiselectForHookForm', () => {
   // eslint-disable-next-line react/prop-types
   const Rt = ({ isEditable = true }) => {
     const hookForm = useForm({
       mode: 'onChange',
       defaultValues: {
-        testField: ['run'],
+        testField: ['run', 'test'],
       },
     });
 
@@ -45,7 +45,7 @@ describe('ConditionalMultiselect', () => {
       <div>
         { /* eslint-disable-next-line react/jsx-props-no-spreading */ }
         <FormProvider {...hookForm}>
-          <ConditionalMultiselect
+          <ConditionalMultiselectForHookForm
             fieldData={fieldData}
             validations={validations}
             fieldName="testField"

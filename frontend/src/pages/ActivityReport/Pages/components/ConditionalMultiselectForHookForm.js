@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import { ERROR_FORMAT } from './constants';
+import ConditionalMultiselect from '../../../../components/ConditionalMultiselect';
 
 const VALIDATION_DICTIONARY = {
   maxSelections: (validation) => (selectedOptions) => (
@@ -57,7 +58,7 @@ const transformValidationsIntoRules = (validations) => validations.rules.reduce(
   } : {},
 });
 
-export default function ConditionalMultiselect({
+export default function ConditionalMultiselectForHookForm({
   fieldData,
   validations,
   fieldName,
@@ -97,7 +98,7 @@ export default function ConditionalMultiselect({
     />
   );
 }
-ConditionalMultiselect.propTypes = {
+ConditionalMultiselectForHookForm.propTypes = {
   fieldName: PropTypes.string.isRequired,
   fieldData: PropTypes.shape({
     title: PropTypes.string.isRequired,
