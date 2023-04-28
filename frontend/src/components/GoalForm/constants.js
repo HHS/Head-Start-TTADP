@@ -37,12 +37,11 @@ export const FORM_FIELD_INDEXES = {
   GRANTS: 0,
   NAME: 1,
   END_DATE: 2,
-  IS_RTTAPA: 3,
-  OBJECTIVES_EMPTY: 4,
-  OBJECTIVES: 5,
+  OBJECTIVES_EMPTY: 3,
+  OBJECTIVES: 4,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>, []];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, []];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',
