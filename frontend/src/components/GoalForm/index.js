@@ -886,6 +886,7 @@ export default function GoalForm({
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
               prompts={prompts}
+              setPrompts={setPrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}

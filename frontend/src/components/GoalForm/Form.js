@@ -10,7 +10,6 @@ import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
 import GoalRttapa from './GoalRttapa';
-import GoalPrompts from './GoalPrompts';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -18,6 +17,7 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
+import ConditionalFields from '../ConditionalFields';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -27,6 +27,7 @@ export default function Form({
   setSelectedGrants,
   goalName,
   prompts,
+  setPrompts,
   setGoalName,
   endDate,
   setEndDate,
@@ -144,8 +145,10 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
-      <GoalPrompts
+      <ConditionalFields
+        isOnReport={isOnApprovedReport}
         prompts={prompts}
+        setPrompts={setPrompts}
       />
 
       <GoalRttapa
@@ -266,6 +269,7 @@ Form.propTypes = {
     title: PropTypes.string.isRequired,
     response: PropTypes.arrayOf(PropTypes.string).isRequired,
   })).isRequired,
+  setPrompts: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {
