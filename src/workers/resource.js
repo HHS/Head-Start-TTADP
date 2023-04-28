@@ -1,4 +1,4 @@
-import axios from 'axios';
+// import axios from 'axios';
 import { Resource } from '../models';
 import { auditLogger, logger } from '../logger';
 
@@ -7,7 +7,7 @@ const processResourceInfo = async (job) => {
   let res;
   try {
     // Use axios to get url info.
-    res = await axios.get(url);
+    // res = await axios.get(url);
     // Get page title.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
 
