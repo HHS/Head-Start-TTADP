@@ -796,7 +796,7 @@ describe('create goal', () => {
       status: 'Not Started',
       endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
-      isRttapa: '',
+      isRttapa: null,
       prompts: [],
       grants: [{
         id: 1,
