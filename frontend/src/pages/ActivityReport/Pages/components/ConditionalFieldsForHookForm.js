@@ -10,6 +10,7 @@ export const FIELD_DICTIONARY = {
     render: (field, validations, value = [], isOnReport) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
+        fieldData={field}
         fieldName={formatTitleForHtmlAttribute(field.title)}
         defaultValue={value}
         isOnReport={isOnReport}

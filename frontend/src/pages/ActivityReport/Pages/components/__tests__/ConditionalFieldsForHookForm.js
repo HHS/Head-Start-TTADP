@@ -8,7 +8,7 @@ import React from 'react';
 import {
   FormProvider, useForm,
 } from 'react-hook-form/dist/index.ie11';
-import ConditionalFields from '../ConditionalFields';
+import ConditionalFieldsForHookForm from '../ConditionalFieldsForHookForm';
 
 const DEFAULT_PROMPTS = [{
   type: 'multiselect',
@@ -33,7 +33,7 @@ const DEFAULT_PROMPTS = [{
   },
 }];
 
-describe('ConditionalFields', () => {
+describe('ConditionalFieldsForHookForm', () => {
   const Rt = ({
     isMultiRecipientReport = false,
     prompts = DEFAULT_PROMPTS,
@@ -49,7 +49,7 @@ describe('ConditionalFields', () => {
       <div>
         { /* eslint-disable-next-line react/jsx-props-no-spreading */ }
         <FormProvider {...hookForm}>
-          <ConditionalFields
+          <ConditionalFieldsForHookForm
             prompts={prompts}
             isMultiRecipientReport={isMultiRecipientReport}
             isOnReport={isOnReport}
@@ -124,34 +124,5 @@ describe('ConditionalFields', () => {
     render(<Rt isMultiRecipientReport prompts={prompts} />);
     expect(screen.queryByText('riddle')).toBeNull();
     expect(screen.queryByText('be careful')).toBeNull();
-  });
-
-  it('renders the read only', () => {
-    const prompts = [{
-      response: ['test', 'rest'],
-      type: 'multiselect',
-      prompt: 'answer my riddle',
-      hint: 'hint',
-      options: [
-        'test',
-        'rest',
-      ],
-      caution: 'be careful',
-      title: 'Riddle',
-      validations: {
-        rules: [{
-          name: 'maxSelections',
-          value: 2,
-          message: 'too many',
-        }, {
-          name: 'unknownKey',
-          value: 1,
-        }],
-        required: true,
-      },
-    }];
-
-    render(<Rt isOnReport prompts={prompts} />);
-    expect(screen.getByText('Riddle')).toBeInTheDocument();
   });
 });
