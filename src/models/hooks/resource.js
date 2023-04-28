@@ -1,5 +1,6 @@
 import { VALID_URL_REGEX } from '../../lib/urlUtils';
 import { addToResourceQueue } from '../../services/resourceQueue';
+import { auditLogger } from '../../logger';
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
@@ -27,7 +28,11 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  addToResourceQueue(instance.id, instance.url);
+  try {
+    addToResourceQueue(instance.id, instance.url);
+  } catch (error) {
+    auditLogger.error('\n\n\n--AddToQueueError--\n\n\n', error);
+  }
 };
 
 export {
