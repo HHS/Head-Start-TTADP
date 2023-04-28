@@ -11,6 +11,7 @@ const DEFAULT_GOAL = {
   status: 'Draft',
   isOnApprovedReport: false,
   isOnReport: false,
+  prompts: [],
 };
 
 describe('Goal Form > Form component', () => {

@@ -7,6 +7,7 @@ import {
 import withWidgetData from '../withWidgetData';
 import useSessionSort from '../../hooks/useSessionSort';
 import Container from '../../components/Container';
+import colors from '../../colors';
 
 /**
  * statuses
@@ -61,6 +62,7 @@ export function TopicsTableWidget({ data, loading }) {
 
   useEffect(() => {
     if (!data || !data.length) return;
+
     const sortedData = data.sort((a, b) => {
       const { sortBy, direction } = sortConfig;
       let prop = sortBy;
@@ -109,20 +111,21 @@ export function TopicsTableWidget({ data, loading }) {
 
     return (
       <th scope="col" aria-sort={fullAriaSort}>
-        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-        <a
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={() => {
             requestSort(name);
           }}
           onKeyDown={() => requestSort(name)}
-          className={`sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          className={`sortable usa-button usa-button--unstyled ${sortClassName}`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
+          style={{
+            color: colors.textInk,
+            textDecoration: 'none',
+          }}
         >
           {displayName}
-        </a>
+        </button>
       </th>
     );
   };

@@ -13,6 +13,7 @@ function ResourceUse({ data, loading }) {
       showPaging={false}
     >
       <HorizontalTableWidget
+        id="resourceUse"
         headers={data.headers}
         data={data.resources}
         firstHeading="Resource URL"

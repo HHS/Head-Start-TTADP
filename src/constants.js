@@ -20,10 +20,10 @@ export const SEARCH_RESULTS_PER_PAGE = 23;
 
 export const AUTOMATIC_CREATION = 'Automatic';
 export const CURATED_CREATION = 'Curated';
-export const CREATION_METHOD = [
-  AUTOMATIC_CREATION,
-  CURATED_CREATION,
-];
+export const CREATION_METHOD = {
+  AUTOMATIC: AUTOMATIC_CREATION,
+  CURATED: CURATED_CREATION,
+};
 
 export const GOAL_STATUS = {
   DRAFT: 'Draft',
@@ -103,6 +103,10 @@ export const DIGEST_SUBJECT_FREQ = {
   DAILY: 'daily',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
+};
+
+export const PROMPT_FIELD_TYPE = {
+  MULTISELECT: 'multiselect',
 };
 
 export const SOURCE_FIELD = {
