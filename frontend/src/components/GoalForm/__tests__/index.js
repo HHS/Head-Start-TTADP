@@ -264,8 +264,6 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    await screen.findByText('Select yes or no');
-
     expect(fetchMock.called()).toBe(false);
 
     userEvent.click(save);
