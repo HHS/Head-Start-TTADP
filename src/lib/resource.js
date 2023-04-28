@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 const getResourceMetaDataJob = async (job) => {
   const {
     resourceId, resourceUrl,
@@ -14,6 +12,5 @@ const getResourceMetaDataJob = async (job) => {
 };
 
 export {
-  axios,
   getResourceMetaDataJob,
 };
