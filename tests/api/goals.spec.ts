@@ -3,6 +3,7 @@ import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
+import { join } from 'path';
 
 test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   const response = await request.get(
@@ -18,7 +19,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     name: Joi.string(),
     recipientType: Joi.allow(null),
     createdAt: Joi.date(),
-    updatedAt: Joi.date()
+    updatedAt: Joi.date(),
+    deleted: Joi.any().allow(null),
   });
   
   const grantSchema = Joi.object({
@@ -44,7 +46,10 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     createdAt: Joi.date(),
     updatedAt: Joi.date(),
     regionId: Joi.number(),
-    recipient: recipientSchema
+    recipient: recipientSchema,
+    inactivationDate: Joi.any().allow(null),
+    inactivationReason: Joi.any().allow(null),
+    deleted: Joi.any().allow(null)
   });
   
   const schema = Joi.array().items(Joi.object({

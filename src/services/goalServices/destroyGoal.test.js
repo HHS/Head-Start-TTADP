@@ -28,6 +28,8 @@ describe('destroyGoal handler', () => {
     number: faker.random.alphaNumeric(10),
     cdi: false,
     regionId: 1,
+    startDate: new Date(),
+    endDate: new Date(),
   };
 
   beforeAll(async () => {
