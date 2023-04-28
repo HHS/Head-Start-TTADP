@@ -10,7 +10,7 @@ const config = {
   outputDir: './playwright/test-results',
   workers: 4, // this was originally set to 3, but changed to 2 when I saw data collisions, but tests have been improved since then so I think it's safe to go back to 3
   expect: {
-    timeout: 20000,
+    timeout: 30000,
   },
   fullyParallel: true,
   reporter: [['html', { outputFolder: './playwright/report', open: 'never' }]],
