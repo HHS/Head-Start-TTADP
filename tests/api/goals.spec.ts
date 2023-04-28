@@ -52,6 +52,11 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     deleted: Joi.any().allow(null)
   });
   
+  const promptsSchema = Joi.object({
+    title: Joi.string(),
+    response: Joi.array().items(Joi.string()),
+  });
+
   const schema = Joi.array().items(Joi.object({
     endDate: Joi.date().allow(null),
     status: Joi.string(),
@@ -65,7 +70,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     goalIds: Joi.array().items(Joi.number()),
     grants: Joi.array().items(grantSchema),
     grantIds: Joi.array().items(Joi.number()),
-    isNew: Joi.boolean()
+    isNew: Joi.boolean(),
+    prompts: Joi.array().items(promptsSchema),
   }));
 
   await validateSchema(response, schema, expect);
@@ -111,8 +117,19 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     onAnyReport: Joi.boolean(),
     onApprovedAR: Joi.boolean(),
     rtrOrder: Joi.number(),
+    isCurated: Joi.boolean(),
     objectives: Joi.array(),
-    grant: grantSchema
+    grant: grantSchema,
+    prompts: Joi.array().items(
+      Joi.object({
+        id: Joi.number(),
+        title: Joi.string(),
+        response: Joi.array().items(
+          Joi.string()
+        ),
+        prompt: Joi.string(),     
+       }),
+      ),  
   });
 
   await validateSchema(response, schema, expect);
