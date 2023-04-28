@@ -27,7 +27,7 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  await addToResourceQueue(instance.id, instance.url);
+  addToResourceQueue(instance.id, instance.url);
 };
 
 export {
