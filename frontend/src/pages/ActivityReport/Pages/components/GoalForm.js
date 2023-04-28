@@ -11,7 +11,7 @@ import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
-import ConditionalFields from './ConditionalFields';
+import ConditionalFields from './ConditionalFieldsForHookForm';
 import {
   GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,

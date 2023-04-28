@@ -1,10 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
-import { FormGroup, Label } from '@trussworks/react-uswds';
-import Select from 'react-select';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
-import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { ERROR_FORMAT } from './constants';
 
 const VALIDATION_DICTIONARY = {
@@ -14,6 +10,30 @@ const VALIDATION_DICTIONARY = {
 };
 
 const VALIDATION_DICTIONARY_KEYS = Object.keys(VALIDATION_DICTIONARY);
+
+const RESPONSE_COMPLETION_DICTIONARY = {
+  maxSelections: (validation, selectedOptions) => (
+    selectedOptions.length === validation.value
+  ),
+};
+
+const RESPONSE_COMPLETION_DICTIONARY_KEYS = Object.keys(RESPONSE_COMPLETION_DICTIONARY);
+
+const confirmResponseComplete = (validations) => validations.rules.reduce((
+  acc, validation,
+) => {
+  const isValidKey = RESPONSE_COMPLETION_DICTIONARY_KEYS.includes(validation.name);
+  if (!isValidKey) {
+    return acc;
+  }
+
+  return [
+    ...acc,
+    (selectedOptions) => (
+      RESPONSE_COMPLETION_DICTIONARY[validation.name](validation, selectedOptions)
+    ),
+  ];
+}, []);
 
 const transformValidationsIntoRules = (validations) => validations.rules.reduce((
   acc, validation,
@@ -42,9 +62,11 @@ export default function ConditionalMultiselect({
   validations,
   fieldName,
   defaultValue,
-  isEditable,
+  isOnReport,
 }) {
   const rules = transformValidationsIntoRules(validations);
+  const completions = confirmResponseComplete(validations);
+
   const {
     field: {
       onChange,
@@ -61,67 +83,20 @@ export default function ConditionalMultiselect({
   const { errors } = useFormContext();
   const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
 
-  const handleOnChange = (selectedOptions) => {
-    onChange(selectedOptions.map((option) => option.label));
-  };
-
-  const options = fieldData.options.map((label, value) => ({ label, value }));
-  const selectedOptions = (fieldValue || []).map((label) => options
-    .find((option) => option.label === label));
-
-  if (!isEditable) {
-    if (!fieldValue || fieldValue.length === 0) {
-      return null;
-    }
-
-    return (
-      <>
-        <p className="usa-prose text-bold margin-bottom-0">
-          {fieldData.title}
-        </p>
-        <ul className="usa-list usa-list--unstyled">
-          {(fieldValue || []).map((option) => (
-            <li key={uuidv4()}>{option}</li>
-          ))}
-        </ul>
-      </>
-    );
-  }
-
   return (
-    <FormGroup error={error.props.children} key={name}>
-      <Label htmlFor={name}>
-        <>
-          { fieldData.prompt }
-          {' '}
-          {validations.required && (<span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>)}
-        </>
-      </Label>
-      { fieldData.hint && (<span className="usa-hint">{fieldData.hint}</span>)}
-      {error}
-      <Select
-        inputName={name}
-        inputId={name}
-        name={name}
-        styles={selectOptionsReset}
-        components={{
-          DropdownIndicator: null,
-        }}
-        className="usa-select"
-        isMulti
-        options={options}
-        onBlur={() => {
-          onBlur(selectedOptions);
-        }}
-        value={selectedOptions}
-        onChange={handleOnChange}
-        closeMenuOnSelect={false}
-        isDisabled={false}
-      />
-    </FormGroup>
+    <ConditionalMultiselect
+      fieldData={fieldData}
+      validations={validations}
+      fieldName={fieldName}
+      fieldValue={fieldValue}
+      isOnReport={isOnReport}
+      completions={completions}
+      onBlur={onBlur}
+      onChange={onChange}
+      error={error}
+    />
   );
 }
-
 ConditionalMultiselect.propTypes = {
   fieldName: PropTypes.string.isRequired,
   fieldData: PropTypes.shape({
@@ -135,5 +110,5 @@ ConditionalMultiselect.propTypes = {
     message: PropTypes.string,
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isEditable: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
 };
