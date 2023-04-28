@@ -12,7 +12,6 @@ import FilterReasonSelect from './FilterReasonSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
-import FilterGoalType from './FilterGoalType';
 import { handleArrayQuery } from './helpers';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
@@ -116,20 +115,3 @@ export const grantNumberFilter = (possibleGrants) => ({
     />
   ),
 });
-
-export const goalTypeFilter = {
-  id: 'goalType',
-  display: 'Goal type',
-  conditions: FILTER_CONDITIONS,
-  defaultValues: {
-    is: 'RTTAPA',
-    'is not': 'RTTAPA',
-  },
-  displayQuery: handleArrayQuery,
-  renderInput: (_id, _condition, query, onApplyQuery) => (
-    <FilterGoalType
-      onApply={onApplyQuery}
-      goalType={query}
-    />
-  ),
-};
