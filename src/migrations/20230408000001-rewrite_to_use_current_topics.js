@@ -28,7 +28,44 @@ module.exports = {
           ON lt."mapsTo" = ct.id
         WHERE lt.name IN ('Teaching Practices / Teacher-Child Interactions', 'Child Assessment, Development, Screening')
         ;
-        
+
+        CREATE TEMP TABLE updated_legacy_ars AS
+        WITH updater AS (
+          UPDATE "ActivityReports"
+          SET imported = JSONB_SET(
+            imported,
+            ARRAY['topics'],
+            TO_JSONB(REPLACE(imported->>'topics', legacy_name, current_name))
+            )
+          FROM renamed_topics
+          WHERE imported->>'topics' like '%' || legacy_name  || '%'
+          RETURNING
+            id updated_id,
+            legacy_tid
+        ) SELECT * FROM updater
+        ;
+
+        -- Because the updates only update on the first match but multiple changes may
+        -- be needed for each line, the following logic must be executed once per
+        -- topic replacement beyond the first.
+        WITH additional_round AS (
+        UPDATE "ActivityReports"
+        SET imported = JSONB_SET(
+          imported,
+          ARRAY['topics'],
+          TO_JSONB(REPLACE(imported->>'topics', legacy_name, current_name))
+          )
+        FROM renamed_topics
+        WHERE imported->>'topics' like '%' || legacy_name  || '%'
+        RETURNING
+          id updated_id,
+          legacy_tid
+        )
+        INSERT INTO updated_legacy_ars
+        SELECT * FROM additional_round
+        ;
+
+        /* We don't actually need to make any of these changes
         CREATE TEMP TABLE updated_objective_topics AS
         WITH updater AS (
           UPDATE "ObjectiveTopics"
@@ -94,7 +131,7 @@ module.exports = {
             legacy_name
         ) SELECT * FROM updater
         ;
-        /*
+        
         SELECT 'updated_objective_topics' tablename, COUNT(*) updates
         FROM updated_objective_topics
         UNION
@@ -108,6 +145,9 @@ module.exports = {
         FROM updated_role_topics
         UNION
         SELECT 'updated_activity_reports', COUNT(*)
+        FROM updated_activity_reports
+        UNION
+        SELECT 'updated_legacy_ars', COUNT(*)
         FROM updated_activity_reports
         ;
         */
