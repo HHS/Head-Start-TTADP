@@ -202,7 +202,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       model: GoalTemplateFieldPrompt,
       as: 'prompts',
       attributes: [
-        'id',
+        ['id', 'promptId'],
         'ordinal',
         'title',
         'prompt',
@@ -514,7 +514,10 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
   return newPrompts
     .reduce((previousPrompts, currentPrompt) => {
-      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
+      const promptId = currentPrompt.promptId
+        ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
+
+      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
       if (existingPrompt) {
         if (!forReport) {
           existingPrompt.response = uniq(
@@ -541,7 +544,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
       }
 
       const newPrompt = {
-        promptId: currentPrompt.promptId,
+        promptId,
         ordinal: currentPrompt.ordinal,
         title: currentPrompt.title,
         prompt: currentPrompt.prompt,
@@ -550,6 +553,8 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         options: currentPrompt.options,
         validations: currentPrompt.validations,
       };
+
+      console.log(newPrompt);
 
       if (forReport) {
         newPrompt.response = uniq(
