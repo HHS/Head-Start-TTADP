@@ -63,6 +63,7 @@ describe('create goal', () => {
 
   const postResponse = [{
     id: 64175,
+    prompts: [],
     name: 'This is goal text',
     status: 'Draft',
     endDate: '08/15/2023',

@@ -320,6 +320,26 @@ export default function GoalForm({
     return !error.props.children;
   };
 
+  const validatePrompts = (title, isErrored, errorMessage) => {
+    let error = <></>;
+    const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
+
+    if (isErrored) {
+      error = <span className="usa-error-message">{errorMessage}</span>;
+    }
+
+    const newErrors = [...errors];
+    promptErrors[title] = error;
+    newErrors.splice(FORM_FIELD_INDEXES.GOAL_PROMPTS, 1, promptErrors);
+    setErrors(newErrors);
+    return !error.props.children;
+  };
+
+  const validateAllPrompts = () => {
+    const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
+    return Object.keys(promptErrors).every((key) => !promptErrors[key].props.children);
+  };
+
   /**
    *
    * @returns bool
@@ -451,6 +471,7 @@ export default function GoalForm({
     && validateEndDate()
     && validateObjectives()
     && validateIsRttapa()
+    && validateAllPrompts()
   );
   const isValidDraft = () => (
     validateGrantNumbers()
@@ -620,7 +641,6 @@ export default function GoalForm({
           status,
           isRttapa,
           isCurated,
-          prompts,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -703,6 +723,7 @@ export default function GoalForm({
       }
       return;
     }
+
     setAppLoadingText('Saving');
     setIsAppLoading(true);
     try {
@@ -912,6 +933,7 @@ export default function GoalForm({
               goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
+              validatePrompts={validatePrompts}
             />
           )}
 

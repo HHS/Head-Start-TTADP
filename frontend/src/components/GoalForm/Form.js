@@ -23,6 +23,7 @@ export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an obje
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
+  validatePrompts,
   selectedGrants,
   setSelectedGrants,
   goalName,
@@ -149,6 +150,8 @@ export default function Form({
         isOnReport={isOnApprovedReport}
         prompts={prompts}
         setPrompts={setPrompts}
+        validatePrompts={validatePrompts}
+        errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
       />
 
       <GoalRttapa
@@ -270,6 +273,7 @@ Form.propTypes = {
     response: PropTypes.arrayOf(PropTypes.string).isRequired,
   })).isRequired,
   setPrompts: PropTypes.func.isRequired,
+  validatePrompts: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {

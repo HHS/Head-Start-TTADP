@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { FormGroup, Label } from '@trussworks/react-uswds';
@@ -11,24 +11,20 @@ export default function ConditionalMultiselect({
   fieldName,
   fieldValue,
   isOnReport,
-  completions,
   onBlur,
   onChange,
   error,
+  isComplete,
 }) {
-  const [isResponseComplete, setIsResponseComplete] = useState(false);
-  const handleOnChange = (selectedOptions) => {
-    onChange(selectedOptions.map((option) => option.label));
-    setIsResponseComplete(
-      completions.every((completion) => completion(selectedOptions)),
-    );
+  const handleOnChange = (selections) => {
+    onChange(selections.map((option) => option.label));
   };
 
   const options = fieldData.options.map((label, value) => ({ label, value }));
   const selectedOptions = (fieldValue || []).map((label) => options
     .find((option) => option.label === label));
 
-  const isEditable = !(isOnReport && isResponseComplete);
+  const isEditable = !(isOnReport && isComplete);
 
   if (!isEditable) {
     if (!fieldValue || fieldValue.length === 0) {
@@ -96,9 +92,13 @@ ConditionalMultiselect.propTypes = {
     message: PropTypes.string,
   }).isRequired,
   isOnReport: PropTypes.bool.isRequired,
-  completions: PropTypes.arrayOf(PropTypes.func).isRequired,
+  isComplete: PropTypes.bool,
   fieldValue: PropTypes.arrayOf(PropTypes.string).isRequired,
   error: PropTypes.node.isRequired,
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
+};
+
+ConditionalMultiselect.defaultProps = {
+  isComplete: false,
 };

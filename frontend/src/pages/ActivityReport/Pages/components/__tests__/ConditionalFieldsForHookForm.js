@@ -11,13 +11,14 @@ import {
 import ConditionalFieldsForHookForm from '../ConditionalFieldsForHookForm';
 
 const DEFAULT_PROMPTS = [{
-  type: 'multiselect',
+  fieldType: 'multiselect',
   prompt: 'answer my riddle',
   hint: 'hint',
   options: [
     'test',
     'rest',
   ],
+  response: [],
   caution: 'be careful',
   title: 'Riddle',
   validations: {

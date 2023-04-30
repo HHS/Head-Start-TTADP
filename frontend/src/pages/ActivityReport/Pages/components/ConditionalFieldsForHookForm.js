@@ -1,19 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form/dist/index.ie11';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
+import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';
+
+const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations, value = [], isOnReport) => (
+    render: (field, validations, value = [], isOnReport, isComplete) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}
         fieldName={formatTitleForHtmlAttribute(field.title)}
         defaultValue={value}
         isOnReport={isOnReport}
+        key={`conditional-multiselect-${formatTitleForHtmlAttribute(field.title)}`}
+        isComplete={isComplete}
       />
     ),
   },
@@ -30,6 +35,15 @@ export default function ConditionalFieldsForHookForm({
     name: 'goalPrompts',
     defaultValue: [],
   });
+
+  const initialValues = useRef([]);
+
+  useEffect(() => {
+    const newPromptValues = updateRefToInitialValues(initialValues.current, prompts);
+
+    // save the new prompts to initialValues
+    initialValues.current = newPromptValues;
+  }, [prompts]);
 
   useEffect(() => {
     // on mount, update the goal conditional fields
@@ -56,11 +70,25 @@ export default function ConditionalFieldsForHookForm({
     }
 
     if (FIELD_DICTIONARY[prompt.fieldType]) {
+      const initialValue = (() => {
+        const current = initialValues.current.find((p) => p.promptId === prompt.promptId);
+        if (current) {
+          return current.response;
+        }
+
+        return [];
+      })();
+
+      const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
+      const completions = validationsAndCompletions.confirmResponseComplete(prompt.validations);
+      const isComplete = completions.every((completion) => completion(initialValue));
+
       return FIELD_DICTIONARY[prompt.fieldType].render(
         prompt,
         prompt.validations,
         prompt.response,
         isOnReport,
+        isComplete,
       );
     }
 
