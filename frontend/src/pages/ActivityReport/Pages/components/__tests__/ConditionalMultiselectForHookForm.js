@@ -11,7 +11,7 @@ import ConditionalMultiselectForHookForm from '../ConditionalMultiselectForHookF
 
 describe('ConditionalMultiselectForHookForm', () => {
   // eslint-disable-next-line react/prop-types
-  const Rt = ({ isEditable = true }) => {
+  const Rt = ({ isOnReport = false, isComplete = false }) => {
     const hookForm = useForm({
       mode: 'onChange',
       defaultValues: {
@@ -27,6 +27,7 @@ describe('ConditionalMultiselectForHookForm', () => {
         'run',
       ],
       title: 'Riddle',
+      type: 'multiselect',
     };
 
     const validations = {
@@ -50,7 +51,8 @@ describe('ConditionalMultiselectForHookForm', () => {
             validations={validations}
             fieldName="testField"
             defaultValue={[]}
-            isEditable={isEditable}
+            isComplete={isComplete}
+            isOnReport={isOnReport}
           />
         </FormProvider>
       </div>
@@ -63,7 +65,7 @@ describe('ConditionalMultiselectForHookForm', () => {
   });
 
   it('renders the prompt if read only', () => {
-    render(<Rt isEditable={false} />);
+    render(<Rt isOnReport isComplete />);
     expect(screen.getByText('Riddle')).toBeInTheDocument();
   });
 });
