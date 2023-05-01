@@ -44,7 +44,7 @@ const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   }
 };
 
-const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
+const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
     if (instance.id !== null
@@ -78,11 +78,11 @@ const beforeValidate = async (sequelize, instance, options) => {
   }
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
-  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
-  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -98,7 +98,7 @@ export {
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
   autoPopulateOnApprovedAR,
-  preventNamChangeWhenOnApprovedAR,
+  preventNameChangeWhenOnApprovedAR,
   propagateName,
   beforeValidate,
   beforeUpdate,
