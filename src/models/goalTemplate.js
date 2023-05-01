@@ -28,6 +28,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'objectiveTemplateId',
         as: 'goalTemplates',
       });
+      GoalTemplate.hasMany(models.GoalTemplateFieldPrompt, { foreignKey: 'goalTemplateId', as: 'prompts' });
       GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
       GoalTemplate.belongsToMany(models.Resource, {
         through: models.GoalTemplateResource,
@@ -58,7 +59,7 @@ export default (sequelize, DataTypes) => {
     },
     creationMethod: {
       allowNull: false,
-      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+      type: DataTypes.ENUM(Object.values(CREATION_METHOD)),
     },
     lastUsed: {
       allowNull: true,

@@ -186,7 +186,13 @@ describe('Activity report service', () => {
         Region.create({ name: 'office 22', id: 22 }),
       ]);
       await Grant.create({
-        id: ALERT_RECIPIENT_ID, number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
+        id: ALERT_RECIPIENT_ID,
+        number: 1,
+        recipientId: ALERT_RECIPIENT_ID,
+        regionId: 22,
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
     });
 
@@ -204,8 +210,8 @@ describe('Activity report service', () => {
       await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
-      await Grant.destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
-      await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
+      await Grant.unscoped().destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
+      await Recipient.unscoped().destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
       await Region.destroy({ where: { id: 22 } });
     });
 
@@ -360,7 +366,13 @@ describe('Activity report service', () => {
       });
 
       await Grant.create({
-        id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 19, status: 'Active',
+        id: RECIPIENT_ID,
+        number: 1,
+        recipientId: RECIPIENT_ID,
+        regionId: 19,
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
     });
 
@@ -385,7 +397,7 @@ describe('Activity report service', () => {
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
       await Program.destroy({ where: { id: [585, 586, 587] } });
-      await Grant.destroy({
+      await Grant.unscoped().destroy({
         where: {
           id: [
             RECIPIENT_ID,
@@ -395,7 +407,7 @@ describe('Activity report service', () => {
           ],
         },
       });
-      await Recipient.destroy({
+      await Recipient.unscoped().destroy({
         where: {
           id: [
             RECIPIENT_ID,
@@ -806,7 +818,13 @@ describe('Activity report service', () => {
       });
       it('includes recipient with programs', async () => {
         const recipientWithProgram = await Recipient.create({ id: RECIPIENT_WITH_PROGRAMS_ID, name: 'recipient with program', uei: 'NNA5N2KHMGM2' });
-        const grantWithProgram = await Grant.create({ id: RECIPIENT_WITH_PROGRAMS_ID, number: 'recipgrantnumber695', recipientId: recipientWithProgram.id });
+        const grantWithProgram = await Grant.create({
+          id: RECIPIENT_WITH_PROGRAMS_ID,
+          number: 'recipgrantnumber695',
+          recipientId: recipientWithProgram.id,
+          startDate: new Date(),
+          endDate: new Date(),
+        });
 
         const report = await ActivityReport.create(
           {
@@ -843,6 +861,9 @@ describe('Activity report service', () => {
           endDate: 'tomorrow',
         });
 
+        expect(recipientWithProgram.name).toBe('recipient with program');
+        const createdGrant = await Grant.findOne({ where: { number: 'recipgrantnumber695' } });
+        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695 ');
         const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
         expect(foundReport).not.toBeNull();
         expect(activityRecipients.length).toBe(1);
@@ -891,7 +912,13 @@ describe('Activity report service', () => {
         const topicsOne = ['topic d', 'topic c'];
         const topicsTwo = ['topic b', 'topic a'];
         const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa', uei: 'NNA5N2KHMGM2' });
-        firstGrant = await Grant.create({ id: RECIPIENT_ID_SORTING, number: 'anumber', recipientId: firstRecipient.id });
+        firstGrant = await Grant.create({
+          id: RECIPIENT_ID_SORTING,
+          number: 'anumber',
+          recipientId: firstRecipient.id,
+          startDate: new Date(),
+          endDate: new Date(),
+        });
 
         await ActivityReport.create({
           ...submittedReport,
@@ -1038,7 +1065,13 @@ describe('Activity report service', () => {
         };
         // Recipient and Grant.
         const downloadRecipient = await Recipient.create({ id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID, name: 'download recipient with program', uei: 'DNA5N2KHMGM2' });
-        const downloadGrant = await Grant.create({ id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID, number: 'downloadgrantnumber695', recipientId: downloadRecipient.id });
+        const downloadGrant = await Grant.create({
+          id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
+          number: 'downloadgrantnumber695',
+          recipientId: downloadRecipient.id,
+          startDate: new Date(),
+          endDate: new Date(),
+        });
 
         // create two approved
         approvedReport = await ActivityReport.create(
