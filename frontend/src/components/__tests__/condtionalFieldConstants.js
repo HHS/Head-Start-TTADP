@@ -63,6 +63,12 @@ describe('condtionalFieldConstants', () => {
 
       const transformedValidations = multiselect.transformValidationsIntoRules(validations);
 
+      const validRequired = transformedValidations.validate.mustSelectOne(['a', 'b']);
+      expect(validRequired).toEqual(true);
+
+      const invalidRequired = transformedValidations.validate.mustSelectOne([]);
+      expect(invalidRequired).toEqual('Please select at least one option');
+
       const result = transformedValidations.validate.maxSelections(['a', 'b', 'c']);
       expect(result).toEqual('How DARE you');
 
