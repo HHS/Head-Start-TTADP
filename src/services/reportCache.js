@@ -31,10 +31,9 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
   const newFilesIds = fileIds.filter((topic) => !currentFileIds.has(topic));
 
   return Promise.all([
-    ...newFilesIds.map(async (fileId) => ActivityReportObjectiveFile.create({
-      activityReportObjectiveId,
-      fileId,
-    })),
+    ActivityReportObjectiveFile.bulkCreate(
+      newFilesIds.map(async (fileId) => ({ activityReportObjectiveId, fileId })),
+    ),
     removedFileIds.length > 0
       ? ActivityReportObjectiveFile.destroy({
         where: {
@@ -178,10 +177,9 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
 
   return Promise.all([
-    ...newTopicsIds.map(async (topicId) => ActivityReportObjectiveTopic.create({
-      activityReportObjectiveId,
-      topicId,
-    })),
+    ActivityReportObjectiveTopic.bulkCreate(
+      newTopicsIds.map(async (topicId) => ({ activityReportObjectiveId, topicId })),
+    ),
     removedTopicIds.length > 0
       ? ActivityReportObjectiveTopic.destroy({
         where: {

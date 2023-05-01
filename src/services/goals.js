@@ -254,23 +254,33 @@ export async function saveObjectiveAssociations(
   });
 
   // topics
-  const objectiveTopics = await Promise.all(
-    (topics.map(async (topic) => {
-      let otopic = await ObjectiveTopic.findOne({
-        where: {
-          objectiveId: objective.id,
-          topicId: topic.id,
-        },
-      });
-      if (!otopic) {
-        otopic = await ObjectiveTopic.create({
-          objectiveId: objective.id,
-          topicId: topic.id,
-        }, { hooks: !!o.objectiveTemplateId });
-      }
-      return otopic;
-    })),
-  );
+  const objectiveTopics = await (async () => {
+    const currentTopicsRaw = await ObjectiveTopic.findAll({
+      attributes: ['topicId'],
+      where: {
+        objectiveId: objective.id,
+        topicId: { [Op.in]: topics },
+      },
+      raw: true,
+    });
+    const currentTopics = currentTopicsRaw.map((topic) => topic.topicId);
+    if (topics && topics.length > 0) {
+      await ObjectiveTopic.bulkCreate(
+        topics
+          .filter((topic) => !currentTopics.includes(topic))
+          .map((topic) => ({
+            objectiveId: objective.id,
+            topic,
+          })),
+      );
+    }
+    return ObjectiveTopic.findAll({
+      where: {
+        objectiveId: objective.id,
+        topicId: { [Op.in]: topics },
+      },
+    });
+  })();
 
   if (deleteUnusedAssociations) {
     // cleanup objective topics
