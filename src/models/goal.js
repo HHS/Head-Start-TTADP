@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
@@ -28,7 +28,14 @@ export default (sequelize, DataTypes) => {
       });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
+      Goal.belongsToMany(models.GoalTemplateFieldPrompt, {
+        through: models.GoalFieldResponse,
+        foreignKey: 'goalId',
+        otherKey: 'goalTemplateFieldPromptId',
+        as: 'prompts',
+      });
+      Goal.hasMany(models.GoalFieldResponse, { foreignKey: 'goalId', as: 'responses' });
       Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
       Goal.belongsToMany(models.Resource, {
         through: models.GoalResource,

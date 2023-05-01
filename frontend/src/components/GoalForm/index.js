@@ -6,6 +6,7 @@ import React, {
   useContext,
 } from 'react';
 import moment from 'moment';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -30,7 +31,6 @@ import {
   GOAL_RTTAPA_ERROR,
   objectivesWithValidResourcesOnly,
 } from './constants';
-import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
@@ -73,6 +73,7 @@ export default function GoalForm({
     id: 'new',
     onApprovedAR: false,
     isRttapa: '',
+    prompts: [],
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -86,6 +87,7 @@ export default function GoalForm({
   const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
+  const [prompts, setPrompts] = useState(goalDefaults.prompts);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [isRttapa, setIsRttapa] = useState(goalDefaults.isRttapa);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
@@ -141,6 +143,7 @@ export default function GoalForm({
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setIsRttapa(goal.isRttapa);
+        setPrompts(goal.prompts);
         initialRttapa.current = goal.isRttapa;
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
@@ -869,6 +872,7 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
+              prompts={prompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}

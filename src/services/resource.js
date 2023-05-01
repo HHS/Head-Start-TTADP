@@ -357,7 +357,7 @@ const filterResourcesForSync = (
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
       const isReduced = matchingFromFields
-        .filter((mff) => resource.sourceFields
+        .filter((mff) => (resource.sourceFields || [])
           .filter((l) => mff.sourceFields.includes(l))
           .length < resource.sourceFields.length)
         .length > 0;

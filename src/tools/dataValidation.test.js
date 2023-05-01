@@ -1,7 +1,7 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import dataValidation, { countAndLastUpdated, runSelectQuery } from './dataValidation';
 import { sequelize } from '../models';
 import { auditLogger } from '../logger';
-import { DECIMAL_BASE } from '../constants';
 
 jest.mock('../logger');
 

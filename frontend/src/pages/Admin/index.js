@@ -6,7 +6,6 @@ import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
 import Flags from './Flags';
-import RoleManagement from './RoleManagement';
 import SiteAlerts from './SiteAlerts';
 
 function Admin() {
@@ -50,10 +49,6 @@ function Admin() {
         <Route
           path="/admin/site-alerts/"
           render={({ match }) => <SiteAlerts match={match} />}
-        />
-        <Route
-          path="/admin/roles/"
-          render={({ match }) => <RoleManagement match={match} />}
         />
       </Switch>
     </>
