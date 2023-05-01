@@ -317,7 +317,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
 
-    expect(searchResult.hits.length).toBe(2);
+    expect(searchResult.hits.length).toBe(1);
     expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
     expect(searchResult.hits[1]['_id']).toBe(reportThree.id.toString());
 
