@@ -57,6 +57,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'goalNumber',
     'createdVia',
     'isRttapa',
+    'goalTemplateId',
     [
       'onAR',
       'onAnyReport',
@@ -553,8 +554,6 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         options: currentPrompt.options,
         validations: currentPrompt.validations,
       };
-
-      console.log(newPrompt);
 
       if (forReport) {
         newPrompt.response = uniq(
