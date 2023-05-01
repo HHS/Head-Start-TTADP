@@ -250,7 +250,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
 
   // Only change the status if we have an approved report using the objective.
   if (approvedReports.length) {
-    Promise.all(objectiveIds.map((o) => {
+    await Promise.all(objectiveIds.map((o) => {
       // Get reports that use this objective.
       const relevantARs = approvedReports.filter(
         (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
@@ -280,7 +280,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
 
       // Update Objective status.
       return sequelize.models.Objective.update({
-        status: aro.status || 'Not Started',
+        status: aro.status || OBJECTIVE_STATUS.NOT_STARTED,
       }, {
         where: { id: o },
         individualHooks: true,
