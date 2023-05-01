@@ -319,7 +319,6 @@ describe('Create AWS Elastic Search Indexes', () => {
 
     expect(searchResult.hits.length).toBe(1);
     expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
-    expect(searchResult.hits[1]['_id']).toBe(reportThree.id.toString());
 
     // Recipient Next Steps.
     query = 'bold';
