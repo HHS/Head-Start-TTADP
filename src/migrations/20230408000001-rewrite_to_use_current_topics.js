@@ -64,6 +64,24 @@ module.exports = {
         INSERT INTO updated_legacy_ars
         SELECT * FROM additional_round
         ;
+        
+        CREATE TEMP TABLE updated_activity_reports AS
+        WITH updater AS (
+          WITH renames AS (
+            SELECT DISTINCT
+              legacy_name,
+              current_name
+            FROM renamed_topics
+          )
+          UPDATE "ActivityReports"
+          SET topics = ARRAY_REPLACE(topics, legacy_name, current_name)
+          FROM renames
+          WHERE legacy_name = ANY(topics) 
+          RETURNING
+            id updated_id,
+            legacy_name
+        ) SELECT * FROM updater
+        ;
 
         /* We don't actually need to make any of these changes
         CREATE TEMP TABLE updated_objective_topics AS
@@ -111,24 +129,6 @@ module.exports = {
           RETURNING
             id updated_id,
             legacy_tid
-        ) SELECT * FROM updater
-        ;
-        
-        CREATE TEMP TABLE updated_activity_reports AS
-        WITH updater AS (
-          WITH renames AS (
-            SELECT DISTINCT
-              legacy_name,
-              current_name
-            FROM renamed_topics
-          )
-          UPDATE "ActivityReports"
-          SET topics = ARRAY_REPLACE(topics, legacy_name, current_name)
-          FROM renames
-          WHERE legacy_name = ANY(topics) 
-          RETURNING
-            id updated_id,
-            legacy_name
         ) SELECT * FROM updater
         ;
         
