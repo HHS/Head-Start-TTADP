@@ -37,7 +37,7 @@ export default function ConditionalMultiselect({
           {fieldData.title}
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {(fieldValue || []).map((option) => (
+          {fieldValue.map((option) => (
             <li key={uuidv4()}>{option}</li>
           ))}
         </ul>

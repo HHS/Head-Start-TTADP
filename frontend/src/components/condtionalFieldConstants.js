@@ -1,12 +1,12 @@
 import { uniqBy } from 'lodash';
 
-const MULTISELECT_VALIDATION_DICTIONARY = {
+export const MULTISELECT_VALIDATION_DICTIONARY = {
   maxSelections: (validation) => (selectedOptions) => (
     selectedOptions.length <= validation.value
   ) || validation.message,
 };
 
-const MULTISELECT_RESPONSE_COMPLETION_DICTIONARY = {
+export const MULTISELECT_RESPONSE_COMPLETION_DICTIONARY = {
   maxSelections: (validation, selectedOptions) => (
     selectedOptions.length === validation.value
   ),
@@ -73,7 +73,7 @@ const updateRefToInitialValues = (initialValues, prompts) => {
   return [...initialValues, ...newPrompts];
 };
 
-export const combinePrompts = (templatePrompts = [], goalPrompts = []) => uniqBy([
+export const combinePrompts = (templatePrompts, goalPrompts) => uniqBy([
   ...(templatePrompts || []),
   ...(goalPrompts || []).map((prompt) => ({
     title: prompt.title,
