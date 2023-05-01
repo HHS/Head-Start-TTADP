@@ -29,6 +29,29 @@ describe('ConditionalFields', () => {
     </>
   );
 
+  it('renders nothing if null prompts', async () => {
+    const prompts = null;
+    act(() => {
+      render(<CF prompts={prompts} />);
+    });
+    expect(screen.queryByText('What is a test?')).toBeNull();
+  });
+
+  it('renders nothing if fieldType is not in dictionary', async () => {
+    const prompts = [{
+      fieldType: 'partytime',
+      title: 'Test',
+      prompt: 'What is a test?',
+      options: ['option1', 'option2'],
+      validations: { rules: [] },
+      response: [],
+    }];
+    act(() => {
+      render(<CF prompts={prompts} />);
+    });
+    expect(screen.queryByText('What is a test?')).toBeNull();
+  });
+
   it('renders a prompt', async () => {
     const prompts = [{
       fieldType: 'multiselect',
@@ -44,14 +67,22 @@ describe('ConditionalFields', () => {
     expect(screen.getByText('What is a test?')).toBeInTheDocument();
   });
 
-  it('calls on change & validate prompts', async () => {
+  it('calls on change', async () => {
     const setPrompts = jest.fn();
     const prompts = [{
       fieldType: 'multiselect',
       title: 'Test',
       prompt: 'What is a test?',
       options: ['option1', 'option2', 'option3'],
-      validations: { rules: [] },
+      validations: {
+        rules: [
+          {
+            name: 'maxSelections',
+            value: 1,
+            message: 'How DARE you',
+          },
+        ],
+      },
       response: [],
     }];
     act(() => {
@@ -59,7 +90,6 @@ describe('ConditionalFields', () => {
     });
 
     await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1']);
-
     expect(setPrompts).toHaveBeenCalled();
   });
 });
