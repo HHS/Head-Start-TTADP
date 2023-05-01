@@ -208,7 +208,12 @@ export default function Form({
 Form.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
+  errors: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.shape({}),
+      PropTypes.node,
+    ]),
+  ).isRequired,
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,

@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import ConditionalMultiselect from './ConditionalMultiselect';
 import CONDITIONAL_FIELD_CONSTANTS from './condtionalFieldConstants';
@@ -40,14 +41,14 @@ export default function ConditionalFields({
   validatePrompts,
   errors,
 }) {
-  const initialValues = useRef([]);
+  const [initialValues, setInitialValues] = useState([]);
 
-  useEffect(() => {
-    const newPromptValues = updateRefToInitialValues(initialValues.current, prompts);
+  useDeepCompareEffect(() => {
+    const newPromptValues = updateRefToInitialValues(initialValues, prompts);
 
     // save the new prompts to initialValues
-    initialValues.current = newPromptValues;
-  }, [prompts]);
+    setInitialValues(newPromptValues);
+  }, [prompts, initialValues]);
 
   if (!prompts) {
     return null;
@@ -65,7 +66,7 @@ export default function ConditionalFields({
         const rules = validationsAndCompletions.transformValidationsIntoRules(prompt.validations);
 
         const initialValue = (() => {
-          const current = initialValues.current.find((p) => p.promptId === prompt.promptId);
+          const current = initialValues.find((p) => p.promptId === prompt.promptId);
           if (current) {
             return current.response;
           }
