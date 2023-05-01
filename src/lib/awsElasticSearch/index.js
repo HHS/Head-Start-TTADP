@@ -155,28 +155,21 @@ const search = async (indexName, fields, query, passedClient) => {
     // If we have more than one word (term) then use phrase matching
     // If we have only one word (term) use query string with wildcards.
     // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
-    const queryBody = query.trim().split(' ').length <= 1
-      ? {
-        query_string: {
-          query: `*${query}*`,
-          fields,
-        },
-      }
-      : {
-        bool: {
-          should: [
-            { match_phrase: { context: { slop: 0, query } } },
-            { match_phrase: { nonECLKCResources: { slop: 0, query } } },
-            { match_phrase: { ECLKCResources: { slop: 0, query } } },
-            { match_phrase: { recipientNextSteps: { slop: 0, query } } },
-            { match_phrase: { specialistNextSteps: { slop: 0, query } } },
-            { match_phrase: { activityReportGoals: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectives: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
-          ],
-        },
-      };
+    const queryBody = {
+      bool: {
+        should: [
+          { match_phrase: { context: { slop: 0, query } } },
+          { match_phrase: { nonECLKCResources: { slop: 0, query } } },
+          { match_phrase: { ECLKCResources: { slop: 0, query } } },
+          { match_phrase: { recipientNextSteps: { slop: 0, query } } },
+          { match_phrase: { specialistNextSteps: { slop: 0, query } } },
+          { match_phrase: { activityReportGoals: { slop: 0, query } } },
+          { match_phrase: { activityReportObjectives: { slop: 0, query } } },
+          { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
+          { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
+        ],
+      },
+    };
 
     // Create search body.
     const body = {
