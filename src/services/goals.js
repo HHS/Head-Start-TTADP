@@ -1803,203 +1803,215 @@ async function createObjectivesForGoal(goal, objectives, report) {
   }));
 }
 
+/**
+ * This function is for setting the status metadata of a goal
+ * (lastNotStartedAt, firstNotStartedAt, etc.)
+ *
+ * It should only update the status if it's changed, and it should
+ * only update the other fields where appropriate
+ *
+ * Note that this function only updates the model instance with "set"
+ * and does not save it to the database, so you must call save() on the
+ * model instance after calling this function
+ *
+ * @param {string} oldStatus
+ * @param {GoalModel} goal
+ * @param {string | Date} date
+ * @returns GoalModel
+ */
+const statusDeterminant = async (oldStatus, goal, date) => {
+  const newStatus = goal.status;
+  const changed = oldStatus !== newStatus;
+
+  if (changed) {
+    if (GOAL_STATUS[newStatus]) {
+      goal.set('status', newStatus);
+    } else {
+      auditLogger.error(`Goal status changed to invalid value of "${newStatus}".`);
+      return goal;
+    }
+
+    switch (newStatus) {
+      case undefined:
+      case null:
+      case '':
+      case GOAL_STATUS.DRAFT:
+        break;
+      case GOAL_STATUS.NOT_STARTED:
+        if (!goal.firstNotStartedAt) {
+          goal.set('firstNotStartedAt', date);
+        }
+
+        // for each of these cases, we only want to update the field if it's
+        // the first time it's being set, or if the new date is more recent
+        if (goal.lastNotStartedAt && goal.lastNotStartedAt > date) {
+          break;
+        }
+
+        goal.set('lastNotStartedAt', date);
+        break;
+      case GOAL_STATUS.IN_PROGRESS:
+        if (!goal.firstinProgressAt) {
+          goal.set('firstInProgressAt', date);
+        }
+        if (goal.lastInProgressAt && goal.lastInProgressAt > date) {
+          break;
+        }
+        goal.set('lastInProgressAt', date);
+
+        break;
+      case GOAL_STATUS.SUSPENDED:
+        if (!goal.firstCeasedSuspendedAt) {
+          goal.set('firstCeasedSuspendedAt', date);
+        }
+        if (goal.lastCeasedSuspendedAt && goal.lastCeasedSuspendedAt > date) {
+          break;
+        }
+        goal.set('lastCeasedSuspendedAt', date);
+        break;
+      case GOAL_STATUS.CLOSED:
+        if (!goal.firstClosedAt) {
+          goal.set('firstClosedAt', date);
+        }
+        if (goal.lastClosedAt && goal.lastClosedAt > date) {
+          break;
+        }
+        goal.set('lastClosedAt', date);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return goal;
+};
+
 export async function saveGoalsForReport(goals, report) {
+  // this will be all the currently used objectives
+  // so we can remove any objectives that are no longer being used
   let currentObjectives = [];
 
-  // actively edited goals represents the goals that are currently being edited on the frontend
-  const activelyEditedGoals = [];
+  // let's get all the existing goals that are not closed
+  // we'll use this to determine if we need to create or update
+  // we're doing it here so we don't have to query for each goal
+  const existingGoals = await Goal.findAll({
+    where: {
+      id: goals.map((goal) => goal.goalIds).flat(),
+      grantId: goals.map((goal) => goal.grantIds).flat(),
+      status: { [Op.not]: GOAL_STATUS.CLOSED },
+    },
+  });
 
-  const currentGoals = await Promise.all((goals.map(async (goal) => {
-    let newGoals = [];
+  const currentGoals = await Promise.all(goals.map(async (goal) => {
     const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
-    const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
-    /**
-     * when we find existing goals, we should query by grantIds if available
-     * as switching recipients means that the goal ids provided could apply to now unused grant
-     */
+    return Promise.all(goal.grantIds.map(async (grantId) => {
+      let newOrUpdatedGoal;
 
-    const existingGrantIds = goal.grantIds && Array.isArray(goal.grantIds) ? goal.grantIds : [];
-    const existingGoalIds = goal.goalIds && Array.isArray(goalIds) ? goal.goalIds : [];
-
-    let existingGoals = [];
-    // we only query if there are existing goal ids
-    if (existingGoalIds.length) {
-      const where = {
-        id: existingGoalIds,
-      };
-
-      // if we have grant ids available, we should query by those as well
-      if (existingGrantIds.length) {
-        where.grantId = existingGrantIds;
-      }
-
-      // finally, we can query for existing goals, which simplifies some of loops
-      // further in this file
-      existingGoals = await Goal.findAll({ // All fields are needed.
-        where,
-      });
-    }
-
-    if (!existingGoals.length) {
+      // first pull out all the crufty fields
       const {
+        goalIds,
         objectives,
-        id,
         grantIds,
         status: discardedStatus,
         onApprovedAR,
         createdVia,
-        endDate: discardedEndDate,
         isRttapa,
         prompts,
+        grant,
+        grantId: discardedGrantId,
+        id, // we can't be trying to set this
+        endDate: discardedEndDate, // get this outta here
         ...fields
       } = goal;
 
-      // Reuse an existing Goal:
-      // - Has the same name.
-      // - Grant Id.
-      // - And status is not closed.
-      // Note: The existing goal should be used regardless if it was created new.
-      newGoals = await Promise.all(grantIds.map(async (grantId) => {
-        let newGoal = await Goal.findOne({
+      // does a goal exist for this ID & grantId combination?
+      newOrUpdatedGoal = existingGoals.find((extantGoal) => (
+        (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
+      ));
+
+      // if (newOrUpdatedGoal) {
+      //   auditLogger.info(`
+      //   GoalsForReport
+
+      //   - Found an existing goal with id ${newOrUpdatedGoal.id} and grantId ${grantId}`);
+      // }
+
+      // if not, does it exist for this name and grantId combination
+      if (!newOrUpdatedGoal) {
+        newOrUpdatedGoal = await Goal.findOne({
           where: {
-            name: fields.name,
+            name: goal.name,
             grantId,
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
         });
-        if (!newGoal) {
-          newGoal = await Goal.create({
-            grantId, // If we don't specify the grant it will be created with the old.
-            ...fields,
-            status,
-            onApprovedAR,
-            createdVia: 'activityReport',
-          });
-        }
 
-        if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
-          // todo - compare values to see if it's changed before we update
-          await newGoal.update({ endDate }, { individualHooks: true });
-        }
+        // if (newOrUpdatedGoal) {
+        //   auditLogger.info(`
+        // GoalsForReport
 
-        if (!newGoal.onApprovedAR && prompts) {
-          await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
-        }
+        // - Found an existing goal with name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
+        // }
+      }
 
-        await cacheGoalMetadata(
-          newGoal,
-          report.id,
-          isRttapa || null,
-          isActivelyBeingEditing,
-          prompts || null,
-        );
-
-        const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
-        currentObjectives = [...currentObjectives, ...newGoalObjectives];
-
-        return newGoal;
-      }));
-    } else {
-      const {
-        objectives,
-        grantIds,
-        status: discardedStatus,
-        grant,
-        grantId,
-        id, // this is unique and we can't be trying to set this
-        onApprovedAR, // we don't want to set this manually
-        endDate: discardedEndDate, // get this outta here
-        createdVia,
-        goalIds: discardedGoalIds,
-        isRttapa,
-        prompts,
-        ...fields
-      } = goal;
-
-      await Promise.all(existingGoals.map(async (existingGoal) => {
-        await existingGoal.update({
-          status, endDate, ...fields,
+      // if not, we create it
+      if (!newOrUpdatedGoal) {
+        newOrUpdatedGoal = await Goal.create({
+          createdVia: 'activityReport',
+          grantId,
+          ...fields,
+          status,
         }, { individualHooks: true });
 
-        const existingGoalObjectives = await createObjectivesForGoal(
-          existingGoal,
-          objectives,
-          report,
-        );
-        currentObjectives = [...currentObjectives, ...existingGoalObjectives];
+        // auditLogger.info(`
+        // GoalsForReport
+
+        // - Created a new goal with name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
+      }
+
+      await statusDeterminant(status, newOrUpdatedGoal, report);
+
+      if (!newOrUpdatedGoal.onApprovedAR) {
+        if (fields.name !== newOrUpdatedGoal.name) {
+          newOrUpdatedGoal.set({ name: fields.name }, { individualHooks: true });
+        }
+
+        if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
+        // todo - compare values to see if it's changed before we update
+          newOrUpdatedGoal.set({ endDate }, { individualHooks: true });
+        }
 
         if (prompts) {
-          await setFieldPromptsForCuratedTemplate([existingGoal.id], prompts);
+          await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
         }
+      }
 
-        await cacheGoalMetadata(
-          existingGoal,
-          report.id,
-          isRttapa,
-          isActivelyBeingEditing,
-          prompts || null,
-        );
-      }));
+      // here we save the goal where the status (and collorary fields) have been set
+      // as well as possibly the name and end date
+      await newOrUpdatedGoal.save();
 
-      newGoals = await Promise.all(grantIds.map(async (gId) => {
-        const existingGoal = existingGoals.find((g) => g.grantId === gId);
+      // then we save the goal metadata (to the activity report goal table)
+      await cacheGoalMetadata(
+        newOrUpdatedGoal,
+        report.id,
+        isRttapa || null,
+        isActivelyBeingEditing,
+        prompts || null,
+      );
 
-        if (existingGoal) {
-          return existingGoal;
-        }
+      // and pass the goal to the objective creation function
+      const newGoalObjectives = await createObjectivesForGoal(newOrUpdatedGoal, objectives, report);
+      currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
-        let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
-          where: {
-            name: fields.name,
-            grantId: gId,
-            status: { [Op.not]: 'Closed' },
-          },
-        });
+      return newOrUpdatedGoal;
+    }));
+  })).flat();
 
-        if (!newGoal) {
-          newGoal = await Goal.create({
-            grantId: gId,
-            ...fields,
-            status,
-          });
-        }
-
-        await newGoal.update({
-          ...fields, status, endDate, createdVia: createdVia || 'activityReport',
-        }, { individualHooks: true });
-
-        if (!newGoal.onApprovedAR && prompts) {
-          await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
-        }
-
-        await cacheGoalMetadata(
-          newGoal,
-          report.id,
-          isRttapa,
-          isActivelyBeingEditing,
-          prompts || null,
-        );
-
-        const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
-        currentObjectives = [...currentObjectives, ...newGoalObjectives];
-
-        if (isActivelyBeingEditing) {
-          // if the goal is flagged as "Active" from the frontend, we want to record that
-          // to update the report later
-          activelyEditedGoals.push(newGoal.id);
-        }
-        return newGoal;
-      }));
-    }
-
-    return newGoals;
-  })));
-
-  const currentGoalIds = currentGoals.flat().map((g) => g.id);
+  const currentGoalIds = currentGoals.map((g) => g.id);
 
   // Get previous DB ARG's.
   const previousActivityReportGoals = await ActivityReportGoal.findAll({
@@ -2085,21 +2097,30 @@ export async function updateGoalStatusById(
   }
 
   // finally, if everything is golden, we update the goal
-  const g = await Goal.update({
-    status: newStatus,
-    closeSuspendReason,
-    closeSuspendContext,
-    previousStatus: oldStatus,
-  }, {
+  const goals = await Goal.findAll({
     where: {
       id: goalIds,
     },
-    returning: true,
-    individualHooks: true,
   });
 
-  const [, updated] = g;
-  return updated;
+  if (!goals || !goals.length) {
+    auditLogger.error(`UPDATEGOALSTATUSBYID: Goal ${goalIds} not found`);
+    return false;
+  }
+
+  await Promise.all((goals.map(async (goal) => {
+    const date = new Date();
+    await statusDeterminant(oldStatus, goal, date);
+
+    goal.set('status', newStatus);
+    goal.set('closeSuspendReason', closeSuspendReason);
+    goal.set('closeSuspendContext', closeSuspendContext);
+    goal.set('previousStatus', oldStatus);
+
+    return goal.save();
+  })));
+
+  return goals;
 }
 
 export async function getGoalsForReport(reportId) {
