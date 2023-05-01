@@ -1,5 +1,11 @@
 @use 'colors.scss' as *;
 
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
+  font-weight: bold;
+}
+
 a {
   color: $text-link;
 }
@@ -312,4 +318,14 @@ fill: #1B1B1B;
 .smart-hub-title-big-serif {
   font-size: 30px;
   font-family: Merriweather, serif;
+}
+
+/* ========== some color helpers ========== */
+
+.bg-success-darker {
+  background: $success-darker;
+}
+
+.text-ttahub-blue {
+  color: $ttahub-blue;
 }

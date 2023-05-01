@@ -5,25 +5,45 @@ import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { DECIMAL_BASE } from '@ttahub/common';
+import { uniqBy } from 'lodash';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
+import ConditionalFields from './ConditionalFields';
 import {
   GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,
   GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import { DECIMAL_BASE } from '../../../../Constants';
+
 import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 import AppLoadingContext from '../../../../AppLoadingContext';
+
+const combinePrompts = (templatePrompts = [], goalPrompts = []) => uniqBy([
+  ...(templatePrompts || []),
+  ...(goalPrompts || []).map((prompt) => ({
+    title: prompt.title,
+    prompt: prompt.prompt,
+    options: prompt.options,
+    type: prompt.type,
+    validations: prompt.validations,
+    promptId: prompt.promptId,
+    response: prompt.response,
+    caution: prompt.caution,
+    hint: prompt.hint,
+  })),
+], 'title');
 
 export default function GoalForm({
   goal,
   topicOptions,
   reportId,
   datePickerKey,
+  templatePrompts,
+  isMultiRecipientReport,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -145,9 +165,12 @@ export default function GoalForm({
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
+  const prompts = combinePrompts(templatePrompts, goal.prompts);
+
+  const isCurated = goal.isCurated || false;
+
   return (
     <>
-
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -157,7 +180,13 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
         isLoading={isAppLoading}
-        userCanEdit
+        userCanEdit={!isCurated}
+      />
+
+      <ConditionalFields
+        prompts={prompts}
+        isOnReport={goal.onApprovedAR || false}
+        isMultiRecipientReport={isMultiRecipientReport}
       />
 
       <GoalRttapa
@@ -208,8 +237,15 @@ GoalForm.propTypes = {
     name: PropTypes.string,
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
+    isCurated: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
+    prompts: PropTypes.arrayOf(PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      prompt: PropTypes.string.isRequired,
+      options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    }.isRequired)),
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
@@ -217,4 +253,15 @@ GoalForm.propTypes = {
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
+  templatePrompts: PropTypes.arrayOf(PropTypes.shape({
+    type: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    prompt: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  }.isRequired)).isRequired,
+  isMultiRecipientReport: PropTypes.bool,
+};
+
+GoalForm.defaultProps = {
+  isMultiRecipientReport: false,
 };

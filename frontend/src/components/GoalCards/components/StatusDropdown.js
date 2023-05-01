@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faAngleDown,
 } from '@fortawesome/free-solid-svg-icons';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   InProgress,
   Closed,
@@ -15,7 +16,6 @@ import {
 import colors from '../../../colors';
 import UserContext from '../../../UserContext';
 import { canChangeGoalStatus } from '../../../permissions';
-import { DECIMAL_BASE } from '../../../Constants';
 import Menu from '../../Menu';
 import './StatusDropdown.css';
 

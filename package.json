@@ -115,7 +115,8 @@
     "luxon": "^1.23.1",
     "qs": "^6.9.7",
     "cookiejar": "^2.1.4",
-    "http-cache-semantics": "^4.1.1"
+    "http-cache-semantics": "^4.1.1",
+    "xml2js": "^0.5.0"
   },
   "eslintConfig": {
     "extends": [
@@ -134,7 +135,8 @@
     "ignorePatterns": [
       "node_modules/*",
       "playwright.config.js",
-      "tests/*"
+      "tests/*",
+      "packages/*"
     ],
     "rules": {
       "linebreak-style": 0,
@@ -167,6 +169,7 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
+      "<rootDir>/packages/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
       "<rootDir>/src/worker.ts",
@@ -181,6 +184,7 @@
       "<rootDir>/frontend/",
       "<rootDir>node_modules",
       "<rootDir>/build/",
+      "<rootDir>/packages/",
       "<rootDir>/src/makecolors.js",
       "<rootDir>/src/newrelic.js",
       "<rootDir>/src/testUtils.js",
@@ -271,6 +275,7 @@
     "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
+    "@ttahub/common": "file:./packages/common",   
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",

@@ -1,5 +1,5 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
 
 /**
@@ -26,6 +26,9 @@ export default (sequelize, DataTypes) => {
     },
     recipientType: {
       type: DataTypes.STRING,
+    },
+    deleted: {
+      type: DataTypes.BOOLEAN,
     },
   }, {
     sequelize,

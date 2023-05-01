@@ -2,7 +2,8 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
@@ -383,6 +384,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'name',
       'activityRecipientId',
       'grantId',
+      'otherEntityId',
     ],
     include: [
       {
@@ -703,6 +705,9 @@ export async function activityReports(
       [sequelize.col('grant.recipient.name'), sortDir],
       [sequelize.col('otherEntity.name'), sortDir],
     ],
+    include: [{
+      model: Grant, as: 'grant', required: false,
+    }],
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({

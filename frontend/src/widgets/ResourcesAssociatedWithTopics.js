@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useSessionSort from '../hooks/useSessionSort';
-import { TOPICS_PER_PAGE, DECIMAL_BASE } from '../Constants';
+import { TOPICS_PER_PAGE } from '../Constants';
 
+export const parseValue = (value) => {
+  const noCommasValue = value.replaceAll(',', '');
+  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
+  if (Number.isNaN(parsedValue)) {
+    return value;
+  }
+  return parsedValue;
+};
 function ResourcesAssociatedWithTopics({
   data,
   loading,
@@ -59,15 +68,6 @@ function ResourcesAssociatedWithTopics({
       setSortConfig(sort);
       setOffset((pageNumber - 1) * perPage);
     }
-  };
-
-  const parseValue = (value) => {
-    const noCommasValue = value.replaceAll(',', '');
-    const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
-    if (Number.isNaN(parsedValue)) {
-      return value;
-    }
-    return parsedValue;
   };
 
   const requestSort = (sortBy) => {

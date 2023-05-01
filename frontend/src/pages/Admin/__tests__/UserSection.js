@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, within, fireEvent,
 } from '@testing-library/react';
@@ -7,7 +8,6 @@ import selectEvent from 'react-select-event';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import UserSection from '../UserSection';
-import { SCOPE_IDS } from '../../../Constants';
 
 const {
   ADMIN,

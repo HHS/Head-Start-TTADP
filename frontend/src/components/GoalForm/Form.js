@@ -10,6 +10,7 @@ import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
 import GoalRttapa from './GoalRttapa';
+import GoalPrompts from './GoalPrompts';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -25,6 +26,7 @@ export default function Form({
   selectedGrants,
   setSelectedGrants,
   goalName,
+  prompts,
   setGoalName,
   endDate,
   setEndDate,
@@ -142,6 +144,10 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
+      <GoalPrompts
+        prompts={prompts}
+      />
+
       <GoalRttapa
         error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
         isRttapa={isRttapa}
@@ -256,6 +262,10 @@ Form.propTypes = {
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
+  prompts: PropTypes.arrayOf(PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    response: PropTypes.arrayOf(PropTypes.string).isRequired,
+  })).isRequired,
 };
 
 Form.defaultProps = {

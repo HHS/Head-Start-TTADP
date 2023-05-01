@@ -5,6 +5,7 @@ import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
 import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
+import getCachedResponse from '../../lib/cache';
 
 const namespace = 'SERVICE:WIDGETS';
 
@@ -56,9 +57,16 @@ export async function getWidget(req, res) {
    */
 
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
+    const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 
-    // pass in the scopes and the query
-    const widgetData = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+    const widgetData = await getCachedResponse(
+      key,
+      async () => {
+        const data = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+        return JSON.stringify(data);
+      },
+      JSON.parse,
+    );
 
     res.json(widgetData);
   } catch (error) {

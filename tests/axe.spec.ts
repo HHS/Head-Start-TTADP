@@ -9,7 +9,7 @@ const axeUrls = [
   'http://localhost:3000/activity-reports/new/goals-objectives',
   'http://localhost:3000/activity-reports/new/next-steps',
   'http://localhost:3000/activity-reports/new/review',
-  'http://localhost:3000/admin',
+  // 'http://localhost:3000/admin', this page is not accessible to the test user
   'http://localhost:3000/activity-reports/view/9999',
   'http://localhost:3000/regional-dashboard',
   'http://localhost:3000/recipient-tta-records',

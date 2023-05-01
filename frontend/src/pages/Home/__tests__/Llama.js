@@ -2,10 +2,10 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import Llama from '../Llama';
-import { SCOPE_IDS } from '../../../Constants';
 
 const mockResponse = {
   daysSinceJoined: '123 days',
