@@ -38,7 +38,16 @@ exports.config = {
     filepath: 'stdout',
   },
   audit_log: {
-    enabled: true,
+    enabled: process.env.NEW_RELIC_AUDIT_LOG_ENABLED
+      ? process.env.NEW_RELIC_AUDIT_LOG_ENABLED
+      : false,
+    endpoints: process.env.NEW_RELIC_AUDIT_LOG_ENDPOINTS
+      ? process.env.NEW_RELIC_AUDIT_LOG_ENDPOINTS
+      : [
+        'error_data',
+        'error_event_data',
+        'sql_trace_data',
+      ],
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
@@ -90,10 +99,19 @@ exports.config = {
     ],
   },
   transaction_tracer: {
-    record_sql: 'raw',
+    enabled: process.env.NEW_RELIC_TRACER_ENABLED
+      ? process.env.NEW_RELIC_TRACER_ENABLED
+      : false,
+    record_sql: process.env.NEW_RELIC_RECORD_SQL
+      ? process.env.NEW_RELIC_RECORD_SQL
+      : 'raw',
   },
   slow_sql: {
-    enabled: true,
-    max_samples: 100,
+    enabled: process.env.NEW_RELIC_SLOW_SQL_ENABLED
+      ? process.env.NEW_RELIC_SLOW_SQL_ENABLED
+      : false,
+    max_samples: process.env.NEW_RELIC_MAX_SQL_SAMPLES
+      ? process.env.NEW_RELIC_MAX_SQL_SAMPLES
+      : 100,
   },
 };
