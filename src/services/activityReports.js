@@ -385,6 +385,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'name',
       'activityRecipientId',
       'grantId',
+      'otherEntityId',
     ],
     include: [
       {
@@ -707,6 +708,9 @@ export async function activityReports(
       [sequelize.col('grant.recipient.name'), sortDir],
       [sequelize.col('otherEntity.name'), sortDir],
     ],
+    include: [{
+      model: Grant, as: 'grant', required: false,
+    }],
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({

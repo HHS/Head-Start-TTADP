@@ -26,6 +26,11 @@ export default async function overview(scopes) {
         where: {
           [Op.and]: [
             scopes.grant,
+            { endDate: { [Op.gt]: '2020-08-31' } },
+            { deleted: { [Op.ne]: true } },
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
           ],
         },
       },
@@ -46,7 +51,11 @@ export default async function overview(scopes) {
   // the matching denominator set
   const [{ numRecipients }] = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant->recipient"."id"'))), 'numRecipients'],
+      [sequelize.fn('COUNT', sequelize.fn(
+        'DISTINCT',
+        sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"')),
+        sequelize.col('"activityRecipients->grant"."regionId"'),
+      )), 'numRecipients'],
     ],
     raw: true,
     where: {

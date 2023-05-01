@@ -3,6 +3,7 @@ import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
+import { join } from 'path';
 
 test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   const response = await request.get(
@@ -18,7 +19,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     name: Joi.string(),
     recipientType: Joi.allow(null),
     createdAt: Joi.date(),
-    updatedAt: Joi.date()
+    updatedAt: Joi.date(),
+    deleted: Joi.any().allow(null),
   });
   
   const grantSchema = Joi.object({
@@ -44,9 +46,17 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     createdAt: Joi.date(),
     updatedAt: Joi.date(),
     regionId: Joi.number(),
-    recipient: recipientSchema
+    recipient: recipientSchema,
+    inactivationDate: Joi.any().allow(null),
+    inactivationReason: Joi.any().allow(null),
+    deleted: Joi.any().allow(null)
   });
   
+  const promptsSchema = Joi.object({
+    title: Joi.string(),
+    response: Joi.array().items(Joi.string()),
+  });
+
   const schema = Joi.array().items(Joi.object({
     endDate: Joi.date().allow(null),
     status: Joi.string(),
@@ -60,7 +70,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     goalIds: Joi.array().items(Joi.number()),
     grants: Joi.array().items(grantSchema),
     grantIds: Joi.array().items(Joi.number()),
-    isNew: Joi.boolean()
+    isNew: Joi.boolean(),
+    prompts: Joi.array().items(promptsSchema),
   }));
 
   await validateSchema(response, schema, expect);
@@ -106,8 +117,19 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     onAnyReport: Joi.boolean(),
     onApprovedAR: Joi.boolean(),
     rtrOrder: Joi.number(),
+    isCurated: Joi.boolean(),
     objectives: Joi.array(),
-    grant: grantSchema
+    grant: grantSchema,
+    prompts: Joi.array().items(
+      Joi.object({
+        id: Joi.number(),
+        title: Joi.string(),
+        response: Joi.array().items(
+          Joi.string()
+        ),
+        prompt: Joi.string(),     
+       }),
+      ),  
   });
 
   await validateSchema(response, schema, expect);
