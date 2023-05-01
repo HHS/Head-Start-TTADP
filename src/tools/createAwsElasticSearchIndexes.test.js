@@ -348,8 +348,10 @@ describe('Create AWS Elastic Search Indexes', () => {
       ['activityReportGoals'],
       query,
     );
-    expect(searchResult.hits.length).toBe(1);
+
+    expect(searchResult.hits.length).toBe(2);
     expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
+    expect(searchResult.hits[1]._id).toBe(reportTwo.id.toString());
 
     // ARO.
     query = 'How to prepare';
