@@ -6,7 +6,6 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { uniqBy } from 'lodash';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
@@ -21,21 +20,7 @@ import { NO_ERROR, ERROR_FORMAT } from './constants';
 
 import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 import AppLoadingContext from '../../../../AppLoadingContext';
-
-const combinePrompts = (templatePrompts = [], goalPrompts = []) => uniqBy([
-  ...(templatePrompts || []),
-  ...(goalPrompts || []).map((prompt) => ({
-    title: prompt.title,
-    prompt: prompt.prompt,
-    options: prompt.options,
-    type: prompt.type,
-    validations: prompt.validations,
-    promptId: prompt.promptId,
-    response: prompt.response,
-    caution: prompt.caution,
-    hint: prompt.hint,
-  })),
-], 'title');
+import { combinePrompts } from '../../../../components/condtionalFieldConstants';
 
 export default function GoalForm({
   goal,
@@ -253,12 +238,15 @@ GoalForm.propTypes = {
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
-  templatePrompts: PropTypes.arrayOf(PropTypes.shape({
-    type: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    prompt: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(PropTypes.string).isRequired,
-  }.isRequired)).isRequired,
+  templatePrompts: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.arrayOf(PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      prompt: PropTypes.string.isRequired,
+      options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    })).isRequired,
+  ]).isRequired,
   isMultiRecipientReport: PropTypes.bool,
 };
 

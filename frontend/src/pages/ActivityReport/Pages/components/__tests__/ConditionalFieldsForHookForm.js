@@ -12,6 +12,7 @@ import ConditionalFieldsForHookForm from '../ConditionalFieldsForHookForm';
 
 const DEFAULT_PROMPTS = [{
   fieldType: 'multiselect',
+  type: 'multiselect',
   prompt: 'answer my riddle',
   hint: 'hint',
   options: [

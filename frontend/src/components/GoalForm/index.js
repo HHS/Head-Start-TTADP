@@ -15,6 +15,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
+import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -37,11 +38,12 @@ import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
+import { combinePrompts } from '../condtionalFieldConstants';
 
 const [
   objectiveTextError,
   objectiveTopicsError,
-  objectiveResourcesError,,
+  objectiveResourcesError,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -75,6 +77,7 @@ export default function GoalForm({
     isRttapa: '',
     prompts: [],
     isCurated: false,
+    goalTemplateId: null,
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -89,7 +92,9 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
+  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
+  const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [isRttapa, setIsRttapa] = useState(goalDefaults.isRttapa);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
@@ -151,6 +156,7 @@ export default function GoalForm({
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setIsCurated(goal.isCurated);
+        setGoalTemplateId(goal.goalTemplateId);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -221,6 +227,23 @@ export default function GoalForm({
     }
     fetchTopics();
   }, []);
+
+  useEffect(() => {
+    async function fetchGoalTemplatePrompts() {
+      if (isCurated && goalTemplateId && ids) {
+        const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
+        if (gtPrompts) {
+          setGoalTemplatePrompts(
+            combinePrompts(gtPrompts.map((p) => ({ ...p, fieldType: p.type })), prompts),
+          );
+        } else {
+          setGoalTemplatePrompts(prompts);
+        }
+      }
+    }
+
+    fetchGoalTemplatePrompts();
+  }, [goalTemplateId, ids, isCurated, prompts]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -731,7 +754,7 @@ export default function GoalForm({
         grantId: g.value,
         name: goalName,
         status,
-        prompts,
+        prompts: goalTemplatePrompts,
         isCurated,
         endDate,
         isRttapa,
@@ -906,8 +929,8 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
-              prompts={prompts}
-              setPrompts={setPrompts}
+              prompts={goalTemplatePrompts}
+              setPrompts={setGoalTemplatePrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}

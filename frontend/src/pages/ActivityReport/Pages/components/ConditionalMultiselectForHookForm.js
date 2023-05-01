@@ -56,7 +56,7 @@ ConditionalMultiselectForHookForm.propTypes = {
     hint: PropTypes.string,
   }).isRequired,
   validations: PropTypes.shape({
-    required: PropTypes.bool,
+    required: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     message: PropTypes.string,
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,

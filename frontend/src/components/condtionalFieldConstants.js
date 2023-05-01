@@ -1,3 +1,5 @@
+import { uniqBy } from 'lodash';
+
 const MULTISELECT_VALIDATION_DICTIONARY = {
   maxSelections: (validation) => (selectedOptions) => (
     selectedOptions.length <= validation.value
@@ -68,9 +70,24 @@ const updateRefToInitialValues = (initialValues, prompts) => {
 
   // get all promptValues not in alreadySaved
   const newPrompts = promptValues.filter((p) => !alreadySaved.includes(p.promptId));
-
   return [...initialValues, ...newPrompts];
 };
+
+export const combinePrompts = (templatePrompts = [], goalPrompts = []) => uniqBy([
+  ...(templatePrompts || []),
+  ...(goalPrompts || []).map((prompt) => ({
+    title: prompt.title,
+    prompt: prompt.prompt,
+    options: prompt.options,
+    fieldType: prompt.type,
+    type: prompt.type,
+    validations: prompt.validations,
+    promptId: prompt.promptId,
+    response: prompt.response,
+    caution: prompt.caution,
+    hint: prompt.hint,
+  })),
+], 'title');
 
 export default {
   updateRefToInitialValues,

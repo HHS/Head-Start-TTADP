@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form/dist/index.ie11';
@@ -36,14 +37,14 @@ export default function ConditionalFieldsForHookForm({
     defaultValue: [],
   });
 
-  const initialValues = useRef([]);
+  const [initialValues, setInitialValues] = useState([]);
 
-  useEffect(() => {
-    const newPromptValues = updateRefToInitialValues(initialValues.current, prompts);
+  useDeepCompareEffect(() => {
+    const newPromptValues = updateRefToInitialValues(initialValues, prompts);
 
     // save the new prompts to initialValues
-    initialValues.current = newPromptValues;
-  }, [prompts]);
+    setInitialValues(newPromptValues);
+  }, [prompts, initialValues]);
 
   useEffect(() => {
     // on mount, update the goal conditional fields
@@ -69,9 +70,9 @@ export default function ConditionalFieldsForHookForm({
       return null;
     }
 
-    if (FIELD_DICTIONARY[prompt.fieldType]) {
+    if (FIELD_DICTIONARY[prompt.type]) {
       const initialValue = (() => {
-        const current = initialValues.current.find((p) => p.promptId === prompt.promptId);
+        const current = initialValues.find((p) => p.promptId === prompt.promptId);
         if (current) {
           return current.response;
         }
@@ -79,11 +80,11 @@ export default function ConditionalFieldsForHookForm({
         return [];
       })();
 
-      const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
+      const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.type];
       const completions = validationsAndCompletions.confirmResponseComplete(prompt.validations);
       const isComplete = completions.every((completion) => completion(initialValue));
 
-      return FIELD_DICTIONARY[prompt.fieldType].render(
+      return FIELD_DICTIONARY[prompt.type].render(
         prompt,
         prompt.validations,
         prompt.response,
