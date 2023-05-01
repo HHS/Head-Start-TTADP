@@ -61,7 +61,7 @@ const transformMultiselectValidationsIntoRules = (validations) => validations.ru
  * so that we can know if the prompt was initially complete or not
  */
 const updateRefToInitialValues = (initialValues, prompts) => {
-  const promptValues = prompts.map((p) => ({
+  const promptValues = (prompts || []).map((p) => ({
     promptId: p.promptId,
     response: p.response,
   }));
