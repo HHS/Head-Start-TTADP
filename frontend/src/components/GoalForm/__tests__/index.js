@@ -67,6 +67,7 @@ describe('create goal', () => {
     name: 'This is goal text',
     status: 'Draft',
     endDate: '08/15/2023',
+    goalTemplateId: 1,
     isFromSmartsheetTtaPlan: false,
     timeframe: null,
     isRttapa: 'No',
