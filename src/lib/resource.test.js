@@ -46,6 +46,7 @@ describe('resource worker tests', () => {
     jest.clearAllMocks();
   });
   it('tests a clean resource get', async () => {
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
     expect(got.status).toBe(200);
@@ -78,8 +79,6 @@ describe('resource worker tests', () => {
 
   it('tests a resource retrieve error', async () => {
     mockAxios.mockImplementationOnce(() => Promise.reject(axiosNotFoundError));
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
-    expect(mockUpdate).not.toBeCalledWith();
-    expect(got.status).toBe(500);
+    await expect(getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } })).rejects.toThrow(Error);
   });
 });
