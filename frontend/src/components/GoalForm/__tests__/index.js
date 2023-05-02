@@ -132,6 +132,11 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -162,6 +167,11 @@ describe('create goal', () => {
 
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
@@ -191,12 +201,7 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    /*
-    const topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
-    const topics = document.querySelector('#topics');
-    */
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = document.querySelector('#resource-1');
@@ -204,18 +209,22 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    expect(fetchMock.called()).toBeTruthy();
+    expect(fetchMock.called('/api/goals')).toBeTruthy();
 
     // restore our fetch mock
     fetchMock.restore();
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
-    expect(fetchMock.called()).toBeTruthy();
+    expect(fetchMock.called('/api/goals')).toBeTruthy();
   });
 
   it('goals are validated', async () => {
@@ -304,6 +313,11 @@ describe('create goal', () => {
     renderForm(recipient);
 
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', 500);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
@@ -325,6 +339,11 @@ describe('create goal', () => {
     expect(alert.textContent).toBe('There was an error saving your goal');
 
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -333,25 +352,25 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    /*
-    const topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
-    const topics = document.querySelector('#topics');
-    */
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
-    expect(fetchMock.called()).toBe(false);
+    expect(fetchMock.called('/api/goals')).toBe(false);
     userEvent.click(save);
 
-    expect(fetchMock.called()).toBeTruthy();
+    expect(fetchMock.called('/api/goals')).toBeTruthy();
     alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', 500);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
@@ -394,13 +413,10 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    /*
-    const topicsText = screen.queryAllByLabelText(/topics *i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
     expect(topicsText.length).toBe(2);
     const topics = document.querySelector('#topics');
-    */
 
-    const topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -441,6 +457,11 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
 
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
@@ -459,12 +480,10 @@ describe('create goal', () => {
     let objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    /*
-    let topicsText = screen.queryAllByLabelText(/topics *i);
+    const topicsText = screen.queryAllByLabelText(/topics \*/i);
     expect(topicsText.length).toBe(2);
     let topics = document.querySelector('#topics');
-    */
-    let topics = await screen.findByLabelText(/topics \*/i);
+
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     let resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -474,12 +493,17 @@ describe('create goal', () => {
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    expect(fetchMock.called()).toBeTruthy();
+    expect(fetchMock.called('/api/goals')).toBeTruthy();
 
     // restore our fetch mock
     fetchMock.restore();
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Whats New</title>
+  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+  <subtitle>Confluence Syndication Feed</subtitle>
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    expect(fetchMock.called('/api/goals')).toBe(false);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
     expect(cancel).not.toBeVisible();
@@ -505,18 +529,13 @@ describe('create goal', () => {
     objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    /*
-    topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
     topics = document.querySelector('#topics');
-    */
-    topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
-    await userEvent.click((await screen.findByRole('button', { name: /save draft/i })));
+    userEvent.click((await screen.findByRole('button', { name: /save draft/i })));
 
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -564,12 +583,7 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'test');
 
-    /*
-    const topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
-    const topics = document.querySelector('#topics');
-    */
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -610,8 +624,13 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Whats New</title>
+  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+  <subtitle>Confluence Syndication Feed</subtitle>
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
-    expect(fetchMock.called()).toBe(false);
+    expect(fetchMock.called('/api/goals')).toBe(false);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
@@ -640,12 +659,7 @@ describe('create goal', () => {
 
     await screen.findByText(objectiveTopicsError);
 
-    /*
-    const topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
-    const topics = document.querySelector('#topics');
-    */
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['Coaching']);
 
     userEvent.click(save);
@@ -656,7 +670,7 @@ describe('create goal', () => {
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
-    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.called('/api/goals')).toBe(true);
   });
 
   it('can add and validate objective resources', async () => {
@@ -676,6 +690,11 @@ describe('create goal', () => {
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
@@ -693,12 +712,7 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
-    /*
-    const topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
-    const topics = document.querySelector('#topics');
-    */
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['Coaching']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -773,6 +787,11 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });

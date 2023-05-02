@@ -2,7 +2,9 @@ import React, { useMemo, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
-import FeedArticle from './FeedArticle';
+import FeedArticle from '../../../components/FeedArticle';
+import { parseFeedIntoDom } from '../../../utils';
+import './WhatsNew.scss';
 
 const LOCAL_STORAGE_KEY = 'whatsnew-read-notifications';
 
@@ -22,20 +24,6 @@ const MONTHS = [
   'November',
   'December',
 ];
-
-export const parseFeedIntoDom = (feed) => {
-  if (!feed) {
-    return null;
-  }
-
-  const parsedDom = new window.DOMParser().parseFromString(feed, 'text/xml');
-
-  if (parsedDom.querySelector('parsererror')) {
-    return null;
-  }
-
-  return parsedDom;
-};
 
 export const formatWhatsNew = (feed) => {
   const dom = parseFeedIntoDom(feed);
@@ -141,7 +129,7 @@ export default function WhatsNew({ data }) {
   return (
     <Container>
       <h2 className="font-serif-xl margin-0">What&apos;s new</h2>
-      <div className="ttahub-feed">
+      <div className="ttahub-feed ttahub-feed-whats-new">
         {YEARS.map((year) => (
           <div key={year}>
             {articles[`${year}`] && (
