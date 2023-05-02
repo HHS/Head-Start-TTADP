@@ -1803,89 +1803,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
   }));
 }
 
-/**
- * This function is for setting the status metadata of a goal
- * (lastNotStartedAt, firstNotStartedAt, etc.)
- *
- * It should only update the status if it's changed, and it should
- * only update the other fields where appropriate
- *
- * Note that this function only updates the model instance with "set"
- * and does not save it to the database, so you must call save() on the
- * model instance after calling this function
- *
- * @param {string} oldStatus
- * @param {GoalModel} goal
- * @param {string | Date} date
- * @returns GoalModel
- */
-const statusDeterminant = async (oldStatus, goal, date) => {
-  const newStatus = goal.status;
-  const changed = oldStatus !== newStatus;
-
-  if (changed) {
-    if (GOAL_STATUS[newStatus]) {
-      goal.set('status', newStatus);
-    } else {
-      auditLogger.error(`Goal status changed to invalid value of "${newStatus}".`);
-      return goal;
-    }
-
-    switch (newStatus) {
-      case undefined:
-      case null:
-      case '':
-      case GOAL_STATUS.DRAFT:
-        break;
-      case GOAL_STATUS.NOT_STARTED:
-        if (!goal.firstNotStartedAt) {
-          goal.set('firstNotStartedAt', date);
-        }
-
-        // for each of these cases, we only want to update the field if it's
-        // the first time it's being set, or if the new date is more recent
-        if (goal.lastNotStartedAt && goal.lastNotStartedAt > date) {
-          break;
-        }
-
-        goal.set('lastNotStartedAt', date);
-        break;
-      case GOAL_STATUS.IN_PROGRESS:
-        if (!goal.firstinProgressAt) {
-          goal.set('firstInProgressAt', date);
-        }
-        if (goal.lastInProgressAt && goal.lastInProgressAt > date) {
-          break;
-        }
-        goal.set('lastInProgressAt', date);
-
-        break;
-      case GOAL_STATUS.SUSPENDED:
-        if (!goal.firstCeasedSuspendedAt) {
-          goal.set('firstCeasedSuspendedAt', date);
-        }
-        if (goal.lastCeasedSuspendedAt && goal.lastCeasedSuspendedAt > date) {
-          break;
-        }
-        goal.set('lastCeasedSuspendedAt', date);
-        break;
-      case GOAL_STATUS.CLOSED:
-        if (!goal.firstClosedAt) {
-          goal.set('firstClosedAt', date);
-        }
-        if (goal.lastClosedAt && goal.lastClosedAt > date) {
-          break;
-        }
-        goal.set('lastClosedAt', date);
-        break;
-      default:
-        break;
-    }
-  }
-
-  return goal;
-};
-
 export async function saveGoalsForReport(goals, report) {
   // this will be all the currently used objectives
   // so we can remove any objectives that are no longer being used
@@ -1972,8 +1889,6 @@ export async function saveGoalsForReport(goals, report) {
 
         // - Created a new goal with name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
       }
-
-      await statusDeterminant(status, newOrUpdatedGoal, report);
 
       if (!newOrUpdatedGoal.onApprovedAR) {
         if (fields.name !== newOrUpdatedGoal.name) {
@@ -2097,30 +2012,21 @@ export async function updateGoalStatusById(
   }
 
   // finally, if everything is golden, we update the goal
-  const goals = await Goal.findAll({
+  const g = await Goal.update({
+    status: newStatus,
+    closeSuspendReason,
+    closeSuspendContext,
+    previousStatus: oldStatus,
+  }, {
     where: {
       id: goalIds,
     },
+    returning: true,
+    individualHooks: true,
   });
 
-  if (!goals || !goals.length) {
-    auditLogger.error(`UPDATEGOALSTATUSBYID: Goal ${goalIds} not found`);
-    return false;
-  }
-
-  await Promise.all((goals.map(async (goal) => {
-    const date = new Date();
-    await statusDeterminant(oldStatus, goal, date);
-
-    goal.set('status', newStatus);
-    goal.set('closeSuspendReason', closeSuspendReason);
-    goal.set('closeSuspendContext', closeSuspendContext);
-    goal.set('previousStatus', oldStatus);
-
-    return goal.save();
-  })));
-
-  return goals;
+  const [, updated] = g;
+  return updated;
 }
 
 export async function getGoalsForReport(reportId) {
