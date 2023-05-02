@@ -85,14 +85,14 @@ export function withoutReportText(searchText) {
 
   return {
     [Op.and]: [
-      filterAssociation(nextSteps, search, false, 'NOT ILIKE'),
-      filterAssociation(args, search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTitle, search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTtaProvided, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportResource, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportGoalResource, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveResource, search, false, 'NOT ILIKE'),
-      filterAssociation(nextStepsResource, search, false, 'NOT ILIKE'),
+      filterAssociation(nextSteps, search, true, 'NOT ILIKE'),
+      filterAssociation(args, search, true, 'NOT ILIKE'),
+      filterAssociation(objectiveTitle, search, true, 'NOT ILIKE'),
+      filterAssociation(objectiveTtaProvided, search, true, 'NOT ILIKE'),
+      filterAssociation(activityReportResource, search, true, 'NOT ILIKE'),
+      filterAssociation(activityReportGoalResource, search, true, 'NOT ILIKE'),
+      filterAssociation(activityReportObjectiveResource, search, true, 'NOT ILIKE'),
+      filterAssociation(nextStepsResource, search, true, 'NOT ILIKE'),
     ],
   };
 }
