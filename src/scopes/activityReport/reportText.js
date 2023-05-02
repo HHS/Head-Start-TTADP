@@ -35,8 +35,10 @@ WHERE "Resources"."url"`;
 
 const activityReportGoalResource = `
 SELECT DISTINCT
-  "ActivityReportGoalResources"."activityReportId"
-FROM "ActivityReportGoalResources" "ActivityReportGoalResources"
+  "ActivityReportGoals"."activityReportId"
+FROM "ActivityReportGoals" "ActivityReportGoals"
+INNER JOIN "ActivityReportGoalResources" "ActivityReportGoalResources"
+ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
 INNER JOIN "Resources" "Resources"
 ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
 WHERE "Resources"."url"`;
@@ -53,38 +55,44 @@ WHERE "Resources"."url"`;
 
 const nextStepsResource = `
 SELECT DISTINCT
-  "NextStepsResources"."activityReportId"
-FROM "NextStepsResources" "NextStepsResources"
+  "NextSteps"."activityReportId"
+FROM "NextSteps" "NextSteps"
+INNER JOIN "NextStepResources" "NextStepResources"
+ON "NextSteps"."id" = "NextStepResources"."nextStepId"
 INNER JOIN "Resources" "Resources"
-ON "Resources"."id" = "NextStepsResources"."resourceId"
+ON "Resources"."id" = "NextStepResources"."resourceId"
 WHERE "Resources"."url"`;
 
 export function withReportText(searchText) {
+  const search = [`%${searchText}%`];
+
   return {
     [Op.or]: [
-      filterAssociation(nextSteps, searchText, false, 'ILIKE'),
-      filterAssociation(args, searchText, false, 'ILIKE'),
-      filterAssociation(objectiveTitle, searchText, false, 'ILIKE'),
-      filterAssociation(objectiveTtaProvided, searchText, false, 'ILIKE'),
-      filterAssociation(activityReportResource, searchText, false, 'ILIKE'),
-      filterAssociation(activityReportGoalResource, searchText, false, 'ILIKE'),
-      filterAssociation(activityReportObjectiveResource, searchText, false, 'ILIKE'),
-      filterAssociation(nextStepsResource, searchText, false, 'ILIKE'),
+      filterAssociation(nextSteps, search, false, 'ILIKE'),
+      filterAssociation(args, search, false, 'ILIKE'),
+      filterAssociation(objectiveTitle, search, false, 'ILIKE'),
+      filterAssociation(objectiveTtaProvided, search, false, 'ILIKE'),
+      filterAssociation(activityReportResource, search, false, 'ILIKE'),
+      filterAssociation(activityReportGoalResource, search, false, 'ILIKE'),
+      filterAssociation(activityReportObjectiveResource, search, false, 'ILIKE'),
+      filterAssociation(nextStepsResource, search, false, 'ILIKE'),
     ],
   };
 }
 
 export function withoutReportText(searchText) {
+  const search = [`%${searchText}%`];
+
   return {
     [Op.and]: [
-      filterAssociation(nextSteps, searchText, false, 'NOT ILIKE'),
-      filterAssociation(args, searchText, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTitle, searchText, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTtaProvided, searchText, false, 'NOT ILIKE'),
-      filterAssociation(activityReportResource, searchText, false, 'NOT ILIKE'),
-      filterAssociation(activityReportGoalResource, searchText, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveResource, searchText, false, 'NOT ILIKE'),
-      filterAssociation(nextStepsResource, searchText, false, 'NOT ILIKE'),
+      filterAssociation(nextSteps, search, false, 'NOT ILIKE'),
+      filterAssociation(args, search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTitle, search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTtaProvided, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportResource, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportGoalResource, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportObjectiveResource, search, false, 'NOT ILIKE'),
+      filterAssociation(nextStepsResource, search, false, 'NOT ILIKE'),
     ],
   };
 }
