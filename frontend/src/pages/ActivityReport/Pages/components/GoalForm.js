@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useMemo, useContext, useRef, useState,
+  useEffect, useMemo, useContext, useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -14,11 +14,9 @@ import ConditionalFields from './ConditionalFieldsForHookForm';
 import {
   GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,
-  GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 
-import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
 
@@ -86,23 +84,6 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
-  const {
-    field: {
-      onChange: onUpdateRttapa,
-      value: isRttapa,
-      name: goalIsRttapaInputName,
-    },
-  } = useController({
-    name: 'goalIsRttapa',
-    rules: {
-      required: {
-        value: true,
-        message: GOAL_RTTAPA_ERROR,
-      },
-    },
-    defaultValue: '',
-  });
-
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -112,13 +93,6 @@ export default function GoalForm({
     goal.name,
     onUpdateText,
   ]);
-
-  const initialRttapa = useRef(goal.initialRttapa);
-
-  useEffect(() => {
-    onUpdateRttapa(goal.isRttapa ? goal.isRttapa : '');
-    initialRttapa.current = goal.initialRttapa;
-  }, [goal.initialRttapa, goal.isRttapa, onUpdateRttapa]);
 
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
@@ -174,16 +148,6 @@ export default function GoalForm({
         isMultiRecipientReport={isMultiRecipientReport}
       />
 
-      <GoalRttapa
-        error={errors.goalIsRttapa ? ERROR_FORMAT(errors.goalIsRttapa.message) : NO_ERROR}
-        isRttapa={isRttapa}
-        onChange={onUpdateRttapa}
-        inputName={goalIsRttapaInputName}
-        goalStatus={status}
-        isOnApprovedReport={goal.onApprovedAR || false}
-        initial={initialRttapa.current}
-      />
-
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
         setEndDate={onUpdateDate}
@@ -215,8 +179,6 @@ GoalForm.propTypes = {
       PropTypes.number,
       PropTypes.string,
     ]),
-    isRttapa: PropTypes.string,
-    initialRttapa: PropTypes.string,
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
