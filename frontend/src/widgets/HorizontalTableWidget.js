@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 import './HorizontalTableWidget.scss';
 
+/*
 const trimLongURLs = (url) => {
   let newUrl = url;
   if (newUrl.length >= 35) {
@@ -12,6 +13,7 @@ const trimLongURLs = (url) => {
   }
   return newUrl;
 };
+*/
 
 export default function HorizontalTableWidget(
   {
@@ -97,7 +99,7 @@ export default function HorizontalTableWidget(
                     r.isUrl
                       ? (
                         <a href={r.heading} target="_blank" rel="noreferrer" title={r.heading}>
-                          {trimLongURLs(r.heading)}
+                          {r.heading}
                         </a>
                       )
                       : r.heading

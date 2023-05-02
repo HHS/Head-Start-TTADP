@@ -24,6 +24,9 @@ const beforeUpdate = async (sequelize, instance, options) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
+  if (!instance.title) {
+    addGetResourceMetadataToQueue(instance.id, instance.url);
+  }
 };
 
 const afterCreate = async (sequelize, instance, options) => {

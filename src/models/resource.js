@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { beforeValidate, afterCreate } = require('./hooks/resource');
+const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/resource');
 
 export default (sequelize, DataTypes) => {
   class Resource extends Model {
@@ -31,6 +31,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     sequelize,
     modelName: 'Resource',

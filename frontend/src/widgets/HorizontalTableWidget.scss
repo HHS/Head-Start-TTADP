@@ -59,7 +59,10 @@
   }
 
   .smarthub-horizontal-table-widget .usa-table td:first-child {
-    white-space: normal;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 500px;
+    overflow: hidden;
   }
 
   .smarthub-horizontal-table-widget .usa-table p:first-child {
