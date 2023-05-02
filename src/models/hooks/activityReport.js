@@ -3,6 +3,7 @@ const { REPORT_STATUSES } = require('@ttahub/common');
 const { OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
+const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
   scheduleUpdateIndexDocumentJob,
@@ -674,7 +675,10 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
-          status: ['Draft', 'Not Started'],
+          status: [
+            GOAL_STATUS.DRAFT,
+            GOAL_STATUS.NOT_STARTED,
+          ],
         },
         include: [
           {
@@ -689,7 +693,7 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     );
 
     return Promise.all((goals.map((goal) => {
-      const status = 'In Progress';
+      const status = GOAL_STATUS.IN_PROGRESS;
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
@@ -702,8 +706,9 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
           goal.set('lastInProgressAt', instance.endDate);
         }
       }
-      // removing individual hooks because we don't want to trigger the automatic status change
-      return goal.save({ transaction: options.transaction });
+      // removing hooks because we don't want to trigger the automatic status change
+      // (i.e. last in progress at will be overwritten)
+      return goal.save({ transaction: options.transaction, hooks: false });
     })));
   }
 

@@ -1924,9 +1924,9 @@ export async function saveGoalsForReport(goals, report) {
 
       return newOrUpdatedGoal;
     }));
-  })).flat();
+  }));
 
-  const currentGoalIds = currentGoals.map((g) => g.id);
+  const currentGoalIds = currentGoals.flatMap((g) => g.id);
 
   // Get previous DB ARG's.
   const previousActivityReportGoals = await ActivityReportGoal.findAll({
