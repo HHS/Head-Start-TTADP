@@ -535,6 +535,7 @@ describe('Resources dashboard', () => {
           reportCount: 3,
           recipientCount: 1,
           resourceCount: 2,
+          title: null,
         },
         {
           domain: 'non.test1.gov',
@@ -542,6 +543,7 @@ describe('Resources dashboard', () => {
           reportCount: 2,
           recipientCount: 1,
           resourceCount: 1,
+          title: null,
         },
       ],
     });
