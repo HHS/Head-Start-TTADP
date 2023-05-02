@@ -18,25 +18,21 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
     (objective, index) => {
       let incomplete = false;
       if (!objective.title) {
-        // debugger;
         setError(`${fieldArrayName}[${index}].title`, { message: OBJECTIVE_TITLE });
         incomplete = true;
       }
 
       if (!objective.ttaProvided || objective.ttaProvided === '<p></p>' || objective.ttaProvided === '<p></p>\n') {
-        // debugger;
         setError(`${fieldArrayName}[${index}].ttaProvided`, { message: OBJECTIVE_TTA });
         incomplete = true;
       }
 
       if (!objective.topics || !objective.topics.length) {
-        // debugger;
         setError(`${fieldArrayName}[${index}].topics`, { message: OBJECTIVE_TOPICS });
         incomplete = true;
       }
 
       if (!objective.resources || !validateListOfResources(objective.resources)) {
-        // debugger;
         setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         incomplete = true;
       }
@@ -54,12 +50,10 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
     if (!goal.name) {
       setError('goalName', { message: GOAL_NAME_ERROR });
-      // debugger;
       return GOAL_NAME_ERROR;
     }
 
     if (goal.isRttapa !== 'Yes' && goal.isRttapa !== 'No') {
-      // debugger;
       setError('goalIsRttapa', { message: GOAL_RTTAPA_ERROR });
       return GOAL_RTTAPA_ERROR;
     }
@@ -81,13 +75,11 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
 export const validateGoals = (goals, setError = () => {}) => {
   if (goals.length < 1) {
-    // debugger;
     return GOALS_EMPTY;
   }
 
   const unfinishedMessage = unfinishedGoals(goals, setError);
   if (unfinishedMessage) {
-    // debugger;
     return unfinishedMessage;
   }
   return true;

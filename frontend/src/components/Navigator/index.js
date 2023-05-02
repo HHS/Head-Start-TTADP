@@ -38,6 +38,50 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
+/**
+ *
+ * @param {String[]} promptTitles
+ * @param {function} getValues
+ * @returns {Array} prompts
+ * {
+ *  promptId: number;
+ *  title: string;
+ *  value: string | string[] | number | number[] | boolean;
+ * }
+ */
+function getPrompts(promptTitles, getValues) {
+  let prompts = [];
+  if (promptTitles) {
+    prompts = promptTitles.map(({ promptId, title, fieldName }) => ({
+      promptId,
+      title,
+      response: getValues(fieldName),
+    }));
+  }
+
+  return prompts;
+}
+
+/**
+ *
+ * @param {} isAutoSave
+ * @returns
+ */
+export function getPromptErrors(promptTitles, errors) {
+  let promptErrors = false;
+
+  // break if there are errors in the prompts
+  (promptTitles || []).map((f) => f.fieldName).forEach((fieldName) => {
+    if (errors[fieldName]) {
+      const invalid = document.querySelector(`label[for='${fieldName}']`);
+      if (invalid) invalid.focus();
+      promptErrors = true;
+    }
+  });
+
+  return promptErrors;
+}
+
 const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
     return false;
@@ -47,6 +91,8 @@ const shouldUpdateFormData = (isAutoSave) => {
   const selection = document.getSelection();
   return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
 };
+
+export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
 
 const Navigator = ({
   editable,
@@ -88,6 +134,7 @@ const Navigator = ({
     setValue,
     setError,
     watch,
+    errors,
   } = hookForm;
 
   const pageState = watch('pageState');
@@ -204,10 +251,17 @@ const Navigator = ({
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
+    const promptTitles = getValues('goalPrompts');
+    let prompts = [];
+    const promptErrors = getPromptErrors(promptTitles, errors);
+    if (!promptErrors) {
+      prompts = getPrompts(promptTitles, getValues);
+    }
+
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+    const endDate = formatEndDate(formEndDate);
 
     const goal = {
       ...goalForEditing,
@@ -218,6 +272,7 @@ const Navigator = ({
       isRttapa,
       regionId: formData.regionId,
       grantIds,
+      prompts,
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
@@ -249,6 +304,13 @@ const Navigator = ({
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
+    const promptTitles = getValues('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
+    const promptErrors = getPromptErrors(promptTitles, errors);
+
+    if (promptErrors) {
+      return;
+    }
 
     let invalidResources = false;
     const invalidResourceIndices = [];
@@ -278,7 +340,7 @@ const Navigator = ({
       setSavingLoadScreen(isAutoSave);
     }
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+    const endDate = formatEndDate(formEndDate);
 
     const goal = {
       ...goalForEditing,
@@ -289,6 +351,7 @@ const Navigator = ({
       isRttapa,
       regionId: formData.regionId,
       grantIds,
+      prompts,
     };
 
     let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
@@ -469,15 +532,19 @@ const Navigator = ({
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
+    const promptTitles = getValues('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
 
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: false,
+      grantIds,
       name,
       endDate,
       objectives,
       isRttapa,
       regionId: formData.regionId,
+      prompts,
     };
 
     // validate goals will check the form and set errors
@@ -497,6 +564,11 @@ const Navigator = ({
       return;
     }
 
+    const promptErrors = getPromptErrors(promptTitles, errors);
+    if (promptErrors) {
+      return;
+    }
+
     // save goal to api, come back with new ids for goal and objectives
     try {
       // clear out the goal form
@@ -505,6 +577,7 @@ const Navigator = ({
       setValue('goalEndDate', '');
       setValue('goalIsRttapa', '');
       setValue('goalForEditing.objectives', []);
+      setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
       setValue('goals', [

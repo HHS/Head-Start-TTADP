@@ -1,6 +1,10 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
+
+const { GRANT_INACTIVATION_REASONS } = require('../constants');
+
+const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
 
 /**
  * Grants table. Stores grants.
@@ -58,11 +62,16 @@ export default (sequelize, DataTypes) => {
     stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
+    inactivationDate: DataTypes.DATE,
+    inactivationReason: DataTypes.ENUM(inactivationReasons),
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
     oldGrantId: DataTypes.INTEGER,
+    deleted: {
+      type: DataTypes.BOOLEAN,
+    },
     programTypes: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -98,6 +107,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+  //   defaultScope: {
+  //     where: {
+  //       deleted: false
+  //     }
+  //   },
+  // },
+  // {
     sequelize,
     modelName: 'Grant',
   });
