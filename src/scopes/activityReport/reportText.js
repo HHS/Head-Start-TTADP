@@ -1,95 +1,151 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
-const nextSteps = `
-SELECT DISTINCT
-  "NextSteps"."activityReportId"
-FROM "NextSteps" "NextSteps"
-WHERE "NextSteps".note`;
+const nextStepsPosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "NextSteps".note';
 
-const args = `
-SELECT DISTINCT
-  "ActivityReportGoals"."activityReportId"
-FROM "ActivityReportGoals" "ActivityReportGoals"
-WHERE "ActivityReportGoals".name`;
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "NextSteps" "NextSteps"
+  ON "NextSteps"."activityReportId" = "ActivityReports"."id"
+  WHERE "NextSteps".note${a}`;
+};
 
-const objectiveTitle = `
-SELECT DISTINCT
-  "ActivityReportObjectives"."activityReportId"
-FROM "ActivityReportObjectives" "ActivityReportObjectives"
-WHERE "ActivityReportObjectives".title`;
+const argsPosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "ActivityReportGoals".name';
 
-const objectiveTtaProvided = `
-SELECT DISTINCT
-  "ActivityReportObjectives"."activityReportId"
-FROM "ActivityReportObjectives" "ActivityReportObjectives"
-WHERE "ActivityReportObjectives"."ttaProvided"`;
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "ActivityReportGoals" "ActivityReportGoals"
+  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
+  WHERE "ActivityReportGoals".name${a}`;
+};
 
-const activityReportResource = `
-SELECT DISTINCT
-  "ActivityReportResources"."activityReportId"
-FROM "ActivityReportResources" "ActivityReportResources"
-INNER JOIN "Resources" "Resources"
-ON "Resources"."id" = "ActivityReportResources"."resourceId"
-WHERE "Resources"."url"`;
+const objectiveTitlePosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "ActivityReportObjectives".title';
 
-const activityReportGoalResource = `
-SELECT DISTINCT
-  "ActivityReportGoals"."activityReportId"
-FROM "ActivityReportGoals" "ActivityReportGoals"
-INNER JOIN "ActivityReportGoalResources" "ActivityReportGoalResources"
-ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
-INNER JOIN "Resources" "Resources"
-ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
-WHERE "Resources"."url"`;
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
+  WHERE "ActivityReportObjectives".title${a}`;
+};
 
-const activityReportObjectiveResource = `
-SELECT DISTINCT
-  "ActivityReportObjectives"."activityReportId"
-FROM "ActivityReportObjectives" "ActivityReportObjectives"
-INNER JOIN "ActivityReportObjectiveResources" "ActivityReportObjectiveResources"
-ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
-INNER JOIN "Resources" "Resources"
-ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
-WHERE "Resources"."url"`;
+const objectiveTtaProvidedPosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "ActivityReportObjectives"."ttaProvided"';
 
-const nextStepsResource = `
-SELECT DISTINCT
-  "NextSteps"."activityReportId"
-FROM "NextSteps" "NextSteps"
-INNER JOIN "NextStepResources" "NextStepResources"
-ON "NextSteps"."id" = "NextStepResources"."nextStepId"
-INNER JOIN "Resources" "Resources"
-ON "Resources"."id" = "NextStepResources"."resourceId"
-WHERE "Resources"."url"`;
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
+  WHERE "ActivityReportObjectives"."ttaProvided"${a}`;
+};
 
-const activityReportContext = `
-SELECT DISTINCT
-  "ActivityReports"."id"
-FROM "ActivityReports" "ActivityReports"
-WHERE "ActivityReports"."context"`;
+const activityReportResourcePosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
 
-const additionalNotes = `
-SELECT DISTINCT
-  "ActivityReports"."id"
-FROM "ActivityReports" "ActivityReports"
-WHERE "ActivityReports"."additionalNotes"`;
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "ActivityReportResources" "ActivityReportResources"
+  ON "ActivityReportResources"."activityReportId" = "ActivityReports"."id"
+  LEFT JOIN "Resources" "Resources"
+  ON "Resources"."id" = "ActivityReportResources"."resourceId"
+  WHERE "Resources"."url"${a}`;
+};
+
+const activityReportGoalResourcePosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "ActivityReportGoals" "ActivityReportGoals"
+  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
+  LEFT JOIN "ActivityReportGoalResources" "ActivityReportGoalResources"
+  ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
+  LEFT JOIN "Resources" "Resources"
+  ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
+  WHERE "Resources"."url"${a}`;
+};
+
+const activityReportObjectiveResourcePosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
+  LEFT JOIN "ActivityReportObjectiveResources" "ActivityReportObjectiveResources"
+  ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
+  LEFT JOIN "Resources" "Resources"
+  ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
+  WHERE "Resources"."url"${a}`;
+};
+
+const nextStepsResourcePosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  LEFT JOIN "NextSteps" "NextSteps"
+  ON "NextSteps"."activityReportId" = "ActivityReports"."id"
+  LEFT JOIN "NextStepResources" "NextStepResources"
+  ON "NextSteps"."id" = "NextStepResources"."nextStepId"
+  LEFT JOIN "Resources" "Resources"
+  ON "Resources"."id" = "NextStepResources"."resourceId"
+  WHERE "Resources"."url"${a}`;
+};
+
+const activityReportContextPosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "ActivityReports"."context"';
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id" as "activityReportId"
+  FROM "ActivityReports" "ActivityReports"
+  WHERE "ActivityReports"."context"${a}`;
+};
+
+const additionalNotesPosNeg = (pos = true) => {
+  const a = pos ? '' : ' IS NULL OR "ActivityReports"."additionalNotes"';
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id"
+  FROM "ActivityReports" "ActivityReports"
+  WHERE "ActivityReports"."additionalNotes"${a}`;
+};
 
 export function withReportText(searchText) {
   const search = [`%${searchText}%`];
 
   return {
     [Op.or]: [
-      filterAssociation(nextSteps, search, false, 'ILIKE'),
-      filterAssociation(args, search, false, 'ILIKE'),
-      filterAssociation(objectiveTitle, search, false, 'ILIKE'),
-      filterAssociation(objectiveTtaProvided, search, false, 'ILIKE'),
-      filterAssociation(activityReportResource, search, false, 'ILIKE'),
-      filterAssociation(activityReportGoalResource, search, false, 'ILIKE'),
-      filterAssociation(activityReportObjectiveResource, search, false, 'ILIKE'),
-      filterAssociation(nextStepsResource, search, false, 'ILIKE'),
-      filterAssociation(activityReportContext, search, false, 'ILIKE'),
-      filterAssociation(additionalNotes, search, false, 'ILIKE'),
+      filterAssociation(nextStepsPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(argsPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(objectiveTitlePosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(objectiveTtaProvidedPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportResourcePosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportGoalResourcePosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportObjectiveResourcePosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(nextStepsResourcePosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportContextPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(additionalNotesPosNeg(true), search, false, 'ILIKE'),
     ],
   };
 }
@@ -99,16 +155,16 @@ export function withoutReportText(searchText) {
 
   return {
     [Op.or]: [
-      filterAssociation(nextSteps, search, false, 'NOT ILIKE'),
-      filterAssociation(args, search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTitle, search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTtaProvided, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportResource, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportGoalResource, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveResource, search, false, 'NOT ILIKE'),
-      filterAssociation(nextStepsResource, search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportContext, search, false, 'NOT ILIKE'),
-      filterAssociation(additionalNotes, search, false, 'NOT ILIKE'),
+      filterAssociation(nextStepsPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(argsPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTitlePosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTtaProvidedPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportResourcePosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportGoalResourcePosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportObjectiveResourcePosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(nextStepsResourcePosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportContextPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(additionalNotesPosNeg(false), search, false, 'NOT ILIKE'),
     ],
   };
 }
