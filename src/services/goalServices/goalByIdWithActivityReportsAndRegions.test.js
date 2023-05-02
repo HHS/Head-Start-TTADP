@@ -30,7 +30,8 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       programSpecialistName: faker.name.firstName(),
       regionId: 1,
       id: faker.datatype.number({ min: 64000 }),
-      uei: faker.datatype.string(12),
+      startDate: new Date(),
+      endDate: new Date(),
     });
     goalOnActivityReport = await Goal.create({
       name: 'Goal on activity report',
