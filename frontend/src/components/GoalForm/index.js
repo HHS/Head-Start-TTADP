@@ -234,7 +234,7 @@ export default function GoalForm({
         const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
         if (gtPrompts) {
           setGoalTemplatePrompts(
-            combinePrompts(gtPrompts.map((p) => ({ ...p, fieldType: p.type })), prompts),
+            combinePrompts(gtPrompts, prompts),
           );
         } else {
           setGoalTemplatePrompts(prompts);

@@ -70,7 +70,7 @@ export default function ConditionalFieldsForHookForm({
       return null;
     }
 
-    if (FIELD_DICTIONARY[prompt.type]) {
+    if (FIELD_DICTIONARY[prompt.fieldType]) {
       const initialValue = (() => {
         const current = initialValues.find((p) => p.promptId === prompt.promptId);
         if (current) {
@@ -80,11 +80,11 @@ export default function ConditionalFieldsForHookForm({
         return [];
       })();
 
-      const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.type];
+      const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
       const completions = validationsAndCompletions.confirmResponseComplete(prompt.validations);
       const isComplete = completions.every((completion) => completion(initialValue));
 
-      return FIELD_DICTIONARY[prompt.type].render(
+      return FIELD_DICTIONARY[prompt.fieldType].render(
         prompt,
         prompt.validations,
         prompt.response,
