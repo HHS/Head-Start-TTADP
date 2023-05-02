@@ -63,6 +63,12 @@ INNER JOIN "Resources" "Resources"
 ON "Resources"."id" = "NextStepResources"."resourceId"
 WHERE "Resources"."url"`;
 
+const activityReportContext = `
+SELECT DISTINCT
+  "ActivityReports"."id"
+FROM "ActivityReports" "ActivityReports"
+WHERE "ActivityReports"."context";`;
+
 export function withReportText(searchText) {
   const search = [`%${searchText}%`];
 
@@ -76,6 +82,7 @@ export function withReportText(searchText) {
       filterAssociation(activityReportGoalResource, search, false, 'ILIKE'),
       filterAssociation(activityReportObjectiveResource, search, false, 'ILIKE'),
       filterAssociation(nextStepsResource, search, false, 'ILIKE'),
+      filterAssociation(activityReportContext, search, false, 'ILIKE'),
     ],
   };
 }
@@ -93,6 +100,7 @@ export function withoutReportText(searchText) {
       filterAssociation(activityReportGoalResource, search, true, 'NOT ILIKE'),
       filterAssociation(activityReportObjectiveResource, search, true, 'NOT ILIKE'),
       filterAssociation(nextStepsResource, search, true, 'NOT ILIKE'),
+      filterAssociation(activityReportContext, search, true, 'NOT ILIKE'),
     ],
   };
 }
