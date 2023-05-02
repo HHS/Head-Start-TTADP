@@ -20,10 +20,10 @@ export const SEARCH_RESULTS_PER_PAGE = 23;
 
 export const AUTOMATIC_CREATION = 'Automatic';
 export const CURATED_CREATION = 'Curated';
-export const CREATION_METHOD = [
-  AUTOMATIC_CREATION,
-  CURATED_CREATION,
-];
+export const CREATION_METHOD = {
+  AUTOMATIC: AUTOMATIC_CREATION,
+  CURATED: CURATED_CREATION,
+};
 
 export const GOAL_STATUS = {
   DRAFT: 'Draft',
@@ -105,6 +105,10 @@ export const DIGEST_SUBJECT_FREQ = {
   MONTHLY: 'monthly',
 };
 
+export const PROMPT_FIELD_TYPE = {
+  MULTISELECT: 'multiselect',
+};
+
 export const SOURCE_FIELD = {
   REPORT: {
     NONECLKC: 'nonECLKCResourcesUsed',
@@ -152,4 +156,11 @@ export const RESOURCE_DOMAIN = {
 
 export const AWS_ELASTIC_SEARCH_INDEXES = {
   ACTIVITY_REPORTS: 'activityreports',
+};
+
+export const GRANT_INACTIVATION_REASONS = {
+  REPLACED: 'Replaced',
+  TERMINATED: 'Terminated',
+  RELINQUISHED: 'Relinquished',
+  UNKNOWN: 'Unknown',
 };
