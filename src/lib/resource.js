@@ -1,4 +1,5 @@
 /* eslint-disable import/prefer-default-export */
+import httpCodes from 'http-codes';
 import axios from 'axios';
 import { auditLogger, logger } from '../logger';
 import { Resource } from '../models';
@@ -27,14 +28,14 @@ const getResourceMetaDataJob = async (job) => {
       });
     } else {
       auditLogger.info(`Resource Queue: Warning, unable to retrieve resource metadata for resource '${resourceUrl}'.`);
-      return ({ status: 404, data: { url: resourceUrl } });
+      return ({ status: httpCodes.NOT_FOUND, data: { url: resourceUrl } });
     }
 
     logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
 
-    return ({ status: 200, data: { url: resourceUrl } });
+    return ({ status: httpCodes.OK, data: { url: resourceUrl } });
   } catch (error) {
-    return { status: 500, data: {} };
+    return { status: httpCodes.INTERNAL_SERVER_ERROR, data: {} };
   }
 };
 
