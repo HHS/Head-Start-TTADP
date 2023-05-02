@@ -345,7 +345,6 @@ export const cachePrompts = async (
 const cacheGoalMetadata = async (
   goal,
   reportId,
-  isRttapa,
   isActivelyBeingEditing,
   prompts,
 ) => {
@@ -367,7 +366,7 @@ const cacheGoalMetadata = async (
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
-      isRttapa: isRttapa || null,
+      isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
     }, {
       where: { id: activityReportGoalId },
@@ -384,7 +383,7 @@ const cacheGoalMetadata = async (
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
-      isRttapa: isRttapa || null,
+      isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
     }, {
       individualHooks: true,

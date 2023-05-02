@@ -9,7 +9,6 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
-import GoalRttapa from './GoalRttapa';
 import GoalPrompts from './GoalPrompts';
 import {
   OBJECTIVE_DEFAULTS,
@@ -30,9 +29,6 @@ export default function Form({
   setGoalName,
   endDate,
   setEndDate,
-  isRttapa,
-  initialRttapa,
-  setIsRttapa,
   errors,
   validateGoalName,
   validateEndDate,
@@ -148,16 +144,6 @@ export default function Form({
         prompts={prompts}
       />
 
-      <GoalRttapa
-        error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
-        isRttapa={isRttapa}
-        onChange={setIsRttapa}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        isOnApprovedReport={isOnApprovedReport || false}
-        initial={initialRttapa}
-      />
-
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
         isOnApprovedReport={isOnApprovedReport}
@@ -206,8 +192,6 @@ Form.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
-  isRttapa: PropTypes.string.isRequired,
-  setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
@@ -260,7 +244,6 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
-  initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
   prompts: PropTypes.arrayOf(PropTypes.shape({
     title: PropTypes.string.isRequired,

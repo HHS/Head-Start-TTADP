@@ -182,10 +182,6 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
-
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
@@ -277,16 +273,6 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    await screen.findByText('Select yes or no');
-
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
-
-    expect(fetchMock.called()).toBe(false);
-
-    userEvent.click(save);
-
     expect(fetchMock.called()).toBeTruthy();
 
     // restore our fetch mock
@@ -325,10 +311,6 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
-
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -403,10 +385,6 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
-
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
@@ -470,10 +448,6 @@ describe('create goal', () => {
     let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
-    let fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    let radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
-
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
@@ -518,10 +492,6 @@ describe('create goal', () => {
 
     ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
-
-    fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
 
     newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -572,10 +542,6 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
-
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -638,10 +604,6 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
-
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -701,10 +663,6 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
-
-    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('RTTAPA');
-    userEvent.click(radio);
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -857,7 +815,7 @@ describe('create goal', () => {
       status: 'Not Started',
       endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
-      isRttapa: '',
+      isRttapa: null,
       prompts: [],
       grants: [{
         id: 1,
