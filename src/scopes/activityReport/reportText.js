@@ -69,6 +69,12 @@ SELECT DISTINCT
 FROM "ActivityReports" "ActivityReports"
 WHERE "ActivityReports"."context"`;
 
+const additionalNotes = `
+SELECT DISTINCT
+  "ActivityReports"."id"
+FROM "ActivityReports" "ActivityReports"
+WHERE "ActivityReports"."additionalNotes"`;
+
 export function withReportText(searchText) {
   const search = [`%${searchText}%`];
 
@@ -83,6 +89,7 @@ export function withReportText(searchText) {
       filterAssociation(activityReportObjectiveResource, search, false, 'ILIKE'),
       filterAssociation(nextStepsResource, search, false, 'ILIKE'),
       filterAssociation(activityReportContext, search, false, 'ILIKE'),
+      filterAssociation(additionalNotes, search, false, 'ILIKE'),
     ],
   };
 }
@@ -91,16 +98,17 @@ export function withoutReportText(searchText) {
   const search = [`%${searchText}%`];
 
   return {
-    [Op.and]: [
-      filterAssociation(nextSteps, search, true, 'NOT ILIKE'),
-      filterAssociation(args, search, true, 'NOT ILIKE'),
-      filterAssociation(objectiveTitle, search, true, 'NOT ILIKE'),
-      filterAssociation(objectiveTtaProvided, search, true, 'NOT ILIKE'),
-      filterAssociation(activityReportResource, search, true, 'NOT ILIKE'),
-      filterAssociation(activityReportGoalResource, search, true, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveResource, search, true, 'NOT ILIKE'),
-      filterAssociation(nextStepsResource, search, true, 'NOT ILIKE'),
-      filterAssociation(activityReportContext, search, true, 'NOT ILIKE'),
+    [Op.or]: [
+      filterAssociation(nextSteps, search, false, 'NOT ILIKE'),
+      filterAssociation(args, search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTitle, search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTtaProvided, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportResource, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportGoalResource, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportObjectiveResource, search, false, 'NOT ILIKE'),
+      filterAssociation(nextStepsResource, search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportContext, search, false, 'NOT ILIKE'),
+      filterAssociation(additionalNotes, search, false, 'NOT ILIKE'),
     ],
   };
 }
