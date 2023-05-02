@@ -67,7 +67,7 @@ const activityReportContext = `
 SELECT DISTINCT
   "ActivityReports"."id"
 FROM "ActivityReports" "ActivityReports"
-WHERE "ActivityReports"."context";`;
+WHERE "ActivityReports"."context"`;
 
 export function withReportText(searchText) {
   const search = [`%${searchText}%`];
