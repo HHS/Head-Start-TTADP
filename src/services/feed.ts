@@ -9,9 +9,7 @@ const FEED_URLS = {
 };
 
 export async function fetchFeed(feedAddress: string) {
-  console.log({ feedAddress });
   const { data } = await axios.get(feedAddress);
-  console.log({ data });
   return data;
 }
 
