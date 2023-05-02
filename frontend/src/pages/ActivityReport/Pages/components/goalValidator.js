@@ -1,7 +1,6 @@
 import {
   validateListOfResources,
   GOAL_NAME_ERROR,
-  GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
@@ -51,11 +50,6 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
     if (!goal.name) {
       setError('goalName', { message: GOAL_NAME_ERROR });
       return GOAL_NAME_ERROR;
-    }
-
-    if (goal.isRttapa !== 'Yes' && goal.isRttapa !== 'No') {
-      setError('goalIsRttapa', { message: GOAL_RTTAPA_ERROR });
-      return GOAL_RTTAPA_ERROR;
     }
 
     // Every goal must have an objective or the `goals` field has unfinished goals

@@ -95,9 +95,6 @@ test.describe('Activity Report Text Search Filter', () => {
     // await page.getByTestId('textarea').fill('Learn how to cook.');
     await blur(page);
 
-    // Is RTTAPA.
-    await page.getByText('RTTAPA', { exact: true }).click();
-
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-15-option-0').click();

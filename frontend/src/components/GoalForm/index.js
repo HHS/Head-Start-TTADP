@@ -2,7 +2,6 @@ import React, {
   useEffect,
   useState,
   useMemo,
-  useRef,
   useContext,
 } from 'react';
 import moment from 'moment';
@@ -29,7 +28,6 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
-  GOAL_RTTAPA_ERROR,
   objectivesWithValidResourcesOnly,
 } from './constants';
 import ReadOnly from './ReadOnly';
@@ -74,7 +72,6 @@ export default function GoalForm({
     objectives: [],
     id: 'new',
     onApprovedAR: false,
-    isRttapa: '',
     prompts: [],
     isCurated: false,
     goalTemplateId: null,
@@ -96,10 +93,7 @@ export default function GoalForm({
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
-  const [isRttapa, setIsRttapa] = useState(goalDefaults.isRttapa);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
-
-  const initialRttapa = useRef(isRttapa);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -149,9 +143,7 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setIsRttapa(goal.isRttapa);
         setPrompts(goal.prompts);
-        initialRttapa.current = goal.isRttapa;
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
@@ -332,17 +324,6 @@ export default function GoalForm({
     return !error.props.children;
   };
 
-  const validateIsRttapa = () => {
-    let error = <></>;
-    if (isRttapa !== 'Yes' && isRttapa !== 'No') {
-      error = <span className="usa-error-message">{GOAL_RTTAPA_ERROR}</span>;
-    }
-    const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.IS_RTTAPA, 1, error);
-    setErrors(newErrors);
-    return !error.props.children;
-  };
-
   const validatePrompts = (title, isErrored, errorMessage) => {
     let error = <></>;
     const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
@@ -493,7 +474,6 @@ export default function GoalForm({
     && validateGoalName()
     && validateEndDate()
     && validateObjectives()
-    && validateIsRttapa()
     && validateAllPrompts()
   );
   const isValidDraft = () => (
@@ -582,7 +562,6 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
-          isRttapa,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -662,7 +641,6 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
-          isRttapa,
           isCurated,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
@@ -727,8 +705,6 @@ export default function GoalForm({
     setGoalName(goalDefaults.name);
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
-    setIsRttapa(goalDefaults.isRttapa);
-    initialRttapa.current = goalDefaults.isRttapa;
     setSelectedGrants(goalDefaults.grants);
     setIsCurated(goalDefaults.isCurated);
     setPrompts(goalDefaults.prompts);
@@ -757,7 +733,6 @@ export default function GoalForm({
         prompts: goalTemplatePrompts,
         isCurated,
         endDate,
-        isRttapa,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
@@ -827,8 +802,6 @@ export default function GoalForm({
     setStatus(goal.status);
     setGoalNumbers(goal.goalNumbers);
     setSelectedGrants(goal.grants);
-    setIsRttapa(goal.isRttapa);
-    initialRttapa.current = goal.isRttapa;
     setIsCurated(goal.isCurated);
     setPrompts(goal.prompts);
 
@@ -937,9 +910,6 @@ export default function GoalForm({
               endDate={endDate}
               setEndDate={setEndDate}
               datePickerKey={datePickerKey}
-              isRttapa={isRttapa}
-              setIsRttapa={setIsRttapa}
-              initialRttapa={initialRttapa.current}
               errors={errors}
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}
