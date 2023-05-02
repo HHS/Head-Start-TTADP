@@ -15,27 +15,32 @@ const getResourceMetaDataJob = async (job) => {
     // Get page title.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
 
+    // If we found a title, update the resource.
     if (foundTitle && foundTitle.length >= 1) {
       // Get title.
       const titleToUpdate = foundTitle[1].trim();
 
-      // update URL in DB.
-      const updatedCount = await Resource.update({
+      // Update URL in DB.
+      const updatedCnt = await Resource.update({
         title: titleToUpdate,
       }, {
         where: { url: resourceUrl },
         individualHooks: false,
       });
+
+      // If we don't update anything throw an error to retry.
+      if (updatedCnt[0] === 0) {
+        throw Error('Failed to update resource title.');
+      }
     } else {
       auditLogger.info(`Resource Queue: Warning, unable to retrieve resource metadata for resource '${resourceUrl}'.`);
       return ({ status: httpCodes.NOT_FOUND, data: { url: resourceUrl } });
     }
-
     logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
-
     return ({ status: httpCodes.OK, data: { url: resourceUrl } });
   } catch (error) {
-    return { status: httpCodes.INTERNAL_SERVER_ERROR, data: {} };
+    auditLogger.error('Resource Queue Error: ', error);
+    throw error(error); // We must rethrow the error here to ensure the job is retried.
   }
 };
 
