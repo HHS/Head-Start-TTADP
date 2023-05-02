@@ -27,7 +27,6 @@ export default (sequelize, DataTypes) => {
       Region.hasMany(models.GoalTemplate, { foreignKey: 'regionId', as: 'goalTemplates' });
       Region.hasMany(models.ObjectiveTemplate, { foreignKey: 'regionId', as: 'objectiveTemplates' });
       Region.hasMany(models.Permission, { foreignKey: 'regionId', as: 'permissions' });
-      Region.hasMany(models.Grant, { foreignKey: 'regionId', as: 'grants' });
     }
   }
   Region.init({
