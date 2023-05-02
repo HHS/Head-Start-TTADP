@@ -1830,6 +1830,7 @@ export async function saveGoalsForReport(goals, report) {
 
       // first pull out all the crufty fields
       const {
+        isNew: isGoalNew,
         goalIds,
         objectives,
         grantIds,
@@ -1850,12 +1851,12 @@ export async function saveGoalsForReport(goals, report) {
         (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
       ));
 
-      // if (newOrUpdatedGoal) {
-      //   auditLogger.info(`
-      //   GoalsForReport
-
-      //   - Found an existing goal with id ${newOrUpdatedGoal.id} and grantId ${grantId}`);
-      // }
+      if (newOrUpdatedGoal) {
+        auditLogger.info(`
+        GoalsForReport
+        - Found by ID
+        - Found an existing goal with id ${newOrUpdatedGoal.id} name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
+      }
 
       // if not, does it exist for this name and grantId combination
       if (!newOrUpdatedGoal) {
@@ -1867,12 +1868,12 @@ export async function saveGoalsForReport(goals, report) {
           },
         });
 
-        // if (newOrUpdatedGoal) {
-        //   auditLogger.info(`
-        // GoalsForReport
-
-        // - Found an existing goal with name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
-        // }
+        if (newOrUpdatedGoal) {
+          auditLogger.info(`
+        GoalsForReport
+        - Found by name
+        - Found an existing goal with id ${newOrUpdatedGoal.id} name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
+        }
       }
 
       // if not, we create it
@@ -1884,10 +1885,10 @@ export async function saveGoalsForReport(goals, report) {
           status,
         }, { individualHooks: true });
 
-        // auditLogger.info(`
-        // GoalsForReport
-
-        // - Created a new goal with name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
+        auditLogger.info(`
+        GoalsForReport
+        - Created
+        - Created a new goal with id ${newOrUpdatedGoal.id} name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
       }
 
       if (!newOrUpdatedGoal.onApprovedAR) {
@@ -1896,13 +1897,16 @@ export async function saveGoalsForReport(goals, report) {
         }
 
         if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
-        // todo - compare values to see if it's changed before we update
           newOrUpdatedGoal.set({ endDate }, { individualHooks: true });
         }
+      }
 
-        if (prompts) {
-          await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
-        }
+      if (status && status !== newOrUpdatedGoal.status) {
+        newOrUpdatedGoal.set({ status }, { individualHooks: true });
+      }
+
+      if (prompts) {
+        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
       }
 
       // here we save the goal where the status (and collorary fields) have been set
@@ -1926,7 +1930,7 @@ export async function saveGoalsForReport(goals, report) {
     }));
   }));
 
-  const currentGoalIds = currentGoals.flatMap((g) => g.id);
+  const currentGoalIds = currentGoals.flat().map((g) => g.id);
 
   // Get previous DB ARG's.
   const previousActivityReportGoals = await ActivityReportGoal.findAll({
@@ -1939,7 +1943,7 @@ export async function saveGoalsForReport(goals, report) {
     (arg) => !currentGoalIds.includes(arg.goalId),
   ).map((r) => r.goalId);
 
-  // Remove ARG's.
+  // Remove ARGs.
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
 
   // Delete Objective ARO and associated tables.
@@ -1948,8 +1952,8 @@ export async function saveGoalsForReport(goals, report) {
     currentObjectives.filter((o) => currentGoalIds.includes(o.goalId)),
   );
 
-  // Delete Goal's if not being used and created from AR.
-  return removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
+  // Delete Goals if not being used and created from AR.
+  await removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
 }
 
 /**
