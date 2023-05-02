@@ -69,6 +69,18 @@ SELECT DISTINCT
 FROM "ActivityReports" "ActivityReports"
 WHERE "ActivityReports"."context"`;
 
+const eclkcUsed = `
+SELECT DISTINCT
+  "ActivityReports"."id"
+FROM "ActivityReports" "ActivityReports"
+WHERE ARRAY_TO_STRING("ActivityReports"."ECLKCResourcesUsed", ',')`;
+
+const nonEclkcUsed = `
+SELECT DISTINCT
+  "ActivityReports"."id"
+FROM "ActivityReports" "ActivityReports"
+WHERE ARRAY_TO_STRING("ActivityReports"."nonECLKCResourcesUsed", ',')`;
+
 export function withReportText(searchText) {
   const search = [`%${searchText}%`];
 
@@ -83,6 +95,8 @@ export function withReportText(searchText) {
       filterAssociation(activityReportObjectiveResource, search, false, 'ILIKE'),
       filterAssociation(nextStepsResource, search, false, 'ILIKE'),
       filterAssociation(activityReportContext, search, false, 'ILIKE'),
+      filterAssociation(eclkcUsed, search, false, 'ILIKE'),
+      filterAssociation(nonEclkcUsed, search, false, 'ILIKE'),
     ],
   };
 }
@@ -101,6 +115,8 @@ export function withoutReportText(searchText) {
       filterAssociation(activityReportObjectiveResource, search, true, 'NOT ILIKE'),
       filterAssociation(nextStepsResource, search, true, 'NOT ILIKE'),
       filterAssociation(activityReportContext, search, true, 'NOT ILIKE'),
+      filterAssociation(eclkcUsed, search, true, 'NOT ILIKE'),
+      filterAssociation(nonEclkcUsed, search, true, 'NOT ILIKE'),
     ],
   };
 }
