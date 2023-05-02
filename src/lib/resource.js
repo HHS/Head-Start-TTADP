@@ -16,7 +16,7 @@ const getResourceMetaDataJob = async (job) => {
 
     if (foundTitle && foundTitle.length >= 1) {
       // Get title.
-      const titleToUpdate = foundTitle[1];
+      const titleToUpdate = foundTitle[1].trim();
 
       // update URL in DB.
       const updatedCount = await Resource.update({
