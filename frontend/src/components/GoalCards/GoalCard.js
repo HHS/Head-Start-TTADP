@@ -114,7 +114,6 @@ function GoalCard({
             aria-label={`Select goal ${goalText}`}
             className="margin-right-1"
             data-testid="selectGoalTestId"
-            data-goalIds={ids}
           />
           )}
           <StatusDropdown

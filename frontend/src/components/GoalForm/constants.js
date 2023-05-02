@@ -39,9 +39,10 @@ export const FORM_FIELD_INDEXES = {
   END_DATE: 2,
   OBJECTIVES_EMPTY: 3,
   OBJECTIVES: 4,
+  GOAL_PROMPTS: 5,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, []];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, [], {}];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',
