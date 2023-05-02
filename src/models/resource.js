@@ -23,6 +23,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.TEXT,
     },
+    title: {
+      allowNull: true,
+      type: DataTypes.TEXT,
+    },
   }, {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
