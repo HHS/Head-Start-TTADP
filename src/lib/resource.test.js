@@ -1,7 +1,40 @@
+import axios from 'axios';
 import { getResourceMetaDataJob } from './resource';
 import db, { Resource } from '../models';
 
 jest.mock('bull');
+
+const urlReturn = `
+<!DOCTYPE html>
+<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
+<head>
+<meta charset="utf-8" />
+<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
+<link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
+<link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
+<title>Head Start | ECLKC</title>
+<body>
+test
+</body>
+</html>
+`;
+
+const urlMissingTitle = `
+<!DOCTYPE html>
+<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
+<body>
+test
+</body>
+</html>
+`;
+
+const mockAxios = jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve());
+const axiosCleanResponse = { status: 200, data: urlReturn };
+const axiosNoTitleResponse = { status: 404, data: urlMissingTitle };
+const axiosResourceNotFound = { status: 404, data: 'Not Found' };
+const axiosNotFoundError = new Error();
+axiosNotFoundError.response = { status: 500, data: 'Error' };
+const mockUpdate = jest.spyOn(Resource, 'update').mockImplementation(() => Promise.resolve());
 
 describe('resource worker tests', () => {
   let resource;
@@ -13,8 +46,40 @@ describe('resource worker tests', () => {
     jest.clearAllMocks();
   });
   it('tests a clean resource get', async () => {
-    const got = await getResourceMetaDataJob({ data: { resourceId: 1, resourceUrl: 'http://www.test.gov' } });
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual({ resourceId: 1, resourceUrl: 'http://www.test.gov', res: {} });
+    expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
+
+    expect(mockAxios).toBeCalled();
+    expect(mockUpdate).toBeCalledWith(
+      { title: 'Head Start | ECLKC' },
+      { where: { url: 'http://www.test.gov' }, individualHooks: false },
+    );
+  });
+
+  it('tests a resource without a title', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
+    expect(got.status).toBe(404);
+    expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
+    expect(mockAxios).toBeCalled();
+    expect(mockUpdate).not.toBeCalled();
+  });
+
+  it('tests a resource url not found', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
+    expect(got.status).toBe(404);
+    expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
+    expect(mockAxios).toBeCalled();
+    expect(mockUpdate).not.toBeCalledWith();
+  });
+
+  it('tests a resource retrieve error', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosNotFoundError));
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
+    expect(mockUpdate).not.toBeCalledWith();
+    expect(got.status).toBe(500);
   });
 });

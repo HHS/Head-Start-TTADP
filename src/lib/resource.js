@@ -27,12 +27,12 @@ const getResourceMetaDataJob = async (job) => {
       });
     } else {
       auditLogger.info(`Resource Queue: Warning, unable to retrieve resource metadata for resource '${resourceUrl}'.`);
-      return ({ status: 404, data: {} });
+      return ({ status: 404, data: { url: resourceUrl } });
     }
 
     logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
 
-    return ({ status: 200, data: {} });
+    return ({ status: 200, data: { url: resourceUrl } });
   } catch (error) {
     return { status: 500, data: {} };
   }
