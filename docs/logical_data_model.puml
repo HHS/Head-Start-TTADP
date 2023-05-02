@@ -42,6 +42,15 @@ class ActivityReportFiles{
  * fileId : integer : REFERENCES "Files".id
 }
 
+class ActivityReportGoalFieldResponses{
+ * id : integer : <generated>
+ response : text[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * activityReportGoalId : integer : REFERENCES "ActivityReportGoals".id
+ * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
+}
+
 class ActivityReportGoalResources{
  * id : integer : <generated>
  sourceFields : enum[]
@@ -167,6 +176,17 @@ class Files{
  * fileSize : integer
 }
 
+class GoalFieldResponses{
+ * id : integer : <generated>
+ response : text[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * onAR : boolean
+ * onApprovedAR : boolean
+ * goalId : integer : REFERENCES "Goals".id
+ * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
+}
+
 class GoalResources{
  * id : integer : <generated>
  sourceFields : enum[]
@@ -176,6 +196,21 @@ class GoalResources{
  * onApprovedAR : boolean : false
  * goalId : integer : REFERENCES "Goals".id
  * resourceId : integer : REFERENCES "Resources".id
+}
+
+class GoalTemplateFieldPrompts{
+ * id : integer : <generated>
+ * ordinal : integer
+ * title : text
+ * prompt : text
+ hint : text
+ caution : text
+ fieldType : enum
+ options : text[]
+ validations : json
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
 }
 
 class GoalTemplateObjectiveTemplates{
@@ -253,6 +288,9 @@ class Grants{
  grantSpecialistEmail : varchar(255)
  stateCode : varchar(255)
  annualFundingMonth : varchar(255)
+ deleted : boolean : false
+ inactivationDate : timestamp with time zone
+ inactivationReason : enum
  regionId : integer : REFERENCES "Regions".id
  * recipientId : integer : REFERENCES "Recipients".id
  oldGrantId : integer : REFERENCES "Grants".id
@@ -433,6 +471,7 @@ class Recipients{
  * updatedAt : timestamp with time zone : now()
  recipientType : varchar(255)
  uei : varchar(255) : ''::character varying
+ deleted : boolean : false
 }
 
 class Regions{
@@ -640,6 +679,20 @@ class ZALActivityReportFiles{
  dml_as : bigint
 }
 
+class ZALActivityReportGoalFieldResponses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALActivityReportGoalResources{
  * id : bigint : <generated>
  * data_id : bigint
@@ -793,6 +846,20 @@ class ZALFiles{
  dml_as : bigint
 }
 
+class ZALGoalFieldResponses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALGoalResources{
  * id : bigint : <generated>
  * data_id : bigint
@@ -805,6 +872,20 @@ class ZALGoalResources{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALGoalTemplateFieldPrompts{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALGoalTemplateObjectiveTemplates{
@@ -1331,6 +1412,7 @@ class ZALZAFilter{
 
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
+ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : activityReportObjective, activityReportObjectiveFiles
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : activityReportObjective, activityReportObjectiveResources
@@ -1347,10 +1429,14 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, repo
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
+GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
+GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
-GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplates
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplate
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, activityReportGoals
+Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
@@ -1421,6 +1507,7 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherE
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
+GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
