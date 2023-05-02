@@ -51,8 +51,10 @@ WHERE "Resources"."url"`;
 
 const activityReportObjectiveResource = `
 SELECT DISTINCT
-  "ActivityReportObjectiveResources"."activityReportId"
-FROM "ActivityReportObjectiveResources" "ActivityReportObjectiveResources"
+  "ActivityReportObjectives"."activityReportId"
+FROM "ActivityReportObjectives" "ActivityReportObjectives"
+INNER JOIN "ActivityReportObjectiveResources" "ActivityReportObjectiveResources"
+ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
 INNER JOIN "Resources" "Resources"
 ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
 WHERE "Resources"."url"`;
