@@ -692,17 +692,26 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       },
     );
 
-    await Promise.all((goals.map((goal) => {
+    return Promise.all((goals.map((goal) => {
       const status = 'In Progress';
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
         goal.set('previousStatus', goal.status);
         goal.set('status', status);
+        if (instance.endDate) {
+          if (!goal.firstInProgressAt) {
+            goal.set('firstInProgressAt', instance.endDate);
+          }
+          goal.set('lastInProgressAt', instance.endDate);
+        }
       }
-      return goal.save({ transaction: options.transaction, individualHooks: true });
+      // removing individual hooks because we don't want to trigger the automatic status change
+      return goal.save({ transaction: options.transaction });
     })));
   }
+
+  return Promise.resolve();
 };
 
 const automaticIsRttapaChangeOnApprovalForGoals = async (sequelize, instance, options) => {
