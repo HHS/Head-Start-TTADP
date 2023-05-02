@@ -7,13 +7,16 @@ import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
-  act, render, screen, fireEvent, waitFor,
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
 import ResourcesDashboard from '../index';
-
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { formatDateRange } from '../../../utils';

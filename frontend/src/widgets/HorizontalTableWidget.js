@@ -16,6 +16,7 @@ const trimLongURLs = (url) => {
 export default function HorizontalTableWidget(
   {
     headers,
+    id,
     data,
     firstHeading,
     enableSorting,
