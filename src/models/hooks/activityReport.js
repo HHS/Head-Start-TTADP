@@ -678,10 +678,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
         },
         include: [
           {
-            model: sequelize.models.Objective,
-            as: 'objectives',
-          },
-          {
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
             required: true,
