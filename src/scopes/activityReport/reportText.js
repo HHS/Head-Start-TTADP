@@ -25,14 +25,6 @@ SELECT DISTINCT
 FROM "ActivityReportObjectives" "ActivityReportObjectives"
 WHERE "ActivityReportObjectives"."ttaProvided"`;
 
-const goalResources = `
-SELECT DISTINCT
-  "ActivityReportObjectiveResources"."activityReportId"
-FROM "ActivityReportObjectiveResources" "ActivityReportObjectiveResources"
-INNER JOIN "Resources" "Resources"
-ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
-WHERE "Resources"."url"`;
-
 const activityReportResource = `
 SELECT DISTINCT
   "ActivityReportResources"."activityReportId"
@@ -74,7 +66,6 @@ export function withReportText(searchText) {
       filterAssociation(args, searchText, false, 'ILIKE'),
       filterAssociation(objectiveTitle, searchText, false, 'ILIKE'),
       filterAssociation(objectiveTtaProvided, searchText, false, 'ILIKE'),
-      filterAssociation(goalResources, searchText, false, 'ILIKE'),
       filterAssociation(activityReportResource, searchText, false, 'ILIKE'),
       filterAssociation(activityReportGoalResource, searchText, false, 'ILIKE'),
       filterAssociation(activityReportObjectiveResource, searchText, false, 'ILIKE'),
@@ -90,7 +81,6 @@ export function withoutReportText(searchText) {
       filterAssociation(args, searchText, false, 'NOT ILIKE'),
       filterAssociation(objectiveTitle, searchText, false, 'NOT ILIKE'),
       filterAssociation(objectiveTtaProvided, searchText, false, 'NOT ILIKE'),
-      filterAssociation(goalResources, searchText, false, 'NOT ILIKE'),
       filterAssociation(activityReportResource, searchText, false, 'NOT ILIKE'),
       filterAssociation(activityReportGoalResource, searchText, false, 'NOT ILIKE'),
       filterAssociation(activityReportObjectiveResource, searchText, false, 'NOT ILIKE'),
