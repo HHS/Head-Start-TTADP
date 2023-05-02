@@ -78,7 +78,7 @@ function toCamelCase(str) {
 function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
-    : `class ${key} #pink;line:red;line.bold;text:red {\n`;
+    : `!issue='model missing for table'\nclass ${key} #pink;line:red;line.bold;text:red {\n`;
   const fields = schema.attributes.sort((a, b) => {
     if (a.reference) return 1;
     if (b.reference) return -1;
@@ -91,32 +91,39 @@ function processClassDefinition(schema, key) {
     if (schema.model) {
       modelField = schema.model?.rawAttributes[field.name];
     }
-
+    let column = '';
+    const issues:string[] = [];
     // mark fields that do not allow null
     if (!field.allowNull) {
-      uml += ' *';
+      column += ' *';
     }
 
     // highlight name when not present in model
     if (schema.model && !modelField) {
-      uml += ` <color:${colors.error}>${field.name}</color>: `;
+      issues.push(`!issue='column missing from model'`); //eslint-disable-line
+      column += ` <color:${colors.error}>${field.name}</color>: `;
     } else {
-      uml += ` ${field.name} : `;
+      column += ` ${field.name} : `;
     }
 
     // highlight type when not matched in model
     if (modelField && field.type !== modelField.type.toString().toLowerCase()) {
-      uml += `<color:${colors.error}>${field.type}</color>`;
+      issues.push(`!issue='column type does not match model'`); //eslint-disable-line
+      column += `<color:${colors.error}>${field.type}</color>`;
     } else {
-      uml += `${field.type}`;
+      column += `${field.type}`;
     }
 
     if (field.default) {
-      uml += ` : ${field.default}`;
+      column += ` : ${field.default}`;
     } else if (field.reference) {
-      uml += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
+      column += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
     }
-    uml += '\n';
+
+    if (issues.length > 0) {
+      uml += `${issues.join('\n')}`;
+    }
+    uml += `${column}\n`;
   });
 
   uml += '}\n\n';
@@ -129,7 +136,16 @@ function processAssociations(associations, tables, schemas) {
   interface Association {
     [key: string]: string[];
   }
+  interface AssociationIssues {
+    [key: string]: string[][];
+  }
   const associationsByType:Association = {
+    ['one-to-one']: [],
+    ['one-to-many']: [],
+    ['many-to-many']: [],
+    ['missing-from-model']: [],
+  };
+  const associationIssuesByType:AssociationIssues = {
     ['one-to-one']: [],
     ['one-to-many']: [],
     ['many-to-many']: [],
@@ -204,12 +220,17 @@ function processAssociations(associations, tables, schemas) {
           break;
       }
     });
+    const issues:string[] = [];
 
     relationKey = sourceTarget[key].map((association) => association.as).join(', ');
 
-    const lineColor = relationKey.split(',').length === 1
-      ? colors.error
-      : '#black';
+    let lineColor;
+    if (relationKey?.split(',').length === 1) {
+      lineColor = colors.error;
+      issues.push(`!issue='associations need to be defined both directions'`); //eslint-disable-line
+    } else {
+      lineColor = '#black';
+    }
 
     relationKey = [...new Set(
       relationKey
@@ -219,8 +240,15 @@ function processAssociations(associations, tables, schemas) {
           const isCamel = isCamelCase(cleanR);
           const isDistinct = relationKey.split(',').filter((v) => (v === r)).length === 1;
           if (isCamel && isDistinct) return cleanR;
-          if (isCamel && !isDistinct) return `<color:${colors.errorLighter}>${cleanR}</color>`;
-          if (!isCamel && isDistinct) return `<color:${colors.error}>${cleanR}</color>`;
+          if (isCamel && !isDistinct) {
+            issues.push(`!issue='associations need to be distinct'`); //eslint-disable-line
+            return `<color:${colors.errorLighter}>${cleanR}</color>`;
+          }
+          if (!isCamel && isDistinct) {
+            issues.push(`!issue='associations need to be camel case'`); //eslint-disable-line
+            return `<color:${colors.error}>${cleanR}</color>`;
+          }
+          issues.push(`!issue='associations need to be distinct and camel case'`); //eslint-disable-line
           return `<color:${colors.errorDark}>${cleanR}</color>`;
         }),
     )]
@@ -229,26 +257,61 @@ function processAssociations(associations, tables, schemas) {
     if (sourceNumber === 1 && targetNumber === 1) {
       associationsByType['one-to-one']
         .push(`${leftResource} "1" --[${lineColor},plain,thickness=2]-- "1" ${rightResource} : ${relationKey}`);
+      associationIssuesByType['one-to-one'].push(issues.map((i) => i));
     } else if ((sourceNumber === 1 && targetNumber === 2)
       || (sourceNumber === 2 && targetNumber === 1)) {
       associationsByType['one-to-many']
         .push(`${leftResource} "1" --[${lineColor},dashed,thickness=2]--{  "n" ${rightResource} : ${relationKey}`);
+      associationIssuesByType['one-to-many'].push(issues.map((i) => i));
     } else if (sourceNumber === 2 && targetNumber === 2) {
       associationsByType['many-to-many']
         .push(`${leftResource} "n" }--[${lineColor},dotted,thickness=2]--{ "n" ${rightResource} : ${relationKey}`);
+      associationIssuesByType['many-to-many'].push(issues.map((i) => i));
     } else {
       associationsByType['missing-from-model']
         .push(`${leftResource} o--[#yellow,bold,thickness=2]--o ${rightResource} : <color:${colors.blueVividFocus}>missing-from-model</color>`);
+      associationIssuesByType['missing-from-model'].push(issues.map((i) => i));
     }
   });
 
-  uml += associationsByType['one-to-one'].join('\n');
-  uml += '\n\n';
-  uml += associationsByType['one-to-many'].join('\n');
-  uml += '\n\n';
-  uml += associationsByType['many-to-many'].join('\n');
-  uml += '\n\n';
-  uml += associationsByType['missing-from-model'].join('\n');
+  if (associationsByType['one-to-one'].length > 0) {
+    uml += '\n';
+    for (let i = 0; i < associationsByType['one-to-one'].length; i++) { //eslint-disable-line
+      console.log(associationIssuesByType['one-to-one'][i]);
+      if (associationIssuesByType['one-to-one'][i]?.length > 0) {
+        uml += `${associationIssuesByType['one-to-one'][i].join('\n')}\n`;
+      }
+      uml += `${associationsByType['one-to-one'][i]}\n`;
+    }
+  }
+  if (associationsByType['one-to-many'].length > 0) {
+    uml += '\n';
+    for (let i = 0; i < associationsByType['one-to-many'].length; i++) { //eslint-disable-line
+      if (associationIssuesByType['one-to-many'][i]?.length > 0) {
+        uml += `${associationIssuesByType['one-to-many'][i].join('\n')}\n`;
+      }
+      uml += `${associationsByType['one-to-many'][i]}\n`;
+    }
+  }
+  if (associationsByType['many-to-many'].length > 0) {
+    uml += '\n';
+    for (let i = 0; i < associationsByType['many-to-many'].length; i++) { //eslint-disable-line
+      if (associationIssuesByType['many-to-many'][i]?.length > 0) {
+        uml += `${associationIssuesByType['many-to-many'][i].join('\n')}\n`;
+      }
+      uml += `${associationsByType['many-to-many'][i]}\n`;
+    }
+  }
+  if (associationsByType['missing-from-model'].length > 0) {
+    uml += '\n';
+    uml += `!issue='association missing from models'`; //eslint-disable-line
+    for (let i = 0; i < associationsByType['missing-from-model'].length; i++) { //eslint-disable-line
+      if (associationIssuesByType['missing-from-model'][i]?.length > 0) {
+        uml += `${associationIssuesByType['missing-from-model'][i].join('\n')}\n`;
+      }
+      uml += `${associationsByType['missing-from-model'][i]}\n`;
+    }
+  }
   return uml;
 }
 
