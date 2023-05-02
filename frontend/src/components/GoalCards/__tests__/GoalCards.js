@@ -663,7 +663,6 @@ describe('Goals Table', () => {
       act(() => {
         fireEvent.click(createRttapa);
       });
-      expect(await screen.findByText(/are non-Rttapa goals. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeInTheDocument();
       expect(await screen.findByText(/are draft goals, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeInTheDocument();
 
       const nonRttapaGoals = goalsForRttapaTest.filter((goal) => goal.isRttapa !== 'Yes');
@@ -679,7 +678,6 @@ describe('Goals Table', () => {
         fireEvent.click(nonRttapaCheckboxes[0]);
       });
 
-      expect(await screen.findByText(/is a non-Rttapa goal. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeInTheDocument();
       expect(await screen.findByText(/is a draft goal, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeInTheDocument();
 
       const draftCheckboxes = checkboxes.filter((checkbox) => (draftGoals
@@ -692,7 +690,6 @@ describe('Goals Table', () => {
         fireEvent.click(draftCheckboxes[0]);
       });
 
-      expect(await screen.findByText(/is a non-Rttapa goal. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeInTheDocument();
       expect(screen.queryByText(/is a draft goal, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeNull();
 
       act(() => {

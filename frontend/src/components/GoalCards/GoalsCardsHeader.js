@@ -36,7 +36,6 @@ export default function GoalCardsHeader({
   createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
-  nonRttapaSelectedRttapa,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -170,20 +169,6 @@ export default function GoalCardsHeader({
                   , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
                 </p>
               ) : null}
-              { nonRttapaSelectedRttapa.length ? (
-                <p className="usa-prose margin-top-0">
-                  <strong>{nonRttapaSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
-                  {' '}
-                  {nonRttapaSelectedRttapa.length === 1 ? 'is a' : 'are'}
-                  {' '}
-                  non-Rttapa
-                  {' '}
-                  {nonRttapaSelectedRttapa.length === 1 ? 'goal' : 'goals'}
-                  .
-                  Any goals added to a regional agreement must be RTTAPA goals.
-                  Deselect any non-RTTAPA goals.
-                </p>
-              ) : null}
             </div>
           </Alert>
         )}
@@ -236,7 +221,6 @@ GoalCardsHeader.propTypes = {
   createRttapa: PropTypes.func.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
-  nonRttapaSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
