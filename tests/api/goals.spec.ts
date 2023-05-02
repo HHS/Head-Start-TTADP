@@ -105,6 +105,7 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
   });
   
   const schema = Joi.object({
+    goalTemplateId: Joi.number().allow(null),
     endDate: Joi.date().allow(null),
     goalNumber: Joi.string(),
     id: Joi.number(),

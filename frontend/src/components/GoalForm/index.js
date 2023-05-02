@@ -14,6 +14,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
+import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -35,11 +36,12 @@ import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
+import { combinePrompts } from '../condtionalFieldConstants';
 
 const [
   objectiveTextError,
   objectiveTopicsError,
-  objectiveResourcesError,,
+  objectiveResourcesError,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -71,6 +73,8 @@ export default function GoalForm({
     id: 'new',
     onApprovedAR: false,
     prompts: [],
+    isCurated: false,
+    goalTemplateId: null,
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -85,6 +89,9 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
+  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
+  const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
+  const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
 
@@ -140,6 +147,8 @@ export default function GoalForm({
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
+        setIsCurated(goal.isCurated);
+        setGoalTemplateId(goal.goalTemplateId);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -210,6 +219,23 @@ export default function GoalForm({
     }
     fetchTopics();
   }, []);
+
+  useEffect(() => {
+    async function fetchGoalTemplatePrompts() {
+      if (isCurated && goalTemplateId && ids) {
+        const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
+        if (gtPrompts) {
+          setGoalTemplatePrompts(
+            combinePrompts(gtPrompts, prompts),
+          );
+        } else {
+          setGoalTemplatePrompts(prompts);
+        }
+      }
+    }
+
+    fetchGoalTemplatePrompts();
+  }, [goalTemplateId, ids, isCurated, prompts]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -296,6 +322,26 @@ export default function GoalForm({
     setErrors(newErrors);
 
     return !error.props.children;
+  };
+
+  const validatePrompts = (title, isErrored, errorMessage) => {
+    let error = <></>;
+    const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
+
+    if (isErrored) {
+      error = <span className="usa-error-message">{errorMessage}</span>;
+    }
+
+    const newErrors = [...errors];
+    promptErrors[title] = error;
+    newErrors.splice(FORM_FIELD_INDEXES.GOAL_PROMPTS, 1, promptErrors);
+    setErrors(newErrors);
+    return !error.props.children;
+  };
+
+  const validateAllPrompts = () => {
+    const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
+    return Object.keys(promptErrors).every((key) => !promptErrors[key].props.children);
   };
 
   /**
@@ -428,6 +474,7 @@ export default function GoalForm({
     && validateGoalName()
     && validateEndDate()
     && validateObjectives()
+    && validateAllPrompts()
   );
   const isValidDraft = () => (
     validateGrantNumbers()
@@ -594,6 +641,7 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
+          isCurated,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -658,6 +706,8 @@ export default function GoalForm({
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
+    setIsCurated(goalDefaults.isCurated);
+    setPrompts(goalDefaults.prompts);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -672,6 +722,7 @@ export default function GoalForm({
       }
       return;
     }
+
     setAppLoadingText('Saving');
     setIsAppLoading(true);
     try {
@@ -679,6 +730,8 @@ export default function GoalForm({
         grantId: g.value,
         name: goalName,
         status,
+        prompts: goalTemplatePrompts,
+        isCurated,
         endDate,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
@@ -691,6 +744,8 @@ export default function GoalForm({
           const g = goal.grants.map((grant) => ({
             grantId: grant.id,
             name: goal.name,
+            isCurated: goal.isCurated,
+            prompts: goal.prompts,
             status,
             endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
@@ -747,6 +802,9 @@ export default function GoalForm({
     setStatus(goal.status);
     setGoalNumbers(goal.goalNumbers);
     setSelectedGrants(goal.grants);
+    setIsCurated(goal.isCurated);
+    setPrompts(goal.prompts);
+
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
     // PS - endDate can be null
@@ -844,7 +902,8 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
-              prompts={prompts}
+              prompts={goalTemplatePrompts}
+              setPrompts={setGoalTemplatePrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}
@@ -867,6 +926,7 @@ export default function GoalForm({
               goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
+              validatePrompts={validatePrompts}
             />
           )}
 

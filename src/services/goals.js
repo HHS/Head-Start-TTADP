@@ -56,6 +56,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
     'createdVia',
+    'goalTemplateId',
     [
       'onAR',
       'onAnyReport',
@@ -201,7 +202,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       model: GoalTemplateFieldPrompt,
       as: 'prompts',
       attributes: [
-        'id',
+        ['id', 'promptId'],
         'ordinal',
         'title',
         'prompt',
@@ -513,7 +514,10 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
   return newPrompts
     .reduce((previousPrompts, currentPrompt) => {
-      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
+      const promptId = currentPrompt.promptId
+        ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
+
+      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
       if (existingPrompt) {
         if (!forReport) {
           existingPrompt.response = uniq(
@@ -540,12 +544,12 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
       }
 
       const newPrompt = {
-        promptId: currentPrompt.promptId,
+        promptId,
         ordinal: currentPrompt.ordinal,
         title: currentPrompt.title,
         prompt: currentPrompt.prompt,
         hint: currentPrompt.hint,
-        type: currentPrompt.type,
+        fieldType: currentPrompt.fieldType,
         options: currentPrompt.options,
         validations: currentPrompt.validations,
       };
@@ -1092,6 +1096,8 @@ export async function createOrUpdateGoals(goals) {
       createdVia,
       endDate,
       status,
+      prompts,
+      isCurated,
       ...options
     } = goalData;
 
@@ -1128,6 +1134,10 @@ export async function createOrUpdateGoals(goals) {
           rtrOrder: rtrOrder + 1,
         });
       }
+    }
+
+    if (isCurated) {
+      await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
     }
 
     // we can't update this stuff if the goal is on an approved AR
@@ -2095,7 +2105,7 @@ export async function getGoalsForReport(reportId) {
               'prompt', gtfp.prompt,
               'hint', gtfp.hint,
               'caution', gtfp.caution,
-              'type', gtfp."fieldType",
+              'fieldType', gtfp."fieldType",
               'options', gtfp.options,
               'validations', gtfp.validations,
               'response', gfr.response,
