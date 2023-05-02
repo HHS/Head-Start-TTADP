@@ -1851,13 +1851,6 @@ export async function saveGoalsForReport(goals, report) {
         (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
       ));
 
-      if (newOrUpdatedGoal) {
-        auditLogger.info(`
-        GoalsForReport
-        - Found by ID
-        - Found an existing goal with id ${newOrUpdatedGoal.id} name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
-      }
-
       // if not, does it exist for this name and grantId combination
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.findOne({
@@ -1867,13 +1860,6 @@ export async function saveGoalsForReport(goals, report) {
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
         });
-
-        if (newOrUpdatedGoal) {
-          auditLogger.info(`
-        GoalsForReport
-        - Found by name
-        - Found an existing goal with id ${newOrUpdatedGoal.id} name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
-        }
       }
 
       // if not, we create it
@@ -1884,11 +1870,6 @@ export async function saveGoalsForReport(goals, report) {
           ...fields,
           status,
         }, { individualHooks: true });
-
-        auditLogger.info(`
-        GoalsForReport
-        - Created
-        - Created a new goal with id ${newOrUpdatedGoal.id} name ${newOrUpdatedGoal.name} and grantId ${grantId}`);
       }
 
       if (!newOrUpdatedGoal.onApprovedAR) {
