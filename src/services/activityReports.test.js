@@ -778,13 +778,13 @@ describe('Activity report service', () => {
         };
         // Calls syncApprovers when approverUserIds is present
         const newReport = await createOrUpdate(reportWithApprovers);
-        expect(newReport.approvers[0].User.id).toEqual(mockUserTwo.id);
+        expect(newReport.approvers[0].user.id).toEqual(mockUserTwo.id);
 
         const [report] = await activityReportAndRecipientsById(newReport.id);
 
         // When syncApprovers is undefined, skip call, avoid removing approvers
         const reportTwo = await createOrUpdate({ ...reportObject, regionId: 3 }, report);
-        expect(reportTwo.approvers[0].User.id).toEqual(mockUserTwo.id);
+        expect(reportTwo.approvers[0].user.id).toEqual(mockUserTwo.id);
         expect(reportTwo.regionId).toEqual(3);
       });
     });
@@ -814,7 +814,7 @@ describe('Activity report service', () => {
           note: 'great job from user 2',
         });
         const [foundReport] = await activityReportAndRecipientsById(report.id);
-        expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, COR`);
+        expect(foundReport.approvers[0].user.get('fullName')).toEqual(`${mockUserTwo.name}, COR`);
       });
       it('includes recipient with programs', async () => {
         const recipientWithProgram = await Recipient.create({ id: RECIPIENT_WITH_PROGRAMS_ID, name: 'recipient with program', uei: 'NNA5N2KHMGM2' });
