@@ -6,11 +6,12 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReportCollaborator.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportCollaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      ActivityReportCollaborator.hasMany(models.CollaboratorRole, { foreignKey: 'activityReportCollaboratorId', as: 'collaboratorRoles' });
       ActivityReportCollaborator.belongsToMany(models.Role, {
         through: models.CollaboratorRole,
         foreignKey: 'activityReportCollaboratorId',
         otherKey: 'roleId',
-        as: 'collaboratorRoles',
+        as: 'roles',
       });
     }
   }
@@ -26,9 +27,9 @@ export default (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        const collaboratorRoles = this.collaboratorRoles && this.collaboratorRoles.length
-          ? this.collaboratorRoles : this.user.roles;
-        return generateFullName(this.user.name, collaboratorRoles);
+        const roles = this.roles && this.roles.length
+          ? this.roles : this.user.roles;
+        return generateFullName(this.user.name, roles);
       },
     },
   }, {

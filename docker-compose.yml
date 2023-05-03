@@ -45,7 +45,7 @@ services:
       - "6379:6379"
   mailcatcher:
     image: schickling/mailcatcher
-    ports: 
+    ports:
       - "1025:1025"
       - "1080:1080"
   opensearch-node1:

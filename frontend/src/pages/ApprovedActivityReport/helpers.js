@@ -101,12 +101,12 @@ export const reportDataPropTypes = {
     })),
     targetPopulations: PropTypes.arrayOf(PropTypes.string),
     approvers: PropTypes.arrayOf(PropTypes.shape({
-      User: PropTypes.shape({
+      user: PropTypes.shape({
         fullName: PropTypes.string,
       }),
     })),
     activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      User: PropTypes.shape({
+      user: PropTypes.shape({
         fullName: PropTypes.string,
         note: PropTypes.string,
       }),
