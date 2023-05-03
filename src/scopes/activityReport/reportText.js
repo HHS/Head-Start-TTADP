@@ -111,24 +111,15 @@ const nextStepsResourcePosNeg = (pos = true) => {
   WHERE "Resources"."url"${a}`;
 };
 
-const activityReportContextPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReports"."context"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  WHERE "ActivityReports"."context"${a}`;
-};
-
-const additionalNotesPosNeg = (pos = true) => {
+const additionalNotesAndContextPosNeg = (pos = true) => {
   const a = pos ? '' : ' IS NULL OR "ActivityReports"."additionalNotes"';
+  const b = pos ? '' : ' IS NULL OR "ActivityReports"."context"';
 
   return `
   SELECT DISTINCT
     "ActivityReports"."id"
   FROM "ActivityReports"
-  WHERE "ActivityReports"."additionalNotes"${a}`;
+  WHERE "ActivityReports"."additionalNotes"${a} OR "ActivityReports"."context"${b}`;
 };
 
 export function withReportText(searchText) {
@@ -144,8 +135,7 @@ export function withReportText(searchText) {
       filterAssociation(activityReportGoalResourcePosNeg(true), search, false, 'ILIKE'),
       filterAssociation(activityReportObjectiveResourcePosNeg(true), search, false, 'ILIKE'),
       filterAssociation(nextStepsResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportContextPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(additionalNotesPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(additionalNotesAndContextPosNeg(true), search, false, 'ILIKE'),
     ],
   };
 }
@@ -163,8 +153,7 @@ export function withoutReportText(searchText) {
       filterAssociation(activityReportGoalResourcePosNeg(false), search, false, 'NOT ILIKE'),
       filterAssociation(activityReportObjectiveResourcePosNeg(false), search, false, 'NOT ILIKE'),
       filterAssociation(nextStepsResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportContextPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(additionalNotesPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(additionalNotesAndContextPosNeg(false), search, false, 'NOT ILIKE'),
     ],
   };
 }
