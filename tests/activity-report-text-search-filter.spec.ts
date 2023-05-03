@@ -257,7 +257,7 @@ test.describe('Activity Report Text Search Filter', () => {
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
     // Contains Recipient step.
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
@@ -277,7 +277,7 @@ test.describe('Activity Report Text Search Filter', () => {
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     prs = waitForLandingFilterRequests(page);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
     // Mix with Report ID.
     await page.getByRole('button', { name: 'open filters for this page' }).click();
