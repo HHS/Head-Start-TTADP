@@ -154,7 +154,7 @@ export function withoutReportText(searchText) {
   const search = [`%${searchText}%`];
 
   return {
-    [Op.or]: [
+    [Op.and]: [
       filterAssociation(nextStepsPosNeg(false), search, false, 'NOT ILIKE'),
       filterAssociation(argsPosNeg(false), search, false, 'NOT ILIKE'),
       filterAssociation(objectiveTitlePosNeg(false), search, false, 'NOT ILIKE'),
