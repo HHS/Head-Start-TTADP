@@ -8,7 +8,9 @@ import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import UnusedData from './UnusedData';
 import Drawer from '../Drawer';
-import TopicsInfoList from './TopicsInfoList';
+import Req from '../Req';
+import ContentFromFeedByTag from '../ContentFromFeedByTag';
+import './ObjectiveTopics.scss';
 
 export default function ObjectiveTopics({
   error,
@@ -81,14 +83,21 @@ export default function ObjectiveTopics({
         stickyFooter
         title="Topic guidance"
       >
-        <TopicsInfoList />
+        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
           <>
             Topics
             {' '}
-            <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+            <Req />
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled margin-left-1"
+              ref={drawerTriggerRef}
+            >
+              Tell me more
+            </button>
           </>
         </Label>
         {error}

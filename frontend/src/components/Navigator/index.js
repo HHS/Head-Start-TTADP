@@ -249,7 +249,6 @@ const Navigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
 
     const promptTitles = getValues('goalPrompts');
     let prompts = [];
@@ -269,7 +268,6 @@ const Navigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      isRttapa,
       regionId: formData.regionId,
       grantIds,
       prompts,
@@ -303,7 +301,6 @@ const Navigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
     const promptErrors = getPromptErrors(promptTitles, errors);
@@ -348,7 +345,6 @@ const Navigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      isRttapa,
       regionId: formData.regionId,
       grantIds,
       prompts,
@@ -531,7 +527,6 @@ const Navigator = ({
     const objectives = getValues(fieldArrayName);
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
 
@@ -542,7 +537,6 @@ const Navigator = ({
       name,
       endDate,
       objectives,
-      isRttapa,
       regionId: formData.regionId,
       prompts,
     };
@@ -575,7 +569,6 @@ const Navigator = ({
       setValue('goalForEditing', null);
       setValue('goalName', '');
       setValue('goalEndDate', '');
-      setValue('goalIsRttapa', '');
       setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
 
@@ -880,9 +873,12 @@ Navigator.propTypes = {
     ]),
   }),
   socketMessageStore: PropTypes.shape({
-    user: PropTypes.shape({
-      name: PropTypes.string,
-    }),
+    user: PropTypes.oneOfType([
+      PropTypes.shape({
+        name: PropTypes.string,
+      }),
+      PropTypes.string,
+    ]),
   }),
 };
 

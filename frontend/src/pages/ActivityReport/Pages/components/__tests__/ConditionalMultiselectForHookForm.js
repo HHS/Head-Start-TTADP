@@ -7,15 +7,15 @@ import React from 'react';
 import {
   FormProvider, useForm,
 } from 'react-hook-form/dist/index.ie11';
-import ConditionalMultiselect from '../ConditionalMultiselect';
+import ConditionalMultiselectForHookForm from '../ConditionalMultiselectForHookForm';
 
-describe('ConditionalMultiselect', () => {
+describe('ConditionalMultiselectForHookForm', () => {
   // eslint-disable-next-line react/prop-types
-  const Rt = ({ isEditable = true }) => {
+  const Rt = ({ isOnReport = false, isComplete = false }) => {
     const hookForm = useForm({
       mode: 'onChange',
       defaultValues: {
-        testField: ['run'],
+        testField: ['run', 'test'],
       },
     });
 
@@ -27,6 +27,7 @@ describe('ConditionalMultiselect', () => {
         'run',
       ],
       title: 'Riddle',
+      type: 'multiselect',
     };
 
     const validations = {
@@ -45,12 +46,13 @@ describe('ConditionalMultiselect', () => {
       <div>
         { /* eslint-disable-next-line react/jsx-props-no-spreading */ }
         <FormProvider {...hookForm}>
-          <ConditionalMultiselect
+          <ConditionalMultiselectForHookForm
             fieldData={fieldData}
             validations={validations}
             fieldName="testField"
             defaultValue={[]}
-            isEditable={isEditable}
+            isComplete={isComplete}
+            isOnReport={isOnReport}
           />
         </FormProvider>
       </div>
@@ -63,7 +65,7 @@ describe('ConditionalMultiselect', () => {
   });
 
   it('renders the prompt if read only', () => {
-    render(<Rt isEditable={false} />);
+    render(<Rt isOnReport isComplete />);
     expect(screen.getByText('Riddle')).toBeInTheDocument();
   });
 });
