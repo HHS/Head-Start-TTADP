@@ -40,7 +40,7 @@ const getResourceMetaDataJob = async (job) => {
     return ({ status: httpCodes.OK, data: { url: resourceUrl } });
   } catch (error) {
     auditLogger.error('Resource Queue Error: ', error);
-    throw error(error); // We must rethrow the error here to ensure the job is retried.
+    throw Error(error); // We must rethrow the error here to ensure the job is retried.
   }
 };
 
