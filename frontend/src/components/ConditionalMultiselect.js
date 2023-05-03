@@ -3,71 +3,28 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { FormGroup, Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
-import selectOptionsReset from '../../../../components/selectOptionsReset';
-import { ERROR_FORMAT } from './constants';
-
-const VALIDATION_DICTIONARY = {
-  maxSelections: (validation) => (selectedOptions) => (
-    selectedOptions.length <= validation.value
-  ) || validation.message,
-};
-
-const VALIDATION_DICTIONARY_KEYS = Object.keys(VALIDATION_DICTIONARY);
-
-const transformValidationsIntoRules = (validations) => validations.rules.reduce((
-  acc, validation,
-) => {
-  const isValidKey = VALIDATION_DICTIONARY_KEYS.includes(validation.name);
-
-  if (!isValidKey) {
-    return acc;
-  }
-
-  return {
-    ...acc,
-    validate: {
-      ...acc.validate,
-      [validation.name]: (value) => VALIDATION_DICTIONARY[validation.name](validation)(value),
-    },
-  };
-}, {
-  validate: validations.required ? {
-    mustSelectOne: (value) => value.length > 0 || 'Please select at least one option',
-  } : {},
-});
+import selectOptionsReset from './selectOptionsReset';
 
 export default function ConditionalMultiselect({
   fieldData,
   validations,
   fieldName,
-  defaultValue,
-  isEditable,
+  fieldValue,
+  isOnReport,
+  onBlur,
+  onChange,
+  error,
+  isComplete,
 }) {
-  const rules = transformValidationsIntoRules(validations);
-  const {
-    field: {
-      onChange,
-      onBlur,
-      value: fieldValue,
-      name,
-    },
-  } = useController({
-    name: fieldName,
-    rules,
-    defaultValue,
-  });
-
-  const { errors } = useFormContext();
-  const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
-
-  const handleOnChange = (selectedOptions) => {
-    onChange(selectedOptions.map((option) => option.label));
+  const handleOnChange = (selections) => {
+    onChange(selections.map((option) => option.label));
   };
 
   const options = fieldData.options.map((label, value) => ({ label, value }));
   const selectedOptions = (fieldValue || []).map((label) => options
     .find((option) => option.label === label));
+
+  const isEditable = !(isOnReport && isComplete);
 
   if (!isEditable) {
     if (!fieldValue || fieldValue.length === 0) {
@@ -80,7 +37,7 @@ export default function ConditionalMultiselect({
           {fieldData.title}
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {(fieldValue || []).map((option) => (
+          {fieldValue.map((option) => (
             <li key={uuidv4()}>{option}</li>
           ))}
         </ul>
@@ -89,8 +46,8 @@ export default function ConditionalMultiselect({
   }
 
   return (
-    <FormGroup error={error.props.children} key={name}>
-      <Label htmlFor={name}>
+    <FormGroup error={error.props.children} key={fieldName}>
+      <Label htmlFor={fieldName}>
         <>
           { fieldData.prompt }
           {' '}
@@ -100,9 +57,9 @@ export default function ConditionalMultiselect({
       { fieldData.hint && (<span className="usa-hint">{fieldData.hint}</span>)}
       {error}
       <Select
-        inputName={name}
-        inputId={name}
-        name={name}
+        inputName={fieldName}
+        inputId={fieldName}
+        name={fieldName}
         styles={selectOptionsReset}
         components={{
           DropdownIndicator: null,
@@ -134,6 +91,14 @@ ConditionalMultiselect.propTypes = {
     required: PropTypes.bool,
     message: PropTypes.string,
   }).isRequired,
-  defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isEditable: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
+  isComplete: PropTypes.bool,
+  fieldValue: PropTypes.arrayOf(PropTypes.string).isRequired,
+  error: PropTypes.node.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onBlur: PropTypes.func.isRequired,
+};
+
+ConditionalMultiselect.defaultProps = {
+  isComplete: false,
 };
