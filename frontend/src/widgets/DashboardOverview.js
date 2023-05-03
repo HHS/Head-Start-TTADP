@@ -22,7 +22,7 @@ export function Field({
   tooltipText,
 }) {
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1">
+    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1">
       <span className="smart-hub--dashboard-overview-field-icon flex-1 display-flex flex-justify-center flex-align-center">
         <span className="smart-hub--dashboard-overview-field-icon-background display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
           <FontAwesomeIcon color={iconColor} icon={icon} />
@@ -121,7 +121,7 @@ const DASHBOARD_FIELDS = {
       />
     ),
   },
-  'In-person activities': {
+  'In person activities': {
     render: (data, showTooltip) => (
       <Field
         key="in-person-activities"
@@ -130,7 +130,7 @@ const DASHBOARD_FIELDS = {
         tooltipText="Excludes virtual activities"
         iconColor={colors.ttahubMagenta}
         backgroundColor={colors.ttahubMagentaLight}
-        label="In-person activities"
+        label="In person activities"
         data={data.inPerson}
       />
     ),
@@ -195,7 +195,7 @@ DashboardOverviewWidget.defaultProps = {
     'Grants served',
     'Participants',
     'Hours of TTA',
-    'In-person activities',
+    'In person activities',
   ],
 };
 

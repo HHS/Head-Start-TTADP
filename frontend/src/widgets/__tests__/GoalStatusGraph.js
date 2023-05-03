@@ -55,4 +55,9 @@ describe('GoalStatusChart', () => {
     userEvent.click(closeButton);
     expect(modal.classList.contains('is-hidden')).toBe(true);
   });
+
+  it('falsy data', async () => {
+    renderGoalStatusChart(0);
+    expect(screen.queryByRole('button', { name: /display goal statuses by number as a table/i })).toBeNull();
+  });
 });

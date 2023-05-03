@@ -8,9 +8,9 @@ import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../../UserContext';
 import Approver from '../index';
-import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const user = {
   id: 1,
@@ -24,7 +24,7 @@ const user = {
 };
 
 const defaultApprover = [{
-  id: 1, status: null, note: '', User: { id: 1, fullName: 'name' },
+  id: 1, status: null, note: '', user: { id: 1, fullName: 'name' },
 }];
 
 const defaultPages = [{
@@ -66,13 +66,19 @@ const RenderApprover = ({
 };
 
 const renderReview = (
-  calculatedStatus, onFormReview, reviewed, approvers = defaultApprover, pages = defaultPages,
+  calculatedStatus,
+  onFormReview,
+  reviewed,
+  approvers = defaultApprover,
+  pages = defaultPages,
+  extraFormData = {},
 ) => {
   const formData = {
-    author: { name: 'user' },
+    author: { name: 'user', id: 4 },
     additionalNotes: '',
     calculatedStatus,
     approvers,
+    ...extraFormData,
   };
 
   const history = createMemoryHistory();
@@ -120,26 +126,49 @@ describe('Approver review page', () => {
       expect(notes.textContent).toContain('No creator notes');
     });
 
+    it('shows date submitted', async () => {
+      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, defaultApprover, defaultPages, { submittedDate: '2023-03-03' });
+      expect(await screen.findByText(/date submitted/i)).toBeVisible();
+      expect(await screen.findByText('03/03/2023')).toBeVisible();
+    });
+
+    it('hides date submitted if missing', async () => {
+      renderReview(REPORT_STATUSES.SUBMITTED,
+        () => { },
+        true,
+        defaultApprover,
+        defaultPages,
+        { submittedDate: null });
+      expect(screen.queryAllByText(/date submitted/i).length).toBe(0);
+    });
+
     it('handles approver reviewing needs action', async () => {
       const approverWithNotes = [
         {
-          id: 1, status: REPORT_STATUSES.APPROVED, note: '<p>These are my approved notes 1.</p>\n', User: { id: 1, fullName: 'approver 1' },
+          id: 1, status: REPORT_STATUSES.APPROVED, note: '<p>These are my approved notes 1.</p>\n', user: { id: 1, fullName: 'approver 1' },
         },
         {
-          id: 2, status: REPORT_STATUSES.NEEDS_ACTION, note: '<p>These are my needs action notes 2.</p>\n', User: { id: 2, fullName: 'approver 2' },
+          id: 2, status: REPORT_STATUSES.NEEDS_ACTION, note: '<p>These are my needs action notes 2.</p>\n', user: { id: 2, fullName: 'approver 2' },
         },
         {
-          id: 3, status: null, note: null, User: { id: 1, fullName: 'approver 3' },
+          id: 3, status: null, note: null, user: { id: 1, fullName: 'approver 3' },
         },
         {
-          id: 4, status: REPORT_STATUSES.APPROVED, note: null, User: { id: 4, fullName: 'approver 4' },
+          id: 4, status: REPORT_STATUSES.APPROVED, note: null, user: { id: 4, fullName: 'approver 4' },
         },
       ];
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, approverWithNotes);
+
+      const onFormReview = jest.fn();
+      const reviewed = true;
+      const calculatedStatus = REPORT_STATUSES.NEEDS_ACTION;
+      renderReview(calculatedStatus, onFormReview, reviewed, approverWithNotes);
+
       expect(await screen.findByText(/these are my needs action notes 2\./i)).toBeVisible();
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
-      expect(await screen.findByText(/choose report status/i)).toBeVisible();
+
+      const statuses = screen.queryAllByLabelText('Choose report status *');
+      expect(statuses.length).toBe(1);
     });
 
     it('a report can\'t be submitted with incomplete pages', async () => {
@@ -161,18 +190,58 @@ describe('Approver review page', () => {
     it('shows approver notes', async () => {
       const approverWithNotes = [
         {
-          id: 1, status: null, note: '<p></p>\n', User: { id: 1, fullName: 'approver 1' },
+          id: 1, status: null, note: '<p></p>\n', user: { id: 1, fullName: 'approver 1' },
         },
         {
-          id: 2, status: null, note: '<p>These are my sample notes 2.</p>\n', User: { id: 2, fullName: 'approver 2' },
+          id: 2, status: null, note: '<p>These are my sample notes 2.</p>\n', user: { id: 2, fullName: 'approver 2' },
         },
         {
-          id: 3, status: null, note: null, User: { id: 1, fullName: 'approver 3' },
+          id: 3, status: null, note: null, user: { id: 1, fullName: 'approver 3' },
         },
       ];
       renderReview(REPORT_STATUSES.APPROVED, () => { }, false, approverWithNotes);
+      const alert = document.querySelector('.usa-alert');
+      expect(alert).not.toBe(null);
       expect(await screen.findByText(/these are my sample notes 2\./i)).toBeVisible();
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
+    });
+  });
+
+  describe('when approver is creator', () => {
+    it('does not show an alert', async () => {
+      const calculatedStatus = REPORT_STATUSES.DRAFT;
+      const onFormReview = jest.fn();
+      const reviewed = false;
+      const approvers = [
+        {
+          id: 1, status: null, note: '', user: { id: 4, fullName: 'name' },
+        },
+      ];
+      const pages = defaultPages;
+      renderReview(
+        calculatedStatus, onFormReview, reviewed, approvers, pages,
+      );
+
+      const alert = document.querySelector('.usa-alert');
+      expect(alert).toBe(null);
+    });
+
+    it('does not show a status dropdown', async () => {
+      const calculatedStatus = REPORT_STATUSES.DRAFT;
+      const onFormReview = jest.fn();
+      const reviewed = false;
+      const approvers = [
+        {
+          id: 1, status: null, note: '', user: { id: 4, fullName: 'name' },
+        },
+      ];
+      const pages = defaultPages;
+      renderReview(
+        calculatedStatus, onFormReview, reviewed, approvers, pages,
+      );
+
+      const statuses = screen.queryAllByLabelText('Choose report status (Required)');
+      expect(statuses.length).toBe(0);
     });
   });
 });

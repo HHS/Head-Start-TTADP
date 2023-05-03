@@ -1,9 +1,9 @@
+import { REPORT_STATUSES, REASONS } from '@ttahub/common';
 import db, {
   ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
-import { REPORT_STATUSES, REASONS } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 
 const RECIPIENT_ID = 462034;
@@ -15,7 +15,7 @@ const mockUser = {
   homeRegionId: 1,
   name: 'user5426861',
   hsesUsername: 'user5426861',
-  hsesUserId: '5426861',
+  hsesUserId: '54268610',
 };
 
 const reportObject = {
@@ -125,8 +125,8 @@ const regionOneDraftReport = {
 
 describe('Reason list widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
+    await User.findOrCreate({ where: { ...mockUser } });
+    await Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' } });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
     }, {
@@ -173,7 +173,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list within small date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' });
+    const scopes = await filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' });
     const res = await reasonList(scopes);
 
     expect(res.length).toBe(17);
@@ -188,7 +188,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list for longer date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/03/31' });
+    const scopes = await filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/03/31' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Competitive Threshold (CLASS)');
@@ -200,7 +200,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list for later date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/03/01-2021/04/30' });
+    const scopes = await filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/03/01-2021/04/30' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Quality Threshold (CLASS)');
@@ -212,7 +212,7 @@ describe('Reason list widget', () => {
   });
 
   it('retreives reason list for longer date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/02/01-2021/04/30' });
+    const scopes = await filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/02/01-2021/04/30' });
     const res = await reasonList(scopes);
 
     expect(res.length).toBe(17);
@@ -226,14 +226,14 @@ describe('Reason list widget', () => {
     expect(res[2].count).toBe(2);
   });
   it('does not retrieve reason list outside of date range for specified region', async () => {
-    let scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2020/01/01-2020/12/31' });
+    let scopes = await filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2020/01/01-2020/12/31' });
     let res = await reasonList(scopes);
     expect(res.length).toBe(17);
     REASONS.forEach((reason) => {
       expect(res.some((r) => r.name === reason)).toBe(true);
     });
 
-    scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/05/01-2021/06/23' });
+    scopes = await filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/05/01-2021/06/23' });
 
     res = await reasonList(scopes);
     expect(res.length).toBe(17);

@@ -1,0 +1,26 @@
+@use '../colors.scss' as *;
+
+.smart-hub-identifier {
+  .usa-identifier {
+    background-color: $ttahub-blue;
+  }
+
+  .usa-identifier__section--masthead {
+    margin-bottom: 2.5rem;
+  }
+
+  .usa-identifier__container {
+    margin-left: unset;
+    margin-right: unset;
+  }
+
+  .usa-identifier__identity-domain {
+    color: $base-lighter;
+  }
+
+  .usa-identifier__section--required-links {
+    a {
+      color: $base-lighter;
+    }
+  }
+}

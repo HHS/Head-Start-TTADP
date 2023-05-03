@@ -24,6 +24,11 @@ export const reasons = [
   ...reasonsToMonitor,
 ];
 
+/*
+  Please keep in sync with:
+  frontend > src > constants.js
+  src > constants.js
+*/
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
@@ -43,7 +48,7 @@ export const recipientParticipants = [
 
 export const otherEntityParticipants = [
   'HSCO',
-  'Local/State Agency(ies)',
+  'Local or State Agency',
   'OCC Regional Office',
   'OHS Regional Office',
   'Regional Head Start Association',
@@ -57,7 +62,7 @@ export const otherEntityParticipants = [
 // - src/constants.js
 export const topics = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -67,11 +72,13 @@ export const topics = [
   'Culture & Language',
   'Curriculum (Instructional or Parenting)',
   'Data and Evaluation',
+  'Disabilities Services',
   'ERSEA',
   'Environmental Health and Safety / EPRR',
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -79,6 +86,7 @@ export const topics = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -89,8 +97,9 @@ export const topics = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
+  'Training and Professional Development',
   'Transition Practices',
   'Transportation',
 ];

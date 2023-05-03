@@ -1,7 +1,14 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, afterUpdate } = require('./hooks/goal');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
+
+export const RTTAPA_ENUM = ['Yes', 'No'];
 
 /**
  * Goals table. Stores goals for tta.
@@ -9,9 +16,10 @@ const { beforeValidate, afterUpdate } = require('./hooks/goal');
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
@@ -20,13 +28,27 @@ module.exports = (sequelize, DataTypes) => {
       });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
+      Goal.belongsToMany(models.GoalTemplateFieldPrompt, {
+        through: models.GoalFieldResponse,
+        foreignKey: 'goalId',
+        otherKey: 'goalTemplateFieldPromptId',
+        as: 'prompts',
+      });
+      Goal.hasMany(models.GoalFieldResponse, { foreignKey: 'goalId', as: 'responses' });
+      Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
+      Goal.belongsToMany(models.Resource, {
+        through: models.GoalResource,
+        foreignKey: 'goalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   Goal.init({
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
     endDate: {
       type: DataTypes.DATEONLY,
@@ -69,11 +91,19 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
     },
     previousStatus: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
+    },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
       default: false,
+    },
+    isRttapa: {
+      type: DataTypes.ENUM(RTTAPA_ENUM),
+      allowNull: true,
     },
     firstNotStartedAt: {
       type: DataTypes.DATE,
@@ -115,11 +145,21 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    createdVia: {
+      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
+      allowNull: true,
+    },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

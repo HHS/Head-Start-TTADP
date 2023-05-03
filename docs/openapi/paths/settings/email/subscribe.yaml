@@ -1,0 +1,10 @@
+put:
+  tags:
+    - settings
+    - email
+  summary: Subscribes a user to all email notifications, with immediate frequency.
+  responses:
+    204:
+      description: User subscribed successfully
+    400:
+      description: User was not subscribed successfully

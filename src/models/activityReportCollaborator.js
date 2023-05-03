@@ -1,12 +1,18 @@
 const { Model } = require('sequelize');
-const generateFullName = require('./hooks/activityReportCollaborator');
+const generateFullName = require('./helpers/generateFullName');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportCollaborator extends Model {
     static associate(models) {
       ActivityReportCollaborator.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportCollaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      ActivityReportCollaborator.hasMany(models.CollaboratorRole, { foreignKey: 'activityReportCollaboratorId', onDelete: 'cascade', as: 'collaboratorRoles' });
+      ActivityReportCollaborator.hasMany(models.CollaboratorRole, { foreignKey: 'activityReportCollaboratorId', as: 'collaboratorRoles' });
+      ActivityReportCollaborator.belongsToMany(models.Role, {
+        through: models.CollaboratorRole,
+        foreignKey: 'activityReportCollaboratorId',
+        otherKey: 'roleId',
+        as: 'roles',
+      });
     }
   }
   ActivityReportCollaborator.init({
@@ -21,7 +27,9 @@ module.exports = (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return generateFullName(this.user, this.collaboratorRoles);
+        const roles = this.roles && this.roles.length
+          ? this.roles : this.user.roles;
+        return generateFullName(this.user.name, roles);
       },
     },
   }, {

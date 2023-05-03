@@ -1,0 +1,10 @@
+put:
+  tags:
+    - settings
+    - email
+  summary: Unsubscribes a user from all email notifications.
+  responses:
+    204:
+      description: User unsubscribed successfully
+    400:
+      description: User was not unsubscribed successfully

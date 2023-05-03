@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { ActivityReport } from '../models';
-import { REPORT_STATUSES } from '../constants';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
   // If report is missing duration set value to 0.
@@ -116,7 +116,7 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       // Get X Axis value to use.
       let xValue;
       if (useDays) {
-        xValue = moment(r.startDate).format('D');
+        xValue = moment(r.startDate).format('MMM-DD');
       } else if (multipleYrs) {
         xValue = moment(r.startDate).format('MMM-YY');
       } else {

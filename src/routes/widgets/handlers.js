@@ -4,6 +4,8 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
 import filtersToScopes from '../../scopes';
+import { currentUserId } from '../../services/currentUser';
+import getCachedResponse from '../../lib/cache';
 
 const namespace = 'SERVICE:WIDGETS';
 
@@ -22,7 +24,8 @@ export async function getWidget(req, res) {
     }
 
     // This returns the query object with "region" property filtered by user permissions
-    const query = await setReadRegions(req.query, req.session.userId);
+    const userId = await currentUserId(req, res);
+    const query = await setReadRegions(req.query, userId);
 
     // Determine what scopes we need.
     /**
@@ -38,8 +41,13 @@ export async function getWidget(req, res) {
      * The idea is twofold, firstly, that we can expand the options passed to filtersToScopes and
      * also that we can as needed modify the request to add certain objects
      */
-    const scopes = filtersToScopes(query, { grant: { subset: true } });
-
+    const scopes = await filtersToScopes(
+      query,
+      {
+        grant: { subset: true },
+        userId,
+      },
+    );
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
 
@@ -49,9 +57,16 @@ export async function getWidget(req, res) {
    */
 
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
+    const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 
-    // pass in the scopes and the query
-    const widgetData = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+    const widgetData = await getCachedResponse(
+      key,
+      async () => {
+        const data = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+        return JSON.stringify(data);
+      },
+      JSON.parse,
+    );
 
     res.json(widgetData);
   } catch (error) {

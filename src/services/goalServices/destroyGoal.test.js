@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { destroyGoal } from '../goals';
 import db, {
@@ -8,10 +7,13 @@ import db, {
   Objective,
   ObjectiveResource,
   ActivityReport,
+  Resource,
 } from '../../models';
+import { processObjectiveForResourcesById } from '../resource';
 import { auditLogger } from '../../logger';
+import resource from '../../models/resource';
 
-describe.skip('destroyGoal handler', () => {
+describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
 
   let goal;
@@ -24,38 +26,32 @@ describe.skip('destroyGoal handler', () => {
     number: faker.random.alphaNumeric(10),
     cdi: false,
     regionId: 1,
+    startDate: new Date(),
+    endDate: new Date(),
   };
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }) });
+    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }), uei: faker.datatype.string(12) });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     goal = await Goal.create({
       name: 'This is some serious goal text',
       status: 'Draft',
+      grantId: grant.id,
     });
 
     goalTwo = await Goal.create({
       name: 'This is another goal',
       status: 'Not Started',
+      grantId: grant.id,
     });
-
-    // await GrantGoal.create({
-    //   recipientId: recipient.id,
-    //   grantId: grant.id,
-    //   goalId: goal.id,
-    // });
 
     objective = await Objective.create({
       goalId: goal.id,
       status: 'Not Started',
       title: 'Make everything ok',
-      // ttaProvided: 'No',
     });
 
-    await ObjectiveResource.create({
-      userProvidedUrl: 'http://website',
-      objectiveId: objective.id,
-    });
+    await processObjectiveForResourcesById(objective.id, ['http://website.com']);
   });
 
   afterAll(async () => {
@@ -63,36 +59,42 @@ describe.skip('destroyGoal handler', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: {
+        url: 'http://website.com',
+      },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goal.id,
       },
+      individualHooks: true,
     });
-
-    // await GrantGoal.destroy({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
 
     await Goal.destroy({
       where: {
         id: [goal.id, goalTwo.id],
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     jest.clearAllMocks();
@@ -107,12 +109,6 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    // let foundGrantGoal = await GrantGoal.findAll({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
-
     let foundObjective = await Objective.findAll({
       where: {
         goalId: goal.id,
@@ -121,9 +117,14 @@ describe.skip('destroyGoal handler', () => {
 
     let foundObjectiveResource = await ObjectiveResource.findAll({
       where: {
-        userProvidedUrl: 'http://website',
         objectiveId: objective.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        where: { url: 'http://website.com' },
+      }],
     });
 
     expect(foundGoal.length).toBe(1);
@@ -142,12 +143,6 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    // foundGrantGoal = await GrantGoal.findAll({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
-
     foundObjective = await Objective.findAll({
       where: {
         goalId: goal.id,
@@ -156,13 +151,17 @@ describe.skip('destroyGoal handler', () => {
 
     foundObjectiveResource = await ObjectiveResource.findAll({
       where: {
-        userProvidedUrl: 'http://website',
         objectiveId: objective.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        where: { url: 'http://website.com' },
+      }],
     });
 
     expect(foundGoal.length).toBe(0);
-    // expect(foundGrantGoal.length).toBe(0);
     expect(foundObjective.length).toBe(0);
     expect(foundObjectiveResource.length).toBe(0);
   });

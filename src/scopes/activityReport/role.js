@@ -5,10 +5,14 @@ function userQuery(escapedRoles) {
   return `
   SELECT
     "ActivityReports"."id"
-  FROM "Users" "Users"
+  FROM "Users" "Users"  
   INNER JOIN "ActivityReports" "ActivityReports"
   ON "ActivityReports"."userId" = "Users"."id"
-  WHERE ARRAY[${escapedRoles}] && "Users"."role"::text[]`;
+  INNER JOIN "UserRoles" "UserRoles"
+  ON "UserRoles"."userId" = "Users"."id"
+  INNER JOIN "Roles" "Roles"
+  ON "Roles"."id" = "UserRoles"."roleId"
+  WHERE "Roles"."fullName" IN (${escapedRoles})`;
 }
 
 function collaboratorQuery(escapedRoles) {
@@ -18,7 +22,11 @@ function collaboratorQuery(escapedRoles) {
   FROM "Users" "Users"
   INNER JOIN "ActivityReportCollaborators" "ActivityReportCollaborators"
   ON "ActivityReportCollaborators"."userId" = "Users"."id"
-  WHERE ARRAY[${escapedRoles}] && "Users"."role"::text[]`;
+  INNER JOIN "UserRoles" "UserRoles"
+  ON "UserRoles"."userId" = "Users"."id"
+  INNER JOIN "Roles" "Roles"
+  ON "Roles"."id" = "UserRoles"."roleId"
+  WHERE "Roles"."fullName" IN (${escapedRoles})`;
 }
 
 function generateWhere(escapedSearchTerms, exclude) {

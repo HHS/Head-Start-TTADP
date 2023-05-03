@@ -2,7 +2,7 @@ const {
   Model,
 } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Region extends Model {
     /**
      * Helper method for defining associations.
@@ -11,13 +11,22 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Region.hasMany(models.Grant, { foreignKey: 'regionId', as: 'grants' });
       Region.hasMany(models.User, {
-        foreignKey: {
-          name: 'homeRegionId',
-          allowNull: false,
-        },
+        foreignKey: 'homeRegionId',
+        as: 'users',
       });
-      Region.belongsToMany(models.Scope, { through: models.Permission, foreignKey: 'regionId', timestamps: false });
+      Region.belongsToMany(models.Scope, {
+        through: models.Permission,
+        foreignKey: 'regionId',
+        as: 'scopes',
+        timestamps: false,
+      });
+      Region.hasMany(models.ActivityReport, { foreignKey: 'regionId', as: 'activityReports' });
+      Region.hasMany(models.RttapaPilot, { foreignKey: 'regionId', as: 'rttapaPilots' });
+      Region.hasMany(models.GoalTemplate, { foreignKey: 'regionId', as: 'goalTemplates' });
+      Region.hasMany(models.ObjectiveTemplate, { foreignKey: 'regionId', as: 'objectiveTemplates' });
+      Region.hasMany(models.Permission, { foreignKey: 'regionId', as: 'permissions' });
     }
   }
   Region.init({

@@ -1,0 +1,65 @@
+@use '../colors.scss' as *;
+
+.unstyled-btn {
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  padding: 0;
+}
+
+div.user-menu-dropdown {
+  /** the first child with class .usa-sidenav__item should have no border-top */
+  & .usa-sidenav__item:first-child {
+    border-top: 0;
+  }
+}
+
+ul.user-menu-nav {
+  list-style: none;
+  padding: 0;
+  min-width: 250px;
+
+  & > li > hr {
+    border-top: 1px solid $base-lighter;
+    border-bottom: 0px;
+  }
+
+  & > li > a.usa-nav__link {
+    align-items: center;
+    display: flex;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    cursor: pointer;
+    border-left: 4px solid transparent;
+    color: $ttahub-medium-blue;
+
+    span:first-child {
+      text-decoration: underline;
+    }
+
+    &:hover {
+      background-color: $gray-two;
+    }
+
+    &.usa-current {
+      border-left: 4px solid $ttahub-medium-blue;
+      text-decoration: none;
+    }
+  }
+}
+
+.header-avatar-button__with-unread::after {
+  background-color: $success;
+  border: 1px solid white;
+  border-radius: 50%;
+  content: '';
+  display: inline-block;
+  height: 12px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 12px;
+}

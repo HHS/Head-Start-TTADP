@@ -1,6 +1,10 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
+
+const { GRANT_INACTIVATION_REASONS } = require('../constants');
+
+const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
 
 /**
  * Grants table. Stores grants.
@@ -8,14 +12,29 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
-      Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
+      Grant.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
+      Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants' });
+      Grant.belongsToMany(models.Group, {
+        through: models.GroupGrant,
+        foreignKey: 'grantId',
+        otherKey: 'groupId',
+        as: 'groups',
+      });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
+      Grant.belongsToMany(models.ActivityReport, {
+        through: models.ActivityRecipient,
+        foreignKey: 'grantId',
+        otherKey: 'activityReportId',
+        as: 'activityReports',
+      });
+      Grant.hasMany(models.Grant, { foreignKey: 'oldGrantId', as: 'oldGrants' });
+      Grant.belongsTo(models.Grant, { foreignKey: 'oldGrantId', as: 'grant' });
 
       Grant.addScope('defaultScope', {
         include: [
@@ -51,11 +70,16 @@ module.exports = (sequelize, DataTypes) => {
     stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
+    inactivationDate: DataTypes.DATE,
+    inactivationReason: DataTypes.ENUM(inactivationReasons),
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
     oldGrantId: DataTypes.INTEGER,
+    deleted: {
+      type: DataTypes.BOOLEAN,
+    },
     programTypes: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -85,10 +109,19 @@ module.exports = (sequelize, DataTypes) => {
     recipientInfo: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.number} - ${this.recipient.id}`;
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number} - ${this.recipientId}`
+          : `${this.number} - ${this.recipientId}`;
       },
     },
   }, {
+  //   defaultScope: {
+  //     where: {
+  //       deleted: false
+  //     }
+  //   },
+  // },
+  // {
     sequelize,
     modelName: 'Grant',
   });

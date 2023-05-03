@@ -1,7 +1,12 @@
 const {
   Model,
 } = require('sequelize');
-const { beforeValidate, afterUpdate } = require('./hooks/objective');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+} = require('./hooks/objective');
 
 /**
  * Objective table. Stores objectives for goals.
@@ -9,30 +14,33 @@ const { beforeValidate, afterUpdate } = require('./hooks/objective');
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
-      Objective.hasMany(models.ActivityReportObjective, { foreignKey: 'objectiveId', as: 'activityReportObjectives' });
       Objective.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportObjective,
         foreignKey: 'objectiveId',
         otherKey: 'activityReportId',
         as: 'activityReports',
       });
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'objectiveId', as: 'activityReportObjectives',
+      });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
+      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
+      Objective.belongsToMany(models.Resource, {
+        through: models.ObjectiveResource,
+        foreignKey: 'objectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics' });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,
         foreignKey: 'objectiveId',
         otherKey: 'topicId',
         as: 'topics',
-      });
-      Objective.belongsToMany(models.Role, {
-        through: models.ObjectiveRole,
-        foreignKey: 'objectiveId',
-        otherKey: 'roleId',
-        as: 'roles',
       });
       Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', onDelete: 'cascade' });
       Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
@@ -66,8 +74,17 @@ module.exports = (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
+      default: false,
+    },
+    createdVia: {
+      type: DataTypes.ENUM(['activityReport', 'rtr']),
+      allowNull: true,
     },
     firstNotStartedAt: {
       type: DataTypes.DATE,
@@ -101,11 +118,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

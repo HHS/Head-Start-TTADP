@@ -35,9 +35,9 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 16.13.1 installed.
+2. Make sure you have Node 16.19.1 installed.
 4. Copy `.env.example` to `.env`.
-6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
+6. Change the `FONTAWESOME_NPM_AUTH_TOKEN`, `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 3. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them.
 10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`, API documentation will run on `localhost:5003`, and minio will run on `localhost:9000`.
@@ -47,11 +47,21 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
+We use an AWS OpenSearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
+* `AWS_ELASTICSEARCH_ENDPOINT=http://opensearch-node1:9200`
+* `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
+* `AWS_ELASTICSEARCH_SECRET_KEY=admin`
+
 #### Local build
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
+
+We use an AWS OpensSearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
+* `AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200`
+* `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
+* `AWS_ELASTICSEARCH_SECRET_KEY=admin`
 
 #### Precommit hooks
 
@@ -92,6 +102,12 @@ You may run into some issues running the docker commands on Windows:
  * If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
  * You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
 
+### Coverage reports
+
+On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
+
+Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
+
 ## Yarn Commands
 
 | Docker Command | Description| Host Command | Local only Command |
@@ -118,6 +134,7 @@ You may run into some issues running the docker commands on Windows:
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
 | | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve` | |
 | | Run cucumber tests | `yarn cucumber` | |
+| | Collect backend coverage report | `yarn coverage:backend` ||
 
 ## Infrastructure
 
@@ -132,6 +149,32 @@ The infrastructure used to run this application can be categorized into two dist
 #### Continuous Integration (CI)
 
 Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In the Ad Hoc repository, merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+
+#### Creating and Applying a Deploy Key
+
+In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
+
+The following links outline the steps to take:
+https://circleci.com/docs/github-integration/#create-a-github-deploy-key
+https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+
+Steps to create and apply deploy token:
+1. Open the Git Bash CMD window
+2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+3. When prompted to enter a file name leave blank and press ENTER
+4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
+5. Search for the file created with the name "id_rsa"
+6. Notice that two files have been created private and public in the .ssh folder
+7. Open the public file and copy the entire contents of the file
+8. In Github to the TTAHUB project and click 'Settings' in the top right corner
+9. Under 'Security' click 'Deploy Keys' then 'Add deploy Key'
+10. Give the key a name 'TTAHUB' and paste the private key contents, CHECK 'Allow write access' then click 'Add Key'
+11. Open the private key file that was created and copy the entire contents of the file
+12. Go to CircleCi and open the 'Head-Start-TTADP' project
+13. Click 'Project settings' in the top right corner
+14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
+15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
+16. Click 'Add SSH Key'
 
 #### Continuous Deployment (CD)
 
@@ -174,6 +217,7 @@ organization/space, i.e. each deployment environment, and can be [regenerated by
 who have proper cloud.gov permissions at any time.
 - HSES authentication middleware secrets passed to the application as `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET`.
 - The application `SESSION_SECRET`.
+- The application `JWT_SECRET`.
 - NewRelic license key, passed to the application as `NEW_RELIC_LICENSE_KEY`
 
 Exception:
@@ -364,7 +408,7 @@ Our project includes four deployed Postgres databases, one to interact with each
 
     ```bash
     # example
-    node ./build/server/tools/dataValidationCLI.js
+    node ./build/server/src/tools/dataValidationCLI.js
     ```
 
 1. If on prod, disable ssh in space
@@ -435,6 +479,45 @@ You should also update it where it is specified this README file.
 
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
 If you are using NVM, you can set intall a new node version with ```nvm install VERSION``` and set it to be the default version of node via ```nvm alias default VERSION```.
+
+## Removing, creating and binding a service from the command line
+In the past, we've needed to destroy and recreate particular services (for example, redis). This can be done through the Cloud.gov UI, through the Terraform architecture, and through the cloud foundry command line interface. The following are instructions for using the cloud foundry CLI (```cf```) for this.
+
+- Login and target the environment you wish to make changes to. (```cf login --sso```).
+- You can use ```cf services``` to list your services
+- Remember that you can use ```cf help COMMAND``` to get the documentation for a particular command
+
+To delete and recreate a service (this should not be done lightly, as it is a destructive action)
+
+1  Unbind a service:
+```cf us APP_NAME SERVICE```
+ex:
+```cf us tta-smarthub-staging ttahub-redis-staging```
+
+2  Delete a service:
+```cf ds SERVICE```
+ex:
+```cf ds ttahub-redis-staging```
+
+3  Create a service:
+```cf cs SERVICE_TYPE SERVICE_LABEL SERVICE```
+ex:
+```cf cs aws-elasticache-redis redis-dev ttahub-redis-staging```
+
+4  Bind a service:
+```cf bs APP_NAME SERVICE```
+ex:
+```cf bs ttahub-smarthub-staging ttahub-redis-staging```
+
+5. Trigger a redeploy through the Circle CI UI (rather than restaging)
+
+6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
+ ```cf network-policies```
+If you see nothing there, you'll need to add an appropriate policy. 
+```cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443```
+ex: 
+```cf add-network-policy tta-smarthub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
+
 
 <!-- Links -->
 

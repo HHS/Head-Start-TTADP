@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -17,6 +18,10 @@ import {
   targetPopulationsFilter,
   topicsFilter,
   otherEntitiesFilter,
+  participantsFilter,
+  myReportsFilter,
+  reportTextFilter,
+  endDateFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -25,7 +30,7 @@ import {
   topicsFilter as goalTopicsFilter,
 } from '../goalFilters';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
+
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
@@ -199,6 +204,50 @@ describe('Filter Menu', () => {
     expect(message).toBeVisible();
   });
 
+  /*
+       id: uuidv4(),
+        display: '',
+        conditions: [],
+        */
+
+  it('adds back filter on cancel', async () => {
+    const filters = [
+      {
+        id: 'cancel-filter',
+        display: '',
+        conditions: [],
+      },
+    ];
+
+    // Render.
+    renderFilterMenu(filters);
+
+    // Open menu.
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+    userEvent.click(button);
+
+    // Add new filter for blur.
+    const addNew = screen.getByRole('button', { name: /Add new filter/i });
+    act(() => userEvent.click(addNew));
+
+    const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    expect(topic).toHaveFocus();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(screen.getByText(/please enter a filter/i)).toBeVisible();
+
+    // Cancel.
+    const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
+    userEvent.click(cancel);
+
+    // Open filters again.
+    userEvent.click(button);
+    expect(screen.getByText(/Select a filter/i)).toBeVisible();
+  });
+
   it('the clear all button works', async () => {
     const filters = [
       {
@@ -332,6 +381,7 @@ describe('Filter Menu', () => {
   it('renders activity report filters', async () => {
     const config = [
       grantNumberFilter,
+      participantsFilter,
       programSpecialistFilter,
       programTypeFilter,
       reasonsFilter,
@@ -340,6 +390,9 @@ describe('Filter Menu', () => {
       targetPopulationsFilter,
       topicsFilter,
       otherEntitiesFilter,
+      myReportsFilter,
+      reportTextFilter,
+      endDateFilter,
     ];
 
     const filters = [];
@@ -367,11 +420,23 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Date ended');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Reasons');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Participants');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Recipient name');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Report text');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 
@@ -382,6 +447,14 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Target populations');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Date ended');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'My reports');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
@@ -399,6 +472,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Participants');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Recipient name');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
@@ -410,6 +487,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Target populations');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'My reports');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });

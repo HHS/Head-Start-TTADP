@@ -43,6 +43,11 @@ const recipients = [
     id: 11,
     name: 'Agency 2 in region 1, Inc.',
   },
+  {
+    id: 628,
+    name: 'DBA',
+    uei: 'EWQJWXDDGME5',
+  },
 ];
 
 module.exports = {

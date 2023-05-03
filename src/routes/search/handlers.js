@@ -1,4 +1,4 @@
-import { search } from '../../lib/awsElasticSearch';
+import { search } from '../../lib/awsElasticSearch/index';
 import handleErrors from '../../lib/apiErrorHandler';
 
 const namespace = 'SERVICE:SITE_SEARCH';

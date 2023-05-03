@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Grant, Program, ZALGrant, ActivityRecipient,
+  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient,
 } from '../models';
 
 jest.mock('axios');
@@ -68,14 +69,16 @@ describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
     await db.sequelize.close();
@@ -89,7 +92,12 @@ describe('Update grants and recipients', () => {
 
     const recipient = await Recipient.findOne({ where: { id: 1335 } });
     expect(recipient).toBeDefined();
+    expect(recipient.uei).toBe('NNA5N2KHMGN2');
     expect(recipient.name).toBe('Agency 1, Inc.');
+
+    const recipient7709 = await Recipient.findOne({ where: { id: 7709 } });
+    expect(recipient7709).toBeDefined();
+    expect(recipient7709.uei).toBeNull();
 
     const recipient7782 = await Recipient.findOne({ where: { id: 7782 } });
     expect(recipient7782).toBeDefined();
@@ -144,13 +152,15 @@ describe('Update grants and recipients', () => {
     expect(grantsBefore.length).toBe(0);
     await processFiles();
 
-    const grants = await Grant.findAll({ where: { recipientId: 1335 } });
+    const grants = await Grant.unscoped().findAll({ where: { recipientId: 1335 } });
     expect(grants).toBeDefined();
     expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
-    const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    expect(totalGrants.length).toBe(13);
+    const totalGrants = await Grant.unscoped().findAll({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
+    expect(totalGrants.length).toBe(15);
   });
 
   it('includes the grant specialists name and email', async () => {
@@ -182,8 +192,19 @@ describe('Update grants and recipients', () => {
     expect(recipient).not.toBeNull();
   });
 
+  it('should rename recipient (628)', async () => {
+    const recipientBefore = await Recipient.findOne({ where: { id: 628 } });
+    expect(recipientBefore).not.toBeNull();
+    await recipientBefore.update({ name: 'DBA' });
+    expect(recipientBefore.name).toBe('DBA');
+    await processFiles();
+    const recipient = await Recipient.findOne({ where: { id: 628 } });
+    expect(recipient).not.toBeNull();
+    expect(recipient.name).toBe('Entity name');
+  });
+
   it('should update an existing recipient if it exists in smarthub', async () => {
-    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency' } });
+    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
     await processFiles();
     const recipient = await Recipient.findOne({ where: { id: 1119 } });
     expect(recipient).not.toBeNull();
@@ -193,7 +214,7 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update an existing grant if it exists in smarthub', async () => {
-    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency' } });
+    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
     const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', recipientId: 1119 } });
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 5151 } });
@@ -211,15 +232,21 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update cdi grants', async () => {
-    await Recipient.findOrCreate({ where: { id: 500, name: 'Another Agency' } });
+    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KDFGN2' } });
     await Grant.create({
-      status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', recipientId: 500,
+      status: 'Inactive',
+      regionId: 5,
+      id: 11630,
+      number: '13CDI0001',
+      recipientId: 1119,
+      startDate: '2019-01-01',
+      endDate: '2021-01-01',
     });
     await processFiles();
-    const grant = await Grant.findOne({ where: { id: 11630 } });
+    const grant = await Grant.unscoped().findOne({ where: { id: 11630 } });
     expect(grant.status).toBe('Active');
     expect(grant.regionId).toBe(5);
-    expect(grant.recipientId).toBe(500);
+    expect(grant.recipientId).toBe(1119);
   });
 
   it('should import programs', async () => {
@@ -230,20 +257,83 @@ describe('Update grants and recipients', () => {
     expect(program.programType).toBe('HS');
   });
 
+  it('should delete inactive grants that are no longer sent from HSES', async () => {
+    await Recipient.unscoped().findOrCreate({ where: { id: 2119, name: 'Multi ID Agency Old', uei: 'NMA5N2KHMGM2' } });
+    const [dbGrant] = await Grant.unscoped().findOrCreate({
+      where: {
+        id: 6151, number: '90CI5444', recipientId: 2119, status: 'Inactive', startDate: '2002-01-01', endDate: '2025-06-30',
+      },
+    });
+    expect(dbGrant.deleted).not.toBe(true);
+    await processFiles();
+    const grant = await Grant.unscoped().findOne({ where: { id: 6151 } });
+    expect(grant).not.toBeNull();
+    expect(grant.deleted).toBe(true);
+  });
+
+  it('should not delete inactive grants that are used in the Hub', async () => {
+    await Recipient.unscoped().findOrCreate({ where: { id: 3119, name: 'Multi ID Agency Old 3', uei: 'MMA5N2KHMGM2' } });
+    const [dbGrant] = await Grant.unscoped().findOrCreate({
+      where: {
+        id: 7151, number: '90CI6444', recipientId: 3119, status: 'Inactive', startDate: '2002-01-01', endDate: '2025-06-30',
+      },
+    });
+    const [dbGoal] = await Goal.findOrCreate({
+      where: {
+        id: 7151, grantId: 7151, status: 'Not Started',
+      },
+    });
+    expect(dbGrant.deleted).not.toBe(true);
+    expect(dbGoal.grantId).toBe(7151);
+    await processFiles();
+    const grant = await Grant.unscoped().findOne({ where: { id: 7151 } });
+    expect(grant).not.toBeNull();
+    expect(grant.deleted).toBe(false);
+  });
+
   it('sets metadata in audit tables', async () => {
     await processFiles('hex');
-    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630 } });
+    const grantAuditEntry = await ZALGrant.findOne({
+      where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } },
+      order: [
+        ['id', 'DESC'],
+      ],
+    });
     const {
-      // eslint-disable-next-line camelcase
-      descriptor_id, dml_by, dml_txid, session_sig,
+      descriptor_id, dml_by, dml_as, dml_txid, session_sig,
     } = grantAuditEntry;
 
-    expect(dml_by).toBe(0);
+    expect(dml_by).toBe('0'); // bigint comes back as a string
+    expect(dml_as).toBe('3'); // bigint comes back as a string
     expect(dml_txid).not.toMatch(/^00000000/);
     expect(session_sig).not.toBeNull();
 
     // eslint-disable-next-line camelcase
     const res = await sequelize.query(`SELECT descriptor FROM "ZADescriptor" WHERE id = ${descriptor_id}`, { type: QueryTypes.SELECT });
     expect(res[0].descriptor).toEqual('Grant data import from HSES');
+  });
+
+  it('includes the inactivated date', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 8317 } });
+    // simulate updating an existing grant with null inactivationDate
+    await grant.update({ inactivationDate: null }, { individualHooks: true });
+    const grantWithNullinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullinactivationDate.inactivationDate).toBeNull();
+    await processFiles();
+    const grantWithinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithinactivationDate.inactivationDate).toEqual(new Date('2022-07-31'));
+  });
+
+  it('includes the inactivated reason', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 8317 } });
+    // simulate updating an existing grant with null inactivationReason
+    await grant.update({ inactivationReason: null }, { individualHooks: true });
+    const grantWithNullinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullinactivationReason.inactivationReason).toBeNull();
+    await processFiles();
+    const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
   });
 });

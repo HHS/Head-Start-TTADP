@@ -12,24 +12,20 @@ import VanillaModal from '../components/VanillaModal';
 const GOAL_STATUSES = [
   'Not started',
   'In progress',
-  'Closed',
   'Suspended',
+  'Closed',
 ];
 
 const STATUS_COLORS = [
   colors.ttahubOrange,
   colors.ttahubMediumBlue,
-  colors.success,
   colors.error,
+  colors.success,
 ];
 
 function Bar({
-  count,
   percentage,
-  label,
   color,
-  ratio,
-  total,
 }) {
   // 0/0 is NaN
   const percent = Number.isNaN(percentage) ? 0 : percentage * 100;
@@ -39,31 +35,17 @@ function Bar({
     backgroundColor: color,
   };
 
-  const readablePercentage = `${
-    (percent).toLocaleString('en-us', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-  } percent of goals are ${label}`;
-
-  const readableRatio = `That's ${count} of ${total} goals`;
-
   return (
-    <div className="ttahub-goal-bar-container display-flex flex-justify margin-y-2">
-      <span className="width-10 margin-right-4 flex-align-self-center" aria-label={readablePercentage}>
-        {label}
-      </span>
-      <div className="ttahub-goal-bar height-3 bg-base-lightest flex-6 margin-right-1 width-full" aria-hidden="true">
+    <div className="ttahub-goal-bar-container display-flex flex-justify flex-1">
+      <div className="ttahub-goal-bar height-3 bg-base-lightest width-full" aria-hidden="true">
         <div className="ttahub-goal-bar-color height-full width-full" style={style} />
       </div>
-      <span aria-label={readableRatio} className="width-8 flex-align-self-center text-right padding-left-1">{ratio}</span>
     </div>
   );
 }
 
 Bar.propTypes = {
-  count: PropTypes.number.isRequired,
-  label: PropTypes.string.isRequired,
   percentage: PropTypes.number.isRequired,
-  ratio: PropTypes.string.isRequired,
-  total: PropTypes.number.isRequired,
   color: PropTypes.string.isRequired,
 };
 
@@ -77,7 +59,12 @@ export function GoalStatusChart({ data, loading }) {
   // we only need to recompute this when the data changes, not when the
   // bars or display type are changed
   const accessibleRows = useMemo(
-    () => GOAL_STATUSES.map((status) => ({ data: [status, data[status]] })), [data],
+    () => {
+      if (!data) {
+        return [];
+      }
+      return GOAL_STATUSES.map((status) => ({ data: [status, data[status]] }));
+    }, [data],
   );
 
   const modalRef = useRef();
@@ -104,11 +91,15 @@ export function GoalStatusChart({ data, loading }) {
     updateShowAccessibleData((current) => !current);
   }
 
+  if (!data) {
+    return null;
+  }
+
   return (
-    <Container className="ttahub--goal-status-graph" padding={3} loading={loading} loadingLabel="goal statuses by number loading">
+    <Container className="ttahub--goal-status-graph width-full" loading={loading} loadingLabel="goal statuses by number loading">
       <Grid row className="position-relative margin-bottom-1">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
-          <h2 className="margin-0">
+          <h2 className="ttahub--dashboard-widget-heading margin-0">
             Number of goals by status
           </h2>
         </Grid>
@@ -165,25 +156,41 @@ export function GoalStatusChart({ data, loading }) {
         )
         : (
           <>
-            <div className="border-top border-gray-5">
+            <div className="border-top border-gray-5" data-testid="goalStatusGraph">
               <p className="usa-prose text-bold">
                 {data.total}
                 {' '}
                 goals
               </p>
-              {bars.map(({
-                count, percentage, label, color, ratio, total,
-              }) => (
-                <Bar
-                  key={color}
-                  count={count}
-                  percentage={percentage}
-                  label={label}
-                  color={color}
-                  ratio={ratio}
-                  total={total}
-                />
-              ))}
+              <div className="display-flex flex-justify">
+                <div>
+                  {bars.map(({ label }) => (
+                    <div key={label} className="display-flex height-6 margin-right-1">
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1">
+                  {bars.map(({ label, percentage, color }) => (
+                    <div key={label} className="display-flex height-6">
+                      <div className="display-flex width-full" key={color}>
+                        <Bar
+                          key={color}
+                          percentage={percentage}
+                          color={color}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  {bars.map(({ label, ratio, readableRatio }) => (
+                    <div key={label} className="display-flex height-6 margin-left-1">
+                      <span aria-label={readableRatio}>{ratio}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </>
         )}
@@ -212,4 +219,4 @@ GoalStatusChart.defaultProps = {
   },
 };
 
-export default withWidgetData(GoalStatusChart, 'goalStatusGraph');
+export default withWidgetData(GoalStatusChart, 'goalStatusByGoalName');

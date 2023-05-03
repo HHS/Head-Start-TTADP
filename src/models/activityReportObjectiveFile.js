@@ -1,9 +1,17 @@
 const { Model } = require('sequelize');
+const { afterDestroy } = require('./hooks/activityReportObjectiveFile');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveFile extends Model {
     static associate(models) {
-      ActivityReportObjectiveFile.belongsTo(models.ActivityReportObjective, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjective' });
+      ActivityReportObjectiveFile.belongsTo(
+        models.ActivityReportObjective,
+        {
+          foreignKey: 'activityReportObjectiveId',
+          as: 'activityReportObjective',
+          onDelete: 'cascade',
+        },
+      );
       ActivityReportObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
     }
   }
@@ -23,6 +31,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveFile',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ActivityReportObjectiveFile;
 };

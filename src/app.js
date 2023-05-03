@@ -6,23 +6,47 @@ import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
-import { CronJob } from 'cron';
+
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
-import updateGrantsRecipients from './lib/updateGrantsRecipients';
-import { dbMaintenance } from './lib/dbMaintenance';
+
 import { logger, auditLogger, requestLogger } from './logger';
+import runCronJobs from './lib/cron';
+
+process.on('_fatalException', (err) => {
+  logger.error('Fatal exception', err);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught exception', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error(`Unhandled rejection at: ${promise} reason: ${reason}`);
+
+  if (process.env.CI) {
+    if (reason instanceof Error) {
+      if (reason.message.toLowerCase().includes('maxretriesperrequest')) {
+        return;
+      }
+    }
+  }
+
+  process.exit(1);
+});
 
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
 if (process.env.NODE_ENV === 'production') {
-  index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+  index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
 }
 
 const serveIndex = (req, res) => {
@@ -45,7 +69,7 @@ app.use((req, res, next) => {
       scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
       imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
       connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
-      defaultSrc: ["'self'"],
+      defaultSrc: ["'self'", 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
     },
   });
   cspMiddleware(req, res, next);
@@ -53,7 +77,7 @@ app.use((req, res, next) => {
 
 if (process.env.NODE_ENV === 'production') {
   app.use('/index.html', serveIndex);
-  app.use(express.static(path.join(__dirname, 'client'), { index: false }));
+  app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
@@ -84,42 +108,6 @@ if (process.env.NODE_ENV === 'production') {
   app.use('*', serveIndex);
 }
 
-// Run only on one instance
-if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
-  // Set timing parameters.
-  // Run at 4 am ET
-  const schedule = '0 4 * * *';
-  const timezone = 'America/New_York';
-
-  const runJob = () => {
-    try {
-      return updateGrantsRecipients();
-    } catch (error) {
-      auditLogger.error(`Error processing HSES file: ${error}`);
-      logger.error(error.stack);
-    }
-    return false;
-  };
-  const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-  job.start();
-}
-if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
-  // Set timing parameters.
-  // Run at 1 am ET Sun
-  const schedule = '0 1 * * 7';
-  const timezone = 'America/New_York';
-
-  const runJob = () => {
-    try {
-      return dbMaintenance();
-    } catch (error) {
-      auditLogger.error(`Error running db maintenance: ${error}`);
-      logger.error(error.stack);
-    }
-    return false;
-  };
-  const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-  job.start();
-}
+runCronJobs();
 
 export default app;

@@ -20,6 +20,12 @@ import withStateCode from './stateCode';
 import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
+import { withoutParticipants, withParticipants } from './participants';
+import { withMyReports, withoutMyReports } from './myReports';
+import { withReportText, withoutReportText } from './reportText';
+import { withTtaType, withoutTtaType } from './ttaType';
+import { withGroup, withoutGroup } from './group';
+import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 
 export const topicToQuery = {
   reportId: {
@@ -72,6 +78,10 @@ export const topicToQuery = {
     in: (query) => withProgramTypes(query),
     nin: (query) => withoutProgramTypes(query),
   },
+  myReports: {
+    in: (query, options, userId) => withMyReports(query, options, userId),
+    nin: (query, options, userId) => withoutMyReports(query, options, userId),
+  },
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
@@ -84,12 +94,20 @@ export const topicToQuery = {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
   },
+  participants: {
+    in: (query) => withParticipants(query),
+    nin: (query) => withoutParticipants(query),
+  },
   grantNumber: {
     ctn: (query) => withGrantNumber(query),
     nctn: (query) => withoutGrantNumber(query),
   },
   stateCode: {
     ctn: (query) => withStateCode(query),
+  },
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
   },
   createDate: {
     bef: (query) => beforeCreateDate(query),
@@ -105,8 +123,20 @@ export const topicToQuery = {
     in: (query) => withOtherEntities(query),
     nin: (query) => withoutOtherEntities(query),
   },
+  reportText: {
+    ctn: (query) => withReportText(query),
+    nctn: (query) => withoutReportText(query),
+  },
+  ttaType: {
+    in: (query) => withTtaType(query),
+    nin: (query) => withoutTtaType(query),
+  },
+  deliveryMethod: {
+    in: (query) => withDeliveryMethod(query),
+    nin: (query) => withoutDeliveryMethod(query),
+  },
 };
 
-export function activityReportsFiltersToScopes(filters) {
-  return createFiltersToScopes(filters, topicToQuery);
+export function activityReportsFiltersToScopes(filters, options, userId) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId);
 }

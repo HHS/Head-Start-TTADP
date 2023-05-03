@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
@@ -9,7 +10,8 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
+
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -58,6 +60,31 @@ describe('recipient record page', () => {
     ],
   };
 
+  const mockGoal = {
+    name: 'This is a goal name',
+    status: 'In Progress',
+    endDate: '10/08/2021',
+    grant: {
+      id: 1,
+      number: '1',
+      programs: [{
+        programType: 'EHS',
+      }],
+      status: 'Active',
+    },
+    objectives: [
+      {
+        id: 1238474,
+        title: 'This is an objective',
+        status: 'Not Started',
+        resources: [],
+        topics: [],
+        activityReports: [],
+        roles: [],
+      },
+    ],
+  };
+
   function renderRecipientRecord(history = memoryHistory, regionId = '45') {
     const match = {
       path: '',
@@ -71,7 +98,16 @@ describe('recipient record page', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <RecipientRecord match={match} />
+          <AppLoadingContext.Provider value={
+          {
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }
+        }
+          >
+            <RecipientRecord match={match} />
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
       </Router>,
     );
@@ -95,8 +131,8 @@ describe('recipient record page', () => {
     fetchMock.get(`/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, overview);
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10', { count: 0, rows: [] });
     fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, { count: 0, rows: [] });
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.ctn[]=1', { count: 0, rows: [] });
-    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [] });
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.ctn[]=1', { count: 0, rows: [], topics: [] });
+    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [], topics: [] });
     fetchMock.get('/api/widgets/frequencyGraph', 200);
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, 200);
     fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&recipientId.ctn[]=1', 200);
@@ -104,8 +140,8 @@ describe('recipient record page', () => {
     fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&recipientId.ctn[]=1', 200);
     fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, 200);
     fetchMock.get('/api/widgets/goalStatusGraph?region.in[]=45&recipientId.ctn[]=1', 200);
-    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', {});
-    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', {});
+    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', []);
+    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', []);
   });
   afterEach(() => {
     fetchMock.restore();
@@ -171,8 +207,27 @@ describe('recipient record page', () => {
   it('navigates to the goals & objectives page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/goals-objectives');
-    renderRecipientRecord();
+    act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     expect(document.querySelector('#recipientGoalsObjectives')).toBeTruthy();
+  });
+
+  it('navigates to the edit goals page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/goals/12389/recipient/45', mockGoal);
+    fetchMock.get('/api/topic', []);
+    memoryHistory.push('/recipient-tta-records/45/region/1/goals/12389');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    await screen.findByText(/TTA Goals for the Mighty Recipient/i);
+  });
+
+  it('navigates to the print goals page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false', { goalRows: [] });
+    memoryHistory.push('/recipient-tta-records/45/region/1/goals-objectives/print');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    await screen.findByText(/TTA Goals for the Mighty Recipient/i);
   });
 });

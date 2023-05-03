@@ -1,3 +1,4 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportFile,
@@ -7,24 +8,32 @@ import {
   ObjectiveFile,
   ObjectiveTemplate,
   ObjectiveTemplateFile,
+  ActivityReportObjective,
+  sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
 
 const { UPLOADING } = FILE_STATUSES;
 const deleteFile = async (id) => File.destroy({
   where: { id },
+  individualHooks: true,
 });
 const deleteActivityReportFile = async (id) => ActivityReportFile.destroy({
   where: { id },
+  individualHooks: true,
 });
+// TODO GH - need to pass hookMetadata
 const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveFile.destroy({
   where: { id },
+  individualHooks: true,
 });
 const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
+  individualHooks: true,
 });
 const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy({
   where: { id },
+  individualHooks: true,
 });
 
 const getFileById = async (id) => File.findOne({
@@ -116,6 +125,7 @@ const getObjectiveTemplateFilesById = async (objectiveTemplateId) => ObjectiveTe
 });
 
 const updateStatus = async (fileId, fileStatus) => {
+  /* TODO: If an error occurs make sure it bubbles up. */
   let file;
   try {
     file = await File.update({ status: fileStatus }, {
@@ -126,6 +136,25 @@ const updateStatus = async (fileId, fileStatus) => {
   } catch (error) {
     return error;
   }
+};
+
+const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  return file.dataValues;
 };
 
 const createActivityReportFileMetaData = async (
@@ -178,6 +207,32 @@ const createActivityReportObjectiveFileMetaData = async (
   return file.dataValues;
 };
 
+const createObjectivesFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  objectiveIds,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await Promise.all(objectiveIds.map(
+    (objectiveId) => ObjectiveFile.create({ objectiveId, fileId: file.id }),
+  ));
+  return file.dataValues;
+};
+
 const createObjectiveFileMetaData = async (
   originalFileName,
   s3FileName,
@@ -193,7 +248,7 @@ const createObjectiveFileMetaData = async (
   const [file] = await File.findOrCreate({
     where: {
       originalFileName: newFile.originalFileName,
-      key: newFile.s3FileName,
+      key: newFile.key,
       fileSize: newFile.fileSize,
     },
     defaults: newFile,
@@ -226,6 +281,43 @@ const createObjectiveTemplateFileMetaData = async (
   return file.dataValues;
 };
 
+const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
+  // Get ARO files to delete (destroy does NOT support join's).
+  const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
+    raw: true,
+    attributes: [[
+      sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"ActivityReportObjectiveFile"."id"'))),
+      'ids',
+    ]],
+    where: {
+      fileId: parseInt(fileId, DECIMAL_BASE),
+    },
+    include: [
+      {
+        attributes: [],
+        as: 'activityReportObjective',
+        required: true,
+        model: ActivityReportObjective,
+        where: {
+          activityReportId: parseInt(reportId, DECIMAL_BASE),
+          objectiveId: objectiveIds,
+        },
+
+      },
+    ],
+  });
+
+  // Get ARO file ids.
+  const aroFileIdsToDelete = aroFileToDelete[0].ids;
+
+  // Delete ARO files.
+  await ActivityReportObjectiveFile.destroy({
+    where: { id: aroFileIdsToDelete },
+    hookMetadata: { objectiveIds },
+    individualHooks: true,
+  });
+};
+
 export {
   deleteFile,
   deleteActivityReportFile,
@@ -238,8 +330,11 @@ export {
   getObjectiveFilesById,
   getObjectiveTemplateFilesById,
   updateStatus,
+  createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData,
+  createObjectiveFileMetaData, // for one objective
+  createObjectivesFileMetaData, // for more than one objective
   createObjectiveTemplateFileMetaData,
+  deleteSpecificActivityReportObjectiveFile,
 };

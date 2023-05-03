@@ -128,7 +128,7 @@ describe('Topic & Frequency Graph Widget', () => {
 
   it('handles loading', async () => {
     renderArGraphOverview({ loading: true });
-    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
   });
 
   it('correctly inserts line breaks', () => {

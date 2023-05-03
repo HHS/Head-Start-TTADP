@@ -5,11 +5,11 @@ import {
 } from '@trussworks/react-uswds';
 
 const PrintSummary = ({ reportCreator = {} }) => {
-  const { name = null, role = null } = reportCreator;
+  const { name = null, roles = null } = reportCreator;
   let creatorText = null;
 
-  if (name && role && role.join) {
-    creatorText = `${name}, ${role.join(', ')}`;
+  if (name && roles && roles.join) {
+    creatorText = `${name}, ${roles.map((r) => r.fullName).join(', ')}`;
   } else if (name) {
     creatorText = name;
   }
@@ -35,7 +35,7 @@ const PrintSummary = ({ reportCreator = {} }) => {
 PrintSummary.propTypes = {
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string })),
   }),
 };
 PrintSummary.defaultProps = {

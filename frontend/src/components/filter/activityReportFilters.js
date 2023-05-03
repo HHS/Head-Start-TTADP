@@ -7,6 +7,7 @@ import {
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
+  MY_REPORTS_FILTER_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -18,10 +19,20 @@ import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
+import FilterParticipantsSelect from './FilterParticipantsSelect';
+import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
+import MyReportsSelect from './MyReportsSelect';
+import FilterGroups from './FilterGroups';
+import FilterDeliveryMethod from './FilterDeliveryMethod';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
+};
+
+const EMPTY_MY_REPORTS_MULTI_SELECT = {
+  'where I\'m the': [],
+  'where I\'m not the': [],
 };
 
 const EMPTY_SINGLE_SELECT = {
@@ -116,6 +127,22 @@ export const grantNumberFilter = {
   ),
 };
 
+export const reportTextFilter = {
+  id: 'reportText',
+  display: 'Report text',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`reportText-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter report text"
+    />
+  ),
+};
+
 export const otherEntitiesFilter = {
   id: 'otherEntities',
   display: 'Other entities',
@@ -161,6 +188,21 @@ export const programTypeFilter = {
   ),
 };
 
+export const deliveryMethodFilter = {
+  id: 'deliveryMethod',
+  display: 'Delivery method',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDeliveryMethod
+      inputId={`deliveryMethod-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const reasonsFilter = {
   id: 'reason',
   display: 'Reasons',
@@ -170,6 +212,21 @@ export const reasonsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterReasonSelect
       inputId={`reason-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const participantsFilter = {
+  id: 'participants',
+  display: 'Participants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterParticipantsSelect
+      inputId={`participants-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
@@ -222,6 +279,24 @@ export const regionFilter = {
   ),
 };
 
+export const ttaTypeFilter = {
+  id: 'ttaType',
+  display: 'TTA type',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'training',
+    'is not': 'training',
+  },
+  displayQuery: displayTtaTypeQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterTTAType
+      inputId={`ttaType-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const specialistRoleFilter = {
   id: 'role',
   display: 'Specialist roles',
@@ -267,6 +342,21 @@ export const targetPopulationsFilter = {
   ),
 };
 
+export const myReportsFilter = {
+  id: 'myReports',
+  display: 'My reports',
+  conditions: MY_REPORTS_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <MyReportsSelect
+      inputId={`my-reports-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const topicsFilter = {
   id: 'topic',
   display: 'Topics',
@@ -276,6 +366,21 @@ export const topicsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTopicSelect
       inputId={`topic-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

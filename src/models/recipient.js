@@ -1,5 +1,5 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
 
 /**
@@ -8,13 +8,18 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
+      Recipient.hasMany(models.RttapaPilot, { as: 'rttapaPilots', foreignKey: 'recipientId' });
     }
   }
   Recipient.init({
+    uei: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -22,6 +27,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     recipientType: {
       type: DataTypes.STRING,
+    },
+    deleted: {
+      type: DataTypes.BOOLEAN,
     },
   }, {
     sequelize,

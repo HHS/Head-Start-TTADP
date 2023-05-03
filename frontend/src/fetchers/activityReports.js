@@ -1,11 +1,13 @@
 import join from 'url-join';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   get, put, post, destroy,
 } from './index';
-import { DECIMAL_BASE, REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
+import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
+const activityReportsLocalStorageCleanupUrl = join('/', 'api', 'activity-reports', 'storage-cleanup');
 
 export const legacyReportById = async (legacyId) => {
   const res = await get(join(activityReportUrl, 'legacy', legacyId));
@@ -48,22 +50,44 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
+function combineTopics(report, expandedTopics) {
+  const reportTopics = expandedTopics.filter((topic) => report.id === topic.activityReportId)
+    .map((t) => t.name);
+
+  const exclusiveTopics = new Set([
+    ...report.sortedTopics,
+    ...reportTopics,
+  ]);
+  const topicsArr = [...exclusiveTopics];
+  topicsArr.sort();
+
+  return topicsArr;
+}
+
 export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, filters) => {
   const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
   const json = await reports.json();
-  const { count, rows: rawRows, recipients } = json;
+  const {
+    count, rows: rawRows, recipients, topics,
+  } = json;
 
   const rows = rawRows.map((row) => ({
     ...row,
     activityRecipients: recipients.filter(
       (recipient) => recipient.activityReportId === row.id,
     ),
+    sortedTopics: combineTopics(row, topics),
   }));
 
   return {
     rows,
     count,
   };
+};
+
+export const getReportsForLocalStorageCleanup = async () => {
+  const reports = await get(activityReportsLocalStorageCleanupUrl);
+  return reports.json();
 };
 
 export const getReportAlerts = async (sortBy = 'startDate', sortDir = 'asc', offset = 0, limit = ALERTS_PER_PAGE, filters) => {
@@ -96,6 +120,18 @@ export const getGoals = async (grantIds) => {
   return goals.json();
 };
 
+export const saveGoalsForReport = async (data) => {
+  const url = join(activityReportUrl, 'goals');
+  const goals = await post(url, data);
+  return goals.json();
+};
+
+export const saveObjectivesForReport = async (data) => {
+  const url = join(activityReportUrl, 'objectives');
+  const objectives = await post(url, data);
+  return objectives.json();
+};
+
 export const getCollaborators = async (region) => {
   const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
   const collaborators = await get(url);
@@ -116,5 +152,18 @@ export const downloadReports = async (url) => {
 export const resetToDraft = async (reportId) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'reset');
   const response = await put(url);
+  return response.json();
+};
+
+export const setGoalAsActivelyEdited = async (reportId, goalIds, pageState) => {
+  const params = goalIds.map((goalId) => `goalIds=${goalId}`);
+  const url = join(
+    activityReportUrl,
+    reportId.toString(DECIMAL_BASE),
+    'goals',
+    'edit',
+    `?${params.join('&')}`,
+  );
+  const response = await put(url, { pageState });
   return response.json();
 };

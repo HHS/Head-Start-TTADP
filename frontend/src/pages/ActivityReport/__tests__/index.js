@@ -1,19 +1,19 @@
 import '@testing-library/jest-dom';
 import reactSelectEvent from 'react-select-event';
 import {
-  screen, fireEvent, waitFor, within,
+  screen, fireEvent, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-
+import { REPORT_STATUSES } from '@ttahub/common';
 import { mockWindowProperty, withText } from '../../../testHelpers';
-import { unflattenResourcesUsed, findWhatsChanged, updateGoals } from '../index';
+import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
-  REPORT_STATUSES,
-} from '../../../Constants';
-
-import {
-  history, formData, renderActivityReport, recipients,
+  history,
+  formData,
+  renderActivityReport,
+  recipients,
+  mockGoalsAndObjectives,
 } from '../testHelpers';
 import { HTTPError } from '../../../fetchers';
 
@@ -49,7 +49,7 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', {
         ...data,
-        approvers: [{ User: { id: 3 } }],
+        approvers: [{ user: { id: 3 } }],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
@@ -64,13 +64,13 @@ describe('ActivityReport', () => {
         approvers: [
           {
             status: null,
-            User: {
+            user: {
               id: 3,
             },
           },
           {
             status: REPORT_STATUSES.APPROVED,
-            User: {
+            user: {
               id: 4,
             },
           },
@@ -86,43 +86,12 @@ describe('ActivityReport', () => {
         ...data,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ User: { id: 3 } }],
+        approvers: [{ user: { id: 3 } }],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
 
       const startDate = await screen.findByRole('textbox', { name: /start date/i });
       expect(startDate).toBeVisible();
-    });
-  });
-
-  describe('updateGoals', () => {
-    it('sets new goals as such', () => {
-      const report = {
-        goals: [{
-          id: 123,
-          name: 'name',
-        }],
-      };
-      const updateFn = updateGoals(report);
-      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name', new: true }] });
-
-      expect(goals.length).toBe(1);
-      expect(goals[0].id).toBe(123);
-      expect(goals[0].new).toBeTruthy();
-    });
-
-    it('sets old goals as such', () => {
-      const report = {
-        goals: [{
-          id: 123,
-          name: 'name',
-        }],
-      };
-      const updateFn = updateGoals(report);
-      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name' }] });
-      expect(goals.length).toBe(1);
-      expect(goals[0].id).toBe(123);
-      expect(goals[0].new).toBeFalsy();
     });
   });
 
@@ -154,7 +123,7 @@ describe('ActivityReport', () => {
 
       // we're just checking to see if the "local backup" message is shown, the
       // updatedAt from network won't be shown
-      const alert = screen.queryByTestId('alert');
+      const alert = await screen.findByTestId('alert');
 
       const reggies = [
         new RegExp('your computer at', 'i'),
@@ -198,9 +167,9 @@ describe('ActivityReport', () => {
     it('navigates to the correct page', async () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
-      const button = await screen.findByRole('button', { name: 'Topics and resources Not Started' });
+      const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
     });
   });
 
@@ -211,7 +180,9 @@ describe('ActivityReport', () => {
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const recipient = within(information).getByLabelText('Recipient');
       fireEvent.click(recipient);
-      const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+
+      const recipientName = await screen.findByText(/recipient names/i);
+      const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
@@ -226,7 +197,7 @@ describe('ActivityReport', () => {
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
       const button = await screen.findByRole('button', { name: 'Save draft' });
-      userEvent.click(button);
+      act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       alerts = await screen.findAllByTestId('alert');
       expect(alerts.length).toBe(2);
@@ -267,17 +238,91 @@ describe('ActivityReport', () => {
       expect(result).toEqual({ startDate: null, creatorRole: null });
     });
 
+    it('access correct fields when diffing turns up activity recipients', () => {
+      const old = {
+        activityRecipients: [{
+          activityRecipientId: 1,
+        }],
+        goals: [],
+        goalsAndObjectives: [
+          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }] },
+        ],
+      };
+
+      const young = {
+        activityRecipients: [{
+          activityRecipientId: 2,
+        }, {
+          activityRecipientId: 1,
+        }],
+        goals: [],
+        goalsAndObjectives: [
+          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }] },
+        ],
+      };
+
+      const changed = findWhatsChanged(young, old);
+      expect(changed).toEqual({
+        activityRecipients: [
+          {
+            activityRecipientId: 2,
+          },
+          {
+            activityRecipientId: 1,
+          },
+        ],
+        goals: [
+          {
+            activityReportGoals: [
+              {
+                isActivelyEdited: true,
+              },
+            ],
+            grantIds: [
+              2,
+              1,
+            ],
+            isActivelyEdited: true,
+            name: 'goal 1',
+          },
+          {
+            activityReportGoals: [
+              {
+                isActivelyEdited: false,
+              },
+            ],
+            grantIds: [
+              2,
+              1,
+            ],
+            isActivelyEdited: false,
+            name: 'goal 2',
+          },
+        ],
+        recipientsWhoHaveGoalsThatShouldBeRemoved: [],
+      });
+    });
+
     it('displays the creator name', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       renderActivityReport(1);
       expect(await screen.findByText(/creator:/i)).toBeVisible();
     });
 
+    it('displays the context', async () => {
+      fetchMock.get('/api/activity-reports/1', formData());
+      renderActivityReport(1);
+      const contextGroup = await screen.findByRole('group', { name: /context/i });
+      expect(contextGroup).toBeVisible();
+    });
+
     it('calls "report update"', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       fetchMock.put('/api/activity-reports/1', {});
       renderActivityReport(1);
-      const button = await screen.findByRole('button', { name: 'Topics and resources In Progress' });
+      const button = await screen.findByRole('button', { name: /supporting attachments in progress/i });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
@@ -286,14 +331,11 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
       fetchMock.put('/api/activity-reports/1', {});
-      renderActivityReport(1);
-
+      act(() => renderActivityReport(1));
       const button = await screen.findByRole('button', { name: 'Save draft' });
-      userEvent.click(button);
-
+      act(() => userEvent.click(button));
       const lastOptions = fetchMock.lastOptions();
       const bodyObj = JSON.parse(lastOptions.body);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
       expect(bodyObj.creatorRole).toEqual('Reporter');
     });
   });
@@ -305,11 +347,12 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const recipient = within(information).getByLabelText('Recipient');
         fireEvent.click(recipient);
-        const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
-        reactSelectEvent.openMenu(recipientSelectbox);
 
-        const recipientNames = await screen.findByText(/recipient name\(s\)/i);
-        expect(within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+        const recipientField = await screen.findByText(/recipient names/i);
+        const recipientSelectbox = await within(recipientField).findByText(/- select -/i);
+
+        reactSelectEvent.openMenu(recipientSelectbox);
+        expect(within(recipientField).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
@@ -317,7 +360,10 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const otherEntity = within(information).getByLabelText('Other entity');
         fireEvent.click(otherEntity);
-        const recipientSelectbox = await screen.findByRole('textbox', { name: 'Other entities (Required)' });
+
+        const otherEntities = await screen.findByText(/other entities/i);
+        const recipientSelectbox = await within(otherEntities).findByText(/- select -/i);
+
         reactSelectEvent.openMenu(recipientSelectbox);
         expect(await screen.findByText(withText('otherEntity'))).toBeVisible();
       });
@@ -330,19 +376,21 @@ describe('ActivityReport', () => {
       const recipient = within(information).getByLabelText('Recipient');
       fireEvent.click(recipient);
 
-      let recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+      const recipientName = await screen.findByText(/recipient names/i);
+      let recipientSelectbox = await within(recipientName).findByText(/- select -/i);
+
       reactSelectEvent.openMenu(recipientSelectbox);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
-      const recipientNames = await screen.findByText(/recipient name\(s\)/i);
-      expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+      const recipientNames = await screen.findByText(/recipient names/i);
+      expect(within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const otherEntity = within(information).getByLabelText('Other entity');
       fireEvent.click(otherEntity);
       fireEvent.click(recipient);
 
-      recipientSelectbox = await screen.findByLabelText(/recipient name\(s\)/i);
+      recipientSelectbox = await screen.findByLabelText(/recipient names/i);
       expect(within(recipientSelectbox).queryByText('Recipient Name')).toBeNull();
     });
 
@@ -352,6 +400,74 @@ describe('ActivityReport', () => {
 
       const good = unflattenResourcesUsed(['resource']);
       expect(good).toEqual([{ value: 'resource' }]);
+    });
+  });
+
+  describe('actively editable goals', () => {
+    it('loads goals in edit mode', async () => {
+      const data = formData();
+      fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+      fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityRecipientType: 'recipient',
+        activityRecipients: [
+          {
+            id: 12539,
+            activityRecipientId: 12539,
+            name: 'Barton LLC - 04bear012539  - EHS, HS',
+          },
+        ],
+        objectivesWithoutGoals: [],
+        goalsAndObjectives: mockGoalsAndObjectives(true),
+      });
+
+      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
+
+      // expect no read-only goals
+      expect(document.querySelector('.ttahub-goal-form-goal-summary')).toBeNull();
+
+      // expect the form to be open
+      const goalName = await screen.findByLabelText(/Recipient's goal/i, { selector: 'textarea' });
+      expect(goalName.value).toBe('test');
+
+      // we don't need this but its for the symmetry with the below test
+      expect(document.querySelector('textarea[name="goalName"]')).not.toBeNull();
+    });
+
+    it('loads goals in read-only mode', async () => {
+      const data = formData();
+      fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+      // fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityRecipientType: 'recipient',
+        activityRecipients: [
+          {
+            id: 12539,
+            activityRecipientId: 12539,
+            name: 'Barton LLC - 04bear012539  - EHS, HS',
+          },
+        ],
+        objectivesWithoutGoals: [],
+        goalsAndObjectives: mockGoalsAndObjectives(false),
+      });
+
+      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
+
+      await screen.findByRole('heading', { name: 'Goals and objectives' });
+
+      // expect 1 read-only goals
+      const readOnlyGoals = document.querySelectorAll('.ttahub-goal-form-goal-summary');
+      expect(readOnlyGoals.length).toBe(1);
+
+      await screen.findByRole('heading', { name: 'Goal summary' });
+      await screen.findByText('test', { selector: 'p.usa-prose' });
+
+      // we don't expect form controls
+      expect(document.querySelector('textarea[name="goalName"]')).toBeNull();
     });
   });
 });

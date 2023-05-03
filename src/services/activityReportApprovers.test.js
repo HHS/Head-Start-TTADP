@@ -1,9 +1,9 @@
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityRecipient, ActivityReport, ActivityReportApprover, User, sequelize,
 } from '../models';
 import { upsertApprover, syncApprovers } from './activityReportApprovers';
 import { activityReportAndRecipientsById } from './activityReports';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 const mockUser = {
   id: 11184161,
@@ -104,7 +104,7 @@ describe('activityReportApprovers services', () => {
             userId: secondMockManager.id,
           });
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
-          expect(approver.User).toBeDefined();
+          expect(approver.user).toBeDefined();
         });
         const [updatedReport] = await activityReportAndRecipientsById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();

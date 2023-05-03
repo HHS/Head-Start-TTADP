@@ -1,4 +1,9 @@
-import React, { useMemo, useContext } from 'react';
+import React, {
+  useMemo,
+  useContext,
+  useState,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,7 +32,7 @@ const defaultDate = formatDateRange({
 const FILTER_KEY = 'regional-dashboard-filters';
 export default function RegionalDashboard() {
   const { user } = useContext(UserContext);
-
+  const [resetPagination, setResetPagination] = useState(false);
   /**
    * we are going to memoize all this stuff so it doesn't get recomputed each time
    * this is re-rendered. it would (generally) only get recomputed should the user change
@@ -76,7 +81,12 @@ export default function RegionalDashboard() {
     ];
   }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
+
+  const setFilters = useCallback((newFilters) => {
+    setFiltersInHook(newFilters);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   // Apply filters.
   const onApplyFilters = (newFilters, addBackDefaultRegions) => {
@@ -120,12 +130,12 @@ export default function RegionalDashboard() {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
-        <h1 className="landing">
+        <h1 className="landing margin-top-0 margin-bottom-3">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
-          TTA Activity Dashboard
+          TTA activity dashboard
         </h1>
-        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}
@@ -170,6 +180,9 @@ export default function RegionalDashboard() {
                 filters={filtersToApply}
                 showFilter={false}
                 tableCaption="Activity reports"
+                exportIdPrefix="rd-"
+                resetPagination={resetPagination}
+                setResetPagination={setResetPagination}
               />
             </FilterContext.Provider>
           </Grid>

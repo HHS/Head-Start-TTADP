@@ -8,7 +8,11 @@ import {
   waitFor,
 } from '@testing-library/react';
 import {
-  createDateFilter, reasonsFilter, statusFilter, topicsFilter, grantNumberFilter,
+  createDateFilter,
+  reasonsFilter,
+  statusFilter,
+  topicsFilter,
+  grantNumberFilter,
 } from '../goalFilters';
 import FilterErrorContext from '../FilterErrorContext';
 
@@ -76,6 +80,11 @@ describe('goalFilters', () => {
       const statusInput = await screen.findByLabelText('Select status to filter by');
       await selectEvent.select(statusInput, ['Draft']);
       expect(apply).toHaveBeenCalled();
+    });
+
+    it('displays the correct with empty array', async () => {
+      const q = statusFilter.displayQuery([]);
+      expect(q).toBe('');
     });
   });
 

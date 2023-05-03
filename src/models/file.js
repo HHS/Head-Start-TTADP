@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { getPresignedURL } = require('../lib/s3');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class File extends Model {
     /**
      * Helper method for defining associations.

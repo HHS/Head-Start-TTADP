@@ -1,9 +1,9 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityRecipient extends Model {
     static associate(models) {
-      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
 
@@ -16,6 +16,12 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   ActivityRecipient.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     activityReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,

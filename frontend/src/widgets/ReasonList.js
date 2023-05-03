@@ -19,12 +19,11 @@ const renderReasonList = (data) => {
   return null;
 };
 
-function ReasonList({ data, dateTime, loading }) {
+function ReasonList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Reason', '# of Activities']}
-      dateTime={dateTime}
+      headings={['Reason', 'Number of activities']}
       loading={loading}
       loadingLabel="Reason list loading"
       title="Reasons in Activity Reports"
@@ -42,18 +41,10 @@ ReasonList.propTypes = {
       }),
     ), PropTypes.shape({}),
   ]),
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string,
-    label: PropTypes.string,
-  }),
   loading: PropTypes.bool.isRequired,
 };
 
 ReasonList.defaultProps = {
-  dateTime: {
-    timestamp: '',
-    label: '',
-  },
   data: [],
 };
 

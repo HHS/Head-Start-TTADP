@@ -1,3 +1,6 @@
+const { default: faker } = require('@faker-js/faker');
+const { sample } = require('lodash');
+
 const grants = [
   {
     id: 1,
@@ -5,6 +8,8 @@ const grants = [
     regionId: 14,
     recipientId: 1,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 2,
@@ -12,6 +17,8 @@ const grants = [
     regionId: 14,
     recipientId: 2,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 3,
@@ -19,6 +26,8 @@ const grants = [
     regionId: 14,
     recipientId: 3,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 4,
@@ -26,6 +35,8 @@ const grants = [
     regionId: 14,
     recipientId: 4,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 5,
@@ -33,6 +44,8 @@ const grants = [
     regionId: 14,
     recipientId: 4,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 6,
@@ -40,6 +53,8 @@ const grants = [
     regionId: 9,
     recipientId: 55,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 7,
@@ -47,6 +62,8 @@ const grants = [
     regionId: 9,
     recipientId: 6,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 8,
@@ -54,6 +71,8 @@ const grants = [
     regionId: 9,
     recipientId: 7,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 9,
@@ -61,6 +80,8 @@ const grants = [
     regionId: 9,
     recipientId: 8,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 10,
@@ -68,6 +89,17 @@ const grants = [
     regionId: 1,
     recipientId: 9,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
+  },
+  {
+    id: 18,
+    number: '01HP044445',
+    regionId: 1,
+    recipientId: 9,
+    status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 11,
@@ -75,6 +107,8 @@ const grants = [
     regionId: 1,
     recipientId: 10,
     status: 'Inactive',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 12,
@@ -82,15 +116,52 @@ const grants = [
     regionId: 1,
     recipientId: 11,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
+  },
+  {
+    id: 315,
+    number: '09HP01112',
+    regionId: 1,
+    recipientId: 11,
+    status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
 ];
+
+const baseGrant = {
+  startYear: 2021,
+  startDate: '2021-01-01',
+  status: 'Active',
+  endDate: '2032-09-01',
+};
+
+const programTypes = [
+  'Migrant HS',
+  'Migrant EHS',
+  'EHS',
+  'HS',
+  'AIAN HS',
+  'AIAN EHS',
+];
+
+const programs = grants.map((grant) => ({
+  ...baseGrant,
+  name: faker.company.companyName(),
+  id: grant.id,
+  grantId: grant.id,
+  programType: sample(programTypes),
+}));
 
 module.exports = {
   up: async (queryInterface) => {
     await queryInterface.bulkInsert('Grants', grants, {});
+    await queryInterface.bulkInsert('Programs', programs, {});
   },
 
   down: async (queryInterface) => {
+    await queryInterface.bulkDelete('Programs', null, {});
     await queryInterface.bulkDelete('Grants', null, {});
   },
 };

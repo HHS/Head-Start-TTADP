@@ -10,6 +10,7 @@ import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
+import resourcesRouter from './resources';
 import recipientRouter from './recipient';
 import { userById } from '../services/users';
 import { auditLogger } from '../logger';
@@ -17,8 +18,16 @@ import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
 import goalsRouter from './goals';
 import topicsRouter from './topics';
+import rolesRouter from './roles';
+import siteAlertsRouter from './siteAlerts';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
+import settingsRouter from './settings';
+import rttapaRouter from './rttapaReports';
+import groupsRouter from './groups';
+import goalTemplatesRouter from './goalTemplates';
+import feedRouter from './feeds';
+import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
 
@@ -52,10 +61,18 @@ router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
 router.use('/topic', topicsRouter);
+router.use('/role', rolesRouter);
 router.use('/search', search);
+router.use('/settings', settingsRouter);
+router.use('/rttapa', rttapaRouter);
+router.use('/groups', groupsRouter);
+router.use('/alerts', siteAlertsRouter);
+router.use('/feeds', feedRouter);
+router.use('/resources', resourcesRouter);
+router.use('/goal-templates', goalTemplatesRouter);
 
 const getUser = async (req, res) => {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   try {
     const user = await userById(userId);
     res.json(user.toJSON());

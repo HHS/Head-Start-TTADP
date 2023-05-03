@@ -1,11 +1,25 @@
-import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
+import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
 import { getUserReadRegions } from '../../services/accessValidation';
 import {
-  getRecipient, searchRecipients, getGoalsByRecipient,
+  getRecipient,
+  searchRecipients,
+  getGoalsByRecipient,
+  getGoalsByIdandRecipient,
+  getRecipientAndGrantsByUser,
 } from './handlers';
 import {
-  getGoalsByActivityRecipient, recipientById, recipientsByName,
+  getGoalsByActivityRecipient,
+  recipientById,
+  recipientsByName,
+  recipientsByUserId,
 } from '../../services/recipient';
+import { goalsByIdAndRecipient } from '../../services/goals';
+import SCOPES from '../../middleware/scopeConstants';
+import { currentUserId } from '../../services/currentUser';
+
+jest.mock('../../services/currentUser', () => ({
+  currentUserId: jest.fn(),
+}));
 
 jest.mock('../../services/recipient', () => ({
   recipientById: jest.fn(),
@@ -13,12 +27,25 @@ jest.mock('../../services/recipient', () => ({
   getGoalsByActivityRecipient: jest.fn(),
   getUserReadRegions: jest.fn(),
   updateRecipientGoalStatusById: jest.fn(),
+  recipientsByUserId: jest.fn(),
+}));
+
+jest.mock('../../services/goals', () => ({
+  goalsByIdAndRecipient: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
 
+const mockUserById = {
+  permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
+};
+
+jest.mock('../../services/users', () => ({
+  userById: jest.fn(() => mockUserById),
+}));
+
 describe('getRecipient', () => {
-  const recipientWhere = { name: 'Mr Thaddeus Q Recipient' };
+  const recipientWhere = { name: 'Mr Thaddeus Q Recipient', grants: [{ regionId: 1 }] };
 
   const mockResponse = {
     attachment: jest.fn(),
@@ -38,6 +65,9 @@ describe('getRecipient', () => {
         'region.in': 1,
         modelType: 'grant',
       },
+      session: {
+        userId: 1,
+      },
     };
     recipientById.mockResolvedValue(recipientWhere);
     await getRecipient(req, mockResponse);
@@ -53,6 +83,9 @@ describe('getRecipient', () => {
         'region.in': 1,
         modelType: 'grant',
       },
+      session: {
+        userId: 1,
+      },
     };
     recipientById.mockResolvedValue(null);
     await getRecipient(req, mockResponse);
@@ -63,6 +96,30 @@ describe('getRecipient', () => {
     const req = {};
     await getRecipient(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('returns unauthorized when user does not have access to region', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        'region.in': 1,
+        modelType: 'grant',
+      },
+      session: {
+        userId: 1,
+      },
+    };
+    recipientById.mockResolvedValue({
+      ...recipientWhere,
+      grants: [{
+        regionId: 5,
+      }],
+    });
+    await getRecipient(req, mockResponse);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+    expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 });
 
@@ -195,5 +252,188 @@ describe('getGoalsByActivityRecipient', () => {
     getUserReadRegions.mockResolvedValue([2]);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+  });
+});
+
+describe('getRecipientAndGrantsByUser', () => {
+  it('retrieves a recipient and grants by user', async () => {
+    const req = {
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    currentUserId.mockResolvedValueOnce(1000);
+    recipientsByUserId.mockResolvedValueOnce([{ id: 1, name: 'test' }]);
+
+    await getRecipientAndGrantsByUser(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith([{ id: 1, name: 'test' }]);
+  });
+
+  it('returns a 401 if there is no current user', async () => {
+    const req = {
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    currentUserId.mockResolvedValueOnce(null);
+
+    await getRecipientAndGrantsByUser(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+  });
+
+  it('returns a 500 on error', async () => {
+    const req = {
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    currentUserId.mockResolvedValueOnce(1000);
+    recipientsByUserId.mockRejectedValueOnce(new Error('test error'));
+
+    await getRecipientAndGrantsByUser(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('returns a 404 if there are no recipients', async () => {
+    const req = {
+      session: {
+        userId: 1000,
+      },
+    };
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    currentUserId.mockResolvedValueOnce(1000);
+    recipientsByUserId.mockResolvedValueOnce(null);
+
+    await getRecipientAndGrantsByUser(req, mockResponse);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+});
+
+describe('getGoalsByIdAndRecipient', () => {
+  it('handles errors', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockImplementationOnce(() => {
+      throw new Error('test error');
+    });
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('handles no goals', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockResolvedValueOnce([]);
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+
+  it('return goals successfully', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockResolvedValueOnce([{ name: 'goal' }]);
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith([{ name: 'goal' }]);
   });
 });

@@ -2,12 +2,11 @@ import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import {
   GOVERNMENT_HOSTNAME_EXTENSION,
-  REPORT_STATUSES,
   WITHIN,
   QUERY_CONDITIONS,
-  DECIMAL_BASE,
   DATE_FMT,
   DATE_FORMAT,
 } from './Constants';
@@ -106,7 +105,7 @@ export function expandFilters(filters) {
   return arr;
 }
 
-function decodeQueryParam(param) {
+export function decodeQueryParam(param) {
   const query = decodeURIComponent(param);
   if (query.includes(',')) {
     return query.split(',');
@@ -238,3 +237,17 @@ export function formatDateRange(format = {
 
   return '';
 }
+
+export const parseFeedIntoDom = (feed) => {
+  if (!feed) {
+    return null;
+  }
+
+  const parsedDom = new window.DOMParser().parseFromString(feed, 'text/xml');
+
+  if (parsedDom.querySelector('parsererror')) {
+    return null;
+  }
+
+  return parsedDom;
+};

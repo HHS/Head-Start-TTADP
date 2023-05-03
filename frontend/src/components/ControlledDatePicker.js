@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useController } from 'react-hook-form/dist/index.ie11';
@@ -19,6 +19,8 @@ export default function ControlledDatePicker({
   maxDate,
   setEndDate,
   isStartDate,
+  inputId,
+  endDate,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -26,8 +28,8 @@ export default function ControlledDatePicker({
    */
   const max = useMemo(() => (isStartDate ? {
     display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(),
-    datePicker: moment().format(DATEPICKER_VALUE_FORMAT),
+    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
+    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
     compare: moment(maxDate, DATE_DISPLAY_FORMAT),
   } : {
     display: maxDate,
@@ -35,6 +37,13 @@ export default function ControlledDatePicker({
     datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
     compare: moment(maxDate, DATE_DISPLAY_FORMAT),
   }), [isStartDate, maxDate]);
+
+  const endDateMax = useMemo(() => ({
+    display: moment().format(DATE_DISPLAY_FORMAT),
+    moment: moment(endDate, DATE_DISPLAY_FORMAT),
+    datePicker: moment(endDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+    compare: moment(endDate, DATE_DISPLAY_FORMAT),
+  }), [endDate]);
 
   const min = useMemo(() => ({
     display: minDate,
@@ -49,7 +58,7 @@ export default function ControlledDatePicker({
     const newValue = moment(v, DATE_DISPLAY_FORMAT);
 
     if (!newValue.isValid()) {
-      return 'Please enter a valid date';
+      return 'Enter valid date';
     }
 
     if (newValue.isBefore(min.moment)) {
@@ -64,7 +73,7 @@ export default function ControlledDatePicker({
   }
 
   const {
-    field: { onChange },
+    field: { onChange, onBlur: onFieldBlur },
   } = useController({
     name,
     control,
@@ -72,19 +81,25 @@ export default function ControlledDatePicker({
     defaultValue: formattedValue,
   });
 
+  const handleOnBlur = useCallback((e) => {
+    if (e.nativeEvent && e.nativeEvent.relatedTarget) {
+      // we don't want blur to trigger on the date picker itself, including the calendar icon
+      if (e.nativeEvent.relatedTarget.matches('.usa-date-picker__button')) {
+        return;
+      }
+    }
+
+    onFieldBlur(e);
+  }, [onFieldBlur]);
+
   const datePickerOnChange = (d) => {
     if (isStartDate) {
       const newDate = moment(d, DATE_DISPLAY_FORMAT);
       const currentDate = moment(value, DATE_DISPLAY_FORMAT);
-      const isBeforeMax = max.compare.isBefore(newDate);
-      if (isBeforeMax) {
-        const diff = max.compare.diff(currentDate, 'days');
+      if (endDateMax.compare.isBefore(newDate)) {
+        const diff = endDateMax.compare.diff(currentDate, 'days');
         const newEnd = newDate.add(diff, 'days');
-        if (newEnd.isAfter(moment())) {
-          setEndDate(moment().format(DATE_DISPLAY_FORMAT));
-        } else {
-          setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
-        }
+        setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
       }
     }
     onChange(d);
@@ -93,11 +108,12 @@ export default function ControlledDatePicker({
   return (
     <DatePicker
       defaultValue={formattedValue}
-      name={name}
-      id={name}
+      name={inputId}
+      id={inputId}
       onChange={datePickerOnChange}
       minDate={min.datePicker}
       maxDate={max.datePicker}
+      onBlur={(e) => handleOnBlur(e)}
     />
   );
 }
@@ -114,11 +130,14 @@ ControlledDatePicker.propTypes = {
   }).isRequired,
   isStartDate: PropTypes.bool,
   setEndDate: PropTypes.func,
+  inputId: PropTypes.string.isRequired,
+  endDate: PropTypes.string,
 };
 
 ControlledDatePicker.defaultProps = {
   minDate: '09/01/2020',
-  maxDate: moment().format(DATE_DISPLAY_FORMAT),
+  maxDate: '',
+  endDate: '',
   isStartDate: false,
   setEndDate: () => {},
   value: '',

@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -9,7 +10,6 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
 
 describe('removeRemovedRecipientsGoals', () => {
@@ -29,11 +29,19 @@ describe('removeRemovedRecipientsGoals', () => {
 
   beforeAll(async () => {
     const recipientOne = await Recipient.create(
-      { id: faker.datatype.number({ min: 90000 }), name: faker.company.companyName() },
+      {
+        id: faker.datatype.number({ min: 90000 }),
+        name: faker.company.companyName(),
+        uei: faker.datatype.string(12),
+      },
     );
 
     const recipientTwo = await Recipient.create(
-      { id: faker.datatype.number({ min: 90000 }), name: faker.company.companyName() },
+      {
+        id: faker.datatype.number({ min: 90000 }),
+        name: faker.company.companyName(),
+        uei: faker.datatype.string(12),
+      },
     );
 
     recipients = [recipientOne, recipientTwo];
@@ -43,6 +51,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -50,6 +60,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -78,6 +90,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantOne.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     firstObjective = await Objective.create({
@@ -89,11 +102,13 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: firstGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: firstGoal.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: firstObjective.id,
       activityReportId: multiRecipientReport.id,
+      status: firstObjective.status,
     });
 
     secondGoal = await Goal.create({
@@ -101,6 +116,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     secondObjective = await Objective.create({
@@ -112,11 +128,13 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: secondGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: secondGoal.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: multiRecipientReport.id,
+      status: secondObjective.status,
     });
 
     thirdGoal = await Goal.create({
@@ -124,11 +142,13 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantOne.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     await ActivityReportGoal.create({
       goalId: thirdGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: thirdGoal.status,
     });
 
     fourthGoal = await Goal.create({
@@ -137,11 +157,13 @@ describe('removeRemovedRecipientsGoals', () => {
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
       onApprovedAR: false,
+      createdVia: 'activityReport',
     });
 
     await ActivityReportGoal.create({
       goalId: fourthGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: fourthGoal.status,
     });
 
     secondReport = await ActivityReport.create({
@@ -154,6 +176,7 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: fourthGoal.id,
       activityReportId: secondReport.id,
+      status: fourthGoal.status,
     });
 
     thirdObjective = await Objective.create({
@@ -165,6 +188,7 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportObjective.create({
       activityReportId: secondReport.id,
       objectiveId: thirdObjective.id,
+      status: thirdObjective.status,
     });
   });
 
@@ -175,6 +199,8 @@ describe('removeRemovedRecipientsGoals', () => {
       where: {
         activityReportId: reportIds,
       },
+      hookMetadata: { objectiveIds: [firstObjective.id, secondObjective.id, thirdObjective.id] },
+      individualHooks: true,
     });
 
     await Objective.destroy({

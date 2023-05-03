@@ -4,10 +4,15 @@ import React, {
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { isEmpty } from 'lodash';
+import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox,
+  Fieldset, Radio, Grid, TextInput, Checkbox, Label,
 } from '@trussworks/react-uswds';
+import moment from 'moment';
+import {
+  TARGET_POPULATIONS as targetPopulations,
+  REASONS as reasons,
+} from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -17,12 +22,13 @@ import {
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import {
-  REASONS as reasons,
-  TARGET_POPULATIONS as targetPopulations,
-} from '../../../Constants';
 import ConnectionError from './components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
+import HtmlReviewItem from './Review/HtmlReviewItem';
+import Section from './Review/ReviewSection';
+import { reportIsEditable } from '../../../utils';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 const ActivitySummary = ({
   recipients,
@@ -65,16 +71,17 @@ const ActivitySummary = ({
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient name(s)';
+  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient names';
   const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
   const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
+  const placeholderText = '- Select -';
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
       && previousActivityRecipientType.current !== ''
       && previousActivityRecipientType.current !== null) {
-      setValue('activityRecipients', [], { shouldValidate: true });
-      setValue('participants', [], { shouldValidate: true });
+      setValue('activityRecipients', [], { shouldValidate: false });
+      setValue('participants', [], { shouldValidate: false });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
@@ -115,6 +122,7 @@ const ActivitySummary = ({
       <Helmet>
         <title>Activity summary</title>
       </Helmet>
+      <IndicatesRequiredField />
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
@@ -129,7 +137,8 @@ const ActivitySummary = ({
               label="Recipient"
               value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or other entity' })}
+              inputRef={register({ required: 'Select one' })}
+              required
             />
             <Radio
               id="category-other-entity"
@@ -137,7 +146,7 @@ const ActivitySummary = ({
               label="Other entity"
               value="other-entity"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or other entity' })}
+              inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
         </div>
@@ -158,15 +167,16 @@ const ActivitySummary = ({
               valueProperty="activityRecipientId"
               labelProperty="name"
               simple={false}
-              required="Please select at least one recipient or other entity"
+              required="Select at least one"
               options={selectedRecipients}
+              placeholderText={placeholderText}
             />
           </FormItem>
         </div>
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
-            label="Collaborating Specialists"
+            label="Collaborating specialists"
             name="activityReportCollaborators"
             required={false}
           >
@@ -177,26 +187,32 @@ const ActivitySummary = ({
               valueProperty="user.id"
               labelProperty="user.fullName"
               simple={false}
-              options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
+              placeholderText={placeholderText}
+              options={collaborators.map((user) => ({
+                // we want the role construction here to match what later is returned from the
+                // database, so we do this weirdo mapping thing here
+                value: user.id, label: user.name, roles: user.roles.map((r) => r.fullName),
+              }))}
             />
           </FormItem>
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Target Populations addressed. You may choose more than one."
+            label="Target populations addressed"
             name="targetPopulations"
             required
           >
             <MultiSelect
               name="targetPopulations"
               control={control}
-              required="Please select at least one target population"
+              required="Select at least one"
               options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
+              placeholderText="- Select -"
             />
           </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Reason for Activity">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Reason for activity">
         <div id="reasons" />
         <div className="margin-top-2">
           <FormItem
@@ -210,7 +226,7 @@ const ActivitySummary = ({
               label="Recipient"
               value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or regional office' })}
+              inputRef={register({ required: 'Select one' })}
             />
             <Radio
               id="requestorRegionalOffice"
@@ -218,19 +234,21 @@ const ActivitySummary = ({
               label="Regional Office"
               value="regionalOffice"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or regional office' })}
+              inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Reason(s). You may choose more than one."
+            label="Reasons"
             name="reason"
           >
             <MultiSelect
               name="reason"
               control={control}
               options={reasons.map((reason) => ({ value: reason, label: reason }))}
+              required="Select at least one"
+              placeholderText={placeholderText}
             />
           </FormItem>
         </div>
@@ -241,7 +259,7 @@ const ActivitySummary = ({
           <Grid row>
             <Grid col={8}>
               <FormItem
-                label="Start Date"
+                label="Start date"
                 name="startDate"
                 id="startDate-label"
                 htmlFor="startDate"
@@ -256,8 +274,9 @@ const ActivitySummary = ({
                   name="startDate"
                   value={startDate}
                   setEndDate={setEndDate}
-                  maxDate={endDate}
                   isStartDate
+                  inputId="startDate"
+                  endDate={endDate}
                 />
               </FormItem>
             </Grid>
@@ -265,7 +284,7 @@ const ActivitySummary = ({
           <Grid row>
             <Grid col={8}>
               <FormItem
-                label="End Date"
+                label="End date"
                 name="endDate"
                 id="endDate-label"
                 htmlFor="endDate"
@@ -278,6 +297,7 @@ const ActivitySummary = ({
                 <ControlledDatePicker
                   control={control}
                   name="endDate"
+                  inputId="endDate"
                   value={endDate}
                   minDate={startDate}
                   key={endDateKey}
@@ -296,13 +316,15 @@ const ActivitySummary = ({
                   name="duration"
                   type="number"
                   min={0}
+                  max={99.5}
                   step={0.5}
                   inputRef={
                     register({
-                      required: 'Please enter the duration of the activity',
+                      required: 'Enter duration',
                       valueAsNumber: true,
                       pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
-                      min: { value: 0, message: 'Duration can not be negative' },
+                      min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
+                      max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                     })
                   }
                 />
@@ -311,16 +333,22 @@ const ActivitySummary = ({
           </Grid>
         </div>
       </Fieldset>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
+        <Label htmlFor="context">Provide background or context for this activity</Label>
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
+        </div>
+      </Fieldset>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or Technical Assistance">
         <div id="tta" />
         <div className="margin-top-2">
           <FormItem
-            label="What TTA was provided"
+            label="What type of TTA was provided?"
             name="ttaType"
             fieldSetWrapper
           >
-            {renderCheckbox('ttaType', 'training', 'Training', 'Please specify the type of TTA provided')}
-            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
+            {renderCheckbox('ttaType', 'training', 'Training', 'Select at least one')}
+            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Select at least one')}
           </FormItem>
         </div>
         <div className="margin-top-2">
@@ -330,29 +358,40 @@ const ActivitySummary = ({
             fieldSetWrapper
           >
             <Radio
-              id="delivery-method-virtual"
-              name="deliveryMethod"
-              label="Virtual"
-              value="virtual"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify how the activity was conducted' })}
-            />
-            <Radio
               id="delivery-method-in-person"
               name="deliveryMethod"
               label="In Person"
               value="in-person"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify how the activity was conducted' })}
+              inputRef={register({ required: 'Select one' })}
+            />
+
+            <Radio
+              id="delivery-method-virtual"
+              name="deliveryMethod"
+              label="Virtual"
+              value="virtual"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Select one' })}
+            />
+
+            <Radio
+              id="delivery-method-hybrid"
+              name="deliveryMethod"
+              label="Hybrid"
+              value="hybrid"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
           <div aria-live="polite">
             {isVirtual && (
-            <div className="margin-top-2 smart-hub--virtual-delivery-group">
+            <div className="margin-top-2">
               <FormItem
-                label="Please specify how the virtual event was conducted."
+                label="Optional: Specify how the virtual event was conducted."
                 name="virtualDeliveryType"
                 fieldSetWrapper
+                required={false}
               >
                 <Radio
                   id="virtual-deliver-method-video"
@@ -360,7 +399,8 @@ const ActivitySummary = ({
                   label="Video"
                   value="video"
                   className="smart-hub--report-checkbox"
-                  inputRef={register({ required: 'Please specify how the virtual event was conducted' })}
+                  required={false}
+                  inputRef={register()}
                 />
                 <Radio
                   id="virtual-deliver-method-telephone"
@@ -368,7 +408,8 @@ const ActivitySummary = ({
                   label="Telephone"
                   value="telephone"
                   className="smart-hub--report-checkbox"
-                  inputRef={register({ required: 'Please specify how the virtual event was conducted' })}
+                  required={false}
+                  inputRef={register()}
                 />
               </FormItem>
             </div>
@@ -386,9 +427,11 @@ const ActivitySummary = ({
             <MultiSelect
               name="participants"
               control={control}
+              placeholderText={placeholderText}
               options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
+              required="Select at least one"
             />
           </FormItem>
         </div>
@@ -406,7 +449,7 @@ const ActivitySummary = ({
                   min={1}
                   inputRef={
                     register({
-                      required: 'Please enter the number of participants involved in the activity',
+                      required: 'Enter number of participants',
                       valueAsNumber: true,
                       min: {
                         value: 1,
@@ -418,6 +461,7 @@ const ActivitySummary = ({
               </Grid>
             </Grid>
           </FormItem>
+
         </div>
       </Fieldset>
     </>
@@ -458,11 +502,11 @@ const sections = [
     anchor: 'activity-for',
     items: [
       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
-      { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
+      { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
       {
-        label: 'Collaborating specialist(s)', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
+        label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
       },
-      { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
+      { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
     ],
   },
   {
@@ -470,7 +514,7 @@ const sections = [
     anchor: 'reasons',
     items: [
       { label: 'Requested by', name: 'requester' },
-      { label: 'Reason(s)', name: 'reason', sort: true },
+      { label: 'Reasons', name: 'reason', sort: true },
     ],
   },
   {
@@ -486,7 +530,7 @@ const sections = [
     title: 'Training or Technical Assistance',
     anchor: 'tta',
     items: [
-      { label: 'TTA Provided', name: 'ttaType' },
+      { label: 'TTA provided', name: 'ttaType' },
       { label: 'Conducted', name: 'deliveryMethod' },
     ],
   },
@@ -500,9 +544,99 @@ const sections = [
   },
 ];
 
-const ReviewSection = () => (
-  <ReviewPage sections={sections} path="activity-summary" />
-);
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    context,
+    calculatedStatus,
+  } = watch();
+
+  const canEdit = reportIsEditable(calculatedStatus);
+  return (
+    <>
+      <ReviewPage sections={sections} path="activity-summary" />
+      <Section
+        hidePrint={isUndefined(context)}
+        key="context"
+        basePath="activity-summary"
+        anchor="context"
+        title="Context"
+        canEdit={canEdit}
+      >
+        <HtmlReviewItem
+          label="Context"
+          name="context"
+        />
+      </Section>
+    </>
+  );
+};
+
+export const isPageComplete = (formData, formState) => {
+  const { isValid } = formState;
+  if (isValid) {
+    return true;
+  }
+
+  const {
+    // strings
+    activityRecipientType,
+    requester,
+    deliveryMethod,
+
+    // arrays
+    activityRecipients,
+    targetPopulations: targetPopulationsArray,
+    reason,
+    ttaType,
+    participants,
+
+    // numbers
+    duration,
+    numberOfParticipants,
+
+    // dates
+    startDate,
+    endDate,
+  } = formData;
+
+  const stringsToValidate = [
+    activityRecipientType,
+    requester,
+    deliveryMethod,
+  ];
+
+  if (!stringsToValidate.every((str) => str)) {
+    return false;
+  }
+
+  const arraysToValidate = [
+    activityRecipients,
+    targetPopulationsArray,
+    reason,
+    ttaType,
+    participants,
+  ];
+
+  if (!arraysToValidate.every((arr) => arr.length)) {
+    return false;
+  }
+
+  const numbersToValidate = [
+    duration,
+    numberOfParticipants,
+  ];
+
+  if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
+    return false;
+  }
+
+  if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
+    return false;
+  }
+
+  return true;
+};
 
 export default {
   position: 1,
@@ -519,4 +653,5 @@ export default {
       />
     );
   },
+  isPageComplete,
 };

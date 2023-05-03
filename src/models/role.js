@@ -9,23 +9,29 @@ const {
  * @param {*} DataTypes
  */
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
+      Role.hasMany(models.RoleTopic, { foreignKey: 'roleId', as: 'roleTopics' });
       Role.belongsToMany(models.Topic, {
-        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics', otherKey: 'topicId',
-      });
-      Role.belongsToMany(models.Objective, {
-        through: models.ObjectiveRole,
+        through: models.RoleTopic,
         foreignKey: 'roleId',
-        otherKey: 'objectiveId',
-        as: 'objectives',
+        as: 'topics',
+        otherKey: 'topicId',
       });
-      Role.belongsToMany(models.ObjectiveTemplate, {
-        through: models.ObjectiveTemplateRole,
+      Role.hasMany(models.UserRole, { foreignKey: 'roleId', as: 'userRoles' });
+      Role.belongsToMany(models.User, {
+        through: models.UserRole,
         foreignKey: 'roleId',
-        otherKey: 'objectiveTemplateId',
-        as: 'objectiveTemplates',
+        otherKey: 'userId',
+        as: 'users',
+      });
+      Role.hasMany(models.CollaboratorRole, { foreignKey: 'roleId', as: 'collaboratorRoles' });
+      Role.belongsToMany(models.ActivityReportCollaborator, {
+        through: models.CollaboratorRole,
+        otherKey: 'activityReportCollaboratorId',
+        foreignKey: 'roleId',
+        as: 'collaborators',
       });
     }
   }

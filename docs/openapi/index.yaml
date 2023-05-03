@@ -264,6 +264,19 @@ components:
           type: number
         regionId:
           type: number
+    settings:
+      type: array
+      description: An array of key value pairs that are used to store user-specific settings.
+      items:
+        $ref: '#/components/schemas/setting'
+    setting:
+      type: object
+      description: A key value pair that is used to store user-specific settings.
+      properties:
+        key:
+          type: string
+        value:
+          type: string
     user:
       type: object
       description: A TTA Smart Hub user

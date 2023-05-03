@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { APPROVER_STATUSES } = require('@ttahub/common');
 const {
   afterCreate,
   afterDestroy,
@@ -6,13 +7,12 @@ const {
   afterUpdate,
   afterUpsert,
 } = require('./hooks/activityReportApprover');
-const { APPROVER_STATUSES } = require('../constants');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportApprover extends Model {
     static associate(models) {
       ActivityReportApprover.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
-      ActivityReportApprover.belongsTo(models.User, { foreignKey: 'userId' });
+      ActivityReportApprover.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
   ActivityReportApprover.init({

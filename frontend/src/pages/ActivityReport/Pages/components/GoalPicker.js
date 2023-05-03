@@ -1,178 +1,204 @@
-import React, { useState } from 'react';
-import { uniqBy, cloneDeep } from 'lodash';
+import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
-import { v4 as uuidv4 } from 'uuid';
-
-import FormItem from '../../../../components/FormItem';
-import Goal from './Goal';
-import MultiSelect from '../../../../components/MultiSelect';
+import { useFormContext, useWatch, useController } from 'react-hook-form/dist/index.ie11';
+import Select from 'react-select';
+import { getTopics } from '../../../../fetchers/topics';
+import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
+import Req from '../../../../components/Req';
 import Option from './GoalOption';
-import Input from './GoalInput';
+import SingleValue from './GoalValue';
+import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
+import GoalForm from './GoalForm';
 
-const components = {
-  Input,
-  Option,
-};
-
-const createObjective = () => ({
-  title: '', ttaProvided: '<p></p>', status: 'Not Started', id: uuidv4(), isNew: true,
+export const newGoal = (grantIds) => ({
+  value: uuidv4(),
+  number: false,
+  label: 'Create new goal',
+  objectives: [],
+  name: '',
+  goalNumber: '',
+  id: 'new',
+  isNew: true,
+  endDate: '',
+  onApprovedAR: false,
+  grantIds,
+  goalIds: [],
+  oldGrantIds: [],
+  status: 'Draft',
+  isRttapa: null,
+  isCurated: false,
 });
 
+const components = {
+  Option,
+  SingleValue,
+};
+
 const GoalPicker = ({
-  availableGoals,
-  grantIds,
+  availableGoals, grantIds, reportId,
 }) => {
   const {
-    control, setValue,
+    control, setValue, watch,
   } = useFormContext();
-  const [inMemoryGoals, updateInMemoryGoals] = useState([]);
+  const [topicOptions, setTopicOptions] = useState([]);
+  // the date picker component, as always, presents special challenges, it needs a key updated
+  // to re-render appropriately
+  const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
+  const [templatePrompts, setTemplatePrompts] = useState(false);
+  const activityRecipientType = watch('activityRecipientType');
+
   const selectedGoals = useWatch({ name: 'goals' });
+  const activityRecipients = watch('activityRecipients');
+  const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
-  // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
-  // inMemoryGoals: unsaved goals, deselected goals
-  // selectedGoals: goals selected by user in MultiSelect
-  const allAvailableGoals = [...selectedGoals, ...inMemoryGoals, ...availableGoals];
+  const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
+    const { id, name } = goal;
+    const newSelectedIds = [...acc.selectedIds, id];
+    const newSelectedNames = [...acc.selectedNames, name];
 
-  const onRemoveGoal = (id) => {
-    const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateInMemoryGoals([...inMemoryGoals, ...newGoals]);
-    setValue('goals', newGoals);
-  };
+    return {
+      selectedIds: newSelectedIds,
+      selectedNames: newSelectedNames,
+    };
+  }, {
+    selectedIds: [],
+    selectedNames: [],
+  });
 
-  const onUpdateGoal = (index, name) => {
-    if (name !== '') {
-      const oldGoal = selectedGoals[index];
-      const goal = {
-        ...oldGoal,
-        name,
-        grantIds,
-      };
-      const updatedGoals = cloneDeep(selectedGoals);
-      updatedGoals[index] = goal;
-      setValue('goals', updatedGoals);
+  // excludes already selected goals from the dropdown by name and ID
+  const allAvailableGoals = availableGoals
+    .filter((goal) => goal.goalIds.every((id) => (
+      !selectedIds.includes(id)
+    )) && !selectedNames.includes(goal.name));
+
+  const {
+    field: {
+      onChange,
+      value: goalForEditing,
+    },
+  } = useController({
+    name: 'goalForEditing',
+    rules: {
+      validate: {
+        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals(g ? [g] : []) === true,
+      },
+    },
+    defaultValue: '',
+  });
+
+  // for fetching topic options from API
+  useEffect(() => {
+    async function fetchTopics() {
+      const topics = await getTopics();
+      setTopicOptions(topics);
+    }
+
+    fetchTopics();
+  }, []);
+
+  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
+
+  // We need options with the number and also we need to add the
+  // goal templates and "create new goal" to the front of all the options
+  const options = [
+    newGoal(grantIds),
+    ...uniqueAvailableGoals.map(({
+      goalNumber,
+      ...goal
+    }) => (
+      {
+        value: goal.id,
+        number: goalNumber,
+        label: goal.name,
+        objectives: [],
+        isNew: false,
+        ...goal,
+      }
+    )),
+  ];
+
+  const onSelectGoal = async (goal) => {
+    setValue('goalForEditing.objectives', []);
+    onChange(goal);
+
+    if (goal.isCurated) {
+      const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
+      if (prompts) {
+        setTemplatePrompts(prompts);
+      }
+    } else {
+      setTemplatePrompts(false);
+    }
+
+    // update the goal date forcefully
+    // also update the date picker key to force a re-render
+    setValue('goalEndDate', goal.endDate || '');
+    if (goal.goalIds) {
+      setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
     }
   };
 
-  const onUpdateObjectives = (index, objectives) => {
-    const newGoals = cloneDeep(selectedGoals);
-    newGoals[index].objectives = objectives;
-    // When objectives are added/updated, make sure they are attached to available goals
-    updateInMemoryGoals(newGoals);
-    setValue('goals', newGoals);
-  };
-
-  const onItemSelected = (event) => {
-    // Use selections from MultiSelect to update goals form state
-    const newlySelectedGoals = event.map((e) => {
-      const goal = allAvailableGoals.find((g) => g.id === e.value);
-      let objectives = [createObjective()];
-
-      if (goal.objectives && goal.objectives.length > 0) {
-        objectives = goal.objectives;
-      }
-      return {
-        ...goal,
-        objectives,
-        grantIds,
-      };
-    });
-    // Preserve deselected goals so they can be re-reselected
-    const selectedIds = event.map((g) => g.id);
-    const deselectedGoals = selectedGoals.filter((g) => !selectedIds.includes(g.id));
-    updateInMemoryGoals([...inMemoryGoals, ...deselectedGoals]);
-
-    setValue('goals', newlySelectedGoals);
-  };
-
-  const onNewGoalChange = (newGoal) => {
-    const i = uuidv4();
-    const goal = {
-      id: i,
-      goalIds: [],
-      isNew: true,
-      name: newGoal,
-      objectives: [createObjective()],
-      grantIds,
-      status: 'Not Started',
-    };
-    setValue('goals', [...selectedGoals, goal]);
-    updateInMemoryGoals((oldGoals) => [...oldGoals, goal]);
-  };
-
-  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
-
   return (
-    <div className="margin-top-4">
-      <FormItem
-        label="Select all goals that apply to this report before leaving this page."
-        name="goals"
-        fieldSetWrapper
-      >
+    <>
+      <div className="margin-top-3 position-relative">
         <Label>
-          Select from existing goal(s) or type to create a new goal.
-          <MultiSelect
-            name="goals"
+          Select recipient&apos;s goal
+          {' '}
+          <Req />
+          <Select
+            name="goalForEditing"
             control={control}
-            valueProperty="id"
-            labelProperty="name"
-            simple={false}
             components={components}
-            onItemSelected={onItemSelected}
+            onChange={onSelectGoal}
             rules={{
               validate: validateGoals,
             }}
-            options={uniqueAvailableGoals.map((goal) => ({
-              value: goal.id,
-              label: goal.name,
-              number: goal.goalIds ? goal.goalIds.map((g) => (`G-${g}`)).join(', ') : `G-${goal.id}`,
-            }))}
-            singleRowInput
-            multiSelectOptions={{
-              isClearable: false,
-              closeMenuOnSelect: true,
-              controlShouldRenderValue: false,
-              hideSelectedOptions: false,
+            className="usa-select"
+            options={options}
+            styles={{
+              ...selectOptionsReset,
+              option: (provided) => ({
+                ...provided,
+                marginBottom: '0.5em',
+              }),
             }}
-            onCreateOption={onNewGoalChange}
-            canCreate
+            placeholder="- Select -"
+            value={goalForEditing}
           />
         </Label>
-        <div>
-          {selectedGoals.map((goal, index) => (
-            <Goal
-              key={goal.id}
-              goalIndex={index}
-              id={goal.id}
-              objectives={goal.objectives}
-              name={goal.name}
-              number={goal.goalNumber}
-              isEditable={goal.isNew === true || !goal.onApprovedAR}
-              createObjective={createObjective}
-              onRemoveGoal={() => onRemoveGoal(goal.id)}
-              onUpdateObjectives={(newObjectives) => {
-                onUpdateObjectives(index, newObjectives);
-              }}
-              onUpdateGoal={(goalName) => onUpdateGoal(index, goalName)}
+        {goalForEditing ? (
+          <div>
+            <GoalForm
+              topicOptions={topicOptions}
+              goal={goalForEditing}
+              reportId={reportId}
+              datePickerKey={datePickerKey}
+              templatePrompts={templatePrompts}
+              isMultiRecipientReport={isMultiRecipientReport}
             />
-          ))}
-        </div>
-      </FormItem>
-    </div>
+          </div>
+        ) : null}
+      </div>
+
+    </>
   );
 };
 
 GoalPicker.propTypes = {
   grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  availableGoals: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.number,
-    }),
-  ).isRequired,
+  availableGoals: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+  })).isRequired,
+  reportId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
 };
 
 export default GoalPicker;

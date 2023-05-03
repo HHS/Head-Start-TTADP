@@ -1,13 +1,10 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
-const { USER_ROLES } = require('../constants');
-const generateFullName = require('./hooks/user');
+const generateFullName = require('./helpers/generateFullName');
 
-const featureFlags = [
-  'recipient_goals_objectives',
-];
+const featureFlags = ['resources_dashboard', 'rttapa_form', 'anv_statistics', 'regional_goal_dashboard'];
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
@@ -15,6 +12,21 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.hasMany(models.UserRole, { foreignKey: 'userId', as: 'userRoles' });
+      User.belongsToMany(models.Role, {
+        through: models.UserRole,
+        otherKey: 'roleId',
+        foreignKey: 'userId',
+        as: 'roles',
+      });
+      User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
+      User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
+      User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
+      User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
+      User.hasMany(models.RttapaPilot, { foreignKey: 'userId', as: 'rttapaPilots', hooks: true });
+      User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
+      User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
+      User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
     }
   }
   User.init({
@@ -58,25 +70,21 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
     },
-    role: DataTypes.ARRAY(DataTypes.ENUM(USER_ROLES)),
     flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return generateFullName(this.name, this.role);
+        return generateFullName(this.name, this.roles);
       },
     },
     lastLogin: DataTypes.DATE,
   }, {
-    defaultScope: {
-      order: [
-        [sequelize.fn('CONCAT', sequelize.col('name'), sequelize.col('email')), 'ASC'],
-      ],
-    },
     sequelize,
     modelName: 'User',
   });
   return User;
 };
 
-module.exports.featureFlags = featureFlags;
+export {
+  featureFlags,
+};

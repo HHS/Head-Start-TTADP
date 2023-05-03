@@ -4,10 +4,10 @@ import React, { useRef } from 'react';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import { ModalToggleButton } from '@trussworks/react-uswds';
 import userEvent from '@testing-library/user-event';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../../Constants';
 
 describe('Close Suspend Goal Reason', () => {
   const ModalComponent = (
@@ -121,6 +121,7 @@ describe('Close Suspend Goal Reason', () => {
     expect(await screen.findByText(GOAL_CLOSE_REASONS[0])).toBeVisible();
     expect(await screen.findByText(GOAL_CLOSE_REASONS[1])).toBeVisible();
     expect(await screen.findByText(GOAL_CLOSE_REASONS[2])).toBeVisible();
+    expect(await screen.findByText(GOAL_CLOSE_REASONS[3])).toBeVisible(); // regional office request
 
     // Verify Context.
     expect(await screen.findByText('Additional context')).toBeVisible();

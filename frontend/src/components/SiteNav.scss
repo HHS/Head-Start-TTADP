@@ -6,6 +6,10 @@
   }
 }
 
+.smart-hub-sitenav {
+  transition: padding-top 0.5s ease;
+}
+
 .smart-hub-sitenav-separator--after::after,
 .smart-hub-sitenav-separator--before::before
 {

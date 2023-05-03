@@ -39,6 +39,7 @@ export default function TableHeader({
   downloadAllButtonRef,
   downloadSelectedButtonRef,
   paginationName,
+  exportIdPrefix,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -80,6 +81,7 @@ export default function TableHeader({
               isDownloading={isDownloading}
               downloadAllButtonRef={downloadAllButtonRef}
               downloadSelectedButtonRef={downloadSelectedButtonRef}
+              exportIdPrefix={exportIdPrefix}
             />
           )}
         </span>
@@ -120,6 +122,7 @@ export default function TableHeader({
 }
 
 TableHeader.propTypes = {
+  exportIdPrefix: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   numberOfSelected: PropTypes.number,
   toggleSelectAll: PropTypes.func,
@@ -149,21 +152,21 @@ TableHeader.propTypes = {
 
 TableHeader.defaultProps = {
   numberOfSelected: 0,
-  toggleSelectAll: () => { },
+  toggleSelectAll: null,
   hidePagination: false,
-  handleDownloadAll: () => { },
-  handleDownloadClick: () => { },
+  handleDownloadAll: null,
+  handleDownloadClick: null,
   count: 0,
   activePage: 0,
   offset: 0,
   perPage: 10,
-  handlePageChange: () => { },
+  handlePageChange: null,
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
-  setDownloadError: () => {},
+  setDownloadError: null,
   isDownloading: false,
-  downloadAllButtonRef: () => {},
-  downloadSelectedButtonRef: () => {},
+  downloadAllButtonRef: null,
+  downloadSelectedButtonRef: null,
   paginationName: 'activity reports',
 };

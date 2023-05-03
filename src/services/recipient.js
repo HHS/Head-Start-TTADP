@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { uniq, uniqBy } from 'lodash';
 import {
   Grant,
   Recipient,
@@ -9,11 +10,59 @@ import {
   ActivityReport,
   Objective,
   ActivityRecipient,
+  Topic,
+  Permission,
+  User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
-import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
+import {
+  RECIPIENTS_PER_PAGE,
+  GOALS_PER_PAGE,
+  GOAL_STATUS,
+} from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
+import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+
+/**
+ *
+ * @param {number} userId
+ * @returns {Promise<Model>} recipient results
+ */
+export async function recipientsByUserId(userId) {
+  const user = await User.findOne({
+    attributes: ['id'],
+    where: {
+      id: userId,
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+      },
+    ],
+  });
+
+  if (!user) {
+    return [];
+  }
+
+  const regions = user.permissions.map((p) => p.regionId);
+
+  return Recipient.findAll({
+    order: [['name', 'ASC']],
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId: regions,
+          status: 'Active',
+        },
+      },
+    ],
+  });
+}
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -22,16 +71,27 @@ export async function allRecipients() {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
+        where: {
+          [Op.and]: [
+            { deleted: { [Op.ne]: true } },
+            {
+              endDate: {
+                [Op.gt]: '2020-08-31',
+              },
+            },
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
+          ],
+        },
       },
     ],
   });
 }
 
-const todaysDate = moment().format('MM/DD/yyyy');
-
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
-    attributes: ['id', 'name', 'recipientType'],
+    attributes: ['id', 'name', 'recipientType', 'uei'],
     where: {
       id: recipientId,
     },
@@ -55,15 +115,23 @@ export async function recipientById(recipientId, grantScopes) {
         where: [{
           [Op.and]: [
             { [Op.and]: grantScopes },
+            { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
                 {
                   status: 'Active',
                 },
                 {
-                  endDate: {
-                    [Op.between]: ['2020-09-01', todaysDate],
-                  },
+                  [Op.and]: [
+                    {
+                      endDate: {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
+                    {
+                      [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                    },
+                  ],
                 },
               ],
             },
@@ -89,10 +157,11 @@ export async function recipientById(recipientId, grantScopes) {
  * @param {string} query
  * @param {number} regionId
  * @param {string} sortBy
+ * @param {number[]} userRegions
  *
  * @returns {Promise} recipient results
  */
-export async function recipientsByName(query, scopes, sortBy, direction, offset) {
+export async function recipientsByName(query, scopes, sortBy, direction, offset, userRegions) {
   // fix the query
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
@@ -128,6 +197,10 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
       required: true,
       where: [{
         [Op.and]: [
+          { deleted: { [Op.ne]: true } },
+          {
+            [Op.and]: { regionId: userRegions },
+          },
           { [Op.and]: scopes },
           {
             [Op.or]: [
@@ -135,9 +208,16 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
                 status: 'Active',
               },
               {
-                endDate: {
-                  [Op.between]: ['2020-08-31', todaysDate],
-                },
+                [Op.and]: [
+                  {
+                    endDate: {
+                      [Op.gt]: '2020-08-31',
+                    },
+                  },
+                  {
+                    [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                  },
+                ],
               },
             ],
           },
@@ -165,100 +245,93 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-function dedupeAndSortObjectivesAndReports(objectives) {
-  return objectives.reduce((previous, objective) => {
-    // eslint-disable-next-line max-len
-    const existingObjective = previous.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
+/**
+ *
+ * @param {Object} currentModel
+ * Current goal model we are working on
+ * @param {Object} goal
+ * a goal, either an pre built one or one we are building on the fly as we reduce goals
+ * @param {String[]} grantNumbers
+ * passed into here to avoid having to refigure anything else, they come from the goal
+ * @returns {Object[]} sorted objectives
+ */
+function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
+  // we need to reduce out the objectives, topics, and reasons
+  // 1) we need to return the objectives
+  // 2) we need to attach the topics and reasons to the goal
 
-    if (existingObjective) {
-      // if the objective exists, we also have to make sure all
-      // the reports are combined into one list
+  const {
+    objectives,
+    topics,
+    reasons,
+  } = [
+    ...(currentModel.objectives || []),
+    ...(goal.objectives || [])]
+    .reduce((acc, objective) => {
+    // this secondary reduction is to extract what we need from the activity reports
+    // ( topic, reason, latest endDate)
+      const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
+        t: [...a.t, ...report.topics],
+        r: [...a.r, ...report.reason],
+        endDate: new Date(report.endDate) < new Date(a.endDate) ? a.endDate : report.endDate,
+      }), { t: [], r: [], endDate: '' });
 
-      // eslint-disable-next-line max-len
-      existingObjective.activityReports = objective.activityReports.reduce((existingReports, currentReport) => {
-        const existingReport = existingReports.find((report) => report.id === currentReport.id);
-        if (existingReport) {
-          return existingReports;
-        }
+      // previous added objectives have a regularly accessible attribute, the others
+      // for some reason need to be accessed by the getDataValue method
+      const objectiveTitle = objective.getDataValue ? objective.getDataValue('title') : objective.title;
+      const objectiveStatus = objective.getDataValue ? objective.getDataValue('status') : objective.status;
 
-        return [...existingReports, currentReport];
-      }, existingObjective.activityReports);
-      return previous;
-    }
+      const existing = acc.objectives.find((o) => (
+        o.title === objectiveTitle.trim() && o.status === objectiveStatus
+      ));
 
-    return [
-      ...previous,
-      objective,
-    ];
-  }, []).sort((a, b) => ((
-    a.endDate === b.endDate ? a.id < b.id
-      : a.endDate < b.endDate) ? 1 : -1)); // we also have to sort the objectives
-}
+      // get our objective topics
+      const objectiveTopics = (objective.topics || []).map((ot) => ot.name);
 
-function reduceObjectives(response, goal) {
-  const current = goal;
+      if (existing) {
+        existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
+        existing.reasons = uniq([...existing.reasons, ...r]);
+        existing.reasons.sort();
+        existing.grantNumbers = grantNumbers;
+        return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
+      }
 
-  const objectives = response.objectives.map((objective) => {
-    // Activity Report.
-    let activityReport;
-    if (objective.activityReports && objective.activityReports.length > 0) {
-      // eslint-disable-next-line prefer-destructuring
-      activityReport = objective.activityReports[0];
-      /* TODO: Switch for New Goal Creation (Remove). */
-      current.goalTopics = Array.from(
-        new Set([...goal.goalTopics, ...activityReport.topics]),
-      );
-
-      current.reasons = Array.from(
-        new Set([...goal.reasons, ...activityReport.reason]),
-      );
-    }
-
-    // eslint-disable-next-line max-len
-    const existingObjective = goal.objectives.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
-
-    if (existingObjective) {
-      // eslint-disable-next-line max-len
-      const existingReport = existingObjective.activityReports.find((ar) => ar.id === activityReport.id);
-      if (existingReport) {
-        return {
-          ...existingObjective,
-          grantNumbers: [...existingObjective.grantNumbers, response.grant.number],
-        };
+      // Look up grant number by index.
+      let grantNumberToUse = currentModel.grant.number;
+      const indexOfGoal = goal.ids.indexOf(objective.goalId);
+      if (indexOfGoal !== -1 && goal.grantNumbers[indexOfGoal]) {
+        grantNumberToUse = goal.grantNumbers[indexOfGoal];
       }
 
       return {
-        ...existingObjective,
-        activityReports: [
-          ...existingObjective.activityReports,
-          {
-            id: activityReport ? activityReport.id : null,
-            legacyId: activityReport ? activityReport.legacyId : null,
-            number: activityReport ? activityReport.displayId : null,
-          },
-        ],
-        grantNumbers: [...existingObjective.grantNumbers, response.grant.number],
+        objectives: [...acc.objectives, {
+          ...objective.dataValues,
+          title: objective.title.trim(),
+          endDate,
+          status: objectiveStatus,
+          grantNumbers: [grantNumberToUse],
+          reasons: uniq(r),
+          activityReports: objective.activityReports || [],
+        }],
+        reasons: [...acc.reasons, ...r].sort(),
+        topics: [...acc.topics, ...t, ...objectiveTopics],
       };
-    }
+    }, {
+      objectives: [],
+      topics: [],
+      reasons: [],
+    });
 
-    return {
-      id: objective.id,
-      title: objective.title.trim(),
-      endDate: activityReport ? activityReport.endDate : null,
-      reasons: activityReport ? activityReport.reason : null,
-      status: objective.status,
-      grantNumbers: [response.grant.number],
-      activityReports: [{
-        id: activityReport ? activityReport.id : null,
-        legacyId: activityReport ? activityReport.legacyId : null,
-        number: activityReport ? activityReport.displayId : null,
-      }],
-    };
-  });
+  const current = goal;
+  current.goalTopics = uniq([...goal.goalTopics, ...topics]);
+  current.goalTopics.sort();
 
-  // this is to dedupe (our first pass dedupes objectives from rolled up goals,
-  // this dedupes objectives from the same goal)
-  return dedupeAndSortObjectivesAndReports(objectives);
+  current.reasons = uniq([...goal.reasons, ...reasons]);
+  current.reasons.sort();
+
+  return objectives.sort((a, b) => ((
+    a.endDate === b.endDate ? a.id < b.id
+      : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
 
 function calculatePreviousStatus(goal) {
@@ -293,15 +366,34 @@ export async function getGoalsByActivityRecipient(
     sortDir = 'desc',
     offset = 0,
     limit = GOALS_PER_PAGE,
+    goalIds = [],
     ...filters
   },
 ) {
   // Scopes.
-  const { goal: scopes } = filtersToScopes(filters, { goal: { recipientId } });
+  const { goal: scopes } = await filtersToScopes(filters, { goal: { recipientId } });
 
   // Paging.
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
+
+  // Goal where.
+  let goalWhere = {
+    [Op.or]: [
+      { onApprovedAR: true },
+      { isFromSmartsheetTtaPlan: true },
+      { createdVia: 'rtr' },
+    ],
+    [Op.and]: scopes,
+  };
+
+  // If we have specified goals only retrieve those else all for recipient.
+  if (goalIds && goalIds.length) {
+    goalWhere = {
+      id: goalIds,
+      ...goalWhere,
+    };
+  }
 
   // Get Goals.
   const rows = await Goal.findAll({
@@ -313,13 +405,10 @@ export async function getGoalsByActivityRecipient(
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
-      // [sequelize.fn('ARRAY_AGG', sequelize.col('"grant"."number"')), 'grantNumbers'],
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+      'isRttapa',
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
     ],
-    where: {
-      onApprovedAR: true,
-      [Op.and]: scopes,
-    },
+    where: goalWhere,
     include: [
       {
         model: Grant,
@@ -343,10 +432,11 @@ export async function getGoalsByActivityRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
-        where: {
-          onApprovedAR: true,
-        },
         include: [
+          {
+            model: Topic,
+            as: 'topics',
+          },
           {
             attributes: [
               'id',
@@ -356,10 +446,11 @@ export async function getGoalsByActivityRecipient(
               'calculatedStatus',
               'legacyId',
               'regionId',
+              'displayId',
             ],
             model: ActivityReport,
             as: 'activityReports',
-            required: true,
+            required: false,
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },
@@ -389,17 +480,49 @@ export async function getGoalsByActivityRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
-  const r = rows.reduce((previous, current) => {
+  let sorted = rows;
+
+  if (sortBy === 'goalStatus') {
+    // order determined by the statuses in the GOAL_STATUS constant
+    const ascOrder = Object.values(GOAL_STATUS).map((s) => s.toLowerCase());
+    const descOrder = Array.from(ascOrder).reverse();
+
+    sorted = rows.sort((a, b) => {
+      // if for some reason status is falsy, we sort last
+      if (!a.status || !b.status) return 1;
+
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+      // if we found some weird status that for some reason isn't in ascOrder, sort it last
+      if (!ascOrder.includes(aStatus) || !ascOrder.includes(bStatus)) return 1;
+
+      return sortDir.toLowerCase() === 'asc'
+        ? ascOrder.indexOf(aStatus) - ascOrder.indexOf(bStatus)
+        : descOrder.indexOf(aStatus) - descOrder.indexOf(bStatus);
+    });
+  }
+
+  const allGoalIds = [];
+
+  const r = sorted.reduce((previous, current) => {
     const existingGoal = previous.goalRows.find(
-      (g) => g.goalStatus === current.status && g.goalText.trim() === current.name.trim(),
+      (g) => g.goalStatus === current.status
+        && g.goalText.trim() === current.name.trim()
+        && g.isRttapa === current.isRttapa,
     );
+
+    allGoalIds.push(current.id);
 
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
-      existingGoal.objectives = reduceObjectives(current, existingGoal);
+      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
+      existingGoal.objectives = reduceObjectivesForRecipientRecord(
+        current,
+        existingGoal,
+        existingGoal.grantNumbers,
+      );
       existingGoal.objectiveCount = existingGoal.objectives.length;
-
       return {
         goalRows: previous.goalRows,
       };
@@ -417,9 +540,15 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       previousStatus: calculatePreviousStatus(current),
       objectives: [],
+      grantNumbers: [current.grant.number],
+      isRttapa: current.isRttapa,
     };
 
-    goalToAdd.objectives = reduceObjectives(current, goalToAdd);
+    goalToAdd.objectives = reduceObjectivesForRecipientRecord(
+      current,
+      goalToAdd,
+      [current.grant.number],
+    );
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
     return {
@@ -429,15 +558,25 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
+  const statuses = await goalStatusByGoalName({
+    goal: {
+      id: allGoalIds,
+    },
+  });
+
   if (limitNum) {
     return {
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+      statuses,
+      allGoalIds,
     };
   }
 
   return {
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
+    statuses,
+    allGoalIds,
   };
 }

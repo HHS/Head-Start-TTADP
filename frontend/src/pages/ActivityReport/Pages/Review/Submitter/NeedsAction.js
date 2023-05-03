@@ -9,6 +9,7 @@ import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import IncompletePages from '../IncompletePages';
 import UserContext from '../../../../../UserContext';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const NeedsAction = ({
   additionalNotes,
@@ -19,8 +20,8 @@ const NeedsAction = ({
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
-  const userHasOneRole = user && user.role && user.role.length === 1;
-  const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.role[0] : creatorRole || '');
+  const userHasOneRole = user && user.roles && user.roles.length === 1;
+  const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.roles[0] : creatorRole || '');
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
 
   const submit = async () => {
@@ -44,6 +45,7 @@ const NeedsAction = ({
   return (
     <>
       <h2>Review and re-submit report</h2>
+      <IndicatesRequiredField />
       <div className="margin-bottom-2">
         {
           !userHasOneRole
@@ -62,7 +64,7 @@ const NeedsAction = ({
                       onChange={creatorRoleChange}
                     >
                       <option name="default" value="" disabled hidden>- Select -</option>
-                      {user.role.map((role) => (
+                      {user.roles.map(({ fullName: role }) => (
                         <option key={role} value={role}>{role}</option>
                       ))}
                     </Dropdown>

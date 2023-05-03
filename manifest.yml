@@ -15,6 +15,7 @@ applications:
       # Soon to be removed in favor of TTA_SMART_HUB_URI
       REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
       SESSION_SECRET: ((SESSION_SECRET))
+      JWT_SECRET: ((JWT_SECRET))
       TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
       HSES_DATA_FILE_URL: ((HSES_DATA_FILE_URL))
       HSES_DATA_USERNAME: ((HSES_DATA_USERNAME))
@@ -25,17 +26,18 @@ applications:
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
       SMTP_SECURE: ((SMTP_SECURE))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
+      NODE_MODULES_CACHE: false
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
       - ttahub-document-upload-((env))
       - ttahub-elasticsearch-((env))
     processes:
-    - type: web
-      instances: ((web_instances))
-      command: yarn start:web
-      memory: ((web_memory))
-    - type: worker
-      instances: ((worker_instances))
-      command: yarn start:worker
-      memory: ((worker_memory))
+      - type: web
+        instances: ((web_instances))
+        command: yarn start:web
+        memory: ((web_memory))
+      - type: worker
+        instances: ((worker_instances))
+        command: yarn start:worker
+        memory: ((worker_memory))

@@ -22,7 +22,7 @@ const retrieveUserFromHSES = async (req) => {
 };
 
 const tokenMiddleware = async (req, res, next) => {
-  const userId = currentUserId(req, res) || await retrieveUserFromHSES(req);
+  const userId = await currentUserId(req, res) || await retrieveUserFromHSES(req);
 
   if (!userId) {
     res.status(401).json({

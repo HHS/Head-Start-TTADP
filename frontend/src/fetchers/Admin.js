@@ -1,6 +1,8 @@
 import join from 'url-join';
-import { get, put } from './index';
-import { DECIMAL_BASE } from '../Constants';
+import { DECIMAL_BASE } from '@ttahub/common';
+import {
+  get, put, post, destroy,
+} from './index';
 
 export const getUsers = async () => {
   const users = await get((join('/', 'api', 'admin', 'users')));
@@ -34,4 +36,39 @@ export const assignCDIGrant = async (grantId, regionId, recipientId) => {
   };
   const grant = await put(join('/', 'api', 'admin', 'grants', 'cdi', grantId.toString(DECIMAL_BASE)), body);
   return grant.json();
+};
+
+export const getRoles = async () => {
+  const roles = await get((join('/', 'api', 'admin', 'roles')));
+  return roles.json();
+};
+
+export const saveRoles = async (roles) => {
+  const updatedRoles = await put((join('/', 'api', 'admin', 'roles')), { roles });
+  return updatedRoles.json();
+};
+
+export const getSiteAlerts = async () => {
+  const alerts = await get((join('/', 'api', 'admin', 'alerts')));
+  return alerts.json();
+};
+
+export const saveSiteAlert = async (alert) => {
+  const updatedAlert = await put((join('/', 'api', 'admin', 'alerts', String(alert.id))), alert);
+  return updatedAlert.json();
+};
+
+export const deleteSiteAlert = async (alertId) => {
+  const success = await destroy((join('/', 'api', 'admin', 'alerts', String(alertId))));
+  return !!(success.ok);
+};
+
+export const createSiteAlert = async (alert) => {
+  const createdAlert = await post((join('/', 'api', 'admin', 'alerts')), alert);
+  return createdAlert.json();
+};
+
+export const setFeatureFlag = async (data) => {
+  const result = await post((join('/', 'api', 'users', 'feature-flags')), data);
+  return result;
 };

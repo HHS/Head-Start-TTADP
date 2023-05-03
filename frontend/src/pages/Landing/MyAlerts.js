@@ -50,7 +50,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
       ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
 
-    const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
+    const approversToolTipText = approvers ? approvers.map((a) => a.user.fullName) : [];
     const collaboratorNames = activityReportCollaborators
       ? activityReportCollaborators.map((collaborator) => (
         collaborator.fullName)) : [];
@@ -247,7 +247,7 @@ function MyAlerts(props) {
   return (
     <>
       {reports && reports.length === 0 && (
-        <Container className="landing" padding={0} loading={loading}>
+        <Container className="landing" paddingX={0} paddingY={0} loading={loading}>
           <div className="text-center padding-10">
             <div>
               <h2>You&apos;re all caught up!</h2>
@@ -263,7 +263,7 @@ function MyAlerts(props) {
       )}
 
       {reports && (reports.length > 0) && (
-        <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
+        <Container className="landing inline-size-auto maxw-full" paddingX={0} paddingY={0} loading={loading} loadingLabel="My activity report alerts loading">
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
@@ -280,6 +280,7 @@ function MyAlerts(props) {
             setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
+            exportIdPrefix="my-alerts-"
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>

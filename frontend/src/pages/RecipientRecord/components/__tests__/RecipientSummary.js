@@ -11,6 +11,7 @@ describe('RecipientSummary', () => {
   it('renders the recipient summary appropriately', async () => {
     const summary = {
       recipientId: '44',
+      uei: 'ABCDEFGHIJKL',
       recipientType: 'Frog Stuff',
       grants: [
         {
@@ -22,7 +23,7 @@ describe('RecipientSummary', () => {
     };
     renderRecipientSummary(summary);
 
-    expect(screen.getByText('44')).toBeInTheDocument();
+    expect(screen.getByText(summary.uei)).toBeInTheDocument();
     expect(screen.getByText(/frog stuff/i)).toBeInTheDocument();
   });
 

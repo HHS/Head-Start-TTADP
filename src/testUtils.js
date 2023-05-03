@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
-
-import { REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -14,7 +13,7 @@ import {
 } from './models';
 import { auditLogger } from './logger';
 
-import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
+import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusByGoalName';
 
 const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
 
@@ -78,10 +77,11 @@ async function createRegion(region) {
 function defaultGrant() {
   return {
     id: faker.datatype.number({ min: 10000, max: 100000 }),
-    number: `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}`,
+    number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
+    endDate: new Date(),
   };
 }
 
@@ -89,6 +89,7 @@ export async function createRecipient(recipient) {
   return Recipient.create({
     id: faker.datatype.number({ min: 10000, max: 100000 }),
     name: faker.company.companyName(),
+    uei: 'NNA5N2KHMGN2',
     ...recipient,
   });
 }

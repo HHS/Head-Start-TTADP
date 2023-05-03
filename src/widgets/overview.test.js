@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -6,7 +7,6 @@ import db, {
 } from '../models';
 import filtersToScopes from '../scopes';
 import overview from './overview';
-import { REPORT_STATUSES } from '../constants';
 import { formatQuery } from '../routes/widgets/utils';
 import { createReport, destroyReport } from '../testUtils';
 
@@ -83,8 +83,8 @@ let regionOneReportFour;
 describe('Dashboard overview widget', () => {
   beforeAll(async () => {
     let results = await User.create(mockUser);
-    results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
-    results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID });
+    results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
+    results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID, uei: 'NNA5N2KHMGM2' });
     results = await Region.create({ name: 'office 1717', id: REGION_ONE_ID });
     results = await Region.create({ name: 'office 1818', id: REGION_TWO_ID });
     results = await Promise.all([
@@ -163,7 +163,7 @@ describe('Dashboard overview widget', () => {
 
   it('retrieves data', async () => {
     const query = { 'region.in': [REGION_ONE_ID], 'startDate.win': '2021/01/01-2021/01/01' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('4');
@@ -178,7 +178,7 @@ describe('Dashboard overview widget', () => {
 
   it('accounts for different date ranges', async () => {
     const query = { 'region.in': [REGION_ONE_ID], 'startDate.win': '2021/06/01-2021/06/02' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('1');
@@ -193,7 +193,7 @@ describe('Dashboard overview widget', () => {
 
   it('accounts for different regions', async () => {
     const query = { 'region.in': [REGION_TWO_ID] };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('1');
