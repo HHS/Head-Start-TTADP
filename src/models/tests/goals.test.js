@@ -209,13 +209,13 @@ describe('Goals', () => {
     expect(instance.lastClosedAt).toEqual(undefined);
     expect(instance.lastNotStartedAt).toEqual(instance.firstNotStartedAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstNotStartedAt)))
       .toBeLessThan((Date.parse(instance.lastNotStartedAt)));
 
-    await sleep(1000);
+    sleep(1000);
 
     instance.status = GOAL_STATUS.IN_PROGRESS;
     options = { fields: [] };
@@ -226,13 +226,13 @@ describe('Goals', () => {
       .toBeGreaterThan((Date.parse(instance.lastNotStartedAt)));
     expect(instance.lastInProgressAt).toEqual(instance.firstInProgressAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastInProgressAt)))
       .toBeGreaterThan((Date.parse(instance.firstInProgressAt)));
 
-    await sleep(1000);
+    sleep(1000);
 
     instance.status = GOAL_STATUS.SUSPENDED;
     options = { fields: [] };
@@ -243,13 +243,13 @@ describe('Goals', () => {
       .toBeGreaterThan((Date.parse(instance.lastInProgressAt)));
     expect(instance.lastCeasedSuspendedAt).toEqual(instance.firstCeasedSuspendedAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastCeasedSuspendedAt)))
       .toBeGreaterThan((Date.parse(instance.firstCeasedSuspendedAt)));
 
-    await sleep(1000);
+    sleep(1000);
 
     instance.status = GOAL_STATUS.CLOSED;
     options = { fields: [] };
@@ -260,7 +260,7 @@ describe('Goals', () => {
       .toBeGreaterThan((Date.parse(instance.lastCeasedSuspendedAt)));
     expect(instance.lastClosedAt).toEqual(instance.firstClosedAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastClosedAt)))
