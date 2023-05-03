@@ -30,7 +30,9 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  addGetResourceMetadataToQueue(instance.id, instance.url);
+  if (!instance.title) {
+    addGetResourceMetadataToQueue(instance.id, instance.url);
+  }
 };
 
 export {
