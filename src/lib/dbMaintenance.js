@@ -77,18 +77,22 @@ const dbMaintenance = async () => {
   const promises = [];
   try {
     const descriptor = await sequelize.query(
-      `SELECT"ZAFDescriptorToID"(NULLIF(('${auditDescriptor}')::TEXT, '')) "descriptorId";`,
+      `SELECT "ZAFDescriptorToID"(NULLIF(('${auditDescriptor}')::TEXT, '')) "descriptorId";`,
+      { type: QueryTypes.SELECT },
     );
 
     descriptorId = descriptor[0][0].descriptorId;
 
     const tables = await sequelize.query(
-      `SELECT schemaname, relname
+      `SELECT
+        schemaname,
+        relname
       FROM pg_stat_user_tables
       order by relname;`,
+      { type: QueryTypes.SELECT },
     );
-    promises.push(await vacuumTables(tables[0]));
-    promises.push(await reindexTables(tables[0]));
+    promises.push(vacuumTables(tables));
+    promises.push(reindexTables(tables));
   } catch (err) {
     auditLogger.error(JSON.stringify(err));
     throw err;

@@ -10,6 +10,9 @@ import {
 import {
   DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
 } from '../constants';
+
+import { dbMaintenance } from './dbMaintenance';
+
 import { logger, auditLogger } from '../logger';
 
 // Set timing parameters.
@@ -21,6 +24,9 @@ const dailySched = '0 16 * * 1-5';
 const weeklySched = '0 16 * * 5';
 // Run at 4 pm on the last of the month
 const monthlySched = '0 16 28-31 * *';
+
+// Run at 1 am ET Sun
+const dbMatSchedule = '0 1 * * 7';
 const timezone = 'America/New_York';
 
 const runJob = () => {
@@ -95,6 +101,16 @@ const runMonthlyEmailJob = () => {
   return true;
 };
 
+const runDBMatinance = () => {
+  try {
+    return dbMaintenance();
+  } catch (error) {
+    auditLogger.error(`Error running db maintenance: ${error}`);
+    logger.error(error.stack);
+  }
+  return false;
+};
+
 /**
  * Runs the application's cron jobs
  */
@@ -112,5 +128,7 @@ export default function runCronJobs() {
     weeklyJob.start();
     const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
     monthlyJob.start();
+    const dbMatinanceJob = new CronJob(dbMatSchedule, () => runDBMatinance(), null, true, timezone);
+    dbMatinanceJob.start();
   }
 }
