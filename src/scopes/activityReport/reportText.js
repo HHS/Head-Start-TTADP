@@ -6,9 +6,9 @@ const nextStepsPosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "NextSteps" "NextSteps"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "NextSteps"
   ON "NextSteps"."activityReportId" = "ActivityReports"."id"
   WHERE "NextSteps".note${a}`;
 };
@@ -18,9 +18,9 @@ const argsPosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "ActivityReportGoals" "ActivityReportGoals"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportGoals"
   ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
   WHERE "ActivityReportGoals".name${a}`;
 };
@@ -30,9 +30,9 @@ const objectiveTitlePosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives"
   ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
   WHERE "ActivityReportObjectives".title${a}`;
 };
@@ -42,9 +42,9 @@ const objectiveTtaProvidedPosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives"
   ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
   WHERE "ActivityReportObjectives"."ttaProvided"${a}`;
 };
@@ -54,11 +54,11 @@ const activityReportResourcePosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "ActivityReportResources" "ActivityReportResources"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportResources"
   ON "ActivityReportResources"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "Resources" "Resources"
+  LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportResources"."resourceId"
   WHERE "Resources"."url"${a}`;
 };
@@ -68,13 +68,13 @@ const activityReportGoalResourcePosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "ActivityReportGoals" "ActivityReportGoals"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportGoals"
   ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "ActivityReportGoalResources" "ActivityReportGoalResources"
+  LEFT JOIN "ActivityReportGoalResources"
   ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
-  LEFT JOIN "Resources" "Resources"
+  LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
   WHERE "Resources"."url"${a}`;
 };
@@ -84,13 +84,13 @@ const activityReportObjectiveResourcePosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives"
   ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "ActivityReportObjectiveResources" "ActivityReportObjectiveResources"
+  LEFT JOIN "ActivityReportObjectiveResources"
   ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
-  LEFT JOIN "Resources" "Resources"
+  LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
   WHERE "Resources"."url"${a}`;
 };
@@ -100,13 +100,13 @@ const nextStepsResourcePosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
-  LEFT JOIN "NextSteps" "NextSteps"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "NextSteps"
   ON "NextSteps"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "NextStepResources" "NextStepResources"
+  LEFT JOIN "NextStepResources"
   ON "NextSteps"."id" = "NextStepResources"."nextStepId"
-  LEFT JOIN "Resources" "Resources"
+  LEFT JOIN "Resources"
   ON "Resources"."id" = "NextStepResources"."resourceId"
   WHERE "Resources"."url"${a}`;
 };
@@ -116,8 +116,8 @@ const activityReportContextPosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id" as "activityReportId"
-  FROM "ActivityReports" "ActivityReports"
+    "ActivityReports"."id"
+  FROM "ActivityReports"
   WHERE "ActivityReports"."context"${a}`;
 };
 
@@ -127,7 +127,7 @@ const additionalNotesPosNeg = (pos = true) => {
   return `
   SELECT DISTINCT
     "ActivityReports"."id"
-  FROM "ActivityReports" "ActivityReports"
+  FROM "ActivityReports"
   WHERE "ActivityReports"."additionalNotes"${a}`;
 };
 
