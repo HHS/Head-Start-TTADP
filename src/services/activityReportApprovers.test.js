@@ -104,7 +104,7 @@ describe('activityReportApprovers services', () => {
             userId: secondMockManager.id,
           });
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
-          expect(approver.User).toBeDefined();
+          expect(approver.user).toBeDefined();
         });
         const [updatedReport] = await activityReportAndRecipientsById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();

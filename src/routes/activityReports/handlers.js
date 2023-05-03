@@ -643,6 +643,7 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {

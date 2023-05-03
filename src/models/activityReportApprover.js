@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
   class ActivityReportApprover extends Model {
     static associate(models) {
       ActivityReportApprover.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
-      ActivityReportApprover.belongsTo(models.User, { foreignKey: 'userId' });
+      ActivityReportApprover.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
   ActivityReportApprover.init({

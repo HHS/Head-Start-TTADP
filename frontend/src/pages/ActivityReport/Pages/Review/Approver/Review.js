@@ -33,9 +33,9 @@ const Review = ({
 
   const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
   const otherManagerNotes = approverStatusList
-    ? approverStatusList.filter((a) => a.User.id !== user.id) : null;
+    ? approverStatusList.filter((a) => a.user.id !== user.id) : null;
   const thisApprovingManager = approverStatusList
-    ? approverStatusList.filter((a) => a.User.id === user.id) : null;
+    ? approverStatusList.filter((a) => a.user.id === user.id) : null;
   const hasBeenReviewed = thisApprovingManager
     && thisApprovingManager.length > 0
     && thisApprovingManager[0].status !== null;
