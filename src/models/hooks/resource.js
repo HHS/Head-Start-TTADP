@@ -1,9 +1,10 @@
 import { VALID_URL_REGEX } from '../../lib/urlUtils';
+import { addGetResourceMetadataToQueue } from '../../services/resourceQueue';
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (instance.domain === undefined
-    || instance.domain === null) {
+  if (instance.url && (instance.domain === undefined
+    || instance.domain === null)) {
     const [{ groups: { host, ip } }] = instance.url.matchAll(VALID_URL_REGEX);
     const domain = host || ip;
     if (domain) {
@@ -26,6 +27,9 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
+  if (!instance.title) {
+    addGetResourceMetadataToQueue(instance.id, instance.url);
+  }
 };
 
 export {

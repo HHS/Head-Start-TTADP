@@ -5,6 +5,8 @@ import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
+import { getResourceMetaDataJob } from './lib/resource';
+import { resourceQueue } from './services/resourceQueue';
 import { awsElasticsearchQueue } from './lib/awsElasticSearch/queueManager';
 import processFile from './workers/files';
 import {
@@ -23,7 +25,7 @@ import {
   updateIndexDocument,
   deleteIndexDocument,
 } from './lib/awsElasticSearch';
-import { EMAIL_ACTIONS, AWS_ELASTICSEARCH_ACTIONS } from './constants';
+import { EMAIL_ACTIONS, AWS_ELASTICSEARCH_ACTIONS, RESOURCE_ACTIONS } from './constants';
 import logEmailNotification, { logDigestEmailNotification } from './lib/mailer/logNotifications';
 
 // Number of workers to spawn
@@ -65,6 +67,21 @@ async function start() {
   awsElasticsearchQueue.process(
     AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
     deleteIndexDocument,
+  );
+
+  // Resource Queue.
+  resourceQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
+  resourceQueue.on('completed', (job, result) => {
+    if (result.status === 200 || result.status === 201 || result.status === 202) {
+      logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    } else {
+      auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    }
+  });
+  // Get resource metadata.
+  resourceQueue.process(
+    RESOURCE_ACTIONS.GET_METADATA,
+    getResourceMetaDataJob,
   );
 
   // Notifications
