@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import join from 'url-join';
 import { get } from './index';
 
@@ -10,6 +9,13 @@ const getNotifications = async () => {
   return response.text();
 };
 
+const getSingleFeedItemByTag = async (tag) => {
+  const url = join(feedUrl, 'item', `?tag=${tag}`);
+  const response = await get(url);
+  return response.text();
+};
+
 export {
   getNotifications,
+  getSingleFeedItemByTag,
 };
