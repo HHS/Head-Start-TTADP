@@ -277,7 +277,6 @@ function processAssociations(associations, tables, schemas) {
   if (associationsByType['one-to-one'].length > 0) {
     uml += '\n';
     for (let i = 0; i < associationsByType['one-to-one'].length; i++) { //eslint-disable-line
-      console.log(associationIssuesByType['one-to-one'][i]);
       if (associationIssuesByType['one-to-one'][i]?.length > 0) {
         uml += `${associationIssuesByType['one-to-one'][i].join('\n')}\n`;
       }
