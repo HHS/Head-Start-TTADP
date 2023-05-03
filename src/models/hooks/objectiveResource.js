@@ -160,7 +160,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToTemplate(sequelize, instance, options);
-  cleanupOrphanResources(sequelize, instance.resourceId);
+  await cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
 export {

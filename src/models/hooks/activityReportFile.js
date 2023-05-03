@@ -19,7 +19,7 @@ const beforeDestroy = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToFile(sequelize, instance, options);
-  cleanupOrphanFiles(sequelize, instance.fileId);
+  await cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
 export {
