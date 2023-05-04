@@ -34,7 +34,7 @@ export default async function logEmailNotification(job, success, result) {
         break;
       case EMAIL_ACTIONS.SUBMITTED:
         newApprover = data.newApprover;
-        emailTo = newApprover ? [newApprover.User.email] : [''];
+        emailTo = newApprover ? [newApprover.user.email] : [''];
         template = path.resolve(emailTemplatePath, 'manager_approval_requested', 'subject.pug');
         break;
       case EMAIL_ACTIONS.NEEDS_ACTION:

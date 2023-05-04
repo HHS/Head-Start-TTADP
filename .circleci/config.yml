@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-1020/resurrect-shared-packages"
+    default: "TTAHUB-224/newrelic-config-update"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "mb/TTAHUB-1530/goal-template"
