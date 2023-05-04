@@ -97,6 +97,10 @@ export const AWS_ELASTICSEARCH_ACTIONS = {
   DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
 };
 
+export const S3_ACTIONS = {
+  DELETE_FILE: 'deleteFile',
+};
+
 export const EMAIL_DIGEST_FREQ = {
   DAILY: 'today',
   WEEKLY: 'this week',

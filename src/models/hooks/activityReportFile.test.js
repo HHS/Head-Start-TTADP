@@ -9,11 +9,15 @@ import {
   ActivityReport,
 } from '..';
 import { propagateDestroyToFile } from './genericFile';
-
+import { cleanupOrphanFiles } from '../helpers/orphanCleanupHelper';
 import { draftObject, mockApprovers, approverUserIds } from './testHelpers';
 
 jest.mock('./genericFile', () => ({
   propagateDestroyToFile: jest.fn(),
+}));
+
+jest.mock('../helpers/orphanCleanupHelper', () => ({
+  cleanupOrphanFiles: jest.fn(),
 }));
 
 describe('activityReportFile hooks', () => {
@@ -74,14 +78,15 @@ describe('activityReportFile hooks', () => {
   });
 
   describe('afterDestroy', () => {
-    it('should call propagateDestroyToFile', async () => {
+    it('should call hooks', async () => {
       const mockSequelize = {};
-      const mockInstance = {};
+      const mockInstance = { fileId: 1 };
       const mockOptions = {};
 
       await afterDestroy(mockSequelize, mockInstance, mockOptions);
 
       expect(propagateDestroyToFile).toHaveBeenCalledWith(mockSequelize, mockInstance, mockOptions);
+      expect(cleanupOrphanFiles).toHaveBeenCalledWith(mockSequelize, 1);
     });
   });
 });
