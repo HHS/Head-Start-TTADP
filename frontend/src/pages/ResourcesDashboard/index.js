@@ -16,7 +16,6 @@ import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHel
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
-import ResourceUse from '../../widgets/ResourceUse';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
@@ -190,11 +189,6 @@ export default function ResourcesDashboard() {
           ]}
           showTooltips
         />
-        <ResourceUse
-          data={resourcesData.resourcesUse}
-          loading={isLoading}
-        />
-
         <ResourcesAssociatedWithTopics
           data={resourcesData.topicUse}
           loading={isLoading}

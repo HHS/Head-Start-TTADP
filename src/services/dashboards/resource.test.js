@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-commented-out-tests */
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -18,7 +19,7 @@ import {
   resourceList,
   resourceDomainList,
   resourcesDashboardOverview,
-  resourceUse,
+  // resourceUse,
   resourceTopicUse,
   resourceDashboard,
 } from './resource';
@@ -137,7 +138,6 @@ const regionOneDraftReport = {
   topics: ['Equity', 'ERSEA'],
 };
 
-let grant;
 let goal;
 let objective;
 let activityReportObjectiveOne;
@@ -148,7 +148,7 @@ describe('Resources dashboard', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser, individualHooks: true });
     await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
-    [grant] = await Grant.findOrCreate({
+    await Grant.findOrCreate({
       where: mockGrant,
       validate: true,
       individualHooks: true,
@@ -420,42 +420,43 @@ describe('Resources dashboard', () => {
     });
   });
 
-  it('resourceUse', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const data = await resourceUse(scopes);
-    expect(data).toStrictEqual({
-      headers: ['Jan-21'],
-      resources: [
-        {
-          heading: 'https://eclkc.ohs.acf.hhs.gov/test',
-          isUrl: true,
-          title: null,
-          data: [
-            { title: 'Jan-21', value: '2' },
-            { title: 'Total', value: '2' },
-          ],
-        },
-        {
-          heading: 'https://non.test1.gov/a/b/c',
-          isUrl: true,
-          title: null,
-          data: [
-            { title: 'Jan-21', value: '2' },
-            { title: 'Total', value: '2' },
-          ],
-        },
-        {
-          heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
-          isUrl: true,
-          title: null,
-          data: [
-            { title: 'Jan-21', value: '1' },
-            { title: 'Total', value: '1' },
-          ],
-        },
-      ],
-    });
-  });
+  // it('resourceUse', async () => {
+  // eslint-disable-next-line max-len
+  //   const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+  //   const data = await resourceUse(scopes);
+  //   expect(data).toStrictEqual({
+  //     headers: ['Jan-21'],
+  //     resources: [
+  //       {
+  //         heading: 'https://eclkc.ohs.acf.hhs.gov/test',
+  //         isUrl: true,
+  //         title: null,
+  //         data: [
+  //           { title: 'Jan-21', value: '2' },
+  //           { title: 'Total', value: '2' },
+  //         ],
+  //       },
+  //       {
+  //         heading: 'https://non.test1.gov/a/b/c',
+  //         isUrl: true,
+  //         title: null,
+  //         data: [
+  //           { title: 'Jan-21', value: '2' },
+  //           { title: 'Total', value: '2' },
+  //         ],
+  //       },
+  //       {
+  //         heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
+  //         isUrl: true,
+  //         title: null,
+  //         data: [
+  //           { title: 'Jan-21', value: '1' },
+  //           { title: 'Total', value: '1' },
+  //         ],
+  //       },
+  //     ],
+  //   });
+  // });
 
   it('resourceTopicUse', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
@@ -484,38 +485,38 @@ describe('Resources dashboard', () => {
         recipient: { num: '1', numResources: '1', percentResources: '100.00%' },
         participant: { numParticipants: '44' },
       },
-      use: {
-        headers: ['Jan-21'],
-        resources: [
-          {
-            heading: 'https://eclkc.ohs.acf.hhs.gov/test',
-            isUrl: true,
-            title: null,
-            data: [
-              { title: 'Jan-21', value: '2' },
-              { title: 'Total', value: '2' },
-            ],
-          },
-          {
-            heading: 'https://non.test1.gov/a/b/c',
-            isUrl: true,
-            title: null,
-            data: [
-              { title: 'Jan-21', value: '2' },
-              { title: 'Total', value: '2' },
-            ],
-          },
-          {
-            heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
-            isUrl: true,
-            title: null,
-            data: [
-              { title: 'Jan-21', value: '1' },
-              { title: 'Total', value: '1' },
-            ],
-          },
-        ],
-      },
+      // use: {
+      //   headers: ['Jan-21'],
+      //   resources: [
+      //     {
+      //       heading: 'https://eclkc.ohs.acf.hhs.gov/test',
+      //       isUrl: true,
+      //       title: null,
+      //       data: [
+      //         { title: 'Jan-21', value: '2' },
+      //         { title: 'Total', value: '2' },
+      //       ],
+      //     },
+      //     {
+      //       heading: 'https://non.test1.gov/a/b/c',
+      //       isUrl: true,
+      //       title: null,
+      //       data: [
+      //         { title: 'Jan-21', value: '2' },
+      //         { title: 'Total', value: '2' },
+      //       ],
+      //     },
+      //     {
+      //       heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
+      //       isUrl: true,
+      //       title: null,
+      //       data: [
+      //         { title: 'Jan-21', value: '1' },
+      //         { title: 'Total', value: '1' },
+      //       ],
+      //     },
+      //   ],
+      // },
       topicUse: {
         headers: ['Jan-21'],
         topics: [

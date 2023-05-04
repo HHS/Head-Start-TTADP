@@ -1402,58 +1402,58 @@ const spanDates = (min, max) => {
     .map((monthYear) => ({ title: monthYear, cnt: 0 }));
 };
 
-const generateResourceUse = (allData) => {
-  const { resources } = allData;
-  const minMax = getMinMax(resources);
-  const dateList = spanDates(minMax.min, minMax.max);
+// const generateResourceUse = (allData) => {
+//   const { resources } = allData;
+//   const minMax = getMinMax(resources);
+//   const dateList = spanDates(minMax.min, minMax.max);
 
-  resources.sort((a, b) => {
-    const aTotal = a.startDates.length;
-    const bTotal = b.startDates.length;
-    if (aTotal > bTotal) return -1;
-    if (aTotal < bTotal) return 1;
-    if (a.url < b.url) return -1;
-    if (a.url > b.url) return 1;
-    return 0;
-  });
+//   resources.sort((a, b) => {
+//     const aTotal = a.startDates.length;
+//     const bTotal = b.startDates.length;
+//     if (aTotal > bTotal) return -1;
+//     if (aTotal < bTotal) return 1;
+//     if (a.url < b.url) return -1;
+//     if (a.url > b.url) return 1;
+//     return 0;
+//   });
 
-  const clusteredResources = resources
-    .slice(0, 10) // limit to the top 10
-    .map((resource) => ({
-      heading: resource.url,
-      title: resource.title,
-      isUrl: true,
-      data: [
-        ...resource.startDates.reduce((data, startDate) => {
-          const total = data.find((sd) => sd.title === 'Total');
-          total.cnt += 1;
+//   const clusteredResources = resources
+//     .slice(0, 10) // limit to the top 10
+//     .map((resource) => ({
+//       heading: resource.url,
+//       title: resource.title,
+//       isUrl: true,
+//       data: [
+//         ...resource.startDates.reduce((data, startDate) => {
+//           const total = data.find((sd) => sd.title === 'Total');
+//           total.cnt += 1;
 
-          const currentMonthYear = getMonthYear(startDate);
-          const exists = data.find((sd) => sd.title === currentMonthYear);
-          if (exists) {
-            exists.cnt += 1;
-            return data;
-          }
-          return [
-            ...data,
-            {
-              title: currentMonthYear,
-              cnt: 1,
-            },
-          ];
-        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
-      ]
-        .map(({ title, cnt }) => ({
-          title,
-          value: formatNumber(cnt),
-        })),
-    }));
+//           const currentMonthYear = getMonthYear(startDate);
+//           const exists = data.find((sd) => sd.title === currentMonthYear);
+//           if (exists) {
+//             exists.cnt += 1;
+//             return data;
+//           }
+//           return [
+//             ...data,
+//             {
+//               title: currentMonthYear,
+//               cnt: 1,
+//             },
+//           ];
+//         }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
+//       ]
+//         .map(({ title, cnt }) => ({
+//           title,
+//           value: formatNumber(cnt),
+//         })),
+//     }));
 
-  return {
-    headers: [...dateList.map(({ title }) => title)],
-    resources: clusteredResources,
-  };
-};
+//   return {
+//     headers: [...dateList.map(({ title }) => title)],
+//     resources: clusteredResources,
+//   };
+// };
 /*
 WidgetID: resourceUse
 Expected JSON:
@@ -1568,10 +1568,10 @@ export async function resourcesDashboardOverview(scopes) {
   return generateResourcesDashboardOverview(data);
 }
 
-export async function resourceUse(scopes) {
-  const data = await resourceData(scopes, false, true);
-  return generateResourceUse(data);
-}
+// export async function resourceUse(scopes) {
+//   const data = await resourceData(scopes, false, true);
+//   return generateResourceUse(data);
+// }
 
 export async function resourceTopicUse(scopes) {
   const data = await resourceData(scopes, true, false);
@@ -1582,7 +1582,7 @@ export async function resourceDashboardPhase1(scopes) {
   const data = await resourceData(scopes);
   return {
     overview: generateResourcesDashboardOverview(data),
-    use: generateResourceUse(data),
+    // use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
   };
 }
@@ -1591,7 +1591,7 @@ export async function resourceDashboard(scopes) {
   const data = await resourceData(scopes);
   return {
     overview: generateResourcesDashboardOverview(data),
-    use: generateResourceUse(data),
+    // use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
     domainList: generateResourceDomainList(data, true),
   };

@@ -292,11 +292,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Resource Use (initial).
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    // // Resource Use (initial).
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    // expect(screen.getByText(/177/i)).toBeInTheDocument();
+    // expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -343,13 +343,13 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/819 of 1,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/665/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Reason Use.
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
+    // // Resource Use.
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
 
     // Resources Region 1.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -390,11 +390,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Resource Use (initial).
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    // // Resource Use (initial).
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    // expect(screen.getByText(/177/i)).toBeInTheDocument();
+    // expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -436,14 +436,14 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/565/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Resource Use.
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    // // Resource Use.
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
+    // expect(screen.getByText(/19/i)).toBeInTheDocument();
 
     // Resources Region 2.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -478,11 +478,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Resource Use (initial).
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    // // Resource Use (initial).
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    // expect(screen.getByText(/177/i)).toBeInTheDocument();
+    // expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -510,14 +510,14 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/565/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Resource Use.
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    // // Resource Use.
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
+    // expect(screen.getByText(/19/i)).toBeInTheDocument();
 
     // Resources Region 2.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -552,11 +552,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Resource Use (initial).
-    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
-    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    // // Resource Use (initial).
+    // expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    // expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    // expect(screen.getByText(/177/i)).toBeInTheDocument();
+    // expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
