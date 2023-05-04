@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 import './HorizontalTableWidget.scss';
 
+/*
 const trimLongURLs = (url) => {
   let newUrl = url;
   if (newUrl.length >= 35) {
@@ -12,11 +13,11 @@ const trimLongURLs = (url) => {
   }
   return newUrl;
 };
+*/
 
 export default function HorizontalTableWidget(
   {
     headers,
-    id,
     data,
     firstHeading,
     enableSorting,
@@ -60,7 +61,7 @@ export default function HorizontalTableWidget(
   };
 
   return (
-    <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0" id={id}>
+    <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
@@ -98,7 +99,7 @@ export default function HorizontalTableWidget(
                     r.isUrl
                       ? (
                         <a href={r.heading} target="_blank" rel="noreferrer" title={r.heading}>
-                          {trimLongURLs(r.heading)}
+                          {r.heading}
                         </a>
                       )
                       : r.heading
@@ -138,11 +139,9 @@ HorizontalTableWidget.propTypes = {
   }),
   requestSort: PropTypes.func,
   enableSorting: PropTypes.bool,
-  id: PropTypes.string,
 };
 
 HorizontalTableWidget.defaultProps = {
-  id: '',
   data: [],
   lastHeading: 'Total',
   sortConfig: {

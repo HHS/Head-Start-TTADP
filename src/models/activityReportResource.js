@@ -10,6 +10,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   ActivityReportResource.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     activityReportId: {
       type: DataTypes.INTEGER,
     },

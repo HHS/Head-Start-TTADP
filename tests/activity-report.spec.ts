@@ -176,7 +176,6 @@ test.describe('Activity Report', () => {
     await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
-    await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
@@ -225,7 +224,6 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
-    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
@@ -426,7 +424,6 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
-    await expect(page.getByText('RTTAPA', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
     await expect(page.getByText(g1TopicsTxt || 'Behavioral / Mental Health / Trauma')).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
@@ -455,7 +452,6 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
-    await expect(page.getByText('RTTAPA', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
     await expect(page.getByText('Behavioral / Mental Health / Trauma')).toBeVisible();
     await expect(page.getByText('CLASS: Classroom Organization')).toBeVisible();
@@ -498,9 +494,6 @@ test.describe('Activity Report', () => {
 
     // enter goal name
     await page.getByTestId('textarea').fill('This is a goal for multiple grants');
-
-    // it's an rttapa goal
-    await page.getByText('RTTAPA', { exact: true }).click();
   
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
@@ -522,7 +515,7 @@ test.describe('Activity Report', () => {
 
     // confirm goal is in RTR
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Goal G-(\d), G-(\d)RTTAPA/i }).last()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Goal G-(\d), G-(\d)/i }).last()).toBeVisible();
 
     // navigate to the AR page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -707,7 +700,6 @@ test.describe('Activity Report', () => {
     await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
-    await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective

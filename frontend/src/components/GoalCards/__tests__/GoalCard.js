@@ -29,7 +29,6 @@ describe('GoalCard', () => {
       },
     ],
     previousStatus: null,
-    isRttapa: 'No',
   };
 
   const DEFAULT_USER = {

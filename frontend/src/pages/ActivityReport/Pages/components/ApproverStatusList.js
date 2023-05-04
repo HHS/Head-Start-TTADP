@@ -29,11 +29,11 @@ const ApproverStatusList = ({
   approverStatus,
 }) => {
   const displayApproverStatusList = () => approverStatus.map((s) => (
-    <li className="margin-bottom-205" key={s.User.fullName}>
+    <li className="margin-bottom-205" key={s.user.fullName}>
       {getStatusIcon(s.status)}
       <b>{getDisplayStatus(s.status)}</b>
       {s.status === 'approved' ? ' by ' : ' from '}
-      {s.User.fullName}
+      {s.user.fullName}
     </li>
   ));
 
