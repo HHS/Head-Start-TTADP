@@ -56,7 +56,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
     'createdVia',
-    'isRttapa',
+    'goalTemplateId',
     [
       'onAR',
       'onAnyReport',
@@ -202,7 +202,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       model: GoalTemplateFieldPrompt,
       as: 'prompts',
       attributes: [
-        'id',
+        ['id', 'promptId'],
         'ordinal',
         'title',
         'prompt',
@@ -514,7 +514,10 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
   return newPrompts
     .reduce((previousPrompts, currentPrompt) => {
-      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.id);
+      const promptId = currentPrompt.promptId
+        ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
+
+      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
       if (existingPrompt) {
         if (!forReport) {
           existingPrompt.response = uniq(
@@ -541,12 +544,12 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
       }
 
       const newPrompt = {
-        promptId: currentPrompt.promptId,
+        promptId,
         ordinal: currentPrompt.ordinal,
         title: currentPrompt.title,
         prompt: currentPrompt.prompt,
         hint: currentPrompt.hint,
-        type: currentPrompt.type,
+        fieldType: currentPrompt.fieldType,
         options: currentPrompt.options,
         validations: currentPrompt.validations,
       };
@@ -583,7 +586,6 @@ function reduceGoals(goals, forReport = false) {
   const where = (g, currentValue) => (forReport
     ? g.name === currentValue.dataValues.name
       && g.status === currentValue.dataValues.status
-      && g.isRttapa === currentValue.activityReportGoals[0].isRttapa
     : g.name === currentValue.dataValues.name
       && g.status === currentValue.dataValues.status);
 
@@ -641,11 +643,6 @@ function reduceGoals(goals, forReport = false) {
         isNew: false,
         endDate: currentValue.endDate,
       };
-
-      if (forReport) {
-        goal.isRttapa = currentValue.activityReportGoals[0].isRttapa;
-        goal.initialRttapa = currentValue.isRttapa;
-      }
 
       return [...previousValues, goal];
     } catch (err) {
@@ -1097,20 +1094,15 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       createdVia,
-      isRttapa,
       endDate,
       status,
+      prompts,
+      isCurated,
       ...options
     } = goalData;
 
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
     recipient = recipientId;
-
-    let isRttapaValue = null;
-
-    if (isRttapa === 'Yes' || isRttapa === 'No') {
-      isRttapaValue = isRttapa;
-    }
     let newGoal;
     // we first need to see if the goal exists given what ids we have
     if (ids && ids.length) {
@@ -1144,12 +1136,15 @@ export async function createOrUpdateGoals(goals) {
       }
     }
 
+    if (isCurated) {
+      await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
+    }
+
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
       await newGoal.update(
         {
           ...options,
-          isRttapa: isRttapaValue,
           status,
           // if the createdVia column is populated, keep what's there
           // otherwise, if the goal is imported, we say so
@@ -1162,7 +1157,7 @@ export async function createOrUpdateGoals(goals) {
     // except for the end date, which is always editable
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: endDate || null, isRttapa: isRttapaValue },
+        { endDate: endDate || null },
         { individualHooks: true },
       );
     }
@@ -1333,10 +1328,9 @@ export async function goalsForGrants(grantIds) {
       'status',
       'onApprovedAR',
       'endDate',
-      'isRttapa',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."isRttapa"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
     where: {
       '$grant.id$': ids,
       status: {
@@ -1866,7 +1860,6 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR,
         createdVia,
         endDate: discardedEndDate,
-        isRttapa,
         prompts,
         ...fields
       } = goal;
@@ -1906,7 +1899,6 @@ export async function saveGoalsForReport(goals, report) {
         await cacheGoalMetadata(
           newGoal,
           report.id,
-          isRttapa || null,
           isActivelyBeingEditing,
           prompts || null,
         );
@@ -1928,7 +1920,6 @@ export async function saveGoalsForReport(goals, report) {
         endDate: discardedEndDate, // get this outta here
         createdVia,
         goalIds: discardedGoalIds,
-        isRttapa,
         prompts,
         ...fields
       } = goal;
@@ -1952,7 +1943,6 @@ export async function saveGoalsForReport(goals, report) {
         await cacheGoalMetadata(
           existingGoal,
           report.id,
-          isRttapa,
           isActivelyBeingEditing,
           prompts || null,
         );
@@ -1992,7 +1982,6 @@ export async function saveGoalsForReport(goals, report) {
         await cacheGoalMetadata(
           newGoal,
           report.id,
-          isRttapa,
           isActivelyBeingEditing,
           prompts || null,
         );
@@ -2129,7 +2118,7 @@ export async function getGoalsForReport(reportId) {
               'prompt', gtfp.prompt,
               'hint', gtfp.hint,
               'caution', gtfp.caution,
-              'type', gtfp."fieldType",
+              'fieldType', gtfp."fieldType",
               'options', gtfp.options,
               'validations', gtfp.validations,
               'response', gfr.response,

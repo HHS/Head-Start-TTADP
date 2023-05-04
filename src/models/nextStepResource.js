@@ -10,6 +10,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   NextStepResource.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     nextStepId: {
       type: DataTypes.INTEGER,
     },

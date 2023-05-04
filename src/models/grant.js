@@ -15,7 +15,7 @@ const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
 export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
-      Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
+      Grant.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
       Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants' });
@@ -27,6 +27,14 @@ export default (sequelize, DataTypes) => {
       });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
+      Grant.belongsToMany(models.ActivityReport, {
+        through: models.ActivityRecipient,
+        foreignKey: 'grantId',
+        otherKey: 'activityReportId',
+        as: 'activityReports',
+      });
+      Grant.hasMany(models.Grant, { foreignKey: 'oldGrantId', as: 'oldGrants' });
+      Grant.belongsTo(models.Grant, { foreignKey: 'oldGrantId', as: 'grant' });
 
       Grant.addScope('defaultScope', {
         include: [
