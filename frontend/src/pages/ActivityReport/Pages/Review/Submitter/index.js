@@ -35,7 +35,7 @@ const Submitter = ({
   const [approverStatusList, updateApproverStatusList] = useState([]);
 
   useEffect(() => {
-    const updatedApprovers = approvers ? approvers.filter((a) => a.User) : [];
+    const updatedApprovers = approvers ? approvers.filter((a) => a.user) : [];
     if (updatedApprovers) {
       updateApproverStatusList(updatedApprovers);
     }
@@ -48,7 +48,7 @@ const Submitter = ({
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
     if (needActionApprovers && needActionApprovers.length > 0) {
-      return needActionApprovers.map((a) => a.User.fullName).join(', ');
+      return needActionApprovers.map((a) => a.user.fullName).join(', ');
     }
     return '';
   };

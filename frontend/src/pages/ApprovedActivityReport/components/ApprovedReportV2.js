@@ -120,11 +120,6 @@ function calculateGoalsAndObjectives(report) {
               {goal.name}
             </>
           ),
-          'Goal type': (
-            <>
-              {goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
-            </>
-          ),
         },
         striped,
       };
@@ -163,7 +158,7 @@ export default function ApprovedReportV2({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );

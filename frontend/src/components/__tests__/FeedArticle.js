@@ -26,11 +26,11 @@ describe('FeedArticle', () => {
 
   it('renders the unread class', () => {
     renderFeedArticle({ unread: true });
-    expect(document.querySelector('article').classList).toContain('ttahub-feed-article__whats-new--unread');
+    expect(document.querySelector('article').classList).toContain('ttahub-feed-article--unread');
   });
 
   it('does not render the unread class', () => {
     renderFeedArticle();
-    expect(document.querySelector('article').classList).not.toContain('ttahub-feed-article__whats-new--unread');
+    expect(document.querySelector('article').classList).not.toContain('ttahub-feed-article--unread');
   });
 });

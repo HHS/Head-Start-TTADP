@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import WhatsNew from './components/WhatsNew';
 import BackLink from '../../components/BackLink';
-import './Notifications.scss';
 
 export default function Notifications({ notifications }) {
   const params = new URLSearchParams(window.location.search);

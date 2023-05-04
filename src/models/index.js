@@ -29,6 +29,7 @@ fs
   .filter((file) => (file.indexOf('.') !== 0)
     && (file !== basename)
     && (file !== 'auditModelGenerator.js')
+    && (file !== 'auditModels.js')
     && (file.slice(-3) === '.js'))
   .forEach((file) => {
     try {
@@ -44,6 +45,26 @@ fs
       throw error;
     }
   });
+
+// make models for remaining audit system tables
+{
+  const model = audit.generateZALDDL(sequelize);
+  db[model.name] = model;
+}
+
+{
+  const model = audit.generateZADescriptor(sequelize);
+  const auditModel = audit.generateAuditModel(sequelize, model);
+  db[model.name] = model;
+  db[auditModel.name] = auditModel;
+}
+
+{
+  const model = audit.generateZAFilter(sequelize);
+  const auditModel = audit.generateAuditModel(sequelize, model);
+  db[model.name] = model;
+  db[auditModel.name] = auditModel;
+}
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
