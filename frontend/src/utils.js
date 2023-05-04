@@ -237,3 +237,17 @@ export function formatDateRange(format = {
 
   return '';
 }
+
+export const parseFeedIntoDom = (feed) => {
+  if (!feed) {
+    return null;
+  }
+
+  const parsedDom = new window.DOMParser().parseFromString(feed, 'text/xml');
+
+  if (parsedDom.querySelector('parsererror')) {
+    return null;
+  }
+
+  return parsedDom;
+};

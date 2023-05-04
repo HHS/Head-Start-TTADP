@@ -30,7 +30,7 @@ export const newGoal = (grantIds) => ({
   goalIds: [],
   oldGrantIds: [],
   status: 'Draft',
-  isRttapa: '',
+  isRttapa: null,
   isCurated: false,
 });
 

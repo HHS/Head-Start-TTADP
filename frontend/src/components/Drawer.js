@@ -65,11 +65,28 @@ export default function Drawer({
     };
   }, [onEscape]);
 
-  if (!isOpen) return null;
+  const classNames = [
+    'smart-hub-drawer',
+    'bg-white',
+    'position-fixed',
+    'pin-right',
+    'pin-bottom',
+    'z-100',
+    'overflow-y-auto',
+    'shadow-3',
+    'flex-column',
+    'flex-justify',
+  ];
+
+  if (isOpen) {
+    classNames.push('display-flex');
+    classNames.push('slide-in-right');
+  }
 
   return (
     <div
-      className="smart-hub-drawer slide-in-right bg-white position-fixed pin-right pin-bottom z-100 overflow-y-auto shadow-3 display-flex flex-column flex-justify"
+      hidden={!isOpen}
+      className={classNames.join(' ')}
       ref={elementRef}
       style={{
         top: headerHeight,
@@ -78,7 +95,7 @@ export default function Drawer({
       <div>
         {title && (
           <div
-            className={`bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
+            className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
           >
             <span className="text-bold font-serif-lg">{title}</span>
             <button
