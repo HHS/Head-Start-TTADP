@@ -63,15 +63,26 @@ const defaultDateValues = {
   'is on or before': '',
 };
 
+export const fixQueryWhetherStringOrArray = (query) => {
+  if (Array.isArray(query)) {
+    return query.join(', ');
+  }
+  return query;
+};
+
 export const startDateFilter = {
   id: 'startDate',
   display: 'Date started',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+
+    const smushed = fixQueryWhetherStringOrArray(query);
+
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
