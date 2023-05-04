@@ -206,7 +206,7 @@ export async function setFieldPromptForCuratedTemplate(
   goalIds: number[],
   promptId: number,
   response: string[] | null,
-): Promise<void | [any, ...any[]]> {
+) {
   // Retrieve the current responses and prompt requirements for the given goals and prompt ID.
   const [currentResponses, promptRequirements] = await Promise.all([
     GoalModel.findAll({
@@ -342,7 +342,7 @@ Sets field prompts for a list of curated templates and their associated goals.
 export async function setFieldPromptsForCuratedTemplate(
   goalIds: number[],
   promptResponses: PromptResponse[],
-): Promise<(void | [any, ...any[]])[]> {
+) {
   return Promise.all(
     promptResponses
       .map(({
