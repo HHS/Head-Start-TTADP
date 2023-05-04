@@ -75,12 +75,12 @@ async function checkForSearchItems(filters) {
  */
 export default async function filtersToScopes(filters, options) {
   // Check for AWS Elasticsearch filters.
-  const updatedFilters = await checkForSearchItems(filters);
+  // const updatedFilters = await checkForSearchItems(filters);
 
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](updatedFilters, options && options[model], options && options.userId),
+      [model]: models[model](filters, options && options[model], options && options.userId),
     });
     return scopes;
   }, {});

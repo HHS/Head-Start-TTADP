@@ -46,6 +46,10 @@ export const NEXTSTEP_NOTETYPE = {
   RECIPIENT: 'RECIPIENT',
 };
 
+export const RESOURCE_ACTIONS = {
+  GET_METADATA: 'getMetaData',
+};
+
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
@@ -91,6 +95,10 @@ export const AWS_ELASTICSEARCH_ACTIONS = {
   ADD_INDEX_DOCUMENT: 'addIndexDocument',
   UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
   DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
+};
+
+export const S3_ACTIONS = {
+  DELETE_FILE: 'deleteFile',
 };
 
 export const EMAIL_DIGEST_FREQ = {

@@ -12,6 +12,12 @@ export default (sequelize, DataTypes) => {
       GoalTemplateFieldPrompt.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', onDelete: 'cascade', as: 'goalTemplate' });
       GoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, { foreignKey: 'goalTemplateFieldPromptId', as: 'responses' });
       GoalTemplateFieldPrompt.hasMany(models.ActivityReportGoalFieldResponse, { foreignKey: 'goalTemplateFieldPromptId', as: 'reportResponses' });
+      GoalTemplateFieldPrompt.belongsToMany(models.Goal, {
+        through: models.GoalFieldResponse,
+        foreignKey: 'goalTemplateFieldPromptId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
     }
   }
   GoalTemplateFieldPrompt.init({
