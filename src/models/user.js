@@ -12,6 +12,7 @@ export default (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.hasMany(models.UserRole, { foreignKey: 'userId', as: 'userRoles' });
       User.belongsToMany(models.Role, {
         through: models.UserRole,
         otherKey: 'roleId',
@@ -20,8 +21,12 @@ export default (sequelize, DataTypes) => {
       });
       User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
       User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
+      User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
+      User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
+      User.hasMany(models.RttapaPilot, { foreignKey: 'userId', as: 'rttapaPilots', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
       User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
+      User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
     }
   }
   User.init({

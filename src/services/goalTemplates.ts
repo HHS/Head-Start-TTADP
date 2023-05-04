@@ -39,7 +39,7 @@ interface FieldPrompts {
   question: string;
   hint: string;
   caution: string;
-  type: string;
+  fieldType: string;
   options: string[] | null;
   validations: Validation[];
   response: string[];
@@ -124,7 +124,7 @@ export async function getFieldPromptsForCuratedTemplate(
         'prompt',
         'hint',
         'caution',
-        ['fieldType', 'type'],
+        'fieldType',
         'options',
         'validations',
         'goalTemplateId',
@@ -206,7 +206,7 @@ export async function setFieldPromptForCuratedTemplate(
   goalIds: number[],
   promptId: number,
   response: string[] | null,
-) {
+): Promise<void | [any, ...any[]]> {
   // Retrieve the current responses and prompt requirements for the given goals and prompt ID.
   const [currentResponses, promptRequirements] = await Promise.all([
     GoalModel.findAll({
@@ -244,7 +244,7 @@ export async function setFieldPromptForCuratedTemplate(
       attributes: [
         ['id', 'promptId'],
         'title',
-        ['fieldType', 'type'],
+        'fieldType',
         'options',
         'validations',
       ],
@@ -269,7 +269,7 @@ export async function setFieldPromptForCuratedTemplate(
     }));
 
   if (goalIdsToUpdate.length || recordsToCreate.length) {
-    if (promptRequirements.type === PROMPT_FIELD_TYPE.MULTISELECT) {
+    if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
       if (response
         && response
           .filter((r) => !promptRequirements.options.includes(r))
@@ -342,7 +342,7 @@ Sets field prompts for a list of curated templates and their associated goals.
 export async function setFieldPromptsForCuratedTemplate(
   goalIds: number[],
   promptResponses: PromptResponse[],
-) {
+): Promise<(void | [any, ...any[]])[]> {
   return Promise.all(
     promptResponses
       .map(({

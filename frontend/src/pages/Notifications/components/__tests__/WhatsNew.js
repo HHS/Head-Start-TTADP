@@ -1,7 +1,8 @@
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
-import WhatsNew, { formatWhatsNew, parseFeedIntoDom } from '../WhatsNew';
+import WhatsNew, { formatWhatsNew } from '../WhatsNew';
 import { mockRSSData, mockWindowProperty } from '../../../../testHelpers';
+import { parseFeedIntoDom } from '../../../../utils';
 
 describe('formatWhatsNew', () => {
   describe('with localStorage', () => {
