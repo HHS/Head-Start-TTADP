@@ -83,6 +83,7 @@ async function start() {
       auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
     }
   });
+
   // Delete S3 file.
   s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
@@ -105,12 +106,6 @@ async function start() {
     getResourceMetaDataJob,
   );
 
-  // Get resource metadata.
-  resourceQueue.process(
-    RESOURCE_ACTIONS.GET_METADATA,
-    getResourceMetaDataJob,
-  );
-
   // Notifications
   notificationQueue.on('failed', (job, error) => {
     auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
@@ -125,6 +120,7 @@ async function start() {
       logEmailNotification(job, false, { preferences: 'off' });
     }
   });
+
   // Digests
   notificationDigestQueue.on('failed', (job, error) => {
     auditLogger.error(`job ${job.name} failed for user ${job.data.user.id} with error ${error}`);
