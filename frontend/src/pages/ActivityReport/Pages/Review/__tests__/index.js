@@ -36,7 +36,7 @@ const user = {
   ],
 };
 
-const approversToPass = [{ id: 1, status: null, User: { id: 1, fullName: 'approver 1' } }];
+const approversToPass = [{ id: 1, status: null, user: { id: 1, fullName: 'approver 1' } }];
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types

@@ -41,6 +41,14 @@ export default (sequelize, DataTypes) => {
         return calculateIsAutoDetectedForGoal(this.get('sourceFields'));
       },
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalResource',

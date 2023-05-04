@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
   Goal.init({
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
     endDate: {
       type: DataTypes.DATEONLY,
@@ -91,7 +91,7 @@ export default (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
     },
     previousStatus: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     onAR: {
       type: DataTypes.BOOLEAN,

@@ -46,6 +46,10 @@ export const NEXTSTEP_NOTETYPE = {
   RECIPIENT: 'RECIPIENT',
 };
 
+export const RESOURCE_ACTIONS = {
+  GET_METADATA: 'getMetaData',
+};
+
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',

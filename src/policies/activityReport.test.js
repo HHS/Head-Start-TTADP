@@ -24,7 +24,7 @@ function activityReport(
 
   if (approvers) {
     report.approvers = [...report.approvers, ...approvers.map((approver) => ({
-      id: 9, status: null, note: null, User: { id: approver },
+      id: 9, status: null, note: null, user: { id: approver },
     })),
     ];
   }

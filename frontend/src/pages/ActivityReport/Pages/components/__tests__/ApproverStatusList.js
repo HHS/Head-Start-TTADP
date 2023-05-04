@@ -11,13 +11,13 @@ describe('Approver Status List', () => {
   it('renders correctly with data', async () => {
     const approverStatus = [
       {
-        id: 1, status: 'approved', note: '', User: { id: 1, fullName: 'Test Approver1' },
+        id: 1, status: 'approved', note: '', user: { id: 1, fullName: 'Test Approver1' },
       },
       {
-        id: 2, status: 'submitted', note: '', User: { id: 2, fullName: 'Test Approver2' },
+        id: 2, status: 'submitted', note: '', user: { id: 2, fullName: 'Test Approver2' },
       },
       {
-        id: 3, status: 'needs_action', note: '', User: { id: 3, fullName: 'Test Approver3' },
+        id: 3, status: 'needs_action', note: '', user: { id: 3, fullName: 'Test Approver3' },
       },
     ];
 

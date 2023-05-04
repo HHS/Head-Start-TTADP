@@ -143,7 +143,7 @@ export default class ActivityReport {
     if (!this.activityReport.approvers) {
       return false;
     }
-    const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
+    const approverUserIds = this.activityReport.approvers.map((approval) => approval.user.id);
     return approverUserIds.includes(this.user.id);
   }
 
