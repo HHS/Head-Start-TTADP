@@ -83,7 +83,10 @@ async function start() {
       auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
     }
   });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6ae3a5ddd363dbcf64615dc3dab62498426b88f0
   // Delete S3 file.
   s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
@@ -100,6 +103,15 @@ async function start() {
     }
   });
 
+<<<<<<< HEAD
+=======
+  // Get resource metadata.
+  resourceQueue.process(
+    RESOURCE_ACTIONS.GET_METADATA,
+    getResourceMetaDataJob,
+  );
+
+>>>>>>> 6ae3a5ddd363dbcf64615dc3dab62498426b88f0
   // Get resource metadata.
   resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
