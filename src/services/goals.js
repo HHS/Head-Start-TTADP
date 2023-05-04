@@ -259,7 +259,7 @@ export async function saveObjectiveAssociations(
       attributes: ['topicId'],
       where: {
         objectiveId: objective.id,
-        topicId: { [Op.in]: topics },
+        topicId: { [Op.in]: topics.map((t) => t.id) },
       },
       raw: true,
     });
@@ -267,17 +267,17 @@ export async function saveObjectiveAssociations(
     if (topics && topics.length > 0) {
       await ObjectiveTopic.bulkCreate(
         topics
-          .filter((topic) => !currentTopics.includes(topic))
+          .filter((topic) => !currentTopics.includes(topic.id))
           .map((topic) => ({
             objectiveId: objective.id,
-            topic,
+            topicId: topic.id,
           })),
       );
     }
     return ObjectiveTopic.findAll({
       where: {
         objectiveId: objective.id,
-        topicId: { [Op.in]: topics },
+        topicId: { [Op.in]: topics.map((t) => t.id) },
       },
     });
   })();
