@@ -9,6 +9,12 @@ module.exports = {
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
     minifyAliases: true,
+    pool: {
+      max: 50,
+      min: 2,
+      acquire: 30000,
+      idle: 10000,
+    },
   },
   test: {
     username: process.env.POSTGRES_USERNAME,
@@ -19,6 +25,12 @@ module.exports = {
     dialect: 'postgres',
     logging: false,
     minifyAliases: true,
+    pool: {
+      max: 50,
+      min: 2,
+      acquire: 30000,
+      idle: 10000,
+    },
   },
   production: {
     use_env_variable: 'DATABASE_URL',
@@ -29,5 +41,11 @@ module.exports = {
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
     minifyAliases: true,
+    pool: {
+      max: 50,
+      min: 2,
+      acquire: 30000,
+      idle: 10000,
+    },
   },
 };
