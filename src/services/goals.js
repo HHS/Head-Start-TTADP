@@ -513,7 +513,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
  */
 function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
   return newPrompts
-    .reduce((previousPrompts, currentPrompt) => {
+    ?.reduce((previousPrompts, currentPrompt) => {
       const promptId = currentPrompt.promptId
         ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
 
@@ -612,8 +612,8 @@ function reduceGoals(goals, forReport = false) {
         );
         existingGoal.prompts = reducePrompts(
           forReport,
-          currentValue.dataValues.prompts,
-          existingGoal.prompts,
+          currentValue.dataValues.prompts || [],
+          existingGoal.prompts || [],
         );
         return previousValues;
       }
