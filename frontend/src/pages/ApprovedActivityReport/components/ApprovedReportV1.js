@@ -95,14 +95,14 @@ export default function ApprovedReportV1({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
 
   // Approver Notes.
   const managerNotes = data.approvers.map((a) => `
-        <h2>${a.User.fullName}:</h2>
+        <h2>${a.user.fullName}:</h2>
         ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
   const attendees = formatSimpleArray(data.participants);

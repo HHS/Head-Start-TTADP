@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-// const { auditLogger } = require('../logger');
+const { afterDestroy } = require('./hooks/objectiveTemplateFile');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveTemplateFile extends Model {
@@ -26,6 +26,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateFile',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ObjectiveTemplateFile;
 };

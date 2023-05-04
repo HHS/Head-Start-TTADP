@@ -47,11 +47,11 @@ describe('Approved Activity Report V2 component', () => {
       }],
     approvers: [
       {
-        id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
+        id: 1, status: '', note: '', user: { id: 1, fullName: 'John Q Fullname' },
       },
 
       {
-        id: 2, status: '', note: 'note', User: { id: 2, fullName: 'John Smith' },
+        id: 2, status: '', note: 'note', user: { id: 2, fullName: 'John Smith' },
       },
     ],
     targetPopulations: ['Mid size sedans'],
