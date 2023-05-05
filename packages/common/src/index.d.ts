@@ -15,6 +15,7 @@ export declare const USER_ROLES: string[];
 export declare const CLOSE_SUSPEND_REASONS: string[];
 export declare const GOAL_CLOSE_REASONS: string[];
 export declare const GOAL_SUSPEND_REASONS: string[];
+export declare const GOAL_SOURCES: string[];
 export declare const APPROVER_STATUSES: {
     APPROVED: string;
     NEEDS_ACTION: string;

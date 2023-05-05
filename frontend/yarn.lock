@@ -2230,7 +2230,7 @@
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
 
 "@ttahub/common@file:../packages/common":
-  version "1.0.1"
+  version "1.0.2"
 
 "@turf/area@^6.4.0":
   version "6.5.0"
