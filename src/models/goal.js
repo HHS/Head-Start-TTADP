@@ -154,7 +154,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     sources: {
-      flags: DataTypes.ARRAY(DataTypes.ENUM(GOAL_SOURCES)),
+      type: DataTypes.ARRAY(DataTypes.ENUM(GOAL_SOURCES)),
     },
   }, {
     sequelize,
