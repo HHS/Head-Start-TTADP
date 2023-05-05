@@ -1,22 +1,25 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
+import { Op } from 'sequelize';
 import {
   Resource,
 } from '../models';
 import { addGetResourceMetadataToQueue } from '../services/resourceQueue';
 import { auditLogger, logger } from '../logger';
 
-export default async function processLegacyResources() {
+export default async function processLegacyResources(startDate, endDate) {
   try {
-    logger.info('Populate Legacy Resources: Starting...');
+    logger.info(`Populate Legacy Resources (from: ${startDate} > to: ${endDate}): Starting...`);
     // Get all resources that have no title set.
     const resources = await Resource.findAll({
       where: {
         title: null,
+        createdAt: {
+          [Op.between]: [startDate, endDate],
+        },
       },
     });
-    logger.info(`Populate Legacy Resources: Found ${resources.length} resources`);
-
+    logger.info(`Populate Legacy Resources: Found ${resources.length} resource to process`);
     // Loop and queue resources for processing.
     for (const resource of resources) {
       addGetResourceMetadataToQueue(resource.id, resource.url);
