@@ -72,3 +72,13 @@ export const setFeatureFlag = async (data) => {
   const result = await post((join('/', 'api', 'users', 'feature-flags')), data);
   return result;
 };
+
+export const getRedisInfo = async () => {
+  const info = await get((join('/', 'api', 'admin', 'redis', 'info')));
+  return info.json();
+};
+
+export const flushRedis = async () => {
+  const result = await post((join('/', 'api', 'admin', 'redis', 'flush')));
+  return result.json();
+};
