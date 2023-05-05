@@ -269,6 +269,7 @@ class Goals{
  isRttapa : enum
  * onAR : boolean : false
  rtrOrder : integer : 1
+ sources : enum[] : '{}'::"enum_Goals_sources"[]
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
 }
@@ -497,6 +498,7 @@ class Resources{
  * domain : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ title : text
 }
 
 class RoleTopics{
@@ -687,10 +689,10 @@ class ZALActivityReportGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALActivityReportGoalResources{
@@ -854,10 +856,10 @@ class ZALGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALGoalResources{
@@ -882,10 +884,10 @@ class ZALGoalTemplateFieldPrompts{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALGoalTemplateObjectiveTemplates{
