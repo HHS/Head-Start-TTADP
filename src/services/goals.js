@@ -1861,6 +1861,7 @@ export async function saveGoalsForReport(goals, report) {
         createdVia,
         endDate: discardedEndDate,
         prompts,
+        sources,
         ...fields
       } = goal;
 
@@ -1882,6 +1883,7 @@ export async function saveGoalsForReport(goals, report) {
             grantId, // If we don't specify the grant it will be created with the old.
             ...fields,
             status,
+            sources,
             onApprovedAR,
             createdVia: 'activityReport',
           });
@@ -1889,8 +1891,14 @@ export async function saveGoalsForReport(goals, report) {
 
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
           // todo - compare values to see if it's changed before we update
-          await newGoal.update({ endDate }, { individualHooks: true });
+          await newGoal.set({ endDate });
         }
+
+        if (sources && sources.length) {
+          await newGoal.set({ sources });
+        }
+
+        await newGoal.save({ individualHooks: true });
 
         if (!newGoal.onApprovedAR && prompts) {
           await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
@@ -1921,12 +1929,13 @@ export async function saveGoalsForReport(goals, report) {
         createdVia,
         goalIds: discardedGoalIds,
         prompts,
+        sources,
         ...fields
       } = goal;
 
       await Promise.all(existingGoals.map(async (existingGoal) => {
         await existingGoal.update({
-          status, endDate, ...fields,
+          status, endDate, sources, ...fields,
         }, { individualHooks: true });
 
         const existingGoalObjectives = await createObjectivesForGoal(
@@ -1972,7 +1981,11 @@ export async function saveGoalsForReport(goals, report) {
         }
 
         await newGoal.update({
-          ...fields, status, endDate, createdVia: createdVia || 'activityReport',
+          ...fields,
+          status,
+          sources,
+          endDate,
+          createdVia: createdVia || 'activityReport',
         }, { individualHooks: true });
 
         if (!newGoal.onApprovedAR && prompts) {

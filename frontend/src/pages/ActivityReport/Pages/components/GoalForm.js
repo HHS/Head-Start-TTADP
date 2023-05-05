@@ -19,6 +19,8 @@ import { NO_ERROR, ERROR_FORMAT } from './constants';
 
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
+import FeatureFlag from '../../../../components/FeatureFlag';
+import GoalSource from '../../../../components/GoalForm/GoalSource';
 
 export default function GoalForm({
   goal,
@@ -84,6 +86,36 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
+  // goal source rules = required if activityRecipientType === 'recipient'
+  // and if user has the goal_source flag
+
+  const { user } = useContext(AppLoadingContext);
+
+  const goalSourceRules = useMemo(() => {
+    if (activityRecipientType === 'recipient' && user && user.flags.includes('goal_source')) {
+      return {
+        required: {
+          value: true,
+          message: GOAL_NAME_ERROR,
+        },
+      };
+    }
+    return {};
+  }, [activityRecipientType, user]);
+
+  const {
+    field: {
+      onChange: onUpdateGoalSource,
+      onBlur: onBlurGoalSource,
+      value: goalSources,
+      name: goalSourceInputName,
+    },
+  } = useController({
+    name: 'goalSource',
+    rules: goalSourceRules,
+    defaultValue: [],
+  });
+
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -125,7 +157,6 @@ export default function GoalForm({
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   const prompts = combinePrompts(templatePrompts, goal.prompts);
-
   const isCurated = goal.isCurated || false;
 
   return (
@@ -147,6 +178,21 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         isMultiRecipientReport={isMultiRecipientReport}
       />
+
+      <FeatureFlag flag="goal_source">
+        <GoalSource
+          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
+          sources={goalSources}
+          validateGoalSource={onBlurGoalSource}
+          onChangeGoalSource={onUpdateGoalSource}
+          inputName={goalSourceInputName}
+          goalStatus={status}
+          isLoading={isAppLoading}
+          userCanEdit={!isCurated}
+          isOnReport={false}
+          editingFromActivityReport
+        />
+      </FeatureFlag>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}

@@ -249,6 +249,7 @@ const Navigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
+    const sources = getValues('goalSources');
 
     const promptTitles = getValues('goalPrompts');
     let prompts = [];
@@ -267,6 +268,7 @@ const Navigator = ({
       isActivelyBeingEditing: true,
       name,
       endDate,
+      sources,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
       grantIds,
@@ -300,6 +302,7 @@ const Navigator = ({
     const objectivesFieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
+    const sources = getValues('goalSources');
     const formEndDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
@@ -344,6 +347,7 @@ const Navigator = ({
       isActivelyBeingEditing: true,
       name,
       endDate,
+      sources,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
       grantIds,
@@ -526,6 +530,7 @@ const Navigator = ({
     const fieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(fieldArrayName);
     const name = getValues('goalName');
+    const sources = getValues('goalSources');
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
@@ -536,6 +541,7 @@ const Navigator = ({
       grantIds,
       name,
       endDate,
+      sources,
       objectives,
       regionId: formData.regionId,
       prompts,
@@ -569,6 +575,7 @@ const Navigator = ({
       setValue('goalForEditing', null);
       setValue('goalName', '');
       setValue('goalEndDate', '');
+      setValue('goalSources', []);
       setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
 
