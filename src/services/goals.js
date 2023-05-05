@@ -513,7 +513,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
  */
 function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
   return newPrompts
-    .reduce((previousPrompts, currentPrompt) => {
+    ?.reduce((previousPrompts, currentPrompt) => {
       const promptId = currentPrompt.promptId
         ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
 
@@ -612,8 +612,8 @@ function reduceGoals(goals, forReport = false) {
         );
         existingGoal.prompts = reducePrompts(
           forReport,
-          currentValue.dataValues.prompts,
-          existingGoal.prompts,
+          currentValue.dataValues.prompts || [],
+          existingGoal.prompts || [],
         );
         return previousValues;
       }
@@ -1542,13 +1542,26 @@ async function removeObjectives(objectivesToRemove, reportId) {
     return Promise.resolve();
   }
 
+  // Objectives to destroy.
+  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
+
   // cleanup any ObjectiveFiles that are no longer needed
   await ObjectiveFile.destroy({
     where: {
-      objectiveId: objectivesToDefinitelyDestroy.map((o) => o.id),
+      objectiveId: objectivesIdsToDestroy,
     },
+    individualHooks: true,
   });
 
+  // cleanup any ObjectiveResources that are no longer needed
+  await ObjectiveResource.destroy({
+    where: {
+      objectiveId: objectivesIdsToDestroy,
+    },
+    individualHooks: true,
+  });
+
+  // Delete objective.
   return Objective.destroy({
     where: {
       id: objectivesToDefinitelyDestroy.map((o) => o.id),
@@ -2294,6 +2307,15 @@ export async function destroyGoal(goalIds) {
       })
       : await Promise.resolve();
 
+    const objectiveFilesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveFile.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+        individualHooks: true,
+      })
+      : await Promise.resolve();
+
     const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
       ? await Objective.destroy({
         where: {
@@ -2317,6 +2339,7 @@ export async function destroyGoal(goalIds) {
       objectiveResourcesDestroyed,
       objectiveTopicsDestroyed,
       objectivesDestroyed,
+      objectiveFilesDestroyed,
     };
   } catch (error) {
     auditLogger.error(
