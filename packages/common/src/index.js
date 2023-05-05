@@ -174,6 +174,16 @@ const GOAL_SUSPEND_REASONS = [
 ];
 exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
+const GOAL_SOURCES = [
+  'RTTAPA development',
+  'Federal monitoring issues, including CLASS and RANs',
+  'Regional office priority',
+  'Recipient request',
+  'Training event follow-up',
+];
+
+exports.GOAL_SOURCES = GOAL_SOURCES;
+
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',

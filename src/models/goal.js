@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
@@ -152,6 +152,9 @@ export default (sequelize, DataTypes) => {
     rtrOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    sources: {
+      flags: DataTypes.ARRAY(DataTypes.ENUM(GOAL_SOURCES)),
     },
   }, {
     sequelize,
