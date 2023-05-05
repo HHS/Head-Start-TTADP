@@ -5,7 +5,7 @@ import { auditLogger } from '../logger';
 const resourceQueue = newQueue('resource');
 
 const addGetResourceMetadataToQueue = (id, url) => {
-  const retries = process.env.FILE_SCAN_RETRIES || 5;
+  const retries = 2;
   const delay = process.env.FILE_SCAN_BACKOFF_DELAY || 10000;
   const backOffOpts = {
     type: 'exponential',
