@@ -1,4 +1,5 @@
 const { getSingularOrPluralData } = require('../helpers/hookMetadata');
+const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');
 
 const recalculateOnAR = async (sequelize, instance, options) => {
   // check to see if objectiveId or objectiveIds is validly defined
@@ -55,6 +56,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
+  await cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
 export {
