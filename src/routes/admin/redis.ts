@@ -17,7 +17,10 @@ const namespace = 'ADMIN:REDIS:INFO';
 const logContext = { namespace };
 
 /**
-   * Gets all roles from the database.
+   * Gets the redis info from the client, as if you'd run "info"
+   * redis cli
+   *
+   * https://redis.io/commands/info/
    *
    * @param {Request} _req - request
    * @param {Response} res - response
@@ -47,7 +50,16 @@ export async function getRedisInfo(req: Request, res: Response) {
     await handleError(req, res, err, logContext);
   }
 }
-
+/**
+   * Runs flush all and then returns info on the redis instance
+   * as if you'd run the two commands
+   *
+   * https://redis.io/commands/flushall/
+   * https://redis.io/commands/info/
+   *
+   * @param {Request} _req - request
+   * @param {Response} res - response
+   */
 export async function flushRedis(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {
