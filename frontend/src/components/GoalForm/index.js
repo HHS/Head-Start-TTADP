@@ -5,7 +5,7 @@ import React, {
   useContext,
 } from 'react';
 import moment from 'moment';
-import { DECIMAL_BASE, SCOPE_IDS, GOAL_SOURCES } from '@ttahub/common';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -27,7 +27,6 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
-  GOAL_SOURCE_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
   objectivesWithValidResourcesOnly,
 } from './constants';
@@ -302,15 +301,19 @@ export default function GoalForm({
    * @returns bool
    */
 
-  const validateGoalSource = (message = GOAL_SOURCE_ERROR) => {
-    let error = <></>;
-    if (sources.length && !sources.every((source) => GOAL_SOURCES.includes(source))) {
-      error = <span className="usa-error-message">{message}</span>;
-    }
+  const validateGoalSource = () => {
+    const error = <></>;
 
-    const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
-    setErrors(newErrors);
+    // const newErrors = [...errors];
+
+    // here's where we'd need to validate if we were doing so
+    // i.e. if we were requiring a source
+    // if (!sources.length) {
+    //   error = <span className="usa-error-message">{GOAL_SOURCE_ERROR}</span>;
+    // }
+
+    // newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
+    // setErrors(newErrors);
 
     return !error.props.children;
   };

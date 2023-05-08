@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { GOAL_SOURCES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -481,6 +481,7 @@ describe('saveGoalsForReport (more tests)', () => {
         objectives: [newObjective],
         grantIds: [grantOne.id],
         status: 'Not Started',
+        sources: [GOAL_SOURCES[0]],
       }];
 
     await saveGoalsForReport(newGoals, savedReport);
@@ -501,6 +502,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(savedGoal.name).toBe(goalName);
     expect(savedGoal.grantId).toBe(grantOne.id);
+    expect(savedGoal.sources).toStrictEqual([GOAL_SOURCES[0]]);
 
     const afterObjectives = await ActivityReportObjective.findAll({
       where: {
