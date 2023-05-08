@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -6,7 +7,6 @@ import db, {
 } from '../models';
 import filtersToScopes from '../scopes';
 import overview from './overview';
-import { REPORT_STATUSES } from '../constants';
 import { formatQuery } from '../routes/widgets/utils';
 import { createReport, destroyReport } from '../testUtils';
 

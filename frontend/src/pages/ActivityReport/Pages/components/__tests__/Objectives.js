@@ -6,7 +6,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
-import { REPORT_STATUSES } from '../../../../../Constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
 
 // eslint-disable-next-line react/prop-types
@@ -65,6 +66,18 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
 };
 
 describe('Objectives', () => {
+  beforeAll(() => {
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+  });
+
+  afterAll(() => {
+    fetchMock.restore();
+  });
+
   it('you can create a new objective', async () => {
     const objectiveOptions = [];
     const collabs = [{ role: 'Snake charmer' }, { role: 'lion tamer' }];

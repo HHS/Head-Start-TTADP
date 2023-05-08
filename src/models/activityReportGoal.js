@@ -1,7 +1,12 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
-const { afterCreate, afterDestroy, afterUpdate } = require('./hooks/activityReportGoal');
+const {
+  afterCreate,
+  beforeDestroy,
+  afterDestroy,
+  afterUpdate,
+} = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
@@ -9,6 +14,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       ActivityReportGoal.hasMany(models.ActivityReportGoalResource, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalResources' });
+      ActivityReportGoal.hasMany(models.ActivityReportGoalFieldResponse, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalFieldResponses' });
       ActivityReportGoal.belongsToMany(models.Resource, {
         through: models.ActivityReportGoalResource,
         foreignKey: 'activityReportGoalId',
@@ -38,7 +44,7 @@ export default (sequelize, DataTypes) => {
     },
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     closeSuspendReason: {
       allowNull: true,
       type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
@@ -60,6 +66,7 @@ export default (sequelize, DataTypes) => {
     modelName: 'ActivityReportGoal',
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },

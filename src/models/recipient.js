@@ -1,5 +1,5 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
 
 /**
@@ -12,6 +12,7 @@ export default (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
+      Recipient.hasMany(models.RttapaPilot, { as: 'rttapaPilots', foreignKey: 'recipientId' });
     }
   }
   Recipient.init({
@@ -26,6 +27,9 @@ export default (sequelize, DataTypes) => {
     },
     recipientType: {
       type: DataTypes.STRING,
+    },
+    deleted: {
+      type: DataTypes.BOOLEAN,
     },
   }, {
     sequelize,

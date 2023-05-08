@@ -6,6 +6,7 @@ import {
   getPresignedURL,
   generateS3Config,
   deleteFileFromS3,
+  deleteFileFromS3Job,
 } from './s3';
 
 const oldEnv = { ...process.env };
@@ -182,6 +183,28 @@ describe('s3Uploader.deleteFileFromS3', () => {
     );
     const got = deleteFileFromS3(Key);
     await expect(got).rejects.toBe(anotherFakeError);
+    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+  });
+});
+
+describe('s3Uploader.deleteFileFromJobS3', () => {
+  const Bucket = 'fakeBucket';
+  const Key = 'fakeKey';
+  const anotherFakeError = Error({ statusCode: 500 });
+  it('calls deleteFileFromS3Job() with correct parameters', async () => {
+    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve({ status: 200, data: {} }) }));
+    const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
+    await expect(got).resolves.toStrictEqual({
+      status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
+    });
+    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+  });
+  it('throws an error if promise rejects', async () => {
+    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementationOnce(
+      () => ({ promise: () => Promise.reject(anotherFakeError) }),
+    );
+    const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
+    await expect(got).resolves.toStrictEqual({ data: { bucket: 'fakeBucket', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
     expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
   });
 });

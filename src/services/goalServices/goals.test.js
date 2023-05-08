@@ -272,12 +272,12 @@ describe('Goals DB service', () => {
           isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [],
         },
       ], { id: mockActivityReportId });
-      expect(Goal.create).toHaveBeenCalledWith({
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         createdVia: 'activityReport',
         grantId: mockGrantId,
         name: 'name',
         status: 'Closed',
-      });
+      }));
     });
 
     it('can use existing goals', async () => {

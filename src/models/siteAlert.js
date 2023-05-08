@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } = require('../constants');
+const { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 
 const possibleStatuses = Object.values(ALERT_STATUSES);
