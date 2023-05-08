@@ -11,7 +11,7 @@ const getResourceMetaDataJob = async (job) => {
   let res;
   try {
     // Use axios to get url info.
-    res = await axios.get(resourceUrl, { maxRedirects: 10 });
+    res = await axios.get(resourceUrl, { maxRedirects: 3 });
 
     // Get page title.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
