@@ -23,6 +23,14 @@ module.exports = {
       );
       await queryInterface.sequelize.query('ALTER TABLE "Goals" ALTER COLUMN sources TYPE public."enum_Goals_sources"[] USING CASE WHEN sources IS NULL THEN \'{}\' ELSE ARRAY[sources] END; ALTER TABLE "Goals" ALTER COLUMN sources SET DEFAULT \'{}\';', { transaction });
 
+      await queryInterface.addColumn(
+        'ActivityReportGoals',
+        'sources',
+        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
+        { transaction },
+      );
+      await queryInterface.sequelize.query('ALTER TABLE "ActivityReportGoals" ALTER COLUMN sources TYPE public."enum_ActivityReportGoals_sources"[] USING CASE WHEN sources IS NULL THEN \'{}\' ELSE ARRAY[sources] END; ALTER TABLE "ActivityReportGoals" ALTER COLUMN sources SET DEFAULT \'{}\';', { transaction });
+
       // add new flag
       return queryInterface.sequelize.query(`
       DO $$ BEGIN
@@ -36,5 +44,7 @@ module.exports = {
   down: async (queryInterface) => {
     await queryInterface.removeColumn('Goals', 'source');
     await queryInterface.sequelize.query('DROP TYPE public."enum_Goals_source";');
+    await queryInterface.removeColumn('ActivityReportGoals', 'source');
+    await queryInterface.sequelize.query('DROP TYPE public."enum_ActivityReportGoals_source";');
   },
 };

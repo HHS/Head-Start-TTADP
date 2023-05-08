@@ -46,6 +46,7 @@ export default function GoalForm({
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
+  const defaultSources = useMemo(() => (goal && goal.sources ? goal.sources : []), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -111,7 +112,7 @@ export default function GoalForm({
       name: goalSourceInputName,
     },
   } = useController({
-    name: 'goalSource',
+    name: 'goalSources',
     rules: goalSourceRules,
     defaultValue: [],
   });
@@ -129,6 +130,10 @@ export default function GoalForm({
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
+
+  useEffect(() => {
+    onUpdateGoalSource(goal.sources ? goal.sources : defaultSources);
+  }, [goal.sources, onUpdateGoalSource, defaultSources]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -233,6 +238,7 @@ GoalForm.propTypes = {
     isCurated: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
+    sources: PropTypes.arrayOf(PropTypes.string),
     prompts: PropTypes.arrayOf(PropTypes.shape({
       type: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,

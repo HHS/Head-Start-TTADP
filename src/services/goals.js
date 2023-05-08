@@ -57,6 +57,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'goalNumber',
     'createdVia',
     'goalTemplateId',
+    'sources',
     [
       'onAR',
       'onAnyReport',
@@ -642,6 +643,7 @@ function reduceGoals(goals, forReport = false) {
         ),
         isNew: false,
         endDate: currentValue.endDate,
+        sources: currentValue.dataValues.sources,
       };
 
       return [...previousValues, goal];
@@ -1098,6 +1100,7 @@ export async function createOrUpdateGoals(goals) {
       status,
       prompts,
       isCurated,
+      sources,
       ...options
     } = goalData;
 
@@ -1132,6 +1135,7 @@ export async function createOrUpdateGoals(goals) {
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
           rtrOrder: rtrOrder + 1,
+          sources,
         });
       }
     }
@@ -1151,6 +1155,7 @@ export async function createOrUpdateGoals(goals) {
           // otherwise, we've got ourselves an rtr goal, baby
           createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
           endDate: endDate || null,
+          sources,
         },
         { individualHooks: true },
       );

@@ -5,7 +5,7 @@ import React, {
   useContext,
 } from 'react';
 import moment from 'moment';
-import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
+import { DECIMAL_BASE, SCOPE_IDS, GOAL_SOURCES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +27,7 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
+  GOAL_SOURCE_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
   objectivesWithValidResourcesOnly,
 } from './constants';
@@ -89,6 +90,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
+  const [sources, setSources] = useState([]);
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
@@ -149,6 +151,7 @@ export default function GoalForm({
         setGoalOnApprovedReport(goal.onApprovedAR);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
+        setSources(goal.sources);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -290,6 +293,23 @@ export default function GoalForm({
 
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.NAME, 1, error);
+    setErrors(newErrors);
+
+    return !error.props.children;
+  };
+
+  /**
+   * @returns bool
+   */
+
+  const validateGoalSource = (message = GOAL_SOURCE_ERROR) => {
+    let error = <></>;
+    if (sources.length && !sources.every((source) => GOAL_SOURCES.includes(source))) {
+      error = <span className="usa-error-message">{message}</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
     setErrors(newErrors);
 
     return !error.props.children;
@@ -641,6 +661,7 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
+          sources,
           isCurated,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
@@ -736,6 +757,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
+        sources,
         ids,
       }));
 
@@ -747,6 +769,7 @@ export default function GoalForm({
             isCurated: goal.isCurated,
             prompts: goal.prompts,
             status,
+            sources,
             endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipientId: recipient.id,
@@ -804,6 +827,7 @@ export default function GoalForm({
     setSelectedGrants(goal.grants);
     setIsCurated(goal.isCurated);
     setPrompts(goal.prompts);
+    setSources(goal.sources);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -927,6 +951,9 @@ export default function GoalForm({
               onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
               validatePrompts={validatePrompts}
+              sources={sources}
+              setSources={setSources}
+              validateGoalSource={validateGoalSource}
             />
           )}
 

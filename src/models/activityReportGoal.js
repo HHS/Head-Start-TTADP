@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   afterCreate,
@@ -55,6 +55,9 @@ export default (sequelize, DataTypes) => {
     },
     closeSuspendContext: {
       type: DataTypes.TEXT,
+    },
+    sources: {
+      type: DataTypes.ARRAY(DataTypes.ENUM(GOAL_SOURCES)),
     },
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,

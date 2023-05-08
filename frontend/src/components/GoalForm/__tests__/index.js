@@ -63,6 +63,8 @@ describe('create goal', () => {
 
   const postResponse = [{
     id: 64175,
+    onApprovedAR: false,
+    sources: [],
     prompts: [],
     name: 'This is goal text',
     status: 'Draft',
@@ -819,6 +821,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: null,
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',
@@ -858,6 +861,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',
@@ -897,6 +901,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',
@@ -946,6 +951,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',

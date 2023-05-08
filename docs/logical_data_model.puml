@@ -72,6 +72,7 @@ class ActivityReportGoals{
  endDate : date
  isRttapa : enum
  isActivelyEdited : boolean
+ sources : enum[] : '{}'::"enum_ActivityReportGoals_sources"[]
  * activityReportId : integer : REFERENCES "ActivityReports".id
  * goalId : integer : REFERENCES "Goals".id
 }

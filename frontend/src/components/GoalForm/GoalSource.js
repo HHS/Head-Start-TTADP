@@ -19,11 +19,9 @@ export default function GoalSource({
   isLoading,
   isOnReport,
   userCanEdit,
-  editingFromActivityReport,
 }) {
-  const readOnly = useMemo(() => !editingFromActivityReport
-  && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit),
-  [goalStatus, isOnReport, userCanEdit, editingFromActivityReport]);
+  const readOnly = useMemo(() => isOnReport || goalStatus === 'Closed' || !userCanEdit,
+    [goalStatus, isOnReport, userCanEdit]);
 
   if (readOnly && !sources.length) {
     return null;
@@ -99,11 +97,9 @@ GoalSource.propTypes = {
     PropTypes.number,
   ]).isRequired,
   userCanEdit: PropTypes.bool.isRequired,
-  editingFromActivityReport: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
   inputName: 'goal-source',
   isLoading: false,
-  editingFromActivityReport: false,
 };
