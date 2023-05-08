@@ -37,7 +37,7 @@ import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
-import { getNotifications } from './fetchers/notifications';
+import { getNotifications } from './fetchers/feed';
 import { storageAvailable } from './hooks/helpers';
 import {
   LOCAL_STORAGE_DATA_KEY,

@@ -8,7 +8,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import Navigator from '../index';
+import Navigator, { getPromptErrors } from '../index';
 import UserContext from '../../../UserContext';
 import { COMPLETE, NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
@@ -22,11 +22,11 @@ const user = {
 };
 
 // eslint-disable-next-line react/prop-types
-const Input = ({ name, required }) => {
+const Input = ({ name, required, type = 'radio' }) => {
   const { register } = useFormContext();
   return (
     <input
-      type="radio"
+      type={type}
       data-testid={name}
       name={name}
       ref={register({ required })}
@@ -126,6 +126,8 @@ const initialData = {
   activityRecipients: [],
   activityRecipientType: 'recipient',
   'goalForEditing.objectives': [],
+  goalPrompts: ['test-prompt', 'test-prompt-error'],
+  'test-prompt': ['test'],
 };
 
 describe('Navigator', () => {
@@ -581,6 +583,7 @@ describe('Navigator', () => {
           name: '',
           objectives: [],
           regionId: 1,
+          prompts: expect.anything(),
         },
       ],
       pageState: { 1: COMPLETE, 2: NOT_STARTED },
@@ -922,5 +925,98 @@ describe('Navigator', () => {
     await waitFor(() => expect(fetchMock.called('/api/activity-reports/goals')).toBe(true));
     HTMLDivElement.prototype.contains = previousContains;
     expect(updateForm).not.toHaveBeenCalled();
+  });
+
+  it('breaks save draft when there is an error in the goal prompts', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <Input name="prompt" type="text" required />
+          <GoalTest />
+        </>
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'recipient',
+      activityRecipients: [
+        {
+          id: 1,
+          name: 'recipient',
+          grant: {
+            id: 1,
+          },
+        },
+      ],
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: '09/01/2020',
+      goalIsRttapa: 'Yes',
+      goalName: 'goal name',
+      goalPrompts: [{ fieldName: 'prompt' }],
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
+    expect(saveGoal).toBeVisible();
+    fetchMock.restore();
+    act(() => userEvent.click(saveGoal));
+    expect(fetchMock.called()).toBe(false);
+  });
+});
+
+describe('getPromptErrors', () => {
+  const oldQuerySelector = document.querySelector;
+  afterAll(() => {
+    document.querySelector = oldQuerySelector;
+  });
+
+  it('returns true if there are errors', async () => {
+    document.querySelector = jest.fn(() => null);
+    const errors = { prompt: 'error' };
+    const prompts = [{ fieldName: 'prompt' }];
+    expect(getPromptErrors(prompts, errors)).toBe(true);
+  });
+
+  it('focuses if there are errors', async () => {
+    const focus = jest.fn();
+    document.querySelector = jest.fn(() => ({ focus }));
+    const errors = { prompt: 'error' };
+    const prompts = [{ fieldName: 'prompt' }];
+    expect(getPromptErrors(prompts, errors)).toBe(true);
+    expect(focus).toHaveBeenCalled();
+  });
+
+  it('returns false if there are no errors', async () => {
+    document.querySelector = jest.fn(() => null);
+    const errors = {};
+    const prompts = [{ fieldName: 'prompt' }];
+    expect(getPromptErrors(prompts, errors)).toBe(false);
+  });
+
+  it('returns false if there are no prompts', async () => {
+    document.querySelector = jest.fn(() => null);
+    const errors = {};
+    expect(getPromptErrors(null, errors)).toBe(false);
   });
 });

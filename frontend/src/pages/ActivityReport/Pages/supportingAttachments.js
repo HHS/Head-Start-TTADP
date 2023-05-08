@@ -15,7 +15,6 @@ const SupportingAttachments = ({
   reportId,
 }) => {
   const [fileError, setFileError] = useState();
-  const { control } = useFormContext();
 
   return (
     <>
@@ -40,7 +39,6 @@ const SupportingAttachments = ({
           <Controller
             name="files"
             defaultValue={[]}
-            control={control}
             render={({ onChange, value }) => (
               <ActivityReportFileUploader setErrorMessage={setFileError} files={value} onChange={onChange} reportId={reportId} id="files" />
             )}

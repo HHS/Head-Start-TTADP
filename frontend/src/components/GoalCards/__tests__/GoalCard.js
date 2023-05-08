@@ -1,9 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
+import { SCOPE_IDS } from '@ttahub/common';
 import GoalCard from '../GoalCard';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('GoalCard', () => {
   const goal = {
@@ -30,7 +29,6 @@ describe('GoalCard', () => {
       },
     ],
     previousStatus: null,
-    isRttapa: 'No',
   };
 
   const DEFAULT_USER = {

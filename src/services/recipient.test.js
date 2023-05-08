@@ -44,6 +44,10 @@ describe('Recipient DB service', () => {
   ];
 
   beforeAll(async () => {
+    await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Grant.unscoped().destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
+
     await Promise.all(recipients.map((r) => Recipient.create(r)));
     await Promise.all([
       Grant.create({
@@ -207,8 +211,8 @@ describe('Recipient DB service', () => {
 
   afterAll(async () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
-    await Grant.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
-    await Recipient.destroy({ where: { id: [73, 74, 75, 76] } });
+    await Grant.unscoped().destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
     await sequelize.close();
   });
 
@@ -216,9 +220,9 @@ describe('Recipient DB service', () => {
     it('returns all recipients', async () => {
       const foundRecipients = await allRecipients();
       const foundIds = foundRecipients.map((g) => g.id);
-      expect(foundIds).toContain(73);
       expect(foundIds).toContain(74);
       expect(foundIds).toContain(75);
+      expect(foundIds).toContain(76);
     });
   });
 
@@ -279,7 +283,7 @@ describe('Recipient DB service', () => {
       const recipient = await recipientById(76, {});
 
       expect(recipient.name).toBe('recipient 4');
-      expect(recipient.grants.length).toBe(4);
+      expect(recipient.grants.length).toBe(5);
 
       // Active After Cut Off Date.
       expect(recipient.grants[0].id).toBe(76);
@@ -289,13 +293,17 @@ describe('Recipient DB service', () => {
       expect(recipient.grants[1].id).toBe(77);
       expect(recipient.grants[1].status).toBe('Active');
 
-      // Inactive with End Date of Today.
-      expect(recipient.grants[2].id).toBe(81);
+      // Inactive with End Date past Today.
+      expect(recipient.grants[2].id).toBe(80);
       expect(recipient.grants[2].status).toBe('Inactive');
 
-      // Inactive After Cut Off Date.
-      expect(recipient.grants[3].id).toBe(78);
+      // Inactive with End Date of Today.
+      expect(recipient.grants[3].id).toBe(81);
       expect(recipient.grants[3].status).toBe('Inactive');
+
+      // Inactive After Cut Off Date.
+      expect(recipient.grants[4].id).toBe(78);
+      expect(recipient.grants[4].status).toBe('Inactive');
     });
   });
 
@@ -369,6 +377,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Ben',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 52,
@@ -379,6 +389,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Cassie',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 53,
@@ -389,6 +401,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'David',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 54,
@@ -399,6 +413,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Eric',
         annualFundingMonth: 'January',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 55,
@@ -409,6 +425,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Frank',
         annualFundingMonth: null,
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 56,
@@ -419,6 +437,8 @@ describe('Recipient DB service', () => {
         status: 'Active',
         grantSpecialistName: 'Brom',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 57,
@@ -428,6 +448,8 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Jim',
         status: 'Inactive',
         annualFundingMonth: 'October',
+        startDate: new Date(),
+        endDate: new Date(),
       },
       {
         id: 58,
@@ -487,8 +509,10 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
-      await Grant.destroy({ where: { recipientId: recipientsToSearch.map((g) => g.id) } });
-      await Recipient.destroy({ where: { id: recipientsToSearch.map((g) => g.id) } });
+      await Grant.unscoped().destroy({
+        where: { recipientId: recipientsToSearch.map((g) => g.id) },
+      });
+      await Recipient.unscoped().destroy({ where: { id: recipientsToSearch.map((g) => g.id) } });
     });
 
     it('returns only user regions', async () => {
@@ -499,7 +523,7 @@ describe('Recipient DB service', () => {
 
     it('finds based on recipient name', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(3);
+      expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(66);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(68);
@@ -519,39 +543,39 @@ describe('Recipient DB service', () => {
 
     it('sorts based on name', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
+      expect(foundRecipients.rows.length).toBe(4);
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([67, 68, 63, 66].sort());
     });
 
     it('sorts based on program specialist', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'programSpecialist', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
+      expect(foundRecipients.rows.length).toBe(4);
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 67, 68].sort());
     });
 
     it('sorts based on grant specialist', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'grantSpecialist', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
+      expect(foundRecipients.rows.length).toBe(4);
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([67, 68, 63, 66].sort());
     });
 
     it('respects sort order', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'desc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
+      expect(foundRecipients.rows.length).toBe(4);
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 67, 68].sort());
     });
 
     it('respects the offset passed in', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 1, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(2);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66].sort());
+      expect(foundRecipients.rows.length).toBe(3);
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 68].sort());
     });
 
     it('finds inactive grants that fall in the accepted range', async () => {
       const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
-      expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
   });
 
@@ -592,6 +616,8 @@ describe('Recipient DB service', () => {
         regionId: region.id,
         number: String(faker.datatype.number({ min: 1000 })),
         status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       await Grant.create({
@@ -600,6 +626,8 @@ describe('Recipient DB service', () => {
         regionId: region.id,
         number: String(faker.datatype.number({ min: 1000 })),
         status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       await Grant.create({
@@ -608,6 +636,8 @@ describe('Recipient DB service', () => {
         regionId: region.id,
         number: String(faker.datatype.number({ min: 1000 })),
         status: 'Inactive',
+        startDate: new Date(),
+        endDate: new Date(),
       });
     });
 

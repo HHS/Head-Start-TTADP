@@ -1,29 +1,17 @@
-const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all([
-  await sequelize.models.ActivityReportObjectiveFile.destroy({
+const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
+  [
+    sequelize.models.ActivityReportObjectiveFile,
+    sequelize.models.ActivityReportObjectiveResource,
+    sequelize.models.ActivityReportObjectiveTopic,
+  ].map(async (model) => model.destroy({
     where: {
       activityReportObjectiveId: instance.id,
     },
     individualHooks: true,
     hookMetadata: { objectiveId: instance.objectiveId },
     transaction: options.transaction,
-  }),
-  await sequelize.models.ActivityReportObjectiveResource.destroy({
-    where: {
-      activityReportObjectiveId: instance.id,
-    },
-    individualHooks: true,
-    hookMetadata: { objectiveId: instance.objectiveId },
-    transaction: options.transaction,
-  }),
-  await sequelize.models.ActivityReportObjectiveTopic.destroy({
-    where: {
-      activityReportObjectiveId: instance.id,
-    },
-    individualHooks: true,
-    hookMetadata: { objectiveId: instance.objectiveId },
-    transaction: options.transaction,
-  }),
-]);
+  })),
+);
 
 const recalculateOnAR = async (sequelize, instance, options) => {
   await sequelize.query(`

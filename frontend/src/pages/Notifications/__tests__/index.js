@@ -62,7 +62,7 @@ describe('Notifications', () => {
 
       Array.from(articles).forEach((article) => {
         expect(article).toBeVisible();
-        const title = article.querySelector('.ttahub-feed-article__whats-new-title');
+        const title = article.querySelector('.ttahub-feed-article-title');
         expect(title).not.toBe(null);
         expect(title.textContent).toBeTruthy();
       });

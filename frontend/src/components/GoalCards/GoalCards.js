@@ -5,12 +5,12 @@ import React, {
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
 import { Grid, Alert } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
-import { DECIMAL_BASE } from '../../Constants';
 
 function GoalCards({
   recipientId,
@@ -133,7 +133,6 @@ function GoalCards({
 
   const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
   const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
-  const nonRttapaSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.isRttapa === 'No').map((g) => g.id);
 
   const allSelectedGoalIds = (() => {
     const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
@@ -150,11 +149,11 @@ function GoalCards({
   })();
 
   const showRttapaValidation = (
-    rttapaValidation && !!(draftSelectedRttapa.length || nonRttapaSelectedRttapa.length)
+    rttapaValidation && !!(draftSelectedRttapa.length)
   );
 
   const createRttapa = async () => {
-    if (draftSelectedRttapa.length || nonRttapaSelectedRttapa.length) {
+    if (draftSelectedRttapa.length) {
       setRttapaValidation(true);
     } else {
       history.push(rttapaLink);
@@ -202,7 +201,6 @@ function GoalCards({
           showRttapaValidation={showRttapaValidation}
           createRttapa={createRttapa}
           draftSelectedRttapa={draftSelectedRttapa}
-          nonRttapaSelectedRttapa={nonRttapaSelectedRttapa}
         />
         <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
@@ -218,10 +216,7 @@ function GoalCards({
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
-              erroneouslySelected={showRttapaValidation && [
-                ...draftSelectedRttapa,
-                ...nonRttapaSelectedRttapa,
-              ].includes(goal.id)}
+              erroneouslySelected={showRttapaValidation && draftSelectedRttapa.includes(goal.id)}
             />
           ))}
 

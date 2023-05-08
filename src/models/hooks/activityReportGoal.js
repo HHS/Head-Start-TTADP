@@ -7,6 +7,20 @@ const processForEmbeddedResources = async (sequelize, instance, options) => {
   }
 };
 
+const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
+  [
+    sequelize.models.ActivityReportGoalResource,
+    sequelize.models.ActivityReportGoalFieldResponse,
+  ].map(async (model) => model.destroy({
+    where: {
+      activityReportGoalId: instance.id,
+    },
+    individualHooks: true,
+    hookMetadata: { goalId: instance.goalId },
+    transaction: options.transaction,
+  })),
+);
+
 const recalculateOnAR = async (sequelize, instance, options) => {
   await sequelize.query(`
     WITH
@@ -32,6 +46,10 @@ const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
 };
 
+const beforeDestroy = async (sequelize, instance, options) => {
+  await propagateDestroyToMetadata(sequelize, instance, options);
+};
+
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
 };
@@ -43,7 +61,9 @@ const afterUpdate = async (sequelize, instance, options) => {
 export {
   processForEmbeddedResources,
   recalculateOnAR,
+  propagateDestroyToMetadata,
   afterCreate,
+  beforeDestroy,
   afterDestroy,
   afterUpdate,
 };

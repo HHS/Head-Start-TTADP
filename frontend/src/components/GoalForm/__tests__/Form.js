@@ -11,6 +11,7 @@ const DEFAULT_GOAL = {
   status: 'Draft',
   isOnApprovedReport: false,
   isOnReport: false,
+  prompts: [],
 };
 
 describe('Goal Form > Form component', () => {
@@ -55,6 +56,7 @@ describe('Goal Form > Form component', () => {
       clearEmptyObjectiveError={jest.fn()}
       onUploadFile={jest.fn()}
       validateGoalNameAndRecipients={jest.fn()}
+      prompts={goal.prompts}
     />);
   };
 

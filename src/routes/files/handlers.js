@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
+import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
@@ -16,7 +17,7 @@ import {
   createObjectivesFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
-import { ActivityReportObjective, ActivityReportObjectiveFile } from '../../models';
+import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
@@ -24,7 +25,7 @@ import { userById } from '../../services/users';
 import { getObjectiveById } from '../../services/objectives';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
-import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
+import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 
@@ -75,6 +76,7 @@ const deleteOnlyFile = async (req, res) => {
   }
 
   try {
+    //
     const file = await getFileById(fileId);
     if (!file) {
       return res.status(404).send({ error: 'File not found' });
@@ -461,14 +463,13 @@ const deleteObjectiveFileHandler = async (req, res) => {
     }));
 
     file = await getFileById(fileId);
-    if (file.reports.length
+    if (file && file.reports.length
       + file.reportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
-
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);

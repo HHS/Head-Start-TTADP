@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import faker from '@faker-js/faker';
 import db, {
   Recipient,
@@ -21,7 +22,7 @@ import db, {
 import { createReport, destroyReport } from '../../testUtils';
 import { processObjectiveForResourcesById } from '../resource';
 import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from '../goals';
-import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
+import { FILE_STATUSES } from '../../constants';
 
 describe('goalById', () => {
   let grantRecipient;
@@ -48,6 +49,8 @@ describe('goalById', () => {
       programSpecialistName: faker.name.firstName(),
       regionId: 1,
       id: faker.datatype.number({ min: 64000 }),
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     goalOnActivityReport = await Goal.create({

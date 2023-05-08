@@ -32,7 +32,7 @@ describe('Email Notifications', () => {
         name: 'Mock New Collaborator',
       },
       newApprover: {
-        User: {
+        user: {
           email: 'mockNewApprover@test.gov',
           name: 'Mock New Approver',
         },
