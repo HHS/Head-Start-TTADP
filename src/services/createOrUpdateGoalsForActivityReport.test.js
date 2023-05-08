@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { createOrUpdateGoalsForActivityReport } from './goals';
 import { saveObjectivesForReport, getObjectivesByReportId } from './objectives';
 import db, {
@@ -62,12 +62,16 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
     {
       id: faker.datatype.number(),
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
   ];
 

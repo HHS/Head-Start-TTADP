@@ -5,9 +5,10 @@ import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Op } from 'sequelize';
 import { fileHash } from './fileUtils';
-import {
-  Recipient, Grant, Program, sequelize,
+import db, {
+  Recipient, Grant, Program, sequelize, Goal,
 } from '../models';
 import { logger, auditLogger } from '../logger';
 
@@ -24,6 +25,74 @@ function combineNames(firstName, lastName) {
   // filter removes null names (if a user has a firstname but no lastname)
   const joinedName = names.filter((name) => name).join(' ');
   return joinedName === '' ? null : joinedName;
+}
+
+/**
+ * Performs a soft delete of grants that no longer come from HSES
+ * and haven't been associated with goals
+ * @param {Array<object>} grantsForDb grants to be entered or updated in the db
+ * @param {Array<object>} recipientsForDb recipients to be entered or updated in the db
+ * @returns
+ */
+// TODO: Once HSES sends the inactivated date, add that date to the query.
+export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
+  const grantIdsArr = grantsForDb.map((g) => g.id);
+  const recipientIdsArr = recipientsForDb.map((r) => r.id);
+  const uniqueRecipientIds = [...new Set(recipientIdsArr)];
+
+  const grantsToDelete = await Grant.unscoped().findAll({
+    attributes: ['id', 'status'],
+    include: [
+      {
+        attributes: [],
+        model: Goal,
+        as: 'goals',
+        required: false,
+      },
+    ],
+    where: {
+      status: 'Inactive',
+      id: {
+        [Op.notIn]: grantIdsArr,
+      },
+      '$goals.id$': null,
+    },
+  });
+
+  const removedGrantIds = grantsToDelete.map((d) => d.id);
+
+  const removedRecipients = await Recipient.unscoped().findAll({
+    attributes: ['id'],
+    include: [{
+      model: Grant.unscoped(),
+      as: 'grants',
+      attributes: [],
+      include: [{
+        model: Goal,
+        as: 'goals',
+        attributes: [],
+        required: false,
+      }],
+    },
+    ],
+    where: {
+      id: { [Op.notIn]: uniqueRecipientIds },
+      '$grants->goals.id$': null,
+    },
+  });
+  const removedRecipientIds = removedRecipients.map((r) => r.id);
+
+  const delGrants = await Grant.unscoped().update(
+    { deleted: true },
+    { where: { id: { [Op.in]: removedGrantIds }, deleted: false } },
+  );
+
+  const delRecips = await Recipient.unscoped().update(
+    { deleted: true },
+    { where: { id: { [Op.in]: removedRecipientIds }, deleted: false } },
+  );
+  logger.info(`updateGrantsRecipients: removed ${delGrants} grants: ${removedGrantIds}`);
+  logger.info(`updGrRecipients: removed ${delRecips} recipients: ${removedRecipientIds}`);
 }
 
 /**
@@ -47,7 +116,8 @@ export async function processFiles(hashSumHex) {
           set_config('audit.loggedUser', '0', true) as "loggedUser",
           set_config('audit.transactionId', '${uuidv4()}', true) as "transactionId",
           set_config('audit.sessionSig', '${new Date().toISOString()}T${hashSumHex}', true) as "sessionSig",
-          set_config('audit.auditDescriptor', 'Grant data import from HSES', true) as "auditDescriptor";`,
+          set_config('audit.auditDescriptor', 'Grant data import from HSES', true) as "auditDescriptor",
+          set_config('audit.impersonationUserId', '3', true) as "impersonationUserId";`,
         { transaction },
       );
 
@@ -95,7 +165,7 @@ export async function processFiles(hashSumHex) {
       });
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
-      await Recipient.bulkCreate(
+      await Recipient.unscoped().bulkCreate(
         recipientsForDb,
         {
           updateOnDuplicate: ['uei', 'name', 'recipientType', 'updatedAt'],
@@ -107,9 +177,13 @@ export async function processFiles(hashSumHex) {
       const programs = JSON.parse(toJson(programData));
 
       const grantsForDb = grant.grant_awards.grant_award.map((g) => {
-        let { grant_start_date: startDate, grant_end_date: endDate } = g;
+        let {
+          grant_start_date: startDate, grant_end_date: endDate,
+          inactivation_date: inactivationDate,
+        } = g;
         if (typeof startDate === 'object') { startDate = null; }
         if (typeof endDate === 'object') { endDate = null; }
+        if (typeof inactivationDate === 'object') { inactivationDate = null; }
 
         const programSpecialistName = combineNames(
           g.program_specialist_first_name,
@@ -131,6 +205,7 @@ export async function processFiles(hashSumHex) {
           stateCode: valueFromXML(g.grantee_state),
           startDate,
           endDate,
+          inactivationDate,
           regionId,
           cdi,
           programSpecialistName,
@@ -138,6 +213,7 @@ export async function processFiles(hashSumHex) {
           grantSpecialistName,
           grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
           annualFundingMonth: valueFromXML(g.annual_funding_month),
+          inactivationReason: valueFromXML(g.inactivation_reason),
         };
       });
 
@@ -166,18 +242,18 @@ export async function processFiles(hashSumHex) {
       const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${grantsForDb.length} grants`);
-      await Grant.bulkCreate(
+      await Grant.unscoped().bulkCreate(
         nonCdiGrants,
         {
-          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
 
-      await Grant.bulkCreate(
+      await Grant.unscoped().bulkCreate(
         cdiGrants,
         {
-          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
@@ -194,7 +270,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantUpdatePromises = grantsToUpdate.map((g) => (
-        Grant.update(
+        Grant.unscoped().update(
           { oldGrantId: parseInt(g.replaced_grant_award_id, 10) },
           {
             where: { id: parseInt(g.replacement_grant_award_id, 10) },
@@ -215,6 +291,7 @@ export async function processFiles(hashSumHex) {
           transaction,
         },
       );
+      await removeOldGrantsRecipients(grantsForDb, recipientsForDb);
     });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);

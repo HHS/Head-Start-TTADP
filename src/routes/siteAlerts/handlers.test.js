@@ -1,7 +1,7 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
+import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '@ttahub/common';
 import { SiteAlert, User, sequelize } from '../../models';
-import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '../../constants';
 import { getSiteAlerts } from './handlers';
 
 describe('site alerts', () => {

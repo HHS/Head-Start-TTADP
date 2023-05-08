@@ -1,6 +1,6 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import ActivityReport from './activityReport';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 function activityReport(
   author,
@@ -24,7 +24,7 @@ function activityReport(
 
   if (approvers) {
     report.approvers = [...report.approvers, ...approvers.map((approver) => ({
-      id: 9, status: null, note: null, User: { id: approver },
+      id: 9, status: null, note: null, user: { id: approver },
     })),
     ];
   }

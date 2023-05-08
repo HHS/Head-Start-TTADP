@@ -1,12 +1,13 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   screen, render, fireEvent,
 } from '@testing-library/react';
 import App from '../../App';
-import { SCOPE_IDS } from '../../Constants';
+import { mockRSSData } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter', permissions: [] };
@@ -17,6 +18,8 @@ describe('HeaderUserMenu', () => {
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
   const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
+  const feedUrl = join('api', 'feeds', 'whats-new');
+  const groupsUrl = join('api', 'groups');
 
   const before = async (admin = false) => {
     if (admin) {
@@ -27,6 +30,8 @@ describe('HeaderUserMenu', () => {
 
     fetchMock.get(logoutUrl, 200);
     fetchMock.get(cleanupUrl, []);
+    fetchMock.get(feedUrl, mockRSSData());
+    fetchMock.get(groupsUrl, []);
 
     render(<App />);
 

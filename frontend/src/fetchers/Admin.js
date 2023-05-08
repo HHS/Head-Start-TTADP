@@ -1,8 +1,8 @@
 import join from 'url-join';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   get, put, post, destroy,
 } from './index';
-import { DECIMAL_BASE } from '../Constants';
 
 export const getUsers = async () => {
   const users = await get((join('/', 'api', 'admin', 'users')));
@@ -71,4 +71,14 @@ export const createSiteAlert = async (alert) => {
 export const setFeatureFlag = async (data) => {
   const result = await post((join('/', 'api', 'users', 'feature-flags')), data);
   return result;
+};
+
+export const getRedisInfo = async () => {
+  const info = await get((join('/', 'api', 'admin', 'redis', 'info')));
+  return info.json();
+};
+
+export const flushRedis = async () => {
+  const result = await post((join('/', 'api', 'admin', 'redis', 'flush')));
+  return result.json();
 };

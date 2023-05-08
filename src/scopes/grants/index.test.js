@@ -56,8 +56,8 @@ describe('grant filtersToScopes', () => {
         regionId: 4,
         recipientId: recipients[3].id,
         status: 'Active',
-        startDate: new Date('08/03/1997'),
-        endDate: new Date('08/03/1997'),
+        startDate: new Date('08/03/2022'),
+        endDate: new Date('08/03/2022'),
         programSpecialistName: 'No',
         stateCode: 'RI',
       }),
@@ -67,8 +67,8 @@ describe('grant filtersToScopes', () => {
         regionId: 1,
         recipientId: recipients[0].id,
         status: 'Active',
-        startDate: new Date('07/01/1997'),
-        endDate: new Date('07/01/1997'),
+        startDate: new Date('07/01/2022'),
+        endDate: new Date('07/01/2022'),
         programSpecialistName: 'No',
         stateCode: 'AZ',
       }),
@@ -78,8 +78,8 @@ describe('grant filtersToScopes', () => {
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Active',
-        startDate: new Date('08/01/1997'),
-        endDate: new Date('08/01/2002'),
+        startDate: new Date('08/01/2022'),
+        endDate: new Date('08/01/2025'),
         programSpecialistName: 'Joe Bob',
         stateCode: 'AR',
       }),
@@ -89,8 +89,8 @@ describe('grant filtersToScopes', () => {
         regionId: 3,
         recipientId: recipients[2].id,
         status: 'Active',
-        startDate: new Date('08/01/1997'),
-        endDate: new Date('08/01/2002'),
+        startDate: new Date('08/01/2022'),
+        endDate: new Date('08/01/2025'),
         programSpecialistName: 'Darcy',
         stateCode: 'AK',
       }),
@@ -200,7 +200,7 @@ describe('grant filtersToScopes', () => {
 
   describe('activeWithin', () => {
     it('before', async () => {
-      const filters = { 'startDate.bef': '1997/07/31' };
+      const filters = { 'startDate.bef': '2022/07/31' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
@@ -211,7 +211,7 @@ describe('grant filtersToScopes', () => {
     });
 
     it('after', async () => {
-      const filters = { 'startDate.aft': '1997/07/31' };
+      const filters = { 'startDate.aft': '2022/07/31' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
@@ -222,7 +222,7 @@ describe('grant filtersToScopes', () => {
     });
 
     it('within', async () => {
-      const filters = { 'startDate.win': '1997/07/31-1997/08/02' };
+      const filters = { 'startDate.win': '2022/07/31-2022/08/02' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: {
@@ -380,7 +380,7 @@ describe('grant filtersToScopes', () => {
   describe('group', () => {
     it('filters by', async () => {
       const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
-      const filters = { 'group.in': [groupName] };
+      const filters = { 'group.in': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
@@ -393,7 +393,7 @@ describe('grant filtersToScopes', () => {
 
     it('filters out', async () => {
       const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
-      const filters = { 'group.nin': [groupName] };
+      const filters = { 'group.nin': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },

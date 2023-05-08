@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
@@ -9,7 +10,7 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
+
 import AppLoadingContext from '../../../AppLoadingContext';
 
 const { ADMIN } = SCOPE_IDS;

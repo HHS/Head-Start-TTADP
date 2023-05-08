@@ -10,11 +10,10 @@ import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
 import NetworkContext from '../../../../../NetworkContext';
-
 import ReviewSubmit from '../index';
-import { REPORT_STATUSES } from '../../../../../Constants';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 
 const availableApprovers = [
@@ -37,7 +36,7 @@ const user = {
   ],
 };
 
-const approversToPass = [{ id: 1, status: null, User: { id: 1, fullName: 'approver 1' } }];
+const approversToPass = [{ id: 1, status: null, user: { id: 1, fullName: 'approver 1' } }];
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types

@@ -29,6 +29,8 @@ describe('Change Goal Status', () => {
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // create goal

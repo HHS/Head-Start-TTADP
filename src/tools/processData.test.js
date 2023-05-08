@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReport,
@@ -23,7 +24,6 @@ import processData, {
   convertFileName,
   convertRecipientName,
 } from './processData';
-import { REPORT_STATUSES } from '../constants';
 
 jest.mock('../logger');
 
@@ -180,11 +180,19 @@ describe('processData', () => {
         status: 'Active',
         programSpecialistName: mockManager.name,
         programSpecialistEmail: mockManager.email,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     });
     await Grant.findOrCreate({
       where: {
-        id: GRANT_ID_TWO, number: '01GN011411', recipientId: RECIPIENT_ID_TWO, regionId: 1, status: 'Active',
+        id: GRANT_ID_TWO,
+        number: '01GN011411',
+        recipientId: RECIPIENT_ID_TWO,
+        regionId: 1,
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       },
     });
   });
@@ -216,10 +224,10 @@ describe('processData', () => {
         ],
       },
     });
-    await Grant.destroy({ where: { id: GRANT_ID_ONE } });
-    await Grant.destroy({ where: { id: GRANT_ID_TWO } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID_ONE } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID_TWO } });
+    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE } });
+    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO } });
+    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
+    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
     await sequelize.close();
   });
 
@@ -253,6 +261,7 @@ describe('processData', () => {
       new_row_data: { test: 'test' },
       dml_timestamp: new Date().toISOString(),
       dml_by: 1,
+      dml_as: 3,
       dml_txid: uuidv4(),
     });
 

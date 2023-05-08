@@ -1,4 +1,5 @@
 import { Sequelize, Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -14,7 +15,7 @@ import {
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
-import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
+import { RESOURCE_DOMAIN } from '../../constants';
 
 /**
  * @typedef {Object} RecipientPrimitive
@@ -61,6 +62,7 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
  * @property {number} resourceId
  * @property {string} url
  * @property {string} domain
+ * @property {string} title
  * @property {string[]} sourceFields
  * @property {string} tableType
  * @property {string[]?} topics
@@ -69,6 +71,7 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
  * @property {number} resourceId
  * @property {string} url
  * @property {string} domain
+ * @property {string} title
  * @property {{ sourceField: string, tableType: string }[]} sourceFields
  * @property {string[]?} topics
  *
@@ -149,6 +152,7 @@ const mergeInResources = (currentData, additionalData) => additionalData
 * @property {number} resourceId
 * @property {string} url
 * @property {string} domain
+* @property {string} title
 * @property {string[]} sourceFields
 * @property {string} tableType
 * @property {string[]?} topics
@@ -175,6 +179,7 @@ const switchToResourceCentric = (input) => {
         resourceId,
         url,
         domain,
+        title,
         tableType,
         sourceFields,
         topics: resourceTopics,
@@ -184,6 +189,7 @@ const switchToResourceCentric = (input) => {
             resourceId,
             url,
             domain,
+            title,
             sourceFields,
             reports: [],
             topics: resourceTopics,
@@ -432,6 +438,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -522,6 +530,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"specialistNextSteps->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"specialistNextSteps->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"specialistNextSteps->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -618,6 +628,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"recipientNextSteps->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"recipientNextSteps->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"recipientNextSteps->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -714,6 +726,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"activityReportObjectives->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"activityReportObjectives->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"activityReportObjectives->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -849,6 +863,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"activityReportGoals->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"activityReportGoals->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"activityReportGoals->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -1092,6 +1108,7 @@ function generateResourceDomainList(
       ...domains,
       {
         domain: resource.domain,
+        title: resource.title,
         urls: [resource.url],
         count: resource.reports.length,
         recipients: resource.recipients,
@@ -1109,9 +1126,9 @@ function generateResourceDomainList(
 
   if (removeLists) {
     domainCounts = domainCounts.map(({
-      domain, count, reportCount, recipientCount, resourceCount,
+      domain, title, count, reportCount, recipientCount, resourceCount,
     }) => ({
-      domain, count, reportCount, recipientCount, resourceCount,
+      domain, title, count, reportCount, recipientCount, resourceCount,
     }));
   }
 
@@ -1323,7 +1340,6 @@ const generateResourcesDashboardOverview = (allData) => {
 /*
 WidgetID: resourceDashboardOverview
 Expected JSON (we have this now):
-
 {
   report: {
     numResources: '8,135',
@@ -1405,6 +1421,7 @@ const generateResourceUse = (allData) => {
     .slice(0, 10) // limit to the top 10
     .map((resource) => ({
       heading: resource.url,
+      title: resource.title,
       isUrl: true,
       data: [
         ...resource.startDates.reduce((data, startDate) => {

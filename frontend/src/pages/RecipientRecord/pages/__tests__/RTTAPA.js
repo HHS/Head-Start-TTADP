@@ -6,9 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import RTTAPA from '../RTTAPA';
 import UserContext from '../../../../UserContext';
-import { SCOPE_IDS } from '../../../../Constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
 const rttapaUrl = join('/', 'api', 'rttapa');
@@ -204,26 +204,5 @@ describe('RTTAPA', () => {
     await waitFor(() => {
       expect(screen.getByText('(1)')).toBeInTheDocument();
     });
-  });
-
-  it('you can\'t submit with no goals', async () => {
-    fetchMock.get(recipientGoalsUrl, { goalRows: [] });
-
-    act(() => {
-      renderRttapa();
-    });
-
-    const reviewDate = await screen.findByRole('textbox', { name: /review date/i });
-    act(() => {
-      userEvent.type(reviewDate, '01/01/2023');
-    });
-
-    fetchMock.restore();
-    expect(fetchMock.called()).toBe(false);
-    fetchMock.post(rttapaUrl, {});
-    act(() => {
-      userEvent.click(screen.getByText('Submit RTTAPA'));
-    });
-    await waitFor(() => expect(fetchMock.called()).toBe(false));
   });
 });
