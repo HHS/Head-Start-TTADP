@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import {
   Grant,
   Recipient,
@@ -18,7 +18,6 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
-  REPORT_STATUSES,
   GOAL_STATUS,
 } from '../constants';
 import filtersToScopes from '../scopes';
@@ -72,12 +71,23 @@ export async function allRecipients() {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
+        where: {
+          [Op.and]: [
+            { deleted: { [Op.ne]: true } },
+            {
+              endDate: {
+                [Op.gt]: '2020-08-31',
+              },
+            },
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
+          ],
+        },
       },
     ],
   });
 }
-
-const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
@@ -105,15 +115,23 @@ export async function recipientById(recipientId, grantScopes) {
         where: [{
           [Op.and]: [
             { [Op.and]: grantScopes },
+            { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
                 {
                   status: 'Active',
                 },
                 {
-                  endDate: {
-                    [Op.between]: ['2020-09-01', todaysDate],
-                  },
+                  [Op.and]: [
+                    {
+                      endDate: {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
+                    {
+                      [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                    },
+                  ],
                 },
               ],
             },
@@ -179,6 +197,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
       required: true,
       where: [{
         [Op.and]: [
+          { deleted: { [Op.ne]: true } },
           {
             [Op.and]: { regionId: userRegions },
           },
@@ -189,9 +208,16 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
                 status: 'Active',
               },
               {
-                endDate: {
-                  [Op.between]: ['2020-08-31', todaysDate],
-                },
+                [Op.and]: [
+                  {
+                    endDate: {
+                      [Op.gt]: '2020-08-31',
+                    },
+                  },
+                  {
+                    [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                  },
+                ],
               },
             ],
           },

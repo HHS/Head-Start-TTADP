@@ -1,6 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { REPORT_STATUSES, USER_ROLES, NEXTSTEP_NOTETYPE } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeCreate,
@@ -25,6 +26,18 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.belongsToMany(models.Grant, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'grantId',
+        as: 'grants',
+      });
+      ActivityReport.belongsToMany(models.OtherEntity, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'otherEntityId',
+        as: 'otherEntities',
+      });
       ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
@@ -164,6 +177,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     topics: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
+    programTypes: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     context: {

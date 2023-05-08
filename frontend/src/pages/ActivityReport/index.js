@@ -16,13 +16,12 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  REPORT_STATUSES,
-  DECIMAL_BASE,
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
@@ -258,7 +257,7 @@ function ActivityReport({
 
         // The report can be edited if its in draft OR needs_action state.
 
-        const isMatchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
+        const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
@@ -423,7 +422,7 @@ function ActivityReport({
   };
 
   const onSave = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
         const { startDate, endDate, ...fields } = data;
@@ -510,7 +509,7 @@ function ActivityReport({
   };
 
   const onFormSubmit = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approverIds = data.approvers.map((a) => a.user.id);
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       approverUserIds: approverIds,

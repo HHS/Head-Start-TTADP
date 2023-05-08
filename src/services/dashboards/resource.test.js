@@ -1,6 +1,5 @@
-import { QueryTypes } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  sequelize,
   ActivityReport,
   ActivityRecipient,
   Topic,
@@ -23,7 +22,7 @@ import {
   resourceTopicUse,
   resourceDashboard,
 } from './resource';
-import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
+import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
 
 const RECIPIENT_ID = 46204400;
@@ -430,6 +429,7 @@ describe('Resources dashboard', () => {
         {
           heading: 'https://eclkc.ohs.acf.hhs.gov/test',
           isUrl: true,
+          title: null,
           data: [
             { title: 'Jan-21', value: '2' },
             { title: 'Total', value: '2' },
@@ -438,6 +438,7 @@ describe('Resources dashboard', () => {
         {
           heading: 'https://non.test1.gov/a/b/c',
           isUrl: true,
+          title: null,
           data: [
             { title: 'Jan-21', value: '2' },
             { title: 'Total', value: '2' },
@@ -446,6 +447,7 @@ describe('Resources dashboard', () => {
         {
           heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
           isUrl: true,
+          title: null,
           data: [
             { title: 'Jan-21', value: '1' },
             { title: 'Total', value: '1' },
@@ -488,6 +490,7 @@ describe('Resources dashboard', () => {
           {
             heading: 'https://eclkc.ohs.acf.hhs.gov/test',
             isUrl: true,
+            title: null,
             data: [
               { title: 'Jan-21', value: '2' },
               { title: 'Total', value: '2' },
@@ -496,6 +499,7 @@ describe('Resources dashboard', () => {
           {
             heading: 'https://non.test1.gov/a/b/c',
             isUrl: true,
+            title: null,
             data: [
               { title: 'Jan-21', value: '2' },
               { title: 'Total', value: '2' },
@@ -504,6 +508,7 @@ describe('Resources dashboard', () => {
           {
             heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
             isUrl: true,
+            title: null,
             data: [
               { title: 'Jan-21', value: '1' },
               { title: 'Total', value: '1' },
@@ -530,6 +535,7 @@ describe('Resources dashboard', () => {
           reportCount: 3,
           recipientCount: 1,
           resourceCount: 2,
+          title: null,
         },
         {
           domain: 'non.test1.gov',
@@ -537,6 +543,7 @@ describe('Resources dashboard', () => {
           reportCount: 2,
           recipientCount: 1,
           resourceCount: 1,
+          title: null,
         },
       ],
     });

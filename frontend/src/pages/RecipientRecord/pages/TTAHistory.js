@@ -103,7 +103,7 @@ export default function TTAHistory({
             'Activity reports',
             'Hours of TTA',
             'Participants',
-            'In-person activities',
+            'In person activities',
           ]}
           showTooltips
           filters={filtersToApply}

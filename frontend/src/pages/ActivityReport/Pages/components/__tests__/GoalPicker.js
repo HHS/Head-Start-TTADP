@@ -76,6 +76,7 @@ describe('GoalPicker', () => {
       label: 'Goal 1',
       value: 1,
       goalIds: [1],
+      name: 'Goal 1',
     }];
 
     renderGoalPicker(availableGoals);
