@@ -209,7 +209,6 @@ export default function ApprovedReportV2({ data }) {
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
-  console.log('goal:',goalSections );
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
