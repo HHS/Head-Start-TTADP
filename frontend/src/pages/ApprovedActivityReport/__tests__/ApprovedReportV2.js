@@ -164,6 +164,34 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
   });
 
+  it('hides the goal close anticipation date', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: mockObjectives,
+      }],
+    }}
+    />);
+    expect(screen.queryAllByText(/anticipated close date/i).length).toBe(0);
+  });
+
+  it('shows the goal close anticipation date', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: mockObjectives,
+        endDate: '05/02/2023',
+      }],
+    }}
+    />);
+    expect(await screen.findByText(/anticipated close date/i)).toBeInTheDocument();
+    expect(await screen.findByText('05/02/2023')).toBeInTheDocument();
+  });
+
   it('in person', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'in-person',
