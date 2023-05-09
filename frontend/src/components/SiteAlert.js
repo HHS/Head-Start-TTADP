@@ -7,7 +7,7 @@ export default function SiteAlert({
   heading, children, style, variant, size,
 }) {
   return (
-    <div aria-live={alert.variant === 'emergency' ? 'assertive' : 'polite'}>
+    <span aria-live={alert.variant === 'emergency' ? 'assertive' : 'polite'}>
       <BaseSiteAlert
         variant={variant}
         heading={heading}
@@ -17,7 +17,7 @@ export default function SiteAlert({
       >
         {children}
       </BaseSiteAlert>
-    </div>
+    </span>
   );
 }
 
