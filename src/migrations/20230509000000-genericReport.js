@@ -16,6 +16,7 @@ module.exports = {
       /**
        *  create new tables for new structure:
        * - Reports
+       *  - ReportNationalCenters
        *  - ReportReasons
        *  - ReportTargetPopulations
        *  - EventReports
@@ -23,6 +24,7 @@ module.exports = {
        *  - ReportApprovals
        *  - ReportRecipients
        *  - ReportCollaborators
+       *    - ReportCollaboratorTypes
        *    - ReportCollaboratorRoles
        *  - ReportResources
        *  - ReportFiles
@@ -41,8 +43,10 @@ module.exports = {
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
        * - Statuses
+       * - NationalCenters
        * - Reasons
        * - TargetPopulations
+       * - CollaboratorTypes
        *  */
 
       //---------------------------------------------------------------------------------
@@ -717,6 +721,28 @@ module.exports = {
         },
       }, { transaction });
 
+      await queryInterface.addConstraint('CollaboratorTypes', {
+        fields: ['name', 'validFor'],
+        type: 'unique',
+        transaction,
+      });
+
+      await queryInterface.sequelize.query( `
+        INSERT INTO "CollaboratorTypes"
+        ("name", "validFor", "createdAt", "updatedAt")
+        VALUES
+        ('editor', 'report.event', current_timestamp, current_timestamp),
+        ('owner', 'report.event', current_timestamp, current_timestamp),
+        ('instantiator', 'report.event', current_timestamp, current_timestamp),
+        ('approver', 'report.event', current_timestamp, current_timestamp),
+        ('poc', 'report.event', current_timestamp, current_timestamp),
+        ('editor', 'report.session', current_timestamp, current_timestamp),
+        ('owner', 'report.session', current_timestamp, current_timestamp),
+        ('instantiator', 'report.session', current_timestamp, current_timestamp),
+        ('approver', 'report.session', current_timestamp, current_timestamp),
+        ('poc', 'report.session', current_timestamp, current_timestamp);
+      `, { transaction });
+
       //---------------------------------------------------------------------------------
       const COLLABORATOR_TYPES = {
         EDITOR: 'editor',
@@ -749,13 +775,6 @@ module.exports = {
             },
             key: 'id',
           },
-        },
-        collaboratorTypes: {
-          allowNull: false,
-          default: null,
-          type: Sequelize.DataTypes.ARRAY(
-            Sequelize.DataTypes.ENUM(Object.values(COLLABORATOR_TYPES)),
-          ),
         },
         userId: {
           allowNull: false,
