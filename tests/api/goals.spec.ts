@@ -121,6 +121,9 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     isCurated: Joi.boolean(),
     objectives: Joi.array(),
     grant: grantSchema,
+    sources: Joi.array().items(
+      Joi.string(),
+    ),
     prompts: Joi.array().items(
       Joi.object({
         id: Joi.number(),
