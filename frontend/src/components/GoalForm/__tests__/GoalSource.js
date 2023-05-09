@@ -11,6 +11,8 @@ const defaults = {
   onChangeGoalSource: jest.fn(),
   goalStatus: 'Draft',
   isOnReport: false,
+  isMultiRecipientGoal: false,
+  userCanEdit: true,
 };
 
 describe('GoalSource', () => {
@@ -21,6 +23,8 @@ describe('GoalSource', () => {
       onChangeGoalSource,
       goalStatus,
       isOnReport,
+      isMultiRecipientGoal,
+      userCanEdit,
     } = props;
     render(<GoalSource
       error={<></>}
@@ -30,9 +34,37 @@ describe('GoalSource', () => {
       goalStatus={goalStatus}
       isLoading={false}
       isOnReport={isOnReport}
-      userCanEdit
+      isMultiRecipientGoal={isMultiRecipientGoal}
+      userCanEdit={userCanEdit}
     />);
   };
+
+  it('shows nothing if on a multi-recipient goal', async () => {
+    act(() => {
+      renderGoalSource({
+        ...defaults,
+        isMultiRecipientGoal: true,
+      });
+    });
+
+    expect(screen.queryByText('Goal source')).toBeNull();
+    expect(document.querySelector('usa-select')).toBeNull();
+  });
+
+  it('shows read only if user can\'t edit', async () => {
+    renderGoalSource({
+      ...defaults,
+      sources: GOAL_SOURCES,
+      userCanEdit: false,
+    });
+
+    expect(screen.getByText('Goal source')).toBeInTheDocument();
+    expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
+    expect(screen.getByText(GOAL_SOURCES[1])).toBeInTheDocument();
+    expect(screen.getByText(GOAL_SOURCES[2])).toBeInTheDocument();
+    expect(screen.getByText(GOAL_SOURCES[3])).toBeInTheDocument();
+    expect(document.querySelector('usa-select')).toBeNull();
+  });
 
   it('shows the read only view when on report', async () => {
     act(() => {

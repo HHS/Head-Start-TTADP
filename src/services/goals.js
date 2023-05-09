@@ -1899,7 +1899,7 @@ export async function saveGoalsForReport(goals, report) {
           await newGoal.set({ endDate });
         }
 
-        if (sources && sources.length) {
+        if (!newGoal.onApprovedAR && sources && sources.length) {
           await newGoal.set({ sources });
         }
 
