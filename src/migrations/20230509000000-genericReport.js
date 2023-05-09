@@ -36,9 +36,56 @@ module.exports = {
        *    - ReportObjectiveTopics
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
+       * - Statuses
        * - Reasons
        * - TargetPopulations
        *  */
+
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('Statuses', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: false,
+        },
+        validFor: {
+          type: Sequelize.DataTypes.ENUM([
+            'report.event',
+            'report.session',
+          ]),
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: true,
+          default: null,
+          references: {
+            model: {
+              tableName: 'Statuses',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
 
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Reports', {
@@ -50,9 +97,19 @@ module.exports = {
         },
         reportType: {
           type: Sequelize.DataTypes.ENUM([
-            'event',
-            'session',
+            'report.event',
+            'report.session',
           ]),
+        },
+        statusId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Statuses',
+            },
+            key: 'id',
+          },
         },
         context: {
           type: Sequelize.DataTypes.TEXT,
@@ -79,6 +136,99 @@ module.exports = {
       }, { transaction });
 
       //---------------------------------------------------------------------------------
+      await queryInterface.createTable('NationalCenters', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: true,
+          default: null,
+          references: {
+            model: {
+              tableName: 'Reasons',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportNationalCenters', {
+        id: {
+          type: Sequelize.BIGINTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
+        nationalCenterId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'NationalCenters',
+            },
+            key: 'id',
+          },
+        },
+        actingAs: {
+          type: Sequelize.DataTypes.ENUM([
+            'trainer',
+          ]),
+          allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportNationalCenters', ['reportId', 'nationalCenterId', 'actingAs'], { transaction });
+
+      await queryInterface.addConstraint('ReportNationalCenters', {
+        fields: ['reportId', 'nationalCenterId', 'actingAs'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
       await queryInterface.createTable('Reasons', {
         id: {
           type: Sequelize.INTEGER,
@@ -88,6 +238,13 @@ module.exports = {
         },
         name: {
           type: Sequelize.DataTypes.TEXT,
+          allowNull: false,
+        },
+        validFor: {
+          type: Sequelize.DataTypes.ENUM([
+            'report.event',
+            'report.session',
+          ]),
           allowNull: false,
         },
         createdAt: {
@@ -176,6 +333,12 @@ module.exports = {
         name: {
           type: Sequelize.DataTypes.TEXT,
           allowNull: false,
+        },
+        reportType: {
+          type: Sequelize.DataTypes.ENUM([
+            'event',
+            'session',
+          ]),
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -270,18 +433,34 @@ module.exports = {
             key: 'id',
           },
         },
+        regionId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Regions',
+            },
+            key: 'id',
+          },
+        },
         name: {
           type: Sequelize.DataTypes.TEXT,
           allowNull: true,
         },
         organizer: {
-          type: Sequelize.DataTypes.ENUM(['Regional w/NC', 'Regional w/o NC', 'IST']),
+          type: Sequelize.DataTypes.ENUM([ // TODO: verify enum values
+            'Regional w/NC',
+            'Regional w/o NC',
+            'IST',
+          ]),
           allowNull: false,
         },
         audience: {
           type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(['Recipients', 'TTA specialists', 'Federal staff'])),
           allowNull: false,
         },
+        trainingType: { }, // TODO: don't know what this is yet.
+        vision: { }, // TODO: don't know what this is yet.
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -293,6 +472,7 @@ module.exports = {
           defaultValue: Sequelize.fn('NOW'),
         },
       }, { transaction });
+      await queryInterface.addIndex('EventReports', ['reportId', 'regionId'], { transaction });
 
       await queryInterface.addConstraint('EventReports', {
         fields: ['reportId'],
@@ -318,6 +498,16 @@ module.exports = {
             key: 'id',
           },
         },
+        regionId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Regions',
+            },
+            key: 'id',
+          },
+        },
         name: {
           type: Sequelize.DataTypes.TEXT,
           allowNull: true,
@@ -328,10 +518,6 @@ module.exports = {
         },
         virtualParticipants: {
           type: Sequelize.DataTypes.INTEGER,
-          allowNull: true,
-        },
-        trainingDelivered: {
-          type: Sequelize.DataTypes.TEXT,
           allowNull: true,
         },
         trainers: {
@@ -349,6 +535,7 @@ module.exports = {
           defaultValue: Sequelize.fn('NOW'),
         },
       }, { transaction });
+      await queryInterface.addIndex('SessionReports', ['reportId', 'regionId'], { transaction });
 
       await queryInterface.addConstraint('SessionReports', {
         fields: ['reportId'],
@@ -481,11 +668,58 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+      await queryInterface.createTable('CollaboratorTypes', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: false,
+        },
+        validFor: {
+          type: Sequelize.DataTypes.ENUM([
+            'report.event',
+            'report.session',
+          ]),
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: true,
+          default: null,
+          references: {
+            model: {
+              tableName: 'Reasons',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      //---------------------------------------------------------------------------------
       const COLLABORATOR_TYPES = {
         EDITOR: 'editor',
         OWNER: 'owner',
         INSTANTIATOR: 'instantiator',
         APPROVER: 'approver',
+        POC: 'poc',
       };
 
       const APPROVAL_STATUSES = {
@@ -557,6 +791,53 @@ module.exports = {
 
       await queryInterface.addConstraint('ReportCollaborators', {
         fields: ['reportId', 'userId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportCollaboratorTypes', {
+        id: {
+          type: Sequelize.BIGINTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportCollaboratorId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportCollaborators',
+            },
+            key: 'id',
+          },
+        },
+        collaboratorTypeId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'CollaboratorTypes',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportCollaboratorTypes', ['reportCollaboratorId', 'collaboratorTypeId'], { transaction });
+
+      await queryInterface.addConstraint('ReportCollaboratorTypes', {
+        fields: ['reportCollaboratorId', 'collaboratorTypeId'],
         type: 'unique',
         transaction,
       });
