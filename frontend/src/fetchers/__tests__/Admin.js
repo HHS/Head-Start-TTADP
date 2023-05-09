@@ -2,7 +2,14 @@ import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
 import {
-  getUsers, updateUser, getCDIGrants, getRecipients, assignCDIGrant, getFeatures,
+  getUsers,
+  updateUser,
+  getCDIGrants,
+  getRecipients,
+  assignCDIGrant,
+  getFeatures,
+  getRedisInfo,
+  flushRedis,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -79,6 +86,24 @@ describe('Admin', () => {
       fetchMock.put(join('/', 'api', 'admin', 'grants', 'cdi', '1'), grants[0]);
       const updatedGrant = await assignCDIGrant(1, 2, 3);
       expect(updatedGrant).toEqual(grants[0]);
+    });
+  });
+
+  describe('getRedisInfo', () => {
+    it('gets redis info', async () => {
+      const info = { info: 'info' };
+      fetchMock.get(join('/', 'api', 'admin', 'redis', 'info'), info);
+      const fetchedInfo = await getRedisInfo();
+      expect(fetchedInfo).toEqual(info);
+    });
+  });
+
+  describe('flushRedis', () => {
+    it('flushes redis', async () => {
+      const res = { flushed: true };
+      fetchMock.post(join('/', 'api', 'admin', 'redis', 'flush'), res);
+      const flushed = await flushRedis();
+      expect(flushed).toEqual(res);
     });
   });
 });
