@@ -324,7 +324,7 @@ export async function setFieldPromptForCuratedTemplate(
           },
         },
       ),
-      ...recordsToCreate.map(async (rtc) => GoalFieldResponseModel.create(rtc)),
+      GoalFieldResponseModel.bulkCreate(recordsToCreate, { independentHooks: true }),
     ]);
   }
 
