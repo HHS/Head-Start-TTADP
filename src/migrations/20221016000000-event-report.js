@@ -2,8 +2,8 @@ module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
       const REPORT_TYPE = {
+        LEGACYACTIVITY: 'legacy_activity',
         ACTIVITY: 'activity',
-        RTTAPA: 'rttapa',
       };
 
       const ENTITY_TYPES = {
@@ -14,6 +14,7 @@ module.exports = {
         GOALTEMPLATE: 'goal_template',
         OBJECTIVE: 'objective',
         OBJECTIVETEMPLATE: 'objectiveTemplate',
+        GROUP: 'group',
       };
 
       const COLLABORATOR_TYPES = {
