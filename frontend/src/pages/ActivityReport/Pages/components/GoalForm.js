@@ -195,7 +195,7 @@ export default function GoalForm({
           isLoading={isAppLoading}
           userCanEdit={!isCurated}
           isOnReport={false}
-          editingFromActivityReport
+          isMultiRecipientGoal={isMultiRecipientReport}
         />
       </FeatureFlag>
 

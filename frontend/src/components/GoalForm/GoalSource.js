@@ -19,11 +19,12 @@ export default function GoalSource({
   isLoading,
   isOnReport,
   userCanEdit,
+  isMultiRecipientGoal,
 }) {
   const readOnly = useMemo(() => isOnReport || goalStatus === 'Closed' || !userCanEdit,
     [goalStatus, isOnReport, userCanEdit]);
 
-  if (readOnly && !sources.length) {
+  if ((readOnly && !sources.length) || isMultiRecipientGoal) {
     return null;
   }
   if (readOnly && sources.length) {
@@ -97,9 +98,11 @@ GoalSource.propTypes = {
     PropTypes.number,
   ]).isRequired,
   userCanEdit: PropTypes.bool.isRequired,
+  isMultiRecipientGoal: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
   inputName: 'goal-source',
   isLoading: false,
+  isMultiRecipientGoal: false,
 };
