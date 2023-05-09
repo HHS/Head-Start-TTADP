@@ -86,7 +86,12 @@ describe('Goals DB service', () => {
       }, false]);
       Goal.destroy = jest.fn();
       Goal.update = jest.fn().mockResolvedValue([1, [{ id: mockGoalId }]]);
-      Goal.create = jest.fn().mockResolvedValue({ id: mockGoalId, update: jest.fn() });
+      Goal.create = jest.fn().mockResolvedValue({
+        id: mockGoalId,
+        update: jest.fn(),
+        save: jest.fn(),
+      });
+      Goal.save = jest.fn();
 
       ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();

@@ -194,6 +194,9 @@ test.describe('get /recipient', () => {
            }),
           ),                  
         name: Joi.string(),
+        sources: Joi.array().items(
+          Joi.string(),
+        ),
         goalTemplateId: Joi.number().allow(null),
         status: Joi.string(),
         regionId: Joi.number(),
