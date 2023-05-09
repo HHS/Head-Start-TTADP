@@ -109,7 +109,7 @@ function calculateGoalsAndObjectives(report) {
     report.goalsAndObjectives.forEach((goal) => {
       striped = !striped;
 
-      const goalSection = {
+      let goalSection = {
         heading: 'Goal summary',
         data: {
           'Recipient\'s goal': (
@@ -123,6 +123,22 @@ function calculateGoalsAndObjectives(report) {
         },
         striped,
       };
+
+      // Add anticipated close date if we have it.
+      if (goal.endDate) {
+        goalSection = {
+          ...goalSection.heading,
+          data: {
+            ...goalSection.data,
+            'Anticipated close date': (
+              <>
+                {goal.endDate}
+              </>
+            ),
+          },
+          striped: true,
+        };
+      }
 
       const { prompts } = goal;
       if (prompts && prompts.length) {
@@ -193,7 +209,7 @@ export default function ApprovedReportV2({ data }) {
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
-
+  console.log('goal:',goalSections );
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
