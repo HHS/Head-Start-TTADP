@@ -192,3 +192,27 @@ export const COLLABORATOR_APPROVAL_STATUSES = {
   NEEDS_ACTION: 'needs_action',
   APPROVED: 'approved',
 };
+
+export const TRAINING_TYPE = {
+  SERIES: 'series',
+};
+
+export const AUDIENCE = {
+  RECIPIENTS: 'Recipients',
+  TTA_SPECIALISTS: 'TTA specialists',
+  FEDERAL_STAFF: 'Federal staff',
+};
+
+export const ORGANIZER = {
+  REGIONAL_W_NC: 'Regional w/NC',
+  REGIONAL_WO_NC: 'Regional w/o NC',
+  IST: 'IST',
+};
+
+export const REPORT_STATUSES = {
+  DRAFT: 'draft',
+  DELETED: 'deleted',
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
+  NEEDS_ACTION: 'needs_action',
+};

@@ -16,17 +16,19 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       Report.hasOne(models.Status, { foreignKey: 'statusId', as: 'status' });
       Report.hasOne(models.ReportApproval, { foreignKey: 'reportId', as: 'reportApproval' }); // TODO: limit scope by report type
+      // TODO: make sure this is working, limit scope by report type
       Report.hasMany(models.ReportNationalCenter, {
         foreignKey: 'reportId',
         as: NATIONAL_CENTER_ACTING_AS.TRAINER,
-        scope: { actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER }, // TODO: make sure this is working, limit scope by report type
+        scope: { actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER },
       });
+      // TODO: make sure this is working, limit scope by report type
       Report.belongsToMany(models.NationalCenter, {
         through: models.ReportNationalCenter,
         foreignKey: 'reportId',
         otherKey: 'nationalCenterId',
         as: `${NATIONAL_CENTER_ACTING_AS.TRAINER}s`,
-        scope: { actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER },  // TODO: make sure this is working, limit scope by report type
+        scope: { actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER },
       });
       Report.hasMany(models.ReportReason, {
         foreignKey: 'reportId',
@@ -65,6 +67,9 @@ export default (sequelize, DataTypes) => {
         }],
       });
       Report.addScope('event', {
+        where: {
+          reportType: ENTITY_TYPE.REPORT_EVENT,
+        },
         include: [
           {
             model: models.ReportApproval,
@@ -101,6 +106,9 @@ export default (sequelize, DataTypes) => {
         ],
       });
       Report.addScope('session', {
+        where: {
+          reportType: ENTITY_TYPE.REPORT_SESSION,
+        },
         include: [
           {
             model: models.ReportApproval,

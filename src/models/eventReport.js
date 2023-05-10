@@ -1,6 +1,11 @@
 const {
   Model,
 } = require('sequelize');
+const {
+  TRAINING_TYPE,
+  AUDIENCE,
+  ORGANIZER,
+} = require('../constants');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -35,19 +40,22 @@ export default (sequelize, DataTypes) => {
       unique: true,
     },
     organizer: {
-      type: DataTypes.ENUM([ // TODO: verify enum values
-        'Regional w/NC',
-        'Regional w/o NC',
-        'IST',
-      ]),
+      type: DataTypes.ENUM(Object.values(ORGANIZER)),
       allowNull: false,
     },
     audience: {
-      type: DataTypes.ARRAY(DataTypes.ENUM(['Recipients', 'TTA specialists', 'Federal staff'])),
+      type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(AUDIENCE))),
       allowNull: false,
     },
-    trainingType: { }, // TODO: don't know what this is yet.
-    vision: { }, // TODO: don't know what this is yet.
+    trainingType: {
+      type: DataTypes.ENUM(Object.values(TRAINING_TYPE)),
+      allowNull: false,
+      defaultValue: TRAINING_TYPE.SERIES,
+    },
+    vision: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'EventReport',

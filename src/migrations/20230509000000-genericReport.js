@@ -734,7 +734,7 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.sequelize.query( `
+      await queryInterface.sequelize.query(`
         INSERT INTO "CollaboratorTypes"
         ("name", "validFor", "createdAt", "updatedAt")
         VALUES
@@ -757,7 +757,7 @@ module.exports = {
         APPROVED: 'approved',
       };
 
-      await queryInterface.createTable(`ReportCollaborators`, {
+      await queryInterface.createTable('ReportCollaborators', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -1003,7 +1003,9 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+            Object.values(SOURCE_FIELD.REPORT),
+          )),
         },
         createdAt: {
           allowNull: false,
@@ -1143,7 +1145,9 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOALTEMPLATE))),
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+            Object.values(SOURCE_FIELD.REPORTGOALTEMPLATE),
+          )),
         },
         createdAt: {
           allowNull: false,
@@ -1275,7 +1279,9 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+            Object.values(SOURCE_FIELD.REPORTGOAL),
+          )),
         },
         createdAt: {
           allowNull: false,
@@ -1460,7 +1466,9 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+            Object.values(SOURCE_FIELD.REPORTOBJECTIVE),
+          )),
         },
         createdAt: {
           allowNull: false,
@@ -1706,7 +1714,9 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+            Object.values(SOURCE_FIELD.REPORTOBJECTIVE),
+          )),
         },
         createdAt: {
           allowNull: false,
@@ -1787,88 +1797,90 @@ module.exports = {
       });
     },
   ),
-  down: async (queryInterface) => {
-    const loggedUser = '0';
-    const sessionSig = __filename;
-    const auditDescriptor = 'REVERT MIGRATIONS';
-    await queryInterface.sequelize.query(
-      `SELECT
-              set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
-              set_config('audit.transactionId', NULL, TRUE) as "transactionId",
-              set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
-              set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-      { transaction },
-    );
-    await queryInterface.sequelize.query(
-      `
-      SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
-      `,
-      { transaction },
-    );
+  down: async (queryInterface) => queryInterface.sequelize.transaction(
+    async (transaction) => {
+      const loggedUser = '0';
+      const sessionSig = __filename;
+      const auditDescriptor = 'REVERT MIGRATIONS';
+      await queryInterface.sequelize.query(
+        `SELECT
+                set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
+                set_config('audit.transactionId', NULL, TRUE) as "transactionId",
+                set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
+                set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
+        { transaction },
+      );
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+        `,
+        { transaction },
+      );
 
-    /**
-    *  Remove all new tables
-    * - Reports
-    *  - ReportReasons
-    *  - ReportTargetPopulations
-    *  - EventReports
-    *  - SessionReports
-    *  - ReportApprovals
-    *  - ReportRecipients
-    *  - ReportCollaborators
-    *    - ReportCollaboratorRoles
-    *  - ReportResources
-    *  - ReportFiles
-    *  - ReportGoalTemplates
-    *    - ReportGoalTemplateResources
-    *  - ReportGoals
-    *    - ReportGoalResources
-    *  - ReportObjectives
-    *    - ReportObjectiveFiles
-    *    - ReportObjectiveResources
-    *    - ReportObjectiveTopics
-    *
-    * - Reasons
-    * - TargetPopulations
-    *  */
-    await Promise.all([
-      'Reasons',
-      'TargetPopulations',
-      'ReportReasons',
-      'ReportTargetPopulations',
-      'EventReports',
-      'SessionReports',
-      'ReportApprovals',
-      'ReportRecipients',
-      'ReportCollaborators',
-      'ReportCollaboratorRoles',
-      'ReportResources',
-      'ReportFiles',
-      'ReportGoalTemplateResources',
-      'ReportGoalTemplates',
-      'ReportGoalResources',
-      'ReportGoals',
-      'ReportObjectiveFiles',
-      'ReportObjectiveResources',
-      'ReportObjectiveTopics',
-      'ReportObjectives',
-      'Reports',
-    ]
-      .map(async (table) => {
-        await queryInterface.sequelize.query(
-          ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
-          { raw: true, transaction },
-        );
-        // Drop old audit log table
-        await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });
-        await queryInterface.dropTable(`ZAL${table}`, { transaction });
-        await queryInterface.dropTable(table, { transaction });
-      }));
-    await queryInterface.sequelize.query(
-      `
-      SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
-      `,
-      { transaction },
-    );
-  },
+      /**
+      *  Remove all new tables
+      * - Reports
+      *  - ReportReasons
+      *  - ReportTargetPopulations
+      *  - EventReports
+      *  - SessionReports
+      *  - ReportApprovals
+      *  - ReportRecipients
+      *  - ReportCollaborators
+      *    - ReportCollaboratorRoles
+      *  - ReportResources
+      *  - ReportFiles
+      *  - ReportGoalTemplates
+      *    - ReportGoalTemplateResources
+      *  - ReportGoals
+      *    - ReportGoalResources
+      *  - ReportObjectives
+      *    - ReportObjectiveFiles
+      *    - ReportObjectiveResources
+      *    - ReportObjectiveTopics
+      *
+      * - Reasons
+      * - TargetPopulations
+      *  */
+      await Promise.all([
+        'Reasons',
+        'TargetPopulations',
+        'ReportReasons',
+        'ReportTargetPopulations',
+        'EventReports',
+        'SessionReports',
+        'ReportApprovals',
+        'ReportRecipients',
+        'ReportCollaborators',
+        'ReportCollaboratorRoles',
+        'ReportResources',
+        'ReportFiles',
+        'ReportGoalTemplateResources',
+        'ReportGoalTemplates',
+        'ReportGoalResources',
+        'ReportGoals',
+        'ReportObjectiveFiles',
+        'ReportObjectiveResources',
+        'ReportObjectiveTopics',
+        'ReportObjectives',
+        'Reports',
+      ]
+        .map(async (table) => {
+          await queryInterface.sequelize.query(
+            ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
+            { raw: true, transaction },
+          );
+          // Drop old audit log table
+          await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });
+          await queryInterface.dropTable(`ZAL${table}`, { transaction });
+          await queryInterface.dropTable(table, { transaction });
+        }));
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+        `,
+        { transaction },
+      );
+    },
+  ),
 };

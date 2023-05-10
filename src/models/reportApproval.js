@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { REPORT_STATUSES } = require('../constants');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -26,11 +27,11 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     submissionStatus: {
-      type: DataTypes.ENUM([]),
+      type: DataTypes.ENUM(Object.values(REPORT_STATUSES)),
       allowNull: false,
     },
     calculatedStatus: {
-      type: DataTypes.ENUM([]),
+      type: DataTypes.ENUM(Object.values(REPORT_STATUSES)),
       allowNull: false,
     },
     firstSubmittedAt: {
