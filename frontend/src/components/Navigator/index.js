@@ -94,6 +94,21 @@ const shouldUpdateFormData = (isAutoSave) => {
 
 export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
 
+export const packageGoals = (goals, goal, grantIds, prompts) => [
+  // we make sure to mark all the read only goals as "ActivelyEdited: false"
+  ...goals.map((g) => ({
+    ...g,
+    grantIds,
+    isActivelyBeingEditing: false,
+    prompts: grantIds.length < 2 ? g.prompts : [],
+  })),
+  {
+    ...goal,
+    grantIds,
+    prompts: grantIds.length < 2 ? prompts : [],
+  },
+];
+
 const Navigator = ({
   editable,
   formData,
@@ -178,8 +193,6 @@ const Navigator = ({
 
     return r.activityRecipientId;
   }) : [];
-
-  const isMultiRecipientReport = recipients.length > 1;
 
   const { isDirty, isValid } = formState;
 
@@ -271,17 +284,16 @@ const Navigator = ({
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
-      grantIds,
-      prompts: isMultiRecipientReport ? [] : prompts,
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
     // save it to the server and update the form state
-    const allGoals = [...selectedGoals.map((g) => ({
-      ...g,
-      isActivelyBeingEditing: false,
-      prompts: isMultiRecipientReport ? [] : g.prompts,
-    })), goal];
+    const allGoals = packageGoals(
+      selectedGoals,
+      goal,
+      grantIds,
+      prompts,
+    );
 
     try {
       setValue('goals', allGoals);
@@ -352,15 +364,14 @@ const Navigator = ({
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
-      grantIds,
-      prompts: isMultiRecipientReport ? [] : prompts,
     };
 
-    let allGoals = [...selectedGoals.map((g) => ({
-      ...g,
-      isActivelyBeingEditing: false,
-      prompts: isMultiRecipientReport ? [] : prompts,
-    })), goal];
+    let allGoals = packageGoals(
+      selectedGoals,
+      goal,
+      grantIds,
+      prompts,
+    );
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -543,12 +554,10 @@ const Navigator = ({
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: false,
-      grantIds,
       name,
       endDate,
       objectives,
       regionId: formData.regionId,
-      prompts: isMultiRecipientReport ? [] : prompts,
     };
 
     // validate goals will check the form and set errors
@@ -583,23 +592,25 @@ const Navigator = ({
       setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
-      setValue('goals', [
-        // we make sure to mark all the read only goals as "ActivelyEdited: false"
-        ...selectedGoals.map((g) => ({
-          ...g,
-          isActivelyBeingEditing: false,
-          prompts: isMultiRecipientReport ? [] : prompts,
-        })),
+      setValue('goals', packageGoals(
+        selectedGoals,
         {
           ...goal,
           // we also need to make sure we only send valid objectives to the API
           objectives: objectivesWithValidResourcesOnly(goal.objectives),
         },
-      ]);
+        grantIds,
+        prompts,
+      ));
 
       // save report to API
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
+      const data = {
+        ...formData,
+        ...values,
+        pageState:
+        newNavigatorState(),
+      };
       await onSave(data);
 
       updateErrorMessage('');
