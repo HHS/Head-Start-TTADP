@@ -66,6 +66,7 @@ module.exports = {
             'report.event',
             'report.session',
           ]),
+          allowNull: false,
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -528,10 +529,6 @@ module.exports = {
           type: Sequelize.DataTypes.INTEGER,
           allowNull: true,
         },
-        trainers: {
-          type: Sequelize.DataTypes.ENUM([/* Need a list of national centers, should this be a foreign key*/]),
-          allowNull: false,
-        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -744,14 +741,6 @@ module.exports = {
       `, { transaction });
 
       //---------------------------------------------------------------------------------
-      const COLLABORATOR_TYPES = {
-        EDITOR: 'editor',
-        OWNER: 'owner',
-        INSTANTIATOR: 'instantiator',
-        APPROVER: 'approver',
-        POC: 'poc',
-      };
-
       const APPROVAL_STATUSES = {
         APPROVAL_REQUESTED: 'approval_requested',
         NEEDS_ACTION: 'needs_action',

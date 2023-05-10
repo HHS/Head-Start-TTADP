@@ -172,3 +172,23 @@ export const GRANT_INACTIVATION_REASONS = {
   RELINQUISHED: 'Relinquished',
   UNKNOWN: 'Unknown',
 };
+
+export const ENTITY_TYPE = {
+  REPORT_EVENT: 'report.event',
+  REPORT_SESSION: 'resport.session',
+};
+
+export const NATIONAL_CENTER_ACTING_AS = {
+  TRAINER: 'trainer',
+};
+
+export const RECIPIENT_TYPE = {
+  GRANT: 'grant',
+  OTHER_ENTITY: 'otherEntity',
+};
+
+export const COLLABORATOR_APPROVAL_STATUSES = {
+  APPROVAL_REQUESTED: 'approval_requested',
+  NEEDS_ACTION: 'needs_action',
+  APPROVED: 'approved',
+};
