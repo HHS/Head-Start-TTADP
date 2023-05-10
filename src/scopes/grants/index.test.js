@@ -34,6 +34,14 @@ const recipients = [
     id: seed + 3,
     name: recipientFourName,
   },
+  {
+    id: seed + 4,
+    name: recipientThreeName,
+  },
+  {
+    id: seed + 5,
+    name: recipientFourName,
+  },
 ];
 
 const possibleIds = recipients.map((recipient) => recipient.id);
@@ -93,6 +101,30 @@ describe('grant filtersToScopes', () => {
         endDate: new Date('08/01/2025'),
         programSpecialistName: 'Darcy',
         stateCode: 'AK',
+      }),
+      Grant.create({
+        id: recipients[4].id,
+        number: String(faker.datatype.number({ min: 2800 })),
+        regionId: 1,
+        recipientId: recipients[1].id,
+        status: 'Inactive',
+        startDate: new Date('07/01/2022'),
+        endDate: new Date('08/01/2025'),
+        programSpecialistName: 'Joe Bob',
+        stateCode: 'AR',
+        inactivationDate: new Date('07/26/2022'),
+      }),
+      Grant.create({
+        id: recipients[5].id,
+        number: String(faker.datatype.number({ min: 2800 })),
+        regionId: 3,
+        recipientId: recipients[2].id,
+        status: 'Inactive',
+        startDate: new Date('07/01/2022'),
+        endDate: new Date('08/01/2025'),
+        programSpecialistName: 'Darcy',
+        stateCode: 'AK',
+        inactivationDate: new Date('07/26/2022'),
       }),
     ]);
 
@@ -221,6 +253,18 @@ describe('grant filtersToScopes', () => {
         .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id]));
     });
 
+    it('after plus inactivation date', async () => {
+      const filters = { 'startDate.aft': '2022/07/12' };
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(5);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id,
+        recipients[4].id, recipients[5].id]));
+    });
+
     it('within', async () => {
       const filters = { 'startDate.win': '2022/07/31-2022/08/02' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
@@ -232,6 +276,19 @@ describe('grant filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id]));
+    });
+
+    it('within plus inactivation date', async () => {
+      const filters = { 'startDate.win': '2022/07/11-2022/07/28' };
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: possibleIds }],
+        },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([recipients[4].id, recipients[5].id]));
     });
   });
 
