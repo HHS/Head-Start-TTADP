@@ -179,6 +179,8 @@ const Navigator = ({
     return r.activityRecipientId;
   }) : [];
 
+  const isMultiRecipientReport = recipients.length > 1;
+
   const { isDirty, isValid } = formState;
 
   const newNavigatorState = () => {
@@ -270,12 +272,16 @@ const Navigator = ({
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
       grantIds,
-      prompts,
+      prompts: isMultiRecipientReport ? [] : prompts,
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
     // save it to the server and update the form state
-    const allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
+    const allGoals = [...selectedGoals.map((g) => ({
+      ...g,
+      isActivelyBeingEditing: false,
+      prompts: isMultiRecipientReport ? [] : g.prompts,
+    })), goal];
 
     try {
       setValue('goals', allGoals);
@@ -347,10 +353,14 @@ const Navigator = ({
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
       grantIds,
-      prompts,
+      prompts: isMultiRecipientReport ? [] : prompts,
     };
 
-    let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
+    let allGoals = [...selectedGoals.map((g) => ({
+      ...g,
+      isActivelyBeingEditing: false,
+      prompts: isMultiRecipientReport ? [] : prompts,
+    })), goal];
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -538,7 +548,7 @@ const Navigator = ({
       endDate,
       objectives,
       regionId: formData.regionId,
-      prompts,
+      prompts: isMultiRecipientReport ? [] : prompts,
     };
 
     // validate goals will check the form and set errors
@@ -575,7 +585,11 @@ const Navigator = ({
       // set goals to form data as appropriate
       setValue('goals', [
         // we make sure to mark all the read only goals as "ActivelyEdited: false"
-        ...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })),
+        ...selectedGoals.map((g) => ({
+          ...g,
+          isActivelyBeingEditing: false,
+          prompts: isMultiRecipientReport ? [] : prompts,
+        })),
         {
           ...goal,
           // we also need to make sure we only send valid objectives to the API
