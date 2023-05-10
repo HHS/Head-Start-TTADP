@@ -507,6 +507,16 @@ module.exports = {
             key: 'id',
           },
         },
+        eventReportId: {
+          type: Sequelize.DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
         regionId: {
           type: Sequelize.DataTypes.INTEGER,
           allowNull: false,
@@ -855,43 +865,43 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
-      await queryInterface.createTable(`ReportCollaboratorRoles`, {
-          id: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            primaryKey: true,
-            autoIncrement: true,
-          },
-          reportCollaboratorId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            onDelete: 'CASCADE',
-            references: {
-              model: {
-                tableName: `ReportCollaborators`,
-              },
-              key: 'id',
+      await queryInterface.createTable('ReportCollaboratorRoles', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportCollaboratorId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ReportCollaborators',
             },
+            key: 'id',
           },
-          roleId: {
-            type: Sequelize.INTEGER,
-            allowNull: true,
-            onDelete: 'CASCADE',
-            references: {
-              model: {
-                tableName: 'Roles',
-              },
-              key: 'id',
+        },
+        roleId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Roles',
             },
+            key: 'id',
           },
-          createdAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
-          updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
       await queryInterface.addIndex('ReportCollaboratorRoles', ['reportCollaboratorId', 'roleId'], { transaction });
 
@@ -902,7 +912,60 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
-      const  SOURCE_FIELD = {
+      const NEXTSTEP_NOTETYPE = {
+        SPECIALIST: 'SPECIALIST',
+        RECIPIENT: 'RECIPIENT',
+      };
+
+      await queryInterface.createTable('ReportNextSteps', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
+        note: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        noteType: {
+          allowNull: true,
+          type: Sequelize.DataTypes.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
+        },
+        completedDate: {
+          type: Sequelize.DATEONLY,
+          allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportNextSteps', ['reportId', 'nextStepId'], { transaction });
+
+      await queryInterface.addConstraint('ReportNextSteps', {
+        fields: ['reportId', 'nextStepId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
+      const SOURCE_FIELD = {
         REPORT: {
           CONTEXT: 'context',
           TRAININGDELIVERED: 'trainingDelivered', // via Session Report
@@ -910,818 +973,818 @@ module.exports = {
         },
       };
 
-    await queryInterface.createTable('ReportResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Reports',
-          },
-          key: 'id',
+      await queryInterface.createTable('ReportResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+        reportId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportResources', ['reportId', 'resourceId'], { transaction });
+        resourceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        sourceFields: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportResources', ['reportId', 'resourceId'], { transaction });
 
-    await queryInterface.addConstraint('ReportResources', {
-      fields: ['reportId', 'resourceId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportResources', {
+        fields: ['reportId', 'resourceId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportFiles', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Reports',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      fileId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Files',
+        reportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportFiles', ['reportId', 'fileId'], { transaction });
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportFiles', ['reportId', 'fileId'], { transaction });
 
-    await queryInterface.addConstraint('ReportFiles', {
-      fields: ['reportId', 'fileId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportFiles', {
+        fields: ['reportId', 'fileId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportGoalTemplates', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Reports',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportGoalTemplates', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      goalTemplateId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'GoalTemplates',
+        reportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportGoalTemplates', ['reportId', 'goalTemplateId'], { transaction });
+        goalTemplateId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'GoalTemplates',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportGoalTemplates', ['reportId', 'goalTemplateId'], { transaction });
 
-    await queryInterface.addConstraint('ReportGoalTemplates', {
-      fields: ['reportId', 'goalTemplateId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportGoalTemplates', {
+        fields: ['reportId', 'goalTemplateId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportGoalTemplateResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportGoalTemplateId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ReportGoalTemplates',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportGoalTemplateResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+        reportGoalTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportGoalTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOALTEMPLATE))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportGoalTemplateResources', ['reportGoalTemplateId', 'resourceId'], { transaction });
+        resourceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        sourceFields: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOALTEMPLATE))),
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportGoalTemplateResources', ['reportGoalTemplateId', 'resourceId'], { transaction });
 
-    await queryInterface.addConstraint('ReportGoalTemplateResources', {
-      fields: ['reportGoalTemplateId', 'resourceId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportGoalTemplateResources', {
+        fields: ['reportGoalTemplateId', 'resourceId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportGoals', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Reports',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportGoals', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      goalId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Goals',
+        reportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      name: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      status: {
-        type: Sequelize.ENUM([
-          'Draft',
-          'Not Started',
-          'In Progress',
-          'Suspended',
-          'Closed',
-        ]),
-        allowNull: true,
-      },
-      timeframe: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      closeSuspendReason: {
-        type: Sequelize.ENUM([
-          'Duplicate goal',
-          'Recipient request',
-          'TTA complete',
-          'Key staff turnover / vacancies',
-          'Recipient is not responding',
-          'Regional Office request',
-        ]),
-        allowNull: true,
-      },
-      closeSuspendContext: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      endDate: {
-        type: Sequelize.DATEONLY,
-        allowNull: true,
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportGoals', ['reportId', 'goalId'], { transaction });
+        goalId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Goals',
+            },
+            key: 'id',
+          },
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        status: {
+          type: Sequelize.ENUM([
+            'Draft',
+            'Not Started',
+            'In Progress',
+            'Suspended',
+            'Closed',
+          ]),
+          allowNull: true,
+        },
+        timeframe: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        closeSuspendReason: {
+          type: Sequelize.ENUM([
+            'Duplicate goal',
+            'Recipient request',
+            'TTA complete',
+            'Key staff turnover / vacancies',
+            'Recipient is not responding',
+            'Regional Office request',
+          ]),
+          allowNull: true,
+        },
+        closeSuspendContext: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        endDate: {
+          type: Sequelize.DATEONLY,
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportGoals', ['reportId', 'goalId'], { transaction });
 
-    await queryInterface.addConstraint('ReportGoals', {
-      fields: ['reportId', 'goalId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportGoals', {
+        fields: ['reportId', 'goalId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportGoalResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportGoalId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ReportGoals',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportGoalResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+        reportGoalId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportGoals',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportGoalResources', ['reportGoalId', 'resourceId'], { transaction });
+        resourceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        sourceFields: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportGoalResources', ['reportGoalId', 'resourceId'], { transaction });
 
-    await queryInterface.addConstraint('ReportGoalResources', {
-      fields: ['reportGoalId', 'resourceId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportGoalResources', {
+        fields: ['reportGoalId', 'resourceId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveTemplates', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Reports',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTemplates', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      objectiveTemplateId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveTemplates',
+        reportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      reportGoalId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ReportGoals',
+        objectiveTemplateId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      title: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      status: {
-        type: Sequelize.ENUM([
-          'Not Started',
-          'In Progress',
-          'Suspended',
-          'Complete',
-        ]),
-        allowNull: true,
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectives', ['reportId', 'objectiveTemplateId'], { transaction });
-    await queryInterface.addIndex('ReportObjectives', ['reportId', 'reportObjectiveTemplateId'], { transaction });
+        reportGoalId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ReportGoals',
+            },
+            key: 'id',
+          },
+        },
+        title: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        status: {
+          type: Sequelize.ENUM([
+            'Not Started',
+            'In Progress',
+            'Suspended',
+            'Complete',
+          ]),
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectives', ['reportId', 'objectiveTemplateId'], { transaction });
+      await queryInterface.addIndex('ReportObjectives', ['reportId', 'reportObjectiveTemplateId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectiveTemplates', {
-      fields: ['reportId', 'objectiveTemplateId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectiveTemplates', {
+        fields: ['reportId', 'objectiveTemplateId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveTemplateFiles', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportObjectiveTemplateId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ReportObjectiveTemplates',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTemplateFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      fileId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Files',
+        reportObjectiveTemplateId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ReportObjectiveTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      objectiveTemplateFileId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveTemplateFiles',
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectiveTemplateFiles', ['reportObjectiveTemplateId', 'fileId'], { transaction });
-    await queryInterface.addIndex('ReportObjectiveTemplateFiles', ['reportObjectiveTemplateId', 'objectiveTemplateFileId'], { transaction });
+        objectiveTemplateFileId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplateFiles',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateFiles', ['reportObjectiveTemplateId', 'fileId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateFiles', ['reportObjectiveTemplateId', 'objectiveTemplateFileId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectiveTemplateFiles', {
-      fields: ['reportObjectiveTemplateId', 'fileId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectiveTemplateFiles', {
+        fields: ['reportObjectiveTemplateId', 'fileId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveTemplateResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportObjectiveTemplateId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ReportObjectiveTemplates',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTemplateResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+        reportObjectiveTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportObjectiveTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      objectiveTemplateResourceId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveTemplateResources',
+        resourceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'resourceId'], { transaction });
-    await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'objectiveTemplateResourceId'], { transaction });
+        objectiveTemplateResourceId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplateResources',
+            },
+            key: 'id',
+          },
+        },
+        sourceFields: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'resourceId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'objectiveTemplateResourceId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectiveTemplateResources', {
-      fields: ['reportObjectiveTemplateId', 'resourceId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectiveTemplateResources', {
+        fields: ['reportObjectiveTemplateId', 'resourceId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveTemplateTopics', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportObjectiveTemplateId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ReportObjectiveTemplates',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTemplateTopics', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-      },
-      topicId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Topics',
+        reportObjectiveTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportObjectiveTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-      },
-      objectiveTemplateTopicId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveTemplateTopics',
+        topicId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Topics',
+            },
+            key: 'id',
           },
-          key: 'id',
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
         },
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectiveTemplateTopics', ['reportObjectiveTemplateId', 'topicId'], { transaction });
-    await queryInterface.addIndex('ReportObjectiveTemplateTopics', ['reportObjectiveTemplateId', 'objectiveTemplateTopicId'], { transaction });
+        objectiveTemplateTopicId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplateTopics',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateTopics', ['reportObjectiveTemplateId', 'topicId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateTopics', ['reportObjectiveTemplateId', 'objectiveTemplateTopicId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectiveTemplateTopics', {
-      fields: ['reportObjectiveTemplateId', 'topicId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectiveTemplateTopics', {
+        fields: ['reportObjectiveTemplateId', 'topicId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectives', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Reports',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectives', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      objectiveId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Objectives',
+        reportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      reportGoalId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ReportGoals',
+        objectiveId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Objectives',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      title: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      status: {
-        type: Sequelize.ENUM([
-          'Not Started',
-          'In Progress',
-          'Suspended',
-          'Complete',
-        ]),
-        allowNull: true,
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectives', ['reportId', 'objectiveId'], { transaction });
-    await queryInterface.addIndex('ReportObjectives', ['reportId', 'reportGoalId'], { transaction });
+        reportGoalId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ReportGoals',
+            },
+            key: 'id',
+          },
+        },
+        title: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        status: {
+          type: Sequelize.ENUM([
+            'Not Started',
+            'In Progress',
+            'Suspended',
+            'Complete',
+          ]),
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectives', ['reportId', 'objectiveId'], { transaction });
+      await queryInterface.addIndex('ReportObjectives', ['reportId', 'reportGoalId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectives', {
-      fields: ['reportId', 'objectiveId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectives', {
+        fields: ['reportId', 'objectiveId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveFiles', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportObjectiveId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ReportObjectives',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      fileId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Files',
+        reportObjectiveId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ReportObjectives',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      objectiveFileId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveFiles',
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectives', ['reportObjectiveId', 'fileId'], { transaction });
-    await queryInterface.addIndex('ReportObjectives', ['reportObjectiveId', 'objectiveFileId'], { transaction });
+        objectiveFileId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveFiles',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectives', ['reportObjectiveId', 'fileId'], { transaction });
+      await queryInterface.addIndex('ReportObjectives', ['reportObjectiveId', 'objectiveFileId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectives', {
-      fields: ['reportObjectiveId', 'fileId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectives', {
+        fields: ['reportObjectiveId', 'fileId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveResources', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportObjectiveId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ReportObjectives',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-      },
-      resourceId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Resources',
+        reportObjectiveId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportObjectives',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      objectiveResourceId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveResources',
+        resourceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      },
-      sourceFields: {
-        allowNull: true,
-        default: null,
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectiveResources', ['reportObjectiveId', 'resourceId'], { transaction });
-    await queryInterface.addIndex('ReportObjectiveResources', ['reportObjectiveId', 'objectiveResourceId'], { transaction });
+        objectiveResourceId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveResources',
+            },
+            key: 'id',
+          },
+        },
+        sourceFields: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveResources', ['reportObjectiveId', 'resourceId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveResources', ['reportObjectiveId', 'objectiveResourceId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectiveResources', {
-      fields: ['reportObjectiveId', 'resourceId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectiveResources', {
+        fields: ['reportObjectiveId', 'resourceId'],
+        type: 'unique',
+        transaction,
+      });
 
-    //---------------------------------------------------------------------------------
-    await queryInterface.createTable('ReportObjectiveTopics', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      reportObjectiveId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'ReportObjectives',
-          },
-          key: 'id',
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTopics', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-      },
-      topicId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Topics',
+        reportObjectiveId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportObjectives',
+            },
+            key: 'id',
           },
-          key: 'id',
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-      },
-      objectiveTopicId: {
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'ObjectiveTopics',
+        topicId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Topics',
+            },
+            key: 'id',
           },
-          key: 'id',
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
         },
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-    await queryInterface.addIndex('ReportObjectiveTopics', ['reportObjectiveId', 'topicId'], { transaction });
-    await queryInterface.addIndex('ReportObjectiveTopics', ['reportObjectiveId', 'objectiveTopicId'], { transaction });
+        objectiveTopicId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTopics',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveTopics', ['reportObjectiveId', 'topicId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTopics', ['reportObjectiveId', 'objectiveTopicId'], { transaction });
 
-    await queryInterface.addConstraint('ReportObjectiveTopics', {
-      fields: ['reportObjectiveId', 'topicId'],
-      type: 'unique',
-      transaction,
-    });
+      await queryInterface.addConstraint('ReportObjectiveTopics', {
+        fields: ['reportObjectiveId', 'topicId'],
+        type: 'unique',
+        transaction,
+      });
     },
   ),
   down: async (queryInterface) => {

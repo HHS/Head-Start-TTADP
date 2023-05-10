@@ -1,5 +1,6 @@
 const {
   Model,
+  Op,
 } = require('sequelize');
 const { ENTITY_TYPE, NATIONAL_CENTER_ACTING_AS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
@@ -30,22 +31,100 @@ export default (sequelize, DataTypes) => {
       Report.hasMany(models.ReportReason, {
         foreignKey: 'reportId',
         as: 'reportReasons', // TODO: limit scope by report type
+        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
       });
       Report.belongsToMany(models.Reason, {
         through: models.ReportReason,
         foreignKey: 'reportId',
         otherKey: 'reasonId',
         as: 'reasons', // TODO: limit scope by report type
+        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
       });
       Report.hasMany(models.ReportTargetPopulation, {
         foreignKey: 'reportId',
         as: 'reportTargetPopulations', // TODO: limit scope by report type
+        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
       });
       Report.belongsToMany(models.TargetPopulation, {
         through: models.ReportTargetPopulation,
         foreignKey: 'reportId',
         otherKey: 'targetPopulationId',
         as: 'targetPopulations', // TODO: limit scope by report type
+        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
+      });
+      Report.addScope('defaultScope', {
+        include: [{
+          model: models.ReportApproval,
+          as: 'approval',
+          required: true,
+          where: {
+            submissionStatus: {
+              [Op.ne]: 'deleted',
+            },
+          },
+        }],
+      });
+      Report.addScope('event', {
+        include: [
+          {
+            model: models.ReportApproval,
+            as: 'approval',
+            required: true,
+            where: {
+              submissionStatus: {
+                [Op.ne]: 'deleted',
+              },
+            },
+          },
+          {
+            model: models.EventReport,
+            as: 'eventReport',
+          },
+          {
+            model: models.Reason,
+            as: 'reasons',
+            through: {
+              attributes: [],
+            },
+          },
+          {
+            model: models.TargetPopulation,
+            as: 'targetPopulations',
+            through: {
+              attributes: [],
+            },
+          },
+          {
+            model: models.ReportGoalTemplate,
+            as: 'reportGoalTemplates',
+          },
+        ],
+      });
+      Report.addScope('session', {
+        include: [
+          {
+            model: models.ReportApproval,
+            as: 'approval',
+            required: true,
+            where: {
+              submissionStatus: {
+                [Op.ne]: 'deleted',
+              },
+            },
+          },
+          {
+            model: models.SessionReport,
+            as: 'sessionReport',
+          },
+          {
+            model: models.ReportRecipients,
+            as: 'reportRecipients',
+          },
+          {
+            model: models.ReportObjectiveTemplate,
+            as: 'reportObjectiveTemplates',
+          },
+        ],
       });
     }
   }
