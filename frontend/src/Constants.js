@@ -1,5 +1,6 @@
 import moment from 'moment';
 import { SCOPE_IDS } from '@ttahub/common';
+import { ExporterContext } from 'react-admin';
 
 export const CONTAINS = 'contains';
 export const NOT_CONTAINS = 'does not contain';
@@ -20,6 +21,7 @@ export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
 export const REGION_CONDITIONS = [IS];
+export const SINGLE_OR_MULTI_RECIPIENT_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
