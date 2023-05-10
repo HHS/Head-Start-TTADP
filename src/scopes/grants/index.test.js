@@ -262,7 +262,7 @@ describe('grant filtersToScopes', () => {
       expect(found.length).toBe(5);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id,
-        recipients[4].id, recipients[5].id]));
+          recipients[4].id, recipients[5].id]));
     });
 
     it('within', async () => {
