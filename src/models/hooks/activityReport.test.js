@@ -53,7 +53,7 @@ describe('activity report model hooks', () => {
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number(),
+        id: faker.datatype.number({ min: 133434 }),
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: 1,
@@ -89,6 +89,7 @@ describe('activity report model hooks', () => {
         topics: ['topics'],
         ttaType: ['type'],
         creatorRole: 'TTAC',
+        additionalNotes: 'notes',
       });
 
       await ActivityReportGoal.create({
@@ -195,7 +196,7 @@ describe('activity report model hooks', () => {
       expect(testGoal.status).toEqual('Not Started');
     });
 
-    it('approving the report should set the goal and objectives to "in progress"', async () => {
+    it('approving the report should set the goal and objectives to "in progress", as well as adjusting the notes', async () => {
       let testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
 
@@ -206,10 +207,22 @@ describe('activity report model hooks', () => {
         activityReportId: report.id,
         userId: mockApprover.id,
         status: APPROVER_STATUSES.APPROVED,
+        note: 'approver notes',
       });
 
       testReport = await ActivityReport.findByPk(report.id);
       expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      expect(testReport.additionalNotes).toEqual('');
+
+      const approvers = await ActivityReportApprover.findAll({
+        where: {
+          activityReportId: report.id,
+        },
+      });
+
+      expect(approvers.length).toEqual(1);
+      expect(approvers[0].note).toEqual('');
 
       const testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');

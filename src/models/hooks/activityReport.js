@@ -101,6 +101,21 @@ const setSubmittedDate = (sequelize, instance, options) => {
   }
 };
 
+const clearAdditionalNotes = (sequelize, instance, options) => {
+  try {
+    if (!options.fields.includes('additionalNotes')) {
+      options.fields.push('additionalNotes');
+    }
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // Other > Submitted.
+      instance.set('additionalNotes', '');
+    }
+  } catch (e) {
+    auditLogger.error(JSON.stringify({ e }));
+  }
+};
+
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -811,6 +826,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
   setSubmittedDate(sequelize, instance, options);
+  clearAdditionalNotes(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {

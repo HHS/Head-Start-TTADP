@@ -146,7 +146,7 @@ function calculateGoalsAndObjectives(report) {
 
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, deliveryMethod, additionalNotes: creatorNotes, virtualDeliveryType,
+    reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
 
   // first table
@@ -162,9 +162,6 @@ export default function ApprovedReportV2({ data }) {
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
-
-  // Approver Notes.
-  const managerNotes = data.approvers.map((a) => `${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
@@ -326,22 +323,6 @@ export default function ApprovedReportV2({ data }) {
           ...recipientNextSteps,
         ]}
       />
-
-      <ApprovedReportSection
-        key={`review-and-submit-${reportId}`}
-        className="no-print"
-        title="Review and submit"
-        sections={[
-          {
-            data: {
-              'Creator notes': creatorNotes,
-              'Manager notes': managerNotes,
-            },
-            striped: true,
-          },
-        ]}
-      />
-
     </Container>
   );
 }
