@@ -72,6 +72,8 @@ export const findWhatsChanged = (object, base) => {
 
           return true;
         })(),
+        // no multigrant/multirecipient reports should have prompts
+        prompts: grantIds.length < 2 ? goal.prompts : [],
       }));
     }
 
