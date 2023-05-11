@@ -54,6 +54,22 @@ module.exports = {
         REPORT_SESSION: 'resport.session',
       };
 
+      const GOAL_STATUS = {
+        DRAFT: 'Draft',
+        NOT_STARTED: 'Not Started',
+        IN_PROGRESS: 'In Progress',
+        SUSPENDED: 'Suspended',
+        CLOSED: 'Closed',
+      };
+
+      const OBJECTIVE_STATUS = {
+        DRAFT: 'Draft',
+        NOT_STARTED: 'Not Started',
+        IN_PROGRESS: 'In Progress',
+        SUSPENDED: 'Suspended',
+        COMPLETE: 'Complete',
+      };
+
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Statuses', {
         id: {
@@ -63,11 +79,11 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false,
         },
         validFor: {
-          type: Sequelize.DataTypes.ENUM(Object.values(ENTITY_TYPE)),
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
           allowNull: false,
         },
         createdAt: {
@@ -86,7 +102,7 @@ module.exports = {
           default: null,
         },
         mapsTo: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
           references: {
@@ -107,10 +123,10 @@ module.exports = {
           autoIncrement: true,
         },
         reportType: {
-          type: Sequelize.DataTypes.ENUM(Object.values(ENTITY_TYPE)),
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
         },
         statusId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -120,7 +136,7 @@ module.exports = {
           },
         },
         context: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: true,
         },
         startDate: {
@@ -152,7 +168,7 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false,
         },
         createdAt: {
@@ -171,12 +187,12 @@ module.exports = {
           default: null,
         },
         mapsTo: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
           references: {
             model: {
-              tableName: 'Reasons',
+              tableName: 'NationalCenters',
             },
             key: 'id',
           },
@@ -192,7 +208,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -202,7 +218,7 @@ module.exports = {
           },
         },
         nationalCenterId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -212,7 +228,7 @@ module.exports = {
           },
         },
         actingAs: {
-          type: Sequelize.DataTypes.ENUM([
+          type: Sequelize.ENUM([
             'trainer',
           ]),
           allowNull: false,
@@ -245,11 +261,11 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false,
         },
         validFor: {
-          type: Sequelize.DataTypes.ENUM(Object.values(ENTITY_TYPE)),
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
           allowNull: false,
         },
         createdAt: {
@@ -268,7 +284,7 @@ module.exports = {
           default: null,
         },
         mapsTo: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
           references: {
@@ -289,7 +305,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -299,7 +315,7 @@ module.exports = {
           },
         },
         reasonId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -336,11 +352,11 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false,
         },
         reportType: {
-          type: Sequelize.DataTypes.ENUM([
+          type: Sequelize.ENUM([
             'event',
             'session',
           ]),
@@ -361,7 +377,7 @@ module.exports = {
           default: null,
         },
         mapsTo: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
           references: {
@@ -382,7 +398,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -392,7 +408,7 @@ module.exports = {
           },
         },
         targetPopulationId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -445,7 +461,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -455,7 +471,7 @@ module.exports = {
           },
         },
         regionId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -465,24 +481,24 @@ module.exports = {
           },
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: true,
         },
         organizer: {
-          type: Sequelize.DataTypes.ENUM(Object.values(ORGANIZER)),
+          type: Sequelize.ENUM(Object.values(ORGANIZER)),
           allowNull: false,
         },
         audience: {
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(AUDIENCE))),
+          type: Sequelize.ARRAY(Sequelize.ENUM(Object.values(AUDIENCE))),
           allowNull: false,
         },
         trainingType: {
-          type: Sequelize.DataTypes.ENUM(Object.values(TRAINING_TYPE)),
+          type: Sequelize.ENUM(Object.values(TRAINING_TYPE)),
           allowNull: false,
           defaultValue: TRAINING_TYPE.SERIES,
         },
         vision: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: true,
         },
         createdAt: {
@@ -513,7 +529,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -523,7 +539,7 @@ module.exports = {
           },
         },
         eventReportId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -533,7 +549,7 @@ module.exports = {
           },
         },
         regionId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -543,15 +559,15 @@ module.exports = {
           },
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: true,
         },
         inpersonParticipants: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
         },
         virtualParticipants: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
         },
         createdAt: {
@@ -612,15 +628,15 @@ module.exports = {
         },
         firstSubmittedAt: {
           allowNull: true,
-          type: Sequelize.DataTypes.DATE,
+          type: Sequelize.DATE,
         },
         submittedAt: {
           allowNull: true,
-          type: Sequelize.DataTypes.DATE,
+          type: Sequelize.DATE,
         },
         approvedAt: {
           allowNull: true,
-          type: Sequelize.DataTypes.DATE,
+          type: Sequelize.DATE,
         },
         createdAt: {
           allowNull: false,
@@ -714,11 +730,11 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
           allowNull: false,
         },
         validFor: {
-          type: Sequelize.DataTypes.ENUM([
+          type: Sequelize.ENUM([
             'report.event',
             'report.session',
           ]),
@@ -739,7 +755,7 @@ module.exports = {
           default: null,
         },
         mapsTo: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
           references: {
@@ -811,11 +827,11 @@ module.exports = {
         },
         status: {
           allowNull: true,
-          type: Sequelize.DataTypes.ENUM(Object.values(APPROVAL_STATUSES)),
+          type: Sequelize.ENUM(Object.values(APPROVAL_STATUSES)),
         },
         note: {
           allowNull: true,
-          type: Sequelize.DataTypes.TEXT,
+          type: Sequelize.TEXT,
         },
         createdAt: {
           allowNull: false,
@@ -849,7 +865,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportCollaboratorId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -859,7 +875,7 @@ module.exports = {
           },
         },
         collaboratorTypeId: {
-          type: Sequelize.DataTypes.INTEGER,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: {
@@ -964,7 +980,7 @@ module.exports = {
         },
         noteType: {
           allowNull: true,
-          type: Sequelize.DataTypes.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
+          type: Sequelize.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
         },
         completedDate: {
           type: Sequelize.DATEONLY,
@@ -979,19 +995,45 @@ module.exports = {
           type: Sequelize.DATE,
         },
       }, { transaction });
-      await queryInterface.addIndex('ReportNextSteps', ['reportId', 'nextStepId'], { transaction });
-
-      await queryInterface.addConstraint('ReportNextSteps', {
-        fields: ['reportId', 'nextStepId'],
-        type: 'unique',
-        transaction,
-      });
 
       //---------------------------------------------------------------------------------
       const SOURCE_FIELD = {
         REPORT: {
+          NONECLKC: 'nonECLKCResourcesUsed',
+          ECLKC: 'ECLKCResourcesUsed',
           CONTEXT: 'context',
-          TRAININGDELIVERED: 'trainingDelivered', // via Session Report
+          NOTES: 'additionalNotes',
+          RESOURCE: 'resource',
+        },
+        NEXTSTEPS: {
+          NOTE: 'note',
+          RESOURCE: 'resource',
+        },
+        GOAL: {
+          NAME: 'name',
+          TIMEFRAME: 'timeframe',
+          RESOURCE: 'resource',
+        },
+        GOALTEMPLATE: {
+          NAME: 'name',
+          RESOURCE: 'resource',
+        },
+        REPORTGOAL: {
+          NAME: 'name',
+          TIMEFRAME: 'timeframe',
+          RESOURCE: 'resource',
+        },
+        OBJECTIVE: {
+          TITLE: 'title',
+          RESOURCE: 'resource',
+        },
+        OBJECTIVETEMPLATE: {
+          TITLE: 'title',
+          RESOURCE: 'resource',
+        },
+        REPORTOBJECTIVE: {
+          TITLE: 'title',
+          TTAPROVIDED: 'ttaProvided',
           RESOURCE: 'resource',
         },
       };
@@ -1026,7 +1068,7 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+          type: Sequelize.ARRAY(Sequelize.ENUM(
             Object.values(SOURCE_FIELD.REPORT),
           )),
         },
@@ -1168,8 +1210,8 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
-            Object.values(SOURCE_FIELD.REPORTGOALTEMPLATE),
+          type: Sequelize.ARRAY(Sequelize.ENUM(
+            Object.values(SOURCE_FIELD.GOALTEMPLATE),
           )),
         },
         createdAt: {
@@ -1181,6 +1223,7 @@ module.exports = {
           type: Sequelize.DATE,
         },
       }, { transaction });
+
       await queryInterface.addIndex('ReportGoalTemplateResources', ['reportGoalTemplateId', 'resourceId'], { transaction });
 
       await queryInterface.addConstraint('ReportGoalTemplateResources', {
@@ -1222,13 +1265,7 @@ module.exports = {
           allowNull: true,
         },
         status: {
-          type: Sequelize.ENUM([
-            'Draft',
-            'Not Started',
-            'In Progress',
-            'Suspended',
-            'Closed',
-          ]),
+          type: Sequelize.ENUM(Object.values(GOAL_STATUS)),
           allowNull: true,
         },
         timeframe: {
@@ -1302,7 +1339,7 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+          type: Sequelize.ARRAY(Sequelize.ENUM(
             Object.values(SOURCE_FIELD.REPORTGOAL),
           )),
         },
@@ -1351,27 +1388,18 @@ module.exports = {
             key: 'id',
           },
         },
-        reportGoalId: {
+        reportGoalTemplateId: {
           allowNull: true,
           type: Sequelize.INTEGER,
           references: {
             model: {
-              tableName: 'ReportGoals',
+              tableName: 'ReportGoalTemplates',
             },
             key: 'id',
           },
         },
         title: {
           type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        status: {
-          type: Sequelize.ENUM([
-            'Not Started',
-            'In Progress',
-            'Suspended',
-            'Complete',
-          ]),
           allowNull: true,
         },
         createdAt: {
@@ -1383,8 +1411,8 @@ module.exports = {
           type: Sequelize.DATE,
         },
       }, { transaction });
-      await queryInterface.addIndex('ReportObjectives', ['reportId', 'objectiveTemplateId'], { transaction });
-      await queryInterface.addIndex('ReportObjectives', ['reportId', 'reportObjectiveTemplateId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplates', ['reportId', 'objectiveTemplateId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplates', ['reportId', 'reportGoalTemplateId'], { transaction });
 
       await queryInterface.addConstraint('ReportObjectiveTemplates', {
         fields: ['reportId', 'objectiveTemplateId'],
@@ -1489,7 +1517,7 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+          type: Sequelize.ARRAY(Sequelize.ENUM(
             Object.values(SOURCE_FIELD.REPORTOBJECTIVE),
           )),
         },
@@ -1502,8 +1530,9 @@ module.exports = {
           type: Sequelize.DATE,
         },
       }, { transaction });
+
       await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'resourceId'], { transaction });
-      await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'objectiveTemplateResourceId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateResources', ['reportObjectiveTemplateId', 'objectiveTemplateResourceId'], { name: 'ReportObjectiveTemplateResources_rotId_otrId', transaction });
 
       await queryInterface.addConstraint('ReportObjectiveTemplateResources', {
         fields: ['reportObjectiveTemplateId', 'resourceId'],
@@ -1614,12 +1643,7 @@ module.exports = {
           allowNull: true,
         },
         status: {
-          type: Sequelize.ENUM([
-            'Not Started',
-            'In Progress',
-            'Suspended',
-            'Complete',
-          ]),
+          type: Sequelize.ENUM(Object.values(OBJECTIVE_STATUS)),
           allowNull: true,
         },
         createdAt: {
@@ -1687,10 +1711,11 @@ module.exports = {
           type: Sequelize.DATE,
         },
       }, { transaction });
-      await queryInterface.addIndex('ReportObjectives', ['reportObjectiveId', 'fileId'], { transaction });
-      await queryInterface.addIndex('ReportObjectives', ['reportObjectiveId', 'objectiveFileId'], { transaction });
 
-      await queryInterface.addConstraint('ReportObjectives', {
+      await queryInterface.addIndex('ReportObjectiveFiles', ['reportObjectiveId', 'fileId'], { transaction });
+      await queryInterface.addIndex('ReportObjectiveFiles', ['reportObjectiveId', 'objectiveFileId'], { transaction });
+
+      await queryInterface.addConstraint('ReportObjectiveFiles', {
         fields: ['reportObjectiveId', 'fileId'],
         type: 'unique',
         transaction,
@@ -1737,7 +1762,7 @@ module.exports = {
         sourceFields: {
           allowNull: true,
           default: null,
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(
+          type: Sequelize.ARRAY(Sequelize.ENUM(
             Object.values(SOURCE_FIELD.REPORTOBJECTIVE),
           )),
         },
