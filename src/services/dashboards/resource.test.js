@@ -19,7 +19,6 @@ import {
   resourceDomainList,
   resourcesDashboardOverview,
   resourceUse,
-  resourceTopicUse,
   resourceDashboard,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
@@ -137,7 +136,6 @@ const regionOneDraftReport = {
   topics: ['Equity', 'ERSEA'],
 };
 
-let grant;
 let goal;
 let objective;
 let activityReportObjectiveOne;
@@ -148,7 +146,7 @@ describe('Resources dashboard', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser, individualHooks: true });
     await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
-    [grant] = await Grant.findOrCreate({
+    await Grant.findOrCreate({
       where: mockGrant,
       validate: true,
       individualHooks: true,
@@ -457,23 +455,6 @@ describe('Resources dashboard', () => {
     });
   });
 
-  it('resourceTopicUse', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const data = await resourceTopicUse(scopes);
-    expect(data).toStrictEqual({
-      headers: ['Jan-21'],
-      topics: [
-        { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
-        { heading: 'CLASS: Classroom Organization', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-      ],
-    });
-  });
-
   it('resourceDashboard', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourceDashboard(scopes);
@@ -514,18 +495,6 @@ describe('Resources dashboard', () => {
               { title: 'Total', value: '1' },
             ],
           },
-        ],
-      },
-      topicUse: {
-        headers: ['Jan-21'],
-        topics: [
-          { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
-          { heading: 'CLASS: Classroom Organization', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
         ],
       },
       domainList: [
