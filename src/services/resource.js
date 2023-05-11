@@ -354,24 +354,13 @@ const filterResourcesForSync = (
         };
       }
 
-      const resourceSourceFields = (() => {
-        // I am seeing this occaisionally come through as a string, like a SQL array literal
-        // ex: '{field1,field2,field3}'
-        // todo - figure out why this is happening and fix it
-        if (resource.sourceFields && Array.isArray(resource.sourceFields)) {
-          return resource.sourceFields;
-        }
-
-        return [];
-      })();
-
       const matchingFromFields = incomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
       const isReduced = matchingFromFields
-        .filter((mff) => resourceSourceFields
+        .filter((mff) => resource.sourceFields
           .filter((l) => mff.sourceFields.includes(l))
-          .length < resourceSourceFields.length)
+          .length < resource.sourceFields.length)
         .length > 0;
       if (isReduced) {
         const reduced = resources.reduced
@@ -392,7 +381,7 @@ const filterResourcesForSync = (
             {
               genericId: resource.genericId,
               resourceId: resource.resourceId,
-              sourceFields: resourceSourceFields
+              sourceFields: resource.sourceFields
                 .filter((sourceField) => matching.sourceFields.includes(sourceField)),
             },
           ],
@@ -598,6 +587,8 @@ const genericProcessEntityForResources = async (
   resourceIds,
   ignoreDestroy = false,
 ) => {
+  console.log({ resourceTableModel });
+
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
     ? entity[resourceTableAs]
