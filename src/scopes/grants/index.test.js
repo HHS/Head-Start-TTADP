@@ -237,9 +237,9 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(1);
+      expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([recipients[0].id]));
+        .toEqual(expect.arrayContaining([recipients[0].id], recipients[4].id, recipients[5].id));
     });
 
     it('after', async () => {
@@ -299,9 +299,9 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(1);
+      expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([recipients[2].id]));
+        .toEqual(expect.arrayContaining([recipients[2].id], recipients[5].id));
     });
   });
   describe('recipientName', () => {
@@ -347,8 +347,8 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(1);
-      expect(found.map((f) => f.id)).toContain(recipients[2].id);
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id)).toContain(recipients[2].id, recipients[5].id);
     });
     it('filters out', async () => {
       const filters = { 'programSpecialist.nctn': 'Darcy' };
@@ -356,11 +356,12 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(3);
+      expect(found.length).toBe(4);
       const recips = found.map((f) => f.id);
       expect(recips).toContain(recipients[0].id);
       expect(recips).toContain(recipients[1].id);
       expect(recips).toContain(recipients[3].id);
+      expect(recips).toContain(recipients[4].id);
     });
   });
   describe('programType', () => {
@@ -414,11 +415,13 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(3);
+      expect(found.length).toBe(5);
       const recips = found.map((f) => f.id);
       expect(recips).toContain(recipients[3].id);
       expect(recips).toContain(recipients[2].id);
       expect(recips).toContain(recipients[1].id);
+      expect(recips).toContain(recipients[4].id);
+      expect(recips).toContain(recipients[5].id);
     });
   });
   describe('stateCode', () => {
@@ -456,7 +459,7 @@ describe('grant filtersToScopes', () => {
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(4);
       const foundGrants = found.map((f) => f.id).sort();
       expectedGrants.forEach((grant) => {
         expect(foundGrants).not.toContain(grant);
