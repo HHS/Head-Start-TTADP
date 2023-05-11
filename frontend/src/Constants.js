@@ -1,6 +1,5 @@
 import moment from 'moment';
 import { SCOPE_IDS } from '@ttahub/common';
-import { ExporterContext } from 'react-admin';
 
 export const CONTAINS = 'contains';
 export const NOT_CONTAINS = 'does not contain';
