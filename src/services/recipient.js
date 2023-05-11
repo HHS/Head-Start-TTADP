@@ -1,12 +1,14 @@
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { uniq, uniqBy } from 'lodash';
+import { uniq, uniqBy, isEqual } from 'lodash';
 import {
   Grant,
   Recipient,
   Program,
   sequelize,
   Goal,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
   ActivityReport,
   Objective,
   ActivityRecipient,
@@ -411,6 +413,29 @@ export async function getGoalsByActivityRecipient(
     where: goalWhere,
     include: [
       {
+        model: GoalTemplateFieldPrompt,
+        as: 'prompts',
+        attributes: [
+          ['id', 'promptId'],
+          'ordinal',
+          'title',
+          'prompt',
+          'hint',
+          'fieldType',
+          'options',
+          'validations',
+        ],
+        required: false,
+        include: [
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+            attributes: ['response'],
+            required: true,
+          },
+        ],
+      },
+      {
         model: Grant,
         as: 'grant',
         attributes: [
@@ -504,11 +529,16 @@ export async function getGoalsByActivityRecipient(
 
   const allGoalIds = [];
 
+  const flattenPrompts = (prompts) => (prompts || []).map(({ promptId, response }) => (
+    { promptId, response }
+  ));
+
   const r = sorted.reduce((previous, current) => {
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status
         && g.goalText.trim() === current.name.trim()
-        && g.isRttapa === current.isRttapa,
+        && g.isRttapa === current.isRttapa
+        && isEqual(flattenPrompts(g.prompts), flattenPrompts(current.prompts)),
     );
 
     allGoalIds.push(current.id);

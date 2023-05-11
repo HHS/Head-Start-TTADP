@@ -49,10 +49,7 @@ export const findWhatsChanged = (object, base) => {
 
       let currentlyEditing = false;
 
-      accumulator.goals = [
-        ...(base.goals || []),
-        ...(base.goalsAndObjectives || []),
-      ].map((goal) => ({
+      accumulator.goals = (base.goals || []).map((goal) => ({
         ...goal,
         grantIds,
         isActivelyEdited: (() => {
