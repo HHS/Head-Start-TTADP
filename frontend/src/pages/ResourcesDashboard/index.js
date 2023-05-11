@@ -17,7 +17,6 @@ import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndRe
 import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
-import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
 import { fetchResourceData } from '../../fetchers/Resources';
@@ -42,7 +41,6 @@ export default function ResourcesDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [resourcesData, setResourcesData] = useState({});
   const [error, updateError] = useState();
-  const [resetPagination, setResetPagination] = useState(false);
   const hasCentralOffice = useMemo(() => (
     user && user.homeRegionId && user.homeRegionId === 14
   ), [user]);
@@ -87,7 +85,6 @@ export default function ResourcesDashboard() {
 
   const setFilters = useCallback((newFilters) => {
     setFiltersInHook(newFilters);
-    setResetPagination(true);
   }, [setFiltersInHook]);
 
   // Remove Filters.
@@ -193,13 +190,6 @@ export default function ResourcesDashboard() {
         <ResourceUse
           data={resourcesData.resourcesUse}
           loading={isLoading}
-        />
-
-        <ResourcesAssociatedWithTopics
-          data={resourcesData.topicUse}
-          loading={isLoading}
-          resetPagination={resetPagination}
-          setResetPagination={setResetPagination}
         />
       </>
     </div>

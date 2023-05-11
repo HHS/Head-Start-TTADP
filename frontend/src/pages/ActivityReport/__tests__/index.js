@@ -246,7 +246,7 @@ describe('ActivityReport', () => {
         goals: [],
         goalsAndObjectives: [
           { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
-          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
         ],
       };
 
@@ -259,7 +259,7 @@ describe('ActivityReport', () => {
         goals: [],
         goalsAndObjectives: [
           { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
-          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
         ],
       };
 
@@ -286,6 +286,7 @@ describe('ActivityReport', () => {
             ],
             isActivelyEdited: true,
             name: 'goal 1',
+            prompts: [],
           },
           {
             activityReportGoals: [
@@ -299,6 +300,7 @@ describe('ActivityReport', () => {
             ],
             isActivelyEdited: false,
             name: 'goal 2',
+            prompts: [],
           },
         ],
         recipientsWhoHaveGoalsThatShouldBeRemoved: [],

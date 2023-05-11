@@ -6,7 +6,7 @@ import db, {
 } from '..';
 import {
   autoPopulateOnApprovedAR,
-  preventNamChangeWhenOnApprovedAR,
+  preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
   // propagateName,
 } from '../hooks/goal';
@@ -75,7 +75,7 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -83,7 +83,7 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -91,7 +91,7 @@ describe('Goals', () => {
       changed: () => ['name'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -99,7 +99,7 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -107,7 +107,7 @@ describe('Goals', () => {
       changed: () => ['name'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .toThrowError(errorMsg);
   });
   it('autoPopulateStatusChangeDates', async () => {

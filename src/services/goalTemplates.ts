@@ -206,7 +206,7 @@ export async function setFieldPromptForCuratedTemplate(
   goalIds: number[],
   promptId: number,
   response: string[] | null,
-): Promise<void | [any, ...any[]]> {
+) {
   // Retrieve the current responses and prompt requirements for the given goals and prompt ID.
   const [currentResponses, promptRequirements] = await Promise.all([
     GoalModel.findAll({
@@ -286,7 +286,7 @@ export async function setFieldPromptForCuratedTemplate(
 
       // todo - rip out this validation logic and put it in it's own function
       if (promptRequirements.validations) {
-        const { rules, required } = promptRequirements.validations;
+        const { rules } = promptRequirements.validations;
 
         if (rules) {
           const maxSelections = (() => {
@@ -302,14 +302,6 @@ export async function setFieldPromptForCuratedTemplate(
               `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
             );
           }
-        }
-
-        if (required
-      && (response === null
-        || response === undefined
-        || (Array.isArray(response)
-          && response.length === 0))) {
-          return Promise.reject(new Error(`Response for '${promptRequirements.title}' is required.`));
         }
       }
     }
@@ -342,7 +334,7 @@ Sets field prompts for a list of curated templates and their associated goals.
 export async function setFieldPromptsForCuratedTemplate(
   goalIds: number[],
   promptResponses: PromptResponse[],
-): Promise<(void | [any, ...any[]])[]> {
+) {
   return Promise.all(
     promptResponses
       .map(({

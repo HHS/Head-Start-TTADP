@@ -106,7 +106,5 @@ module.exports = {
       );
     },
   ),
-  down: async (queryInterface) => {
-    await queryInterface.sequelize.transaction((transaction) => (queryInterface.removeColumn('Goals', 'rtrOrder', { transaction })));
-  },
+  down: async () => {},
 };
