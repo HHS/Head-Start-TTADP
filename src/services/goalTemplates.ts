@@ -286,7 +286,7 @@ export async function setFieldPromptForCuratedTemplate(
 
       // todo - rip out this validation logic and put it in it's own function
       if (promptRequirements.validations) {
-        const { rules, required } = promptRequirements.validations;
+        const { rules } = promptRequirements.validations;
 
         if (rules) {
           const maxSelections = (() => {
@@ -302,14 +302,6 @@ export async function setFieldPromptForCuratedTemplate(
               `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
             );
           }
-        }
-
-        if (required
-      && (response === null
-        || response === undefined
-        || (Array.isArray(response)
-          && response.length === 0))) {
-          return Promise.reject(new Error(`Response for '${promptRequirements.title}' is required.`));
         }
       }
     }

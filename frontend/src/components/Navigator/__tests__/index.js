@@ -8,7 +8,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import Navigator, { getPromptErrors } from '../index';
+import Navigator, { getPromptErrors, packageGoals } from '../index';
 import UserContext from '../../../UserContext';
 import { COMPLETE, NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
@@ -1018,5 +1018,81 @@ describe('getPromptErrors', () => {
     document.querySelector = jest.fn(() => null);
     const errors = {};
     expect(getPromptErrors(null, errors)).toBe(false);
+  });
+});
+
+describe('packageGoals', () => {
+  it('correctly formats goals with multiple recipients', () => {
+    const grantIds = [1, 2];
+    const packagedGoals = packageGoals(
+      [
+        {
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+        },
+      ],
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+      },
+      grantIds,
+      [{ fieldName: 'prompt2' }],
+    );
+
+    expect(packagedGoals).toEqual([
+      {
+        name: 'goal name',
+        endDate: '09/01/2020',
+        prompts: [],
+        grantIds,
+        isActivelyBeingEditing: false,
+      },
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+        grantIds,
+        prompts: [],
+      },
+    ]);
+  });
+
+  it('correctly formats goals for a single recipient', () => {
+    const grantIds = [1];
+    const packagedGoals = packageGoals(
+      [
+        {
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+        },
+      ],
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+      },
+      grantIds,
+      [{ fieldName: 'prompt2' }],
+    );
+
+    expect(packagedGoals).toEqual([
+      {
+        name: 'goal name',
+        endDate: '09/01/2020',
+        prompts: [{ fieldName: 'prompt' }],
+        grantIds,
+        isActivelyBeingEditing: false,
+      },
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+        grantIds,
+        prompts: [{ fieldName: 'prompt2' }],
+      },
+    ]);
   });
 });
