@@ -18,10 +18,12 @@ import TableHeader from '../../components/TableHeader';
 import { cleanupLocalStorage } from '../ActivityReport';
 import UserContext from '../../UserContext';
 
-const userIsAnApprover = (id, approvers) => {
-  if (!approvers || !approvers.length) return false;
-  return approvers.some((approver) => approver.user.id === id);
+const isCollaborator = (report, user) => {
+  if (!report.activityReportCollaborators) return false;
+  return report.activityReportCollaborators.find((u) => u.userId === user.id);
 };
+
+const isCreator = (report, user) => report.userId === user.id;
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -79,7 +81,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
       },
     ];
 
-    if (!userIsAnApprover(user.id, approvers)) {
+    if (isCollaborator(report, user) || isCreator(report, user)) {
       menuItems.push({
         label: 'Delete',
         onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
