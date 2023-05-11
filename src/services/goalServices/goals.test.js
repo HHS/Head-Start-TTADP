@@ -72,6 +72,8 @@ describe('Goals DB service', () => {
         id: mockGoalId,
         activityReports: [],
         objectives: [],
+        set: jest.fn(),
+        save: jest.fn(),
       }]);
       Goal.findOne = jest.fn();
       Goal.findByPk = jest.fn().mockResolvedValue({
@@ -86,7 +88,12 @@ describe('Goals DB service', () => {
       }, false]);
       Goal.destroy = jest.fn();
       Goal.update = jest.fn().mockResolvedValue([1, [{ id: mockGoalId }]]);
-      Goal.create = jest.fn().mockResolvedValue({ id: mockGoalId, update: jest.fn() });
+      Goal.create = jest.fn().mockResolvedValue({
+        id: mockGoalId,
+        update: jest.fn(),
+        set: jest.fn(),
+        save: jest.fn(),
+      });
 
       ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
@@ -277,7 +284,7 @@ describe('Goals DB service', () => {
         grantId: mockGrantId,
         name: 'name',
         status: 'Closed',
-      }));
+      }), { individualHooks: true });
     });
 
     it('can use existing goals', async () => {
@@ -292,12 +299,13 @@ describe('Goals DB service', () => {
         goalIds: [mockGoalId],
       };
 
-      Goal.findOne.mockResolvedValue({ id: mockGoalId, update: jest.fn() });
+      const set = jest.fn();
+      Goal.findOne.mockResolvedValue({
+        id: mockGoalId, update: jest.fn(), set, save: jest.fn(),
+      });
       await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
-      expect(existingGoalUpdate).toHaveBeenCalledWith({
-        endDate: null,
+      expect(set).toHaveBeenCalledWith({
         name: 'name',
-        status: 'Draft',
       }, { individualHooks: true });
     });
 
@@ -312,7 +320,8 @@ describe('Goals DB service', () => {
       ]);
       Goal.findOne.mockResolvedValue({
         id: mockGoalId,
-        update: jest.fn(),
+        set: jest.fn(),
+        save: jest.fn(),
       });
       ActivityReportObjective.create.mockResolvedValue({
         id: mockActivityReportObjectiveId,
