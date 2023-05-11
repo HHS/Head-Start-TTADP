@@ -49,6 +49,11 @@ module.exports = {
        * - CollaboratorTypes
        *  */
 
+      const ENTITY_TYPE = {
+        REPORT_EVENT: 'report.event',
+        REPORT_SESSION: 'resport.session',
+      };
+
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Statuses', {
         id: {
@@ -62,10 +67,7 @@ module.exports = {
           allowNull: false,
         },
         validFor: {
-          type: Sequelize.DataTypes.ENUM([
-            'report.event',
-            'report.session',
-          ]),
+          type: Sequelize.DataTypes.ENUM(Object.values(ENTITY_TYPE)),
           allowNull: false,
         },
         createdAt: {
@@ -99,16 +101,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Reports', {
         id: {
-          type: Sequelize.BIGINTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportType: {
-          type: Sequelize.DataTypes.ENUM([
-            'report.event',
-            'report.session',
-          ]),
+          type: Sequelize.DataTypes.ENUM(Object.values(ENTITY_TYPE)),
         },
         statusId: {
           type: Sequelize.DataTypes.INTEGER,
@@ -187,7 +186,7 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportNationalCenters', {
         id: {
-          type: Sequelize.BIGINTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -250,10 +249,7 @@ module.exports = {
           allowNull: false,
         },
         validFor: {
-          type: Sequelize.DataTypes.ENUM([
-            'report.event',
-            'report.session',
-          ]),
+          type: Sequelize.DataTypes.ENUM(Object.values(ENTITY_TYPE)),
           allowNull: false,
         },
         createdAt: {
@@ -287,7 +283,7 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportReasons', {
         id: {
-          type: Sequelize.BIGINTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -380,7 +376,7 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportTargetPopulations', {
         id: {
-          type: Sequelize.BIGINTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -847,7 +843,7 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportCollaboratorTypes', {
         id: {
-          type: Sequelize.BIGINTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
