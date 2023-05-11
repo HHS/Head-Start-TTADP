@@ -708,7 +708,6 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  console.log('\n\n\n---- GET REPORTZ;')
   const userId = await currentUserId(req, res);
   const query = await setReadRegions(req.query, userId);
   const reportsWithCount = await activityReports(query, false, userId);

@@ -638,12 +638,11 @@ describe('filtersToScopes', () => {
         multiRecipient1 = await Recipient.create({
           id: faker.datatype.number({ min: 64000 }),
           name: faker.random.alphaNumeric(6),
-          //uei: faker.datatype.string(12),
         });
         multiRecipient2 = await Recipient.create({
           id: faker.datatype.number({ min: 64000 }),
           name: faker.random.alphaNumeric(6),
-          //uei: faker.datatype.string(12),
+          uei: faker.datatype.string(12),
         });
         singleRecipient = await Recipient.create({
           id: faker.datatype.number({ min: 64000 }),
