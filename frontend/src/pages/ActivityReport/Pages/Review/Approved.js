@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import ApproverStatusList from '../../components/ApproverStatusList';
+import ApproverStatusList from '../components/ApproverStatusList';
 
 const Approved = ({
   approverStatusList,
