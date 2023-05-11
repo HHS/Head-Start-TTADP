@@ -15,14 +15,15 @@ export default async function processLegacyResources(startDate, endDate) {
       where: {
         title: null,
         createdAt: {
-          [Op.between]: [startDate, endDate],
+          [Op.between]: [new Date(startDate), new Date(endDate)],
         },
       },
     });
     logger.info(`Populate Legacy Resources: Found ${resources.length} resource to process`);
     // Loop and queue resources for processing.
     for (const resource of resources) {
-      addGetResourceMetadataToQueue(resource.id, resource.url);
+      // eslint-disable-next-line no-await-in-loop
+      await addGetResourceMetadataToQueue(resource.id, resource.url);
     }
     logger.info(`Populate Legacy Resources: ...Finished adding of ${resources.length} resources for metadata processing`);
   } catch (err) {
