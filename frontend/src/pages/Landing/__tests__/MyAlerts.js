@@ -140,7 +140,7 @@ describe('My Alerts', () => {
     expect(needsAction).toBeVisible();
   });
 
-  test('displays the context menu buttons when I am not an approver', async () => {
+  test('shows both context menu items when I am creator or collaborator', async () => {
     renderMyAlerts(false);
     const menuButtons = await screen.findAllByTestId('ellipsis-button');
     userEvent.click(menuButtons[0]);
@@ -157,7 +157,7 @@ describe('My Alerts', () => {
     expect(deleteButton.length).toBe(1);
   });
 
-  test('does not show Delete when I am an approver', async () => {
+  test('does not show Delete when I am not a creator or collaborator', async () => {
     const report = {
       startDate: '02/08/2021',
       lastSaved: '02/05/2021',
@@ -243,6 +243,7 @@ describe('My Alerts', () => {
       startDate: '02/08/2021',
       lastSaved: '02/05/2021',
       id: 1,
+      userId: user.id,
       displayId: 'R14-AR-1',
       regionId: 14,
       topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
