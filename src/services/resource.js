@@ -587,8 +587,6 @@ const genericProcessEntityForResources = async (
   resourceIds,
   ignoreDestroy = false,
 ) => {
-  console.log({ resourceTableModel });
-
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
     ? entity[resourceTableAs]
