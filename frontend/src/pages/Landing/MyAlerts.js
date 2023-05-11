@@ -1,6 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
@@ -16,11 +16,15 @@ import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
 import { cleanupLocalStorage } from '../ActivityReport';
+import UserContext from '../../UserContext';
+
+const userIsAnApprover = (id, approvers) => approvers.some((approver) => approver.user.id === id);
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
+  const { user } = useContext(UserContext);
 
   const onDelete = async (reportId) => {
     if (modalRef && modalRef.current) {
@@ -70,11 +74,14 @@ export function ReportsRow({ reports, removeAlert, message }) {
         label: 'View',
         onClick: () => { history.push(idLink); },
       },
-      {
+    ];
+
+    if (!userIsAnApprover(user.id, approvers)) {
+      menuItems.push({
         label: 'Delete',
         onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
-      },
-    ];
+      });
+    }
 
     return (
       <tr key={idKey}>
