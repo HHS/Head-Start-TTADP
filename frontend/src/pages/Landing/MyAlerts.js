@@ -18,7 +18,10 @@ import TableHeader from '../../components/TableHeader';
 import { cleanupLocalStorage } from '../ActivityReport';
 import UserContext from '../../UserContext';
 
-const userIsAnApprover = (id, approvers) => approvers.some((approver) => approver.user.id === id);
+const userIsAnApprover = (id, approvers) => {
+  if (!approvers || !approvers.length) return false;
+  return approvers.some((approver) => approver.user.id === id);
+};
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
