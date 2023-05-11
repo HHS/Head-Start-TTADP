@@ -18,44 +18,92 @@ const { formatDate } = require('../lib/modelHelpers');
 export default (sequelize, DataTypes) => {
   class Report extends Model {
     static associate(models) {
+      Report.hasOne(models.EventReport, {
+        foreignKey: 'reportId',
+        as: 'event',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
+      });
+      Report.hasOne(models.SessionReport, {
+        foreignKey: 'reportId',
+        as: 'session',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
+      });
+
+      Report.hasMany(models.ReportGoalTemplate, {
+        foreignKey: 'reportId',
+        as: 'reportGoalTemplates',
+        scope: {
+          [sequelize.col('"Report".reportType')]: {
+            [Op.in]: [
+              ENTITY_TYPE.REPORT_EVENT,
+              ENTITY_TYPE.REPORT_SESSION,
+            ],
+          },
+        },
+      });
+
+      // Report.hasMany(models.ReportObjectiveTemplate, {
+      //   foreignKey: 'reportId',
+      //   as: 'reportObjectiveTemplates',
+      //   scope: {
+      //     [sequelize.col('"Report".reportType')]: {
+      //       [Op.in]: [
+      //         ENTITY_TYPE.REPORT_SESSION,
+      //       ],
+      //     },
+      //   },
+      // });
+
+      // Report.hasMany(models.ReportGoal, {
+      //   foreignKey: 'reportId',
+      //   as: 'reportGoals',
+      //   scope: {
+      //     [sequelize.col('"Report".reportType')]: {
+      //       [Op.in]: [
+      //         ENTITY_TYPE.REPORT_EVENT,
+      //         ENTITY_TYPE.REPORT_SESSION,
+      //       ],
+      //     },
+      //   },
+      // });
+
+      // Report.hasMany(models.ReportObjective, {
+      //   foreignKey: 'reportId',
+      //   as: 'reportObjectives',
+      //   scope: {
+      //     [sequelize.col('"Report".reportType')]: {
+      //       [Op.in]: [
+      //         ENTITY_TYPE.REPORT_SESSION,
+      //       ],
+      //     },
+      //   },
+      // });
+
       Report.hasOne(models.Status, { foreignKey: 'statusId', as: 'status' });
-      Report.hasOne(models.ReportApproval, { foreignKey: 'reportId', as: 'reportApproval' }); // TODO: limit scope by report type
-      Report.hasMany(models.reportCollaborators, {
+      Report.hasOne(models.ReportApproval, { // TODO: limit scope by report type
+        foreignKey: 'reportId',
+        as: 'reportApproval',
+      });
+      Report.hasMany(models.ReportCollaborator, {
         foreignKey: 'reportId',
         as: 'collaborators',
       });
-      Report.hasOne(models.reportCollaborators.scope(COLLABORATOR_TYPES.INSTANTIATOR), {
-        foreignKey: 'reportId',
-        as: COLLABORATOR_TYPES.INSTANTIATOR,
-      });
-      Report.hasOne(models.reportCollaborators.scope(COLLABORATOR_TYPES.OWNER), {
-        foreignKey: 'reportId',
-        as: COLLABORATOR_TYPES.OWNER,
-      });
-      Report.hasMany(models.reportCollaborators.scope(COLLABORATOR_TYPES.EDITOR), {
-        foreignKey: 'reportId',
-        as: `${COLLABORATOR_TYPES.EDITOR}s`,
-      });
-      Report.hasMany(models.reportCollaborators.scope(COLLABORATOR_TYPES.APPROVER), {
-        foreignKey: 'reportId',
-        as: `${COLLABORATOR_TYPES.APPROVER}s`, // TODO: limit scope by report type
-      });
-      Report.hasOne(models.reportCollaborators.scope(COLLABORATOR_TYPES.POC), {
-        foreignKey: 'reportId',
-        as: COLLABORATOR_TYPES.POC, // TODO: limit scope by report type
-      });
-      Report.hasMany(models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER), {
-        foreignKey: 'reportId',
-        as: 'reportTrainers',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
-      });
-      Report.belongsToMany(models.NationalCenter, {
-        through: models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER),
-        foreignKey: 'reportId',
-        otherKey: 'nationalCenterId',
-        as: 'trainers',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
-      });
+
+      /*
+      * Note: Associations located in reportCollaborator.js for:
+      * ReportCollaborator as instantiator
+      * ReportCollaborator as owner
+      * ReportCollaborator as editors
+      * ReportCollaborator as approvers
+      * ReportCollaborator as poc
+      */
+
+      /*
+      * Note: Associations located in ReportNationalCenter.js for:
+      * ReportCollaborator as reportTrainers
+      * NationalCenter as trainers
+      */
+
       Report.hasMany(models.ReportReason, {
         foreignKey: 'reportId',
         as: 'reportReasons',
@@ -164,10 +212,10 @@ export default (sequelize, DataTypes) => {
             model: models.ReportRecipients,
             as: 'reportRecipients',
           },
-          {
-            model: models.ReportObjectiveTemplate,
-            as: 'reportObjectiveTemplates',
-          },
+          // {
+          //   model: models.ReportObjectiveTemplate,
+          //   as: 'reportObjectiveTemplates',
+          // },
         ],
       });
     }

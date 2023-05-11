@@ -26,7 +26,9 @@ export default (sequelize, DataTypes) => {
     sourceFields: {
       allowNull: true,
       default: null,
-      type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))), // TODO: fix source fields
+      type: DataTypes.ARRAY(DataTypes.ENUM(
+        Object.values(SOURCE_FIELD.REPORT),
+      )), // TODO: fix source fields
     },
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),

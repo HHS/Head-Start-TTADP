@@ -24,8 +24,10 @@ export default (sequelize, DataTypes) => {
         otherKey: 'collaboratorTypeId',
         as: 'CollaboratorType',
       });
+      ReportCollaborator.addScope('defaultScope', {});
       ReportCollaborator.addScope(COLLABORATOR_TYPES.INSTANTIATOR, {
         include: [{
+          attributes: [],
           model: models.CollaboratorType,
           as: 'CollaboratorType',
           required: true,
@@ -36,6 +38,7 @@ export default (sequelize, DataTypes) => {
       });
       ReportCollaborator.addScope(COLLABORATOR_TYPES.OWNER, {
         include: [{
+          attributes: [],
           model: models.CollaboratorType,
           as: 'CollaboratorType',
           required: true,
@@ -46,6 +49,7 @@ export default (sequelize, DataTypes) => {
       });
       ReportCollaborator.addScope(COLLABORATOR_TYPES.EDITOR, {
         include: [{
+          attributes: [],
           model: models.CollaboratorType,
           as: 'CollaboratorType',
           required: true,
@@ -56,6 +60,7 @@ export default (sequelize, DataTypes) => {
       });
       ReportCollaborator.addScope(COLLABORATOR_TYPES.APPROVER, {
         include: [{
+          attributes: [],
           model: models.CollaboratorType,
           as: 'CollaboratorType',
           required: true,
@@ -66,6 +71,7 @@ export default (sequelize, DataTypes) => {
       });
       ReportCollaborator.addScope(COLLABORATOR_TYPES.POC, {
         include: [{
+          attributes: [],
           model: models.CollaboratorType,
           as: 'CollaboratorType',
           required: true,
@@ -73,6 +79,29 @@ export default (sequelize, DataTypes) => {
             name: COLLABORATOR_TYPES.POC,
           },
         }],
+      });
+
+      // Relocated from report.js as the scopes needed to be defined before the associations.
+      models.Report.hasOne(models.ReportCollaborator
+        .scope(COLLABORATOR_TYPES.INSTANTIATOR), {
+        foreignKey: 'reportId',
+        as: COLLABORATOR_TYPES.INSTANTIATOR,
+      });
+      models.Report.hasOne(models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER), {
+        foreignKey: 'reportId',
+        as: COLLABORATOR_TYPES.OWNER,
+      });
+      models.Report.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR), {
+        foreignKey: 'reportId',
+        as: `${COLLABORATOR_TYPES.EDITOR}s`,
+      });
+      models.Report.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER), {
+        foreignKey: 'reportId',
+        as: `${COLLABORATOR_TYPES.APPROVER}s`, // TODO: limit scope by report type
+      });
+      models.Report.hasOne(models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC), {
+        foreignKey: 'reportId',
+        as: COLLABORATOR_TYPES.POC, // TODO: limit scope by report type
       });
     }
   }

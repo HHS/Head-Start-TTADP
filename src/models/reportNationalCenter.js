@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { NATIONAL_CENTER_ACTING_AS } = require('../constants');
+const { ENTITY_TYPE, NATIONAL_CENTER_ACTING_AS } = require('../constants');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -18,6 +18,20 @@ export default (sequelize, DataTypes) => {
         where: {
           actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER,
         },
+      });
+
+      // Relocated from report.js as the scopes needed to be defined before the associations.
+      models.Report.hasMany(models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER), {
+        foreignKey: 'reportId',
+        as: 'reportTrainers',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
+      });
+      models.Report.belongsToMany(models.NationalCenter, {
+        through: models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER),
+        foreignKey: 'reportId',
+        otherKey: 'nationalCenterId',
+        as: 'trainers',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
       });
     }
   }
