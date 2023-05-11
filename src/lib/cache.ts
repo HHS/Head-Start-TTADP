@@ -56,7 +56,7 @@ export default async function getCachedResponse(
         },
       });
       await redisClient.connect();
-      // response = await redisClient.get(key);
+      response = await redisClient.get(key);
       clientConnected = true;
     }
   } catch (err) {

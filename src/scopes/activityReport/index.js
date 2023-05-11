@@ -142,6 +142,5 @@ export const topicToQuery = {
 };
 
 export function activityReportsFiltersToScopes(filters, options, userId) {
-  console.log('\n\n\n----Fitlers: ', filters);
   return createFiltersToScopes(filters, topicToQuery, options, userId);
 }
