@@ -216,3 +216,11 @@ export const REPORT_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
 };
+
+export const COLLABORATOR_TYPES = {
+  EDITOR: 'editor',
+  OWNER: 'owner',
+  INSTANTIATOR: 'instantiator',
+  APPROVER: 'approver',
+  POC: 'poc',
+};

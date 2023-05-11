@@ -14,6 +14,11 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ReportNationalCenter.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
       ReportNationalCenter.belongsTo(models.NationalCenter, { foreignKey: 'nationalCenterId', as: 'nationalCenter' });
+      ReportNationalCenter.addScope(NATIONAL_CENTER_ACTING_AS.TRAINER, {
+        where: {
+          actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER,
+        },
+      });
     }
   }
   ReportNationalCenter.init({

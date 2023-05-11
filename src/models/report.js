@@ -2,7 +2,11 @@ const {
   Model,
   Op,
 } = require('sequelize');
-const { ENTITY_TYPE, NATIONAL_CENTER_ACTING_AS } = require('../constants');
+const {
+  ENTITY_TYPE,
+  NATIONAL_CENTER_ACTING_AS,
+  COLLABORATOR_TYPES,
+} = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
 /**
@@ -16,45 +20,77 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       Report.hasOne(models.Status, { foreignKey: 'statusId', as: 'status' });
       Report.hasOne(models.ReportApproval, { foreignKey: 'reportId', as: 'reportApproval' }); // TODO: limit scope by report type
-      // TODO: make sure this is working, limit scope by report type
-      Report.hasMany(models.ReportNationalCenter, {
+      Report.hasMany(models.reportCollaborators, {
         foreignKey: 'reportId',
-        as: NATIONAL_CENTER_ACTING_AS.TRAINER,
-        scope: { actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER },
+        as: 'collaborators',
       });
-      // TODO: make sure this is working, limit scope by report type
+      Report.hasOne(models.reportCollaborators.scope(COLLABORATOR_TYPES.INSTANTIATOR), {
+        foreignKey: 'reportId',
+        as: COLLABORATOR_TYPES.INSTANTIATOR,
+      });
+      Report.hasOne(models.reportCollaborators.scope(COLLABORATOR_TYPES.OWNER), {
+        foreignKey: 'reportId',
+        as: COLLABORATOR_TYPES.OWNER,
+      });
+      Report.hasMany(models.reportCollaborators.scope(COLLABORATOR_TYPES.EDITOR), {
+        foreignKey: 'reportId',
+        as: `${COLLABORATOR_TYPES.EDITOR}s`,
+      });
+      Report.hasMany(models.reportCollaborators.scope(COLLABORATOR_TYPES.APPROVER), {
+        foreignKey: 'reportId',
+        as: `${COLLABORATOR_TYPES.APPROVER}s`, // TODO: limit scope by report type
+      });
+      Report.hasOne(models.reportCollaborators.scope(COLLABORATOR_TYPES.POC), {
+        foreignKey: 'reportId',
+        as: COLLABORATOR_TYPES.POC, // TODO: limit scope by report type
+      });
+      Report.hasMany(models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER), {
+        foreignKey: 'reportId',
+        as: 'reportTrainers',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
+      });
       Report.belongsToMany(models.NationalCenter, {
-        through: models.ReportNationalCenter,
+        through: models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER),
         foreignKey: 'reportId',
         otherKey: 'nationalCenterId',
-        as: `${NATIONAL_CENTER_ACTING_AS.TRAINER}s`,
-        scope: { actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER },
+        as: 'trainers',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
       });
       Report.hasMany(models.ReportReason, {
         foreignKey: 'reportId',
-        as: 'reportReasons', // TODO: limit scope by report type
-        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
+        as: 'reportReasons',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
       });
       Report.belongsToMany(models.Reason, {
         through: models.ReportReason,
         foreignKey: 'reportId',
         otherKey: 'reasonId',
-        as: 'reasons', // TODO: limit scope by report type
-        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
+        as: 'reasons',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
       });
       Report.hasMany(models.ReportTargetPopulation, {
         foreignKey: 'reportId',
-        as: 'reportTargetPopulations', // TODO: limit scope by report type
-        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
+        as: 'reportTargetPopulations',
+        scope: {
+          [Op.and]: {
+            validFor: sequelize.col('"Report".reportType'),
+            [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT,
+          },
+        },
       });
       Report.belongsToMany(models.TargetPopulation, {
         through: models.ReportTargetPopulation,
         foreignKey: 'reportId',
         otherKey: 'targetPopulationId',
-        as: 'targetPopulations', // TODO: limit scope by report type
-        scope: { reportType: ENTITY_TYPE.REPORT_EVENT },
+        as: 'targetPopulations',
+        scope: {
+          [Op.and]: {
+            validFor: sequelize.col('"Report".reportType'),
+            [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT,
+          },
+        },
       });
-      Report.addScope('defaultScope', {
+      Report.addScope('defaultScope', { // TODO: switch to statusId and not approval
         include: [{
           model: models.ReportApproval,
           as: 'approval',
