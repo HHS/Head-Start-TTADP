@@ -425,6 +425,22 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+      const TRAINING_TYPE = {
+        SERIES: 'series',
+      };
+
+      const AUDIENCE = {
+        RECIPIENTS: 'Recipients',
+        TTA_SPECIALISTS: 'TTA specialists',
+        FEDERAL_STAFF: 'Federal staff',
+      };
+
+      const ORGANIZER = {
+        REGIONAL_W_NC: 'Regional w/NC',
+        REGIONAL_WO_NC: 'Regional w/o NC',
+        IST: 'IST',
+      };
+
       await queryInterface.createTable('EventReports', {
         id: {
           type: Sequelize.INTEGER,
@@ -457,19 +473,22 @@ module.exports = {
           allowNull: true,
         },
         organizer: {
-          type: Sequelize.DataTypes.ENUM([ // TODO: verify enum values
-            'Regional w/NC',
-            'Regional w/o NC',
-            'IST',
-          ]),
+          type: Sequelize.DataTypes.ENUM(Object.values(ORGANIZER)),
           allowNull: false,
         },
         audience: {
-          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(['Recipients', 'TTA specialists', 'Federal staff'])),
+          type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(AUDIENCE))),
           allowNull: false,
         },
-        trainingType: { }, // TODO: don't know what this is yet.
-        vision: { }, // TODO: don't know what this is yet.
+        trainingType: {
+          type: Sequelize.DataTypes.ENUM(Object.values(TRAINING_TYPE)),
+          allowNull: false,
+          defaultValue: TRAINING_TYPE.SERIES,
+        },
+        vision: {
+          type: Sequelize.DataTypes.TEXT,
+          allowNull: true,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -559,6 +578,14 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+      const REPORT_STATUSES = {
+        DRAFT: 'draft',
+        DELETED: 'deleted',
+        SUBMITTED: 'submitted',
+        APPROVED: 'approved',
+        NEEDS_ACTION: 'needs_action',
+      };
+
       await queryInterface.createTable('ReportApprovals', {
         id: {
           allowNull: false,
