@@ -8,6 +8,7 @@ export default function ReadOnly({
   onRemove,
   createdGoals,
   hideEdit,
+  isMultiGrant, // used on AR only
 }) {
   return (
     <>
@@ -19,6 +20,7 @@ export default function ReadOnly({
             hideEdit={hideEdit}
             goal={goal}
             index={index}
+            isMultiGrant={isMultiGrant}
           />
         </div>
       ))}
@@ -39,8 +41,10 @@ ReadOnly.propTypes = {
   onEdit: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
   hideEdit: PropTypes.bool,
+  isMultiGrant: PropTypes.bool,
 };
 
 ReadOnly.defaultProps = {
   hideEdit: false,
+  isMultiGrant: false,
 };

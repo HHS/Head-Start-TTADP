@@ -280,7 +280,6 @@ const GoalsObjectives = ({
       */}
       {!isRecipientReport
         && isObjectivesFormClosed
-        // && objectivesWithoutGoals
         && objectivesWithoutGoals.length
         ? (
           <ReadOnlyOtherEntityObjectives
@@ -304,6 +303,7 @@ const GoalsObjectives = ({
           onEdit={onEdit}
           onRemove={onRemove}
           createdGoals={goalsForReview}
+          isMultiGrant={activityRecipientIds.length > 1}
         />
       ) : null }
 

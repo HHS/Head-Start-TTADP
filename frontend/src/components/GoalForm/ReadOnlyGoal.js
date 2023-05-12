@@ -17,6 +17,7 @@ export default function ReadOnlyGoal({
   hideEdit,
   goal,
   index,
+  isMultiGrant, // used on AR only
 }) {
   let menuItems = [
     {
@@ -62,7 +63,7 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
-        {(goal.prompts) && (
+        {(goal.prompts && !isMultiGrant) && (
           formatPrompts(goal.prompts).map((prompt) => (
             <div className="margin-bottom-2" key={prompt.key}>
               <h4 className="margin-0">{prompt.title}</h4>
@@ -85,6 +86,7 @@ export default function ReadOnlyGoal({
 }
 
 ReadOnlyGoal.propTypes = {
+  isMultiGrant: PropTypes.bool,
   onEdit: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
   hideEdit: PropTypes.bool,
@@ -137,4 +139,5 @@ ReadOnlyGoal.propTypes = {
 
 ReadOnlyGoal.defaultProps = {
   hideEdit: false,
+  isMultiGrant: false,
 };
