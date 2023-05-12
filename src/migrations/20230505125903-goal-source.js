@@ -18,18 +18,16 @@ module.exports = {
       await queryInterface.addColumn(
         'Goals',
         'sources',
-        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
+        { type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(GOAL_SOURCES)) },
         { transaction },
       );
-      await queryInterface.sequelize.query('ALTER TABLE "Goals" ALTER COLUMN sources TYPE public."enum_Goals_sources"[] USING CASE WHEN sources IS NULL THEN \'{}\' ELSE ARRAY[sources] END; ALTER TABLE "Goals" ALTER COLUMN sources SET DEFAULT \'{}\';', { transaction });
 
       await queryInterface.addColumn(
         'ActivityReportGoals',
         'sources',
-        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
+        { type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(GOAL_SOURCES)) },
         { transaction },
       );
-      await queryInterface.sequelize.query('ALTER TABLE "ActivityReportGoals" ALTER COLUMN sources TYPE public."enum_ActivityReportGoals_sources"[] USING CASE WHEN sources IS NULL THEN \'{}\' ELSE ARRAY[sources] END; ALTER TABLE "ActivityReportGoals" ALTER COLUMN sources SET DEFAULT \'{}\';', { transaction });
 
       // add new flag
       return queryInterface.sequelize.query(`
