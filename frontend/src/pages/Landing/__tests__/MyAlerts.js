@@ -10,6 +10,13 @@ import { createMemoryHistory } from 'history';
 import MyAlerts from '../MyAlerts';
 import activityReports from '../mocks';
 import { ALERTS_PER_PAGE } from '../../../Constants';
+import UserContext from '../../../UserContext';
+
+const user = {
+  name: 'test@test.com',
+  fullName: 'a',
+  id: 999,
+};
 
 const renderMyAlerts = (report = false) => {
   const history = createMemoryHistory();
@@ -25,22 +32,24 @@ const renderMyAlerts = (report = false) => {
 
   render(
     <Router history={history}>
-      <MyAlerts
-        loading={false}
-        reports={report ? [...activityReports, report] : activityReports}
-        newBtn={newBtn}
-        alertsSortConfig={alertsSortConfig}
-        alertsOffset={alertsOffset}
-        alertsPerPage={alertsPerPage}
-        alertsActivePage={alertsActivePage}
-        alertReportsCount={alertReportsCount}
-        sortHandler={requestAlertsSort}
-        updateReportAlerts={updateReportAlerts}
-        setAlertReportsCount={setAlertReportsCount}
-        fetchReports={() => { }}
-        updateReportFilters={() => { }}
-        handleDownloadAllAlerts={() => { }}
-      />
+      <UserContext.Provider value={{ user }}>
+        <MyAlerts
+          loading={false}
+          reports={report ? [report] : activityReports}
+          newBtn={newBtn}
+          alertsSortConfig={alertsSortConfig}
+          alertsOffset={alertsOffset}
+          alertsPerPage={alertsPerPage}
+          alertsActivePage={alertsActivePage}
+          alertReportsCount={alertReportsCount}
+          sortHandler={requestAlertsSort}
+          updateReportAlerts={updateReportAlerts}
+          setAlertReportsCount={setAlertReportsCount}
+          fetchReports={() => { }}
+          updateReportFilters={() => { }}
+          handleDownloadAllAlerts={() => { }}
+        />
+      </UserContext.Provider>
     </Router>,
   );
   return history;
@@ -131,8 +140,8 @@ describe('My Alerts', () => {
     expect(needsAction).toBeVisible();
   });
 
-  test('displays the context menu buttons', async () => {
-    renderMyAlerts();
+  test('shows both context menu items when I am creator or collaborator', async () => {
+    renderMyAlerts(false);
     const menuButtons = await screen.findAllByTestId('ellipsis-button');
     userEvent.click(menuButtons[0]);
 
@@ -146,6 +155,74 @@ describe('My Alerts', () => {
 
     expect(viewButton.length).toBe(1);
     expect(deleteButton.length).toBe(1);
+  });
+
+  test('does not show Delete when I am not a creator or collaborator', async () => {
+    const report = {
+      startDate: '02/08/2021',
+      lastSaved: '02/05/2021',
+      id: 1,
+      displayId: 'R14-AR-1',
+      regionId: 14,
+      topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+      status: 'draft',
+      approvers: [{ user: { ...user } }],
+      activityRecipients: [
+        {
+          activityRecipientId: 5,
+          name: 'Johnston-Romaguera - 14CH00003',
+          id: 1,
+          grant: {
+            id: 5,
+            number: '14CH00003',
+            recipient: { name: 'Johnston-Romaguera' },
+          },
+          otherEntity: null,
+        },
+        {
+          activityRecipientId: 4,
+          name: 'Johnston-Romaguera - 14CH00002',
+          id: 2,
+          grant: {
+            id: 4,
+            number: '14CH00002',
+            recipient: { name: 'Johnston-Romaguera' },
+          },
+          otherEntity: null,
+        },
+        {
+          activityRecipientId: 1,
+          name: 'Recipient Name - 14CH1234',
+          id: 3,
+          grant: {
+            id: 1,
+            number: '14CH1234',
+            recipient: { name: 'Recipient Name' },
+          },
+          otherEntity: null,
+        },
+      ],
+      author: {
+        fullName: 'Kiwi, GS',
+        name: 'Kiwi',
+        role: 'Grants Specialist',
+        homeRegionId: 14,
+      },
+      collaborators: [],
+    };
+
+    renderMyAlerts(report);
+
+    const menuButtons = await screen.findAllByTestId('ellipsis-button');
+    userEvent.click(menuButtons[0]);
+
+    const viewButton = await screen.findAllByRole('button', {
+      name: 'View',
+    });
+
+    expect(viewButton.length).toBe(1);
+
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
   });
 
   test('redirects to view activity report when clicked from context menu', async () => {
@@ -166,6 +243,7 @@ describe('My Alerts', () => {
       startDate: '02/08/2021',
       lastSaved: '02/05/2021',
       id: 1,
+      userId: user.id,
       displayId: 'R14-AR-1',
       regionId: 14,
       topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
