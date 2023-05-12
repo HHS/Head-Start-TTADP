@@ -50,7 +50,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
     'id',
     'endDate',
-    'name'.trim(),
+    'name',
     'status',
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
@@ -72,7 +72,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   include: [
     {
       attributes: [
-        'title'.trim(),
+        'title',
         'id',
         'status',
         'onApprovedAR',
@@ -129,7 +129,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             {
               model: Topic,
               as: 'topic',
-              attributes: ['id', 'name'.trim()],
+              attributes: ['id', 'name'],
             },
           ],
         },
@@ -204,7 +204,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       attributes: [
         ['id', 'promptId'],
         'ordinal',
-        'title'.trim(),
+        'title',
         'prompt',
         'hint',
         'fieldType',
@@ -665,9 +665,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       'endDate',
       'status',
       ['id', 'value'],
-      ['name'.trim(), 'label'],
+      ['name', 'label'],
       'id',
-      'name'.trim(),
+      'name',
     ],
     where: {
       id,
@@ -691,7 +691,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         },
         attributes: [
           'id',
-          ['title'.trim(), 'label'],
+          ['title', 'label'],
           'title',
           'status',
           'goalId',
@@ -750,7 +750,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         attributes: [
           'id',
           'ordinal',
-          'title'.trim(),
+          'title',
           'prompt',
           'hint',
           'fieldType',
@@ -811,9 +811,9 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
       'endDate',
       'status',
       ['id', 'value'],
-      ['name'.trim(), 'label'],
+      ['name', 'label'],
       'id',
-      'name'.trim(),
+      'name',
     ],
     where: {
       id: goalId,
@@ -836,8 +836,8 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
         },
         attributes: [
           'id',
-          'title'.trim(),
-          'title'.trim(),
+          'title',
+          'title',
           'status',
         ],
         model: Objective,
@@ -874,7 +874,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
             as: 'topics',
             attributes: [
               ['id', 'value'],
-              ['name'.trim(), 'label'],
+              ['name', 'label'],
             ],
             required: false,
           },
@@ -974,7 +974,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
     attributes: [
-      'name'.trim(),
+      'name',
       'id',
       'status',
       'createdVia',
@@ -1325,7 +1325,7 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('"Goal"."goalTemplateId"'),
         ),
       ), 'goalTemplateId'],
-      'name'.trim(),
+      'name',
       'status',
       'onApprovedAR',
       'endDate',
@@ -1481,7 +1481,7 @@ async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
         },
       },
       {
-        attributes: ['id', 'goalId', 'title'.trim()],
+        attributes: ['id', 'goalId', 'title'],
         model: Objective,
         as: 'objectives',
         required: false,
@@ -2030,7 +2030,7 @@ export async function getGoalsForReport(reportId) {
             jsonb_agg( DISTINCT jsonb_build_object(
               'promptId', gtfp.id ,
               'ordinal', gtfp.ordinal,
-              'title'.trim(), gtfp.title,
+              'title', gtfp,
               'prompt', gtfp.prompt,
               'hint', gtfp.hint,
               'caution', gtfp.caution,
