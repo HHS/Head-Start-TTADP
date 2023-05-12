@@ -1145,8 +1145,8 @@ export async function createOrUpdateGoals(goals) {
       await newGoal.update(
         {
           ...options,
+          ...(options && options.name && { name: options.name.trim() }),
           status,
-          name: options.name.trim(),
           // if the createdVia column is populated, keep what's there
           // otherwise, if the goal is imported, we say so
           // otherwise, we've got ourselves an rtr goal, baby
