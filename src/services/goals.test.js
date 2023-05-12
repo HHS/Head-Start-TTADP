@@ -53,6 +53,8 @@ describe('Goals DB service', () => {
       recipient = await Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Grant.
@@ -61,6 +63,8 @@ describe('Goals DB service', () => {
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Goal.

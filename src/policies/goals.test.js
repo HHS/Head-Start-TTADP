@@ -1,6 +1,6 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 describe('Goals policies', () => {
   describe('canDelete && canEdit', () => {

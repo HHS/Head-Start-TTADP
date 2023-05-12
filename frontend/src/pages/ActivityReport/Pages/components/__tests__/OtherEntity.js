@@ -70,6 +70,11 @@ describe('OtherEntity', () => {
       onApprovedAR: false,
       title: '',
     });
+    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
   it('renders created objectives', async () => {
     render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);

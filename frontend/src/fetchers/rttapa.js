@@ -8,7 +8,8 @@ const rttapaUrl = join('/', 'api', 'rttapa');
  * @param {number} recipientId
  * @returns {Promise}
  */
-export const getRttapas = async (regionId, recipientId) => {
+export const getRttapas = async (regionId, recipientId, sort) => {
+  const { sortBy, direction } = sort;
   const rttapas = await get(
     join(
       rttapaUrl,
@@ -16,6 +17,7 @@ export const getRttapas = async (regionId, recipientId) => {
       String(regionId),
       'recipient',
       String(recipientId),
+      `?sortBy=${sortBy}&direction=${direction}`,
     ),
   );
   return rttapas.json();

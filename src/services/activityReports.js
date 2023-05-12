@@ -2,8 +2,9 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import {
-  REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE, GOAL_STATUS,
+  REPORTS_PER_PAGE, GOAL_STATUS,
 } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
@@ -282,6 +283,7 @@ export function activityReportByLegacyId(legacyId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -385,6 +387,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'name',
       'activityRecipientId',
       'grantId',
+      'otherEntityId',
     ],
     include: [
       {
@@ -501,7 +504,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           },
           {
             model: Role,
-            as: 'collaboratorRoles',
+            as: 'roles',
             order: [['name', 'ASC']],
           },
         ],
@@ -539,6 +542,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -660,7 +664,7 @@ export async function activityReports(
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -672,6 +676,7 @@ export async function activityReports(
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -705,6 +710,9 @@ export async function activityReports(
       [sequelize.col('grant.recipient.name'), sortDir],
       [sequelize.col('otherEntity.name'), sortDir],
     ],
+    include: [{
+      model: Grant, as: 'grant', required: false,
+    }],
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({
@@ -810,6 +818,7 @@ export async function activityReportsForCleanup(userId) {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id'],
             },
           ],
@@ -925,7 +934,7 @@ export async function activityReportAlerts(userId, {
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -937,6 +946,7 @@ export async function activityReportAlerts(userId, {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -1249,7 +1259,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         },
         {
           model: Role,
-          as: 'collaboratorRoles',
+          as: 'roles',
         }],
       },
       {
@@ -1275,6 +1285,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['name'],
           },
         ],

@@ -23,15 +23,28 @@ import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
+
+export const validatePrompts = async (promptTitles, trigger) => {
+  // attempt to validate prompts
+  if (promptTitles && promptTitles.length) {
+    const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
+    if (outputs.some((output) => output === false)) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 const GoalsObjectives = ({
   reportId,
   onSaveDraftOetObjectives,
 }) => {
   const {
-    watch, setValue, getValues, setError,
+    watch, setValue, getValues, setError, trigger,
   } = useFormContext();
 
   const {
@@ -82,6 +95,7 @@ const GoalsObjectives = ({
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
+          const fetchedGoalTemplates = await getGoalTemplates(grantIds);
           const formattedGoals = fetchedGoals.map((g) => {
             // if the goal is on an "old" grant, we should
             // treat it like a new goal for now
@@ -93,7 +107,13 @@ const GoalsObjectives = ({
 
             return { ...g, isNew, grantIds };
           });
-          updateAvailableGoals(formattedGoals);
+
+          const goalNames = formattedGoals.map((g) => g.name);
+
+          updateAvailableGoals([
+            ...fetchedGoalTemplates.filter((g) => !goalNames.includes(g.name)),
+            ...formattedGoals,
+          ]);
         }
 
         setFetchError(false);
@@ -154,13 +174,11 @@ const GoalsObjectives = ({
       const objectivesForEditing = getValues('objectivesForEditing') ? [...getValues('objectivesForEditing')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
-      const isRttapa = getValues('goalIsRttapa');
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
           name,
           endDate,
-          isRttapa,
           objectives: objectivesForEditing,
         }],
         setError,
@@ -169,11 +187,19 @@ const GoalsObjectives = ({
       if (areGoalsValid !== true) {
         return;
       }
+
+      const promptTitles = getValues('goalPrompts');
+
+      const arePromptsValid = await validatePrompts(promptTitles, trigger);
+      if (!arePromptsValid) {
+        return;
+      }
     }
 
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
+    setValue('goalPrompts', []);
 
     // make this goal the editable goal
     setValue('goalForEditing', goal);
@@ -181,8 +207,6 @@ const GoalsObjectives = ({
     setValue('goalName', goal.name);
     setValue('objectivesForEditing', goal.objectives);
 
-    const rttapaValue = goal.isRttapa;
-    setValue('goalIsRttapa', rttapaValue);
     toggleGoalForm(false);
     setValue(
       'pageState',
@@ -193,15 +217,15 @@ const GoalsObjectives = ({
     );
 
     let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    // add the goal that was being edited to the "selected goals"
     if (currentlyEditing) {
       copyOfSelectedGoals.push(currentlyEditing);
     }
 
-    // remove the goal from the "selected goals"
+    // remove the goal we are now editing from the "selected goals"
     copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
-
     onUpdateGoals(copyOfSelectedGoals);
-  };
+  }; // end onEdit
 
   // the read only component expects things a little differently
   const goalsForReview = selectedGoals.map((goal) => {

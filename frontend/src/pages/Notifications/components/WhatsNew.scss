@@ -1,0 +1,22 @@
+@use '../../../colors.scss' as *;
+
+.ttahub-feed-whats-new .ttahub-feed-article {
+  border-bottom: 1px solid $base-lighter;
+}
+
+.ttahub-feed-whats-new .ttahub-feed-article-content {
+  padding-left: 2rem;
+}
+
+// this adds the little green circle to the left of the "new" notification
+.ttahub-feed-whats-new  .ttahub-feed-article--unread .ttahub-feed-article-content:before {
+    content: '';
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: $success;
+    position: absolute;
+    top: 5px;
+    left: 0;
+}

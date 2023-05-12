@@ -5,8 +5,8 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES } from '@ttahub/common';
 import ReviewPage from '../ReviewPage';
-import { REPORT_STATUSES } from '../../../../../Constants';
 
 const sections = [
   {

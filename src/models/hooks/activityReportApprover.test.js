@@ -1,4 +1,4 @@
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   User,

@@ -46,7 +46,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
 
 function formatDelivery(method, virtualDeliveryType) {
   if (method === 'in-person') {
-    return 'In person';
+    return 'In Person';
   }
 
   if (method === 'virtual') {
@@ -108,6 +108,7 @@ function calculateGoalsAndObjectives(report) {
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
       striped = !striped;
+
       const goalSection = {
         heading: 'Goal summary',
         data: {
@@ -119,14 +120,18 @@ function calculateGoalsAndObjectives(report) {
               {goal.name}
             </>
           ),
-          'Goal type': (
-            <>
-              {goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
-            </>
-          ),
         },
         striped,
       };
+
+      const { prompts } = goal;
+      if (prompts && prompts.length) {
+        const promptData = {};
+        prompts.forEach((prompt) => {
+          promptData[prompt.title] = prompt.response.join(', ');
+        });
+        goalSection.data = { ...goalSection.data, ...promptData };
+      }
 
       sections.push(goalSection);
 
@@ -153,7 +158,7 @@ export default function ApprovedReportV2({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );

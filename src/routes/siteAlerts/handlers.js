@@ -2,7 +2,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import httpCodes from 'http-codes';
-import { ALERT_STATUSES } from '../../constants';
+import { ALERT_STATUSES } from '@ttahub/common';
 import { SiteAlert } from '../../models';
 
 export async function getSiteAlerts(req, res) {
