@@ -3,6 +3,7 @@ const { REPORT_STATUSES } = require('@ttahub/common');
 const { OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
+const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
   scheduleUpdateIndexDocumentJob,
@@ -260,7 +261,6 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
         include: [{
           model: sequelize.models.Objective,
           as: 'objective',
-          attributes: ['id', 'status'],
           required: true,
         }],
       },
@@ -271,45 +271,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     report.calculatedStatus === REPORT_STATUSES.APPROVED
   ));
 
-  // Only change the status if we have an approved report using the objective.
-  if (approvedReports.length) {
-    Promise.all(objectiveIds.map((o) => {
-      // Get reports that use this objective.
-      const relevantARs = approvedReports.filter(
-        (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
-      );
-
-      if (!relevantARs && !relevantARs.length) {
-        return Promise.resolve();
-      }
-
-      // Get latest report by end date.
-      const latestAR = relevantARs.reduce((r, a) => {
-        if (r && r.endDate) {
-          return new Date(r.endDate) > new Date(a.endDate) ? r : a;
-        }
-        return a;
-      }, {
-        endDate: null,
-        activityReportObjectives: [],
-      });
-
-      // Get Objective to take status from.
-      const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
-
-      if (!aro) {
-        return Promise.resolve();
-      }
-
-      // Update Objective status.
-      return sequelize.models.Objective.update({
-        status: aro.status || 'Not Started',
-      }, {
-        where: { id: o },
-        individualHooks: true,
-      });
-    }));
-  } else if (isUnlocked) {
+  if (isUnlocked && !approvedReports.length) {
     const report = allReports.find((r) => r.id === activityReportId);
     const objectivesToReset = report && report.activityReportObjectives
       ? report.activityReportObjectives.map((a) => a.objectiveId)
@@ -317,14 +279,76 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
 
     // we don't need to run this query with an empty array I don't think
     if (objectivesToReset.length) {
-      await sequelize.models.Objective.update({
+      return sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
         where: { id: objectivesToReset },
         individualHooks: true,
       });
     }
+
+    return Promise.resolve();
   }
+
+  return Promise.all(objectiveIds.map((objectiveId) => {
+    // Get reports that use this objective.
+    const relevantARs = approvedReports.filter(
+      (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === objectiveId),
+    );
+
+    const objectivesToUpdate = relevantARs.map((a) => a.activityReportObjectives
+      .filter((aro) => aro.objectiveId === objectiveId).map((aro) => aro.objective)).flat();
+
+    if (!relevantARs && !relevantARs.length) {
+      return Promise.resolve();
+    }
+
+    // Get latest report by end date.
+    const latestAR = relevantARs.reduce((r, a) => {
+      if (r && r.endDate) {
+        return new Date(r.endDate) > new Date(a.endDate) ? r : a;
+      }
+      return a;
+    }, {
+      endDate: null,
+      activityReportObjectives: [],
+    });
+
+    // // Get Objective to take status from.
+    const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === objectiveId));
+    const latestEndDate = latestAR.endDate;
+
+    if (!aro) {
+      return Promise.resolve();
+    }
+
+    return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
+      const newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+      if (newStatus === objectiveToUpdate.status) {
+        return Promise.resolve();
+      }
+
+      if (objectiveToUpdate.status === OBJECTIVE_STATUS.NOT_STARTED
+          && newStatus === OBJECTIVE_STATUS.IN_PROGRESS
+      ) {
+        if (!objectiveToUpdate.firstInProgressAt) {
+          objectiveToUpdate.set('firstInProgressAt', latestEndDate);
+        }
+
+        objectiveToUpdate.set('lastInProgressAt', latestEndDate);
+        objectiveToUpdate.set('status', newStatus);
+        // in this case, we don't want to run hooks because we don't want to update the
+        // status metadata
+        return objectiveToUpdate.save({ hooks: false });
+      }
+
+      return objectiveToUpdate.update({
+        status: newStatus,
+      }, {
+        individualHooks: true,
+      });
+    })));
+  }));
 };
 
 const propagateApprovedStatus = async (sequelize, instance, options) => {
@@ -697,13 +721,12 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
-          status: ['Draft', 'Not Started'],
+          status: [
+            GOAL_STATUS.DRAFT,
+            GOAL_STATUS.NOT_STARTED,
+          ],
         },
         include: [
-          {
-            model: sequelize.models.Objective,
-            as: 'objectives',
-          },
           {
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
@@ -715,17 +738,27 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       },
     );
 
-    await Promise.all((goals.map((goal) => {
-      const status = 'In Progress';
+    return Promise.all((goals.map((goal) => {
+      const status = GOAL_STATUS.IN_PROGRESS;
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
         goal.set('previousStatus', goal.status);
         goal.set('status', status);
+        if (instance.endDate) {
+          if (!goal.firstInProgressAt) {
+            goal.set('firstInProgressAt', instance.endDate);
+          }
+          goal.set('lastInProgressAt', instance.endDate);
+        }
       }
-      return goal.save({ transaction: options.transaction, individualHooks: true });
+      // removing hooks because we don't want to trigger the automatic status change
+      // (i.e. last in progress at will be overwritten)
+      return goal.save({ transaction: options.transaction, hooks: false });
     })));
   }
+
+  return Promise.resolve();
 };
 
 const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance, options) => {
