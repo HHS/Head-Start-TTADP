@@ -15,7 +15,7 @@ export default function ObjectiveStatus({
 
   // if the goal is closed, the objective status should be read-only
   const hideDropdown = useMemo(() => {
-    if (goalStatus === 'Closed' || !userCanEdit) {
+    if (['Closed', 'Not Started'].includes(goalStatus) || !userCanEdit) {
       return true;
     }
 

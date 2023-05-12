@@ -8,7 +8,7 @@ const {
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class UserRole extends Model {
     static associate(models) {
       UserRole.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'cascade', as: 'user' });
@@ -16,6 +16,12 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   UserRole.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     userId: {
       type: DataTypes.STRING,
       allowNull: false,

@@ -50,7 +50,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
       ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
 
-    const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
+    const approversToolTipText = approvers ? approvers.map((a) => a.user.fullName) : [];
     const collaboratorNames = activityReportCollaborators
       ? activityReportCollaborators.map((collaborator) => (
         collaborator.fullName)) : [];
@@ -280,6 +280,7 @@ function MyAlerts(props) {
             setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
+            exportIdPrefix="my-alerts-"
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>

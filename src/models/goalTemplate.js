@@ -1,9 +1,14 @@
 const { Model } = require('sequelize');
 const { CREATION_METHOD } = require('../constants');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goalTemplate');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goalTemplate');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class GoalTemplate extends Model {
     /**
      * Helper method for defining associations.
@@ -12,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId', as: 'goals' });
-      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId' });
+      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       GoalTemplate.hasMany(
         models.GoalTemplateObjectiveTemplate,
         { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
@@ -22,6 +27,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'goalTemplateId',
         otherKey: 'objectiveTemplateId',
         as: 'goalTemplates',
+      });
+      GoalTemplate.hasMany(models.GoalTemplateFieldPrompt, { foreignKey: 'goalTemplateId', as: 'prompts' });
+      GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
+      GoalTemplate.belongsToMany(models.Resource, {
+        through: models.GoalTemplateResource,
+        foreignKey: 'goalTemplateId',
+        otherKey: 'resourceId',
+        as: 'resources',
       });
     }
   }
@@ -46,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     creationMethod: {
       allowNull: false,
-      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+      type: DataTypes.ENUM(Object.values(CREATION_METHOD)),
     },
     lastUsed: {
       allowNull: true,
@@ -62,6 +75,7 @@ module.exports = (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

@@ -1,4 +1,5 @@
 import { createTransport } from 'nodemailer';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
   collaboratorAssignedNotification,
@@ -15,7 +16,8 @@ import {
   notifyRecipientReportApproved,
 } from '.';
 import {
-  EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES,
+  EMAIL_ACTIONS,
+  EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
 } from '../../constants';
 import { auditLogger as logger } from '../../logger';
@@ -32,7 +34,7 @@ const mockManager = {
   email: 'mockManager@test.gov',
 };
 const mockApprover = {
-  User: mockManager,
+  user: mockManager,
   note: 'You are awesome! Nice work!',
 };
 const mockAuthor = {

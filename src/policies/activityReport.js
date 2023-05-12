@@ -7,8 +7,8 @@
   or get the report.
 */
 import _ from 'lodash';
+import { REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 export default class ActivityReport {
   constructor(user, activityReport) {
@@ -143,7 +143,7 @@ export default class ActivityReport {
     if (!this.activityReport.approvers) {
       return false;
     }
-    const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
+    const approverUserIds = this.activityReport.approvers.map((approval) => approval.user.id);
     return approverUserIds.includes(this.user.id);
   }
 

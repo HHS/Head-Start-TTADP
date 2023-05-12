@@ -15,7 +15,7 @@ describe('Approved Activity Report V2 component', () => {
         ttaProvided: 'All of it',
       },
       topics: [{ label: 'being fancy' }],
-      resources: [{ value: 'http://www.website.com', userProvidedUrl: 'http://www.OtherEntity.com' }],
+      resources: [{ value: 'http://www.website.com', url: 'http://www.OtherEntity.com' }],
       status: 'Test status',
       files: [
         {
@@ -47,11 +47,11 @@ describe('Approved Activity Report V2 component', () => {
       }],
     approvers: [
       {
-        id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
+        id: 1, status: '', note: '', user: { id: 1, fullName: 'John Q Fullname' },
       },
 
       {
-        id: 2, status: '', note: 'note', User: { id: 2, fullName: 'John Smith' },
+        id: 2, status: '', note: 'note', user: { id: 2, fullName: 'John Smith' },
       },
     ],
     targetPopulations: ['Mid size sedans'],
@@ -93,6 +93,28 @@ describe('Approved Activity Report V2 component', () => {
     render(<ApprovedReportV2 data={report} />);
     expect(await screen.findByText(/Goal 1/i)).toBeInTheDocument();
     expect(await screen.findByText(/Goal 2/i)).toBeInTheDocument();
+  });
+
+  it('renders a report with multiple steps', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      recipientNextSteps: [{
+        note: 'First step',
+        completeDate: '2021-01-01',
+      },
+      {
+        note: 'Second step',
+        completeDate: '2022-03-05',
+      },
+      {
+        note: 'Third step',
+        completeDate: '2022-03-05',
+      }],
+    }}
+    />);
+    expect(await screen.findByText(/First Step/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Second Step/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Third Step/i)).toBeInTheDocument();
   });
 
   it('renders an other entity report', async () => {
@@ -148,7 +170,7 @@ describe('Approved Activity Report V2 component', () => {
     }}
     />);
 
-    expect(await screen.findByText(/In person/i)).toBeInTheDocument();
+    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
   it('virtual', async () => {
@@ -158,5 +180,41 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
+  });
+
+  it('hybrid', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, deliveryMethod: 'hybrid',
+    }}
+    />);
+
+    expect(await screen.findByText('Hybrid')).toBeInTheDocument();
+  });
+
+  it('submitted date shown', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, submittedDate: '2023-01-09',
+    }}
+    />);
+    expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
+    expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
+  });
+
+  it('submitted date hidden', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, submittedDate: null,
+    }}
+    />);
+    expect(screen.queryAllByText(/Date submitted:/i).length).toBe(0);
+  });
+
+  it('renders without activity recipients', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      activityRecipients: [],
+      activityRecipientType: 'other-entity',
+    }}
+    />);
+    expect(await screen.findByText(/Other entities next steps/i)).toBeInTheDocument();
   });
 });

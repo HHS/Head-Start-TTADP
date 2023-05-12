@@ -2,19 +2,18 @@
   max-width: 100%;
 }
 
+@media( min-width: 640px){
+  .smart-hub--dashboard-overview  {
+      column-gap: 1rem;
+      row-gap:.5rem;
+  }
+}
+
 @media( max-width: 768px ) {
   .ttahub-dashboard--filters {
     align-items: flex-start;
     flex-direction: column;
   }
-}
-
-.ttahub--dashboard-title {
-  font-size: 40px;
-  font-family: 'Merriweather', serif;
-  font-weight: 700;
-  margin: 0 30px 0 0;
-  white-space: inherit;
 }
 
 .ttahub--dashboard-widget-heading {

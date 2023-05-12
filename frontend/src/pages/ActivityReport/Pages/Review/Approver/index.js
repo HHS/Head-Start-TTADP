@@ -3,10 +3,9 @@ import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
-
+import { REPORT_STATUSES } from '@ttahub/common';
 import Review from './Review';
 import Approved from './Approved';
-import { REPORT_STATUSES } from '../../../../../Constants';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
@@ -22,6 +21,7 @@ const Approver = ({
     additionalNotes,
     calculatedStatus,
     approvers,
+    submittedDate,
   } = formData;
 
   // Approvers should be able to change their review until the report is approved.
@@ -47,7 +47,7 @@ const Approver = ({
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
 
-  const approverIsAlsoCreator = approvers ? approvers.some((a) => a.User.id === author.id) : false;
+  const approverIsAlsoCreator = approvers ? approvers.some((a) => a.user.id === author.id) : false;
 
   // if a user is an approver and they are also the creator of the report, the logic below
   // needs to account for what they'll see
@@ -116,6 +116,7 @@ const Approver = ({
             <Review
               pendingOtherApprovals={pendingOtherApprovals}
               additionalNotes={additionalNotes}
+              dateSubmitted={submittedDate}
               onFormReview={onFormReview}
               approverStatusList={approvers}
               pages={pages}
@@ -143,6 +144,7 @@ Approver.propTypes = {
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
+    submittedDate: PropTypes.string,
     approvers: PropTypes.arrayOf(
       PropTypes.shape({
         status: PropTypes.string,

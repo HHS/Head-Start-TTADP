@@ -7,6 +7,39 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import ExternalLink from '../../../../components/ExternalResourceModal';
 import { isValidURL, isExternalURL, isInternalGovernmentLink } from '../../../../utils';
 
+export const mapUrlValue = (v) => {
+  let result = v;
+  switch (v) {
+    case 'recipient':
+      result = 'Recipient';
+      break;
+    case 'regionalOffice':
+      result = 'Regional Office';
+      break;
+    case 'other-entity':
+      result = 'Other entity';
+      break;
+    case 'technical-assistance':
+      result = 'Technical assistance';
+      break;
+    case 'training':
+      result = 'Training';
+      break;
+    case 'in-person':
+      result = 'In Person';
+      break;
+    case 'virtual':
+      result = 'Virtual';
+      break;
+    case 'hybrid':
+      result = 'Hybrid';
+      break;
+    default:
+      break;
+  }
+  return result;
+};
+
 const ReviewItem = ({
   label, name, path, sortValues,
 }) => {
@@ -30,33 +63,7 @@ const ReviewItem = ({
     // If not a valid url, then its most likely just text, so leave it as is
     // except for several values
     if (!isValidURL(v)) {
-      let result = v;
-      switch (v) {
-        case 'recipient':
-          result = 'Recipient';
-          break;
-        case 'regionalOffice':
-          result = 'Regional Office';
-          break;
-        case 'other-entity':
-          result = 'Other entity';
-          break;
-        case 'technical-assistance':
-          result = 'Technical assistance';
-          break;
-        case 'training':
-          result = 'Training';
-          break;
-        case 'in-person':
-          result = 'In person';
-          break;
-        case 'virtual':
-          result = 'Virtual';
-          break;
-        default:
-          break;
-      }
-      return result;
+      return mapUrlValue(v);
     }
 
     if (isExternalURL(v) || isInternalGovernmentLink(v)) {

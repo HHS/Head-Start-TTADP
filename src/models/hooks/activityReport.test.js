@@ -1,5 +1,6 @@
 import faker from '@faker-js/faker';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import moment from 'moment';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportGoal,
@@ -14,6 +15,11 @@ import db, {
 } from '..';
 import { unlockReport } from '../../routes/activityReports/handlers';
 import ActivityReportPolicy from '../../policies/activityReport';
+import {
+  moveDraftGoalsToNotStartedOnSubmission,
+  propagateSubmissionStatus,
+} from './activityReport';
+import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 
@@ -23,9 +29,11 @@ describe('activity report model hooks', () => {
     let grant;
     let goal;
     let report;
+    let report2;
     let mockUser;
     let mockApprover;
     let objective;
+    let objective2;
 
     beforeAll(async () => {
       recipient = await Recipient.create({
@@ -52,6 +60,8 @@ describe('activity report model hooks', () => {
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       goal = await Goal.create({
@@ -84,8 +94,33 @@ describe('activity report model hooks', () => {
         creatorRole: 'TTAC',
       });
 
+      report2 = await ActivityReport.create({
+        userId: mockUser.id,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+      });
+
       await ActivityReportGoal.create({
         activityReportId: report.id,
+        goalId: goal.id,
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: report2.id,
         goalId: goal.id,
       });
 
@@ -93,43 +128,48 @@ describe('activity report model hooks', () => {
         activityReportId: report.id,
         grantId: grant.id,
       });
+
+      await ActivityRecipient.create({
+        activityReportId: report2.id,
+        grantId: grant.id,
+      });
     });
 
     afterAll(async () => {
       await ActivityReportApprover.destroy({
         where: {
-          activityReportId: report.id,
+          activityReportId: [report.id, report2.id],
         },
         force: true,
       });
 
       await ActivityRecipient.destroy({
         where: {
-          activityReportId: report.id,
+          activityReportId: [report.id, report2.id],
         },
       });
 
       await ActivityReportGoal.destroy({
         where: {
-          activityReportId: report.id,
+          activityReportId: [report.id, report2.id],
         },
       });
 
       await ActivityReportObjective.destroy({
         where: {
-          activityReportId: report.id,
+          activityReportId: [report.id, report2.id],
         },
       });
 
       await Objective.destroy({
         where: {
-          id: objective.id,
+          id: [objective.id, objective2.id],
         },
       });
 
       await ActivityReport.destroy({
         where: {
-          id: report.id,
+          id: [report.id, report2.id],
         },
       });
 
@@ -139,13 +179,13 @@ describe('activity report model hooks', () => {
         },
       });
 
-      await Grant.destroy({
+      await Grant.unscoped().destroy({
         where: {
           id: grant.id,
         },
       });
 
-      await Recipient.destroy({
+      await Recipient.unscoped().destroy({
         where: {
           id: recipient.id,
         },
@@ -168,7 +208,7 @@ describe('activity report model hooks', () => {
 
       await ActivityReportObjective.create({
         activityReportId: report.id,
-        status: 'Complete',
+        status: 'In Progress',
         objectiveId: objective.id,
       });
 
@@ -189,6 +229,11 @@ describe('activity report model hooks', () => {
     });
 
     it('approving the report should set the goal and objectives to "in progress"', async () => {
+      let testGoal = await Goal.findByPk(goal.id);
+      expect(testGoal.status).toEqual('Not Started');
+      expect(testGoal.firstInProgressAt).toEqual(null);
+      expect(testGoal.lastInProgressAt).toEqual(null);
+
       let testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
 
@@ -204,10 +249,59 @@ describe('activity report model hooks', () => {
       testReport = await ActivityReport.findByPk(report.id);
       expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
 
-      const testGoal = await Goal.findByPk(goal.id);
+      testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');
+      expect(moment(testGoal.firstInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
+      expect(moment(testGoal.lastInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
 
       testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('In Progress');
+      expect(moment(testObjective.firstInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
+      expect(moment(testObjective.lastInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
+    });
+
+    it('setting a status to something other than in progress from not started does not skip metadata', async () => {
+      objective2 = await Objective.create({
+        title: 'Objective 2',
+        goalId: goal.id,
+        status: 'Not Started',
+      });
+
+      await ActivityReportObjective.create({
+        activityReportId: report2.id,
+        status: 'Complete',
+        objectiveId: objective2.id,
+      });
+
+      let testGoal = await Goal.findByPk(goal.id);
+      expect(testGoal.status).toEqual('In Progress');
+
+      let testReport = await ActivityReport.findByPk(report2.id);
+
+      await testReport.update({
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      testGoal = await Goal.findByPk(goal.id);
+      expect(testGoal.status).toEqual('In Progress');
+
+      let testObjective = await Objective.findByPk(objective2.id);
+      expect(testObjective.status).toEqual('Not Started');
+
+      await ActivityReportApprover.create({
+        activityReportId: report2.id,
+        userId: mockApprover.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+
+      testReport = await ActivityReport.findByPk(report2.id);
+      expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      testGoal = await Goal.findByPk(goal.id);
+      expect(testGoal.status).toEqual('In Progress');
+
+      testObjective = await Objective.findByPk(objective2.id);
       expect(testObjective.status).toEqual('Complete');
     });
 
@@ -242,5 +336,79 @@ describe('activity report model hooks', () => {
       const testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
     });
+  });
+});
+
+describe('moveDraftGoalsToNotStartedOnSubmission', () => {
+  it('logs an error if one is thrown', async () => {
+    const mockSequelize = {
+      models: {
+        Goal: {
+          findAll: jest.fn(() => []),
+          update: jest.fn(() => {
+            throw new Error('test error');
+          }),
+        },
+        ActivityReport: {},
+      },
+    };
+    const mockInstance = {
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      changed: jest.fn(() => ['submissionStatus']),
+      id: 1,
+    };
+    const mockOptions = {
+      transaction: 'transaction',
+    };
+
+    jest.spyOn(auditLogger, 'error');
+
+    await moveDraftGoalsToNotStartedOnSubmission(mockSequelize, mockInstance, mockOptions);
+    expect(auditLogger.error).toHaveBeenCalled();
+  });
+});
+
+describe('propagateSubmissionStatus', () => {
+  it('logs an error if one is thrown updating goals', async () => {
+    const mockSequelize = {
+      fn: jest.fn(),
+      models: {
+        ActivityReport: {
+          findAll: jest.fn(() => []),
+          update: jest.fn(() => {
+            throw new Error('test error');
+          }),
+        },
+        GoalTemplate: {
+          findOrCreate: jest.fn(() => [{ id: 1, name: 'name' }]),
+        },
+        Goal: {
+          findAll: jest.fn(() => [{
+            id: 1,
+            name: 'name',
+            createdAt: new Date(),
+            goalTemplateId: 1,
+            updatedAt: new Date(),
+          }]),
+          update: jest.fn(() => {
+            throw new Error('test error');
+          }),
+        },
+      },
+    };
+    const mockInstance = {
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      changed: jest.fn(() => ['submissionStatus']),
+      id: 1,
+      regionId: 1,
+    };
+    const mockOptions = {
+      transaction: 'transaction',
+    };
+
+    jest.spyOn(auditLogger, 'error');
+
+    await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
+    expect(auditLogger.error).toHaveBeenCalled();
   });
 });

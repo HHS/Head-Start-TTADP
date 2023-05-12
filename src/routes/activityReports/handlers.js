@@ -1,5 +1,11 @@
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
+import {
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+  DECIMAL_BASE,
+} from '@ttahub/common';
+import { USER_SETTINGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -29,11 +35,7 @@ import { saveObjectivesForReport, getObjectivesByReportId } from '../../services
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import {
-  APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
-} from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
-
 import { logger } from '../../logger';
 import {
   approverAssignedNotification,
@@ -176,6 +178,10 @@ async function sendActivityReportCSV(reports, res) {
         {
           key: 'createdAt',
           header: 'Created date',
+        },
+        {
+          key: 'submittedDate',
+          header: 'Submitted date',
         },
         {
           key: 'approvedAt',
@@ -637,6 +643,7 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -931,6 +938,7 @@ export async function setGoalAsActivelyEdited(req, res) {
   try {
     const { activityReportId } = req.params;
     const { goalIds } = req.query;
+    const { pageState } = req.body;
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
@@ -941,7 +949,7 @@ export async function setGoalAsActivelyEdited(req, res) {
       return;
     }
 
-    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId);
+    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId, pageState);
     res.json(goals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

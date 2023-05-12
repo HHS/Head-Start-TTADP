@@ -16,12 +16,16 @@ import {
   participantsFilter,
   myReportsFilter,
   reportTextFilter,
+  ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
+
+import { groupsFilter } from '../../components/filter/grantFilters';
 
 export const LANDING_BASE_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   myReportsFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -35,12 +39,14 @@ export const LANDING_BASE_FILTER_CONFIG = [
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   myReportsFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -55,4 +61,5 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];

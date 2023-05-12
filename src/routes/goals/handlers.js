@@ -1,3 +1,5 @@
+import httpCodes from 'http-codes';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
@@ -10,7 +12,6 @@ import {
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
-import { DECIMAL_BASE } from '../../constants';
 import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:GOALS';
@@ -79,21 +80,27 @@ export async function changeGoalStatus(req, res) {
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
+    const previousStatus = [];
 
     await Promise.all(ids.map(async (goalId) => {
       if (!status) {
         const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
         if (!goal) {
-          status = 404;
+          status = httpCodes.NOT_FOUND;
           return status;
         }
 
         if (!new Goal(user, goal).canChangeStatus()) {
-          status = 401;
+          status = httpCodes.UNAUTHORIZED;
           return status;
         }
+
+        if (goal.previousStatus && !previousStatus.includes(goal.previousStatus)) {
+          previousStatus.push(goal.previousStatus);
+        }
       }
+
       return status;
     }));
 
@@ -108,7 +115,14 @@ export async function changeGoalStatus(req, res) {
       newStatus,
       closeSuspendReason,
       closeSuspendContext,
+      previousStatus,
     );
+
+    if (!updatedGoal) {
+      // the updateGoalStatusById function returns false
+      // if the goal status change is not allowed
+      res.sendStatus(httpCodes.BAD_REQUEST);
+    }
 
     res.json(updatedGoal);
   } catch (error) {
@@ -155,14 +169,14 @@ export async function retrieveGoalsByIds(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    let canView = true;
-    goalIds.forEach(async (id) => {
+    const permissions = await Promise.all(goalIds.map(async (id) => {
       const goal = await goalByIdWithActivityReportsAndRegions(id);
+
       const policy = new Goal(user, goal);
-      if (!policy.canView()) {
-        canView = false;
-      }
-    });
+      return policy.canView();
+    }));
+
+    const canView = permissions.every((permission) => permission);
 
     if (!canView) {
       res.sendStatus(401);
@@ -172,7 +186,7 @@ export async function retrieveGoalsByIds(req, res) {
     const gIds = goalIds.map((g) => parseInt(g, 10));
     const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
 
-    if (!retrievedGoal) {
+    if (!retrievedGoal || !retrievedGoal.length) {
       res.sendStatus(404);
       return;
     }

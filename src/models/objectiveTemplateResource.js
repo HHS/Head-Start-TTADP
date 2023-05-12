@@ -1,7 +1,8 @@
 const { Model } = require('sequelize');
-// const { auditLogger } = require('../logger');
+const { SOURCE_FIELD } = require('../constants');
+const { afterDestroy } = require('./hooks/nextStepResource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplateResource extends Model {
     /**
      * Helper method for defining associations.
@@ -9,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplateResource' });
+      ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplate' });
+      ObjectiveTemplateResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
   ObjectiveTemplateResource.init({
@@ -19,17 +21,41 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    userProvidedUrl: {
-      type: DataTypes.STRING,
+    resourceId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     objectiveTemplateId: {
-      type: DataTypes.TEXT,
+      type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    sourceFields: {
+      allowNull: true,
+      default: null,
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVETEMPLATE)))),
+    },
+    isAutoDetected: {
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        // eslint-disable-next-line global-require
+        const { calculateIsAutoDetectedForObjectiveTemplate } = require('../services/resource');
+        return calculateIsAutoDetectedForObjectiveTemplate(this.get('sourceFields'));
+      },
+    },
+    userProvidedUrl: {
+      type: new DataTypes.VIRTUAL(DataTypes.TEXT),
+      get() {
+        return this.resource && this.resource.url
+          ? this.resource.url
+          : '';
+      },
     },
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateResource',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ObjectiveTemplateResource;
 };

@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
-
+import { REPORT_STATUSES } from '@ttahub/common';
 import Container from '../../../../../components/Container';
-import { REPORT_STATUSES } from '../../../../../Constants';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from './Approved';
@@ -36,7 +35,7 @@ const Submitter = ({
   const [approverStatusList, updateApproverStatusList] = useState([]);
 
   useEffect(() => {
-    const updatedApprovers = approvers ? approvers.filter((a) => a.User) : [];
+    const updatedApprovers = approvers ? approvers.filter((a) => a.user) : [];
     if (updatedApprovers) {
       updateApproverStatusList(updatedApprovers);
     }
@@ -49,7 +48,7 @@ const Submitter = ({
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
     if (needActionApprovers && needActionApprovers.length > 0) {
-      return needActionApprovers.map((a) => a.User.fullName).join(', ');
+      return needActionApprovers.map((a) => a.user.fullName).join(', ');
     }
     return '';
   };

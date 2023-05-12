@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
-const { beforeDestroy } = require('./hooks/activityReportObjective');
+const { beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
     static associate(models) {
       ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
@@ -20,6 +20,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'topicId',
         as: 'topics',
+      });
+      ActivityReportObjective.belongsToMany(models.Resource, {
+        through: models.ActivityReportObjectiveResource,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
       });
     }
   }
@@ -48,6 +54,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'ActivityReportObjective',
     hooks: {
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
   return ActivityReportObjective;

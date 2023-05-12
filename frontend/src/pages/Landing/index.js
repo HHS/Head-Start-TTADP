@@ -5,6 +5,7 @@ import React, {
   useContext,
   useMemo,
   useRef,
+  useCallback,
 } from 'react';
 import {
   Alert, Grid, Button,
@@ -69,7 +70,7 @@ function Landing() {
 
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
       && defaultRegion !== 0
@@ -88,6 +89,7 @@ function Landing() {
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
   const [showAlert, updateShowAlert] = useState(true);
+  const [resetPagination, setResetPagination] = useState(false);
 
   const [alertsSortConfig, setAlertsSortConfig] = React.useState({
     sortBy: 'startDate',
@@ -135,6 +137,16 @@ function Landing() {
       downloadAllAlertsButtonRef.current.focus();
     }
   };
+
+  const setFilters = useCallback((newFilters) => {
+    // pass through
+    setFiltersInHook(newFilters);
+
+    // reset pagination
+    setAlertsActivePage(1);
+    setAlertsOffset(0);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -269,7 +281,7 @@ function Landing() {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
+            <h1 className="landing margin-top-0 margin-bottom-3">{`Activity reports - ${regionLabel()}`}</h1>
           </Grid>
           <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
@@ -278,7 +290,7 @@ function Landing() {
               && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
-          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
             <FilterPanel
               applyButtonAria="apply filters for activity reports"
               filters={filters}
@@ -329,6 +341,9 @@ function Landing() {
             filters={filtersToApply}
             showFilter={false}
             tableCaption="Approved activity reports"
+            exportIdPrefix="ar-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
       </>

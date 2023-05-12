@@ -1,9 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faAngleDown,
 } from '@fortawesome/free-solid-svg-icons';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   InProgress,
   Closed,
@@ -15,7 +16,6 @@ import {
 import colors from '../../../colors';
 import UserContext from '../../../UserContext';
 import { canChangeGoalStatus } from '../../../permissions';
-import { DECIMAL_BASE } from '../../../Constants';
 import Menu from '../../Menu';
 import './StatusDropdown.css';
 
@@ -69,13 +69,18 @@ export default function StatusDropdown({
   onUpdateGoalStatus,
   previousStatus,
   regionId,
+  showReadOnlyStatus,
 }) {
   const { user } = useContext(UserContext);
   const key = status || 'Needs Status';
   const { icon, display } = STATUSES[key];
 
-  const isReadOnly = (
-    status === 'Draft' || status === 'Completed' || status === 'Closed') || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE));
+  const isReadOnly = useMemo(() => ((
+    status === 'Draft'
+    || status === 'Completed'
+    || status === 'Closed')
+    || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE))
+    || showReadOnlyStatus), [status, user, regionId, showReadOnlyStatus]);
 
   if (isReadOnly) {
     return (
@@ -113,7 +118,7 @@ export default function StatusDropdown({
       ];
     }
 
-    if (status === 'In Progress') {
+    if (status === 'In Progress' || status === 'Not Started') {
       return [
         {
           label: 'Closed',
@@ -168,9 +173,11 @@ StatusDropdown.propTypes = {
   status: PropTypes.string,
   previousStatus: PropTypes.string,
   regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  showReadOnlyStatus: PropTypes.bool,
 };
 
 StatusDropdown.defaultProps = {
   status: '',
   previousStatus: null,
+  showReadOnlyStatus: false,
 };

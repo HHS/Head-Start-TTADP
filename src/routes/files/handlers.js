@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
+import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
@@ -14,8 +15,9 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
   createObjectivesFileMetaData,
+  deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
-import { ActivityReportObjective, ActivityReportObjectiveFile } from '../../models';
+import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
@@ -23,7 +25,7 @@ import { userById } from '../../services/users';
 import { getObjectiveById } from '../../services/objectives';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
-import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
+import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 
@@ -69,11 +71,12 @@ const deleteOnlyFile = async (req, res) => {
 
   const user = await userById(userId);
   const policy = new Users(user);
-  if (!policy.canWriteInAtLeastOneRegion) {
+  if (!policy.canWriteInAtLeastOneRegion()) {
     return res.status(400).send({ error: 'Write permissions required' });
   }
 
   try {
+    //
     const file = await getFileById(fileId);
     if (!file) {
       return res.status(404).send({ error: 'File not found' });
@@ -149,11 +152,12 @@ const linkHandler = async (req, res) => {
     reportId,
     reportObjectiveId,
     objectiveId,
-    objectiveTempleteId,
+    objectiveTemplateId,
     fileId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
+
   const user = await userById(userId);
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -165,7 +169,7 @@ const linkHandler = async (req, res) => {
   try {
     const file = await getFileById(fileId);
     if (reportId
-      && !(reportId in file.reportFiles.map((r) => r.activityReportId))) {
+      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
       createActivityReportFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -173,7 +177,10 @@ const linkHandler = async (req, res) => {
         file.size,
       );
     } else if (reportObjectiveId
-      && !(reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId))) {
+      && !(
+        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
+          .includes(reportObjectiveId)
+      )) {
       createActivityReportObjectiveFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -181,19 +188,22 @@ const linkHandler = async (req, res) => {
         file.size,
       );
     } else if (objectiveId
-      && !(objectiveId in file.objectiveFiles.map((r) => r.objectiveId))) {
+      && !(file.objectiveFiles.map((r) => r.objectiveId).includes(objectiveId))) {
       createObjectiveFileMetaData(
         file.originalFilename,
         file.fileName,
         reportId,
         file.size,
       );
-    } else if (objectiveTempleteId
-      && !(objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId))) {
+    } else if (objectiveTemplateId
+      && !(
+        file.objectiveTemplateFiles.map((r) => r.objectiveTemplateId)
+          .includes(objectiveTemplateId)
+      )) {
       createObjectiveTemplateFileMetaData(
         file.originalFilename,
         file.fileName,
-        objectiveTempleteId,
+        objectiveTemplateId,
         file.size,
       );
     }
@@ -329,7 +339,7 @@ const uploadHandler = async (req, res) => {
   }
   try {
     await addToScanQueue({ key: metadata.key });
-    return updateStatus(metadata.id, QUEUED);
+    return await updateStatus(metadata.id, QUEUED);
   } catch (err) {
     auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${metadata.originalFileName}. Error: ${err}`);
     return updateStatus(metadata.id, QUEUEING_FAILED);
@@ -413,7 +423,7 @@ const uploadObjectivesFile = async (req, res) => {
         throw new Error('Missing key or id for file status update');
       }
       await addToScanQueue({ key: queueItem.key });
-      return updateStatus(queueItem.id, QUEUED);
+      return await updateStatus(queueItem.id, QUEUED);
     } catch (err) {
       auditLogger.error(`${logContext} ${logContext.namespace}:uploadObjectivesFile Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
       return updateStatus(queueItem.id, QUEUEING_FAILED);
@@ -453,14 +463,13 @@ const deleteObjectiveFileHandler = async (req, res) => {
     }));
 
     file = await getFileById(fileId);
-    if (file.reports.length
+    if (file && file.reports.length
       + file.reportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
-
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
@@ -495,21 +504,8 @@ async function deleteActivityReportObjectiveFile(req, res) {
       return;
     }
 
-    await ActivityReportObjectiveFile.destroy({
-      where: {
-        fileId: parseInt(fileId, DECIMAL_BASE),
-      },
-      include: [
-        {
-          model: ActivityReportObjective,
-          where: {
-            activityReportId: parseInt(reportId, DECIMAL_BASE),
-            objectiveIds,
-          },
-          required: true,
-        },
-      ],
-    });
+    // Delete specific ARO file.
+    await deleteSpecificActivityReportObjectiveFile(reportId, fileId, objectiveIds);
 
     res.status(204).send();
   } catch (error) {

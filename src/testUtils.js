@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
-
-import { REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -14,7 +13,7 @@ import {
 } from './models';
 import { auditLogger } from './logger';
 
-import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
+import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusByGoalName';
 
 const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
 
@@ -82,6 +81,7 @@ function defaultGrant() {
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
+    endDate: new Date(),
   };
 }
 

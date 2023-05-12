@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 16.18.1 installed.
+2. Make sure you have Node 16.19.1 installed.
 4. Copy `.env.example` to `.env`.
 6. Change the `FONTAWESOME_NPM_AUTH_TOKEN`, `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
@@ -105,6 +105,8 @@ You may run into some issues running the docker commands on Windows:
 ### Coverage reports
 
 On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
+
+Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
 
 ## Yarn Commands
 
@@ -406,7 +408,7 @@ Our project includes four deployed Postgres databases, one to interact with each
 
     ```bash
     # example
-    node ./build/server/tools/dataValidationCLI.js
+    node ./build/server/src/tools/dataValidationCLI.js
     ```
 
 1. If on prod, disable ssh in space
@@ -507,7 +509,14 @@ ex:
 ex:
 ```cf bs ttahub-smarthub-staging ttahub-redis-staging```
 
-Finally, trigger a redeploy through the Circle CI UI. By triggering a deploy rather than restaging, we are allowing cloud.gov
+5. Trigger a redeploy through the Circle CI UI (rather than restaging)
+
+6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
+ ```cf network-policies```
+If you see nothing there, you'll need to add an appropriate policy. 
+```cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443```
+ex: 
+```cf add-network-policy tta-smarthub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
 
 
 <!-- Links -->

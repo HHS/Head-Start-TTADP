@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import {
   Grant,
   Recipient,
@@ -11,17 +11,58 @@ import {
   Objective,
   ActivityRecipient,
   Topic,
+  Permission,
+  User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
-  REPORT_STATUSES,
   GOAL_STATUS,
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
-import goalStatusGraph from '../widgets/goalStatusGraph';
+import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+
+/**
+ *
+ * @param {number} userId
+ * @returns {Promise<Model>} recipient results
+ */
+export async function recipientsByUserId(userId) {
+  const user = await User.findOne({
+    attributes: ['id'],
+    where: {
+      id: userId,
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+      },
+    ],
+  });
+
+  if (!user) {
+    return [];
+  }
+
+  const regions = user.permissions.map((p) => p.regionId);
+
+  return Recipient.findAll({
+    order: [['name', 'ASC']],
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId: regions,
+          status: 'Active',
+        },
+      },
+    ],
+  });
+}
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -30,12 +71,23 @@ export async function allRecipients() {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
+        where: {
+          [Op.and]: [
+            { deleted: { [Op.ne]: true } },
+            {
+              endDate: {
+                [Op.gt]: '2020-08-31',
+              },
+            },
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
+          ],
+        },
       },
     ],
   });
 }
-
-const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
@@ -63,15 +115,23 @@ export async function recipientById(recipientId, grantScopes) {
         where: [{
           [Op.and]: [
             { [Op.and]: grantScopes },
+            { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
                 {
                   status: 'Active',
                 },
                 {
-                  endDate: {
-                    [Op.between]: ['2020-09-01', todaysDate],
-                  },
+                  [Op.and]: [
+                    {
+                      endDate: {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
+                    {
+                      [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                    },
+                  ],
                 },
               ],
             },
@@ -97,10 +157,11 @@ export async function recipientById(recipientId, grantScopes) {
  * @param {string} query
  * @param {number} regionId
  * @param {string} sortBy
+ * @param {number[]} userRegions
  *
  * @returns {Promise} recipient results
  */
-export async function recipientsByName(query, scopes, sortBy, direction, offset) {
+export async function recipientsByName(query, scopes, sortBy, direction, offset, userRegions) {
   // fix the query
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
@@ -136,6 +197,10 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
       required: true,
       where: [{
         [Op.and]: [
+          { deleted: { [Op.ne]: true } },
+          {
+            [Op.and]: { regionId: userRegions },
+          },
           { [Op.and]: scopes },
           {
             [Op.or]: [
@@ -143,9 +208,16 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
                 status: 'Active',
               },
               {
-                endDate: {
-                  [Op.between]: ['2020-08-31', todaysDate],
-                },
+                [Op.and]: [
+                  {
+                    endDate: {
+                      [Op.gt]: '2020-08-31',
+                    },
+                  },
+                  {
+                    [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                  },
+                ],
               },
             ],
           },
@@ -224,12 +296,20 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
 
+      // Look up grant number by index.
+      let grantNumberToUse = currentModel.grant.number;
+      const indexOfGoal = goal.ids.indexOf(objective.goalId);
+      if (indexOfGoal !== -1 && goal.grantNumbers[indexOfGoal]) {
+        grantNumberToUse = goal.grantNumbers[indexOfGoal];
+      }
+
       return {
         objectives: [...acc.objectives, {
           ...objective.dataValues,
           title: objective.title.trim(),
           endDate,
-          grantNumbers: [currentModel.grant.number],
+          status: objectiveStatus,
+          grantNumbers: [grantNumberToUse],
           reasons: uniq(r),
           activityReports: objective.activityReports || [],
         }],
@@ -478,7 +558,7 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
-  const statuses = await goalStatusGraph({
+  const statuses = await goalStatusByGoalName({
     goal: {
       id: allGoalIds,
     },

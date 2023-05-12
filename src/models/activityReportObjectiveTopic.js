@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-// const { afterCreate, afterDestroy } = require('./hooks/objectiveTopic');
+const { afterDestroy } = require('./hooks/activityReportObjectiveTopic');
 
 /**
    * ObjectiveTopic table. Junction table
@@ -7,7 +7,7 @@ const { Model } = require('sequelize');
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveTopic extends Model {
     static associate(models) {
       ActivityReportObjectiveTopic.belongsTo(models.ActivityReportObjective, {
@@ -36,10 +36,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveTopic',
-    // hooks: {
-    //   afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    // },
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ActivityReportObjectiveTopic;
 };

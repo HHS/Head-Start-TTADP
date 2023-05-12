@@ -1,7 +1,8 @@
 const { Model } = require('sequelize');
 const { getPresignedURL } = require('../lib/s3');
+const { afterDestroy } = require('./hooks/file');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class File extends Model {
     /**
      * Helper method for defining associations.
@@ -78,6 +79,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'File',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return File;
 };

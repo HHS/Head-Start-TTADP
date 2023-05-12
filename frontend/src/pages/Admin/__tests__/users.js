@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { Router } from 'react-router';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, within,
 } from '@testing-library/react';
@@ -10,7 +11,6 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import moment from 'moment';
 import Users, { setFeatureFromURL } from '../users';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('User Page', () => {
   beforeEach(async () => {
@@ -189,6 +189,12 @@ describe('User Page', () => {
       render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
       const userInfo = await screen.findByRole('group', { name: 'User Profile' });
       expect(userInfo).toBeVisible();
+    });
+
+    it('displays the "Download users" button', async () => {
+      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+      const download = await screen.findByRole('button', { name: 'Download users' });
+      expect(download).toBeVisible();
     });
 
     describe('saving', () => {

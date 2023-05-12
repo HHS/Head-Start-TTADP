@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -14,10 +15,11 @@ import db, {
   Topic,
   ObjectiveTopic,
   ObjectiveResource,
+  Resource,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
 import { activityReportAndRecipientsById } from '../activityReports';
+import { processObjectiveForResourcesById } from '../resource';
 
 const mockUser = {
   id: 54253461,
@@ -45,6 +47,10 @@ describe('saveGoalsForReport (more tests)', () => {
   let secondTopic;
   let rtrObjectiveNotOnReport;
 
+  // Test removing of Goal and Objective.
+  let goalToBeRemoved;
+  let objectiveToBeRemoved;
+
   // Adding a recipient.
   let addingRecipientReport;
   let addingRecipientGrantOne;
@@ -54,7 +60,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let objective2;
 
   beforeAll(async () => {
-    await User.create(mockUser);
+    await User.findOrCreate({ where: mockUser });
     const recipientOne = await Recipient.create(
       {
         id: faker.datatype.number({ min: 90000 }),
@@ -94,6 +100,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -101,6 +109,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -109,6 +119,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: addingRecipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: addingRecipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     addingRecipientGrantTwo = await Grant.create(
@@ -116,6 +128,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: addingRecipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: addingRecipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -127,6 +141,7 @@ describe('saveGoalsForReport (more tests)', () => {
       regionId: 1,
       userId: mockUser.id,
       activityRecipientType: 'recipient',
+      context: 'activityReportForNewGoal',
     });
 
     // Activity report for multiple recipients
@@ -135,6 +150,7 @@ describe('saveGoalsForReport (more tests)', () => {
       regionId: 1,
       userId: mockUser.id,
       activityRecipientType: 'recipient',
+      context: 'multiRecipientReport',
     });
 
     // Activity report for adding a new recipient.
@@ -143,6 +159,7 @@ describe('saveGoalsForReport (more tests)', () => {
       regionId: 1,
       userId: mockUser.id,
       activityRecipientType: 'recipient',
+      context: 'addingRecipientReport',
     });
 
     // report for reused objective text
@@ -151,6 +168,7 @@ describe('saveGoalsForReport (more tests)', () => {
       regionId: 1,
       userId: 1,
       activityRecipientType: 'recipient',
+      context: 'reportForReusedObjectiveText',
     });
 
     reportWeArentWorryingAbout = await ActivityReport.create({
@@ -158,6 +176,7 @@ describe('saveGoalsForReport (more tests)', () => {
       regionId: 1,
       userId: mockUser.id,
       activityRecipientType: 'recipient',
+      context: 'reportWeArentWorryingAbout',
     });
 
     activityReports = [
@@ -221,6 +240,15 @@ describe('saveGoalsForReport (more tests)', () => {
       previousStatus: null,
     });
 
+    // Goal to remove only used by one report.
+    goalToBeRemoved = await Goal.create({
+      name: 'This goal should be removed',
+      status: 'In Progress',
+      grantId: grantOne.id,
+      previousStatus: 'Not Started',
+      createdVia: 'activityReport',
+    });
+
     await ActivityReportGoal.create({
       goalId: goal.id,
       activityReportId: reportWeArentWorryingAbout.id,
@@ -266,15 +294,20 @@ describe('saveGoalsForReport (more tests)', () => {
       title: 'Objective for adding recipient',
     });
 
+    // Objective for report adding recipient.
+    objectiveToBeRemoved = await Objective.create({
+      goalId: goalToBeRemoved.id,
+      status: 'In Progress',
+      title: 'Objective to be removed with goal',
+      createdVia: 'activityReport',
+    });
+
     await ObjectiveTopic.create({
       objectiveId: existingObjective.id,
       topicId: topic.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: existingObjective.id,
-      userProvidedUrl: 'http://www.finally-a-url.com',
-    });
+    await processObjectiveForResourcesById(existingObjective.id, ['http://www.finally-a-url.com']);
 
     objective2 = await Objective.create({
       goalId: goal.id,
@@ -296,10 +329,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topicId: topic.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: addingRecipientObjective.id,
-      userProvidedUrl: 'http://www.testgov.com',
-    });
+    await processObjectiveForResourcesById(addingRecipientObjective.id, ['http://www.testgov.com']);
 
     await ActivityReportObjective.create({
       ttaProvided: 'Adding recipient tta',
@@ -327,6 +357,8 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         activityReportId: reportIds,
       },
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
@@ -865,13 +897,41 @@ describe('saveGoalsForReport (more tests)', () => {
   });
 
   it('removes unused goals', async () => {
-    const beforeGoals = await ActivityReportGoal.findAll({
+    // Goal and Objective to remove Id's.
+    const goalToRemoveId = goalToBeRemoved.id;
+    const objectiveToRemoveId = objectiveToBeRemoved.id;
+
+    // Add ARG to remove.
+    await ActivityReportGoal.create({
+      goalId: goalToBeRemoved.id,
+      activityReportId: activityReportForNewGoal.id,
+      status: goal.status,
+    });
+
+    // Add ARO to remove.
+    await ActivityReportObjective.create({
+      ttaProvided: 'TTA to be deleted',
+      activityReportId: activityReportForNewGoal.id,
+      objectiveId: objectiveToBeRemoved.id,
+      status: objective.status,
+    });
+
+    // Get ARG's.
+    const beforeActivityReportGoals = await ActivityReportGoal.findAll({
       where: {
         activityReportId: activityReportForNewGoal.id,
       },
     });
+    expect(beforeActivityReportGoals.length).toBe(3);
 
-    expect(beforeGoals.length).toBe(2);
+    // Goals before.
+    const beforeGoals = await Goal.findAll({
+      where: {
+        id: beforeActivityReportGoals.map((g) => g.goalId),
+      },
+    });
+
+    expect(beforeGoals.length).toBe(3);
 
     const beforeObjectives = await ActivityReportObjective.findAll({
       where: {
@@ -879,10 +939,10 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    expect(beforeObjectives.length).toBe(0);
+    expect(beforeObjectives.length).toBe(1);
 
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
-    const [beforeGoal] = beforeGoals;
+    const [beforeGoal] = beforeActivityReportGoals;
     const alreadyExtantGoal = await Goal.findByPk(beforeGoal.goalId);
 
     const newGoals = [
@@ -906,16 +966,35 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(afterObjectives.length).toBe(0);
 
-    const afterGoals = await ActivityReportGoal.findAll({
+    const afterActivityReportGoals = await ActivityReportGoal.findAll({
       where: {
         activityReportId: activityReportForNewGoal.id,
       },
     });
 
-    expect(afterGoals.length).toBe(1);
+    expect(afterActivityReportGoals.length).toBe(1);
 
-    const goalIds = afterGoals.map((ag) => ag.goalId);
+    const activityReportGoalIds = afterActivityReportGoals.map((ag) => ag.goalId);
+    expect(activityReportGoalIds).toContain(alreadyExtantGoal.id);
+
+    // Goals after.
+    const afterGoals = await Goal.findAll({
+      where: {
+        id: beforeActivityReportGoals.map((g) => g.goalId),
+      },
+    });
+
+    // Two goals are still being used by other reports we verify the ARG and ARO are deleted.
+    // One goal and objective are deleted at the ARO, ARG, Objective, and Goal level.
+    expect(afterGoals.length).toBe(2);
+    const goalIds = afterGoals.map((ag) => ag.id);
     expect(goalIds).toContain(alreadyExtantGoal.id);
+
+    // Verify goal and objective are deleted.
+    const objectiveIsDeleted = await Objective.findByPk(objectiveToRemoveId);
+    expect(objectiveIsDeleted).toBeNull();
+    const goalIsDeleted = await Goal.findByPk(goalToRemoveId);
+    expect(goalIsDeleted).toBeNull();
   });
 
   it('adds a goal & objective from the RTR', async () => {
@@ -941,6 +1020,22 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const rtrGoal = await Goal.findByPk(existingGoal.id);
     const rtrObjective = await Objective.findByPk(existingObjective.id);
+    // check that our resource are on the objective
+    const beforeObjectiveResources = await ObjectiveResource.findAll({
+      where: {
+        objectiveId: rtrObjective.id,
+      },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        required: true,
+      }],
+    });
+
+    expect(beforeObjectiveResources.length).toBe(1);
+    const beforeUrls = beforeObjectiveResources.map((bor) => bor.resource.dataValues.url);
+    expect(beforeUrls).toContain('http://www.finally-a-url.com');
 
     const newGoals = [
       {
@@ -984,7 +1079,6 @@ describe('saveGoalsForReport (more tests)', () => {
                 id: secondTopic.id,
               },
             ],
-
             resources: [
               {
                 key: 'gibberish-i-THINK-thats-obvious',
@@ -1055,21 +1149,32 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         objectiveId: rtrObjective.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        required: true,
+      }],
     });
 
     expect(afterObjectiveResources.length).toBe(2);
-    const userProvidedUrls = afterObjectiveResources.map((ar) => ar.userProvidedUrl);
-    expect(userProvidedUrls).toContain('https://www.google.com');
-    expect(userProvidedUrls).toContain('http://www.finally-a-url.com');
+    const urls = afterObjectiveResources.map((ar) => ar.resource.dataValues.url);
+    expect(urls).toContain('https://www.google.com');
+    expect(urls).toContain('http://www.finally-a-url.com');
 
     const afterActivityReportObjectiveResources = await ActivityReportObjectiveResource.findAll({
       where: {
         activityReportObjectiveId: existingObjectiveARO.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+      }],
     });
 
     expect(afterActivityReportObjectiveResources.length).toBe(1);
-    expect(afterActivityReportObjectiveResources[0].userProvidedUrl).toBe('https://www.google.com');
+    expect(afterActivityReportObjectiveResources[0].resource.dataValues.url).toBe('https://www.google.com');
   });
 
   it('adds a new recipient', async () => {

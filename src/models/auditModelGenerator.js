@@ -36,6 +36,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, d
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
+  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : '';
   // eslint-disable-next-line no-unneeded-ternary
   const auditDescriptor = descriptor ? descriptor : (httpContext.get('auditDescriptor') || '');
   const { type: optionsType } = options || { type: '' };
@@ -47,6 +48,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, d
       pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
       pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
       pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
+      pgSetConfigIfNull('audit.impersonationUserId', impersonationId, 'impersonationUserId'),
     ];
 
     if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
@@ -69,11 +71,22 @@ const removeFromAuditedTransactions = (options) => {
   }
 };
 
-const generateAuditModel = (sequelize, model) => {
-  const auditModelName = `ZAL${model.name}`;
+const generateModelClass = (sequelize, name, schema) => {
+  const auditModelName = name;
   const auditModel = class extends Model {};
+  auditModel.init(schema, {
+    sequelize,
+    modelName: auditModelName,
+    createdAt: false,
+    updatedAt: false,
+  });
+  module.exports[auditModelName] = auditModel;
+  return auditModel;
+};
 
-  auditModel.init({
+const generateZALDDL = (sequelize) => {
+  const name = 'ZALDDL';
+  const schema = {
     id: {
       type: DataTypes.BIGINT,
       allowNull: false,
@@ -81,18 +94,112 @@ const generateAuditModel = (sequelize, model) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    data_id: { type: DataTypes.INTEGER },
+    ddl_timestamp: {
+      allowNull: false,
+      type: DataTypes.DATE,
+    },
+    ddl_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      comment: null,
+    },
+    session_sig: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+    },
+    ddl_txid: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      validate: { isUUID: 'all' },
+    },
+    descriptor_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+    },
+    command_tag: {
+      type: DataTypes.STRING,
+    },
+    object_type: {
+      type: DataTypes.STRING,
+    },
+    schema_name: {
+      type: DataTypes.STRING,
+    },
+    object_identity: {
+      type: DataTypes.STRING,
+    },
+  };
+
+  return generateModelClass(sequelize, name, schema);
+};
+
+const generateZADescriptor = (sequelize) => {
+  const name = 'ZADescriptor';
+  const schema = {
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: null,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    descriptor: {
+      allowNull: false,
+      type: DataTypes.TEXT,
+    },
+  };
+
+  return generateModelClass(sequelize, name, schema);
+};
+
+const generateZAFilter = (sequelize) => {
+  const name = 'ZAFilter';
+  const schema = {
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: null,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    tableName: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
+    columnName: {
+      allowNull: false,
+      type: DataTypes.STRING,
+    },
+  };
+
+  return generateModelClass(sequelize, name, schema);
+};
+
+const generateAuditModel = (sequelize, model) => {
+  const name = `ZAL${model.name}`;
+  const schema = {
+    id: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: null,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    data_id: { type: DataTypes.BIGINT },
     dml_type: {
       type: DataTypes.ENUM(...dmlType),
       allowNull: false,
     },
     old_row_data: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSONB,
       allowNull: true,
       get() { return tryJsonParse(this.getDataValue('old_row_data')); },
     },
     new_row_data: {
-      type: DataTypes.JSON,
+      type: DataTypes.JSONB,
       allowNull: true,
       get() { return tryJsonParse(this.getDataValue('new_row_data')); },
     },
@@ -101,10 +208,21 @@ const generateAuditModel = (sequelize, model) => {
       type: DataTypes.DATE,
     },
     dml_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: null,
       comment: null,
+    },
+    dml_as: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: null,
+      comment: null,
+    },
+    session_sig: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
     },
     dml_txid: {
       type: DataTypes.UUID,
@@ -116,14 +234,9 @@ const generateAuditModel = (sequelize, model) => {
       allowNull: true,
       defaultValue: null,
     },
-  }, {
-    sequelize,
-    modelName: auditModelName,
-    createdAt: false,
-    updatedAt: false,
-  });
-  module.exports[auditModelName] = auditModel;
-  return auditModel;
+  };
+
+  return generateModelClass(sequelize, name, schema);
 };
 
 // eslint-disable-next-line
@@ -187,7 +300,10 @@ const attachHooksForAuditing = (sequelize) => {
   );
 };
 
-module.exports = {
+export {
+  generateZALDDL,
+  generateZADescriptor,
+  generateZAFilter,
   generateAuditModel,
   attachHooksForAuditing,
   addAuditTransactionSettings,

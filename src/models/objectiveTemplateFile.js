@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
-// const { auditLogger } = require('../logger');
+const { afterDestroy } = require('./hooks/objectiveTemplateFile');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplateFile extends Model {
     static associate(models) {
       ObjectiveTemplateFile.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate' });
@@ -26,6 +26,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateFile',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ObjectiveTemplateFile;
 };

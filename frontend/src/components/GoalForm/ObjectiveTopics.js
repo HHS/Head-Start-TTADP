@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -8,6 +8,9 @@ import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import UnusedData from './UnusedData';
 import Req from '../Req';
+import Drawer from '../Drawer';
+import ContentFromFeedByTag from '../ContentFromFeedByTag';
+import './ObjectiveTopics.scss';
 
 export default function ObjectiveTopics({
   error,
@@ -22,6 +25,7 @@ export default function ObjectiveTopics({
   userCanEdit,
   editingFromActivityReport,
 }) {
+  const drawerTriggerRef = useRef(null);
   const readOnly = useMemo(() => !editingFromActivityReport
   && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit),
   [goalStatus, isOnReport, userCanEdit, editingFromActivityReport]);
@@ -73,18 +77,32 @@ export default function ObjectiveTopics({
           </>
         )
         : null}
-
+      <Drawer
+        triggerRef={drawerTriggerRef}
+        stickyHeader
+        stickyFooter
+        title="Topic guidance"
+      >
+        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="topic" contentSelector="table" />
+      </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
           <>
             Topics
             {' '}
             <Req doNotRead />
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled margin-left-1"
+              ref={drawerTriggerRef}
+            >
+              Tell me more
+            </button>
           </>
         </Label>
         {error}
         <Select
-          objectiveTopicsInputName={inputName}
+          inputName={inputName}
           inputId={inputName}
           name={inputName}
           styles={selectOptionsReset}

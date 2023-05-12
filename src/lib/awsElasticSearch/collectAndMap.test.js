@@ -1,4 +1,5 @@
 /* eslint-disable dot-notation */
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -10,11 +11,13 @@ import db, {
   Objective,
   ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveResource,
 } from '../../models';
 import { formatModelForAwsElasticsearch } from './modelMapper';
 import { collectModelData } from './datacollector';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import { auditLogger } from '../../logger';
+import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 jest.mock('bull');
 
@@ -41,6 +44,8 @@ const draft = {
   topics: ['topics'],
   ttaType: ['type'],
   context: 'Lets give some context.',
+  nonECLKCResourcesUsed: [],
+  ECLKCResourcesUsed: [],
 };
 
 const approvedReport = {
@@ -55,26 +60,34 @@ describe('Collect and Map AWS Elasticsearch data', () => {
   let grant;
   let goal;
   let objective;
+  let activityReportObjective;
 
   let reportOne;
 
   beforeAll(async () => {
     try {
       // User.
-      user = await User.create({ ...mockUser });
+      user = await User.findOne({ where: { hsesUserId: mockUser.hsesUserId } });
+      if (!user) {
+        user = await User.create({ ...mockUser });
+      }
 
       // Recipient.
-      recipient = await Recipient.create({
-        id: 75165,
-        name: 'Sample Elasticsearch Recipient',
+      [recipient] = await Recipient.findOrCreate({
+        where: {
+          id: 75165,
+          name: 'Sample Elasticsearch Recipient',
+        },
       });
 
       // Grant.
-      grant = await Grant.create({
-        id: 584224,
-        number: 'ES584224',
-        recipientId: recipient.id,
-        regionId: 1,
+      [grant] = await Grant.findOrCreate({
+        where: {
+          id: 584224,
+          number: 'ES584224',
+          recipientId: recipient.id,
+          regionId: 1,
+        },
       });
 
       // Approved Reports.
@@ -82,6 +95,8 @@ describe('Collect and Map AWS Elasticsearch data', () => {
         ...approvedReport,
         context: 'Lets give some context',
         userId: user.id,
+        nonECLKCResourcesUsed: ['https://www.youtube.com', 'https://www.smartsheet.com'],
+        ECLKCResourcesUsed: ['https://ECLKC1.gov', 'https://ECLKC2.gov'],
       });
 
       // Recipient Next Steps.
@@ -130,13 +145,19 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       });
 
       // Create ARO's.
-      await ActivityReportObjective.create({
+      activityReportObjective = await ActivityReportObjective.create({
         activityReportId: reportOne.id,
         objectiveId: objective.id,
         title: 'Reading glasses',
         ttaProvided: 'Go to the library',
         status: 'Complete',
       });
+
+      // Create Objective Resource
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective.id,
+        ['http://test1.gov', 'http://test2.gov', 'http://test3.gov'],
+      );
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -145,6 +166,13 @@ describe('Collect and Map AWS Elasticsearch data', () => {
 
   afterAll(async () => {
     try {
+      // Delete objective resource.
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjective.id,
+        },
+      });
+
       // Delete Next Steps.
       await NextStep.destroy({
         where: {
@@ -215,6 +243,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       specialistNextStepsToIndex,
       goalsToIndex,
       objectivesToIndex,
+      objectiveResourceLinks,
     } = collectedData;
 
     // Recipient Next Steps.
@@ -246,6 +275,16 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     expect(objectivesToIndex[0].title).toBe('Reading glasses');
     expect(objectivesToIndex[0].ttaProvided).toBe('Go to the library');
 
+    // Objective Resource Links.
+    expect(objectiveResourceLinks).not.toBeNull();
+    expect(objectiveResourceLinks.length).toBe(3);
+    expect(objectiveResourceLinks[0]['activityReportObjective.activityReportId']).toBe(reportOne.id);
+    expect(objectiveResourceLinks[0]['resource.url']).toBe('http://test1.gov');
+    expect(objectiveResourceLinks[1]['activityReportObjective.activityReportId']).toBe(reportOne.id);
+    expect(objectiveResourceLinks[1]['resource.url']).toBe('http://test2.gov');
+    expect(objectiveResourceLinks[2]['activityReportObjective.activityReportId']).toBe(reportOne.id);
+    expect(objectiveResourceLinks[2]['resource.url']).toBe('http://test3.gov');
+
     // Format as AWS Elasticsearch document.
     const document = await formatModelForAwsElasticsearch(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
@@ -276,5 +315,26 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     // Objective TTA.
     expect(document.activityReportObjectivesTTA.length).toBe(1);
     expect(document.activityReportObjectivesTTA[0]).toBe('Go to the library');
+
+    // Objective Resources.
+    expect(document.activityReportObjectiveResources.length).toBe(3);
+    expect(document.activityReportObjectiveResources[0]).toBe('http://test1.gov');
+    expect(document.activityReportObjectiveResources[1]).toBe('http://test2.gov');
+    expect(document.activityReportObjectiveResources[2]).toBe('http://test3.gov');
+
+    /*
+     nonECLKCResourcesUsed: ['https://wwww.youtube.com', 'https://wwww.smartsheet.com'],
+        ECLKCResourcesUsed: ['https://ECLKC1.gov', 'https://ECLKC2.gov'],
+        */
+
+    // Non ECLKC resources.
+    expect(document.nonECLKCResources.length).toBe(2);
+    expect(document.nonECLKCResources[0]).toBe('https://www.youtube.com');
+    expect(document.nonECLKCResources[1]).toBe('https://www.smartsheet.com');
+
+    // ECLKC resources.
+    expect(document.ECLKCResources.length).toBe(2);
+    expect(document.ECLKCResources[0]).toBe('https://ECLKC1.gov');
+    expect(document.ECLKCResources[1]).toBe('https://ECLKC2.gov');
   });
 });

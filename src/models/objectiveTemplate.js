@@ -3,7 +3,7 @@ const { CREATION_METHOD } = require('../constants');
 const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplate extends Model {
     /**
      * Helper method for defining associations.
@@ -11,8 +11,23 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      ObjectiveTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
-      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources' });
+      ObjectiveTemplate.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplateFiles' });
+      ObjectiveTemplate.belongsToMany(models.File, {
+        through: models.ObjectiveTemplateFile,
+        foreignKey: 'objectiveTemplateId',
+        otherKey: 'fileId',
+        as: 'files',
+      });
+      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplateResources' });
+      ObjectiveTemplate.belongsToMany(models.Resource, {
+        through: models.ObjectiveTemplateResource,
+        foreignKey: 'objectiveTemplateId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      ObjectiveTemplate.hasMany(models.ObjectiveTemplateTopic, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplateTopics' });
       ObjectiveTemplate.belongsToMany(models.Topic, {
         through: models.ObjectiveTemplateTopic,
         foreignKey: 'objectiveTemplateId',
@@ -49,7 +64,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     creationMethod: {
       allowNull: false,
-      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+      type: DataTypes.ENUM(Object.values(CREATION_METHOD)),
     },
     lastUsed: {
       allowNull: true,

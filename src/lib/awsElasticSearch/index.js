@@ -1,3 +1,5 @@
+/* eslint-disable dot-notation */
+/* eslint-disable no-await-in-loop */
 /* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
@@ -16,16 +18,16 @@ const generateEsConfig = () => {
       'aws-elasticsearch': [{
         credentials: {
           uri,
-          access_key,
-          secret_key,
+          access_key: accessKey,
+          secret_key: secretKey,
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
 
     return {
       uri,
-      access_key,
-      secret_key,
+      accessKey,
+      secretKey,
     };
   }
 
@@ -39,8 +41,8 @@ const generateEsConfig = () => {
 
 const {
   uri,
-  access_key,
-  secret_key,
+  accessKey,
+  secretKey,
 } = generateEsConfig();
 
 const createAwsConnector = (credentials, region) => {
@@ -63,8 +65,8 @@ const createAwsConnector = (credentials, region) => {
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      accessKeyId: access_key,
-      secretAccessKey: secret_key,
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
     },
     'us-gov-west-1',
   ),
@@ -114,7 +116,7 @@ const addIndexDocument = async (job) => {
     return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to add document to index '${indexName}': ${error.message}`);
-    return { data: job.data, status: res.statusCode, res };
+    return { data: job.data, status: res?.statusCode, res };
   }
 };
 /*
@@ -148,15 +150,38 @@ const search = async (indexName, fields, query, passedClient) => {
     // Initialize the client.
     const client = passedClient || await getClient();
 
-    // Create search body.
-    const body = {
-      // size: 20,
-      query: {
-        multi_match: {
-          query,
+    // Create query section.
+    // ReadMe:
+    // If we have more than one word (term) then use phrase matching
+    // If we have only one word (term) use query string with wildcards.
+    // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
+    const queryBody = query.trim().split(' ').length <= 1
+      ? {
+        query_string: {
+          query: `*${query}*`,
           fields,
         },
-      },
+      }
+      : {
+        bool: {
+          should: [
+            { match_phrase: { context: { slop: 0, query } } },
+            { match_phrase: { nonECLKCResources: { slop: 0, query } } },
+            { match_phrase: { ECLKCResources: { slop: 0, query } } },
+            { match_phrase: { recipientNextSteps: { slop: 0, query } } },
+            { match_phrase: { specialistNextSteps: { slop: 0, query } } },
+            { match_phrase: { activityReportGoals: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectives: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
+          ],
+        },
+      };
+
+    // Create search body.
+    const body = {
+      size: 2001,
+      query: queryBody,
     };
 
     // Search an index.
@@ -171,7 +196,6 @@ const search = async (indexName, fields, query, passedClient) => {
     throw error;
   }
 };
-
 /*
   Update index document.
 */

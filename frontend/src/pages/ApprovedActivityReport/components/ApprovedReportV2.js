@@ -26,7 +26,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
     return (
       <ul>
         {resources.map((resource) => {
-          const resourceValue = isOtherEntity ? resource.userProvidedUrl : resource.value;
+          const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
             <li key={resourceValue}>
               <a
@@ -46,11 +46,15 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
 
 function formatDelivery(method, virtualDeliveryType) {
   if (method === 'in-person') {
-    return 'In person';
+    return 'In Person';
   }
 
-  if (method === 'virtual' && virtualDeliveryType) {
-    return `Virtual: ${virtualDeliveryType}`;
+  if (method === 'virtual') {
+    return virtualDeliveryType ? `Virtual: ${virtualDeliveryType}` : 'Virtual';
+  }
+
+  if (method === 'hybrid') {
+    return 'Hybrid';
   }
 
   return '';
@@ -104,6 +108,7 @@ function calculateGoalsAndObjectives(report) {
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
       striped = !striped;
+
       const goalSection = {
         heading: 'Goal summary',
         data: {
@@ -118,6 +123,15 @@ function calculateGoalsAndObjectives(report) {
         },
         striped,
       };
+
+      const { prompts } = goal;
+      if (prompts && prompts.length) {
+        const promptData = {};
+        prompts.forEach((prompt) => {
+          promptData[prompt.title] = prompt.response.join(', ');
+        });
+        goalSection.data = { ...goalSection.data, ...promptData };
+      }
 
       sections.push(goalSection);
 
@@ -144,7 +158,7 @@ export default function ApprovedReportV2({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
@@ -172,10 +186,11 @@ export default function ApprovedReportV2({ data }) {
 
   // next steps table
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const nextStepsLabel = recipientType === 'Recipient' ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const nextStepsLabel = recipientType === 'Recipients' ? 'Recipient\'s next steps' : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
 
@@ -192,11 +207,6 @@ export default function ApprovedReportV2({ data }) {
           {' '}
           {creator}
         </p>
-        <p className="no-print">
-          <strong>Date created:</strong>
-          {' '}
-          {createdAt}
-        </p>
         <p>
           <strong>Collaborators:</strong>
           {' '}
@@ -207,6 +217,20 @@ export default function ApprovedReportV2({ data }) {
           {' '}
           {approvingManagers}
         </p>
+        <p className="no-print">
+          <strong>Date created:</strong>
+          {' '}
+          {createdAt}
+        </p>
+        { submittedAt !== ''
+          ? (
+            <p>
+              <strong>Date submitted:</strong>
+              {' '}
+              {submittedAt}
+            </p>
+          )
+          : null }
         { approvedAt !== ''
           ? (
             <p>

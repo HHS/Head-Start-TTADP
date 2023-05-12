@@ -6,7 +6,11 @@ import {
 } from '../../../components/filter/goalFilters';
 
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
-  createDateFilter, grantNumberFilter(grantNumberParams), reasonsFilter, statusFilter, topicsFilter,
+  createDateFilter,
+  grantNumberFilter(grantNumberParams),
+  reasonsFilter,
+  statusFilter,
+  topicsFilter,
 ];
 
 export const TTAHISTORY_FILTER_CONFIG = [

@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class UserSettings extends Model {
     static associate(models) {
       UserSettings.hasMany(models.UserSettingOverrides, { foreignKey: 'userSettingId', as: 'userSettingOverrides' });
@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
   UserSettings.init(
     {
       key: { type: DataTypes.STRING, allowNull: false },
-      default: { type: DataTypes.STRING, allowNull: false },
+      default: { type: DataTypes.JSONB, allowNull: false },
+      class: { type: DataTypes.STRING, allowNull: false },
     },
     { sequelize, modelName: 'UserSettings' },
   );

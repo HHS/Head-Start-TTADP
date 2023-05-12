@@ -1,15 +1,14 @@
 version: 2.1
 orbs:
   node: circleci/node@5.0.2
-  browser-tools: circleci/browser-tools@1.2.3
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:16.19.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:16.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -19,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:16.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -52,7 +51,7 @@ commands:
     steps:
       - run:
           name: Combine package-lock.json files to single file
-          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+          command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -208,10 +207,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "websocket-demo"
+    default: "TTAHUB-224/newrelic-config-update"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-1245/fix-date-filters-graph"
+    default: "mb/TTAHUB-1530/goal-template"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -233,16 +232,17 @@ jobs:
       - create_combined_yarnlock
       - restore_cache:
           keys:
-            # To manually bust the cache, increment the version e.g. v6-yarn...
-            - v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # To manually bust the cache, increment the version e.g. v7-yarn...
+            - v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v6-yarn-deps-
+            - v8-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - packages/common/node_modules
+          key: v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -257,6 +257,8 @@ jobs:
           root: .
           paths:
             - .
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -293,6 +295,7 @@ jobs:
           path: backend-coverage-artifacts.tar
       - store_test_results:
           path: reports/
+    resource_class: large
   test_frontend:
     executor: docker-executor
     steps:
@@ -316,6 +319,7 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+    resource_class: large
   test_e2e:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -341,7 +345,7 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Wait for server to start
-          command: ./bin/ping-server
+          command: ./bin/ping-server 3000
       - run:
           name: Install playwright dependencies
           command: |
@@ -350,7 +354,44 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright/
+          path: playwright/e2e
+    resource_class: large
+  test_api:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:api
+      - store_artifacts:
+          path: playwright/api
+    resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -370,13 +411,14 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Wait for server to start
-          command: ./bin/ping-server
+          command: ./bin/ping-server 3000
       - run:
           name: Run cucumber
           command: |
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
+    resource_class: large
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -385,6 +427,9 @@ jobs:
       - run:
           name: Start up local server
           command: ./bin/prod-style-server
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-stable:2.11.1
@@ -396,35 +441,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
-  accessibility_scan:
-    executor: docker-postgres-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - browser-tools/install-chrome:
-          chrome-version: 93.0.4577.63
-          replace-existing: true
-      - browser-tools/install-chromedriver
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Build
-          command: yarn build
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Start server
-          command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
-          background: true
-      - run:
-          name: Run axe
-          command: |
-            sleep 10
-            yarn axe:ci
-      - store_artifacts:
-          path: reports/
+    resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -460,8 +477,8 @@ jobs:
                   REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW           
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov       
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -615,6 +632,7 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+    resource_class: large
 workflows:
   build_test_deploy:
     jobs:
@@ -628,13 +646,13 @@ workflows:
       - test_e2e:
           requires:
             - build_and_lint
+      - test_api:
+          requires:
+            - build_and_lint
       - cucumber_test:
           requires:
             - build_and_lint
       - dynamic_security_scan:
-          requires:
-            - build_and_lint
-      - accessibility_scan:
           requires:
             - build_and_lint
       - deploy:
@@ -642,9 +660,9 @@ workflows:
             - test_backend
             - test_frontend
             - test_e2e
+            - test_api
             - cucumber_test
             - dynamic_security_scan
-            - accessibility_scan
           filters:
             branches:
               only:
@@ -671,6 +689,9 @@ workflows:
           requires:
             - build_and_lint
       - test_e2e:
+          requires:
+            - build_and_lint
+      - test_api:
           requires:
             - build_and_lint
       - dynamic_security_scan:

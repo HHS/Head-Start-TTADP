@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
 import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
@@ -80,8 +81,8 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
       id,
       displayId,
     } = report;
-    const approverEmail = approver.User.email;
-    const approverName = approver.User.name;
+    const approverEmail = approver.user.email;
+    const approverName = approver.user.name;
     const approverNote = approver.note;
     logger.debug(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
 
@@ -217,7 +218,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       id,
       displayId,
     } = report;
-    const approverEmail = newApprover.User.email;
+    const approverEmail = newApprover.user.email;
     logger.debug(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({

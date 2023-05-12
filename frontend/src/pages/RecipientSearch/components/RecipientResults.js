@@ -77,6 +77,7 @@ export default function RecipientResults(
         offset={offset}
         perPage={perPage}
         handlePageChange={handlePageChange}
+        exportIdPrefix="recipient-search"
       />
       <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-top-0">
         <caption className="usa-sr-only">

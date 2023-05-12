@@ -6,6 +6,8 @@ const grants = [
     recipientId: 6,
     cdi: true,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 14,
@@ -14,6 +16,8 @@ const grants = [
     recipientId: 55,
     cdi: true,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 15,
@@ -22,6 +26,8 @@ const grants = [
     recipientId: 4,
     cdi: true,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 16,
@@ -30,6 +36,8 @@ const grants = [
     recipientId: 2,
     cdi: true,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 17,
@@ -38,6 +46,8 @@ const grants = [
     recipientId: 2,
     cdi: true,
     status: 'Inactive',
+    startDate: new Date(),
+    endDate: new Date(),
   },
 ];
 

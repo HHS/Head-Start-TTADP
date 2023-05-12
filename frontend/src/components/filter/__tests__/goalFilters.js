@@ -8,7 +8,11 @@ import {
   waitFor,
 } from '@testing-library/react';
 import {
-  createDateFilter, reasonsFilter, statusFilter, topicsFilter, grantNumberFilter,
+  createDateFilter,
+  reasonsFilter,
+  statusFilter,
+  topicsFilter,
+  grantNumberFilter,
 } from '../goalFilters';
 import FilterErrorContext from '../FilterErrorContext';
 

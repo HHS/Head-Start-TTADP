@@ -1,9 +1,10 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class CollaboratorRole extends Model {
     static associate(models) {
       CollaboratorRole.belongsTo(models.ActivityReportCollaborator, { foreignKey: 'activityReportCollaboratorId', as: 'activityReportCollaborator' });
+      CollaboratorRole.belongsTo(models.Role, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
     }
   }
   CollaboratorRole.init({

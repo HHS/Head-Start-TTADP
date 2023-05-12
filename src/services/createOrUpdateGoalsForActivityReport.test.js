@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { createOrUpdateGoalsForActivityReport } from './goals';
 import { saveObjectivesForReport, getObjectivesByReportId } from './objectives';
 import db, {
@@ -62,12 +62,16 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
     {
       id: faker.datatype.number(),
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
   ];
 
@@ -355,6 +359,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     expect(createdGoals[0].name).toBe('Test create goal for activity reports');
     expect(createdGoals[0].grantIds.sort()).toStrictEqual(grants.map((g) => g.id).sort());
     expect(createdGoals[0].objectives.length).toBe(3);
+    expect(createdGoals[0].endDate).toBe('11/22/2022'); // confirm date is returned in correct format by reducer
 
     // Objectives (sorted by order).
     expect(createdGoals[0].objectives[0].id).not.toBeNull();

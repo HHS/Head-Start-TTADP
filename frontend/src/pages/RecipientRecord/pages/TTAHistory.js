@@ -1,4 +1,6 @@
-import React, { useMemo, useContext } from 'react';
+import React, {
+  useMemo, useContext, useState, useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -23,11 +25,12 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   recipientName, recipientId, regionId,
 }) {
+  const [resetPagination, setResetPagination] = useState(false);
   const filterKey = `ttahistory-filters-${recipientId}`;
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     filterKey,
     [
       {
@@ -38,6 +41,11 @@ export default function TTAHistory({
       },
     ],
   );
+
+  const setFilters = useCallback((newFilters) => {
+    setFiltersInHook(newFilters);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   if (!recipientName) {
     return null;
@@ -79,8 +87,8 @@ export default function TTAHistory({
           {recipientName}
         </title>
       </Helmet>
-      <div className="margin-x-2 maxw-widescreen">
-        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
+      <div className="maxw-widescreen">
+        <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             filters={filters}
             onApplyFilters={onApply}
@@ -95,7 +103,7 @@ export default function TTAHistory({
             'Activity reports',
             'Hours of TTA',
             'Participants',
-            'In-person activities',
+            'In person activities',
           ]}
           showTooltips
           filters={filtersToApply}
@@ -115,6 +123,9 @@ export default function TTAHistory({
             filters={filtersToApply}
             showFilter={false}
             tableCaption="Approved activity reports"
+            exportIdPrefix="tta-history-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
       </div>

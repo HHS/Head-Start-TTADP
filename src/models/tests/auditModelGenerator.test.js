@@ -2,7 +2,7 @@ import faker from '@faker-js/faker';
 import { Model } from 'sequelize';
 import db, { User, ZALUser } from '..';
 import { auditLogger } from '../../logger';
-import audit from '../auditModelGenerator';
+import { generateAuditModel } from '../auditModelGenerator';
 
 describe('Audit System', () => {
   let t;
@@ -15,13 +15,16 @@ describe('Audit System', () => {
       transactionId: faker.datatype.uuid(),
       sessionSig: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
       auditDescriptor: 'Audit System Test',
+      impersonationUserId: '3',
     };
 
     const query = `SELECT
       set_config('audit.loggedUser', '${transactionVariables.loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', '${transactionVariables.transactionId}', TRUE) as "transactionId",
       set_config('audit.sessionSig', '${transactionVariables.sessionSig}', TRUE) as "sessionSig",
-      set_config('audit.auditDescriptor', '${transactionVariables.auditDescriptor}', TRUE) as "auditDescriptor";`;
+      set_config('audit.auditDescriptor', '${transactionVariables.auditDescriptor}', TRUE) as "auditDescriptor",
+      set_config('audit.impersonationUserId', '${transactionVariables.impersonationUserId}', TRUE) as "impersonationUserId";
+      `;
 
     await db.sequelize.queryInterface.sequelize.query(
       query,
@@ -46,7 +49,9 @@ describe('Audit System', () => {
       current_setting('audit.loggedUser', true) as "loggedUser",
       current_setting('audit.transactionId', true) as "transactionId",
       current_setting('audit.sessionSig', true) as "sessionSig",
-      current_setting('audit.auditDescriptor', true) as "auditDescriptor";`;
+      current_setting('audit.auditDescriptor', true) as "auditDescriptor",
+      current_setting('audit.impersonationUserId', true) as "impersonationUserId";
+      `;
 
       const values = await db.sequelize.queryInterface.sequelize.query(
         query,
@@ -209,7 +214,7 @@ describe('Audit System', () => {
         ];
         hooks.map((hook) => expect(db.sequelize.hasHook(hook)).toEqual(true));
 
-        const ZALTest = audit.generateAuditModel(db.sequelize, Test);
+        const ZALTest = generateAuditModel(db.sequelize, Test);
 
         let addTest;
         try {

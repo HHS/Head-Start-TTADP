@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -9,7 +10,6 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
 
 describe('removeRemovedRecipientsGoals', () => {
@@ -51,6 +51,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -58,6 +60,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -86,6 +90,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantOne.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     firstObjective = await Objective.create({
@@ -111,6 +116,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     secondObjective = await Objective.create({
@@ -136,6 +142,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantOne.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     await ActivityReportGoal.create({
@@ -150,6 +157,7 @@ describe('removeRemovedRecipientsGoals', () => {
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
       onApprovedAR: false,
+      createdVia: 'activityReport',
     });
 
     await ActivityReportGoal.create({
@@ -191,6 +199,8 @@ describe('removeRemovedRecipientsGoals', () => {
       where: {
         activityReportId: reportIds,
       },
+      hookMetadata: { objectiveIds: [firstObjective.id, secondObjective.id, thirdObjective.id] },
+      individualHooks: true,
     });
 
     await Objective.destroy({

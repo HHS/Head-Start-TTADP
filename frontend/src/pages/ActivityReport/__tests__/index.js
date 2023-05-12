@@ -5,13 +5,9 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-
+import { REPORT_STATUSES } from '@ttahub/common';
 import { mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
-import {
-  REPORT_STATUSES,
-} from '../../../Constants';
-
 import {
   history,
   formData,
@@ -53,7 +49,7 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', {
         ...data,
-        approvers: [{ User: { id: 3 } }],
+        approvers: [{ user: { id: 3 } }],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
@@ -68,13 +64,13 @@ describe('ActivityReport', () => {
         approvers: [
           {
             status: null,
-            User: {
+            user: {
               id: 3,
             },
           },
           {
             status: REPORT_STATUSES.APPROVED,
-            User: {
+            user: {
               id: 4,
             },
           },
@@ -90,7 +86,7 @@ describe('ActivityReport', () => {
         ...data,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ User: { id: 3 } }],
+        approvers: [{ user: { id: 3 } }],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
 
@@ -240,6 +236,75 @@ describe('ActivityReport', () => {
       };
       const result = findWhatsChanged(orig, changed);
       expect(result).toEqual({ startDate: null, creatorRole: null });
+    });
+
+    it('access correct fields when diffing turns up activity recipients', () => {
+      const old = {
+        activityRecipients: [{
+          activityRecipientId: 1,
+        }],
+        goals: [],
+        goalsAndObjectives: [
+          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
+        ],
+      };
+
+      const young = {
+        activityRecipients: [{
+          activityRecipientId: 2,
+        }, {
+          activityRecipientId: 1,
+        }],
+        goals: [],
+        goalsAndObjectives: [
+          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
+          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
+        ],
+      };
+
+      const changed = findWhatsChanged(young, old);
+      expect(changed).toEqual({
+        activityRecipients: [
+          {
+            activityRecipientId: 2,
+          },
+          {
+            activityRecipientId: 1,
+          },
+        ],
+        goals: [
+          {
+            activityReportGoals: [
+              {
+                isActivelyEdited: true,
+              },
+            ],
+            grantIds: [
+              2,
+              1,
+            ],
+            isActivelyEdited: true,
+            name: 'goal 1',
+            prompts: [],
+          },
+          {
+            activityReportGoals: [
+              {
+                isActivelyEdited: false,
+              },
+            ],
+            grantIds: [
+              2,
+              1,
+            ],
+            isActivelyEdited: false,
+            name: 'goal 2',
+            prompts: [],
+          },
+        ],
+        recipientsWhoHaveGoalsThatShouldBeRemoved: [],
+      });
     });
 
     it('displays the creator name', async () => {

@@ -1,9 +1,14 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { REPORT_STATUSES, USER_ROLES } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
-  beforeCreate, beforeUpdate, afterUpdate,
+  beforeCreate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+  beforeValidate,
 } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
@@ -15,12 +20,24 @@ const generateCreatorNameWithRole = (ar) => {
   return `${creatorName}${roles}`;
 };
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.belongsToMany(models.Grant, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'grantId',
+        as: 'grants',
+      });
+      ActivityReport.belongsToMany(models.OtherEntity, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'otherEntityId',
+        as: 'otherEntities',
+      });
       ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
@@ -30,8 +47,23 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'files',
       });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
+      ActivityReport.hasMany(models.ActivityReportResource, { foreignKey: 'activityReportId', as: 'activityReportResources' });
+      ActivityReport.belongsToMany(models.Resource, {
+        through: models.ActivityReportResource,
+        foreignKey: 'activityReportId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'specialistNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.SPECIALIST] },
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'recipientNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.RECIPIENT] },
+      });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
       ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals' });
       ActivityReport.belongsToMany(models.Goal, {
@@ -147,6 +179,9 @@ module.exports = (sequelize, DataTypes) => {
     topics: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    programTypes: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
     context: {
       type: DataTypes.TEXT,
     },
@@ -193,6 +228,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
+    },
+    submittedDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+      allowNull: true,
     },
     updatedAt: {
       allowNull: false,
@@ -255,8 +295,10 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeCreate: async (instance) => beforeCreate(instance),
-      beforeUpdate: async (instance) => beforeUpdate(instance),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     sequelize,

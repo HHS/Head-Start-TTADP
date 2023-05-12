@@ -1,5 +1,6 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from './ObjectiveTopics';
@@ -8,7 +9,7 @@ import ObjectiveFiles from './ObjectiveFiles';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
-import { REPORT_STATUSES } from '../../Constants';
+
 import ObjectiveStatus from './ObjectiveStatus';
 import AppLoadingContext from '../../AppLoadingContext';
 
@@ -136,6 +137,7 @@ export default function ObjectiveForm({
         goalStatus={goalStatus}
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
+        toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
       />
       { title && (
       <ObjectiveFiles

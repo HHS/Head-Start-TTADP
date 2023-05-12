@@ -20,7 +20,10 @@ import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
+import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
+import FilterGroups from './FilterGroups';
+import FilterDeliveryMethod from './FilterDeliveryMethod';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -60,15 +63,26 @@ const defaultDateValues = {
   'is on or before': '',
 };
 
+export const fixQueryWhetherStringOrArray = (query) => {
+  if (Array.isArray(query)) {
+    return query.join(', ');
+  }
+  return query;
+};
+
 export const startDateFilter = {
   id: 'startDate',
   display: 'Date started',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+
+    const smushed = fixQueryWhetherStringOrArray(query);
+
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
@@ -185,6 +199,21 @@ export const programTypeFilter = {
   ),
 };
 
+export const deliveryMethodFilter = {
+  id: 'deliveryMethod',
+  display: 'Delivery method',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDeliveryMethod
+      inputId={`deliveryMethod-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const reasonsFilter = {
   id: 'reason',
   display: 'Reasons',
@@ -261,6 +290,24 @@ export const regionFilter = {
   ),
 };
 
+export const ttaTypeFilter = {
+  id: 'ttaType',
+  display: 'TTA type',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'training',
+    'is not': 'training',
+  },
+  displayQuery: displayTtaTypeQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterTTAType
+      inputId={`ttaType-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const specialistRoleFilter = {
   id: 'role',
   display: 'Specialist roles',
@@ -330,6 +377,21 @@ export const topicsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTopicSelect
       inputId={`topic-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

@@ -174,7 +174,7 @@ export function TopicFrequencyGraphWidget({
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel="Topic frequency loading">
+    <Container className="ttahub--topic-frequency-graph" loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
@@ -212,6 +212,7 @@ export function TopicFrequencyGraphWidget({
             aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
             onClick={toggleType}
             data-html2canvas-ignore
+            id="rd-display-table-topic-frequency"
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>

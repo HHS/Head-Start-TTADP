@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useContext, useState, useEffect } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   Alert,
@@ -10,7 +9,6 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
-import GoalRttapa from './GoalRttapa';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -18,25 +16,25 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
+import ConditionalFields from '../ConditionalFields';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
+  validatePrompts,
   selectedGrants,
   setSelectedGrants,
   goalName,
+  prompts,
+  setPrompts,
   setGoalName,
   endDate,
   setEndDate,
-  isRttapa,
-  initialRttapa,
-  setIsRttapa,
   errors,
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
-  validateIsRttapa,
   validateGoalNameAndRecipients,
   objectives,
   setObjectives,
@@ -162,22 +160,19 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
-      <GoalRttapa
-        error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
-        isRttapa={isRttapa}
-        onBlur={validateIsRttapa}
-        onChange={setIsRttapa}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        isOnApprovedReport={isOnApprovedReport || false}
-        initial={initialRttapa}
+      <ConditionalFields
+        isOnReport={isOnApprovedReport}
+        prompts={prompts}
+        setPrompts={setPrompts}
+        validatePrompts={validatePrompts}
+        errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
       />
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
         isOnApprovedReport={isOnApprovedReport}
         setEndDate={setEndDate}
-        endDate={moment(endDate, 'YYYY-MM-DD').format('MM/DD/YYYY')}
+        endDate={endDate}
         validateEndDate={validateEndDate}
         key={datePickerKey}
         isLoading={isAppLoading}
@@ -217,13 +212,15 @@ export default function Form({
 Form.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
+  errors: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.shape({}),
+      PropTypes.node,
+    ]),
+  ).isRequired,
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
-  validateIsRttapa: PropTypes.func.isRequired,
-  isRttapa: PropTypes.string.isRequired,
-  setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
@@ -276,8 +273,13 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
-  initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
+  prompts: PropTypes.arrayOf(PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    response: PropTypes.arrayOf(PropTypes.string).isRequired,
+  })).isRequired,
+  setPrompts: PropTypes.func.isRequired,
+  validatePrompts: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {

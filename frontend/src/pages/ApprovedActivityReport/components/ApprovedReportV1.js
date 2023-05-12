@@ -15,7 +15,7 @@ import {
  * @param {object} report an activity report object
  * @returns an array of two arrays, each of which contains strings
  */
-function calculateGoalsAndObjectives(report) {
+export function calculateGoalsAndObjectives(report) {
   const headings = [];
   const data = [];
 
@@ -51,7 +51,7 @@ function calculateGoalsAndObjectives(report) {
     data.push(objective.title);
 
     headings.push(`TTA Provided ${displayNumber}`);
-    data.push(objective.ActivityReportObjective.ttaProvided);
+    data.push(objective.ttaProvided);
   });
 
   return [headings, data];
@@ -76,7 +76,7 @@ function formatMethod(method, delivery) {
 }
 
 function createResourceMarkup(resources) {
-  return resources.map((resource) => {
+  return !resources ? [] : resources.map((resource) => {
     try {
       return <a href={new URL(resource)}>{resource}</a>;
     } catch (err) {
@@ -95,14 +95,14 @@ export default function ApprovedReportV1({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
 
   // Approver Notes.
   const managerNotes = data.approvers.map((a) => `
-        <h2>${a.User.fullName}:</h2>
+        <h2>${a.user.fullName}:</h2>
         ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
   const attendees = formatSimpleArray(data.participants);
@@ -131,8 +131,9 @@ export default function ApprovedReportV1({ data }) {
   const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
-  const creator = data.author.fullName || '';
+  const creator = data.author && data.author.fullName ? data.author.fullName : '';
 
   return (
     <>
@@ -148,11 +149,6 @@ export default function ApprovedReportV1({ data }) {
             {' '}
             {creator}
           </p>
-          <p className="no-print">
-            <strong>Date created:</strong>
-            {' '}
-            {createdAt}
-          </p>
           <p>
             <strong>Collaborators:</strong>
             {' '}
@@ -163,6 +159,20 @@ export default function ApprovedReportV1({ data }) {
             {' '}
             {approvingManagers}
           </p>
+          <p className="no-print">
+            <strong>Date created:</strong>
+            {' '}
+            {createdAt}
+          </p>
+          { submittedAt !== ''
+            ? (
+              <p>
+                <strong>Date submitted:</strong>
+                {' '}
+                {submittedAt}
+              </p>
+            )
+            : null }
           { approvedAt !== ''
             ? (
               <p>

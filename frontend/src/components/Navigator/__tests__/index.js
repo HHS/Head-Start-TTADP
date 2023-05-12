@@ -8,9 +8,9 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import Navigator from '../index';
+import Navigator, { getPromptErrors, packageGoals } from '../index';
 import UserContext from '../../../UserContext';
-import { NOT_STARTED, IN_PROGRESS } from '../constants';
+import { COMPLETE, NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import GoalFormContext from '../../../GoalFormContext';
@@ -22,11 +22,11 @@ const user = {
 };
 
 // eslint-disable-next-line react/prop-types
-const Input = ({ name, required }) => {
+const Input = ({ name, required, type = 'radio' }) => {
   const { register } = useFormContext();
   return (
     <input
-      type="radio"
+      type={type}
       data-testid={name}
       name={name}
       ref={register({ required })}
@@ -126,6 +126,8 @@ const initialData = {
   activityRecipients: [],
   activityRecipientType: 'recipient',
   'goalForEditing.objectives': [],
+  goalPrompts: ['test-prompt', 'test-prompt-error'],
+  'test-prompt': ['test'],
 };
 
 describe('Navigator', () => {
@@ -515,6 +517,80 @@ describe('Navigator', () => {
     await waitFor(() => expect(updateForm).toHaveBeenCalled());
   });
 
+  it('runs the autosave when navigating from the goals and objectives page', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }, {
+      position: 2,
+      path: 'second',
+      label: 'second page',
+      review: false,
+      render: () => (
+        <Input name="second" required />
+      ),
+    },
+    {
+      position: 3,
+      path: 'third',
+      label: 'third page',
+      review: false,
+      render: () => (
+        <Input name="third" required />
+      ),
+    },
+    {
+      position: 4,
+      label: 'review page',
+      path: 'review',
+      review: true,
+      render: (formData, onFormSubmit) => (
+        <div>
+          <Input name="fourth" required />
+          <button type="button" data-testid="review" onClick={onFormSubmit}>Continue</button>
+        </div>
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByRole('textbox', { name: 'Name' }));
+    userEvent.click(await screen.findByRole('button', { name: 'second page Not Started' }));
+
+    await waitFor(() => expect(
+      onSave,
+    ).toHaveBeenCalledWith({
+      ...initialData,
+      goalName: '',
+      goals: [
+        {
+          endDate: '',
+          grantIds: [],
+          isActivelyBeingEditing: true,
+          isRttapa: undefined,
+          name: '',
+          objectives: [],
+          regionId: 1,
+          prompts: expect.anything(),
+        },
+      ],
+      pageState: { 1: COMPLETE, 2: NOT_STARTED },
+    }));
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
+  });
+
   it('disables the save button', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
@@ -849,5 +925,174 @@ describe('Navigator', () => {
     await waitFor(() => expect(fetchMock.called('/api/activity-reports/goals')).toBe(true));
     HTMLDivElement.prototype.contains = previousContains;
     expect(updateForm).not.toHaveBeenCalled();
+  });
+
+  it('breaks save draft when there is an error in the goal prompts', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <Input name="prompt" type="text" required />
+          <GoalTest />
+        </>
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'recipient',
+      activityRecipients: [
+        {
+          id: 1,
+          name: 'recipient',
+          grant: {
+            id: 1,
+          },
+        },
+      ],
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: '09/01/2020',
+      goalIsRttapa: 'Yes',
+      goalName: 'goal name',
+      goalPrompts: [{ fieldName: 'prompt' }],
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
+    expect(saveGoal).toBeVisible();
+    fetchMock.restore();
+    act(() => userEvent.click(saveGoal));
+    expect(fetchMock.called()).toBe(false);
+  });
+});
+
+describe('getPromptErrors', () => {
+  const oldQuerySelector = document.querySelector;
+  afterAll(() => {
+    document.querySelector = oldQuerySelector;
+  });
+
+  it('returns true if there are errors', async () => {
+    document.querySelector = jest.fn(() => null);
+    const errors = { prompt: 'error' };
+    const prompts = [{ fieldName: 'prompt' }];
+    expect(getPromptErrors(prompts, errors)).toBe(true);
+  });
+
+  it('focuses if there are errors', async () => {
+    const focus = jest.fn();
+    document.querySelector = jest.fn(() => ({ focus }));
+    const errors = { prompt: 'error' };
+    const prompts = [{ fieldName: 'prompt' }];
+    expect(getPromptErrors(prompts, errors)).toBe(true);
+    expect(focus).toHaveBeenCalled();
+  });
+
+  it('returns false if there are no errors', async () => {
+    document.querySelector = jest.fn(() => null);
+    const errors = {};
+    const prompts = [{ fieldName: 'prompt' }];
+    expect(getPromptErrors(prompts, errors)).toBe(false);
+  });
+
+  it('returns false if there are no prompts', async () => {
+    document.querySelector = jest.fn(() => null);
+    const errors = {};
+    expect(getPromptErrors(null, errors)).toBe(false);
+  });
+});
+
+describe('packageGoals', () => {
+  it('correctly formats goals with multiple recipients', () => {
+    const grantIds = [1, 2];
+    const packagedGoals = packageGoals(
+      [
+        {
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+        },
+      ],
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+      },
+      grantIds,
+      [{ fieldName: 'prompt2' }],
+    );
+
+    expect(packagedGoals).toEqual([
+      {
+        name: 'goal name',
+        endDate: '09/01/2020',
+        prompts: [],
+        grantIds,
+        isActivelyBeingEditing: false,
+      },
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+        grantIds,
+        prompts: [],
+      },
+    ]);
+  });
+
+  it('correctly formats goals for a single recipient', () => {
+    const grantIds = [1];
+    const packagedGoals = packageGoals(
+      [
+        {
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+        },
+      ],
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+      },
+      grantIds,
+      [{ fieldName: 'prompt2' }],
+    );
+
+    expect(packagedGoals).toEqual([
+      {
+        name: 'goal name',
+        endDate: '09/01/2020',
+        prompts: [{ fieldName: 'prompt' }],
+        grantIds,
+        isActivelyBeingEditing: false,
+      },
+      {
+        name: 'recipient',
+        endDate: '09/01/2020',
+        isActivelyBeingEditing: true,
+        grantIds,
+        prompts: [{ fieldName: 'prompt2' }],
+      },
+    ]);
   });
 });

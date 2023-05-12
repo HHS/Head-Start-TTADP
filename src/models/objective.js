@@ -14,7 +14,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
       Objective.belongsToMany(models.ActivityReport, {
@@ -28,7 +28,14 @@ module.exports = (sequelize, DataTypes) => {
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
+      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
+      Objective.belongsToMany(models.Resource, {
+        through: models.ObjectiveResource,
+        foreignKey: 'objectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics' });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,
         foreignKey: 'objectiveId',
@@ -67,8 +74,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
+      default: false,
     },
     createdVia: {
       type: DataTypes.ENUM(['activityReport', 'rtr']),

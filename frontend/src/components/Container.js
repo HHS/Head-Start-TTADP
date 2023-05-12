@@ -15,15 +15,17 @@ const Container = forwardRef((props, ref) => {
     loadingLabel,
     paddingX,
     paddingY,
+    positionRelative,
   } = props;
 
   const skipTop = skipTopPadding ? 'padding-top-0' : '';
   const skipBottom = skipBottomPadding ? 'padding-bottom-0' : '';
+  const relative = positionRelative ? 'position-relative' : '';
 
   return (
-    <div className={`${classes} ${className} position-relative`} ref={ref}>
+    <div className={`${classes} ${className}`} ref={ref}>
       <Loader loading={loading} loadingLabel={loadingLabel} />
-      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${skipTop} ${skipBottom}`}>
+      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${relative} ${skipTop} ${skipBottom}`}>
         {children}
       </div>
     </div>
@@ -39,16 +41,18 @@ Container.propTypes = {
   skipBottomPadding: PropTypes.bool,
   loading: PropTypes.bool,
   loadingLabel: PropTypes.string,
+  positionRelative: PropTypes.bool,
 };
 
 Container.defaultProps = {
   className: '',
-  paddingX: 5,
-  paddingY: 5,
+  paddingX: 3,
+  paddingY: 3,
   skipTopPadding: false,
   skipBottomPadding: false,
   loading: false,
   loadingLabel: 'loading',
+  positionRelative: false,
 };
 
 export default Container;

@@ -1,20 +1,25 @@
 /* eslint-disable react/jsx-no-bind */
 import React, {
-  useEffect, useState, useRef,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
-import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
-import RegionalSelect from '../../components/RegionalSelect';
 import RecipientResults from './components/RecipientResults';
 import { getUserRegions } from '../../permissions';
 import { searchRecipients } from '../../fetchers/recipient';
 import { RECIPIENTS_PER_PAGE } from '../../Constants';
 import './index.css';
 import useSession from '../../hooks/useSession';
+import FilterPanel from '../../components/filter/FilterPanel';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
+import { expandFilters } from '../../utils';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -26,20 +31,43 @@ const DEFAULT_CENTRAL_OFFICE_SORT = {
   direction: 'asc',
 };
 
+export const determineDefaultSort = (userHasCentralOffice) => (
+  userHasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT
+);
+
 function RecipientSearch({ user }) {
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl('recipient-search-filters', []);
+
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
+  const defaultSort = useMemo(() => determineDefaultSort(hasCentralOffice), [hasCentralOffice]);
   const [queryAndSort, setQueryAndSort] = useSession('rtr-search', {
     query: '',
     activePage: 1,
-    sortConfig: hasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT,
-    appliedRegion: hasCentralOffice ? 14 : regions[0],
+    sortConfig: defaultSort,
   });
 
   const [results, setResults] = useState({ count: 0, rows: [] });
   const [loading, setLoading] = useState(false);
 
   const { query, activePage, sortConfig } = queryAndSort;
+
+  const setFilters = (newFilters) => {
+    const qAndS = {
+      activePage: 1,
+      sortConfig: defaultSort,
+      query,
+    };
+
+    setQueryAndSort(qAndS);
+    setFiltersInHook(newFilters);
+  };
+
+  const onRemoveFilter = (filterId) => {
+    const newFilters = filters.map((f) => ({ ...f })).filter((f) => f.id !== filterId);
+    setFilters(newFilters);
+  };
+  const applyButtonAria = 'Apply filters';
 
   const updateQueryAndSort = (key, value) => {
     const qAndS = { ...queryAndSort };
@@ -54,42 +82,28 @@ function RecipientSearch({ user }) {
     updateQueryAndSort('activePage', ap);
   };
 
-  const setAppliedRegion = (ar) => {
-    updateQueryAndSort('appliedRegion', ar);
-  };
-
   const inputRef = useRef();
   const offset = (activePage - 1) * RECIPIENTS_PER_PAGE;
 
   useEffect(() => {
+    const updateQuery = (q) => {
+      const qAndS = {
+        activePage: 1,
+        sortConfig: defaultSort,
+        query: q,
+      };
+
+      setQueryAndSort(qAndS);
+    };
+
     async function fetchRecipients() {
-      const filters = [];
-
-      if (queryAndSort.appliedRegion === 14) {
-        getUserRegions(user).forEach((region) => {
-          filters.push({
-            id: uuidv4(),
-            topic: 'region',
-            condition: 'is',
-            query: region,
-          });
-        });
-      } else {
-        filters.push({
-          id: uuidv4(),
-          topic: 'region',
-          condition: 'is',
-          query: queryAndSort.appliedRegion,
-        });
-      }
-
       /**
        * if the current query doesn't match the value of the input,
        * we need to handle that first. Changing that will trigger this hook again
        */
       if (query !== inputRef.current.value) {
         if (inputRef.current) {
-          setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
+          updateQuery(inputRef.current.value);
         }
         return;
       }
@@ -99,7 +113,7 @@ function RecipientSearch({ user }) {
       try {
         const response = await searchRecipients(
           query,
-          filters,
+          expandFilters(filters),
           { ...sortConfig, offset },
         );
         setResults(response);
@@ -111,11 +125,7 @@ function RecipientSearch({ user }) {
     }
 
     fetchRecipients();
-  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort]);
-
-  function onApplyRegion(region) {
-    setAppliedRegion(region.value);
-  }
+  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters, defaultSort]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
@@ -136,7 +146,11 @@ function RecipientSearch({ user }) {
   async function onSubmit(e) {
     e.preventDefault();
     if (inputRef.current) {
-      setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
+      setQueryAndSort({
+        sortConfig: defaultSort,
+        activePage: 1,
+        query: inputRef.current.value,
+      });
     }
   }
 
@@ -148,20 +162,8 @@ function RecipientSearch({ user }) {
         <title>Recipient TTA Records Search</title>
       </Helmet>
       <div className="ttahub-recipient-search">
-        <h1 className="landing">Recipient Records</h1>
-        <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
-          {regions.length > 1
-              && (
-                <div className="margin-right-2">
-                  <RegionalSelect
-                    regions={regions}
-                    onApply={onApplyRegion}
-                    hasCentralOffice={hasCentralOffice}
-                    appliedRegion={queryAndSort.appliedRegion}
-                    disabled={loading}
-                  />
-                </div>
-              )}
+        <h1 className="landing margin-top-0 margin-bottom-3">Recipient Records</h1>
+        <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-3">
           <form role="search" className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
             { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
             <label htmlFor="recipientRecordSearch" className="sr-only">Search recipient records by name or grant id</label>
@@ -172,6 +174,16 @@ function RecipientSearch({ user }) {
               <span className="sr-only">Search for matching recipients</span>
             </button>
           </form>
+        </Grid>
+        <Grid className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+          <FilterPanel
+            filters={filters}
+            filterConfig={RECIPIENT_SEARCH_FILTER_CONFIG}
+            onRemoveFilter={onRemoveFilter}
+            onApplyFilters={setFilters}
+            applyButtonAria={applyButtonAria}
+            allUserRegions={regions}
+          />
         </Grid>
         <RecipientResults
           recipients={rows}

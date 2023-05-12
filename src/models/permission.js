@@ -2,9 +2,12 @@ const {
   Model,
 } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Permission extends Model {
-    static associate() {
+    static associate(models) {
+      Permission.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
+      Permission.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      Permission.belongsTo(models.Scope, { foreignKey: 'scopeId', as: 'scope' });
     }
   }
   Permission.init({
@@ -13,6 +16,18 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
       type: DataTypes.INTEGER,
+    },
+    regionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    userId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    scopeId: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   }, {
     sequelize,

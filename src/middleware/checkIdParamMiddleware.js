@@ -69,25 +69,6 @@ export function checkReportIdParam(req, res, next) {
 }
 
 /**
- *  Check reportObjectiveId req param
- *
- * This middleware validates that the Activity Report Objective id supplied
- * by the reportObjectiveId query param is an integer before we proceed with the request
- * @param {*} req - request
- * @param {*} res - response
- * @param {*} next - next middleware
- */
-export function checkReportObjectiveIdParam(req, res, next) {
-  if (req.params && req.params.reportObjectiveId && canBeInt(req.params.reportObjectiveId)) {
-    return next();
-  }
-
-  const msg = `${errorMessage}: reportObjectiveId ${req.params ? (req.params.reportObjectiveId || 'undefined') : 'undefined'}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
-}
-
-/**
  *  Check objectiveId req param
  *
  * This middleware validates that the Objective id supplied
@@ -121,6 +102,63 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
   }
 
   const msg = `${errorMessage}: objectiveTemplateId ${req.params ? (req.params.objectiveTemplateId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
+ *  Check groupId req param
+ *
+ * This middleware validates that the site alert id supplied
+ * by the alertId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGroupIdParam(req, res, next) {
+  if (req.params && req.params.groupId && canBeInt(req.params.groupId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: groupId ${req.params ? (req.params.groupId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
+ *  Check alertId req param
+ *
+ * This middleware validates that the site alert id supplied
+ * by the alertId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkAlertIdParam(req, res, next) {
+  if (req.params && req.params.alertId && canBeInt(req.params.alertId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: alertId ${req.params ? (req.params.alertId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
+ *  Check goalTemplateId req param
+ *
+ * This middleware validates that the site alert id supplied
+ * by the goalTemplateId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGoalTemplateIdParam(req, res, next) {
+  if (req.params && req.params.goalTemplateId && canBeInt(req.params.goalTemplateId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: goalTemplateId ${req.params ? (req.params.goalTemplateId || 'undefined') : 'undefined'}`;
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }

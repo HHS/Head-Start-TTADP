@@ -1,4 +1,6 @@
-/* eslint-disable dot-notation */
+/* eslint-disable @typescript-eslint/dot-notation */
+/* eslint-disable no-underscore-dangle */
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -10,12 +12,14 @@ import db, {
   Objective,
   ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveResource,
 } from '../models';
 import createAwsElasticSearchIndexes from './createAwsElasticSearchIndexes';
 import {
   search,
 } from '../lib/awsElasticSearch/index';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
+import { processActivityReportObjectiveForResourcesById } from '../services/resource';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 import { auditLogger } from '../logger';
 
 const mockUser = {
@@ -41,6 +45,8 @@ const draft = {
   topics: ['topics'],
   ttaType: ['type'],
   context: 'Lets give some context.',
+  nonECLKCResourcesUsed: [],
+  ECLKCResourcesUsed: [],
 };
 
 const approvedReport = {
@@ -63,6 +69,9 @@ describe('Create AWS Elastic Search Indexes', () => {
   let reportTwo;
   let reportThree;
 
+  let activityReportObjective1;
+  let activityReportObjective2;
+
   beforeAll(async () => {
     try {
       // User.
@@ -80,6 +89,8 @@ describe('Create AWS Elastic Search Indexes', () => {
         number: 'ES234234',
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Draft Report (excluded).
@@ -88,20 +99,22 @@ describe('Create AWS Elastic Search Indexes', () => {
       // Approved Reports.
       reportOne = await ActivityReport.create({
         ...approvedReport,
-        context: 'Lets give some',
+        context: 'Some houses had lead water in the pipes.',
         userId: user.id,
+        nonECLKCResourcesUsed: ['https://www.youtube.com'],
+        ECLKCResourcesUsed: ['https://www.smartsheet.com'],
       });
       reportTwo = await ActivityReport.create(
         {
           ...approvedReport,
-          context: 'New context to test',
+          context: 'Students should each pack a water.',
           userId: user.id,
         },
       );
       reportThree = await ActivityReport.create(
         {
           ...approvedReport,
-          context: 'If the search works',
+          context: 'We need to detect any lead in the pipes. Bring a water its going to be hot.',
           userId: user.id,
         },
       );
@@ -178,14 +191,14 @@ describe('Create AWS Elastic Search Indexes', () => {
       });
 
       // Create ARO's.
-      await ActivityReportObjective.create({
+      activityReportObjective1 = await ActivityReportObjective.create({
         activityReportId: reportOne.id,
         objectiveId: objective.id,
         title: 'Reading glasses',
         ttaProvided: 'Go to the library',
         status: 'Complete',
       });
-      await ActivityReportObjective.create({
+      activityReportObjective2 = await ActivityReportObjective.create({
         activityReportId: reportTwo.id,
         objectiveId: objective.id,
         title: 'How to prepare your work space',
@@ -199,6 +212,16 @@ describe('Create AWS Elastic Search Indexes', () => {
         ttaProvided: 'Search for local activities',
         status: 'Complete',
       });
+
+      // Create ARO resources.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective1.id,
+        ['http://google.com', 'http://yahoo.com'],
+      );
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective2.id,
+        ['http://bing.com', 'https://eclkc.ohs.acf.hhs.gov/'],
+      );
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -207,51 +230,74 @@ describe('Create AWS Elastic Search Indexes', () => {
 
   afterAll(async () => {
     try {
+      // Delete objective resource.
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: [activityReportObjective1.id, activityReportObjective2.id],
+        },
+        individualHooks: true,
+      });
+
       // Delete Next Steps.
       await NextStep.destroy({
         where: {
           activityReportId: [reportOne.id, reportTwo.id, reportThree.id],
         },
+        individualHooks: true,
       });
 
       // Delete ARO's.
       await ActivityReportObjective.destroy({
         where: { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+        individualHooks: true,
       });
 
       // Delete ARG's.
       await ActivityReportGoal.destroy({
         where: { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+        individualHooks: true,
       });
 
       // Delete activity recipient.
-      await ActivityRecipient.destroy({ where: { activityReportId: reportOne.id } });
-      await ActivityRecipient.destroy({ where: { activityReportId: reportTwo.id } });
-      await ActivityRecipient.destroy({ where: { activityReportId: reportThree.id } });
+      await ActivityRecipient.destroy({
+        where: { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+        individualHooks: true,
+      });
 
       // Delete Objective.
       await Objective.destroy({
         where: {
           id: objective.id,
         },
+        individualHooks: true,
       });
       // Delete Goal.
       await Goal.destroy({
         where: {
           grantId: grant.id,
         },
+        individualHooks: true,
       });
       // Delete Report's.
-      await ActivityReport.destroy({ where: { id: reportOne.id } });
-      await ActivityReport.destroy({ where: { id: reportTwo.id } });
-      await ActivityReport.destroy({ where: { id: reportThree.id } });
-      await ActivityReport.destroy({ where: { id: draftReport.id } });
+      await ActivityReport.destroy({
+        where: { id: [reportOne.id, reportTwo.id, reportThree.id, draftReport.id] },
+        individualHooks: true,
+      });
       // Delete Grant.
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({
+        where: { id: grant.id },
+        individualHooks: true,
+      });
       // Delete Recipient.
-      await Recipient.destroy({ where: { id: recipient.id } });
+      await Recipient.destroy({
+        where: { id: recipient.id },
+        individualHooks: true,
+      });
       // Delete User.
-      await User.destroy({ where: { id: user.id } });
+      await User.destroy({
+        where: { id: user.id },
+        individualHooks: true,
+      });
       await db.sequelize.close();
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
@@ -264,7 +310,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     await createAwsElasticSearchIndexes();
 
     // Context Search.
-    let query = 'context to test';
+    let query = 'lead water';
     let searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       ['context'],
@@ -272,7 +318,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     );
 
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
 
     // Recipient Next Steps.
     query = 'bold';
@@ -283,7 +329,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     );
 
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportThree.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportThree.id.toString());
 
     // Specialist Next Steps (contains two matches).
     query = 'change';
@@ -293,7 +339,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
 
     // ARG.
     query = 'book';
@@ -303,7 +349,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
 
     // ARO.
     query = 'How to prepare';
@@ -313,7 +359,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
 
     // ARO TTA.
     query = 'local activities';
@@ -323,7 +369,38 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportThree.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportThree.id.toString());
+
+    // ARO Resources.
+    // query = 'https://eclkc.ohs.acf.hhs.gov/';
+    query = 'eclkc';
+    searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['activityReportObjectiveResources'],
+      query,
+    );
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
+
+    // non ECLKC Resource.
+    query = 'youtube';
+    searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['nonECLKCResources'],
+      query,
+    );
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
+
+    // ECLKC Resource.
+    query = 'smartsheet';
+    searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['ECLKCResources'],
+      query,
+    );
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
 
     // Search all indexes.
     query = 'thousand miles';
@@ -332,8 +409,28 @@ describe('Create AWS Elastic Search Indexes', () => {
       [],
       query,
     );
-    expect(searchResult.hits.length).toBe(2);
+    expect(searchResult.hits.length).toBe(1);
     expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
-    expect(searchResult.hits[1]['_id']).toBe(reportThree.id.toString());
+  });
+});
+
+describe('error states', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
+
+  it('search index job error', async () => {
+    ActivityReport.findAll = jest.fn().mockRejectedValueOnce(new Error('test error'));
+
+    jest.spyOn(auditLogger, 'error');
+
+    // Create Indexes.
+    await createAwsElasticSearchIndexes();
+
+    expect(auditLogger.error).toHaveBeenCalled();
   });
 });

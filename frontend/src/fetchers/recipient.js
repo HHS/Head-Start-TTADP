@@ -1,6 +1,7 @@
 import join from 'url-join';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { get } from './index';
-import { DECIMAL_BASE, GOALS_PER_PAGE } from '../Constants';
+import { GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../utils';
 
 const recipientUrl = join('/', 'api', 'recipient');
@@ -24,7 +25,12 @@ export const searchRecipients = async (query, filters, params = { sortBy: 'name'
   const queryParams = filtersToQueryString(filters);
 
   const recipients = await get(
-    join(recipientUrl, 'search', `${querySearch}&${queryParams}`, `&sortBy=${params.sortBy}&direction=${params.direction}&offset=${params.offset}`),
+    join(
+      recipientUrl,
+      'search',
+      `${querySearch}${queryParams ? `&${queryParams}` : ''}`,
+      `&sortBy=${params.sortBy}&direction=${params.direction}&offset=${params.offset}`,
+    ),
   );
 
   return recipients.json();
@@ -56,4 +62,9 @@ export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updated
   const recipientGoalsUrl = join(recipientUrl, recipientId, 'region', regionId, 'goals');
   const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${goalsParam && goalsParam.length ? `&${goalsParam.join('&')}` : ''}${filters ? `&${filters}` : ''}`);
   return goals.json();
+};
+
+export const getRecipientAndGrantsByUser = async () => {
+  const recipients = await get(join(recipientUrl, 'user'));
+  return recipients.json();
 };
