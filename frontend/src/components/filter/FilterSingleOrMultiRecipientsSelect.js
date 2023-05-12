@@ -11,7 +11,7 @@ export function mapDisplayValue(value) {
     return 'Multiple recipients';
   }
 
-  return value;
+  return '';
 }
 
 export default function FilterSingleOrMultiRecipientsSelect({
