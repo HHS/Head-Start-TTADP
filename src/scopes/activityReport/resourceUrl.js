@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const activityReportResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
 
   return `
   SELECT DISTINCT
@@ -12,11 +12,11 @@ const activityReportResourcePosNeg = (pos = true) => {
   ON "ActivityReportResources"."activityReportId" = "ActivityReports"."id"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
+  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
 };
 
 const activityReportGoalResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
 
   return `
   SELECT DISTINCT
@@ -28,11 +28,11 @@ const activityReportGoalResourcePosNeg = (pos = true) => {
   ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
+  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
 };
 
 const activityReportObjectiveResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
 
   return `
   SELECT DISTINCT
@@ -44,11 +44,11 @@ const activityReportObjectiveResourcePosNeg = (pos = true) => {
   ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
+  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
 };
 
 const nextStepsResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
+  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
 
   return `
   SELECT DISTINCT
@@ -60,7 +60,7 @@ const nextStepsResourcePosNeg = (pos = true) => {
   ON "NextSteps"."id" = "NextStepResources"."nextStepId"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "NextStepResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
+  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
 };
 
 export function withResourceUrl(query) {
