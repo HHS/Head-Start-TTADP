@@ -135,6 +135,14 @@ export const topicToQuery = {
     in: (query) => withDeliveryMethod(query),
     nin: (query) => withoutDeliveryMethod(query),
   },
+  resourceAttachment: {
+    ctn: (query) => withResourceAttachment(query),
+    nctn: (query) => withoutResourceAttachment(query),
+  },
+  resourceUrl: {
+    ctn: (query) => withResourceUrl(query),
+    nctn: (query) => withoutResourceUrl(query),
+  },
 };
 
 export function activityReportsFiltersToScopes(filters, options, userId) {
