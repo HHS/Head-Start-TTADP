@@ -39,7 +39,9 @@ test.describe('Activity Report Text Search Filter', () => {
     const fullName = await getFullName(page);
 
     // Navigate to AR landing.
+    let prs = waitForLandingFilterRequests(page);
     await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await Promise.all(prs);
 
     // Create new report.
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
@@ -49,7 +51,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Summary page.
 
     // Recipient.
-    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.getByRole('group', { name: /Was this activity for a recipient or other entity/i }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-3-option-0-0').click();
     await blur(page);
@@ -62,16 +64,16 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.locator('#react-select-7-option-0').click();
     await blur(page);
     // Requested by.
-    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Recipient' }).click();
-    await page.getByRole('group', { name: 'Reason for activity' }).getByText('- Select -').click();
+    await page.getByRole('group', { name: /Who requested this activity\? Use "Regional Office" for TTA not requested by recipient/i }).locator('label').filter({ hasText: 'Recipient' }).click();
+    // await page.getByRole('group', { name: /Reason for activity/i }).getByText('- Select -').click();
+    await page.getByLabel(/reason/i).click();
     await page.locator('#react-select-9-option-0').click();
     await blur(page);
     // Start and End Dates.
-    await page.getByLabel('Start date *mm/dd/yyyy').fill('01/17/2023');
-    await page.getByLabel('End date *mm/dd/yyyy').fill('01/17/2023');
+    await page.getByLabel(/Start date/i).fill('01/17/2023');
+    await page.getByLabel(/End date/i).fill('01/17/2023');
     // Duration.
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').click();
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('9.5');
+    await page.getByLabel(/Duration in hours/i).fill('9.5');
     await page.getByRole('textbox', { name: 'Context' }).locator('div').nth(2).fill('The sky is blue. The ocean is deep.');
     // Type of tta.
     await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText('Training').click();
@@ -81,26 +83,23 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
     // Number of participants.
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
-    await page.getByLabel('Number of participants involved *').click();
-    await page.getByLabel('Number of participants involved *').fill('5');
+    await page.getByLabel(/Number of participants involved/i).fill('5');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // Goals page.
-    await page.getByText('- Select -').click();
+    await page.getByLabel(/select recipient\'s goal/i).click();
     await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
 
     // Goal title.
     await page.getByTestId('textarea').click();
     await page.keyboard.type('Learn how to cook.');
-    // await page.getByTestId('textarea').fill('Learn how to cook.');
     await blur(page);
 
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-15-option-0').click();
     // Objective title.
-    await page.getByLabel('TTA objective *').click();
-    await page.getByLabel('TTA objective *').fill('Prepare your first meal.');
+    await page.getByLabel('TTA objective/i').fill('Prepare your first meal.');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-19-option-0').click();
     await blur(page);
@@ -117,23 +116,19 @@ test.describe('Activity Report Text Search Filter', () => {
 
     // Next steps page.
     // Specialist step 1.
-    await page.getByTestId('specialistNextSteps-input').click();
     await page.getByTestId('specialistNextSteps-input').fill('Do your best and forget the rest.');
-    await page.getByLabel('When do you anticipate completing step 1? *').fill('01/17/2023');
+    await page.getByLabel(/When do you anticipate completing step 1/i).fill('01/17/2023');
     await page.getByTestId('specialistNextSteps-button').click();
     // Specialist step 2.
-    await page.getByLabel('Step 2 *').click();
-    await page.getByLabel('Step 2 *').fill('If you can dream it, you can do it.');
-    await page.getByLabel('When do you anticipate completing step 2? *').fill('01/17/2023');
+    await page.getByLabel(/Step 2/i).fill('If you can dream it, you can do it.');
+    await page.getByLabel(/When do you anticipate completing step 2/i).fill('01/17/2023');
     // Recipient step 1.
-    await page.getByTestId('recipientNextSteps-input').click();
     await page.getByTestId('recipientNextSteps-input').fill('Just one small positive thought in the morning can change your whole day.');
-    await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('01/17/2023');
+    await page.getByLabel(/When does the recipient anticipate completing step 1/i).fill('01/17/2023');
     // Recipient step 2.
     await page.getByTestId('recipientNextSteps-button').click();
-    await page.getByRole('group', { name: 'Recipient\'s next steps' }).getByLabel('Step 2 *').click();
-    await page.getByRole('group', { name: 'Recipient\'s next steps' }).getByLabel('Step 2 *').fill('Virtually nothing is impossible in this world.');
-    await page.getByLabel('When does the recipient anticipate completing step 2? *').fill('01/17/2023');
+    await page.getByRole('group', { name: 'Recipient\'s next steps' }).getByLabel(/Step 2/).fill('Virtually nothing is impossible in this world.');
+    await page.getByLabel(/When does the recipient anticipate completing step 2/).fill('01/17/2023');
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -168,7 +163,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Contains context.
     await page.locator('select[name="condition"]').selectOption('contains');
     await page.getByLabel('Enter report text').fill('the ocean is');
-    let prs = waitForLandingFilterRequests(page);
+    prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
