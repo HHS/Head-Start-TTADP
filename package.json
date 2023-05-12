@@ -182,6 +182,7 @@
       "<rootDir>/src/app.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,
