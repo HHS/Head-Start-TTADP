@@ -1161,7 +1161,7 @@ export async function createOrUpdateGoals(goals) {
         { endDate: endDate || null },
         { individualHooks: true },
       );
-    } 
+    }
 
     const newObjectives = await Promise.all(
       objectives.map(async (o, index) => {
