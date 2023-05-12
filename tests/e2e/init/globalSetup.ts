@@ -1,5 +1,5 @@
 // @ts-ignore
-import { UserValidationStatus } from '../../src/models';
+import { UserValidationStatus } from '../../../src/models';
 
 async function globalSetup() {
   if (!process.env.CI) {
