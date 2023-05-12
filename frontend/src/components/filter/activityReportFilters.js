@@ -349,7 +349,7 @@ export const singleOrMultiRecipientsFilter = {
   display: 'Single or multiple recipients',
   conditions: SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
   defaultValues: {
-    is: 'Single recipient',
+    is: 'single-recipient',
   },
   displayQuery: mapDisplayValue,
   renderInput: (id, condition, query, onApplyQuery) => (
