@@ -2030,7 +2030,7 @@ export async function getGoalsForReport(reportId) {
             jsonb_agg( DISTINCT jsonb_build_object(
               'promptId', gtfp.id ,
               'ordinal', gtfp.ordinal,
-              'title', gtfp,
+              'title', gtfp.title,
               'prompt', gtfp.prompt,
               'hint', gtfp.hint,
               'caution', gtfp.caution,
