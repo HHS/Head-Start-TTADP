@@ -23,18 +23,18 @@ export default (sequelize, DataTypes) => {
         as: 'reason',
       });
 
-      models.Report.hasMany(models.ReportReason, {
-        foreignKey: 'reportId',
-        as: 'reportReasons',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
-      });
-      models.Report.belongsToMany(models.Reason, {
-        through: models.ReportReason,
-        foreignKey: 'reportId',
-        otherKey: 'reasonId',
-        as: 'reasons',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
-      });
+      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+        .hasMany(models.ReportReason, {
+          foreignKey: 'reportId',
+          as: 'reportReasons',
+        });
+      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+        .belongsToMany(models.Reason, {
+          through: models.ReportReason,
+          foreignKey: 'reportId',
+          otherKey: 'reasonId',
+          as: 'reasons',
+        });
     }
   }
   ReportReason.init({

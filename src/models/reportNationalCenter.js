@@ -12,8 +12,14 @@ const { ENTITY_TYPE, NATIONAL_CENTER_ACTING_AS } = require('../constants');
 export default (sequelize, DataTypes) => {
   class ReportNationalCenter extends Model {
     static associate(models) {
-      ReportNationalCenter.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportNationalCenter.belongsTo(models.NationalCenter, { foreignKey: 'nationalCenterId', as: 'nationalCenter' });
+      ReportNationalCenter.belongsTo(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      ReportNationalCenter.belongsTo(models.NationalCenter, {
+        foreignKey: 'nationalCenterId',
+        as: 'nationalCenter',
+      });
       ReportNationalCenter.addScope(NATIONAL_CENTER_ACTING_AS.TRAINER, {
         where: {
           actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER,
@@ -21,18 +27,18 @@ export default (sequelize, DataTypes) => {
       });
 
       // Relocated from report.js as the scopes needed to be defined before the associations.
-      models.Report.hasMany(models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER), {
-        foreignKey: 'reportId',
-        as: 'reportTrainers',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
-      });
-      models.Report.belongsToMany(models.NationalCenter, {
-        through: models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER),
-        foreignKey: 'reportId',
-        otherKey: 'nationalCenterId',
-        as: 'trainers',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
-      });
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+        .hasMany(models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER), {
+          foreignKey: 'reportId',
+          as: 'reportTrainers',
+        });
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+        .belongsToMany(models.NationalCenter, {
+          through: models.ReportNationalCenter.scope(NATIONAL_CENTER_ACTING_AS.TRAINER),
+          foreignKey: 'reportId',
+          otherKey: 'nationalCenterId',
+          as: 'trainers',
+        });
     }
   }
   ReportNationalCenter.init({

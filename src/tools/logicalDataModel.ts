@@ -348,6 +348,8 @@ async function writeEncoded(uml, dbRoot) {
 
 async function generateUML(schemas, tables, root) {
   let uml = `@startuml
+
+  left to right direction
   ' avoid problems with angled crows feet
   skinparam linetype ortho
   skinparam class {

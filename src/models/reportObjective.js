@@ -16,17 +16,11 @@ export default (sequelize, DataTypes) => {
         as: 'objective',
       });
 
-      models.Report.hasMany(models.ReportObjective, {
-        foreignKey: 'reportId',
-        as: 'reportObjectives',
-        scope: {
-          [sequelize.col('"Report".reportType')]: {
-            [Op.in]: [
-              ENTITY_TYPE.REPORT_SESSION,
-            ],
-          },
-        },
-      });
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+        .hasMany(models.ReportObjective, {
+          foreignKey: 'reportId',
+          as: 'reportObjectives',
+        });
     }
   }
   ReportObjective.init({

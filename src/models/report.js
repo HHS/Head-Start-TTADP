@@ -29,6 +29,21 @@ export default (sequelize, DataTypes) => {
           },
         }],
       });
+      Report.addScope(ENTITY_TYPE.REPORT_SESSION, {
+        where: {
+          reportType: ENTITY_TYPE.REPORT_SESSION,
+        },
+        include: [{
+          model: models.Status,
+          as: 'status',
+          required: true,
+          where: {
+            name: {
+              [Op.ne]: 'deleted',
+            },
+          },
+        }],
+      });
     }
   }
   Report.init({

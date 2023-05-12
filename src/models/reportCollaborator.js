@@ -107,6 +107,110 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportId',
         as: COLLABORATOR_TYPES.POC, // TODO: limit scope by report type
       });
+
+      models.User.hasMany(models.ReportCollaborator, {
+        foreignKey: 'userId',
+        as: 'reportCollaborators',
+      });
+
+      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.INSTANTIATOR), {
+        foreignKey: 'userId',
+        as: `reportCollaboratorsAs${COLLABORATOR_TYPES.INSTANTIATOR}`,
+      });
+
+      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER), {
+        foreignKey: 'userId',
+        as: `reportCollaboratorsAs${COLLABORATOR_TYPES.OWNER}`,
+      });
+
+      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR), {
+        foreignKey: 'userId',
+        as: `reportCollaboratorsAs${COLLABORATOR_TYPES.EDITOR}`,
+      });
+
+      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER), {
+        foreignKey: 'userId',
+        as: `reportCollaboratorsAs${COLLABORATOR_TYPES.APPROVER}`,
+      });
+
+      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC), {
+        foreignKey: 'userId',
+        as: `reportCollaboratorsAs${COLLABORATOR_TYPES.POC}`,
+      });
+
+      models.Report.belongsToMany(models.User, {
+        through: models.ReportCollaborator,
+        foreignKey: 'reportId',
+        otherKey: 'userId',
+        as: 'users',
+      });
+      models.Report.belongsToMany(models.User, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.INSTANTIATOR),
+        foreignKey: 'reportId',
+        otherKey: 'userId',
+        as: `usersAs${COLLABORATOR_TYPES.INSTANTIATOR}`,
+      });
+      models.Report.belongsToMany(models.User, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER),
+        foreignKey: 'reportId',
+        otherKey: 'userId',
+        as: `usersAs${COLLABORATOR_TYPES.OWNER}`,
+      });
+      models.Report.belongsToMany(models.User, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR),
+        foreignKey: 'reportId',
+        otherKey: 'userId',
+        as: `usersAs${COLLABORATOR_TYPES.EDITOR}`,
+      });
+      models.Report.belongsToMany(models.User, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER),
+        foreignKey: 'reportId',
+        otherKey: 'userId',
+        as: `usersAs${COLLABORATOR_TYPES.APPROVER}`, // TODO: limit scope by report type
+      });
+      models.Report.belongsToMany(models.User, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC),
+        foreignKey: 'reportId',
+        otherKey: 'userId',
+        as: `usersAs${COLLABORATOR_TYPES.POC}`, // TODO: limit scope by report type
+      });
+
+      models.User.belongsToMany(models.Report, {
+        through: models.ReportCollaborator,
+        foreignKey: 'userId',
+        otherKey: 'reportId',
+        as: 'reports',
+      });
+      models.User.belongsToMany(models.Report, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.INSTANTIATOR),
+        foreignKey: 'userId',
+        otherKey: 'reportId',
+        as: `reportsAs${COLLABORATOR_TYPES.INSTANTIATOR}`,
+      });
+      models.User.belongsToMany(models.Report, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER),
+        foreignKey: 'userId',
+        otherKey: 'reportId',
+        as: `reportsAs${COLLABORATOR_TYPES.OWNER}`,
+      });
+      models.User.belongsToMany(models.Report, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR),
+        foreignKey: 'userId',
+        otherKey: 'reportId',
+        as: `reportsAs${COLLABORATOR_TYPES.EDITOR}`,
+      });
+      models.User.belongsToMany(models.Report, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER),
+        foreignKey: 'userId',
+        otherKey: 'reportId',
+        as: `reportsAs${COLLABORATOR_TYPES.APPROVER}`, // TODO: limit scope by report type
+      });
+      models.User.belongsToMany(models.Report, {
+        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC),
+        foreignKey: 'userId',
+        otherKey: 'reportId',
+        as: `reportsAs${COLLABORATOR_TYPES.POC}`, // TODO: limit scope by report type
+      });
     }
   }
   ReportCollaborator.init({

@@ -32,17 +32,9 @@ export default (sequelize, DataTypes) => {
         as: 'resources',
       });
 
-      models.Report.hasMany(models.ReportGoal, {
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).hasMany(models.ReportGoal, {
         foreignKey: 'reportId',
         as: 'reportGoals',
-        scope: {
-          [sequelize.col('"Report".reportType')]: {
-            [Op.in]: [
-              ENTITY_TYPE.REPORT_EVENT,
-              ENTITY_TYPE.REPORT_SESSION,
-            ],
-          },
-        },
       });
     }
   }

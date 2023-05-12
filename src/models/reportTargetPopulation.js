@@ -24,28 +24,35 @@ export default (sequelize, DataTypes) => {
         as: 'targetPopulation',
       });
 
-      models.Report.hasMany(models.ReportTargetPopulation, {
-        foreignKey: 'reportId',
+      models.TargetPopulation.hasMany(models.ReportTargetPopulation, {
+        foreignKey: 'targetPopulationId',
         as: 'reportTargetPopulations',
-        scope: {
-          [Op.and]: {
-            validFor: sequelize.col('"Report".reportType'),
-            [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT,
-          },
-        },
       });
-      models.Report.belongsToMany(models.TargetPopulation, {
+      models.TargetPopulation.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_EVENT), {
         through: models.ReportTargetPopulation,
-        foreignKey: 'reportId',
-        otherKey: 'targetPopulationId',
-        as: 'targetPopulations',
-        scope: {
-          [Op.and]: {
-            validFor: sequelize.col('"Report".reportType'),
-            [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT,
-          },
-        },
+        foreignKey: 'targetPopulationId',
+        otherKey: 'reportId',
+        as: 'reports',
       });
+
+      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+        .hasMany(models.ReportTargetPopulation, {
+          foreignKey: 'reportId',
+          as: 'reportTargetPopulations',
+          scope: {
+            validFor: ENTITY_TYPE.REPORT_EVENT,
+          },
+        });
+      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+        .belongsToMany(models.TargetPopulation, {
+          through: models.ReportTargetPopulation,
+          foreignKey: 'reportId',
+          otherKey: 'targetPopulationId',
+          as: 'targetPopulations',
+          scope: {
+            validFor: ENTITY_TYPE.REPORT_EVENT,
+          },
+        });
     }
   }
   ReportTargetPopulation.init({

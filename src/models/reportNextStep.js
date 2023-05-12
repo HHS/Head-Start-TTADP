@@ -1,22 +1,41 @@
 const {
   Model,
 } = require('sequelize');
-const { NEXTSTEP_NOTETYPE } = require('../constants');
+const { ENTITY_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
-/**
- * Status table. Stores topics used in activity reports and tta plans.
- *
- * @param {} sequelize
- * @param {*} DataTypes
- */
 export default (sequelize, DataTypes) => {
-  class ReportReason extends Model {
+  class ReportNextStep extends Model {
     static associate(models) {
-      ReportReason.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
+      ReportNextStep.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+
+      ReportNextStep.addScope(NEXTSTEP_NOTETYPE.RECIPIENT, {
+        where: {
+          noteType: NEXTSTEP_NOTETYPE.RECIPIENT,
+        },
+      });
+      ReportNextStep.addScope(NEXTSTEP_NOTETYPE.SPECIALIST, {
+        where: {
+          noteType: NEXTSTEP_NOTETYPE.SPECIALIST,
+        },
+      });
+
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+        .hasMany(models.ReportNextStep.scope(NEXTSTEP_NOTETYPE.RECIPIENT), {
+          foreignKey: 'reportId',
+          as: 'reportNextStepRecipients',
+        });
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+        .hasMany(models.ReportNextStep.scope(NEXTSTEP_NOTETYPE.SPECIALIST), {
+          foreignKey: 'reportId',
+          as: 'reportNextStepSpecialists',
+        });
     }
   }
-  ReportReason.init({
+  ReportNextStep.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -40,7 +59,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'ReportReason',
+    modelName: 'ReportNextStep',
   });
-  return ReportReason;
+  return ReportNextStep;
 };

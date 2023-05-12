@@ -21,49 +21,25 @@ export default (sequelize, DataTypes) => {
         as: 'region',
       });
 
-      models.Report.hasOne(models.EventReport, {
-        foreignKey: 'reportId',
-        as: 'event',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
-      });
       models.Report.addScope(ENTITY_TYPE.REPORT_EVENT, {
         where: {
           reportType: ENTITY_TYPE.REPORT_EVENT,
         },
-        include: [
-          {
-            model: models.ReportApproval,
-            as: 'approval',
-            required: true,
-            where: {
-              submissionStatus: {
-                [Op.ne]: 'deleted',
-              },
+        include: [{
+          model: models.Status,
+          as: 'status',
+          required: true,
+          where: {
+            name: {
+              [Op.ne]: 'deleted',
             },
           },
-          {
-            model: models.EventReport,
-            as: 'eventReport',
-          },
-          {
-            model: models.Reason,
-            as: 'reasons',
-            through: {
-              attributes: [],
-            },
-          },
-          {
-            model: models.TargetPopulation,
-            as: 'targetPopulations',
-            through: {
-              attributes: [],
-            },
-          },
-          {
-            model: models.ReportGoalTemplate,
-            as: 'reportGoalTemplates',
-          },
-        ],
+        }],
+      });
+
+      models.Report.scope(ENTITY_TYPE.REPORT_EVENT).hasOne(models.EventReport, {
+        foreignKey: 'reportId',
+        as: 'event',
       });
     }
   }

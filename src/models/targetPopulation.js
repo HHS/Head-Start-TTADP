@@ -12,17 +12,13 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class TargetPopulation extends Model {
     static associate(models) {
-      TargetPopulation.belongsTo(models.TargetPopulation, { foreignKey: 'mapsTo', as: 'mapsToTargetPopulation' });
-      TargetPopulation.hasMany(models.TargetPopulation, { foreignKey: 'mapsTo', as: 'mapsFromTargetPopulations' });
-      TargetPopulation.hasMany(models.ReportTargetPopulation, {
-        foreignKey: 'targetPopulationId',
-        as: 'reportTargetPopulations',
+      TargetPopulation.belongsTo(models.TargetPopulation, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToTargetPopulation',
       });
-      TargetPopulation.belongsToMany(models.Report, {
-        through: models.ReportTargetPopulation,
-        foreignKey: 'targetPopulationId',
-        otherKey: 'reportId',
-        as: 'reports',
+      TargetPopulation.hasMany(models.TargetPopulation, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromTargetPopulations',
       });
     }
   }

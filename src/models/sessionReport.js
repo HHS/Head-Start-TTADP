@@ -18,39 +18,9 @@ export default (sequelize, DataTypes) => {
         as: 'region',
       });
 
-      models.Report.hasOne(models.SessionReport, {
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).hasOne(models.SessionReport, {
         foreignKey: 'reportId',
         as: 'session',
-        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
-      });
-      models.Report.addScope('session', {
-        where: {
-          reportType: ENTITY_TYPE.REPORT_SESSION,
-        },
-        include: [
-          {
-            model: models.ReportApproval,
-            as: 'approval',
-            required: true,
-            where: {
-              submissionStatus: {
-                [Op.ne]: 'deleted',
-              },
-            },
-          },
-          {
-            model: models.SessionReport,
-            as: 'sessionReport',
-          },
-          {
-            model: models.ReportRecipients,
-            as: 'reportRecipients',
-          },
-          {
-            model: models.ReportObjectiveTemplate,
-            as: 'reportObjectiveTemplates',
-          },
-        ],
       });
     }
   }
