@@ -10,11 +10,7 @@ const recipientSql = (singleOrMulti) => (`SELECT
     ON "ActivityRecipients"."grantId" = "Grants"."id"
   GROUP BY "ActivityRecipients"."activityReportId"
   HAVING
-    COUNT(DISTINCT CASE WHEN "Recipients"."uei" IS NULL OR  "Recipients"."uei" = ''
-      THEN
-        "Recipients"."name"
-      ELSE "Recipients"."uei"
-      END)
+    COUNT(DISTINCT COALESCE(NULLIF("Recipients"."uei",''),"Recipients"."name"))
     ${singleOrMulti === 'single-recipient' ? '=' : '>'} 1`
 );
 
