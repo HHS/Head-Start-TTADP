@@ -73,7 +73,7 @@ export default function Llama({ user }) {
   return (
     <Container>
       <div className="position-relative bg-white margin-auto" onClick={addWiggler}>
-        <Loader loadingLabel="Crunching some numbers..." loading={loading} />
+        <Loader loadingLabel="Crunching some numbers and loading your statistics..." loading={loading} />
         <img
           className="display-none bottom-0"
           src={celebratoryLlama}

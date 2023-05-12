@@ -28,74 +28,6 @@ function combineNames(firstName, lastName) {
 }
 
 /**
- * Performs a soft delete of grants that no longer come from HSES
- * and haven't been associated with goals
- * @param {Array<object>} grantsForDb grants to be entered or updated in the db
- * @param {Array<object>} recipientsForDb recipients to be entered or updated in the db
- * @returns
- */
-// TODO: Once HSES sends the inactivated date, add that date to the query.
-export async function removeOldGrantsRecipients(grantsForDb, recipientsForDb) {
-  const grantIdsArr = grantsForDb.map((g) => g.id);
-  const recipientIdsArr = recipientsForDb.map((r) => r.id);
-  const uniqueRecipientIds = [...new Set(recipientIdsArr)];
-
-  const grantsToDelete = await Grant.unscoped().findAll({
-    attributes: ['id', 'status'],
-    include: [
-      {
-        attributes: [],
-        model: Goal,
-        as: 'goals',
-        required: false,
-      },
-    ],
-    where: {
-      status: 'Inactive',
-      id: {
-        [Op.notIn]: grantIdsArr,
-      },
-      '$goals.id$': null,
-    },
-  });
-
-  const removedGrantIds = grantsToDelete.map((d) => d.id);
-
-  const removedRecipients = await Recipient.unscoped().findAll({
-    attributes: ['id'],
-    include: [{
-      model: Grant.unscoped(),
-      as: 'grants',
-      attributes: [],
-      include: [{
-        model: Goal,
-        as: 'goals',
-        attributes: [],
-        required: false,
-      }],
-    },
-    ],
-    where: {
-      id: { [Op.notIn]: uniqueRecipientIds },
-      '$grants->goals.id$': null,
-    },
-  });
-  const removedRecipientIds = removedRecipients.map((r) => r.id);
-
-  const delGrants = await Grant.unscoped().update(
-    { deleted: true },
-    { where: { id: { [Op.in]: removedGrantIds }, deleted: false } },
-  );
-
-  const delRecips = await Recipient.unscoped().update(
-    { deleted: true },
-    { where: { id: { [Op.in]: removedRecipientIds }, deleted: false } },
-  );
-  logger.info(`updateGrantsRecipients: removed ${delGrants} grants: ${removedGrantIds}`);
-  logger.info(`updGrRecipients: removed ${delRecips} recipients: ${removedRecipientIds}`);
-}
-
-/**
  * Reads HSES data files that were previously extracted to the "temp" directory.
  * The files received from HSES are:
  *
@@ -291,7 +223,6 @@ export async function processFiles(hashSumHex) {
           transaction,
         },
       );
-      await removeOldGrantsRecipients(grantsForDb, recipientsForDb);
     });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);

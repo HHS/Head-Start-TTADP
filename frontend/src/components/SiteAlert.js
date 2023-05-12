@@ -7,15 +7,17 @@ export default function SiteAlert({
   heading, children, style, variant, size,
 }) {
   return (
-    <BaseSiteAlert
-      variant={variant}
-      heading={heading}
-      showIcon
-      style={{ ...style }}
-      className={`usa-site-alert--ttahub usa-site-alert--ttahub__${size} no-print`}
-    >
-      {children}
-    </BaseSiteAlert>
+    <span aria-live="polite">
+      <BaseSiteAlert
+        variant={variant}
+        heading={heading}
+        showIcon
+        style={{ ...style }}
+        className={`usa-site-alert--ttahub usa-site-alert--ttahub__${size} no-print`}
+      >
+        {children}
+      </BaseSiteAlert>
+    </span>
   );
 }
 

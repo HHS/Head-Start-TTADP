@@ -10,6 +10,11 @@ import { createMemoryHistory } from 'history';
 import { mockWindowProperty } from '../../../testHelpers';
 import { ReportsRow } from '../MyAlerts';
 import activityReports from '../mocks';
+import UserContext from '../../../UserContext';
+
+const user = {
+  name: 'test@test.com',
+};
 
 describe('ReportsRow', () => {
   const removeItem = jest.fn();
@@ -34,13 +39,15 @@ describe('ReportsRow', () => {
     const history = createMemoryHistory();
 
     render(
-      <Router history={history}>
-        <ReportsRow
-          reports={[report, activityReports[1]]}
-          removeAlert={removeAlert}
-          message={message}
-        />
-      </Router>,
+      <UserContext.Provider value={{ user }}>
+        <Router history={history}>
+          <ReportsRow
+            reports={[report, activityReports[1]]}
+            removeAlert={removeAlert}
+            message={message}
+          />
+        </Router>
+      </UserContext.Provider>,
     );
   };
 
