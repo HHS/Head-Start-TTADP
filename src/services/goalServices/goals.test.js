@@ -92,6 +92,7 @@ describe('Goals DB service', () => {
         id: mockGoalId,
         update: jest.fn(),
         save: jest.fn(),
+        set: jest.fn(),
       });
       Goal.save = jest.fn().mockResolvedValue({
         set: jest.fn(),
@@ -309,7 +310,7 @@ describe('Goals DB service', () => {
       await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
       expect(set).toHaveBeenCalledWith({
         name: 'name',
-      }, { individualHooks: true });
+      });
     });
 
     test.todo('can update an existing goal');
