@@ -101,14 +101,22 @@ const setSubmittedDate = (sequelize, instance, options) => {
   }
 };
 
-const clearAdditionalNotes = (sequelize, instance, options) => {
+/**
+ * This hook is called when an activity report is approved.
+ * It clears the additional notes field, which is data we don't
+ * want to retain after approval.
+ *
+ * @param {*} _sequelize
+ * @param {*} instance
+ * @param {*} options
+ */
+const clearAdditionalNotes = (_sequelize, instance, options) => {
   try {
-    if (!options.fields.includes('additionalNotes')) {
-      options.fields.push('additionalNotes');
-    }
     if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
       && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      // Other > Submitted.
+      if (!options.fields.includes('additionalNotes')) {
+        options.fields.push('additionalNotes');
+      }
       instance.set('additionalNotes', '');
     }
   } catch (e) {
