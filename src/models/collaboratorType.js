@@ -12,8 +12,14 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class CollaboratorType extends Model {
     static associate(models) {
-      CollaboratorType.belongsTo(models.CollaboratorType, { foreignKey: 'mapsTo', as: 'mapsToCollaboratorType' });
-      CollaboratorType.hasMany(models.CollaboratorType, { foreignKey: 'mapsTo', as: 'mapsFromCollaboratorTypes' });
+      CollaboratorType.belongsTo(models.CollaboratorType, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToCollaboratorType',
+      });
+      CollaboratorType.hasMany(models.CollaboratorType, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromCollaboratorTypes',
+      });
       CollaboratorType.hasMany(models.ReportCollaboratorType, {
         foreignKey: 'collaboratorTypeId',
         as: 'reportCollaboratorType',
@@ -24,6 +30,8 @@ export default (sequelize, DataTypes) => {
         otherKey: 'reportCollaboratorId',
         as: 'reportCollaborators',
       });
+
+      // TODO: make a scope to perform the mapTo automatically
     }
   }
   CollaboratorType.init({

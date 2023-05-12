@@ -17,12 +17,12 @@ export default (sequelize, DataTypes) => {
   }
   ReportCollaboratorRole.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportCollaboratorId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     roleId: {

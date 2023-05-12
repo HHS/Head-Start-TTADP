@@ -1,28 +1,71 @@
 const {
   Model,
+  Op,
 } = require('sequelize');
+const {
+  ENTITY_TYPE,
+} = require('../constants');
 
-/**
- * Status table. Stores topics used in activity reports and tta plans.
- *
- * @param {} sequelize
- * @param {*} DataTypes
- */
 export default (sequelize, DataTypes) => {
   class SessionReport extends Model {
     static associate(models) {
-      SessionReport.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      SessionReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
+      SessionReport.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      SessionReport.belongsTo(models.Region, {
+        foreignKey: 'regionId',
+        as: 'region',
+      });
+
+      models.Report.hasOne(models.SessionReport, {
+        foreignKey: 'reportId',
+        as: 'session',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_SESSION },
+      });
+      models.Report.addScope('session', {
+        where: {
+          reportType: ENTITY_TYPE.REPORT_SESSION,
+        },
+        include: [
+          {
+            model: models.ReportApproval,
+            as: 'approval',
+            required: true,
+            where: {
+              submissionStatus: {
+                [Op.ne]: 'deleted',
+              },
+            },
+          },
+          {
+            model: models.SessionReport,
+            as: 'sessionReport',
+          },
+          {
+            model: models.ReportRecipients,
+            as: 'reportRecipients',
+          },
+          {
+            model: models.ReportObjectiveTemplate,
+            as: 'reportObjectiveTemplates',
+          },
+        ],
+      });
     }
   }
   SessionReport.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: false,
+    },
+    eventReportId: {
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     regionId: {

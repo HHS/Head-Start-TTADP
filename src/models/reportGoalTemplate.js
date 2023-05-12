@@ -1,16 +1,52 @@
-const { Model } = require('sequelize');
+const {
+  Model,
+  Op,
+} = require('sequelize');
+const { ENTITY_TYPE } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplate extends Model {
     static associate(models) {
-      ReportGoalTemplate.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportGoalTemplate.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
-      ReportGoalTemplate.hasMany(models.ReportGoalTemplateResource, { foreignKey: 'reportGoalTemplateId', as: 'reportGoalTemplateResources' });
+      ReportGoalTemplate.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      ReportGoalTemplate.belongsTo(models.GoalTemplate, {
+        foreignKey: 'goalTemplateId',
+        as: 'goalTemplate',
+      });
+      ReportGoalTemplate.hasMany(models.ReportGoalTemplateResource, {
+        foreignKey: 'reportGoalTemplateId',
+        as: 'reportGoalTemplateResources',
+      });
       ReportGoalTemplate.belongsToMany(models.Resource, {
         through: models.ReportGoalTemplateResource,
         foreignKey: 'reportGoalTemplateId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+
+      models.Report.hasMany(models.ReportGoalTemplate, {
+        foreignKey: 'reportId',
+        as: 'reportGoalTemplates',
+        scope: {
+          [sequelize.col('"Report".reportType')]: {
+            [Op.in]: [
+              ENTITY_TYPE.REPORT_EVENT,
+              ENTITY_TYPE.REPORT_SESSION,
+            ],
+          },
+        },
+      });
+      models.GoalTemplate.hasMany(models.ReportGoalTemplate, {
+        foreignKey: 'goalTemplateId',
+        as: 'reportGoalTemplates',
+      });
+      models.GoalTemplate.belongsToMany(models.Report, {
+        through: models.ReportGoalTemplate,
+        foreignKey: 'goalTemplateId',
+        otherKey: 'reportId',
+        as: 'reports',
       });
     }
   }
@@ -19,10 +55,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     goalTemplateId: {

@@ -3,28 +3,28 @@ const {
 } = require('sequelize');
 const { COLLABORATOR_APPROVAL_STATUSES, COLLABORATOR_TYPES } = require('../constants');
 
-/**
- * Status table. Stores topics used in activity reports and tta plans.
- *
- * @param {} sequelize
- * @param {*} DataTypes
- */
 export default (sequelize, DataTypes) => {
   class ReportCollaborator extends Model {
     static associate(models) {
-      ReportCollaborator.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportCollaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      ReportCollaborator.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      ReportCollaborator.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user',
+      });
       ReportCollaborator.hasMany(models.ReportCollaboratorType, {
         foreignKey: 'reportCollaboratorId',
-        as: 'reportCollaboratorType',
+        as: 'reportCollaboratorTypes',
       });
       ReportCollaborator.belongsToMany(models.CollaboratorType, {
         through: models.ReportCollaboratorType,
         foreignKey: 'reportCollaboratorId',
         otherKey: 'collaboratorTypeId',
-        as: 'CollaboratorType',
+        as: 'CollaboratorTypes',
       });
-      ReportCollaborator.addScope('defaultScope', {});
+
       ReportCollaborator.addScope(COLLABORATOR_TYPES.INSTANTIATOR, {
         include: [{
           attributes: [],
@@ -81,12 +81,16 @@ export default (sequelize, DataTypes) => {
         }],
       });
 
-      // Relocated from report.js as the scopes needed to be defined before the associations.
+      models.Report.hasMany(models.ReportCollaborator, {
+        foreignKey: 'reportId',
+        as: 'collaborators',
+      });
       models.Report.hasOne(models.ReportCollaborator
         .scope(COLLABORATOR_TYPES.INSTANTIATOR), {
         foreignKey: 'reportId',
         as: COLLABORATOR_TYPES.INSTANTIATOR,
       });
+
       models.Report.hasOne(models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER), {
         foreignKey: 'reportId',
         as: COLLABORATOR_TYPES.OWNER,
@@ -107,12 +111,12 @@ export default (sequelize, DataTypes) => {
   }
   ReportCollaborator.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     userId: {

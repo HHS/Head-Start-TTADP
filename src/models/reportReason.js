@@ -1,6 +1,9 @@
 const {
   Model,
 } = require('sequelize');
+const {
+  ENTITY_TYPE,
+} = require('../constants');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -11,13 +14,32 @@ const {
 export default (sequelize, DataTypes) => {
   class ReportReason extends Model {
     static associate(models) {
-      ReportReason.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportReason.belongsTo(models.Reason, { foreignKey: 'reasonId', as: 'reason' });
+      ReportReason.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      ReportReason.belongsTo(models.Reason, {
+        foreignKey: 'reasonId',
+        as: 'reason',
+      });
+
+      models.Report.hasMany(models.ReportReason, {
+        foreignKey: 'reportId',
+        as: 'reportReasons',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
+      });
+      models.Report.belongsToMany(models.Reason, {
+        through: models.ReportReason,
+        foreignKey: 'reportId',
+        otherKey: 'reasonId',
+        as: 'reasons',
+        scope: { [sequelize.col('"Report".reportType')]: ENTITY_TYPE.REPORT_EVENT },
+      });
     }
   }
   ReportReason.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },

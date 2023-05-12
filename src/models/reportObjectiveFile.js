@@ -11,7 +11,21 @@ export default (sequelize, DataTypes) => {
           onDelete: 'cascade',
         },
       );
-      ReportObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
+      ReportObjectiveFile.belongsTo(models.File, {
+        foreignKey: 'fileId',
+        as: 'file',
+      });
+
+      models.ReportObjective.hasMany(models.ReportObjectiveFile, {
+        foreignKey: 'reportObjectiveId',
+        as: 'reportObjectiveFiles',
+      });
+      models.ReportObjective.belongsToMany(models.File, {
+        through: models.ReportObjectiveFile,
+        foreignKey: 'reportObjectiveId',
+        otherKey: 'fileId',
+        as: 'files',
+      });
     }
   }
   ReportObjectiveFile.init({

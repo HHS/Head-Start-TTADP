@@ -12,9 +12,18 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class Status extends Model {
     static associate(models) {
-      Status.belongsTo(models.Status, { foreignKey: 'mapsTo', as: 'mapsToStatus' });
-      Status.hasMany(models.Status, { foreignKey: 'mapsTo', as: 'mapsFromStatuses' });
-      Status.belongsTo(models.Report, { foreignKey: 'statusId', as: 'report' });
+      Status.belongsTo(models.Status, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToStatus',
+      });
+      Status.hasMany(models.Status, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromStatuses',
+      });
+      Status.belongsTo(models.Report, {
+        foreignKey: 'statusId',
+        as: 'report',
+      });
     }
   }
   Status.init({

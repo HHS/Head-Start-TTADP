@@ -166,6 +166,31 @@ class CollaboratorRoles{
  roleId : integer : REFERENCES "Roles".id
 }
 
+class CollaboratorTypes{
+ * id : integer : <generated>
+!issue='column type does not match model'
+ * name : <color:#d54309>text</color>
+ * validFor : enum
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ mapsTo : integer : REFERENCES "Reasons".id
+}
+
+class EventReports{
+ * id : bigint : <generated>
+ name : text
+!issue='column missing from model'
+ * <color:#d54309>organizer</color>: enum
+ * audience : enum[]
+ * trainingType : enum : 'series'::"enum_EventReports_trainingType"
+ vision : text
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * reportId : bigint : REFERENCES "Reports".id
+ * regionId : integer : REFERENCES "Regions".id
+}
+
 class Files{
  * id : integer : <generated>
  * originalFileName : varchar(255)
@@ -325,6 +350,16 @@ class MailerLogs{
  * updatedAt : timestamp with time zone : now()
 }
 
+class NationalCenters{
+ * id : integer : <generated>
+!issue='column type does not match model'
+ * name : <color:#d54309>text</color>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ mapsTo : integer : REFERENCES "NationalCenters".id
+}
+
 class NextStepResources{
  * id : integer : <generated>
  sourceFields : enum[]
@@ -435,6 +470,17 @@ class Objectives{
  otherEntityId : integer : REFERENCES "OtherEntities".id
 }
 
+class Organizers{
+ * id : integer : <generated>
+!issue='column type does not match model'
+ * name : <color:#d54309>text</color>
+ * validFor : enum
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ mapsTo : integer : REFERENCES "Statuses".id
+}
+
 class OtherEntities{
  * id : integer : <generated>
  * name : varchar(255)
@@ -464,6 +510,17 @@ class Programs{
  * grantId : integer : REFERENCES "Grants".id
 }
 
+class Reasons{
+ * id : integer : <generated>
+!issue='column type does not match model'
+ * name : <color:#d54309>text</color>
+ * validFor : enum
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ mapsTo : integer : REFERENCES "Reasons".id
+}
+
 class Recipients{
  * id : integer
  name : varchar(255)
@@ -477,6 +534,287 @@ class Recipients{
 class Regions{
  * id : integer : <generated>
  * name : varchar(255)
+}
+
+class ReportApprovals{
+ * id : bigint : <generated>
+ * submissionStatus : enum
+ calculatedStatus : enum
+ firstSubmittedAt : timestamp with time zone
+ submittedAt : timestamp with time zone
+ approvedAt : timestamp with time zone
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ * reportId : bigint : REFERENCES "Reports".id
+}
+
+class ReportCollaboratorRoles{
+!issue='column type does not match model'
+ * id : <color:#d54309>integer</color> : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column type does not match model'
+ * reportCollaboratorId : <color:#d54309>integer</color> : REFERENCES "ReportCollaborators".id
+ roleId : integer : REFERENCES "Roles".id
+}
+
+class ReportCollaboratorTypes{
+ * id : bigint : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+!issue='column type does not match model'
+ * reportCollaboratorId : <color:#d54309>integer</color> : REFERENCES "ReportCollaborators".id
+ * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
+}
+
+class ReportCollaborators{
+ * id : bigint : <generated>
+ status : enum
+ note : text
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ * reportId : bigint : REFERENCES "Reports".id
+ * userId : integer : REFERENCES "Users".id
+}
+
+class ReportFiles{
+ * id : bigint : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportId : bigint : REFERENCES "Reports".id
+ * fileId : integer : REFERENCES "Files".id
+}
+
+class ReportGoalFieldResponses{
+ * id : integer : <generated>
+ response : text[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportGoalId : integer : REFERENCES "ReportGoals".id
+ * goalTemplateFieldPromptId : integer : REFERENCES "Resources".id
+}
+
+class ReportGoalResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportGoalId : integer : REFERENCES "ReportGoals".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+!issue='model missing for table'
+class ReportGoalTemplateFieldPrompts #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ caution : text
+ hint : text
+ * ordinal : integer
+ * title : text
+ * prompt : text
+ fieldType : enum
+ options : text[]
+ validations : json
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportGoalTemplateId : integer : REFERENCES "ReportGoalTemplates".id
+ * reportGoalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
+}
+
+class ReportGoalTemplateResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column type does not match model'
+ * reportGoalTemplateId : <color:#d54309>integer</color> : REFERENCES "ReportGoalTemplates".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ReportGoalTemplates{
+ * id : bigint : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportId : bigint : REFERENCES "Reports".id
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+}
+
+class ReportGoals{
+!issue='column type does not match model'
+ * id : <color:#d54309>bigint</color> : <generated>
+ name : text
+!issue='column type does not match model'
+ status : <color:#d54309>enum</color>
+ timeframe : text
+ closeSuspendReason : enum
+ closeSuspendContext : text
+ endDate : date
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column type does not match model'
+ * reportId : <color:#d54309>bigint</color> : REFERENCES "Reports".id
+ * goalId : integer : REFERENCES "Goals".id
+}
+
+class ReportNationalCenters{
+ * id : bigint : <generated>
+ * actingAs : enum
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * reportId : bigint : REFERENCES "Reports".id
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+}
+
+!issue='model missing for table'
+class ReportNextSteps #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * note : text
+ noteType : enum
+ * completedDate : date
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportId : bigint : REFERENCES "Reports".id
+}
+
+class ReportObjectiveFiles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportObjectiveId : integer : REFERENCES "ReportObjectives".id
+ * fileId : integer : REFERENCES "Files".id
+!issue='column missing from model'
+ <color:#d54309>objectiveFileId</color>: integer : REFERENCES "ObjectiveFiles".id
+}
+
+class ReportObjectiveResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportObjectiveId : integer : REFERENCES "ReportObjectives".id
+ * resourceId : integer : REFERENCES "Resources".id
+!issue='column missing from model'
+ <color:#d54309>objectiveResourceId</color>: integer : REFERENCES "ObjectiveResources".id
+}
+
+!issue='model missing for table'
+class ReportObjectiveTemplateFiles #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportObjectiveTemplateId : integer : REFERENCES "ReportObjectiveTemplates".id
+ * fileId : integer : REFERENCES "Files".id
+ objectiveTemplateFileId : integer : REFERENCES "ObjectiveTemplateFiles".id
+}
+
+class ReportObjectiveTemplateResources{
+ * id : integer : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportObjectiveTemplateId : integer : REFERENCES "ReportObjectiveTemplates".id
+ * resourceId : integer : REFERENCES "Resources".id
+!issue='column missing from model'
+ <color:#d54309>objectiveTemplateResourceId</color>: integer : REFERENCES "ObjectiveTemplateResources".id
+}
+
+!issue='model missing for table'
+class ReportObjectiveTemplateTopics #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportObjectiveTemplateId : integer : REFERENCES "ReportObjectiveTemplates".id
+ * topicId : integer : REFERENCES "Topics".id
+ objectiveTemplateTopicId : integer : REFERENCES "ObjectiveTemplateTopics".id
+}
+
+class ReportObjectiveTemplates{
+!issue='column type does not match model'
+ * id : <color:#d54309>bigint</color> : <generated>
+!issue='column missing from model'
+ <color:#d54309>title</color>: text
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column type does not match model'
+ * reportId : <color:#d54309>bigint</color> : REFERENCES "Reports".id
+ * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
+!issue='column missing from model'
+ <color:#d54309>reportGoalTemplateId</color>: integer : REFERENCES "ReportGoalTemplates".id
+}
+
+class ReportObjectiveTopics{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportObjectiveId : integer : REFERENCES "ReportObjectives".id
+ * topicId : integer : REFERENCES "Topics".id
+!issue='column missing from model'
+ <color:#d54309>objectiveTopicId</color>: integer : REFERENCES "ObjectiveTopics".id
+}
+
+class ReportObjectives{
+!issue='column type does not match model'
+ * id : <color:#d54309>bigint</color> : <generated>
+ title : text
+!issue='column type does not match model'
+ status : <color:#d54309>enum</color>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column type does not match model'
+ * reportId : <color:#d54309>bigint</color> : REFERENCES "Reports".id
+ * objectiveId : integer : REFERENCES "Objectives".id
+!issue='column missing from model'
+ <color:#d54309>reportGoalId</color>: integer : REFERENCES "ReportGoals".id
+}
+
+class ReportReasons{
+ * id : bigint : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * reportId : bigint : REFERENCES "Reports".id
+ * reasonId : integer : REFERENCES "Reasons".id
+}
+
+class ReportRecipients{
+!issue='column type does not match model'
+ * id : <color:#d54309>bigint</color> : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+!issue='column type does not match model'
+ * reportId : <color:#d54309>bigint</color> : REFERENCES "Reports".id
+ grantId : integer : REFERENCES "Grants".id
+ otherEntityId : integer : REFERENCES "OtherEntities".id
+}
+
+class ReportResources{
+!issue='column type does not match model'
+ * id : <color:#d54309>bigint</color> : <generated>
+ sourceFields : enum[]
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * reportId : bigint : REFERENCES "Reports".id
+ * resourceId : integer : REFERENCES "Resources".id
+}
+
+class ReportTargetPopulations{
+!issue='column type does not match model'
+ * id : <color:#d54309>bigint</color> : <generated>
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * reportId : bigint : REFERENCES "Reports".id
+ * targetPopulationId : integer : REFERENCES "TargetPopulations".id
+}
+
+class Reports{
+ * id : bigint : <generated>
+ reportType : enum
+ context : text
+ startDate : date
+ endDate : date
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * statusId : integer : REFERENCES "Statuses".id
 }
 
 class RequestErrors{
@@ -497,6 +835,7 @@ class Resources{
  * domain : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ title : text
 }
 
 class RoleTopics{
@@ -538,6 +877,18 @@ class Scopes{
  * updatedAt : timestamp with time zone : now()
 }
 
+class SessionReports{
+ * id : bigint : <generated>
+ name : text
+ inpersonParticipants : integer
+ virtualParticipants : integer
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ * reportId : bigint : REFERENCES "Reports".id
+ * eventReportId : bigint : REFERENCES "Reports".id
+ * regionId : integer : REFERENCES "Regions".id
+}
+
 class SiteAlerts{
  * id : integer : <generated>
  * startDate : timestamp with time zone
@@ -550,6 +901,27 @@ class SiteAlerts{
  * updatedAt : timestamp with time zone
  * size : enum : 'standard'::"enum_SiteAlerts_size"
  * userId : integer : REFERENCES "Users".id
+}
+
+class Statuses{
+ * id : integer : <generated>
+!issue='column type does not match model'
+ * name : <color:#d54309>text</color>
+ * validFor : enum
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ mapsTo : integer : REFERENCES "Statuses".id
+}
+
+class TargetPopulations{
+ * id : integer : <generated>
+ * name : varchar(255)
+ * validFor : enum
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ mapsTo : integer : REFERENCES "TargetPopulations".id
 }
 
 class Topics{
@@ -819,6 +1191,20 @@ class ZALCollaboratorRoles{
  dml_as : bigint
 }
 
+class ZALCollaboratorTypes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALDDL{
  * id : bigint : <generated>
  command_tag : varchar(255)
@@ -828,6 +1214,20 @@ class ZALDDL{
  * ddl_timestamp : timestamp with time zone
  ddl_by : integer
  * ddl_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALEventReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
 }
@@ -1000,6 +1400,20 @@ class ZALMailerLogs{
  dml_as : bigint
 }
 
+class ZALNationalCenters{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALNextStepResources{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1140,6 +1554,20 @@ class ZALObjectives{
  dml_as : bigint
 }
 
+class ZALOrganizers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALOtherEntities{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1182,6 +1610,20 @@ class ZALPrograms{
  dml_as : bigint
 }
 
+class ZALReasons{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALRecipients{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1208,6 +1650,374 @@ class ZALRegions{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALReportApprovals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportCollaboratorRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportCollaboratorTypes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportCollaborators{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportGoalFieldResponses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportGoalResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+!issue='model missing for table'
+class ZALReportGoalTemplateFieldPrompts #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportGoalTemplateResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportGoalTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportNationalCenters{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+!issue='model missing for table'
+class ZALReportNextSteps #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportObjectiveFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportObjectiveResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+!issue='model missing for table'
+class ZALReportObjectiveTemplateFiles #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportObjectiveTemplateResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+!issue='model missing for table'
+class ZALReportObjectiveTemplateTopics #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportObjectiveTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportObjectiveTopics{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportObjectives{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportReasons{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportRecipients{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportResources{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReportTargetPopulations{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALResources{
@@ -1280,6 +2090,20 @@ class ZALScopes{
  dml_as : bigint
 }
 
+class ZALSessionReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALSiteAlerts{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1292,6 +2116,34 @@ class ZALSiteAlerts{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALTargetPopulations{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALTopics{
@@ -1410,6 +2262,52 @@ class ZALZAFilter{
 ' Associations
 
 
+!issue='associations need to be defined both directions'
+Files "1" --[#d54309,plain,thickness=2]-- "1" ReportObjectiveFiles : file
+!issue='associations need to be defined both directions'
+GoalTemplateFieldPrompts "1" --[#d54309,plain,thickness=2]-- "1" ReportGoalFieldResponses : prompt
+!issue='associations need to be defined both directions'
+Goals "1" --[#d54309,plain,thickness=2]-- "1" ReportGoals : goal
+!issue='associations need to be defined both directions'
+Grants "1" --[#d54309,plain,thickness=2]-- "1" ReportRecipients : grant
+!issue='associations need to be defined both directions'
+!issue='associations need to be camel case'
+ObjectiveTemplates "1" --[#d54309,plain,thickness=2]-- "1" ReportObjectiveTemplates : <color:#d54309>ObjectiveTemplate</color>
+!issue='associations need to be defined both directions'
+Objectives "1" --[#d54309,plain,thickness=2]-- "1" ReportObjectives : objective
+!issue='associations need to be defined both directions'
+OtherEntities "1" --[#d54309,plain,thickness=2]-- "1" ReportRecipients : otherEntity
+!issue='associations need to be defined both directions'
+Regions "1" --[#d54309,plain,thickness=2]-- "1" EventReports : region
+!issue='associations need to be defined both directions'
+Regions "1" --[#d54309,plain,thickness=2]-- "1" ReportApprovals : region
+!issue='associations need to be defined both directions'
+Regions "1" --[#d54309,plain,thickness=2]-- "1" SessionReports : region
+!issue='associations need to be defined both directions'
+ReportCollaborators "1" --[#d54309,plain,thickness=2]-- "1" ReportCollaboratorRoles : reportCollaborator
+Reports "1" --[#black,plain,thickness=2]-- "1" EventReports : report, event
+Reports "1" --[#black,plain,thickness=2]-- "1" ReportApprovals : report, reportApproval
+!issue='associations need to be defined both directions'
+Reports "1" --[#d54309,plain,thickness=2]-- "1" ReportRecipients : report
+Reports "1" --[#black,plain,thickness=2]-- "1" SessionReports : session, report
+Reports "1" --[#black,plain,thickness=2]-- "1" Statuses : status, report
+!issue='associations need to be defined both directions'
+Resources "1" --[#d54309,plain,thickness=2]-- "1" ReportGoalResources : resource
+!issue='associations need to be defined both directions'
+Resources "1" --[#d54309,plain,thickness=2]-- "1" ReportGoalTemplateResources : resource
+!issue='associations need to be defined both directions'
+Resources "1" --[#d54309,plain,thickness=2]-- "1" ReportObjectiveResources : resource
+!issue='associations need to be defined both directions'
+Resources "1" --[#d54309,plain,thickness=2]-- "1" ReportObjectiveTemplateResources : resource
+!issue='associations need to be defined both directions'
+Resources "1" --[#d54309,plain,thickness=2]-- "1" ReportResources : resource
+!issue='associations need to be defined both directions'
+Roles "1" --[#d54309,plain,thickness=2]-- "1" ReportCollaboratorRoles : role
+!issue='associations need to be defined both directions'
+Topics "1" --[#d54309,plain,thickness=2]-- "1" ReportObjectiveTopics : topic
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" ReportCollaborators : user
+
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -1424,16 +2322,20 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
-Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
+CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : mapsToCollaboratorType, mapsFromCollaboratorTypes
+CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaboratorTypes : reportCollaboratorType, collaboratorType
+Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, activityReportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
+Files "1" --[#black,dashed,thickness=2]--{  "n" ReportFiles : reportFiles, file
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplate
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalTemplates : reportGoalTemplates, goalTemplate
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, activityReportGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
@@ -1444,6 +2346,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" ReportNationalCenters : reportNationalCanter, nationalCenter
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles
@@ -1454,8 +2357,12 @@ Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : 
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
+Organizers "1" --[#black,dashed,thickness=2]--{  "n" EventReports : organizer, eventReports
+Organizers "1" --[#black,dashed,thickness=2]--{  "n" Organizers : mapsToOrganizer, mapsFromOrganizers
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
+Reasons "1" --[#black,dashed,thickness=2]--{  "n" Reasons : mapsToReason, mapsFromReasons
+Reasons "1" --[#black,dashed,thickness=2]--{  "n" ReportReasons : reportReasons, reason
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
@@ -1465,6 +2372,24 @@ Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, o
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Permissions : region, permissions
 Regions "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, region
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : users, homeRegion
+ReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaboratorTypes : reportCollaborator, reportCollaboratorTypes
+ReportGoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalTemplateResources : reportGoalTemplate, reportGoalTemplateResources
+ReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalFieldResponses : reportGoal, reportGoalFieldResponses
+ReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalResources : reportGoal, reportGoalResources
+ReportObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateResources : reportObjectiveTemplate, reportObjectiveTemplateResources
+ReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveFiles : reportObjective, reportObjectiveFiles
+ReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveResources : reportObjective, reportObjectiveResources
+ReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTopics : reportObjective, reportObjectiveTopics
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaborators : report, collaborators, instantiator, owner, editors, approvers, poc
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportFiles : report, reportFiles
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalTemplates : report, reportGoalTemplates
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportGoals : report, reportGoals
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportNationalCenters : report, reportTrainers
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplates : report, reportObjectiveTemplates
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectives : report, reportObjectives
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportReasons : report, reportReasons
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportResources : report, reportResources
+Reports "1" --[#black,dashed,thickness=2]--{  "n" ReportTargetPopulations : report, reportTargetPopulations
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : resource, activityReportGoalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : resource, activityReportObjectiveResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : resource, activityReportResources
@@ -1477,6 +2402,9 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collab
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
+Statuses "1" --[#black,dashed,thickness=2]--{  "n" Statuses : mapsToStatus, mapsFromStatuses
+TargetPopulations "1" --[#black,dashed,thickness=2]--{  "n" ReportTargetPopulations : targetPopulation, reportTargetPopulations
+TargetPopulations "1" --[#black,dashed,thickness=2]--{  "n" TargetPopulations : mapsToTargetPopulation, mapsFromTargetPopulations
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics
@@ -1498,27 +2426,92 @@ ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resour
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, activityReportObjectives
-ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
+!issue='associations need to be camel case'
+CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" ReportCollaborators : reportCollaborators, <color:#d54309>CollaboratorTypes</color>
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
+!issue='associations need to be defined both directions'
+Files "n" }--[#d54309,dotted,thickness=2]--{ "n" ReportObjectives : files
+Files "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, files
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
+!issue='associations need to be defined both directions'
+GoalTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Reports : reports
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
+NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, trainers
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectiveTemplates
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectiveTemplates
 Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectives
 Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectives
+Organizers "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, organizer
+Reasons "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, reasons
 Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
+!issue='associations need to be defined both directions'
+ReportGoalTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+!issue='associations need to be defined both directions'
+ReportGoals "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+!issue='associations need to be defined both directions'
+ReportObjectiveTemplates "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+!issue='associations need to be defined both directions'
+ReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+!issue='associations need to be defined both directions'
+ReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" Topics : topics
+!issue='associations need to be defined both directions'
+Reports "n" }--[#d54309,dotted,thickness=2]--{ "n" Resources : resources
+Reports "n" }--[#black,dotted,thickness=2]--{ "n" TargetPopulations : targetPopulations, reports
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'
+!issue='associations need to be defined both directions'
+Files o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateFiles : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+GoalTemplateFieldPrompts o--[#yellow,bold,thickness=2]--o ReportGoalTemplateFieldPrompts : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+NationalCenters o--[#yellow,bold,thickness=2]--o NationalCenters : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ObjectiveFiles o--[#yellow,bold,thickness=2]--o ReportObjectiveFiles : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ObjectiveResources o--[#yellow,bold,thickness=2]--o ReportObjectiveResources : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ObjectiveTemplateFiles o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateFiles : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ObjectiveTemplateResources o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateResources : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ObjectiveTemplateTopics o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateTopics : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ObjectiveTopics o--[#yellow,bold,thickness=2]--o ReportObjectiveTopics : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Reasons o--[#yellow,bold,thickness=2]--o CollaboratorTypes : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ReportGoalTemplates o--[#yellow,bold,thickness=2]--o ReportGoalTemplateFieldPrompts : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ReportGoalTemplates o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplates : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ReportGoals o--[#yellow,bold,thickness=2]--o ReportObjectives : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ReportObjectiveTemplates o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateFiles : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+ReportObjectiveTemplates o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateTopics : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Reports o--[#yellow,bold,thickness=2]--o ReportNextSteps : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Resources o--[#yellow,bold,thickness=2]--o ReportGoalFieldResponses : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Statuses o--[#yellow,bold,thickness=2]--o Organizers : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Statuses o--[#yellow,bold,thickness=2]--o Reports : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Topics o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateTopics : <color:#2491FF>missing-from-model</color>
 
 @enduml

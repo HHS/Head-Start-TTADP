@@ -12,18 +12,29 @@ const { REPORT_STATUSES } = require('../constants');
 export default (sequelize, DataTypes) => {
   class ReportApproval extends Model {
     static associate(models) {
-      ReportApproval.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportApproval.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
+      ReportApproval.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      ReportApproval.belongsTo(models.Region, {
+        foreignKey: 'regionId',
+        as: 'region',
+      });
+
+      models.Report.hasOne(models.ReportApproval, { // TODO: limit scope by report type
+        foreignKey: 'reportId',
+        as: 'reportApproval',
+      });
     }
   }
   ReportApproval.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     submissionStatus: {

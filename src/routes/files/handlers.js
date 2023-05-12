@@ -81,7 +81,7 @@ const deleteOnlyFile = async (req, res) => {
     if (!file) {
       return res.status(404).send({ error: 'File not found' });
     }
-    if (file.reports.length
+    if (file.activityReports.length
     + file.reportObjectiveFiles.length
     + file.objectiveFiles.length
     + file.objectiveTemplateFiles.length === 0) {
@@ -112,7 +112,7 @@ const deleteHandler = async (req, res) => {
         res.sendStatus(403);
         return;
       }
-      const rf = file.reportFiles.find(
+      const rf = file.activityReportFiles.find(
         (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE),
       );
       if (rf) {
@@ -134,7 +134,7 @@ const deleteHandler = async (req, res) => {
     }
 
     file = await getFileById(fileId);
-    if (file.reports.length
+    if (file.activityReports.length
       + file.reportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
@@ -169,7 +169,7 @@ const linkHandler = async (req, res) => {
   try {
     const file = await getFileById(fileId);
     if (reportId
-      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
+      && !(file.activityReportFiles.map((r) => r.activityReportId).includes(reportId))) {
       createActivityReportFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -463,7 +463,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
     }));
 
     file = await getFileById(fileId);
-    if (file && file.reports.length
+    if (file && file.activityReports.length
       + file.reportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {

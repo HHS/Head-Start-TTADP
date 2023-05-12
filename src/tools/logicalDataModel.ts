@@ -121,7 +121,7 @@ function processClassDefinition(schema, key) {
     }
 
     if (issues.length > 0) {
-      uml += `${issues.join('\n')}`;
+      uml += `${issues.join('\n')}\n`;
     }
     uml += `${column}\n`;
   });
@@ -154,37 +154,46 @@ function processAssociations(associations, tables, schemas) {
 
   const sourceTarget = {};
 
-  schemas.forEach((schema) => {
-    schema.attributes.forEach((attribute) => {
-      if (attribute.reference) {
-        const source = /"([^"]*)"/.exec(attribute.reference)[1];
-        const target = schema.table;
-        const key = `${source}***${target}`;
+  try {
+    schemas.forEach((schema) => {
+      schema.attributes.forEach((attribute) => {
+        if (attribute.reference) {
+          const source = /"([^"]*)"/.exec(attribute.reference)[1];
+          const target = schema.table;
+          const key = `${source}***${target}`;
 
-        if (!sourceTarget[key]) {
-          sourceTarget[key] = [];
+          if (!sourceTarget[key]) {
+            sourceTarget[key] = [];
+          }
         }
-      }
+      });
     });
-  });
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 
   // regroup associations into buckets for each table
   associations.forEach((association) => {
     const source = schemas.find((s) => s.model?.name === association.source.name);
     const target = schemas.find((s) => s.model?.name === association.target.name);
-
-    let key = `${source.table}***${target.table}`;
-    if (association.associationType.toLowerCase().startsWith('belongstomany')) {
-      const associationTables = [source.table, target.table];
-      associationTables.sort();
-      key = `${associationTables[0]}***${associationTables[1]}`;
-    } else if (association.associationType.toLowerCase().startsWith('belongs')) {
-      key = `${target.table}***${source.table}`;
+    if (source && target) {
+      let key = `${source.table}***${target.table}`;
+      if (association.associationType.toLowerCase().startsWith('belongstomany')) {
+        const associationTables = [source.table, target.table];
+        associationTables.sort();
+        key = `${associationTables[0]}***${associationTables[1]}`;
+      } else if (association.associationType.toLowerCase().startsWith('belongs')) {
+        key = `${target.table}***${source.table}`;
+      }
+      if (!sourceTarget[key]) {
+        sourceTarget[key] = [];
+      }
+      sourceTarget[key].push(association);
+    } else {
+      console.log('Source: ', source && source.model?.name, ' ', association.source.name);
+      console.log('Target: ', target && target.model?.name, ' ', association.target.name);
     }
-    if (!sourceTarget[key]) {
-      sourceTarget[key] = [];
-    }
-    sourceTarget[key].push(association);
   });
 
   Object.keys(sourceTarget).sort().forEach((key) => {
@@ -303,7 +312,7 @@ function processAssociations(associations, tables, schemas) {
   }
   if (associationsByType['missing-from-model'].length > 0) {
     uml += '\n';
-    uml += `!issue='association missing from models'`; //eslint-disable-line
+    uml += `!issue='association missing from models'\n`; //eslint-disable-line
     for (let i = 0; i < associationsByType['missing-from-model'].length; i++) { //eslint-disable-line
       if (associationIssuesByType['missing-from-model'][i]?.length > 0) {
         uml += `${associationIssuesByType['missing-from-model'][i].join('\n')}\n`;
@@ -366,66 +375,71 @@ async function generateUML(schemas, tables, root) {
 }
 
 export default async function generateUMLFromDB() {
+  let tableData;
   try {
-    const tableData = await db.sequelize.query(`
-      SELECT
-        table_schema,
-        table_name "table",
-        json_agg(
-          json_build_object(
-            'ordinal', ordinal_position,
-            'name', column_name,
-            'type', CASE
-                  WHEN data_type = 'USER-DEFINED' THEN 'enum'
-                  WHEN data_type = 'character varying' THEN 'varchar(255)'
-                  WHEN data_type = 'ARRAY' THEN
-                    CASE
-                      WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'varchar' THEN 'varchar(255)'
-                      WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
-                      ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
-                    END || '[]'
-                  WHEN data_type = 'numeric' THEN 'decimal(3,1)'
-                  WHEN data_type = 'int4' THEN 'integer'
-                  ELSE data_type
-                END,
-            'subtype', SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?'),
-            'default', CASE
-                  WHEN column_default LIKE 'nextval%' THEN '<generated>'
-                  ELSE column_default
-                END,
-            'allowNull', is_nullable = 'YES',
-            'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])')
-          )
-          ORDER BY ordinal_position ASC
-        ) "fields"
-      FROM information_schema.columns col
-      LEFT JOIN pg_constraint con
-      ON col.table_name = regexp_replace(con.conrelid::regclass::TEXT,'"','','g')
-      AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY ("' || col.column_name || '") REFERENCES %'
-      WHERE table_schema = 'public'
-      AND table_name != 'SequelizeMeta'
-      --AND table_name NOT LIKE 'ZA%'
-      GROUP BY 1,2
+    tableData = await db.sequelize.query(`
+    Select
+      table_schema,
+      table_name "table",
+      json_agg(
+        json_build_object(
+          'ordinal', ordinal_position,
+          'name', column_name,
+          'type', CASE
+                WHEN data_type = 'USER-DEFINED' THEN 'enum'
+                WHEN data_type = 'character varying' THEN 'varchar(255)'
+                WHEN data_type = 'ARRAY' THEN
+                  CASE
+                    WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'varchar' THEN 'varchar(255)'
+                    WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
+                    ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
+                  END || '[]'
+                WHEN data_type = 'numeric' THEN 'decimal(3,1)'
+                WHEN data_type = 'int4' THEN 'integer'
+                ELSE data_type
+              END,
+          'subtype', SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?'),
+          'default', CASE
+                WHEN column_default LIKE 'nextval%' THEN '<generated>'
+                ELSE column_default
+              END,
+          'allowNull', is_nullable = 'YES',
+          'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])')
+        )
+        ORDER BY ordinal_position ASC
+      ) "fields"
+    FROM information_schema.columns col
+    LEFT JOIN pg_constraint con
+    ON col.table_name = regexp_replace(con.conrelid::regclass::TEXT,'"','','g')
+    AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY ("' || col.column_name || '") REFERENCES %'
+    WHERE table_schema = 'public'
+    AND table_name != 'SequelizeMeta'
+    --AND table_name NOT LIKE 'ZA%'
+    GROUP BY 1,2;
     `, {
       type: QueryTypes.SELECT,
     });
 
     const tables = db.sequelize.models;
-    const schemas = tableData.map((td) => ({
-      table: td.table,
-      model: (db.sequelize.models[td.table]
-        || db.sequelize.models[td.table.slice(0, -1)]
-        || db.sequelize.models[td.table.replace('ies', 'y')]),
-      attributes: td.fields,
-      associations: (db.sequelize.models[td.table]
-        || db.sequelize.models[td.table.slice(0, -1)]
-        || db.sequelize.models[td.table.replace('ies', 'y')])
-        ?.associations,
-    }));
+    const schemas = tableData
+      .map(({ table, fields }) => ({
+        table,
+        model: (db.sequelize.models[table]
+          || db.sequelize.models[table.slice(0, -1)]
+          || db.sequelize.models[table.replace('ies', 'y')]
+          || db.sequelize.models[table.slice(0, -2)]),
+        attributes: fields,
+        associations: (db.sequelize.models[table]
+          || db.sequelize.models[table.slice(0, -1)]
+          || db.sequelize.models[table.replace('ies', 'y')]
+          || db.sequelize.models[table.slice(0, -2)])
+          ?.associations,
+      }));
 
     await generateUML(schemas, tables, 'docs');
   } catch (err) {
-    auditLogger.error(err);
+    console.log(err);
+    auditLogger.error(err, tableData, err.stack);
     throw err;
   }
 }

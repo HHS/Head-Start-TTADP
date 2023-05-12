@@ -119,7 +119,7 @@ describe('File Upload', () => {
       include: [
         {
           model: ActivityReportFile,
-          as: 'reportFiles',
+          as: 'activityReportFiles',
           required: true,
           where: { activityReportId: report.dataValues.id },
         },

@@ -2,38 +2,27 @@ const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
 
 export default (sequelize, DataTypes) => {
-  class ReportObjectiveResource extends Model {
+  class ReportObjectiveTemplateResource extends Model {
     static associate(models) {
-      ReportObjectiveResource.belongsTo(models.ReportObjective, {
-        foreignKey: 'reportObjectiveId',
+      ReportObjectiveTemplateResource.belongsTo(models.ReportObjectiveTemplate, {
+        foreignKey: 'reportObjectiveTemplateId',
         onDelete: 'cascade',
-        as: 'reportObjective',
+        as: 'reportObjectiveTemplate',
       });
-      ReportObjectiveResource.belongsTo(models.Resource, {
+      ReportObjectiveTemplateResource.belongsTo(models.Resource, {
         foreignKey: 'resourceId',
         as: 'resource',
       });
-
-      models.ReportObjective.hasMany(models.ReportObjectiveResource, {
-        foreignKey: 'reportObjectiveId',
-        as: 'reportObjectiveResources',
-      });
-      models.ReportObjective.belongsToMany(models.Resource, {
-        through: models.ReportObjectiveResource,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
     }
   }
-  ReportObjectiveResource.init({
+  ReportObjectiveTemplateResource.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
-    reportObjectiveId: {
+    reportObjectiveTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -65,7 +54,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'ReportObjectiveResource',
+    modelName: 'ReportObjectiveTemplateResource',
   });
-  return ReportObjectiveResource;
+  return ReportObjectiveTemplateResource;
 };

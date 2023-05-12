@@ -12,17 +12,17 @@ export default (sequelize, DataTypes) => {
   class ReportCollaboratorType extends Model {
     static associate(models) {
       ReportCollaboratorType.belongsTo(models.ReportCollaborator, { foreignKey: 'reportCollaboratorId', as: 'reportCollaborator' });
-      ReportCollaboratorType.belongsTo(models.TargetPopulation, { foreignKey: 'collaboratorTypeId', as: 'collaboratorType' });
+      ReportCollaboratorType.belongsTo(models.CollaboratorType, { foreignKey: 'collaboratorTypeId', as: 'collaboratorType' });
     }
   }
   ReportCollaboratorType.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportCollaboratorId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     collaboratorTypeId: {

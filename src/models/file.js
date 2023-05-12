@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles' });
+      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'activityReportFiles' });
       File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
       File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
       File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles' });
@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
         through: models.ActivityReportFile,
         foreignKey: 'fileId',
         otherKey: 'activityReportId',
-        as: 'reports',
+        as: 'activityReports',
       });
       File.belongsToMany(models.ActivityReportObjective, {
         through: models.ActivityReportObjectiveFile,

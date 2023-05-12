@@ -1,30 +1,31 @@
-const { Model } = require('sequelize');
+const {
+  Model,
+  Op,
+} = require('sequelize');
+const { ENTITY_TYPE } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class ReportObjective extends Model {
     static associate(models) {
-      ReportObjective.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportObjective.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
-      ReportObjective.hasMany(models.ReportObjectiveFile, { foreignKey: 'reportObjectiveId', as: 'reportObjectiveFiles' });
-      ReportObjective.hasMany(models.ReportObjectiveTopic, { foreignKey: 'reportObjectiveId', as: 'reportObjectiveTopics' });
-      ReportObjective.hasMany(models.ReportObjectiveResource, { foreignKey: 'reportObjectiveId', as: 'reportObjectiveResources' });
-      ReportObjective.belongsToMany(models.File, {
-        through: models.ReportObjectiveFile,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'fileId',
-        as: 'files',
+      ReportObjective.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
       });
-      ReportObjective.belongsToMany(models.Topic, {
-        through: models.ReportObjectiveTopic,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'topicId',
-        as: 'topics',
+      ReportObjective.belongsTo(models.Objective, {
+        foreignKey: 'objectiveId',
+        as: 'objective',
       });
-      ReportObjective.belongsToMany(models.Resource, {
-        through: models.ReportObjectiveResource,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'resourceId',
-        as: 'resources',
+
+      models.Report.hasMany(models.ReportObjective, {
+        foreignKey: 'reportId',
+        as: 'reportObjectives',
+        scope: {
+          [sequelize.col('"Report".reportType')]: {
+            [Op.in]: [
+              ENTITY_TYPE.REPORT_SESSION,
+            ],
+          },
+        },
       });
     }
   }

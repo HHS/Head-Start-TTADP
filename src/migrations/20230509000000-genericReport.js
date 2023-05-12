@@ -15,43 +15,44 @@ module.exports = {
 
       /**
        *  create new tables for new structure:
-       * - Reports
-       *  - ReportNationalCenters
-       *  - ReportReasons
-       *  - ReportTargetPopulations
-       *  - EventReports
-       *  - SessionReports
-       *  - ReportApprovals
-       *  - ReportRecipients
-       *  - ReportCollaborators
-       *    - ReportCollaboratorTypes
-       *    - ReportCollaboratorRoles
-       *  - ReportResources
-       *  - ReportFiles
-       *  - ReportGoalTemplates
-       *    - ReportGoalTemplateResources
-       *  - ReportGoals
-       *    - ReportGoalResources
-       *  - ReportObjectiveTemplates
+       * - Reports-
+       *  - ReportNationalCenters-
+       *  - ReportReasons-
+       *  - ReportTargetPopulations-
+       *  - EventReports-
+       *  - SessionReports-
+       *  - ReportApprovals-
+       *  - ReportRecipients-
+       *  - ReportCollaborators-
+       *    - ReportCollaboratorTypes-
+       *    - ReportCollaboratorRoles-
+       *  - ReportResources-
+       *  - ReportFiles-
+       *  - ReportGoalTemplates-
+       *    - ReportGoalTemplateResources-
+       *  - ReportGoals-
+       *    - ReportGoalFieldResponse---
+       *    - ReportGoalResources-
+       *  - ReportObjectiveTemplates-
        *    - ReportObjectiveTemplateFiles
        *    - ReportObjectiveTemplateResources
        *    - ReportObjectiveTemplateTopics
-       *  - ReportObjectives
-       *    - ReportObjectiveFiles
-       *    - ReportObjectiveResources
-       *    - ReportObjectiveTopics
+       *  - ReportObjectives-
+       *    - ReportObjectiveFiles-
+       *    - ReportObjectiveResources-
+       *    - ReportObjectiveTopics-
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
-       * - Statuses
-       * - NationalCenters
-       * - Reasons
-       * - TargetPopulations
-       * - CollaboratorTypes
+       * - Statuses-
+       * - NationalCenters-
+       * - Reasons-
+       * - TargetPopulations-
+       * - CollaboratorTypes-
        *  */
 
       const ENTITY_TYPE = {
         REPORT_EVENT: 'report.event',
-        REPORT_SESSION: 'resport.session',
+        REPORT_SESSION: 'report.session',
       };
 
       const GOAL_STATUS = {
@@ -72,6 +73,50 @@ module.exports = {
 
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Statuses', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        validFor: {
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          references: {
+            model: {
+              tableName: 'Statuses',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('Organizers', {
         id: {
           type: Sequelize.INTEGER,
           allowNull: false,
@@ -208,7 +253,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -305,7 +350,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -352,14 +397,12 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.TEXT,
+          type: Sequelize.STRING,
           allowNull: false,
         },
-        reportType: {
-          type: Sequelize.ENUM([
-            'event',
-            'session',
-          ]),
+        validFor: {
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+          allowNull: false,
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -382,7 +425,7 @@ module.exports = {
           default: null,
           references: {
             model: {
-              tableName: 'Reasons',
+              tableName: 'TargetPopulations',
             },
             key: 'id',
           },
@@ -398,7 +441,7 @@ module.exports = {
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -455,13 +498,13 @@ module.exports = {
 
       await queryInterface.createTable('EventReports', {
         id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -484,9 +527,15 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        organizer: {
-          type: Sequelize.ENUM(Object.values(ORGANIZER)),
+        organizerId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'Organizers',
+            },
+            key: 'id',
+          },
         },
         audience: {
           type: Sequelize.ARRAY(Sequelize.ENUM(Object.values(AUDIENCE))),
@@ -523,13 +572,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('SessionReports', {
         id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -539,7 +588,7 @@ module.exports = {
           },
         },
         eventReportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -603,11 +652,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -666,11 +715,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -734,10 +783,8 @@ module.exports = {
           allowNull: false,
         },
         validFor: {
-          type: Sequelize.ENUM([
-            'report.event',
-            'report.session',
-          ]),
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+          allowNull: false,
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -801,11 +848,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -958,13 +1005,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportNextSteps', {
         id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           onDelete: 'CASCADE',
           references: {
@@ -1043,10 +1090,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           references: {
             model: {
@@ -1095,11 +1142,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           references: {
             model: {
               tableName: 'Reports',
@@ -1140,11 +1187,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           references: {
             model: {
               tableName: 'Reports',
@@ -1175,6 +1222,87 @@ module.exports = {
 
       await queryInterface.addConstraint('ReportGoalTemplates', {
         fields: ['reportId', 'goalTemplateId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
+      const PROMPT_FIELD_TYPE = {
+        MULTISELECT: 'multiselect',
+      };
+
+      await queryInterface.createTable('ReportGoalTemplateFieldPrompts', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        reportGoalTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportGoalTemplates',
+            },
+            key: 'id',
+          },
+        },
+        reportGoalTemplateFieldPromptId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'GoalTemplateFieldPrompts',
+            },
+            key: 'id',
+          },
+        },
+        caution: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        hint: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        ordinal: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        title: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        prompt: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        fieldType: {
+          type: Sequelize.ENUM(Object.values(PROMPT_FIELD_TYPE)),
+        },
+        options: {
+          type: Sequelize.ARRAY(Sequelize.TEXT),
+          allowNull: true,
+        },
+        validations: {
+          type: Sequelize.JSON,
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.addIndex('ReportGoalTemplateFieldPrompts', ['reportGoalTemplateId', 'reportGoalTemplateFieldPromptId'], { transaction });
+
+      await queryInterface.addConstraint('ReportGoalTemplateFieldPrompts', {
+        fields: ['reportGoalTemplateId', 'reportGoalTemplateFieldPromptId'],
         type: 'unique',
         transaction,
       });
@@ -1238,11 +1366,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           references: {
             model: {
               tableName: 'Reports',
@@ -1309,6 +1437,55 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportGoalFieldResponses', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        reportGoalId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ReportGoals',
+            },
+            key: 'id',
+          },
+        },
+        goalTemplateFieldPromptId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        response: {
+          type: Sequelize.ARRAY(Sequelize.TEXT),
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportGoalFieldResponses', ['reportGoalId', 'goalTemplateFieldPromptId'], { transaction });
+
+      await queryInterface.addConstraint('ReportGoalFieldResponses', {
+        fields: ['reportGoalId', 'goalTemplateFieldPromptId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportGoalResources', {
         id: {
           allowNull: false,
@@ -1366,11 +1543,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           references: {
             model: {
               tableName: 'Reports',
@@ -1606,11 +1783,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           references: {
             model: {
               tableName: 'Reports',

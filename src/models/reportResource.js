@@ -4,8 +4,25 @@ const { SOURCE_FIELD } = require('../constants');
 export default (sequelize, DataTypes) => {
   class ReportResource extends Model {
     static associate(models) {
-      ReportResource.belongsTo(models.Report, { foreignKey: 'reportId', as: 'report' });
-      ReportResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
+      ReportResource.belongsTo(models.Report, {
+        foreignKey: 'reportId',
+        as: 'report',
+      });
+      ReportResource.belongsTo(models.Resource, {
+        foreignKey: 'resourceId',
+        as: 'resource',
+      });
+
+      models.Report.hasMany(models.ReportResource, {
+        foreignKey: 'reportId',
+        as: 'reportResources',
+      });
+      models.Report.belongsToMany(models.Resource, {
+        through: models.ReportResource,
+        foreignKey: 'reportId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   ReportResource.init({
