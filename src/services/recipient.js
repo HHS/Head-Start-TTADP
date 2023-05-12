@@ -426,14 +426,7 @@ export async function getGoalsByActivityRecipient(
           'validations',
         ],
         required: false,
-        include: [
-          {
-            model: GoalFieldResponse,
-            as: 'responses',
-            attributes: ['response'],
-            required: true,
-          },
-        ],
+        through: { attributes: ['response'] },
       },
       {
         model: Grant,
