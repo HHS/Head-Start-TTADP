@@ -50,7 +50,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
     'id',
     'endDate',
-    'name',
+    'name'.trim(),
     'status',
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
@@ -72,7 +72,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   include: [
     {
       attributes: [
-        'title',
+        'title'.trim(),
         'id',
         'status',
         'onApprovedAR',
@@ -129,7 +129,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             {
               model: Topic,
               as: 'topic',
-              attributes: ['id', 'name'],
+              attributes: ['id', 'name'.trim()],
             },
           ],
         },
@@ -204,7 +204,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       attributes: [
         ['id', 'promptId'],
         'ordinal',
-        'title',
+        'title'.trim(),
         'prompt',
         'hint',
         'fieldType',
@@ -377,7 +377,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ...(objective.dataValues
         ? objective.dataValues
         : objective),
-      title: objective.title,
+      title: objective.title.trim(),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -462,7 +462,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title,
+      title: objective.title.trim(),
       value: id,
       ids: [id],
       ttaProvided,
@@ -665,9 +665,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       'endDate',
       'status',
       ['id', 'value'],
-      ['name', 'label'],
+      ['name'.trim(), 'label'],
       'id',
-      'name',
+      'name'.trim(),
     ],
     where: {
       id,
@@ -691,7 +691,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         },
         attributes: [
           'id',
-          ['title', 'label'],
+          ['title'.trim(), 'label'],
           'title',
           'status',
           'goalId',
@@ -750,7 +750,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         attributes: [
           'id',
           'ordinal',
-          'title',
+          'title'.trim(),
           'prompt',
           'hint',
           'fieldType',
@@ -811,9 +811,9 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
       'endDate',
       'status',
       ['id', 'value'],
-      ['name', 'label'],
+      ['name'.trim(), 'label'],
       'id',
-      'name',
+      'name'.trim(),
     ],
     where: {
       id: goalId,
@@ -836,8 +836,8 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
         },
         attributes: [
           'id',
-          'title',
-          'title',
+          'title'.trim(),
+          'title'.trim(),
           'status',
         ],
         model: Objective,
@@ -874,7 +874,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
             as: 'topics',
             attributes: [
               ['id', 'value'],
-              ['name', 'label'],
+              ['name'.trim(), 'label'],
             ],
             required: false,
           },
@@ -974,7 +974,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
     attributes: [
-      'name',
+      'name'.trim(),
       'id',
       'status',
       'createdVia',
@@ -1122,13 +1122,13 @@ export async function createOrUpdateGoals(goals) {
           status: {
             [Op.not]: 'Closed',
           },
-          name: options.name,
+          name: options.name.trim(),
         },
       });
       if (!newGoal) {
         newGoal = await Goal.create({
           grantId,
-          name: options.name,
+          name: options.name.trim(),
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
           rtrOrder: rtrOrder + 1,
@@ -1146,6 +1146,7 @@ export async function createOrUpdateGoals(goals) {
         {
           ...options,
           status,
+          name: options.name.trim(),
           // if the createdVia column is populated, keep what's there
           // otherwise, if the goal is imported, we say so
           // otherwise, we've got ourselves an rtr goal, baby
@@ -1160,7 +1161,7 @@ export async function createOrUpdateGoals(goals) {
         { endDate: endDate || null },
         { individualHooks: true },
       );
-    }
+    } 
 
     const newObjectives = await Promise.all(
       objectives.map(async (o, index) => {
@@ -1324,7 +1325,7 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('"Goal"."goalTemplateId"'),
         ),
       ), 'goalTemplateId'],
-      'name',
+      'name'.trim(),
       'status',
       'onApprovedAR',
       'endDate',
@@ -1480,7 +1481,7 @@ async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
         },
       },
       {
-        attributes: ['id', 'goalId', 'title'],
+        attributes: ['id', 'goalId', 'title'.trim()],
         model: Objective,
         as: 'objectives',
         required: false,
@@ -1861,7 +1862,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.findOne({
           where: {
-            name: goal.name,
+            name: goal.name.trim(),
             grantId,
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
@@ -1880,7 +1881,7 @@ export async function saveGoalsForReport(goals, report) {
 
       if (!newOrUpdatedGoal.onApprovedAR) {
         if (fields.name !== newOrUpdatedGoal.name) {
-          newOrUpdatedGoal.set({ name: fields.name }, { individualHooks: true });
+          newOrUpdatedGoal.set({ name: fields.name.trim() }, { individualHooks: true });
         }
 
         if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
@@ -2029,7 +2030,7 @@ export async function getGoalsForReport(reportId) {
             jsonb_agg( DISTINCT jsonb_build_object(
               'promptId', gtfp.id ,
               'ordinal', gtfp.ordinal,
-              'title', gtfp.title,
+              'title'.trim(), gtfp.title,
               'prompt', gtfp.prompt,
               'hint', gtfp.hint,
               'caution', gtfp.caution,
