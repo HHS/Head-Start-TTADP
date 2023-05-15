@@ -255,6 +255,17 @@ function App() {
         />
         <Route
           exact
+          path="/training-reports"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <ResourcesDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
