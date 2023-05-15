@@ -7,7 +7,6 @@ module.exports = {
     // constraint, postgres already supplies an index so we only add the second key index.
     // We're also not adding indexes on low-cardinality foreign keys like region, roleId,
     // and topicId
-    queryInterface.addIndex('ActivityReportGoals', ['activityReportId', 'goalId'], { transaction }),
     queryInterface.addIndex('ActivityReportGoals', ['goalId'], { transaction }),
     queryInterface.addIndex('ActivityReportCollaborators', ['activityReportId'], { transaction }),
     queryInterface.addIndex('ActivityReportObjectives', ['activityReportId', 'objectiveId'], { transaction }),
@@ -43,7 +42,6 @@ module.exports = {
 
   down: (queryInterface) => queryInterface.sequelize.transaction((transaction) => Promise.all([
     // Remove foreign key indices.
-    queryInterface.removeIndex('ActivityReportGoals', ['activityReportId', 'goalId'], { transaction }),
     queryInterface.removeIndex('ActivityReportGoals', ['goalId'], { transaction }),
     queryInterface.removeIndex('ActivityReportCollaborators', ['activityReportId'], { transaction }),
     queryInterface.removeIndex('ActivityReportObjectives', ['activityReportId', 'objectiveId'], { transaction }),
