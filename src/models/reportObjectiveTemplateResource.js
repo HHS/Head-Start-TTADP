@@ -13,6 +13,29 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'resourceId',
         as: 'resource',
       });
+      models.ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateResource, {
+        foreignKey: 'reportObjectiveTemplateId',
+        onDelete: 'cascade',
+        as: 'reportObjectiveTemplateResources',
+      });
+      models.Resource.hasMany(models.ReportObjectiveTemplateResource, {
+        foreignKey: 'resourceId',
+        as: 'resource',
+      });
+      models.ReportObjectiveTemplate.belongsToMany(models.Resource, {
+        through: models.ReportObjectiveTemplateResource,
+        foreignKey: 'reportObjectiveTemplateId',
+        otherKey: 'resourceId',
+        onDelete: 'cascade',
+        as: 'resources',
+      });
+      models.Resource.belongsToMany(models.ReportObjectiveTemplate, {
+        through: models.ReportObjectiveTemplateResource,
+        foreignKey: 'resourceId',
+        otherKey: 'reportObjectiveTemplateId',
+        onDelete: 'cascade',
+        as: 'reportObjectiveTemplates',
+      });
     }
   }
   ReportObjectiveTemplateResource.init({

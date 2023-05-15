@@ -17,17 +17,18 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'objectiveTemplateId',
         as: 'objectiveTemplate',
       });
-      ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateResource, {
-        foreignKey: 'reportObjectiveTemplateId',
-        as: 'reportObjectiveTemplateResources',
-      });
-      ReportObjectiveTemplate.belongsToMany(models.Resource, {
-        through: models.ReportObjectiveTemplateResource,
-        foreignKey: 'reportObjectiveTemplateId',
-        otherKey: 'resourceId',
-        as: 'resources',
+
+      ReportObjectiveTemplate.belongsTo(models.ReportGoalTemplate, {
+        foreignKey: 'reportGoalTemplateId',
+        as: 'reportGoalTemplate',
       });
 
+      models.ReportGoalTemplate.hasMany(models.ReportObjectiveTemplate, {
+        foreignKey: 'reportGoalTemplateId',
+        as: 'reportObjectiveTemplates',
+      });
+
+      // TODO: switch to scope model, my require relocating
       models.Report.hasMany(models.ReportObjectiveTemplate, {
         foreignKey: 'reportId',
         as: 'reportObjectiveTemplates',
@@ -43,6 +44,7 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'objectiveTemplateId',
         as: 'reportObjectiveTemplates',
       });
+      // TODO: add both through associations between report and ObjectiveTemplate
     }
   }
   ReportObjectiveTemplate.init({

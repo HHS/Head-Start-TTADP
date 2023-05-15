@@ -8,11 +8,11 @@ export default (sequelize, DataTypes) => {
         onDelete: 'cascade',
         as: 'reportGoal',
       });
-      ReportGoalFieldResponse.belongsTo(models.ReportGoalFieldResponse, {
+      ReportGoalFieldResponse.belongsTo(models.GoalTemplateFieldPrompt, {
         foreignKey: 'goalTemplateFieldPromptId',
         as: 'prompt',
       });
-      models.ReportGoal.hasMany(models.ReportGoal, {
+      models.ReportGoal.hasMany(models.ReportGoalFieldResponse, {
         foreignKey: 'reportGoalId',
         onDelete: 'cascade',
         as: 'reportGoalFieldResponses',

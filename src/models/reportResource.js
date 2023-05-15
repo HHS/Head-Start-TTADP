@@ -17,11 +17,21 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportId',
         as: 'reportResources',
       });
+      models.Resource.hasMany(models.ReportResource, {
+        foreignKey: 'resourceId',
+        as: 'reportResources',
+      });
       models.Report.belongsToMany(models.Resource, {
         through: models.ReportResource,
         foreignKey: 'reportId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+      models.Resource.belongsToMany(models.Report, {
+        through: models.ReportResource,
+        foreignKey: 'resourceId',
+        otherKey: 'reportId',
+        as: 'reports',
       });
     }
   }

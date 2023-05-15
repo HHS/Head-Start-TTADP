@@ -41,6 +41,11 @@ export default (sequelize, DataTypes) => {
         }],
       }));
 
+      models.Status.hasMany(models.ReportCollaborator, {
+        foreignKey: 'statusId',
+        as: 'reportCollaborators',
+      });
+
       models.Report.hasMany(models.ReportCollaborator, {
         foreignKey: 'reportId',
         as: 'collaborators',
@@ -210,6 +215,32 @@ export default (sequelize, DataTypes) => {
           throw new Error(`Invalid status name of ${value} for collaborator.`);
         }
       },
+    },
+    currentRoles: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.roles
+          ? this.roles.map(({ name }) => name)
+          : [];
+      },
+      // TODO: finish implementation
+      // async set(values) {
+      //   const status = await sequelize.models.ReportCollaboratorRole
+      //     .findAll({
+      //       where: { reportCollaboratorId: this.id },
+      //       include: [{
+      //         models: sequelize.models.Roles,
+      //         as: 'role',
+      //         attributes: [],
+
+      //       }],
+      //     });
+      //   if (status) {
+      //     this.setDataValue('statusId', status.id);
+      //   } else {
+      //     throw new Error(`Invalid status name of ${value} for report of type ${this.reportType}.`);
+      //   }
+      // },
     },
   }, {
     sequelize,

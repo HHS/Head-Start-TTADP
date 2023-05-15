@@ -8,7 +8,30 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportGoalTemplateId',
         as: 'reportGoalTemplate',
       });
-      ReportGoalTemplateResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
+      ReportGoalTemplateResource.belongsTo(models.Resource, {
+        foreignKey: 'resourceId',
+        as: 'resource',
+      });
+      models.ReportGoalTemplate.hasMany(models.ReportGoalTemplateResource, {
+        foreignKey: 'reportGoalTemplateId',
+        as: 'reportGoalTemplateResources',
+      });
+      models.Resource.hasMany(models.ReportGoalTemplateResource, {
+        foreignKey: 'resourceId',
+        as: 'reportGoalTemplateResources',
+      });
+      models.ReportGoalTemplate.belongsToMany(models.Resource, {
+        through: models.ReportGoalTemplate,
+        foreignKey: 'reportGoalTemplateId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      models.Resource.belongsToMany(models.ReportGoalTemplate, {
+        through: models.ReportGoalTemplate,
+        foreignKey: 'resourceId',
+        otherKey: 'reportGoalTemplateId',
+        as: 'reportGoalTemplates',
+      });
     }
   }
   ReportGoalTemplateResource.init({
