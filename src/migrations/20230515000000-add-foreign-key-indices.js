@@ -59,7 +59,6 @@ module.exports = {
     queryInterface.removeIndex('ObjectiveTemplateFiles', ['fileId'], { transaction }),
     queryInterface.removeIndex('ObjectiveTemplateResources', ['objectiveTemplateId'], { transaction }),
     queryInterface.removeIndex('ObjectiveTemplateTopics', ['objectiveTemplateId'], { transaction }),
-    queryInterface.removeIndex('ObjectiveTemplateRoles', ['objectiveTemplateId'], { transaction }),
     queryInterface.removeIndex('Goals', ['grantId'], { transaction }),
     queryInterface.removeIndex('Goals', ['goalTemplateId'], { transaction }),
     queryInterface.removeIndex('GoalTemplateObjectiveTemplates', ['goalTemplateId', 'objectiveTemplateId'], { transaction }),
