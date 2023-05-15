@@ -38,6 +38,7 @@ import {
   addIndexDocument,
 } from '../../lib/awsElasticSearch/index';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
+import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -2310,6 +2311,195 @@ describe('filtersToScopes', () => {
           [Op.and]: [
             scope,
             { id: [reportOne.id, reportTwo.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(0);
+    });
+  });
+
+  describe('resourceAttachment', () => {
+    let recipient;
+    let recipientCreated;
+
+    let grant;
+    let grantCreated;
+
+    let goal;
+    let goalCreated;
+
+    let objective;
+    let objectiveCreated;
+
+    let report;
+    let reportCreated;
+
+    let aro;
+    let aroCreated;
+
+    beforeAll(async () => {
+      [recipient, recipientCreated] = await Recipient.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          id: 99_998,
+          name: faker.random.alphaNumeric(10),
+          uei: faker.datatype.string(12),
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [grant, grantCreated] = await Grant.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          number: recipient.id,
+          recipientId: recipient.id,
+          programSpecialistName: faker.name.firstName(),
+          regionId: 1,
+          id: 99_998,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [goal, goalCreated] = await Goal.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          id: 99_998,
+          grantId: grant.id,
+          status: 'In Progress',
+          name: faker.random.alphaNumeric(10),
+          isFromSmartsheetTtaPlan: false,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [objective, objectiveCreated] = await Objective.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [report, reportCreated] = await ActivityReport.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          context: '',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          numberOfParticipants: 1,
+          deliveryMethod: 'method',
+          duration: 0,
+          endDate: '2020-01-01T12:00:00Z',
+          startDate: '2020-01-01T12:00:00Z',
+          requester: 'requester',
+          regionId: 1,
+          targetPopulations: [],
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [aro, aroCreated] = await ActivityReportObjective.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          id: 99_998,
+          activityReportId: 99_998,
+          objectiveId: objective.id,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      await createActivityReportObjectiveFileMetaData(
+        'test.pdf',
+        'very-unique-file-key',
+        99_998,
+        99_998,
+        12_345,
+      );
+    });
+
+    afterAll(async () => {
+      if (aroCreated) {
+        await ActivityReportObjective.destroy({
+          where: { id: aro.id },
+          individualHooks: true,
+        });
+      }
+
+      if (reportCreated) {
+        await ActivityReport.destroy({
+          where: { id: report.id },
+          individualHooks: true,
+        });
+      }
+
+      if (objectiveCreated) {
+        await Objective.destroy({
+          where: { id: objective.id },
+          individualHooks: true,
+        });
+      }
+
+      if (goalCreated) {
+        await Goal.destroy({
+          where: { id: goal.id },
+          individualHooks: true,
+        });
+      }
+
+      if (grantCreated) {
+        await Grant.destroy({
+          where: { id: grant.id },
+          individualHooks: true,
+        });
+      }
+
+      if (recipientCreated) {
+        await Recipient.destroy({
+          where: { id: recipient.id },
+          individualHooks: true,
+        });
+      }
+    });
+
+    it('returns correct resource attachment filter search results', async () => {
+      const filters = { 'resourceAttachment.ctn': ['test'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [report.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([report.id]));
+    });
+
+    it('excludes correct resource attachment filter search results', async () => {
+      const filters = { 'resourceAttachment.nctn': ['test'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [report.id] },
           ],
         },
       });
