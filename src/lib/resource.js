@@ -8,9 +8,10 @@ const getResourceMetaDataJob = async (job) => {
   const {
     resourceId, resourceUrl,
   } = job.data;
+  let res;
   try {
     // Use axios to get url info.
-    const res = await axios.get(resourceUrl);
+    res = await axios.get(resourceUrl, { maxRedirects: 3 });
 
     // Get page title.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
@@ -39,7 +40,7 @@ const getResourceMetaDataJob = async (job) => {
     logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
     return ({ status: httpCodes.OK, data: { url: resourceUrl } });
   } catch (error) {
-    auditLogger.error('Resource Queue Error: ', error);
+    auditLogger.error(`Resource Queue: Unable to retrieve title for Resource (ID: ${resourceId} URL: ${resourceUrl}), please make sure this is a valid address:`, error);
     throw Error(error); // We must rethrow the error here to ensure the job is retried.
   }
 };
