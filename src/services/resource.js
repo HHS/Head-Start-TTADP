@@ -261,6 +261,7 @@ const filterResourcesForSync = (
       destroy: [],
     };
   }
+
   // pull all of the new and expanded resources in a single pass over the incomingResources.
   const newExpandedResources = incomingResources
     .reduce((resources, resource) => {

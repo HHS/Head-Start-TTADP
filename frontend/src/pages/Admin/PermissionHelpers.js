@@ -1,9 +1,9 @@
 import _ from 'lodash';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   REGIONAL_SCOPES,
   GLOBAL_SCOPES,
   REGIONS,
-  DECIMAL_BASE,
 } from '../../Constants';
 
 const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
@@ -40,10 +40,11 @@ export function userRegionalPermissions(user) {
     return regionalPermissions;
   }
 
-  user.permissions.filter((permission) => regionalScopeIds.includes(permission.scopeId))
-    .forEach(({ regionId, scopeId }) => {
-      regionalPermissions[regionId][scopeId] = true;
-    });
+  user.permissions.filter((permission) => (
+    regionalScopeIds.includes(permission.scopeId) && permission.regionId !== 14
+  )).forEach(({ regionId, scopeId }) => {
+    regionalPermissions[regionId][scopeId] = true;
+  });
 
   return regionalPermissions;
 }

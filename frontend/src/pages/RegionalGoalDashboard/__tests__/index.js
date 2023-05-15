@@ -6,9 +6,9 @@ import moment from 'moment';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
+import { SCOPE_IDS } from '@ttahub/common';
 import RegionalGoalDashboard from '../index';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 import { formatDateRange } from '../../../utils';
 
 const WIDGET_MOCKS = {

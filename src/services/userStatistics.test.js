@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -164,6 +164,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientOne.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
     grantTwo = await Grant.create({
       id: faker.datatype.number(),
@@ -171,6 +173,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientTwo.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
     grantThree = await Grant.create({
       id: faker.datatype.number(),
@@ -178,6 +182,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientThree.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     grantFour = await Grant.create({
@@ -186,6 +192,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientFour.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     grantOutsideRegion = await Grant.create({
@@ -194,6 +202,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 2,
       recipientId: recipientOutsideRegion.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // Goals.

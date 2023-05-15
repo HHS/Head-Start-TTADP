@@ -130,8 +130,8 @@ const Draft = ({
           >
             <ApproverSelect
               name="approvers"
-              valueProperty="User.id"
-              labelProperty="User.fullName"
+              valueProperty="user.id"
+              labelProperty="user.fullName"
               options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
             />
           </FormItem>

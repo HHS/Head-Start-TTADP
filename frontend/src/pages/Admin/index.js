@@ -6,8 +6,8 @@ import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
 import Flags from './Flags';
-import RoleManagement from './RoleManagement';
 import SiteAlerts from './SiteAlerts';
+import Redis from './Redis';
 
 function Admin() {
   return (
@@ -28,6 +28,9 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
           Site alerts
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
+          Redis info
         </NavLink>
       </div>
       <Switch>
@@ -52,8 +55,8 @@ function Admin() {
           render={({ match }) => <SiteAlerts match={match} />}
         />
         <Route
-          path="/admin/roles/"
-          render={({ match }) => <RoleManagement match={match} />}
+          path="/admin/redis/"
+          render={({ match }) => <Redis match={match} />}
         />
       </Switch>
     </>
