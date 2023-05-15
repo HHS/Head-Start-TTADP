@@ -76,12 +76,12 @@ export default (sequelize, DataTypes) => {
   }
   ReportRecipient.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     grantId: {

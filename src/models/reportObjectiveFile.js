@@ -20,11 +20,21 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportObjectiveId',
         as: 'reportObjectiveFiles',
       });
+      models.File.hasMany(models.ReportObjectiveFile, {
+        foreignKey: 'fileId',
+        as: 'reportObjectiveFiles',
+      });
       models.ReportObjective.belongsToMany(models.File, {
         through: models.ReportObjectiveFile,
         foreignKey: 'reportObjectiveId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      models.File.belongsToMany(models.ReportObjective, {
+        through: models.ReportObjectiveFile,
+        foreignKey: 'fileId',
+        otherKey: 'reportObjectiveId',
+        as: 'reportObjectives',
       });
     }
   }
@@ -33,13 +43,19 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportObjectiveId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: false,
     },
     fileId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    objectiveFileId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     sequelize,

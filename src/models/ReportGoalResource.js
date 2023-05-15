@@ -9,22 +9,46 @@ export default (sequelize, DataTypes) => {
         onDelete: 'cascade',
         as: 'reportGoal',
       });
-      ReportGoalResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
+      ReportGoalResource.belongsTo(models.Resource, {
+        foreignKey: 'resourceId',
+        as: 'resource',
+      });
+      models.ReportGoal.hasMany(models.ReportGoalResource, {
+        foreignKey: 'reportGoalId',
+        as: 'reportGoalResources',
+      });
+      models.ReportGoal.belongsToMany(models.Resource, {
+        through: models.ReportGoalResource,
+        foreignKey: 'reportGoalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      models.Resource.belongsToMany(models.ReportGoal, {
+        through: models.ReportGoalResource,
+        foreignKey: 'resourceId',
+        otherKey: 'reportGoalId',
+        as: 'reportGoals',
+      });
     }
   }
   ReportGoalResource.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
     reportGoalId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    goalResourceId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     sourceFields: {
       allowNull: true,

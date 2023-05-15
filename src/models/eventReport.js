@@ -41,6 +41,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportId',
         as: 'event',
       });
+      models.Region.hasMany(models.EventReport, {
+        foreignKey: 'regionId',
+        as: 'event',
+      });
     }
   }
   EventReport.init({

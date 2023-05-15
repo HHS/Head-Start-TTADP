@@ -18,6 +18,11 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportObjectiveTemplateId',
         as: 'reportObjectiveTemplateTopics',
       });
+      models.Topic.hasMany(models.ReportObjectiveTemplateTopic, {
+        foreignKey: 'topicId',
+        onDelete: 'cascade',
+        as: 'reportObjectiveTemplateTopics',
+      });
       models.ReportObjectiveTemplate.belongsToMany(models.Topic, {
         through: models.ReportObjectiveTemplateTopic,
         foreignKey: 'reportObjectiveTemplateId',
@@ -38,15 +43,19 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
-    reportObjectiveId: {
-      type: DataTypes.STRING,
+    reportObjectiveTemplateId: {
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     topicId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    objectiveTemplateTopicId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     sequelize,

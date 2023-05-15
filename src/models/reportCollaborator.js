@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { COLLABORATOR_APPROVAL_STATUSES, COLLABORATOR_TYPES } = require('../constants');
+const { ENTITY_TYPE, COLLABORATOR_TYPES } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class ReportCollaborator extends Model {
@@ -14,6 +14,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'userId',
         as: 'user',
       });
+      ReportCollaborator.belongsTo(models.Status, {
+        foreignKey: 'statusId',
+        as: 'status',
+      });
       ReportCollaborator.hasMany(models.ReportCollaboratorType, {
         foreignKey: 'reportCollaboratorId',
         as: 'reportCollaboratorTypes',
@@ -22,88 +26,44 @@ export default (sequelize, DataTypes) => {
         through: models.ReportCollaboratorType,
         foreignKey: 'reportCollaboratorId',
         otherKey: 'collaboratorTypeId',
-        as: 'CollaboratorTypes',
+        as: 'collaboratorTypes',
       });
 
-      ReportCollaborator.addScope(COLLABORATOR_TYPES.INSTANTIATOR, {
+      ReportCollaborator.addScope('collaboratorType', (collaboratorType) => ({
         include: [{
           attributes: [],
           model: models.CollaboratorType,
-          as: 'CollaboratorType',
+          as: 'collaboratorTypes',
           required: true,
           where: {
-            name: COLLABORATOR_TYPES.INSTANTIATOR,
+            name: collaboratorType,
           },
         }],
-      });
-      ReportCollaborator.addScope(COLLABORATOR_TYPES.OWNER, {
-        include: [{
-          attributes: [],
-          model: models.CollaboratorType,
-          as: 'CollaboratorType',
-          required: true,
-          where: {
-            name: COLLABORATOR_TYPES.OWNER,
-          },
-        }],
-      });
-      ReportCollaborator.addScope(COLLABORATOR_TYPES.EDITOR, {
-        include: [{
-          attributes: [],
-          model: models.CollaboratorType,
-          as: 'CollaboratorType',
-          required: true,
-          where: {
-            name: COLLABORATOR_TYPES.EDITOR,
-          },
-        }],
-      });
-      ReportCollaborator.addScope(COLLABORATOR_TYPES.APPROVER, {
-        include: [{
-          attributes: [],
-          model: models.CollaboratorType,
-          as: 'CollaboratorType',
-          required: true,
-          where: {
-            name: COLLABORATOR_TYPES.APPROVER,
-          },
-        }],
-      });
-      ReportCollaborator.addScope(COLLABORATOR_TYPES.POC, {
-        include: [{
-          attributes: [],
-          model: models.CollaboratorType,
-          as: 'CollaboratorType',
-          required: true,
-          where: {
-            name: COLLABORATOR_TYPES.POC,
-          },
-        }],
-      });
+      }));
 
       models.Report.hasMany(models.ReportCollaborator, {
         foreignKey: 'reportId',
         as: 'collaborators',
       });
       models.Report.hasOne(models.ReportCollaborator
-        .scope(COLLABORATOR_TYPES.INSTANTIATOR), {
+        .scope({ method: ['collaboratorType', COLLABORATOR_TYPES.INSTANTIATOR] }), {
         foreignKey: 'reportId',
         as: COLLABORATOR_TYPES.INSTANTIATOR,
       });
 
-      models.Report.hasOne(models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER), {
+      models.Report.hasOne(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.OWNER] }), {
         foreignKey: 'reportId',
         as: COLLABORATOR_TYPES.OWNER,
       });
-      models.Report.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR), {
+      models.Report.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.EDITOR] }), {
         foreignKey: 'reportId',
         as: `${COLLABORATOR_TYPES.EDITOR}s`,
       });
-      models.Report.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER), {
+      models.Report.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.APPROVER] }), {
         foreignKey: 'reportId',
         as: `${COLLABORATOR_TYPES.APPROVER}s`, // TODO: limit scope by report type
       });
-      models.Report.hasOne(models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC), {
+      models.Report.hasOne(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.POC] }), {
         foreignKey: 'reportId',
         as: COLLABORATOR_TYPES.POC, // TODO: limit scope by report type
       });
@@ -113,27 +73,27 @@ export default (sequelize, DataTypes) => {
         as: 'reportCollaborators',
       });
 
-      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.INSTANTIATOR), {
+      models.User.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.INSTANTIATOR] }), {
         foreignKey: 'userId',
         as: `reportCollaboratorsAs${COLLABORATOR_TYPES.INSTANTIATOR}`,
       });
 
-      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER), {
+      models.User.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.OWNER] }), {
         foreignKey: 'userId',
         as: `reportCollaboratorsAs${COLLABORATOR_TYPES.OWNER}`,
       });
 
-      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR), {
+      models.User.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.EDITOR] }), {
         foreignKey: 'userId',
         as: `reportCollaboratorsAs${COLLABORATOR_TYPES.EDITOR}`,
       });
 
-      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER), {
+      models.User.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.APPROVER] }), {
         foreignKey: 'userId',
         as: `reportCollaboratorsAs${COLLABORATOR_TYPES.APPROVER}`,
       });
 
-      models.User.hasMany(models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC), {
+      models.User.hasMany(models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.POC] }), {
         foreignKey: 'userId',
         as: `reportCollaboratorsAs${COLLABORATOR_TYPES.POC}`,
       });
@@ -145,31 +105,31 @@ export default (sequelize, DataTypes) => {
         as: 'users',
       });
       models.Report.belongsToMany(models.User, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.INSTANTIATOR),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.INSTANTIATOR] }),
         foreignKey: 'reportId',
         otherKey: 'userId',
         as: `usersAs${COLLABORATOR_TYPES.INSTANTIATOR}`,
       });
       models.Report.belongsToMany(models.User, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.OWNER] }),
         foreignKey: 'reportId',
         otherKey: 'userId',
         as: `usersAs${COLLABORATOR_TYPES.OWNER}`,
       });
       models.Report.belongsToMany(models.User, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.EDITOR] }),
         foreignKey: 'reportId',
         otherKey: 'userId',
         as: `usersAs${COLLABORATOR_TYPES.EDITOR}`,
       });
       models.Report.belongsToMany(models.User, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.APPROVER] }),
         foreignKey: 'reportId',
         otherKey: 'userId',
         as: `usersAs${COLLABORATOR_TYPES.APPROVER}`, // TODO: limit scope by report type
       });
       models.Report.belongsToMany(models.User, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.POC] }),
         foreignKey: 'reportId',
         otherKey: 'userId',
         as: `usersAs${COLLABORATOR_TYPES.POC}`, // TODO: limit scope by report type
@@ -182,31 +142,31 @@ export default (sequelize, DataTypes) => {
         as: 'reports',
       });
       models.User.belongsToMany(models.Report, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.INSTANTIATOR),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.INSTANTIATOR] }),
         foreignKey: 'userId',
         otherKey: 'reportId',
         as: `reportsAs${COLLABORATOR_TYPES.INSTANTIATOR}`,
       });
       models.User.belongsToMany(models.Report, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.OWNER),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.OWNER] }),
         foreignKey: 'userId',
         otherKey: 'reportId',
         as: `reportsAs${COLLABORATOR_TYPES.OWNER}`,
       });
       models.User.belongsToMany(models.Report, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.EDITOR),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.EDITOR] }),
         foreignKey: 'userId',
         otherKey: 'reportId',
         as: `reportsAs${COLLABORATOR_TYPES.EDITOR}`,
       });
       models.User.belongsToMany(models.Report, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.APPROVER),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.APPROVER] }),
         foreignKey: 'userId',
         otherKey: 'reportId',
         as: `reportsAs${COLLABORATOR_TYPES.APPROVER}`, // TODO: limit scope by report type
       });
       models.User.belongsToMany(models.Report, {
-        through: models.ReportCollaborator.scope(COLLABORATOR_TYPES.POC),
+        through: models.ReportCollaborator.scope({ method: ['collaboratorType', COLLABORATOR_TYPES.POC] }),
         foreignKey: 'userId',
         otherKey: 'reportId',
         as: `reportsAs${COLLABORATOR_TYPES.POC}`, // TODO: limit scope by report type
@@ -227,13 +187,29 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    status: {
+    statusId: {
+      type: DataTypes.INTEGER,
       allowNull: true,
-      type: DataTypes.ENUM(Object.values(COLLABORATOR_APPROVAL_STATUSES)),
     },
     note: {
       allowNull: true,
       type: DataTypes.TEXT,
+    },
+    currentStatus: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.status ? this.status.name : null;
+      },
+      async set(value) {
+        const status = await sequelize.models.Status
+          .scope({ method: ['validFor', ENTITY_TYPE.COLLABORATOR] })
+          .findOne({ where: { name: value } });
+        if (status) {
+          this.setDataValue('statusId', status.id);
+        } else {
+          throw new Error(`Invalid status name of ${value} for collaborator.`);
+        }
+      },
     },
   }, {
     sequelize,

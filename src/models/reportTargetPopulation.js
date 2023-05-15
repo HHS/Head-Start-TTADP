@@ -57,12 +57,12 @@ export default (sequelize, DataTypes) => {
   }
   ReportTargetPopulation.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     targetPopulationId: {

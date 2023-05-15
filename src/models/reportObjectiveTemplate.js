@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
       });
       ReportObjectiveTemplate.belongsTo(models.ObjectiveTemplate, {
         foreignKey: 'objectiveTemplateId',
-        as: 'ObjectiveTemplate',
+        as: 'objectiveTemplate',
       });
       ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateResource, {
         foreignKey: 'reportObjectiveTemplateId',
@@ -39,6 +39,10 @@ export default (sequelize, DataTypes) => {
           },
         },
       });
+      models.ObjectiveTemplate.hasMany(models.ReportObjectiveTemplate, {
+        foreignKey: 'objectiveTemplateId',
+        as: 'reportObjectiveTemplates',
+      });
     }
   }
   ReportObjectiveTemplate.init({
@@ -46,14 +50,18 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    reportGoalTemplateId: {
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     templateTitle: {

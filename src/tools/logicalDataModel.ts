@@ -182,6 +182,7 @@ function processAssociations(associations, tables, schemas) {
       if (association.associationType.toLowerCase().startsWith('belongstomany')) {
         const associationTables = [source.table, target.table];
         associationTables.sort();
+        console.log(associationTables);
         key = `${associationTables[0]}***${associationTables[1]}`;
       } else if (association.associationType.toLowerCase().startsWith('belongs')) {
         key = `${target.table}***${source.table}`;
@@ -237,6 +238,7 @@ function processAssociations(associations, tables, schemas) {
     if (relationKey?.split(',').length === 1) {
       lineColor = colors.error;
       issues.push(`!issue='associations need to be defined both directions'`); //eslint-disable-line
+      console.log(relationKey);
     } else {
       lineColor = '#black';
     }
@@ -266,7 +268,9 @@ function processAssociations(associations, tables, schemas) {
     if (sourceNumber === 1 && targetNumber === 1) {
       associationsByType['one-to-one']
         .push(`${leftResource} "1" --[${lineColor},plain,thickness=2]-- "1" ${rightResource} : ${relationKey}`);
-      associationIssuesByType['one-to-one'].push(issues.map((i) => i));
+      if (relationKey.split(',').length <= 1) {
+        associationIssuesByType['one-to-one'].push(issues.map((i) => i));
+      }
     } else if ((sourceNumber === 1 && targetNumber === 2)
       || (sourceNumber === 2 && targetNumber === 1)) {
       associationsByType['one-to-many']

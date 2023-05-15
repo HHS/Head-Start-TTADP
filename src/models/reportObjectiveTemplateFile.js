@@ -41,13 +41,19 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportObjectiveTemplateId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: false,
     },
     fileId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    objectiveTemplateFileId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     sequelize,

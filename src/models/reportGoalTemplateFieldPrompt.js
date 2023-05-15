@@ -39,12 +39,8 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    reportId: {
-      type: DataTypes.BIGINT,
-      allowNull: false,
-    },
     reportGoalTemplateId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     goalTemplateFieldPromptId: {

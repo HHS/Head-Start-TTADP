@@ -17,24 +17,27 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'goalId',
         as: 'goal',
       });
-      ReportGoal.hasMany(models.ReportGoalResource, {
-        foreignKey: 'reportGoalId',
-        as: 'reportGoalResources',
-      });
-      ReportGoal.hasMany(models.ReportGoalFieldResponse, {
-        foreignKey: 'reportGoalId',
-        as: 'reportGoalFieldResponses',
-      });
-      ReportGoal.belongsToMany(models.Resource, {
-        through: models.ReportGoalResource,
-        foreignKey: 'reportGoalId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
 
       models.Report.scope(ENTITY_TYPE.REPORT_SESSION).hasMany(models.ReportGoal, {
         foreignKey: 'reportId',
         as: 'reportGoals',
+      });
+      models.Goal.hasMany(models.ReportGoal, {
+        foreignKey: 'goalId',
+        as: 'reportGoals',
+      });
+
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).belongsToMany(models.Goal, {
+        through: models.ReportGoal,
+        foreignKey: 'reportId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
+      models.Goal.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
+        through: models.ReportGoal,
+        foreignKey: 'reportId',
+        otherKey: 'goalId',
+        as: 'reports',
       });
     }
   }
@@ -43,10 +46,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     goalId: {
@@ -54,7 +57,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     name: DataTypes.TEXT,
-    status: DataTypes.STRING,
+    statusId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     timeframe: DataTypes.TEXT,
     closeSuspendReason: {
       allowNull: true,
@@ -71,6 +77,22 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: true,
+    },
+    currentStatus: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.status ? this.status.name : null;
+      },
+      async set(value) {
+        const status = await sequelize.models.Status
+          .scope({ method: ['validFor', ENTITY_TYPE.GOAL] })
+          .findOne({ where: { name: value } });
+        if (status) {
+          this.setDataValue('statusId', status.id);
+        } else {
+          throw new Error(`Invalid status name of ${value} for Goal`);
+        }
+      },
     },
   }, {
     sequelize,

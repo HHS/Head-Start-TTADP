@@ -16,10 +16,6 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportId',
         as: 'report',
       });
-      ReportApproval.belongsTo(models.Region, {
-        foreignKey: 'regionId',
-        as: 'region',
-      });
 
       models.Report.hasOne(models.ReportApproval, { // TODO: limit scope by report type
         foreignKey: 'reportId',

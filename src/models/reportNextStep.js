@@ -37,12 +37,12 @@ export default (sequelize, DataTypes) => {
   }
   ReportNextStep.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     note: {

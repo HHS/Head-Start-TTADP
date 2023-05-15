@@ -11,7 +11,7 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'activityReportFiles' });
-      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
+      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'activityReportObjectiveFiles' });
       File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
       File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles' });
 
@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'fileId',
         otherKey: 'activityReportObjectiveId',
-        as: 'reportObjectives',
+        as: 'activityReportObjectives',
       });
       File.belongsToMany(models.Objective, {
         through: models.ObjectiveFile,

@@ -17,17 +17,22 @@ export default (sequelize, DataTypes) => {
   }
   ReportObjectiveTemplateResource.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
     reportObjectiveTemplateId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    objectiveTemplateResourceId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     sourceFields: {
       allowNull: true,

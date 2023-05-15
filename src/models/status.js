@@ -24,6 +24,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'statusId',
         as: 'report',
       });
+
+      Status.addScope('validFor', (validFor) => ({
+        where: { validFor },
+      }));
     }
   }
   Status.init({
@@ -33,7 +37,7 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       unique: true,
     },

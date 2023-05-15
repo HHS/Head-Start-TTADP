@@ -53,7 +53,10 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
     },
     reportType: {
-      type: DataTypes.ENUM(Object.values(ENTITY_TYPE).filter((et) => et.startsWith('report.'))),
+      type: DataTypes.ENUM(
+        Object.values(ENTITY_TYPE)
+          .filter((et) => et.startsWith('report.')),
+      ),
       allowNull: false,
     },
     statusId: {
@@ -71,6 +74,22 @@ export default (sequelize, DataTypes) => {
     endDate: {
       type: DataTypes.DATEONLY,
       get: formatDate,
+    },
+    currentStatus: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.status ? this.status.name : null;
+      },
+      async set(value) {
+        const status = await sequelize.models.Status
+          .scope({ method: ['validFor', this.reportType] })
+          .findOne({ where: { name: value } });
+        if (status) {
+          this.setDataValue('statusId', status.id);
+        } else {
+          throw new Error(`Invalid status name of ${value} for report of type ${this.reportType}.`);
+        }
+      },
     },
   }, {
     sequelize,

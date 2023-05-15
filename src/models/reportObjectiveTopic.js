@@ -18,11 +18,21 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reportObjectiveId',
         as: 'reportObjectiveTopics',
       });
+      models.Topic.hasMany(models.ReportObjectiveTopic, {
+        foreignKey: 'topicId',
+        as: 'reportObjectiveTopics',
+      });
       models.ReportObjective.belongsToMany(models.Topic, {
         through: models.ReportObjectiveTopic,
         foreignKey: 'reportObjectiveId',
         otherKey: 'topicId',
         as: 'topics',
+      });
+      models.Topic.belongsToMany(models.ReportObjective, {
+        through: models.ReportObjectiveTopic,
+        foreignKey: 'topicId',
+        otherKey: 'reportObjectiveId',
+        as: 'reportObjectives',
       });
     }
   }
@@ -31,14 +41,18 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportObjectiveId: {
-      type: DataTypes.STRING,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
+    objectiveTopicId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     topicId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   }, {

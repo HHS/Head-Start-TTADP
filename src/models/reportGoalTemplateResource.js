@@ -13,13 +13,13 @@ export default (sequelize, DataTypes) => {
   }
   ReportGoalTemplateResource.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
     reportGoalTemplateId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     resourceId: {

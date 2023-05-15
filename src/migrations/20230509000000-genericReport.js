@@ -53,6 +53,9 @@ module.exports = {
       const ENTITY_TYPE = {
         REPORT_EVENT: 'report.event',
         REPORT_SESSION: 'report.session',
+        GOAL: 'goal',
+        OBJECTIVE: 'objective',
+        COLLABORATOR: 'collaborator',
       };
 
       const GOAL_STATUS = {
@@ -69,6 +72,12 @@ module.exports = {
         IN_PROGRESS: 'In Progress',
         SUSPENDED: 'Suspended',
         COMPLETE: 'Complete',
+      };
+
+      const APPROVAL_STATUSES = {
+        APPROVAL_REQUESTED: 'approval_requested',
+        NEEDS_ACTION: 'needs_action',
+        APPROVED: 'approved',
       };
 
       //---------------------------------------------------------------------------------
@@ -106,6 +115,8 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Statuses',
@@ -115,6 +126,15 @@ module.exports = {
         },
       }, { transaction });
 
+      await queryInterface.sequelize.query(`
+        INSERT INTO "Statuses"
+        ("name", "validFor", "createdAt", "updatedAt")
+        VALUES
+        ${Object.values(GOAL_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.GOAL}', current_timestamp, current_timestamp)`).join(',\n')},
+        ${Object.values(OBJECTIVE_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.OBJECTIVE}', current_timestamp, current_timestamp)`).join(',\n')},
+        ${Object.values(APPROVAL_STATUSES).map((status) => `('${status}', '${ENTITY_TYPE.COLLABORATOR}', current_timestamp, current_timestamp)`).join(',\n')}
+       ;
+      `, { transaction });
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Organizers', {
         id: {
@@ -150,6 +170,8 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Statuses',
@@ -173,6 +195,8 @@ module.exports = {
         statusId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Statuses',
@@ -235,6 +259,8 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'NationalCenters',
@@ -255,6 +281,8 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -265,6 +293,8 @@ module.exports = {
         nationalCenterId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'NationalCenters',
@@ -332,6 +362,8 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reasons',
@@ -352,6 +384,8 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -362,6 +396,8 @@ module.exports = {
         reasonId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reasons',
@@ -423,6 +459,8 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'TargetPopulations',
@@ -443,6 +481,8 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -453,6 +493,8 @@ module.exports = {
         targetPopulationId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'TargetPopulations',
@@ -506,6 +548,8 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -516,6 +560,8 @@ module.exports = {
         regionId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Regions',
@@ -530,6 +576,8 @@ module.exports = {
         organizerId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Organizers',
@@ -580,6 +628,8 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -590,6 +640,8 @@ module.exports = {
         eventReportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -600,6 +652,8 @@ module.exports = {
         regionId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Regions',
@@ -657,6 +711,7 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -720,6 +775,7 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -731,6 +787,7 @@ module.exports = {
         grantId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -742,6 +799,7 @@ module.exports = {
         otherEntityId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -779,7 +837,7 @@ module.exports = {
           autoIncrement: true,
         },
         name: {
-          type: Sequelize.TEXT,
+          type: Sequelize.STRING,
           allowNull: false,
         },
         validFor: {
@@ -805,6 +863,8 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
           default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reasons',
@@ -837,11 +897,6 @@ module.exports = {
       `, { transaction });
 
       //---------------------------------------------------------------------------------
-      const APPROVAL_STATUSES = {
-        APPROVAL_REQUESTED: 'approval_requested',
-        NEEDS_ACTION: 'needs_action',
-        APPROVED: 'approved',
-      };
 
       await queryInterface.createTable('ReportCollaborators', {
         id: {
@@ -853,6 +908,7 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -864,6 +920,7 @@ module.exports = {
         userId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -872,9 +929,17 @@ module.exports = {
             key: 'id',
           },
         },
-        status: {
-          allowNull: true,
-          type: Sequelize.ENUM(Object.values(APPROVAL_STATUSES)),
+        statusId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Statuses',
+            },
+            key: 'id',
+          },
         },
         note: {
           allowNull: true,
@@ -912,8 +977,10 @@ module.exports = {
           autoIncrement: true,
         },
         reportCollaboratorId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportCollaborators',
@@ -924,6 +991,8 @@ module.exports = {
         collaboratorTypeId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'CollaboratorTypes',
@@ -953,14 +1022,15 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportCollaboratorRoles', {
         id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportCollaboratorId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -972,6 +1042,7 @@ module.exports = {
         roleId: {
           type: Sequelize.INTEGER,
           allowNull: true,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -1013,6 +1084,7 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
@@ -1095,6 +1167,8 @@ module.exports = {
         reportId: {
           type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -1105,6 +1179,8 @@ module.exports = {
         resourceId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Resources',
@@ -1147,6 +1223,8 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -1157,6 +1235,8 @@ module.exports = {
         fileId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Files',
@@ -1192,6 +1272,8 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -1202,6 +1284,8 @@ module.exports = {
         goalTemplateId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'GoalTemplates',
@@ -1236,11 +1320,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportGoalTemplateId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportGoalTemplates',
@@ -1248,9 +1334,11 @@ module.exports = {
             key: 'id',
           },
         },
-        reportGoalTemplateFieldPromptId: {
+        goalTemplateFieldPromptId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'GoalTemplateFieldPrompts',
@@ -1299,10 +1387,10 @@ module.exports = {
         },
       }, { transaction });
 
-      await queryInterface.addIndex('ReportGoalTemplateFieldPrompts', ['reportGoalTemplateId', 'reportGoalTemplateFieldPromptId'], { transaction });
+      await queryInterface.addIndex('ReportGoalTemplateFieldPrompts', ['reportGoalTemplateId', 'goalTemplateFieldPromptId'], { transaction });
 
       await queryInterface.addConstraint('ReportGoalTemplateFieldPrompts', {
-        fields: ['reportGoalTemplateId', 'reportGoalTemplateFieldPromptId'],
+        fields: ['reportGoalTemplateId', 'goalTemplateFieldPromptId'],
         type: 'unique',
         transaction,
       });
@@ -1313,11 +1401,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportGoalTemplateId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportGoalTemplates',
@@ -1328,6 +1418,8 @@ module.exports = {
         resourceId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Resources',
@@ -1361,6 +1453,7 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+
       await queryInterface.createTable('ReportGoals', {
         id: {
           allowNull: false,
@@ -1371,6 +1464,8 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -1381,6 +1476,8 @@ module.exports = {
         goalId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Goals',
@@ -1392,9 +1489,17 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        status: {
-          type: Sequelize.ENUM(Object.values(GOAL_STATUS)),
-          allowNull: true,
+        statusId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Statuses',
+            },
+            key: 'id',
+          },
         },
         timeframe: {
           type: Sequelize.TEXT,
@@ -1442,11 +1547,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportGoalId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportGoals',
@@ -1457,6 +1564,8 @@ module.exports = {
         goalTemplateFieldPromptId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Resources',
@@ -1491,11 +1600,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportGoalId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportGoals',
@@ -1506,6 +1617,8 @@ module.exports = {
         resourceId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Resources',
@@ -1548,6 +1661,8 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -1558,6 +1673,8 @@ module.exports = {
         objectiveTemplateId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveTemplates',
@@ -1567,7 +1684,9 @@ module.exports = {
         },
         reportGoalTemplateId: {
           allowNull: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportGoalTemplates',
@@ -1575,7 +1694,7 @@ module.exports = {
             key: 'id',
           },
         },
-        title: {
+        templateTitle: {
           type: Sequelize.TEXT,
           allowNull: true,
         },
@@ -1603,11 +1722,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportObjectiveTemplateId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportObjectiveTemplates',
@@ -1618,6 +1739,8 @@ module.exports = {
         fileId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Files',
@@ -1628,6 +1751,8 @@ module.exports = {
         objectiveTemplateFileId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveTemplateFiles',
@@ -1659,11 +1784,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportObjectiveTemplateId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportObjectiveTemplates',
@@ -1674,6 +1801,8 @@ module.exports = {
         resourceId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Resources',
@@ -1684,6 +1813,8 @@ module.exports = {
         objectiveTemplateResourceId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveTemplateResources',
@@ -1723,35 +1854,37 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportObjectiveTemplateId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportObjectiveTemplates',
             },
             key: 'id',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
         },
         topicId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Topics',
             },
             key: 'id',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
         },
         objectiveTemplateTopicId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveTemplateTopics',
@@ -1788,6 +1921,8 @@ module.exports = {
         reportId: {
           allowNull: false,
           type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Reports',
@@ -1798,6 +1933,8 @@ module.exports = {
         objectiveId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Objectives',
@@ -1807,7 +1944,9 @@ module.exports = {
         },
         reportGoalId: {
           allowNull: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportGoals',
@@ -1819,9 +1958,17 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        status: {
-          type: Sequelize.ENUM(Object.values(OBJECTIVE_STATUS)),
-          allowNull: true,
+        statusId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Statuses',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           allowNull: false,
@@ -1847,11 +1994,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportObjectiveId: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportObjectives',
@@ -1862,6 +2011,8 @@ module.exports = {
         fileId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Files',
@@ -1872,6 +2023,8 @@ module.exports = {
         objectiveFileId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveFiles',
@@ -1904,11 +2057,13 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportObjectiveId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportObjectives',
@@ -1919,6 +2074,8 @@ module.exports = {
         resourceId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Resources',
@@ -1929,6 +2086,8 @@ module.exports = {
         objectiveResourceId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveResources',
@@ -1967,35 +2126,37 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
         },
         reportObjectiveId: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ReportObjectives',
             },
             key: 'id',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
         },
         topicId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Topics',
             },
             key: 'id',
           },
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
         },
         objectiveTopicId: {
           allowNull: true,
           type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'ObjectiveTopics',

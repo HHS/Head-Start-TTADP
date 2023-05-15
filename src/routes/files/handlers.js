@@ -82,7 +82,7 @@ const deleteOnlyFile = async (req, res) => {
       return res.status(404).send({ error: 'File not found' });
     }
     if (file.activityReports.length
-    + file.reportObjectiveFiles.length
+    + file.activityReportObjectiveFiles.length
     + file.objectiveFiles.length
     + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
@@ -135,7 +135,7 @@ const deleteHandler = async (req, res) => {
 
     file = await getFileById(fileId);
     if (file.activityReports.length
-      + file.reportObjectiveFiles.length
+      + file.activityReportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
@@ -178,7 +178,7 @@ const linkHandler = async (req, res) => {
       );
     } else if (reportObjectiveId
       && !(
-        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
+        file.activityReportObjectiveFiles.map((aro) => aro.reportObjectiveId)
           .includes(reportObjectiveId)
       )) {
       createActivityReportObjectiveFileMetaData(
@@ -464,7 +464,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
 
     file = await getFileById(fileId);
     if (file && file.activityReports.length
-      + file.reportObjectiveFiles.length
+      + file.activityReportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);

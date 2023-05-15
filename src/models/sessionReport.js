@@ -18,8 +18,13 @@ export default (sequelize, DataTypes) => {
         as: 'region',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).hasOne(models.SessionReport, {
-        foreignKey: 'reportId',
+      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+        .hasOne(models.SessionReport, {
+          foreignKey: 'reportId',
+          as: 'session',
+        });
+      models.Region.hasMany(models.SessionReport, {
+        foreignKey: 'regionId',
         as: 'session',
       });
     }

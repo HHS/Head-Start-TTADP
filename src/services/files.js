@@ -62,7 +62,7 @@ const getFileById = async (id) => File.findOne({
     },
     {
       model: ActivityReportObjectiveFile,
-      as: 'reportObjectiveFiles',
+      as: 'activityReportObjectiveFiles',
       required: false,
       attributes: ['id', 'activityReportObjectiveId'],
     },

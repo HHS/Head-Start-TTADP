@@ -21,6 +21,11 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'reportId',
           as: 'reportObjectives',
         });
+
+      models.Objective.hasMany(models.ReportObjective, {
+        foreignKey: 'objectiveId',
+        as: 'objective',
+      });
     }
   }
   ReportObjective.init({
@@ -28,21 +33,46 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: false,
     },
     objectiveId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    reportGoalId: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
     },
     ordinal: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
     title: DataTypes.TEXT,
-    status: DataTypes.STRING,
+    statusId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     ttaProvided: DataTypes.TEXT,
+    currentStatus: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.status ? this.status.name : null;
+      },
+      async set(value) {
+        const status = await sequelize.models.Status
+          .scope({ method: ['validFor', ENTITY_TYPE.OBJECTIVE] })
+          .findOne({ where: { name: value } });
+        if (status) {
+          this.setDataValue('statusId', status.id);
+        } else {
+          throw new Error(`Invalid status name of ${value} for Objective`);
+        }
+      },
+    },
   }, {
     sequelize,
     modelName: 'ReportObjective',

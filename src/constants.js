@@ -176,6 +176,9 @@ export const GRANT_INACTIVATION_REASONS = {
 export const ENTITY_TYPE = {
   REPORT_EVENT: 'report.event',
   REPORT_SESSION: 'resport.session',
+  GOAL: 'goal',
+  OBJECTIVE: 'objective',
+  COLLABORATOR: 'collaborator',
 };
 
 export const NATIONAL_CENTER_ACTING_AS = {
