@@ -3,16 +3,19 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import moment from 'moment';
 import join from 'url-join';
+import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
-  act, render, screen, fireEvent, waitFor,
+  act,
+  render,
+  screen,
+  fireEvent,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
 import ResourcesDashboard from '../index';
-import { SCOPE_IDS } from '../../../Constants';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { formatDateRange } from '../../../utils';
@@ -60,7 +63,7 @@ const resourcesDefault = {
           },
           {
             title: 'total',
-            value: '26',
+            value: '262',
           },
         ],
       },
@@ -284,29 +287,15 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
-
-    // Resources Associated Default.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
-
-      expect(screen.getByRole('link', { name: /https:\/\/official1\.gov/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /773/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
-    });
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Add region filter.
     let open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -339,27 +328,13 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/819 of 1,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/665/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Reason Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
-
-    // Resources Region 1.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
-
-      expect(screen.getByRole('link', { name: /https:\/\/official2\.gov/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /111/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /222/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
-    });
 
     // Remove filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -382,29 +357,15 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
-
-    // Resources Associated Default.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
-
-      expect(screen.getByRole('link', { name: /https:\/\/official1\.gov/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /773/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
-    });
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Add region filter test pill remove.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -432,28 +393,14 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/565/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/19/i)).toBeInTheDocument();
-
-    // Resources Region 2.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
-
-      expect(screen.getByRole('link', { name: /https:\/\/official3\.gov/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /555/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
-    });
 
     // Test filter updates from region pill remove.
     let removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
@@ -470,15 +417,15 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -506,28 +453,14 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/565/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/19/i)).toBeInTheDocument();
-
-    // Resources Region 2.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
-
-      expect(screen.getByRole('link', { name: /https:\/\/official3\.gov/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /555/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
-    });
 
     // Test remove non-region filter pill.
     removePill = await screen.findByRole('button', { name: /this button removes the filter: report id contains 123/i });
@@ -544,30 +477,15 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/26/i)).toBeInTheDocument();
-
-    // Resources Associated Default.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Topics/i)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
-
-      expect(screen.getByRole('link', { name: /https:\/\/official1\.gov/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /773/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
-    });
+    expect(screen.getByText(/262/i)).toBeInTheDocument();
   });
 
   it('handles errors by displaying an error message', async () => {

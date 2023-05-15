@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
-import { Checkbox, Tag } from '@trussworks/react-uswds';
+import { Checkbox } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -43,7 +43,6 @@ function GoalCard({
     reasons,
     objectives,
     previousStatus,
-    isRttapa,
   } = goal;
 
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
@@ -115,7 +114,6 @@ function GoalCard({
             aria-label={`Select goal ${goalText}`}
             className="margin-right-1"
             data-testid="selectGoalTestId"
-            data-goalIds={ids}
           />
           )}
           <StatusDropdown
@@ -140,7 +138,6 @@ function GoalCard({
             Goal
             {' '}
             {goalNumbers}
-            { isRttapa === 'Yes' ? <Tag className="margin-left-1 text-ink" background={colors.baseLighter}>RTTAPA</Tag> : null }
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}

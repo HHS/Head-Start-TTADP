@@ -5,9 +5,10 @@ import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Op } from 'sequelize';
 import { fileHash } from './fileUtils';
-import {
-  Recipient, Grant, Program, sequelize,
+import db, {
+  Recipient, Grant, Program, sequelize, Goal,
 } from '../models';
 import { logger, auditLogger } from '../logger';
 
@@ -96,7 +97,7 @@ export async function processFiles(hashSumHex) {
       });
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
-      await Recipient.bulkCreate(
+      await Recipient.unscoped().bulkCreate(
         recipientsForDb,
         {
           updateOnDuplicate: ['uei', 'name', 'recipientType', 'updatedAt'],
@@ -108,9 +109,13 @@ export async function processFiles(hashSumHex) {
       const programs = JSON.parse(toJson(programData));
 
       const grantsForDb = grant.grant_awards.grant_award.map((g) => {
-        let { grant_start_date: startDate, grant_end_date: endDate } = g;
+        let {
+          grant_start_date: startDate, grant_end_date: endDate,
+          inactivation_date: inactivationDate,
+        } = g;
         if (typeof startDate === 'object') { startDate = null; }
         if (typeof endDate === 'object') { endDate = null; }
+        if (typeof inactivationDate === 'object') { inactivationDate = null; }
 
         const programSpecialistName = combineNames(
           g.program_specialist_first_name,
@@ -132,6 +137,7 @@ export async function processFiles(hashSumHex) {
           stateCode: valueFromXML(g.grantee_state),
           startDate,
           endDate,
+          inactivationDate,
           regionId,
           cdi,
           programSpecialistName,
@@ -139,6 +145,7 @@ export async function processFiles(hashSumHex) {
           grantSpecialistName,
           grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
           annualFundingMonth: valueFromXML(g.annual_funding_month),
+          inactivationReason: valueFromXML(g.inactivation_reason),
         };
       });
 
@@ -167,18 +174,18 @@ export async function processFiles(hashSumHex) {
       const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${grantsForDb.length} grants`);
-      await Grant.bulkCreate(
+      await Grant.unscoped().bulkCreate(
         nonCdiGrants,
         {
-          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
 
-      await Grant.bulkCreate(
+      await Grant.unscoped().bulkCreate(
         cdiGrants,
         {
-          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
@@ -195,7 +202,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantUpdatePromises = grantsToUpdate.map((g) => (
-        Grant.update(
+        Grant.unscoped().update(
           { oldGrantId: parseInt(g.replaced_grant_award_id, 10) },
           {
             where: { id: parseInt(g.replacement_grant_award_id, 10) },

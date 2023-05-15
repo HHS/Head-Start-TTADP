@@ -8,6 +8,8 @@ const grants = [
     regionId: 14,
     recipientId: 1,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 2,
@@ -15,6 +17,8 @@ const grants = [
     regionId: 14,
     recipientId: 2,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 3,
@@ -22,6 +26,8 @@ const grants = [
     regionId: 14,
     recipientId: 3,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 4,
@@ -29,6 +35,8 @@ const grants = [
     regionId: 14,
     recipientId: 4,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 5,
@@ -36,6 +44,8 @@ const grants = [
     regionId: 14,
     recipientId: 4,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 6,
@@ -43,6 +53,8 @@ const grants = [
     regionId: 9,
     recipientId: 55,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 7,
@@ -50,6 +62,8 @@ const grants = [
     regionId: 9,
     recipientId: 6,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 8,
@@ -57,6 +71,8 @@ const grants = [
     regionId: 9,
     recipientId: 7,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 9,
@@ -64,6 +80,8 @@ const grants = [
     regionId: 9,
     recipientId: 8,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 10,
@@ -71,6 +89,8 @@ const grants = [
     regionId: 1,
     recipientId: 9,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 18,
@@ -78,6 +98,8 @@ const grants = [
     regionId: 1,
     recipientId: 9,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 11,
@@ -85,6 +107,8 @@ const grants = [
     regionId: 1,
     recipientId: 10,
     status: 'Inactive',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 12,
@@ -92,6 +116,8 @@ const grants = [
     regionId: 1,
     recipientId: 11,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 315,
@@ -99,6 +125,8 @@ const grants = [
     regionId: 1,
     recipientId: 11,
     status: 'Active',
+    startDate: new Date(),
+    endDate: new Date(),
   },
 ];
 

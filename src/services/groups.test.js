@@ -51,6 +51,8 @@ describe('Groups service', () => {
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // create a second grant
@@ -59,6 +61,8 @@ describe('Groups service', () => {
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // create a group to edit

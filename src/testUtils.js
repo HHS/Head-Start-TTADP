@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
-
-import { REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -82,6 +81,7 @@ function defaultGrant() {
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
+    endDate: new Date(),
   };
 }
 

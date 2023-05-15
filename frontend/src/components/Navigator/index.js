@@ -38,6 +38,50 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
+/**
+ *
+ * @param {String[]} promptTitles
+ * @param {function} getValues
+ * @returns {Array} prompts
+ * {
+ *  promptId: number;
+ *  title: string;
+ *  value: string | string[] | number | number[] | boolean;
+ * }
+ */
+function getPrompts(promptTitles, getValues) {
+  let prompts = [];
+  if (promptTitles) {
+    prompts = promptTitles.map(({ promptId, title, fieldName }) => ({
+      promptId,
+      title,
+      response: getValues(fieldName),
+    }));
+  }
+
+  return prompts;
+}
+
+/**
+ *
+ * @param {} isAutoSave
+ * @returns
+ */
+export function getPromptErrors(promptTitles, errors) {
+  let promptErrors = false;
+
+  // break if there are errors in the prompts
+  (promptTitles || []).map((f) => f.fieldName).forEach((fieldName) => {
+    if (errors[fieldName]) {
+      const invalid = document.querySelector(`label[for='${fieldName}']`);
+      if (invalid) invalid.focus();
+      promptErrors = true;
+    }
+  });
+
+  return promptErrors;
+}
+
 const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
     return false;
@@ -47,6 +91,23 @@ const shouldUpdateFormData = (isAutoSave) => {
   const selection = document.getSelection();
   return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
 };
+
+export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
+
+export const packageGoals = (goals, goal, grantIds, prompts) => [
+  // we make sure to mark all the read only goals as "ActivelyEdited: false"
+  ...goals.map((g) => ({
+    ...g,
+    grantIds,
+    isActivelyBeingEditing: false,
+    prompts: grantIds.length < 2 ? g.prompts : [],
+  })),
+  {
+    ...goal,
+    grantIds,
+    prompts: grantIds.length < 2 ? prompts : [],
+  },
+];
 
 const Navigator = ({
   editable,
@@ -88,6 +149,7 @@ const Navigator = ({
     setValue,
     setError,
     watch,
+    errors,
   } = hookForm;
 
   const pageState = watch('pageState');
@@ -202,12 +264,18 @@ const Navigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
+
+    const promptTitles = getValues('goalPrompts');
+    let prompts = [];
+    const promptErrors = getPromptErrors(promptTitles, errors);
+    if (!promptErrors) {
+      prompts = getPrompts(promptTitles, getValues);
+    }
 
     const isAutoSave = false;
     setSavingLoadScreen(isAutoSave);
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+    const endDate = formatEndDate(formEndDate);
 
     const goal = {
       ...goalForEditing,
@@ -215,14 +283,17 @@ const Navigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      isRttapa,
       regionId: formData.regionId,
-      grantIds,
     };
 
     // the above logic has packaged all the fields into a tidy goal object and we can now
     // save it to the server and update the form state
-    const allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
+    const allGoals = packageGoals(
+      selectedGoals,
+      goal,
+      grantIds,
+      prompts,
+    );
 
     try {
       setValue('goals', allGoals);
@@ -248,7 +319,13 @@ const Navigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
+    const promptTitles = getValues('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
+    const promptErrors = getPromptErrors(promptTitles, errors);
+
+    if (promptErrors) {
+      return;
+    }
 
     let invalidResources = false;
     const invalidResourceIndices = [];
@@ -278,7 +355,7 @@ const Navigator = ({
       setSavingLoadScreen(isAutoSave);
     }
 
-    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+    const endDate = formatEndDate(formEndDate);
 
     const goal = {
       ...goalForEditing,
@@ -286,12 +363,15 @@ const Navigator = ({
       name,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
-      isRttapa,
       regionId: formData.regionId,
-      grantIds,
     };
 
-    let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
+    let allGoals = packageGoals(
+      selectedGoals,
+      goal,
+      grantIds,
+      prompts,
+    );
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -468,7 +548,8 @@ const Navigator = ({
     const objectives = getValues(fieldArrayName);
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
-    const isRttapa = getValues('goalIsRttapa');
+    const promptTitles = getValues('goalPrompts');
+    const prompts = getPrompts(promptTitles, getValues);
 
     const goal = {
       ...goalForEditing,
@@ -476,7 +557,6 @@ const Navigator = ({
       name,
       endDate,
       objectives,
-      isRttapa,
       regionId: formData.regionId,
     };
 
@@ -497,29 +577,40 @@ const Navigator = ({
       return;
     }
 
+    const promptErrors = getPromptErrors(promptTitles, errors);
+    if (promptErrors) {
+      return;
+    }
+
     // save goal to api, come back with new ids for goal and objectives
     try {
       // clear out the goal form
       setValue('goalForEditing', null);
       setValue('goalName', '');
       setValue('goalEndDate', '');
-      setValue('goalIsRttapa', '');
       setValue('goalForEditing.objectives', []);
+      setValue('goalPrompts', []);
 
       // set goals to form data as appropriate
-      setValue('goals', [
-        // we make sure to mark all the read only goals as "ActivelyEdited: false"
-        ...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })),
+      setValue('goals', packageGoals(
+        selectedGoals,
         {
           ...goal,
           // we also need to make sure we only send valid objectives to the API
           objectives: objectivesWithValidResourcesOnly(goal.objectives),
         },
-      ]);
+        grantIds,
+        prompts,
+      ));
 
       // save report to API
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
+      const data = {
+        ...formData,
+        ...values,
+        pageState:
+        newNavigatorState(),
+      };
       await onSave(data);
 
       updateErrorMessage('');
@@ -807,9 +898,12 @@ Navigator.propTypes = {
     ]),
   }),
   socketMessageStore: PropTypes.shape({
-    user: PropTypes.shape({
-      name: PropTypes.string,
-    }),
+    user: PropTypes.oneOfType([
+      PropTypes.shape({
+        name: PropTypes.string,
+      }),
+      PropTypes.string,
+    ]),
   }),
 };
 
