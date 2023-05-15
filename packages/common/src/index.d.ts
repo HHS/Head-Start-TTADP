@@ -26,6 +26,8 @@ export declare const SCOPE_IDS: {
     READ_ACTIVITY_REPORTS: number;
     APPROVE_ACTIVITY_REPORTS: number;
     UNLOCK_APPROVED_REPORTS: number;
+    READ_WRITE_TRAINING_REPORTS: number;
+    READ_TRAINING_REPORTS: number;
 };
 export declare const DECIMAL_BASE = 10;
 export declare const ALERT_STATUSES: {
