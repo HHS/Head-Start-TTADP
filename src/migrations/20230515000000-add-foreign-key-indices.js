@@ -25,7 +25,6 @@ module.exports = {
     // Skipping creating a userProvidedUrl index because it's just a text field
     queryInterface.addIndex('ObjectiveTemplateResources', ['objectiveTemplateId'], { transaction }),
     queryInterface.addIndex('ObjectiveTemplateTopics', ['objectiveTemplateId'], { transaction }),
-    queryInterface.addIndex('ObjectiveTemplateRoles', ['objectiveTemplateId'], { transaction }),
     queryInterface.addIndex('Goals', ['grantId'], { transaction }),
     queryInterface.addIndex('Goals', ['goalTemplateId'], { transaction }),
     queryInterface.addIndex('GoalTemplateObjectiveTemplates', ['goalTemplateId', 'objectiveTemplateId'], { transaction }),
