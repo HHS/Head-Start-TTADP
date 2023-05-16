@@ -1,7 +1,8 @@
 # Test related
 coverage
 junit.xml
-reports
+frontend/reports
+/reports
 yarn-error.log
 docs/circleci/test_report.md
 lcov.info
