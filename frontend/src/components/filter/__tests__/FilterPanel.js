@@ -235,4 +235,20 @@ describe('Filter Panel', () => {
     // If this pill exists we know it parsed the region correctly.
     expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible();
   });
+
+  it('Using a shared singleOrMultiRecipient link renders correctly', async () => {
+    const filters = [
+      {
+        id: 1,
+        topic: 'singleOrMultiRecipients',
+        condition: 'is',
+        query: ['multi-recipients'],
+      },
+    ];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    expect(screen.queryAllByText('Multiple recipients').length).toBe(2);
+  });
 });

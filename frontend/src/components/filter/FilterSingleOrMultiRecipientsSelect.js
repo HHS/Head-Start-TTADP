@@ -1,16 +1,17 @@
 import React from 'react';
+import { isArray } from 'lodash';
 import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 
 export function mapDisplayValue(value) {
-  if (value === 'single-recipient') {
+  const valueToMape = isArray(value) ? value[0] : value;
+  if (valueToMape === 'single-recipient') {
     return 'Single recipient';
   }
 
-  if (value === 'multi-recipients') {
+  if (valueToMape === 'multi-recipients') {
     return 'Multiple recipients';
   }
-
   return '';
 }
 
