@@ -3,7 +3,7 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class TrainingReportPilot extends Model {
     static associate(models) {
-      TrainingReportPilot.belongsTo(models.Event, { foreignKey: 'eventId', as: 'event' });
+      TrainingReportPilot.belongsTo(models.EventReportPilot, { foreignKey: 'eventId', as: 'event' });
     }
   }
 
