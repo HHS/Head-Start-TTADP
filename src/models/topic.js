@@ -11,6 +11,14 @@ const {
 export default (sequelize, DataTypes) => {
   class Topic extends Model {
     static associate(models) {
+      Topic.belongsTo(models.Topic, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToTopic',
+      });
+      Topic.hasMany(models.Topic, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromTopics',
+      });
       Topic.hasMany(models.RoleTopic, { foreignKey: 'topicId', as: 'roleTopics' });
       Topic.belongsToMany(models.Role, {
         through: models.RoleTopic,
@@ -39,6 +47,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'objectiveTemplateId',
         as: 'objectiveTemplates',
       });
+
+      models.Topic.addScope('defaultScope', {
+        include: [{
+          model: models.Topic,
+          as: 'mapsToTopic',
+          required: false,
+        }],
+      });
     }
   }
   Topic.init({
@@ -50,6 +66,22 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToTopic').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToTopic').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,

@@ -36,7 +36,13 @@ export default (sequelize, DataTypes) => {
         as: 'organizer',
       });
 
-      // TODO: make a scope to perform the mapTo automatically
+      models.Organizer.addScope('defaultScope', {
+        include: [{
+          model: models.Organizer,
+          as: 'mapsToOrganizer',
+          required: false,
+        }],
+      });
     }
   }
   Organizer.init({
@@ -57,6 +63,22 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToOrganizer').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToOrganizer').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,

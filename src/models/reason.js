@@ -12,8 +12,14 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class Reason extends Model {
     static associate(models) {
-      Reason.belongsTo(models.Reason, { foreignKey: 'mapsTo', as: 'mapsToReason' });
-      Reason.hasMany(models.Reason, { foreignKey: 'mapsTo', as: 'mapsFromReasons' });
+      Reason.belongsTo(models.Reason, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToReason',
+      });
+      Reason.hasMany(models.Reason, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromReasons',
+      });
       Reason.hasMany(models.ReportReason, {
         foreignKey: 'reasonId',
         as: 'reportReasons',
@@ -23,6 +29,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'reasonId',
         otherKey: 'reportId',
         as: 'reports',
+      });
+
+      models.Reason.addScope('defaultScope', {
+        include: [{
+          model: models.Reason,
+          as: 'mapsToReason',
+          required: false,
+        }],
       });
     }
   }
@@ -44,6 +58,22 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToReason').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToReason').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,

@@ -29,6 +29,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'reportId',
         as: 'reports',
       });
+
+      models.NationalCenter.addScope('defaultScope', {
+        include: [{
+          model: models.NationalCenter,
+          as: 'mapsToNationalCenter',
+          required: false,
+        }],
+      });
     }
   }
   NationalCenter.init({
@@ -45,6 +53,22 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToNationalCenter').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToNationalCenter').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,

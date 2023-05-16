@@ -72,6 +72,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'statusId',
         as: 'reportObjectives',
       });
+
+      models.Status.addScope('defaultScope', {
+        include: [{
+          model: models.Status,
+          as: 'mapsToStatus',
+          required: false,
+        }],
+      });
     }
   }
   Status.init({
@@ -92,6 +100,22 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToStatus').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToStatus').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,

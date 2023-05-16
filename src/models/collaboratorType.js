@@ -1,5 +1,6 @@
 const {
   Model,
+  Op,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
 
@@ -22,6 +23,14 @@ export default (sequelize, DataTypes) => {
       });
 
       // TODO: make a scope to perform the mapTo automatically
+
+      models.CollaboratorType.addScope('defaultScope', {
+        include: [{
+          model: models.CollaboratorType,
+          as: 'mapsToCollaboratorType',
+          required: false,
+        }],
+      });
     }
   }
   CollaboratorType.init({
@@ -42,6 +51,22 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToCollaboratorType').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToCollaboratorType').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,
