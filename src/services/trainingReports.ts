@@ -3,14 +3,16 @@ import db from '../models';
 
 const { TrainingReportPilot } = db;
 
-export async function createTR(request) {
-  const requiredFields = ['eventId', 'data'];
-
+const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {
     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
+};
+
+export async function createTR(request) {
+  validateFields(request, ['eventId', 'data']);
 
   const { eventId, data } = request;
 
@@ -29,6 +31,8 @@ export async function updateTR(id, request) {
     return createTR(request);
   }
 
+  validateFields(request, ['eventId', 'data']);
+
   const { eventId, data } = request;
 
   return TrainingReportPilot.update(
@@ -39,7 +43,6 @@ export async function updateTR(id, request) {
     { where: { id } },
   );
 }
-
 type WhereOptions = {
   id?: number;
   eventId?: number;

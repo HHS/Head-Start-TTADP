@@ -12,6 +12,14 @@ const {
   EventReportPilot,
 } = db;
 
+const validateFields = (request, requiredFields) => {
+  const missingFields = requiredFields.filter((field) => !request[field]);
+
+  if (missingFields.length) {
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+  }
+};
+
 /**
  * Creates an event.
  *
@@ -27,13 +35,7 @@ const {
  * @throws {Error} If any required fields are missing in the request data.
  */
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
-  const requiredFields = ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data'];
-
-  const missingFields = requiredFields.filter((field) => !request[field]);
-
-  if (missingFields.length) {
-    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-  }
+  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -68,13 +70,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     return createEvent(request);
   }
 
-  const requiredFields = ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data'];
-
-  const missingFields = requiredFields.filter((field) => !request[field]);
-
-  if (missingFields.length) {
-    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-  }
+  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
 
   const {
     ownerId,
