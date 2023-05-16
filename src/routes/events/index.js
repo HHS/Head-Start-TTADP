@@ -3,16 +3,16 @@ import transactionWrapper from '../transactionWrapper';
 import {
   createHandler,
   updateHandler,
-  getEvent,
+  getHandler,
 } from './handlers';
 
 const router = express.Router();
 
-router.get('/id/:eventId', transactionWrapper(getEvent));
-router.get('/regionId/:regionId', transactionWrapper(getEvent));
-router.get('/ownerId/:ownerId', transactionWrapper(getEvent));
-router.get('/pocId/:pocId', transactionWrapper(getEvent));
-router.get('/collaboratorId/:collaboratorId', transactionWrapper(getEvent));
+router.get('/id/:eventId', transactionWrapper(getHandler));
+router.get('/regionId/:regionId', transactionWrapper(getHandler));
+router.get('/ownerId/:ownerId', transactionWrapper(getHandler));
+router.get('/pocId/:pocId', transactionWrapper(getHandler));
+router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler));
 router.post('/', transactionWrapper(createHandler));
 router.put('/', transactionWrapper(updateHandler));
 
