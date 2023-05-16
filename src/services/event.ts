@@ -8,7 +8,6 @@ import {
 } from './types/event';
 
 const {
-  sequelize,
   EventReportPilot,
 } = db;
 

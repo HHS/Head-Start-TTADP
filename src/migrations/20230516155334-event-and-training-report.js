@@ -22,6 +22,8 @@ module.exports = {
           "pocId" INTEGER NOT NULL,
           "collaboratorIds" INTEGER[] NOT NULL,
           "regionId" INTEGER NOT NULL,
+          "createdAt" DATE NOT NULL DEFAULT CURRENT_DATE,
+          "updatedAt" DATE NOT NULL DEFAULT CURRENT_DATE,
           data JSONB NOT NULL
         );
         `,
@@ -34,6 +36,8 @@ module.exports = {
           id SERIAL PRIMARY KEY,
           "eventId" INTEGER NOT NULL,
           data JSONB NOT NULL,
+          "createdAt" DATE NOT NULL DEFAULT CURRENT_DATE,
+          "updatedAt" DATE NOT NULL DEFAULT CURRENT_DATE,
           FOREIGN KEY ("eventId") REFERENCES "EventReportPilots" (id)
         );
         `,
