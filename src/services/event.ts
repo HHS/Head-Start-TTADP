@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { DataTypes, cast } from 'sequelize';
 import db from '../models';
 import {
@@ -12,6 +13,14 @@ const {
 } = db;
 
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
+  const requiredFields = ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data'];
+
+  const missingFields = requiredFields.filter((field) => !request[field]);
+
+  if (missingFields.length) {
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+  }
+
   const {
     ownerId,
     pocId,
@@ -29,7 +38,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
   });
 }
 
-async function findEventHelper(whereClause: WhereOptions): Promise<EventShape> {
+async function findEventHelper(whereClause: WhereOptions): Promise<EventShape | null> {
   const event = await Event.findOne({
     attributes: [
       'id',
@@ -42,6 +51,10 @@ async function findEventHelper(whereClause: WhereOptions): Promise<EventShape> {
     where: whereClause,
     raw: true,
   });
+
+  if (!event) {
+    return null;
+  }
 
   return {
     id: event?.id,
@@ -58,30 +71,37 @@ type WhereOptions = {
   ownerId?: number;
   pocId?: number;
   collaboratorIds?: number[];
+  regionId?: number;
 };
 
-export async function findEventById(request: FindEventRequest): Promise<EventShape> {
+export async function findEventById(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
   return findEventHelper({ id });
 }
 
-export async function findEventByOwnerId(request: FindEventRequest): Promise<EventShape> {
+export async function findEventByOwnerId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
   return findEventHelper({ ownerId: id });
 }
 
-export async function findEventByPocId(request: FindEventRequest): Promise<EventShape> {
+export async function findEventByPocId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
   return findEventHelper({ pocId: id });
 }
 
-export async function findEventByCollaboratorIds(request: FindEventRequest): Promise<EventShape> {
+export async function findEventByCollaboratorId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
   return findEventHelper({ collaboratorIds: [id] });
+}
+
+export async function findEventByRegionId(request: FindEventRequest): Promise<EventShape | null> {
+  const { id } = request;
+
+  return findEventHelper({ regionId: id });
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
