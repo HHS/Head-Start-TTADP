@@ -185,11 +185,14 @@ describe('Approved Activity Report V2 component', () => {
         goalNumbers: ['1'],
         objectives: mockObjectives,
         endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+        }],
       }],
     }}
     />);
     expect(await screen.findByText(/anticipated close date/i)).toBeInTheDocument();
-    expect(await screen.findByText('05/02/2023')).toBeInTheDocument();
+    expect(await screen.findByText('05/03/2023')).toBeInTheDocument();
   });
 
   it('in person', async () => {
