@@ -36,5 +36,6 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Event',
   });
+
   return Event;
 };
