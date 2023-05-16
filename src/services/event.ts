@@ -5,7 +5,6 @@ import {
   EventShape,
   CreateEventRequest,
   UpdateEventRequest,
-  FindEventRequest,
 } from './types/event';
 
 const {
@@ -129,33 +128,23 @@ type WhereOptions = {
   regionId?: number;
 };
 
-export async function findEventById(request: FindEventRequest): Promise<EventShape | null> {
-  const { id } = request;
-
+export async function findEventById(id: number): Promise<EventShape | null> {
   return findEventHelper({ id });
 }
 
-export async function findEventsByOwnerId(request: FindEventRequest): Promise<EventShape | null> {
-  const { id } = request;
-
+export async function findEventsByOwnerId(id: number): Promise<EventShape | null> {
   return findEventHelper({ ownerId: id }, true);
 }
 
-export async function findEventsByPocId(request: FindEventRequest): Promise<EventShape | null> {
-  const { id } = request;
-
+export async function findEventsByPocId(id: number): Promise<EventShape | null> {
   return findEventHelper({ pocId: id }, true);
 }
 
-export async function findEventsByCollaboratorId(request: FindEventRequest): Promise<EventShape | null> {
-  const { id } = request;
-
+export async function findEventsByCollaboratorId(id: number): Promise<EventShape | null> {
   return findEventHelper({ collaboratorIds: [id] }, true);
 }
 
-export async function findEventsByRegionId(request: FindEventRequest): Promise<EventShape | null> {
-  const { id } = request;
-
+export async function findEventsByRegionId(id: number): Promise<EventShape | null> {
   return findEventHelper({ regionId: id }, true);
 }
 
