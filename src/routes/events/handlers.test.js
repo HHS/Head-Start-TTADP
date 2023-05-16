@@ -83,13 +83,6 @@ describe('event handlers', () => {
     it('returns the event', async () => {
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
-      // expect(mockResponse.send).toHaveBeenCalledWith(expect.objectContaining({
-      //   ownerId: 99_999,
-      //   pocId: 99_999,
-      //   regionId: 99_999,
-      //   collaboratorIds: [99_998, 99_999],
-      //   data: {},
-      // }));
     });
 
     it('returns 400 when no body', async () => {
