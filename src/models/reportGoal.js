@@ -56,6 +56,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    // TODO: add foreignKey linking GoalTemplate & ReportGoalTemplate
     name: DataTypes.TEXT,
     statusId: {
       type: DataTypes.INTEGER,
