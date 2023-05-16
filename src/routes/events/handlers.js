@@ -16,10 +16,7 @@ const logContext = {
   namespace,
 };
 
-export const readHandler = async (req, res) => {
-};
-
-export const getEvent = async (req, res) => {
+export const getHandler = async (req, res) => {
   try {
     let event;
     const {
