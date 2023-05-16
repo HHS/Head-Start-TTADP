@@ -48,12 +48,12 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.BIGINT,
     },
-    reportId: {
-      type: DataTypes.BIGINT,
-      allowNull: false,
-    },
     goalId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    reportId: {
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     name: DataTypes.TEXT,

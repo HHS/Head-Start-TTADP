@@ -13,6 +13,16 @@ export default (sequelize, DataTypes) => {
         onDelete: 'cascade',
         as: 'topic',
       });
+      ReportObjectiveTopic.belongsTo(models.ObjectiveTopic, {
+        foreignKey: 'objectiveTopicId',
+        onDelete: 'cascade',
+        as: 'objectiveTopic',
+      });
+      models.ObjectiveTopic.hasMany(models.ReportObjectiveTopic, {
+        foreignKey: 'objectiveTopicId',
+        onDelete: 'cascade',
+        as: 'reportObjectiveTopics',
+      });
 
       models.ReportObjective.hasMany(models.ReportObjectiveTopic, {
         foreignKey: 'reportObjectiveId',

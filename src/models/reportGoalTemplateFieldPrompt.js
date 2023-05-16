@@ -10,11 +10,24 @@ export default (sequelize, DataTypes) => {
         as: 'reportGoalTemplate',
       });
 
+      ReportGoalTemplateFieldPrompt.belongsTo(models.GoalTemplateFieldPrompt, {
+        foreignKey: 'goalTemplateFieldPromptId',
+        onDelete: 'cascade',
+        as: 'goalTemplateFieldPrompt',
+      });
+
       models.ReportGoalTemplate.hasMany(models.ReportGoalTemplateFieldPrompt, {
         foreignKey: 'reportGoalTemplateId',
         onDelete: 'cascade',
         as: 'reportGoalTemplateFieldPrompts',
       });
+
+      models.GoalTemplateFieldPrompt.hasMany(models.ReportGoalTemplateFieldPrompt, {
+        foreignKey: 'goalTemplateFieldPromptId',
+        onDelete: 'cascade',
+        as: 'reportGoalTemplateFieldPrompts',
+      });
+
       // TODO: think how to handle the related responses
       // ReportGoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, {
       //   foreignKey: 'goalTemplateFieldPromptId',

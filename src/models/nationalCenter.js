@@ -11,7 +11,18 @@ const {
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {
     static associate(models) {
-      NationalCenter.hasMany(models.ReportNationalCenter, { foreignKey: 'nationalCenterId', as: 'reportNationalCanter' });
+      NationalCenter.belongsTo(models.NationalCenter, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToNationalCenter',
+      });
+      NationalCenter.hasMany(models.NationalCenter, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromNationalCenters',
+      });
+      NationalCenter.hasMany(models.ReportNationalCenter, {
+        foreignKey: 'nationalCenterId',
+        as: 'reportNationalCanter',
+      });
       NationalCenter.belongsToMany(models.Report, {
         through: models.ReportNationalCenter,
         foreignKey: 'nationalCenterId',

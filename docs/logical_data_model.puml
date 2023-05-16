@@ -559,7 +559,8 @@ class ReportCollaboratorTypes{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  * reportCollaboratorId : bigint : REFERENCES "ReportCollaborators".id
- * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
+!issue='column type does not match model'
+ * collaboratorTypeId : <color:#d54309>integer</color> : REFERENCES "CollaboratorTypes".id
 }
 
 class ReportCollaborators{
@@ -2249,7 +2250,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiv
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : mapsToCollaboratorType, mapsFromCollaboratorTypes
-CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaboratorTypes : reportCollaboratorType, collaboratorType
+CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaboratorTypes : collaboratorType
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, activityReportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, activityReportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
@@ -2260,6 +2261,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateFiles : r
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalFieldResponses : reportGoalFieldResponses, prompt
+GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalTemplateFieldPrompts : reportGoalTemplateFieldPrompts, goalTemplateFieldPrompt
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
@@ -2277,14 +2279,21 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ReportRecipients : reportRecipient, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" ReportNationalCenters : reportNationalCanter, nationalCenter
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
+ObjectiveFiles "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveFiles : reportObjectiveFiles, objectiveFile
+ObjectiveResources "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveResources : reportObjectiveResources, objectiveResource
+ObjectiveTemplateFiles "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateFiles : reportObjectiveTemplateFiles, objectiveTemplateFile
+ObjectiveTemplateResources "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateResources : reportObjectiveTemplateResources, objectiveTemplateResource
+ObjectiveTemplateTopics "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateTopics : reportObjectiveTemplateTopics, objectiveTemplateTopic
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : objectiveTemplate, objectiveTemplateResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : objectiveTemplate, objectiveTemplateTopics
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplates : reportObjectiveTemplates, objectiveTemplate
+ObjectiveTopics "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTopics : reportObjectiveTopics, objectiveTopic
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, activityReportObjectives
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
@@ -2385,7 +2394,8 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activ
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
-CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" ReportCollaborators : reportCollaborators, collaboratorTypes
+!issue='associations need to be defined both directions'
+CollaboratorTypes "n" }--[#d54309,dotted,thickness=2]--{ "n" ReportCollaborators : collaboratorTypes
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ReportObjectiveTemplates : reportObjectiveTemplates, files
@@ -2409,6 +2419,8 @@ Organizers "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, organize
 OtherEntities "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, otherEntities
 Reasons "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, reasons
 Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
+!issue='associations need to be defined both directions'
+ReportCollaboratorTypes "n" }--[#d54309,dotted,thickness=2]--{ "n" ReportCollaborators : reportCollaborators
 ReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : roles, reportCollaborators
 ReportGoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, reportGoalTemplates
 ReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, reportGoals
@@ -2424,22 +2436,6 @@ Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 
 !issue='association missing from models'
-!issue='associations need to be defined both directions'
-GoalTemplateFieldPrompts o--[#yellow,bold,thickness=2]--o ReportGoalTemplateFieldPrompts : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-NationalCenters o--[#yellow,bold,thickness=2]--o NationalCenters : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ObjectiveFiles o--[#yellow,bold,thickness=2]--o ReportObjectiveFiles : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ObjectiveResources o--[#yellow,bold,thickness=2]--o ReportObjectiveResources : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ObjectiveTemplateFiles o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateFiles : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ObjectiveTemplateResources o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateResources : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ObjectiveTemplateTopics o--[#yellow,bold,thickness=2]--o ReportObjectiveTemplateTopics : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ObjectiveTopics o--[#yellow,bold,thickness=2]--o ReportObjectiveTopics : <color:#2491FF>missing-from-model</color>
 !issue='associations need to be defined both directions'
 Reasons o--[#yellow,bold,thickness=2]--o CollaboratorTypes : <color:#2491FF>missing-from-model</color>
 !issue='associations need to be defined both directions'

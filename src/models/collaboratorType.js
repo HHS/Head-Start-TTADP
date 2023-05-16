@@ -20,16 +20,6 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsTo',
         as: 'mapsFromCollaboratorTypes',
       });
-      CollaboratorType.hasMany(models.ReportCollaboratorType, {
-        foreignKey: 'collaboratorTypeId',
-        as: 'reportCollaboratorType',
-      });
-      CollaboratorType.belongsToMany(models.ReportCollaborator, {
-        through: models.ReportCollaboratorType,
-        foreignKey: 'collaboratorTypeId',
-        otherKey: 'reportCollaboratorId',
-        as: 'reportCollaborators',
-      });
 
       // TODO: make a scope to perform the mapTo automatically
     }

@@ -15,6 +15,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'fileId',
         as: 'file',
       });
+      ReportObjectiveFile.belongsTo(models.ObjectiveFile, {
+        foreignKey: 'objectiveFileId',
+        as: 'objectiveFile',
+      });
 
       models.ReportObjective.hasMany(models.ReportObjectiveFile, {
         foreignKey: 'reportObjectiveId',
@@ -22,6 +26,10 @@ export default (sequelize, DataTypes) => {
       });
       models.File.hasMany(models.ReportObjectiveFile, {
         foreignKey: 'fileId',
+        as: 'reportObjectiveFiles',
+      });
+      models.ObjectiveFile.hasMany(models.ReportObjectiveFile, {
+        foreignKey: 'objectiveFileId',
         as: 'reportObjectiveFiles',
       });
       models.ReportObjective.belongsToMany(models.File, {

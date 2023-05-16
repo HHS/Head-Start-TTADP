@@ -11,8 +11,28 @@ const {
 export default (sequelize, DataTypes) => {
   class ReportCollaboratorType extends Model {
     static associate(models) {
-      ReportCollaboratorType.belongsTo(models.ReportCollaborator, { foreignKey: 'reportCollaboratorId', as: 'reportCollaborator' });
-      ReportCollaboratorType.belongsTo(models.CollaboratorType, { foreignKey: 'collaboratorTypeId', as: 'collaboratorType' });
+      ReportCollaboratorType.belongsTo(models.ReportCollaborator, {
+        foreignKey: 'reportCollaboratorId',
+        as: 'reportCollaborator',
+      });
+      ReportCollaboratorType.belongsTo(models.CollaboratorType, {
+        foreignKey: 'collaboratorTypeId',
+        as: 'collaboratorType',
+      });
+      models.ReportCollaborator.hasMany(models.ReportCollaboratorType, {
+        foreignKey: 'reportCollaboratorId',
+        as: 'reportCollaborator',
+      });
+      models.CollaboratorType.hasMany(models.ReportCollaboratorType, {
+        foreignKey: 'collaboratorTypeId',
+        as: 'collaboratorType',
+      });
+      models.ReportCollaboratorType.belongsToMany(models.ReportCollaborator, {
+        through: models.ReportCollaboratorType,
+        foreignKey: 'collaboratorTypeId',
+        otherKey: 'reportCollaboratorId',
+        as: 'reportCollaborators',
+      });
     }
   }
   ReportCollaboratorType.init({

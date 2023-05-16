@@ -13,6 +13,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'resourceId',
         as: 'resource',
       });
+      ReportObjectiveTemplateResource.belongsTo(models.ObjectiveTemplateResource, {
+        foreignKey: 'objectiveTemplateResourceId',
+        as: 'objectiveTemplateResource',
+      });
+      models.ObjectiveTemplateResource.hasMany(models.ReportObjectiveTemplateResource, {
+        foreignKey: 'objectiveTemplateResourceId',
+        as: 'reportObjectiveTemplateResources',
+      });
       models.ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateResource, {
         foreignKey: 'reportObjectiveTemplateId',
         onDelete: 'cascade',

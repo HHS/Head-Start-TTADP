@@ -13,6 +13,15 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'resourceId',
         as: 'resource',
       });
+      ReportObjectiveResource.belongsTo(models.ObjectiveResource, {
+        foreignKey: 'objectiveResourceId',
+        as: 'objectiveResource',
+      });
+
+      models.ObjectiveResource.hasMany(models.ReportObjectiveResource, {
+        foreignKey: 'objectiveResourceId',
+        as: 'reportObjectiveResources',
+      });
 
       models.ReportObjective.hasMany(models.ReportObjectiveResource, {
         foreignKey: 'reportObjectiveId',

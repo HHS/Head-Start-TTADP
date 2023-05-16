@@ -12,6 +12,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'fileId',
         as: 'file',
       });
+      ReportObjectiveTemplateFile.belongsTo(models.ObjectiveTemplateFile, {
+        foreignKey: 'objectiveTemplateFileId',
+        as: 'objectiveTemplateFile',
+      });
+      models.ObjectiveTemplateFile.hasMany(models.ReportObjectiveTemplateFile, {
+        foreignKey: 'objectiveTemplateFileId',
+        as: 'reportObjectiveTemplateFiles',
+      });
 
       models.ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateFile, {
         foreignKey: 'reportObjectiveTemplateId',
