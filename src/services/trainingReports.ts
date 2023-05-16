@@ -20,9 +20,7 @@ export async function createTR(request) {
   });
 }
 
-export async function updateTR(request) {
-  const { id } = request;
-
+export async function updateTR(id, request) {
   const tr = await TrainingReportPilot.findOne({
     where: { id },
   });

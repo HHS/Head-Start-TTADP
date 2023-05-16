@@ -14,6 +14,6 @@ router.get('/ownerId/:ownerId', transactionWrapper(getHandler));
 router.get('/pocId/:pocId', transactionWrapper(getHandler));
 router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler));
 router.post('/', transactionWrapper(createHandler));
-router.put('/', transactionWrapper(updateHandler));
+router.put('/id/:eventId', transactionWrapper(updateHandler));
 
 export default router;

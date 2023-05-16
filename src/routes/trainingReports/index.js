@@ -11,6 +11,6 @@ const router = express.Router();
 router.get('/id/:id', transactionWrapper(getHandler));
 router.get('/eventId/:eventId', transactionWrapper(getHandler));
 router.post('/', transactionWrapper(createHandler));
-router.put('/', transactionWrapper(updateHandler));
+router.put('/id/:id', transactionWrapper(updateHandler));
 
 export default router;
