@@ -76,7 +76,9 @@ export default (sequelize, DataTypes) => {
     //   type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
     //   get() {
     //     // eslint-disable-next-line global-require
-    //     const { calculateIsAutoDetectedForActivityReportObjective } = require('../services/resource');
+    //     const {
+    //      calculateIsAutoDetectedForActivityReportObjective,
+    //     } = require('../services/resource');
     //     return calculateIsAutoDetectedForActivityReportObjective(this.get('sourceFields'));
     //   },
     // },

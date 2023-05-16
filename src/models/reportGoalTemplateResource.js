@@ -52,13 +52,15 @@ export default (sequelize, DataTypes) => {
     sourceFields: {
       allowNull: true,
       default: null,
-      type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE))), // TODO: fix source fields
+      type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE))),
+      // TODO: fix source fields
     },
     // isAutoDetected: {
     //   type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
     //   get() {
     //     // eslint-disable-next-line global-require
-    //     const { calculateIsAutoDetectedForReport } = require('../services/resource'); // TODO: implement calculateIsAutoDetectedForReport
+    //     const { calculateIsAutoDetectedForReport } = require('../services/resource');
+    // TODO: implement calculateIsAutoDetectedForReport
     //     return calculateIsAutoDetectedForReport(this.get('sourceFields'));
     //   },
     // },

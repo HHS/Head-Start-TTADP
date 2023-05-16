@@ -238,7 +238,9 @@ export default (sequelize, DataTypes) => {
       //   if (status) {
       //     this.setDataValue('statusId', status.id);
       //   } else {
-      //     throw new Error(`Invalid status name of ${value} for report of type ${this.reportType}.`);
+      //     throw new Error(
+      //      `Invalid status name of ${value} for report of type ${this.reportType}.`
+      //     );
       //   }
       // },
     },
