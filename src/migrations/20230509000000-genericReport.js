@@ -92,6 +92,11 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
+        isTerminal: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          default: false,
+        },
         validFor: {
           type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
           allowNull: false,
@@ -126,6 +131,7 @@ module.exports = {
         },
       }, { transaction });
 
+      // TODO: need to add statuses for reports
       await queryInterface.sequelize.query(`
         INSERT INTO "Statuses"
         ("name", "validFor", "createdAt", "updatedAt")
@@ -134,6 +140,13 @@ module.exports = {
         ${Object.values(OBJECTIVE_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.OBJECTIVE}', current_timestamp, current_timestamp)`).join(',\n')},
         ${Object.values(APPROVAL_STATUSES).map((status) => `('${status}', '${ENTITY_TYPE.COLLABORATOR}', current_timestamp, current_timestamp)`).join(',\n')}
        ;
+      `, { transaction });
+      await queryInterface.sequelize.query(`
+        UPDATE "Statuses"
+        SET "isTerminal" = true
+        WHERE ("name" = '${GOAL_STATUS.CLOSED}' AND "validFor" = '${ENTITY_TYPE.GOAL}')
+        OR ("name" = '${OBJECTIVE_STATUS.COMPLETE}' AND "validFor" = '${ENTITY_TYPE.OBJECTIVE}')
+        OR ("name" = '${APPROVAL_STATUSES.APPROVED}' AND "validFor" = '${ENTITY_TYPE.COLLABORATOR}');
       `, { transaction });
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Organizers', {

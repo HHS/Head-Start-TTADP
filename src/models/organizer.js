@@ -54,7 +54,6 @@ export default (sequelize, DataTypes) => {
     name: {
       type: DataTypes.TEXT,
       allowNull: false,
-      unique: true,
     },
     validFor: {
       type: DataTypes.ENUM(Object.values(ENTITY_TYPE)),
