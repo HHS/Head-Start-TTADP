@@ -15,6 +15,7 @@ import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
@@ -259,7 +260,7 @@ function App() {
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
-                <ResourcesDashboard user={user} />
+                <TrainingReports user={user} />
               </FeatureFlag>
             </AppWrapper>
           )}
