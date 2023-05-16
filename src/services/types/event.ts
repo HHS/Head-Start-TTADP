@@ -16,7 +16,3 @@ export type CreateEventRequest = {
 };
 
 export type UpdateEventRequest = CreateEventRequest & { id: number };
-
-export type FindEventRequest = {
-  id: number;
-};

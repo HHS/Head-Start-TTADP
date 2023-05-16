@@ -12,9 +12,7 @@ import {
 
 const namespace = 'SERVICE:EVENTS';
 
-const logContext = {
-  namespace,
-};
+const logContext = { namespace };
 
 export const getHandler = async (req, res) => {
   try {
