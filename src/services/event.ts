@@ -68,6 +68,14 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     return createEvent(request);
   }
 
+  const requiredFields = ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data'];
+
+  const missingFields = requiredFields.filter((field) => !request[field]);
+
+  if (missingFields.length) {
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+  }
+
   const {
     ownerId,
     pocId,
