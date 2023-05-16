@@ -62,11 +62,13 @@ export const createHandler = async (req, res) => {
 
 export const updateHandler = async (req, res) => {
   try {
+    const { eventId } = req.params;
+
     if (!req.body) {
       return res.status(400).send({ message: 'Request body is empty' });
     }
 
-    const event = await updateEvent(req.body);
+    const event = await updateEvent(eventId, req.body);
     return res.status(201).send(event);
   } catch (error) {
     return handleErrors(req, res, error, logContext);

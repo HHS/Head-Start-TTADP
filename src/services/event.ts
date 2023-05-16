@@ -59,11 +59,9 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @returns A Promise that resolves to the updated event.
  * @throws {Error} If the specified event does not exist and cannot be created.
  */
-export async function updateEvent(request: UpdateEventRequest): Promise<EventShape> {
-  const { id } = request;
-
+export async function updateEvent(eventId: number, request: UpdateEventRequest): Promise<EventShape> {
   const event = await EventReportPilot.findOne({
-    where: { id },
+    where: { id: eventId },
   });
 
   if (!event) {
@@ -86,7 +84,7 @@ export async function updateEvent(request: UpdateEventRequest): Promise<EventSha
       regionId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
-    { where: { id } },
+    { where: { id: eventId } },
   );
 }
 
