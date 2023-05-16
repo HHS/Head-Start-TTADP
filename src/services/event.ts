@@ -4,14 +4,29 @@ import db from '../models';
 import {
   EventShape,
   CreateEventRequest,
+  UpdateEventRequest,
   FindEventRequest,
 } from './types/event';
 
 const {
   sequelize,
-  Event,
+  EventReportPilot,
 } = db;
 
+/**
+ * Creates an event.
+ *
+ * @param {CreateEventRequest} request - The request data for creating the event.
+ * @param {string} request.ownerId - The ID of the owner.
+ * @param {string} request.pocId - The ID of the point of contact.
+ * @param {string[]} request.collaboratorIds - An array of IDs of collaborators.
+ * @param {string} request.regionId - The ID of the region where the event will take place.
+ * @param {unknown} request.data - The data associated with the event.
+ *
+ * @returns {Promise<EventShape>} A promise that resolves to the created event.
+ *
+ * @throws {Error} If any required fields are missing in the request data.
+ */
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
   const requiredFields = ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data'];
 
@@ -29,7 +44,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     data,
   } = request;
 
-  return Event.create({
+  return EventReportPilot.create({
     ownerId,
     pocId,
     collaboratorIds,
@@ -38,8 +53,48 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
   });
 }
 
-async function findEventHelper(whereClause: WhereOptions): Promise<EventShape | null> {
-  const event = await Event.findOne({
+/**
+ * Updates an existing event in the database or creates a new one if it doesn't exist.
+ * @param request An object containing all fields to be updated for the event.
+ *                Required fields: id, ownerId, pocId, collaboratorIds, regionId, data.
+ * @returns A Promise that resolves to the updated event.
+ * @throws {Error} If the specified event does not exist and cannot be created.
+ */
+export async function updateEvent(request: UpdateEventRequest): Promise<EventShape> {
+  const { id } = request;
+
+  const event = await EventReportPilot.findOne({
+    where: { id },
+  });
+
+  if (!event) {
+    return createEvent(request);
+  }
+
+  const {
+    ownerId,
+    pocId,
+    collaboratorIds,
+    regionId,
+    data,
+  } = request;
+
+  return EventReportPilot.update(
+    {
+      ownerId,
+      pocId,
+      collaboratorIds,
+      regionId,
+      data: cast(JSON.stringify(data), 'jsonb'),
+    },
+    { where: { id } },
+  );
+}
+
+async function findEventHelper(whereClause: WhereOptions, plural = false): Promise<EventShape | null> {
+  const finder = plural ? EventReportPilot.findAll : EventReportPilot.findOne;
+
+  const event = await finder({
     attributes: [
       'id',
       'ownerId',
@@ -80,32 +135,32 @@ export async function findEventById(request: FindEventRequest): Promise<EventSha
   return findEventHelper({ id });
 }
 
-export async function findEventByOwnerId(request: FindEventRequest): Promise<EventShape | null> {
+export async function findEventsByOwnerId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
-  return findEventHelper({ ownerId: id });
+  return findEventHelper({ ownerId: id }, true);
 }
 
-export async function findEventByPocId(request: FindEventRequest): Promise<EventShape | null> {
+export async function findEventsByPocId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
-  return findEventHelper({ pocId: id });
+  return findEventHelper({ pocId: id }, true);
 }
 
-export async function findEventByCollaboratorId(request: FindEventRequest): Promise<EventShape | null> {
+export async function findEventsByCollaboratorId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
-  return findEventHelper({ collaboratorIds: [id] });
+  return findEventHelper({ collaboratorIds: [id] }, true);
 }
 
-export async function findEventByRegionId(request: FindEventRequest): Promise<EventShape | null> {
+export async function findEventsByRegionId(request: FindEventRequest): Promise<EventShape | null> {
   const { id } = request;
 
-  return findEventHelper({ regionId: id });
+  return findEventHelper({ regionId: id }, true);
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
-  return Event.findAll({
+  return EventReportPilot.findAll({
     attributes: [
       'id',
       'ownerId',

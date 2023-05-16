@@ -15,6 +15,8 @@ export type CreateEventRequest = {
   data: unknown;
 };
 
+export type UpdateEventRequest = CreateEventRequest & { id: number };
+
 export type FindEventRequest = {
   id: number;
 };

@@ -2,11 +2,12 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { Events } from '../../models';
 import {
   createEvent,
-  findEventByCollaboratorId,
+  findEventsByCollaboratorId,
   findEventById,
-  findEventByOwnerId,
-  findEventByPocId,
-  findEventByRegionId,
+  findEventsByOwnerId,
+  findEventsByPocId,
+  findEventsByRegionId,
+  updateEvent,
 } from '../../services/event';
 
 const namespace = 'SERVICE:EVENTS';
@@ -32,13 +33,13 @@ export const getEvent = async (req, res) => {
     if (eventId) {
       event = await findEventById(eventId);
     } else if (regionId) {
-      event = await findEventByRegionId(regionId);
+      event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
-      event = await findEventByOwnerId(ownerId);
+      event = await findEventsByOwnerId(ownerId);
     } else if (pocId) {
-      event = await findEventByPocId(pocId);
+      event = await findEventsByPocId(pocId);
     } else if (collaboratorId) {
-      event = await findEventByCollaboratorId(collaboratorId);
+      event = await findEventsByCollaboratorId(collaboratorId);
     }
 
     if (!event) {
@@ -58,6 +59,19 @@ export const createHandler = async (req, res) => {
     }
 
     const event = await createEvent(req.body);
+    return res.status(201).send(event);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const updateHandler = async (req, res) => {
+  try {
+    if (!req.body) {
+      return res.status(400).send({ message: 'Request body is empty' });
+    }
+
+    const event = await updateEvent(req.body);
     return res.status(201).send(event);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
