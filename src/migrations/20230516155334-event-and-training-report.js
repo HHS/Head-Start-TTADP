@@ -16,12 +16,12 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         `
-        CREATE TABLE IF NOT EXISTS EventReportPilots (
+        CREATE TABLE IF NOT EXISTS "EventReportPilots" (
           id SERIAL PRIMARY KEY,
-          ownerId INTEGER NOT NULL,
-          pocId INTEGER NOT NULL,
-          collaboratorIds INTEGER[] NOT NULL,
-          regionId INTEGER NOT NULL,
+          "ownerId" INTEGER NOT NULL,
+          "pocId" INTEGER NOT NULL,
+          "collaboratorIds" INTEGER[] NOT NULL,
+          "regionId" INTEGER NOT NULL,
           data JSONB NOT NULL
         );
         `,
@@ -30,11 +30,11 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         `
-        CREATE TABLE IF NOT EXISTS TrainingReportPilots (
+        CREATE TABLE IF NOT EXISTS "TrainingReportPilots" (
           id SERIAL PRIMARY KEY,
-          eventId INTEGER NOT NULL,
+          "eventId" INTEGER NOT NULL,
           data JSONB NOT NULL,
-          FOREIGN KEY (eventId) REFERENCES EventReportPilots (id)
+          FOREIGN KEY ("eventId") REFERENCES "EventReportPilots" (id)
         );
         `,
         { transaction },
