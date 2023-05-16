@@ -1,5 +1,4 @@
 import handleErrors from '../../lib/apiErrorHandler';
-import { Events } from '../../models';
 import {
   createEvent,
   findEventsByCollaboratorId,
