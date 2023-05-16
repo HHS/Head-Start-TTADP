@@ -15,6 +15,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         as: 'objective',
       });
+      ReportObjective.belongsTo(models.ReportGoal, {
+        foreignKey: 'reportGoalId',
+        as: 'reportGoal',
+      });
 
       models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
         .hasMany(models.ReportObjective, {
@@ -25,6 +29,11 @@ export default (sequelize, DataTypes) => {
       models.Objective.hasMany(models.ReportObjective, {
         foreignKey: 'objectiveId',
         as: 'objective',
+      });
+
+      models.ReportGoal.hasMany(models.ReportObjective, {
+        foreignKey: 'reportGoalId',
+        as: 'reportObjectives',
       });
     }
   }

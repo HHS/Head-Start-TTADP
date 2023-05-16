@@ -108,8 +108,6 @@ function processClassDefinition(schema, key) {
 
     // highlight type when not matched in model
     if (modelField && field.type !== modelField.type.toString().toLowerCase()) {
-      console.log(field);
-      console.log(modelField);
       issues.push(`!issue='column type does not match model'`); //eslint-disable-line
       column += `<color:${colors.error}>${field.type}</color>`;
     } else {
@@ -156,24 +154,19 @@ function processAssociations(associations, tables, schemas) {
 
   const sourceTarget = {};
 
-  try {
-    schemas.forEach((schema) => {
-      schema.attributes.forEach((attribute) => {
-        if (attribute.reference) {
-          const source = /"([^"]*)"/.exec(attribute.reference)[1];
-          const target = schema.table;
-          const key = `${source}***${target}`;
+  schemas.forEach((schema) => {
+    schema.attributes.forEach((attribute) => {
+      if (attribute.reference) {
+        const source = /"([^"]*)"/.exec(attribute.reference)[1];
+        const target = schema.table;
+        const key = `${source}***${target}`;
 
-          if (!sourceTarget[key]) {
-            sourceTarget[key] = [];
-          }
+        if (!sourceTarget[key]) {
+          sourceTarget[key] = [];
         }
-      });
+      }
     });
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
+  });
 
   // regroup associations into buckets for each table
   associations.forEach((association) => {
@@ -184,7 +177,6 @@ function processAssociations(associations, tables, schemas) {
       if (association.associationType.toLowerCase().startsWith('belongstomany')) {
         const associationTables = [source.table, target.table];
         associationTables.sort();
-        console.log(associationTables);
         key = `${associationTables[0]}***${associationTables[1]}`;
       } else if (association.associationType.toLowerCase().startsWith('belongs')) {
         key = `${target.table}***${source.table}`;
@@ -193,9 +185,6 @@ function processAssociations(associations, tables, schemas) {
         sourceTarget[key] = [];
       }
       sourceTarget[key].push(association);
-    } else {
-      console.log('Source: ', source && source.model?.name, ' ', association.source.name);
-      console.log('Target: ', target && target.model?.name, ' ', association.target.name);
     }
   });
 
@@ -240,7 +229,6 @@ function processAssociations(associations, tables, schemas) {
     if (relationKey?.split(',').length === 1) {
       lineColor = colors.error;
       issues.push(`!issue='associations need to be defined both directions'`); //eslint-disable-line
-      console.log(relationKey);
     } else {
       lineColor = '#black';
     }
@@ -446,7 +434,6 @@ export default async function generateUMLFromDB() {
 
     await generateUML(schemas, tables, 'docs');
   } catch (err) {
-    console.log(err);
     auditLogger.error(err, tableData, err.stack);
     throw err;
   }

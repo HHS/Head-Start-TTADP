@@ -35,8 +35,8 @@ export default (sequelize, DataTypes) => {
       });
       models.Goal.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
         through: models.ReportGoal,
-        foreignKey: 'reportId',
-        otherKey: 'goalId',
+        foreignKey: 'goalId',
+        otherKey: 'reportId',
         as: 'reports',
       });
     }
@@ -48,12 +48,12 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.BIGINT,
     },
-    goalId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
     reportId: {
       type: DataTypes.BIGINT,
+      allowNull: false,
+    },
+    goalId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     name: DataTypes.TEXT,

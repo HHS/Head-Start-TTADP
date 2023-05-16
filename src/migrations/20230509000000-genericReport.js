@@ -174,7 +174,7 @@ module.exports = {
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'Statuses',
+              tableName: 'Organizers',
             },
             key: 'id',
           },
@@ -867,7 +867,7 @@ module.exports = {
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'Reasons',
+              tableName: 'CollaboratorTypes',
             },
             key: 'id',
           },
@@ -1568,7 +1568,7 @@ module.exports = {
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'Resources',
+              tableName: 'GoalTemplateFieldPrompts',
             },
             key: 'id',
           },

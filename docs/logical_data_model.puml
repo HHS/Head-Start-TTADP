@@ -175,7 +175,7 @@ class CollaboratorTypes{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
- mapsTo : integer : REFERENCES "Reasons".id
+ mapsTo : integer : REFERENCES "CollaboratorTypes".id
 }
 
 class EventReports{
@@ -476,7 +476,7 @@ class Organizers{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
- mapsTo : integer : REFERENCES "Statuses".id
+ mapsTo : integer : REFERENCES "Organizers".id
 }
 
 class OtherEntities{
@@ -559,8 +559,7 @@ class ReportCollaboratorTypes{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  * reportCollaboratorId : bigint : REFERENCES "ReportCollaborators".id
-!issue='column type does not match model'
- * collaboratorTypeId : <color:#d54309>integer</color> : REFERENCES "CollaboratorTypes".id
+ * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
 }
 
 class ReportCollaborators{
@@ -588,7 +587,7 @@ class ReportGoalFieldResponses{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * reportGoalId : bigint : REFERENCES "ReportGoals".id
- * goalTemplateFieldPromptId : integer : REFERENCES "Resources".id
+ * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
 }
 
 class ReportGoalResources{
@@ -642,10 +641,8 @@ class ReportGoals{
  endDate : date
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
-!issue='column type does not match model'
- * reportId : <color:#d54309>bigint</color> : REFERENCES "Reports".id
-!issue='column type does not match model'
- * goalId : <color:#d54309>integer</color> : REFERENCES "Goals".id
+ * reportId : bigint : REFERENCES "Reports".id
+ * goalId : integer : REFERENCES "Goals".id
  * statusId : integer : REFERENCES "Statuses".id
 }
 
@@ -2324,6 +2321,7 @@ ReportGoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalTemplate
 ReportGoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplates : reportObjectiveTemplates, reportGoalTemplate
 ReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalFieldResponses : reportGoal, reportGoalFieldResponses
 ReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ReportGoalResources : reportGoal, reportGoalResources
+ReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectives : reportObjectives, reportGoal
 ReportObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateFiles : reportObjectiveTemplate, reportObjectiveTemplateFiles
 ReportObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateResources : reportObjectiveTemplate, reportObjectiveTemplateResources
 ReportObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateTopics : reportObjectiveTemplate, reportObjectiveTemplateTopics
@@ -2361,6 +2359,9 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
 Statuses "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaborators : status, reportCollaborators
+Statuses "1" --[#black,dashed,thickness=2]--{  "n" ReportGoals : status, reportGoals
+Statuses "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectives : status, reportObjectives
+Statuses "1" --[#black,dashed,thickness=2]--{  "n" Reports : eventStatus, sessionStatus, eventReports, sessionReports
 Statuses "1" --[#black,dashed,thickness=2]--{  "n" Statuses : mapsToStatus, mapsFromStatuses
 TargetPopulations "1" --[#black,dashed,thickness=2]--{  "n" ReportTargetPopulations : targetPopulation, reportTargetPopulations
 TargetPopulations "1" --[#black,dashed,thickness=2]--{  "n" TargetPopulations : mapsToTargetPopulation, mapsFromTargetPopulations
@@ -2394,8 +2395,7 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activ
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
-!issue='associations need to be defined both directions'
-CollaboratorTypes "n" }--[#d54309,dotted,thickness=2]--{ "n" ReportCollaborators : collaboratorTypes
+CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" ReportCollaborators : reportCollaborators, collaboratorTypes
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ReportObjectiveTemplates : reportObjectiveTemplates, files
@@ -2419,8 +2419,6 @@ Organizers "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, organize
 OtherEntities "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, otherEntities
 Reasons "n" }--[#black,dotted,thickness=2]--{ "n" Reports : reports, reasons
 Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
-!issue='associations need to be defined both directions'
-ReportCollaboratorTypes "n" }--[#d54309,dotted,thickness=2]--{ "n" ReportCollaborators : reportCollaborators
 ReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : roles, reportCollaborators
 ReportGoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, reportGoalTemplates
 ReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, reportGoals
@@ -2434,21 +2432,5 @@ Reports "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, usersAsinstanti
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
-
-!issue='association missing from models'
-!issue='associations need to be defined both directions'
-Reasons o--[#yellow,bold,thickness=2]--o CollaboratorTypes : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-ReportGoals o--[#yellow,bold,thickness=2]--o ReportObjectives : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-Resources o--[#yellow,bold,thickness=2]--o ReportGoalFieldResponses : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-Statuses o--[#yellow,bold,thickness=2]--o Organizers : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-Statuses o--[#yellow,bold,thickness=2]--o ReportGoals : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-Statuses o--[#yellow,bold,thickness=2]--o ReportObjectives : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-Statuses o--[#yellow,bold,thickness=2]--o Reports : <color:#2491FF>missing-from-model</color>
 
 @enduml

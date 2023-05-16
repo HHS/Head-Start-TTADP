@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
     },
     reportId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     nationalCenterId: {

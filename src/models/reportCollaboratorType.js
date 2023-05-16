@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'collaboratorTypeId',
         as: 'collaboratorType',
       });
-      models.ReportCollaboratorType.belongsToMany(models.ReportCollaborator, {
+      models.CollaboratorType.belongsToMany(models.ReportCollaborator, {
         through: models.ReportCollaboratorType,
         foreignKey: 'collaboratorTypeId',
         otherKey: 'reportCollaboratorId',
