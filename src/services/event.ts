@@ -91,7 +91,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   );
 }
 
-async function findEventHelper(whereClause: WhereOptions, plural = false): Promise<EventShape | null> {
+async function findEventHelper(whereClause: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
   const finder = plural ? EventReportPilot.findAll : EventReportPilot.findOne;
 
   const event = await finder({
@@ -130,23 +130,23 @@ type WhereOptions = {
 };
 
 export async function findEventById(id: number): Promise<EventShape | null> {
-  return findEventHelper({ id });
+  return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventsByOwnerId(id: number): Promise<EventShape | null> {
-  return findEventHelper({ ownerId: id }, true);
+export async function findEventsByOwnerId(id: number): Promise<EventShape[] | null> {
+  return findEventHelper({ ownerId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByPocId(id: number): Promise<EventShape | null> {
-  return findEventHelper({ pocId: id }, true);
+export async function findEventsByPocId(id: number): Promise<EventShape[] | null> {
+  return findEventHelper({ pocId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByCollaboratorId(id: number): Promise<EventShape | null> {
-  return findEventHelper({ collaboratorIds: [id] }, true);
+export async function findEventsByCollaboratorId(id: number): Promise<EventShape[] | null> {
+  return findEventHelper({ collaboratorIds: [id] }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByRegionId(id: number): Promise<EventShape | null> {
-  return findEventHelper({ regionId: id }, true);
+export async function findEventsByRegionId(id: number): Promise<EventShape[] | null> {
+  return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
