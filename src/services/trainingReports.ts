@@ -46,6 +46,12 @@ export async function updateTR(id, request) {
 
   return findTRHelper({ id }) as Promise<TrainingReportShape>;
 }
+
+export async function destroyTR(id) {
+  return TrainingReportPilot.destroy({ where: { id } });
+}
+
+
 type WhereOptions = {
   id?: number;
   eventId?: number;
