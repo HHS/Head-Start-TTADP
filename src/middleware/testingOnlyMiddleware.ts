@@ -1,6 +1,6 @@
-//import { Request, Response } from 'express';
+// import { Request, Response } from 'express';
 
-export function  testingOnly(req, res, next) {
+export default function testingOnly(req, res, next) {
   const isLocal = process.env.NODE_ENV === 'development';
   const isCircleCI = process.env.CIRCLECI === 'true';
 
