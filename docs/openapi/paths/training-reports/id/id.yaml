@@ -1,0 +1,40 @@
+get:
+  tags:
+    - training report
+  summary: Get a single training report by its ID
+  parameters:
+    - name: id
+      in: path
+      description: ID of the training report to retrieve
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '../../../index.yaml#/components/schemas/trainingReport'
+put:
+  tags:
+    - training report
+  summary: Update a training report by its ID
+  parameters:
+    - name: id
+      in: path
+      description: ID of the training report to update
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            eventId:
+              type: integer
+            data:
+              type: object
