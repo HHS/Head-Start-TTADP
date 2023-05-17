@@ -30,23 +30,35 @@ describe('testingOnlyMiddleware', () => {
     process.env.NODE_ENV = currentEnv;
   });
   it('development/test or CI only - pass - CI', async () => {
+    const currentEnvNode = process.env.NODE_ENV;
     let clearEnv;
-    if (!process.env.CIRCLECI_AUTH_TOKEN) {
+    if (!process.env.CI) {
       clearEnv = true;
-      process.env.CIRCLECI_AUTH_TOKEN = 'development';
+      process.env.CI = 'development';
     }
+    process.env.NODE_ENV = 'production';
+
     testingOnly(mockRequest, mockResponse, mockNext);
     expect(statusCode).not.toBe(403);
 
+    process.env.NODE_ENV = currentEnvNode;
     if (clearEnv) {
-      delete process.env.CIRCLECI_AUTH_TOKEN;
+      delete process.env.CI;
     }
   });
   it('development/test or CI only - fail - production', async () => {
-    const currentEnv = process.env.NODE_ENV;
+    const currentEnvNode = process.env.NODE_ENV;
+    let currentEnvCI;
+    if (process.env.CI) {
+      currentEnvCI = process.env.CI;
+      delete process.env.CI;
+    }
     process.env.NODE_ENV = 'production';
     testingOnly(mockRequest, mockResponse, mockNext);
     expect(statusCode).toBe(403);
-    process.env.NODE_ENV = currentEnv;
+    process.env.NODE_ENV = currentEnvNode;
+    if (currentEnvCI) {
+      process.env.CI = currentEnvCI;
+    }
   });
 });

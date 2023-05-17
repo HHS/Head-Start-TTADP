@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
 import cookieSession from '../middleware/sessionMiddleware';
+import { isTestingOrCI } from '../middleware/testingOnlyMiddleware';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
@@ -27,6 +28,7 @@ import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
 import goalTemplatesRouter from './goalTemplates';
 import feedRouter from './feeds';
+import testingRouter from './testingOnly';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -70,6 +72,10 @@ router.use('/alerts', siteAlertsRouter);
 router.use('/feeds', feedRouter);
 router.use('/resources', resourcesRouter);
 router.use('/goal-templates', goalTemplatesRouter);
+
+if (isTestingOrCI()) {
+  router.use('/testing', testingRouter);
+}
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
