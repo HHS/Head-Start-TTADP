@@ -39,20 +39,12 @@ describe('training report handlers', () => {
     });
 
     it('returns 404 when not found by id', async () => {
-      try {
-        await getHandler({ params: { id: 0 } }, mockResponse);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
+      await getHandler({ params: { id: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by eventId', async () => {
-      try {
-        await getHandler({ params: { eventId: 0 } }, mockResponse);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
+      await getHandler({ params: { eventId: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
   });
@@ -71,20 +63,12 @@ describe('training report handlers', () => {
     });
 
     it('returns 400 when there is no body', async () => {
-      try {
-        await createHandler({ body: null }, mockResponse);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
+      await createHandler({ body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
     it('returns 500 when fields are missing', async () => {
-      try {
-        await createHandler({ body: {} }, mockResponse);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
+      await createHandler({ body: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
@@ -103,20 +87,12 @@ describe('training report handlers', () => {
     });
 
     it('returns 400 when there is no body', async () => {
-      try {
-        await updateHandler({ body: null }, mockResponse);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
+      await updateHandler({ body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
     it('returns 500 when fields are missing', async () => {
-      try {
-        await updateHandler({ body: {} }, mockResponse);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
+      await updateHandler({ body: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
