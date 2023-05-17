@@ -7,18 +7,16 @@ import {
   findEventsByPocId,
   findEventsByCollaboratorId,
   findEventsByRegionId,
-} from "./event";
+} from './event';
 
 describe('event service', () => {
-  const createAnEvent = async (num) => {
-    return createEvent({
-      ownerId: num,
-      regionId: num,
-      pocId: num,
-      collaboratorIds: [num],
-      data: {},
-    });
-  };
+  const createAnEvent = async (num) => createEvent({
+    ownerId: num,
+    regionId: num,
+    pocId: num,
+    collaboratorIds: [num],
+    data: {},
+  });
 
   describe('createEvent', () => {
     it('works', async () => {
@@ -117,4 +115,3 @@ describe('event service', () => {
     });
   });
 });
-
