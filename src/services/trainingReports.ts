@@ -73,6 +73,10 @@ async function findTRHelper(where: WhereOptions, plural = false): Promise<Traini
     return null;
   }
 
+  if (Array.isArray(tr)) {
+    return tr;
+  }
+
   return {
     id: tr?.id,
     eventId: tr?.eventId,
