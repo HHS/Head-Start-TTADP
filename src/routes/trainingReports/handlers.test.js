@@ -1,5 +1,5 @@
 import { EventReportPilot, TrainingReportPilot } from '../../models';
-import { createHandler, getHandler } from './handlers';
+import { createHandler, getHandler, updateHandler } from './handlers';
 
 describe('training report handlers', () => {
   beforeAll(async () => {
@@ -20,7 +20,7 @@ describe('training report handlers', () => {
   });
 
   afterAll(async () => {
-    await TrainingReportPilot.destroy({ where: { id: 99_999 } });
+    await TrainingReportPilot.destroy({ where: { eventId: 99_998 } });
     await EventReportPilot.destroy({ where: { id: 99_998 } });
   });
 
@@ -90,5 +90,34 @@ describe('training report handlers', () => {
   });
 
   describe('updateHandler', () => {
+    const mockRequest = {
+      params: { id: 99_999 },
+      body: {
+        data: {},
+      },
+    };
+
+    it('returns the tr', async () => {
+      await updateHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('returns 400 when there is no body', async () => {
+      try {
+        await updateHandler({ body: null }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 500 when fields are missing', async () => {
+      try {
+        await updateHandler({ body: {} }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
   });
 });
