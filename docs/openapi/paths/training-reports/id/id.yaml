@@ -38,3 +38,17 @@ put:
               type: integer
             data:
               type: object
+delete:
+  tags:
+    - training report
+  summary: Delete a training report by ID
+  parameters:
+    - name: eventId
+      in: path
+      description: ID of the training report to delete
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK
