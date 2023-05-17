@@ -95,4 +95,41 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
+
+  describe('updateHandler', () => {
+    const mockRequest = {
+      params: {
+        eventId: 99_999,
+      },
+      body: {
+        ownerId: 99_999,
+        pocId: 99_999,
+        collaboratorIds: [99_998, 99_999],
+        regionId: 99_999,
+        data: {},
+      },
+    };
+    const mockResponse = {
+      send: jest.fn(),
+      status: jest.fn(() => ({
+        send: jest.fn(),
+        end: jest.fn(),
+      })),
+    };
+
+    it('returns the event', async () => {
+      await updateHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('returns 400 when no body', async () => {
+      await updateHandler({ params: { eventId: 99_999 }, body: null }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 500 when fields are missing', async () => {
+      await updateHandler({ params: { eventId: 99_999 }, body: {} }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
 });
