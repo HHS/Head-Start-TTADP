@@ -77,5 +77,5 @@ export async function findTRById(id) {
 }
 
 export async function findTRByEventId(eventId) {
-  return findTRHelper({ eventId });
+  return findTRHelper({ eventId }, true);
 }
