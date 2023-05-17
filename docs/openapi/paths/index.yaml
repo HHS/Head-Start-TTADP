@@ -74,3 +74,23 @@
   $ref: './settings/email/unsubscribe.yaml'
 '/settings/email/subscribe':
   $ref: './settings/email/subscribe.yaml'
+
+'/event':
+  $ref: './event/index.yaml'
+'/event/id/${eventId}':
+  $ref: './event/id/eventId.yaml'
+'/event/regionId/${regionId}':
+  $ref: './event/regionId/regionId.yaml'
+'/event/ownerId/${ownerId}':
+  $ref: './event/ownerId/ownerId.yaml'
+'/event/pocId/${pocId}':
+  $ref: './event/pocId/pocId.yaml'
+'/event/collaboratorId/${collaboratorId}':
+  $ref: './event/collaboratorId/collaboratorId.yaml'
+
+'/training-reports':
+  $ref: './training-reports/index.yaml'
+'/training-reports/id/${id}':
+  $ref: './training-reports/id/id.yaml'
+'/training-reports/eventId/${eventId}':
+  $ref: './training-reports/eventId/eventId.yaml'
