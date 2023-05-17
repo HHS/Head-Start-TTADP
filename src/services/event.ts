@@ -91,7 +91,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   );
 }
 
-async function findEventHelper(whereClause: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
+async function findEventHelper(where: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
   let event;
 
   const query = {
@@ -103,7 +103,7 @@ async function findEventHelper(whereClause: WhereOptions, plural = false): Promi
       'regionId',
       'data',
     ],
-    where: whereClause,
+    where,
     raw: true,
   };
 

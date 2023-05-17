@@ -50,7 +50,7 @@ type WhereOptions = {
 };
 
 // eslint-disable-next-line max-len
-async function findTRHelper(whereClause: WhereOptions, plural = false): Promise<TrainingReportShape | TrainingReportShape[] | null> {
+async function findTRHelper(where: WhereOptions, plural = false): Promise<TrainingReportShape | TrainingReportShape[] | null> {
   let tr;
 
   const query = {
@@ -59,7 +59,7 @@ async function findTRHelper(whereClause: WhereOptions, plural = false): Promise<
       'eventId',
       'data',
     ],
-    where: whereClause,
+    where,
     raw: true,
   };
 
