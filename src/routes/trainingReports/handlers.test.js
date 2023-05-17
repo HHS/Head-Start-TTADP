@@ -1,5 +1,11 @@
 import { EventReportPilot, TrainingReportPilot } from '../../models';
-import { createHandler, getHandler, updateHandler } from './handlers';
+import { createTR } from '../../services/trainingReports';
+import {
+  createHandler,
+  deleteHandler,
+  getHandler,
+  updateHandler,
+} from './handlers';
 
 describe('training report handlers', () => {
   beforeAll(async () => {
@@ -94,6 +100,14 @@ describe('training report handlers', () => {
     it('returns 500 when fields are missing', async () => {
       await updateHandler({ body: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('deleteHandler', () => {
+    it('returns 200', async () => {
+      const created = await createTR({ eventId: 99_998, data: {} });
+      await deleteHandler({ params: { id: created.id } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
 });
