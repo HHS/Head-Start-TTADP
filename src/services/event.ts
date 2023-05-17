@@ -128,6 +128,10 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
     return null;
   }
 
+  if (Array.isArray(event)) {
+    return event;
+  }
+
   return {
     id: event?.id,
     ownerId: event?.ownerId,
