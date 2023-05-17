@@ -18,11 +18,6 @@ describe('event handlers', () => {
   });
 
   describe('getHandler', () => {
-    const mockRequest = {
-      params: {
-        eventId: 0,
-      },
-    };
     const mockResponse = {
       send: jest.fn(),
       status: jest.fn(() => ({
