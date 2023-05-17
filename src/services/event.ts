@@ -91,6 +91,17 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   );
 }
 
+/**
+ * Deletes all training reports and an event report based on the provided event id.
+ * @param id - The id of the event to be deleted
+ * @returns - A promise that resolves when both records have been successfully deleted
+ * @throws - Throws an error if either of the delete operations fail
+ */
+export async function destroyEvent(id: number): Promise<void> {
+  await TrainingReportPilot.destroy({ where: { eventId: id, } });
+  await EventReportPilot.destroy({ where: { id } });
+}
+
 async function findEventHelper(where: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
   let event;
 
