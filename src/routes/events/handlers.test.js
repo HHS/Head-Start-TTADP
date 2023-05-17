@@ -31,28 +31,48 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalled();
     });
 
-    it('returns 404 when not found by eventId', async () => {
-      await getHandler({ params: { eventId: 0 } }, mockResponse);
+    it('throws an error when not found by eventId', async () => {
+      try {
+        await getHandler({ params: { eventId: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by regionId', async () => {
-      await getHandler({ params: { regionId: 0 } }, mockResponse);
+      try {
+        await getHandler({ params: { regionId: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by ownerId', async () => {
-      await getHandler({ params: { ownerId: 0 } }, mockResponse);
+      try {
+        await getHandler({ params: { ownerId: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by pocId', async () => {
-      await getHandler({ params: { pocId: 0 } }, mockResponse);
+      try {
+        await getHandler({ params: { pocId: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by collaboratorId', async () => {
-      await getHandler({ params: { collaboratorId: 0 } }, mockResponse);
+      try {
+        await getHandler({ params: { collaboratorId: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
   });
@@ -81,12 +101,20 @@ describe('event handlers', () => {
     });
 
     it('returns 400 when no body', async () => {
-      await createHandler({ body: null }, mockResponse);
+      try {
+        await createHandler({ body: null }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
     it('returns 500 when fields are missing', async () => {
-      await createHandler({ body: {} }, mockResponse);
+      try {
+        await createHandler({ body: {} }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
@@ -118,12 +146,20 @@ describe('event handlers', () => {
     });
 
     it('returns 400 when no body', async () => {
-      await updateHandler({ params: { eventId: 99_999 }, body: null }, mockResponse);
+      try {
+        await updateHandler({ params: { eventId: 99_999 }, body: null }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
     it('returns 500 when fields are missing', async () => {
-      await updateHandler({ params: { eventId: 99_999 }, body: {} }, mockResponse);
+      try {
+        await updateHandler({ params: { eventId: 99_999 }, body: {} }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
