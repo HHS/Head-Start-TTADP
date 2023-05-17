@@ -6,8 +6,8 @@ export const isTestingOrCI = () => {
   const isCI = process.env.CI !== undefined
     && process.env.CI !== null;
 
-    return isLocal || isCI;
-}
+  return isLocal || isCI;
+};
 
 export default function testingOnly(req, res, next) {
   if (isTestingOrCI()) {
