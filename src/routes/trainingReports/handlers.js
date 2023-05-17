@@ -1,7 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   createTR,
-  findTRByEventId,
+  findTRsByEventId,
   findTRById,
   updateTR,
 } from '../../services/trainingReports';
@@ -22,7 +22,7 @@ export const getHandler = async (req, res) => {
     if (id) {
       tr = await findTRById(id);
     } else if (eventId) {
-      tr = await findTRByEventId(eventId);
+      tr = await findTRsByEventId(eventId);
     }
 
     if (!tr) {

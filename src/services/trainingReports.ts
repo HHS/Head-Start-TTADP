@@ -97,6 +97,6 @@ export async function findTRById(id: number): Promise<TrainingReportShape> {
   return findTRHelper({ id }) as Promise<TrainingReportShape>;
 }
 
-export async function findTRByEventId(eventId): Promise<TrainingReportShape[]> {
+export async function findTRsByEventId(eventId): Promise<TrainingReportShape[]> {
   return findTRHelper({ eventId }, true) as Promise<TrainingReportShape[]>;
 }
