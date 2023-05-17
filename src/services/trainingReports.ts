@@ -51,9 +51,9 @@ type WhereOptions = {
 
 // eslint-disable-next-line max-len
 async function findTRHelper(whereClause: WhereOptions, plural = false): Promise<TrainingReportShape | TrainingReportShape[] | null> {
-  const finder = plural ? TrainingReportPilot.findAll : TrainingReportPilot.findOne;
+  let tr;
 
-  const tr = await finder({
+  const query = {
     attributes: [
       'id',
       'eventId',
@@ -61,7 +61,13 @@ async function findTRHelper(whereClause: WhereOptions, plural = false): Promise<
     ],
     where: whereClause,
     raw: true,
-  });
+  };
+
+  if (plural) {
+    tr = await TrainingReportPilot.findAll(query);
+  } else {
+    tr = await TrainingReportPilot.findOne(query);
+  }
 
   if (!tr) {
     return null;
