@@ -9,6 +9,7 @@ import {
 
 const {
   EventReportPilot,
+  TrainingReportPilot,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -79,7 +80,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     data,
   } = request;
 
-  return EventReportPilot.update(
+  await EventReportPilot.update(
     {
       ownerId,
       pocId,
@@ -89,6 +90,11 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     },
     { where: { id } },
   );
+
+  return EventReportPilot.findOne({
+    where: { id },
+    raw: true,
+  });
 }
 
 /**
