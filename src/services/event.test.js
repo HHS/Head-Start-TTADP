@@ -36,7 +36,7 @@ describe('event service', () => {
   };
 
   describe('createEvent', () => {
-    it('createEvent', async () => {
+    it('works', async () => {
       const created = await createAnEvent(98_989);
       expect(created).toHaveProperty('id');
       expect(created).toHaveProperty('ownerId', 98_989);
