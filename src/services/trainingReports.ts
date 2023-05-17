@@ -1,5 +1,6 @@
 import { cast } from 'sequelize';
 import db from '../models';
+import { TrainingReportShape } from './types/trainingReport';
 
 const { TrainingReportPilot } = db;
 
@@ -48,7 +49,8 @@ type WhereOptions = {
   eventId?: number;
 };
 
-async function findTRHelper(whereClause: WhereOptions, plural = false) {
+// eslint-disable-next-line max-len
+async function findTRHelper(whereClause: WhereOptions, plural = false): Promise<TrainingReportShape | TrainingReportShape[] | null> {
   const finder = plural ? TrainingReportPilot.findAll : TrainingReportPilot.findOne;
 
   const tr = await finder({
@@ -72,10 +74,10 @@ async function findTRHelper(whereClause: WhereOptions, plural = false) {
   };
 }
 
-export async function findTRById(id) {
-  return findTRHelper({ id });
+export async function findTRById(id: number): Promise<TrainingReportShape> {
+  return findTRHelper({ id }) as Promise<TrainingReportShape>;
 }
 
-export async function findTRByEventId(eventId) {
-  return findTRHelper({ eventId }, true);
+export async function findTRByEventId(eventId): Promise<TrainingReportShape[]> {
+  return findTRHelper({ eventId }, true) as Promise<TrainingReportShape[]>;
 }
