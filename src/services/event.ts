@@ -92,9 +92,9 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 }
 
 async function findEventHelper(whereClause: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
-  const finder = plural ? EventReportPilot.findAll : EventReportPilot.findOne;
+  let event;
 
-  const event = await finder({
+  const query = {
     attributes: [
       'id',
       'ownerId',
@@ -105,7 +105,13 @@ async function findEventHelper(whereClause: WhereOptions, plural = false): Promi
     ],
     where: whereClause,
     raw: true,
-  });
+  };
+
+  if (plural) {
+    event = await EventReportPilot.findAll(query);
+  } else {
+    event = await EventReportPilot.findOne(query);
+  }
 
   if (!event) {
     return null;
