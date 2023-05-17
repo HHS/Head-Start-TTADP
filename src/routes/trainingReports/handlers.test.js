@@ -1,0 +1,94 @@
+import { EventReportPilot, TrainingReportPilot } from '../../models';
+import { createHandler, getHandler } from './handlers';
+
+describe('training report handlers', () => {
+  beforeAll(async () => {
+    await EventReportPilot.create({
+      id: 99_998,
+      ownerId: 99_998,
+      pocId: 99_998,
+      regionId: 99_998,
+      collaboratorIds: [99_998],
+      data: {},
+    });
+
+    await TrainingReportPilot.create({
+      id: 99_999,
+      eventId: 99_998,
+      data: {},
+    });
+  });
+
+  afterAll(async () => {
+    await TrainingReportPilot.destroy({ where: { id: 99_999 } });
+    await EventReportPilot.destroy({ where: { id: 99_998 } });
+  });
+
+  const mockResponse = {
+    send: jest.fn(),
+    status: jest.fn(() => ({
+      send: jest.fn(),
+      end: jest.fn(),
+    })),
+  };
+
+  describe('getHandler', () => {
+    it('returns the tr', async () => {
+      await getHandler({ params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('returns 404 when not found by id', async () => {
+      try {
+        await getHandler({ params: { id: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 404 when not found by eventId', async () => {
+      try {
+        await getHandler({ params: { eventId: 0 } }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('createHandler', () => {
+    const mockRequest = {
+      body: {
+        eventId: 99_998,
+        data: {},
+      },
+    };
+
+    it('returns the tr', async () => {
+      await createHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('returns 400 when there is no body', async () => {
+      try {
+        await createHandler({ body: null }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 500 when fields are missing', async () => {
+      try {
+        await createHandler({ body: {} }, mockResponse);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('updateHandler', () => {
+  });
+});
