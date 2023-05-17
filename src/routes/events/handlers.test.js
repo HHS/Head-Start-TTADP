@@ -1,5 +1,11 @@
-import { getHandler, createHandler, updateHandler } from './handlers';
+import {
+  getHandler,
+  createHandler,
+  updateHandler,
+  deleteHandler,
+} from './handlers';
 import { EventReportPilot } from '../../models';
+import { createEvent } from '../../services/event';
 
 describe('event handlers', () => {
   beforeAll(async () => {
@@ -125,6 +131,29 @@ describe('event handlers', () => {
     it('returns 500 when fields are missing', async () => {
       await updateHandler({ params: { eventId: 99_999 }, body: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('deleteHandler', () => {
+    const mockResponse = {
+      send: jest.fn(),
+      status: jest.fn(() => ({
+        send: jest.fn(),
+        end: jest.fn(),
+      })),
+    };
+
+    it('works', async () => {
+      const event = await createEvent({
+        ownerId: 99_999,
+        pocId: 99_999,
+        collaboratorIds: [99_998, 99_999],
+        regionId: 99_999,
+        data: {},
+      });
+
+      await deleteHandler({ params: { eventId: event.id } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
 });
