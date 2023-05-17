@@ -10,21 +10,6 @@ import {
 } from "./event";
 
 describe('event service', () => {
-  /* beforeAll(async () => { */
-  /*   await EventReportPilot.create({ */
-  /*     id: 99_999, */
-  /*     ownerId: 99_999, */
-  /*     pocId: 99_999, */
-  /*     regionId: 99_999, */
-  /*     collaboratorIds: [99_998, 99_999], */
-  /*     data: {}, */
-  /*   }); */
-  /* }); */
-  /**/
-  /* afterAll(async () => { */
-  /*   await EventReportPilot.destroy({ where: { id: 99_999 } }); */
-  /* }); */
-
   const createAnEvent = async (num) => {
     return createEvent({
       ownerId: num,
