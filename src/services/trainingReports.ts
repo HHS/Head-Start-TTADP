@@ -36,13 +36,15 @@ export async function updateTR(id, request) {
 
   const { eventId, data } = request;
 
-  return TrainingReportPilot.update(
+  await TrainingReportPilot.update(
     {
       eventId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
     { where: { id } },
   );
+
+  return findTRHelper({ id }) as Promise<TrainingReportShape>;
 }
 type WhereOptions = {
   id?: number;

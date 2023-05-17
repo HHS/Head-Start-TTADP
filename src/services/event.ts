@@ -91,10 +91,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     { where: { id } },
   );
 
-  return EventReportPilot.findOne({
-    where: { id },
-    raw: true,
-  });
+  return findEventHelper({ id }) as Promise<EventShape>;
 }
 
 /**
