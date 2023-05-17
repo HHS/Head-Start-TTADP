@@ -12,45 +12,9 @@ const validateFields = (request, requiredFields) => {
   }
 };
 
-export async function createTR(request) {
-  validateFields(request, ['eventId', 'data']);
-
-  const { eventId, data } = request;
-
-  return TrainingReportPilot.create({
-    eventId,
-    data: cast(JSON.stringify(data), 'jsonb'),
-  });
-}
-
-export async function updateTR(id, request) {
-  const tr = await TrainingReportPilot.findOne({
-    where: { id },
-  });
-
-  if (!tr) {
-    return createTR(request);
-  }
-
-  validateFields(request, ['eventId', 'data']);
-
-  const { eventId, data } = request;
-
-  await TrainingReportPilot.update(
-    {
-      eventId,
-      data: cast(JSON.stringify(data), 'jsonb'),
-    },
-    { where: { id } },
-  );
-
-  return findTRHelper({ id }) as Promise<TrainingReportShape>;
-}
-
 export async function destroyTR(id) {
   return TrainingReportPilot.destroy({ where: { id } });
 }
-
 
 type WhereOptions = {
   id?: number;
@@ -90,6 +54,43 @@ async function findTRHelper(where: WhereOptions, plural = false): Promise<Traini
     eventId: tr?.eventId,
     data: tr?.data ?? {},
   };
+}
+
+export async function createTR(request) {
+  validateFields(request, ['eventId', 'data']);
+
+  const { eventId, data } = request;
+
+  const created = await TrainingReportPilot.create({
+    eventId,
+    data: cast(JSON.stringify(data), 'jsonb'),
+  });
+
+  return findTRHelper({ id: created.dataValues.id }) as Promise<TrainingReportShape>;
+}
+
+export async function updateTR(id, request) {
+  const tr = await TrainingReportPilot.findOne({
+    where: { id },
+  });
+
+  if (!tr) {
+    return createTR(request);
+  }
+
+  validateFields(request, ['eventId', 'data']);
+
+  const { eventId, data } = request;
+
+  await TrainingReportPilot.update(
+    {
+      eventId,
+      data: cast(JSON.stringify(data), 'jsonb'),
+    },
+    { where: { id } },
+  );
+
+  return findTRHelper({ id }) as Promise<TrainingReportShape>;
 }
 
 export async function findTRById(id: number): Promise<TrainingReportShape> {

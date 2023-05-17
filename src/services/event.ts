@@ -55,53 +55,13 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 }
 
 /**
- * Updates an existing event in the database or creates a new one if it doesn't exist.
- * @param request An object containing all fields to be updated for the event.
- *                Required fields: id, ownerId, pocId, collaboratorIds, regionId, data.
- * @returns A Promise that resolves to the updated event.
- * @throws {Error} If the specified event does not exist and cannot be created.
- */
-export async function updateEvent(id: number, request: UpdateEventRequest): Promise<EventShape> {
-  const event = await EventReportPilot.findOne({
-    where: { id },
-  });
-
-  if (!event) {
-    return createEvent(request);
-  }
-
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
-
-  const {
-    ownerId,
-    pocId,
-    collaboratorIds,
-    regionId,
-    data,
-  } = request;
-
-  await EventReportPilot.update(
-    {
-      ownerId,
-      pocId,
-      collaboratorIds,
-      regionId,
-      data: cast(JSON.stringify(data), 'jsonb'),
-    },
-    { where: { id } },
-  );
-
-  return findEventHelper({ id }) as Promise<EventShape>;
-}
-
-/**
  * Deletes all training reports and an event report based on the provided event id.
  * @param id - The id of the event to be deleted
  * @returns - A promise that resolves when both records have been successfully deleted
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
-  await TrainingReportPilot.destroy({ where: { eventId: id, } });
+  await TrainingReportPilot.destroy({ where: { eventId: id } });
   await EventReportPilot.destroy({ where: { id } });
 }
 
@@ -152,6 +112,46 @@ type WhereOptions = {
   collaboratorIds?: number[];
   regionId?: number;
 };
+
+/**
+ * Updates an existing event in the database or creates a new one if it doesn't exist.
+ * @param request An object containing all fields to be updated for the event.
+ *                Required fields: id, ownerId, pocId, collaboratorIds, regionId, data.
+ * @returns A Promise that resolves to the updated event.
+ * @throws {Error} If the specified event does not exist and cannot be created.
+ */
+export async function updateEvent(id: number, request: UpdateEventRequest): Promise<EventShape> {
+  const event = await EventReportPilot.findOne({
+    where: { id },
+  });
+
+  if (!event) {
+    return createEvent(request);
+  }
+
+  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+
+  const {
+    ownerId,
+    pocId,
+    collaboratorIds,
+    regionId,
+    data,
+  } = request;
+
+  await EventReportPilot.update(
+    {
+      ownerId,
+      pocId,
+      collaboratorIds,
+      regionId,
+      data: cast(JSON.stringify(data), 'jsonb'),
+    },
+    { where: { id } },
+  );
+
+  return findEventHelper({ id }) as Promise<EventShape>;
+}
 
 export async function findEventById(id: number): Promise<EventShape | null> {
   return findEventHelper({ id }) as Promise<EventShape>;
