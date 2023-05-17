@@ -4,6 +4,7 @@ import {
   findTRsByEventId,
   findTRById,
   updateTR,
+  destroyTR,
 } from '../../services/trainingReports';
 
 const namespace = 'SERVICE:TRAININGREPORTS';
@@ -58,6 +59,16 @@ export const updateHandler = async (req, res) => {
 
     const event = await updateTR(id, req.body);
     return res.status(201).send(event);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const deleteHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await destroyTR(id);
+    return res.status(200);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

@@ -7,6 +7,7 @@ import {
   findEventsByPocId,
   findEventsByRegionId,
   updateEvent,
+  destroyEvent,
 } from '../../services/event';
 
 const namespace = 'SERVICE:EVENTS';
@@ -69,6 +70,16 @@ export const updateHandler = async (req, res) => {
 
     const event = await updateEvent(eventId, req.body);
     return res.status(201).send(event);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const deleteHandler = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    await destroyEvent(eventId);
+    return res.status(200);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

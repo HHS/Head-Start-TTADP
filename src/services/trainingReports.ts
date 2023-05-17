@@ -12,8 +12,8 @@ const validateFields = (request, requiredFields) => {
   }
 };
 
-export async function destroyTR(id) {
-  return TrainingReportPilot.destroy({ where: { id } });
+export async function destroyTR(id): Promise<void> {
+  await TrainingReportPilot.destroy({ where: { id } });
 }
 
 type WhereOptions = {
