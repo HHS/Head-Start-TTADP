@@ -6,11 +6,11 @@ import { Dropdown } from '@trussworks/react-uswds';
 export function mapDisplayValue(value) {
   const valueToMape = isArray(value) ? value[0] : value;
   if (valueToMape === 'single-recipient') {
-    return 'Single recipient';
+    return 'Single';
   }
 
   if (valueToMape === 'multi-recipients') {
-    return 'Multiple recipients';
+    return 'Multiple';
   }
   return '';
 }
@@ -31,10 +31,10 @@ export default function FilterSingleOrMultiRecipientsSelect({
       <label className="sr-only" htmlFor={inputId}>Select single or multiple recipients to filter by</label>
       <Dropdown name={inputId} id={inputId} value={query} onChange={onApplySingleOrMulti}>
         <option value="single-recipient">
-          Single recipient
+          Single
         </option>
         <option value="multi-recipients">
-          Multiple recipients
+          Multiple
         </option>
       </Dropdown>
     </>

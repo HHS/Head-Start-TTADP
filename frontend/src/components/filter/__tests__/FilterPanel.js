@@ -249,6 +249,6 @@ describe('Filter Panel', () => {
     const onApplyFilters = jest.fn();
     const userAllRegions = [1];
     renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
-    expect(screen.queryAllByText('Multiple recipients').length).toBe(2);
+    expect(screen.queryAllByText('Multiple').length).toBe(2);
   });
 });
