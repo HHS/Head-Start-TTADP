@@ -322,6 +322,7 @@
     "sequelize-cli": "^6.2.0",
     "throng": "^5.0.0",
     "through2": "^4.0.2",
+    "umzug": "^3.2.1",
     "url-join": "^4.0.1",
     "uuid": "^8.3.2",
     "validator": "^13.7.0",
