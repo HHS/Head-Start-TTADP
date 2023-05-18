@@ -9,11 +9,17 @@ const clear = async () => {
   `);
 };
 
-const executeCommand = async (command: string) => {
+const executeCommand = async (
+  command: string,
+  timeout: number = 5 * 60 * 1000, // 5 minutes
+) => {
   return new Promise<void>((resolve, reject) => {
     const migrate = exec(
       `node_modules/.bin/sequelize ${command}`,
-      {env: process.env},
+      {
+        env: process.env,
+        timeout,
+      },
       err => (err ? reject(err): resolve())
     );
 
