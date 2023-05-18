@@ -143,7 +143,7 @@ export default function GoalForm({
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
-        const formattedEndDate = goal.endDate ? moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY') : ''; 
+        const formattedEndDate = goal.endDate ? moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY') : '';
         setEndDate(formattedEndDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setPrompts(goal.prompts);
