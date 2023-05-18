@@ -21,7 +21,7 @@ describe('FilterSingleOrMultiSelect', () => {
     const onApply = jest.fn();
     renderSingleOrMultiSelect(onApply);
     const select = await screen.findByRole('combobox');
-    userEvent.selectOptions(select, 'Multiple recipients');
+    userEvent.selectOptions(select, 'Multiple');
     expect(onApply).toHaveBeenCalled();
   });
 });
