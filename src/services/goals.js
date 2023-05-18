@@ -1146,7 +1146,6 @@ export async function createOrUpdateGoals(goals) {
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
           rtrOrder: rtrOrder + 1,
-          source,
         });
       }
     }
@@ -1166,14 +1165,14 @@ export async function createOrUpdateGoals(goals) {
           // otherwise, we've got ourselves an rtr goal, baby
           createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
           endDate: endDate || null,
-          source,
+          source: source || null,
         },
         { individualHooks: true },
       );
     // except for the end date && sources which are always editable (until the goal is closed)
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: endDate || null, source },
+        { endDate: endDate || null, source: source || null },
         { individualHooks: true },
       );
     }
