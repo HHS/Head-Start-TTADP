@@ -90,7 +90,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
-  const [source, setSource] = useState([]);
+  const [source, setSource] = useState('');
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);

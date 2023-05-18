@@ -358,12 +358,6 @@ test.describe('Activity Report', () => {
     // e.g. 'Goal G-5, G-6RTTAPA' will become 'G-5G-6'
     const g1GoalsForObjectives = getGoals(g1GoalsTxt || '');
     // strip 'Goals' and 'RTTAPA' from g1GoalsTxt: e.g "Goal G-5, G-6RTTAPA" will become "G-5, G-6"
-    const g1GoalsForSelector = g1GoalsTxt ? g1GoalsTxt.substring(5).split('RTTAPA')[0] : '';
-    // use the correct text to locate the topics, e.g. "G-5, G-6"
-    const g1Topics = page.locator(`div:right-of(h3:text("${g1GoalsForSelector}"))`).first().locator('p').last();
-    const g1TopicsTxt = await g1Topics.textContent();
-    // verify the topics for the previously created goal
-    expect(g1TopicsTxt).toBe('Behavioral / Mental Health / Trauma');
     // look for the goals heading for the previously created goal, e.g. 'Goal G-8, G-7RTTAPA'
     const g2Goals = page.locator('h3:above(p:text("g2"))').first();
     const g2GoalsTxt = await g2Goals.textContent();
@@ -372,7 +366,7 @@ test.describe('Activity Report', () => {
     const g2GoalsForObjectives = getGoals(g2GoalsTxt || '');
     // extract text used to locate the topics
     const g2Topics = page.locator(`div:right-of(h3:text("${g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : ''}"))`).first().locator('p').getByText('Behavioral / Mental Health / Trauma, CLASS: Classroom Organization');
-    // verify the topics for the previously created goal
+    // verify the topics for the previously created goal    
     expect(g2Topics).toBeVisible();
 
     // expand objectives for g1
@@ -390,6 +384,7 @@ test.describe('Activity Report', () => {
     // verify the reason is visible in the objective section
     const goalOneContent = await page.getByText('g1o1', { exact: true }).locator('..').locator('..').textContent();
     expect(goalOneContent).toContain('Change in Scope');
+    expect(goalOneContent).toContain('Behavioral / Mental Health / Trauma');
     // verify the end date is visible in the objective section
     await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
     // verify the correct status for the objective is visible
