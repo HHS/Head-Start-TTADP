@@ -93,7 +93,9 @@
     "coverage:backend": "./bin/build-coverage-report",
     "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
     "createAwsElasticSearchIndexes": "node ./build/server/src/tools/createAwsElasticSearchIndexesCli.js",
-    "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js"
+    "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js",
+    "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
+    "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js"
   },
   "repository": {
     "type": "git",
