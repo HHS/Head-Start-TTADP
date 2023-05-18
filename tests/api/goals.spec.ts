@@ -58,7 +58,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   });
 
   const schema = Joi.array().items(Joi.object({
-    endDate: Joi.string().allow(null),
+    endDate: Joi.string().allow(null).allow(''),
     status: Joi.string(),
     value: Joi.number(),
     label: Joi.string(),

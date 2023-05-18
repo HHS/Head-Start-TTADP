@@ -73,6 +73,7 @@ export const findWhatsChanged = (object, base) => {
         })(),
         // no multigrant/multirecipient reports should have prompts
         prompts: grantIds.length < 2 ? goal.prompts : [],
+        source: grantIds.length < 2 ? goal.source : '',
       }));
     }
 
@@ -123,11 +124,20 @@ export const convertGoalsToFormData = (
   ) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = { ...goal, grantIds, objectives: goal.objectives };
+    accumulatedData.goalForEditing = {
+      ...goal,
+      grantIds,
+      objectives: goal.objectives,
+      source: grantIds.length < 2 ? goal.source : '',
+    };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
     // grant ids
-    accumulatedData.goals.push({ ...goal, grantIds });
+    accumulatedData.goals.push({
+      ...goal,
+      grantIds,
+      source: grantIds.length < 2 ? goal.source : '',
+    });
   }
 
   return accumulatedData;
