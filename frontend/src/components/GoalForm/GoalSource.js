@@ -56,7 +56,9 @@ export default function GoalSource({
           id={inputName}
           name={inputName}
           onChange={onChange}
-          onBlur={(e) => { console.log(e); validateGoalSource(); }}
+          onBlur={() => {
+            validateGoalSource();
+          }}
           disabled={isLoading}
           value={source}
         >

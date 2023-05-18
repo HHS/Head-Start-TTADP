@@ -139,22 +139,15 @@ function ObjectiveCard({
         <span className="margin-right-3 minw-15">End date </span>
         {endDate}
       </li>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Reasons</span>
-        {reasons && displayReasonsList(reasons)}
-      </li>
 
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Topics</span>
-        <ul className="usa-list usa-list--unstyled">
-          {
-            topicsForDisplay.map((t) => (
-              <li key={`topic_${t}`}>
-                {t}
-              </li>
-            ))
-          }
-        </ul>
+        {topicsForDisplay.join(', ')}
+      </li>
+
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Reasons</span>
+        {reasons && displayReasonsList(reasons)}
       </li>
 
       <li className="display-flex padding-bottom-05 flex-align-start">
