@@ -1,4 +1,7 @@
 import { exec } from 'child_process';
+import { Umzug, SequelizeStorage } from 'umzug';
+import { Sequelize } from 'sequelize'
+import path from 'path';
 import db from '../../src/models';
 import { calledFromTestFileOrDirectory } from './testOnly';
 
@@ -9,30 +12,43 @@ const clear = async () => {
   `);
 };
 
-const executeCommand = async (
-  command: string,
-  timeout: number = 5 * 60 * 1000, // 5 minutes
-) => {
-  return new Promise<void>((resolve, reject) => {
-    const migrate = exec(
-      `node_modules/.bin/sequelize ${command}`,
-      {
-        env: process.env,
-        timeout,
-      },
-      err => (err ? reject(err): resolve())
-    );
+const loadMigrations = async (migrationSet:string): Promise<void> => {
+  const migrationPattern = '*.js'; // File extension pattern for migration files
+  const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
-    migrate.stdout?.pipe(process.stdout);
-    migrate.stderr?.pipe(process.stderr);
+  console.log(migrationDir);
+
+  const umzug = new Umzug({
+    storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    migrations: {
+      glob: migrationDir,
+      resolve: ({ name, path, context }) => {
+        const migration = require(path);
+        return {
+            name,
+            up: async () => migration.up(context, Sequelize),
+            down: async () => migration.down(context, Sequelize),
+        };
+      },
+    },
+    context: db.sequelize.getQueryInterface(),
+    logger: console,
   });
-};
+
+  try {
+    const migrations = await umzug.up();
+    console.log(`Successfully executed ${migrations.length} migrations.`);
+  } catch (error) {
+    console.error('Error executing migrations:', error);
+  }
+}
+
 
 export const reseed = async () => {
   if (calledFromTestFileOrDirectory()) {
     await clear();
-    await executeCommand('db:migrate');
-    await executeCommand('db:seed:all');
+    await loadMigrations('migrations');
+    await loadMigrations('seeders');
     return true;
   }
   return false;
