@@ -9,6 +9,13 @@ const openFilters = async (page: Page, condition: string, value: string) => {
 };
 
 test.describe('activity reports landing page', () => {
+  test('properly displays start date in filter', async ({ page }) => {
+    await page.goto('http://localhost:3000/activity-reports?region.in[]=1&startDate.in[]=2023%2F04%2F04-2023%2F05%2F04');
+  
+    await page.waitForTimeout(5000);
+    expect(page.getByText('04/04/2023-05/04/2023')).toBeTruthy();
+  });
+
   test('only allows access to correct regions despite shared url', async ({ page }) => {
     // this user only has access to region 1
     await page.goto('http://localhost:3000/activity-reports?region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12');
@@ -69,3 +76,4 @@ test.describe('activity reports landing page', () => {
     await expect(page.getByRole('rowheader', { name: 'R01-AR-9999' })).not.toBeVisible();
   });
 });
+

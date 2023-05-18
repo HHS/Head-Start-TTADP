@@ -38,7 +38,7 @@ test('my groups', async ({ page }) => {
   // edit group
   await page.getByTestId('header-avatar').click();
   await page.getByRole('link', { name: 'Account Management' }).click();
-  await page.getByRole('link', { name: 'Edit group' }).click();
+  await page.getByRole('link', { name: /Edit A new group for me/i }).click();
   await page.getByTestId('textInput').clear()
   await page.getByTestId('textInput').fill('A new group for me and you');  
   await page.getByRole('button', { name: 'Save group' }).click();
