@@ -121,9 +121,7 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     isCurated: Joi.boolean(),
     objectives: Joi.array(),
     grant: grantSchema,
-    sources: Joi.array().items(
-      Joi.string(),
-    ).allow(null),
+    source: Joi.string().allow(null),
     prompts: Joi.array().items(
       Joi.object({
         id: Joi.number(),
@@ -135,8 +133,6 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
        }),
       ),  
   });
-
-  console.log(response);
 
   await validateSchema(response, schema, expect);
 });

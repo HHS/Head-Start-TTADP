@@ -62,10 +62,10 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
-        {(goal.sources && goal.sources.length) ? (
-          <div className="margin-bottom-2" key={goal.sources.join('-')}>
+        {(goal.source && goal.source.length) ? (
+          <div className="margin-bottom-2" key={goal.source}>
             <h4 className="margin-0">Goal source</h4>
-            <p className="usa-prose margin-0">{goal.sources.join(', ')}</p>
+            <p className="usa-prose margin-0">{goal.source}</p>
           </div>
         ) : null}
         {(goal.prompts) && (
@@ -105,7 +105,7 @@ ReadOnlyGoal.propTypes = {
         ]),
       }),
     ),
-    sources: PropTypes.arrayOf(PropTypes.string),
+    source: PropTypes.string,
     id: PropTypes.number,
     grants: PropTypes.arrayOf(
       PropTypes.shape({

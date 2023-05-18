@@ -2,16 +2,15 @@ import React, { useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
+  Dropdown,
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 import { GOAL_SOURCES } from '@ttahub/common';
-import Select from 'react-select';
-import selectOptionsReset from '../selectOptionsReset';
 import Req from '../Req';
 
 export default function GoalSource({
   error,
-  sources,
+  source,
   validateGoalSource,
   onChangeGoalSource,
   goalStatus,
@@ -23,34 +22,24 @@ export default function GoalSource({
   const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
     [goalStatus, userCanEdit]);
 
-  if ((readOnly && !sources.length) || isMultiRecipientGoal) {
+  if ((readOnly && !source) || isMultiRecipientGoal) {
     return null;
   }
-  if (readOnly && sources.length) {
+  if (readOnly && source) {
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-0">
           Goal source
         </p>
-        <ul className="usa-list usa-list--unstyled">
-          {sources.map((source) => (
-            <li key={uuid()}>
-              {source}
-            </li>
-          ))}
-        </ul>
+        <p className="usa-prose margin-0">{source}</p>
       </>
     );
   }
 
-  const options = GOAL_SOURCES.map((label, value) => ({ label, value }));
-  const onChange = (selectedOptions) => {
-    const selectedSources = selectedOptions.map((option) => option.label);
-    onChangeGoalSource(selectedSources);
+  const onChange = (evt) => {
+    const { value } = evt.target;
+    onChangeGoalSource(value);
   };
-
-  const value = options.filter((source) => sources.includes(source.label))
-    .sort((a, b) => a.label - b.label);
 
   return (
     <>
@@ -63,23 +52,20 @@ export default function GoalSource({
           </>
         </Label>
         {error}
-        <Select
-          inputName={inputName}
-          inputId={inputName}
+        <Dropdown
+          id={inputName}
           name={inputName}
-          styles={selectOptionsReset}
-          components={{
-            DropdownIndicator: null,
-          }}
-          className="usa-select"
-          isMulti
-          options={options}
-          onBlur={validateGoalSource}
-          value={value}
           onChange={onChange}
-          closeMenuOnSelect={false}
-          isDisabled={isLoading}
-        />
+          onBlur={(e) => { console.log(e); validateGoalSource(); }}
+          disabled={isLoading}
+          value={source}
+        >
+          <option value="" disabled selected hidden>- Select -</option>
+          {GOAL_SOURCES.map((s) => (
+            <option key={uuid()}>{s}</option>
+          ))}
+        </Dropdown>
+
       </FormGroup>
     </>
   );
@@ -87,7 +73,7 @@ export default function GoalSource({
 
 GoalSource.propTypes = {
   error: PropTypes.node.isRequired,
-  sources: PropTypes.arrayOf(PropTypes.string).isRequired,
+  source: PropTypes.string.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   onChangeGoalSource: PropTypes.func.isRequired,
   inputName: PropTypes.string,

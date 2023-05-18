@@ -66,7 +66,7 @@ describe('cacheGoalMetadata', () => {
       endDate: null,
       isRttapa: null,
       isActivelyEdited: false,
-      sources: [GOAL_SOURCES[0]],
+      source: GOAL_SOURCES[0],
     });
   });
 
@@ -107,7 +107,7 @@ describe('cacheGoalMetadata', () => {
       endDate: null,
       isRttapa: null,
       isActivelyEdited: false,
-      sources: [GOAL_SOURCES[0]],
+      source: GOAL_SOURCES[0],
     };
 
     expect(arg[0].dataValues).toMatchObject(data);
@@ -176,7 +176,7 @@ describe('cacheObjectiveMetadata', () => {
     id: 20850000,
     status: 'Not Started',
     timeframe: 'None',
-    sources: [GOAL_SOURCES[0]],
+    source: GOAL_SOURCES[0],
   };
 
   const mockObjective = {

@@ -74,7 +74,7 @@ export default function GoalForm({
     onApprovedAR: false,
     prompts: [],
     isCurated: false,
-    sources: [],
+    source: '',
     goalTemplateId: null,
   }), [possibleGrants]);
 
@@ -90,7 +90,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
-  const [sources, setSources] = useState([]);
+  const [source, setSource] = useState([]);
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
@@ -151,7 +151,7 @@ export default function GoalForm({
         setGoalOnApprovedReport(goal.onApprovedAR);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSources(goal.sources || []);
+        setSource(goal.source || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -665,7 +665,7 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
-          sources,
+          source,
           isCurated,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
@@ -733,7 +733,7 @@ export default function GoalForm({
     setSelectedGrants(goalDefaults.grants);
     setIsCurated(goalDefaults.isCurated);
     setPrompts(goalDefaults.prompts);
-    setSources(goalDefaults.sources);
+    setSource(goalDefaults.source);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -762,7 +762,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
-        sources,
+        source,
         ids,
       }));
 
@@ -774,7 +774,7 @@ export default function GoalForm({
             isCurated: goal.isCurated,
             prompts: goal.prompts,
             status,
-            sources,
+            source,
             endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipientId: recipient.id,
@@ -832,7 +832,7 @@ export default function GoalForm({
     setSelectedGrants(goal.grants);
     setIsCurated(goal.isCurated);
     setPrompts(goal.prompts);
-    setSources(goal.sources);
+    setSource(goal.source);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -956,8 +956,8 @@ export default function GoalForm({
               onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
               validatePrompts={validatePrompts}
-              sources={sources}
-              setSources={setSources}
+              source={source}
+              setSources={setSource}
               validateGoalSource={validateGoalSource}
             />
           )}

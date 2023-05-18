@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { uniqBy, uniq, isEqual } from 'lodash';
+import { uniqBy, uniq } from 'lodash';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from './resource';
 import {
@@ -58,7 +58,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'goalNumber',
     'createdVia',
     'goalTemplateId',
-    'sources',
+    'source',
     [
       'onAR',
       'onAnyReport',
@@ -620,7 +620,15 @@ function reduceGoals(goals, forReport = false) {
         return previousValues;
       }
 
-      const endDate = moment(currentValue.dataValues.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
+      const endDate = (() => {
+        const date = moment(currentValue.dataValues.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
+
+        if (date === 'Invalid date') {
+          return '';
+        }
+
+        return date;
+      })();
 
       const goal = {
         ...currentValue.dataValues,
@@ -646,7 +654,7 @@ function reduceGoals(goals, forReport = false) {
         ),
         isNew: false,
         endDate,
-        sources: currentValue.dataValues.sources,
+        source: currentValue.dataValues.source,
       };
 
       return [...previousValues, goal];
@@ -1103,7 +1111,7 @@ export async function createOrUpdateGoals(goals) {
       status,
       prompts,
       isCurated,
-      sources,
+      source,
       ...options
     } = goalData;
 
@@ -1138,7 +1146,7 @@ export async function createOrUpdateGoals(goals) {
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
           rtrOrder: rtrOrder + 1,
-          sources,
+          source,
         });
       }
     }
@@ -1158,14 +1166,14 @@ export async function createOrUpdateGoals(goals) {
           // otherwise, we've got ourselves an rtr goal, baby
           createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
           endDate: endDate || null,
-          sources,
+          source,
         },
         { individualHooks: true },
       );
     // except for the end date && sources which are always editable (until the goal is closed)
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: endDate || null, sources },
+        { endDate: endDate || null, source },
         { individualHooks: true },
       );
     }
@@ -1853,7 +1861,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR,
         createdVia,
         prompts,
-        sources,
+        source,
         grant,
         grantId: discardedGrantId,
         id, // we can't be trying to set this
@@ -1888,8 +1896,8 @@ export async function saveGoalsForReport(goals, report) {
       }
 
       if (!newOrUpdatedGoal.onApprovedAR) {
-        if (sources && sources.length && !isEqual(newOrUpdatedGoal.sources, sources)) {
-          newOrUpdatedGoal.set({ sources });
+        if (source && newOrUpdatedGoal.source !== source) {
+          newOrUpdatedGoal.set({ source });
         }
 
         if (fields.name !== newOrUpdatedGoal.name) {

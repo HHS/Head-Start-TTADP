@@ -243,8 +243,7 @@ describe('ActivityReport', () => {
         activityRecipients: [{
           activityRecipientId: 1,
         }],
-        goals: [],
-        goalsAndObjectives: [
+        goals: [
           { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
           { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
         ],
@@ -256,8 +255,7 @@ describe('ActivityReport', () => {
         }, {
           activityRecipientId: 1,
         }],
-        goals: [],
-        goalsAndObjectives: [
+        goals: [
           { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
           { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
         ],

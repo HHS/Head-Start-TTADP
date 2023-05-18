@@ -17,15 +17,15 @@ module.exports = {
 
       await queryInterface.addColumn(
         'Goals',
-        'sources',
-        { type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(GOAL_SOURCES)) },
+        'source',
+        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
         { transaction },
       );
 
       await queryInterface.addColumn(
         'ActivityReportGoals',
-        'sources',
-        { type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(GOAL_SOURCES)) },
+        'source',
+        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
         { transaction },
       );
 
