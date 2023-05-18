@@ -51,7 +51,6 @@ export const findWhatsChanged = (object, base) => {
 
       accumulator.goals = [
         ...(base.goals || []),
-        ...(base.goalsAndObjectives || []),
       ].map((goal) => ({
         ...goal,
         grantIds,

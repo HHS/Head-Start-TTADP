@@ -150,7 +150,7 @@ const GoalsObjectives = ({
       setValue('goalForEditing', '');
       setValue('goalName', '');
       setValue('goalEndDate', '');
-      setValue('goalSources', []);
+      setValue('goalSource', '');
       toggleGoalForm(false);
     }
   };
@@ -168,13 +168,13 @@ const GoalsObjectives = ({
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
-      const sources = getValues('goalSources');
+      const source = getValues('goalSource');
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
           name,
           endDate,
-          sources,
+          source,
           objectives: goalForEditingObjectives,
         }],
         setError,
@@ -200,7 +200,7 @@ const GoalsObjectives = ({
     // make this goal the editable goal
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
-    setValue('goalSources', goal.sources);
+    setValue('goalSource', goal.source);
     setValue('goalName', goal.name);
 
     toggleGoalForm(false);

@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { GOAL_SOURCES } from '@ttahub/common';
+import userEvent from '@testing-library/user-event';
 import { render, screen, act } from '@testing-library/react';
-import selectEvent from 'react-select-event';
 import GoalSource from '../GoalSource';
 
 const defaults = {
@@ -17,7 +17,7 @@ const defaults = {
 describe('GoalSource', () => {
   const renderGoalSource = (props = defaults) => {
     const {
-      sources,
+      source,
       validateGoalSource,
       onChangeGoalSource,
       goalStatus,
@@ -26,7 +26,7 @@ describe('GoalSource', () => {
     } = props;
     render(<GoalSource
       error={<></>}
-      sources={sources}
+      source={source}
       validateGoalSource={validateGoalSource}
       onChangeGoalSource={onChangeGoalSource}
       goalStatus={goalStatus}
@@ -51,15 +51,12 @@ describe('GoalSource', () => {
   it('shows read only if user can\'t edit', async () => {
     renderGoalSource({
       ...defaults,
-      sources: GOAL_SOURCES,
+      source: GOAL_SOURCES[0],
       userCanEdit: false,
     });
 
     expect(screen.getByText('Goal source')).toBeInTheDocument();
     expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[1])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[2])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[3])).toBeInTheDocument();
     expect(document.querySelector('usa-select')).toBeNull();
   });
 
@@ -67,16 +64,13 @@ describe('GoalSource', () => {
     act(() => {
       renderGoalSource({
         ...defaults,
-        sources: GOAL_SOURCES,
+        source: GOAL_SOURCES[0],
         goalStatus: 'Closed',
       });
     });
 
     expect(screen.getByText('Goal source')).toBeInTheDocument();
     expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[1])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[2])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[3])).toBeInTheDocument();
     expect(document.querySelector('usa-select')).toBeNull();
   });
 
@@ -84,16 +78,13 @@ describe('GoalSource', () => {
     act(() => {
       renderGoalSource({
         ...defaults,
-        sources: GOAL_SOURCES,
+        source: GOAL_SOURCES[0],
         userCanEdit: false,
       });
     });
 
     expect(screen.getByText('Goal source')).toBeInTheDocument();
     expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[1])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[2])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[3])).toBeInTheDocument();
     expect(document.querySelector('usa-select')).toBeNull();
   });
 
@@ -104,14 +95,14 @@ describe('GoalSource', () => {
       renderGoalSource({
         ...defaults,
         onChangeGoalSource: onChange,
-        sources: [GOAL_SOURCES[0]],
+        source: GOAL_SOURCES[0],
       });
     });
 
     expect(screen.getByText('Goal source')).toBeInTheDocument();
 
-    await selectEvent.select(screen.getByLabelText(/Goal source/i), [GOAL_SOURCES[0], GOAL_SOURCES[1]]);
-
-    expect(onChange).toBeCalledWith([GOAL_SOURCES[0], GOAL_SOURCES[1]]);
+    const dropdown = screen.getByLabelText(/Goal source/i);
+    userEvent.selectOptions(dropdown, GOAL_SOURCES[0]);
+    expect(onChange).toBeCalledWith(GOAL_SOURCES[0]);
   });
 });

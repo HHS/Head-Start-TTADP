@@ -16,11 +16,12 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-
+import isAdmin from '../../../../permissions';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
 import FeatureFlag from '../../../../components/FeatureFlag';
 import GoalSource from '../../../../components/GoalForm/GoalSource';
+import UserContext from '../../../../UserContext';
 
 export default function GoalForm({
   goal,
@@ -46,7 +47,7 @@ export default function GoalForm({
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
-  const defaultSources = useMemo(() => (goal && goal.sources ? goal.sources : []), [goal]);
+  const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -90,14 +91,14 @@ export default function GoalForm({
   // goal source rules = required if activityRecipientType === 'recipient'
   // and if user has the goal_source flag
 
-  const { user } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
 
   const goalSourceRules = useMemo(() => {
-    if (activityRecipientType === 'recipient' && user && user.flags.includes('goal_source')) {
+    if (activityRecipientType === 'recipient' && ((user && user.flags.includes('goal_source')) || isAdmin(user))) {
       return {
         required: {
           value: true,
-          message: GOAL_NAME_ERROR,
+          message: 'Select a goal source',
         },
       };
     }
@@ -108,13 +109,13 @@ export default function GoalForm({
     field: {
       onChange: onUpdateGoalSource,
       onBlur: onBlurGoalSource,
-      value: goalSources,
+      value: goalSource,
       name: goalSourceInputName,
     },
   } = useController({
-    name: 'goalSources',
+    name: 'goalSource',
     rules: goalSourceRules,
-    defaultValue: [],
+    defaultValue: '',
   });
 
   // when the goal is updated in the selection, we want to update
@@ -132,8 +133,8 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   useEffect(() => {
-    onUpdateGoalSource(goal.sources ? goal.sources : defaultSources);
-  }, [goal.sources, onUpdateGoalSource, defaultSources]);
+    onUpdateGoalSource(goal.source ? goal.source : defaultSource);
+  }, [goal.source, onUpdateGoalSource, defaultSource]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -187,7 +188,7 @@ export default function GoalForm({
       <FeatureFlag flag="goal_source">
         <GoalSource
           error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-          sources={goalSources}
+          source={goalSource}
           validateGoalSource={onBlurGoalSource}
           onChangeGoalSource={onUpdateGoalSource}
           inputName={goalSourceInputName}
@@ -238,7 +239,7 @@ GoalForm.propTypes = {
     isCurated: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
-    sources: PropTypes.arrayOf(PropTypes.string),
+    source: PropTypes.string,
     prompts: PropTypes.arrayOf(PropTypes.shape({
       type: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,

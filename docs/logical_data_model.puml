@@ -72,7 +72,7 @@ class ActivityReportGoals{
  endDate : date
  isRttapa : enum
  isActivelyEdited : boolean
- sources : enum[]
+ source : enum
  * activityReportId : integer : REFERENCES "ActivityReports".id
  * goalId : integer : REFERENCES "Goals".id
 }
@@ -270,7 +270,7 @@ class Goals{
  isRttapa : enum
  * onAR : boolean : false
  rtrOrder : integer : 1
- sources : enum[]
+ source : enum
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
 }

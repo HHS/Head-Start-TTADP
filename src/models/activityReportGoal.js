@@ -56,8 +56,8 @@ export default (sequelize, DataTypes) => {
     closeSuspendContext: {
       type: DataTypes.TEXT,
     },
-    sources: {
-      type: DataTypes.ARRAY(DataTypes.ENUM(GOAL_SOURCES)),
+    source: {
+      type: DataTypes.ENUM(GOAL_SOURCES),
     },
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,

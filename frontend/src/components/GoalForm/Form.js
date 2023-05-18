@@ -51,8 +51,8 @@ export default function Form({
   clearEmptyObjectiveError,
   onUploadFiles,
   userCanEdit,
-  sources,
-  setSources,
+  source,
+  setSource,
   validateGoalSource,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
@@ -157,8 +157,8 @@ export default function Form({
 
       <FeatureFlag flag="goal_source">
         <GoalSource
-          sources={sources}
-          onChangeGoalSource={setSources}
+          source={source}
+          onChangeGoalSource={setSource}
           error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
           isOnReport={isOnApprovedReport}
           goalStatus={status}
@@ -279,8 +279,8 @@ Form.propTypes = {
   })).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
-  sources: PropTypes.arrayOf(PropTypes.string).isRequired,
-  setSources: PropTypes.func.isRequired,
+  source: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
 };
 
