@@ -17,8 +17,8 @@ const executeCommand = async (command: string) => {
       err => (err ? reject(err): resolve())
     );
 
-    migrate.stdout.pipe(process.stdout);
-    migrate.stderr.pipe(process.stderr);
+    migrate.stdout?.pipe(process.stdout);
+    migrate.stderr?.pipe(process.stderr);
   });
 };
 
