@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import { Umzug, SequelizeStorage } from 'umzug';
+import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
 import { Sequelize } from 'sequelize'
 import path from 'path';
 import db from '../../src/models';
@@ -39,17 +39,26 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
     const migrations = await umzug.up();
     console.log(`Successfully executed ${migrations.length} migrations.`);
   } catch (error) {
+    if (error instanceof MigrationError) {
+      const original = error.cause;
+      console.error('Error executing migrations:', error.cause, '\n', error);
+    }
     console.error('Error executing migrations:', error);
+    throw error;
   }
 }
 
 
 export const reseed = async () => {
-  if (calledFromTestFileOrDirectory()) {
-    await clear();
-    await loadMigrations('migrations');
-    await loadMigrations('seeders');
-    return true;
+  try {
+    if (calledFromTestFileOrDirectory()) {
+      await clear();
+      await loadMigrations('migrations');
+      await loadMigrations('seeders');
+      return true;
+    }
+    return false;
+  } catch (error) {
+    return false;
   }
-  return false;
 };
