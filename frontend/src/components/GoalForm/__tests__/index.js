@@ -861,15 +861,14 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],
-      sources: [],
-      grants: [{
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
