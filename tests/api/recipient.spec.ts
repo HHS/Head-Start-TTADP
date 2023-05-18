@@ -243,7 +243,7 @@ test.describe('get /recipient', () => {
         ),
         grantIds: Joi.array().items(Joi.number()),
         isNew: Joi.boolean(),
-        endDate: Joi.string().allow(null),
+        endDate: Joi.string().allow(null).allow(''),
       })
     ).min(1);
 
