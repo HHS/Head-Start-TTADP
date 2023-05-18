@@ -38,7 +38,7 @@ describe('dbUtils', () => {
   beforeAll(() => {
     preBypass = process.env.BYPASS_AUTH;
     preuserId = process.env.CURRENT_USER_ID;
-  })
+  });
   beforeEach(async () => {
     if (!await User.findOne({ where: { id: mockUser.id } })) {
       await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
