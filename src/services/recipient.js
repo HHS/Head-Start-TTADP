@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { uniq, uniqBy } from 'lodash';
+import { uniq, uniqBy, isEqual } from 'lodash';
 import {
   Grant,
   Recipient,
@@ -509,7 +509,7 @@ export async function getGoalsByActivityRecipient(
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status
         && g.goalText.trim() === current.name.trim()
-        && g.isRttapa === current.isRttapa,
+        && isEqual(g.sources, current.sources),
     );
 
     allGoalIds.push(current.id);

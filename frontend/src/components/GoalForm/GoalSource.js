@@ -17,12 +17,11 @@ export default function GoalSource({
   goalStatus,
   inputName,
   isLoading,
-  isOnReport,
   userCanEdit,
   isMultiRecipientGoal,
 }) {
-  const readOnly = useMemo(() => isOnReport || goalStatus === 'Closed' || !userCanEdit,
-    [goalStatus, isOnReport, userCanEdit]);
+  const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
+    [goalStatus, userCanEdit]);
 
   if ((readOnly && !sources.length) || isMultiRecipientGoal) {
     return null;
@@ -50,7 +49,8 @@ export default function GoalSource({
     onChangeGoalSource(selectedSources);
   };
 
-  const value = options.filter((source) => sources.includes(source.label));
+  const value = options.filter((source) => sources.includes(source.label))
+    .sort((a, b) => a.label - b.label);
 
   return (
     <>

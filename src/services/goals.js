@@ -642,7 +642,7 @@ function reduceGoals(goals, forReport = false) {
           [],
         ),
         isNew: false,
-        endDate: currentValue.endDate,
+        endDate: currentValue.dataValues.endDate,
         sources: currentValue.dataValues.sources,
       };
 
@@ -1159,10 +1159,10 @@ export async function createOrUpdateGoals(goals) {
         },
         { individualHooks: true },
       );
-    // except for the end date, which is always editable
+    // except for the end date && sources which are always editable (until the goal is closed)
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: endDate || null },
+        { endDate: endDate || null, sources },
         { individualHooks: true },
       );
     }
@@ -1885,7 +1885,7 @@ export async function saveGoalsForReport(goals, report) {
       }
 
       if (!newOrUpdatedGoal.onApprovedAR) {
-        if (!isEqual(newOrUpdatedGoal.sources, sources)) {
+        if (sources && sources.length && !isEqual(newOrUpdatedGoal.sources, sources)) {
           newOrUpdatedGoal.set({ sources });
         }
 
