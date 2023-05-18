@@ -1,6 +1,6 @@
-const {exec} = require('child_process');
-const db = require('../../src/models');
-const { calledFromTestFileOrDirectory } = require('./testOnly');
+import { exec } from 'child_process';
+import db from '../../src/models';
+import { calledFromTestFileOrDirectory } from './testOnly';
 
 const clear = async () => await db.sequelize.query(`
   DROP SCHEMA public CASCADE;
