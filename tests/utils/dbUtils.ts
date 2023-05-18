@@ -2,40 +2,31 @@ import { exec } from 'child_process';
 import db from '../../src/models';
 import { calledFromTestFileOrDirectory } from './testOnly';
 
-const clear = async () => await db.sequelize.query(`
-  DROP SCHEMA public CASCADE;
-  CREATE SCHEMA public;
-`);
+const clear = async () => {
+  await db.sequelize.query(`
+    DROP SCHEMA public CASCADE;
+    CREATE SCHEMA public;
+  `);
+};
 
-const migrate = async () => await new Promise<void>((resolve, reject) => {
-  const migrate = exec(
-    'node_modules/.bin/sequelize db:migrate',
-    {env: process.env},
-    err => (err ? reject(err): resolve())
-  );
+const executeCommand = async (command: string) => {
+  return new Promise<void>((resolve, reject) => {
+    const migrate = exec(
+      `node_modules/.bin/sequelize ${command}`,
+      {env: process.env},
+      err => (err ? reject(err): resolve())
+    );
 
-  // Forward stdout+stderr to this process
-  migrate.stdout.pipe(process.stdout);
-  migrate.stderr.pipe(process.stderr);
-});
-
-const seed = async () => await new Promise<void>((resolve, reject) => {
-  const migrate = exec(
-    'node_modules/.bin/sequelize db:seed:all',
-    {env: process.env},
-    err => (err ? reject(err): resolve())
-  );
-
-  // Forward stdout+stderr to this process
-  migrate.stdout.pipe(process.stdout);
-  migrate.stderr.pipe(process.stderr);
-});
+    migrate.stdout.pipe(process.stdout);
+    migrate.stderr.pipe(process.stderr);
+  });
+};
 
 export const reseed = async () => {
   if (calledFromTestFileOrDirectory()) {
     await clear();
-    await migrate();
-    await seed();
+    await executeCommand('db:migrate');
+    await executeCommand('db:seed:all');
     return true;
   }
   return false;
