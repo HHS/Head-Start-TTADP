@@ -957,7 +957,7 @@ export default function GoalForm({
               userCanEdit={canEdit}
               validatePrompts={validatePrompts}
               source={source}
-              setSources={setSource}
+              setSource={setSource}
               validateGoalSource={validateGoalSource}
             />
           )}
