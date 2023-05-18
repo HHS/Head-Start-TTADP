@@ -68,7 +68,7 @@ describe('create goal', () => {
     prompts: [],
     name: 'This is goal text',
     status: 'Draft',
-    endDate: '2023-08-15',
+    endDate: '08/15/2023',
     goalTemplateId: 1,
     isFromSmartsheetTtaPlan: false,
     timeframe: null,
@@ -817,7 +817,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: null,
       prompts: [],
@@ -857,7 +857,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Draft',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],
@@ -897,7 +897,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
       prompts: [],
@@ -947,7 +947,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'In Progress',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],

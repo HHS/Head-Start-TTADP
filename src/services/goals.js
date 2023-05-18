@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import { uniqBy, uniq, isEqual } from 'lodash';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from './resource';
@@ -619,6 +620,8 @@ function reduceGoals(goals, forReport = false) {
         return previousValues;
       }
 
+      const endDate = moment(currentValue.dataValues.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
+
       const goal = {
         ...currentValue.dataValues,
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
@@ -642,7 +645,7 @@ function reduceGoals(goals, forReport = false) {
           [],
         ),
         isNew: false,
-        endDate: currentValue.dataValues.endDate,
+        endDate,
         sources: currentValue.dataValues.sources,
       };
 
