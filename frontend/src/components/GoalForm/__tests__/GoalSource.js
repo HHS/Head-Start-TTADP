@@ -10,7 +10,6 @@ const defaults = {
   validateGoalSource: jest.fn(),
   onChangeGoalSource: jest.fn(),
   goalStatus: 'Draft',
-  isOnReport: false,
   isMultiRecipientGoal: false,
   userCanEdit: true,
 };
@@ -22,7 +21,6 @@ describe('GoalSource', () => {
       validateGoalSource,
       onChangeGoalSource,
       goalStatus,
-      isOnReport,
       isMultiRecipientGoal,
       userCanEdit,
     } = props;
@@ -33,7 +31,6 @@ describe('GoalSource', () => {
       onChangeGoalSource={onChangeGoalSource}
       goalStatus={goalStatus}
       isLoading={false}
-      isOnReport={isOnReport}
       isMultiRecipientGoal={isMultiRecipientGoal}
       userCanEdit={userCanEdit}
     />);
@@ -56,23 +53,6 @@ describe('GoalSource', () => {
       ...defaults,
       sources: GOAL_SOURCES,
       userCanEdit: false,
-    });
-
-    expect(screen.getByText('Goal source')).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[1])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[2])).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[3])).toBeInTheDocument();
-    expect(document.querySelector('usa-select')).toBeNull();
-  });
-
-  it('shows the read only view when on report', async () => {
-    act(() => {
-      renderGoalSource({
-        ...defaults,
-        sources: GOAL_SOURCES,
-        isOnReport: true,
-      });
     });
 
     expect(screen.getByText('Goal source')).toBeInTheDocument();
@@ -114,18 +94,6 @@ describe('GoalSource', () => {
     expect(screen.getByText(GOAL_SOURCES[1])).toBeInTheDocument();
     expect(screen.getByText(GOAL_SOURCES[2])).toBeInTheDocument();
     expect(screen.getByText(GOAL_SOURCES[3])).toBeInTheDocument();
-    expect(document.querySelector('usa-select')).toBeNull();
-  });
-
-  it('shows nothing when there report is read-only and the goal has no sources', async () => {
-    act(() => {
-      renderGoalSource({
-        ...defaults,
-        isOnReport: true,
-      });
-    });
-
-    expect(screen.queryByText('Goal source')).toBeNull();
     expect(document.querySelector('usa-select')).toBeNull();
   });
 

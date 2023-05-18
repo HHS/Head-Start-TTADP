@@ -74,6 +74,7 @@ export default function GoalForm({
     onApprovedAR: false,
     prompts: [],
     isCurated: false,
+    sources: [],
     goalTemplateId: null,
   }), [possibleGrants]);
 
@@ -142,7 +143,8 @@ export default function GoalForm({
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
-        setEndDate(goal.endDate);
+        const formattedEndDate = goal.endDate ? moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY') : ''; 
+        setEndDate(formattedEndDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setPrompts(goal.prompts);
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
@@ -150,7 +152,7 @@ export default function GoalForm({
         setGoalOnApprovedReport(goal.onApprovedAR);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSources(goal.sources);
+        setSources(goal.sources || []);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -732,6 +734,7 @@ export default function GoalForm({
     setSelectedGrants(goalDefaults.grants);
     setIsCurated(goalDefaults.isCurated);
     setPrompts(goalDefaults.prompts);
+    setSources(goalDefaults.sources);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
