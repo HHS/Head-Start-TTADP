@@ -33,6 +33,12 @@ const mockUser = {
 };
 
 describe('dbUtils', () => {
+  let preBypass;
+  let preuserId;
+  beforeAll(() => {
+    preBypass = process.env.BYPASS_AUTH;
+    preuserId = process.env.CURRENT_USER_ID;
+  })
   beforeEach(async () => {
     if (!await User.findOne({ where: { id: mockUser.id } })) {
       await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
@@ -41,6 +47,8 @@ describe('dbUtils', () => {
     process.env.CURRENT_USER_ID = 110110;
   });
   afterAll(async () => {
+    process.env.BYPASS_AUTH = preBypass;
+    process.env.CURRENT_USER_ID = preuserId;
     await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();
   });
