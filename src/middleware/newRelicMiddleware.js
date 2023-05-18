@@ -3,9 +3,10 @@ import { isTestingOrCI } from './testingOnlyMiddleware';
 // desired results. These middleware functions were created for cases
 // where we want to separate routes that were automatically grouped.
 
-const nr = isTestingOrCI()
-  ? { setTransactionName: () => {} }
-  : require('newrelic');
+// const nr = isTestingOrCI()
+//   ? { setTransactionName: () => {} }
+//   : require('newrelic');
+const nr = require('newrelic');
 
 /**
  * Set transaction name by request method, baseUrl, and asterisk
