@@ -1156,26 +1156,28 @@ export async function createOrUpdateGoals(goals) {
 
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
-      await newGoal.update(
-        {
-          ...options,
-          status,
-          // if the createdVia column is populated, keep what's there
-          // otherwise, if the goal is imported, we say so
-          // otherwise, we've got ourselves an rtr goal, baby
-          createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
-          endDate: endDate || null,
-          source: source || null,
-        },
-        { individualHooks: true },
-      );
-    // except for the end date && sources which are always editable (until the goal is closed)
-    } else if (newGoal) {
-      await newGoal.update(
-        { endDate: endDate || null, source: source || null },
-        { individualHooks: true },
-      );
+      newGoal.set({ ...options });
+
+      if (newGoal.status !== status) {
+        newGoal.set({ status });
+      }
+
+      if (!newGoal.createdVia || newGoal.createdVia !== createdVia) {
+        newGoal.set({ createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr') });
+      }
     }
+
+    // end date and source can be updated if the goal is not closed
+    // which it won't be at this point (refer to above where we check for closed goals)
+    if (endDate && newGoal.endDate !== endDate) {
+      newGoal.set({ endDate });
+    }
+
+    if (source && newGoal.source !== source) {
+      newGoal.set({ source });
+    }
+
+    await newGoal.save({ individualHooks: true });
 
     const newObjectives = await Promise.all(
       objectives.map(async (o, index) => {
