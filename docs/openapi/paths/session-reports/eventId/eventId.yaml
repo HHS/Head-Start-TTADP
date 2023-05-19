@@ -17,4 +17,4 @@ get:
           schema:
             type: array
             items:
-              $ref: '../../../index.yaml#/components/schemas/trainingReport'
+              $ref: '../../../index.yaml#/components/schemas/sessionReport'

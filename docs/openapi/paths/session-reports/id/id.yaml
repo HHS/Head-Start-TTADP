@@ -1,11 +1,11 @@
 get:
   tags:
-    - training report
-  summary: Get a single training report by its ID
+    - session report
+  summary: Get a single session report by its ID
   parameters:
     - name: id
       in: path
-      description: ID of the training report to retrieve
+      description: ID of the session report to retrieve
       required: true
       schema:
         type: integer
@@ -15,15 +15,15 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../../../index.yaml#/components/schemas/trainingReport'
+            $ref: '../../../index.yaml#/components/schemas/sessionReport'
 put:
   tags:
-    - training report
-  summary: Update a training report by its ID
+    - session report
+  summary: Update a session report by its ID
   parameters:
     - name: id
       in: path
-      description: ID of the training report to update
+      description: ID of the session report to update
       required: true
       schema:
         type: integer
@@ -40,12 +40,12 @@ put:
               type: object
 delete:
   tags:
-    - training report
-  summary: Delete a training report by ID
+    - session report
+  summary: Delete a session report by ID
   parameters:
     - name: eventId
       in: path
-      description: ID of the training report to delete
+      description: ID of the session report to delete
       required: true
       schema:
         type: integer

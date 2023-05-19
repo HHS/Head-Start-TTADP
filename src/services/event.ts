@@ -9,7 +9,7 @@ import {
 
 const {
   EventReportPilot,
-  TrainingReportPilot,
+  SessionReportPilot,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -61,7 +61,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
-  await TrainingReportPilot.destroy({ where: { eventId: id } });
+  await SessionReportPilot.destroy({ where: { eventId: id } });
   await EventReportPilot.destroy({ where: { id } });
 }
 

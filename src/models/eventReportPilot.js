@@ -3,7 +3,7 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class EventReportPilot extends Model {
     static associate(models) {
-      EventReportPilot.hasMany(models.TrainingReportPilot, { foreignKey: 'eventId', as: 'trainingReports' });
+      EventReportPilot.hasMany(models.SessionReportPilot, { foreignKey: 'eventId', as: 'sessionReports' });
     }
   }
 

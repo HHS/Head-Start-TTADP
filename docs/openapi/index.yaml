@@ -391,9 +391,9 @@ components:
         - collaboratorIds
         - regionId
         - data
-    trainingReport:
+    sessionReport:
       type: object
-      description: A training report
+      description: A session report
       properties:
         id:
           type: integer

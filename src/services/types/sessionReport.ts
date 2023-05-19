@@ -1,4 +1,4 @@
-export type TrainingReportShape = {
+export type SessionReportShape = {
   id: number;
   eventId: number;
   data: unknown;

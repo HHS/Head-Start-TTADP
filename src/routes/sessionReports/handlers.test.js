@@ -1,5 +1,5 @@
-import { EventReportPilot, TrainingReportPilot } from '../../models';
-import { createTR } from '../../services/trainingReports';
+import { EventReportPilot, SessionReportPilot } from '../../models';
+import { createSession } from '../../services/sessionReports';
 import {
   createHandler,
   deleteHandler,
@@ -18,7 +18,7 @@ describe('training report handlers', () => {
       data: {},
     });
 
-    await TrainingReportPilot.create({
+    await SessionReportPilot.create({
       id: 99_999,
       eventId: 99_998,
       data: {},
@@ -26,7 +26,7 @@ describe('training report handlers', () => {
   });
 
   afterAll(async () => {
-    await TrainingReportPilot.destroy({ where: { eventId: 99_998 } });
+    await SessionReportPilot.destroy({ where: { eventId: 99_998 } });
     await EventReportPilot.destroy({ where: { id: 99_998 } });
   });
 
@@ -105,7 +105,7 @@ describe('training report handlers', () => {
 
   describe('deleteHandler', () => {
     it('returns 200', async () => {
-      const created = await createTR({ eventId: 99_998, data: {} });
+      const created = await createSession({ eventId: 99_998, data: {} });
       await deleteHandler({ params: { id: created.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
