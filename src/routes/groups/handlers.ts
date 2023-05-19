@@ -19,7 +19,9 @@ const { Group, Grant } = db;
 export async function getGroups(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
-    const usersGroups = await groups(userId);
+    const user = await userById(userId);
+    const userRegions = user.permissions.map((p) => p.regionId);
+    const usersGroups = await groups(userId, userRegions);
     res.json(usersGroups);
   } catch (e) {
     auditLogger.error(`${NAMESPACE}, 'getGroups', ${e}`);
@@ -33,7 +35,7 @@ export async function getGroup(req: Request, res: Response) {
     const userId = await currentUserId(req, res);
     const groupResponse = await group(parseInt(groupId, 10));
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupResponse);
-    if (!policy.ownsGroup()) {
+    if (!policy.ownsGroup() && !policy.isPublic()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
