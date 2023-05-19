@@ -14,7 +14,7 @@ const logContext = { namespace };
 
 export const getHandler = async (req, res) => {
   try {
-    let tr;
+    let session;
 
     const {
       id,
@@ -22,16 +22,16 @@ export const getHandler = async (req, res) => {
     } = req.params;
 
     if (id) {
-      tr = await findSessionById(id);
+      session = await findSessionById(id);
     } else if (eventId) {
-      tr = await findSessionsByEventId(eventId);
+      session = await findSessionsByEventId(eventId);
     }
 
-    if (!tr) {
+    if (!session) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report not found' });
     }
 
-    return res.status(httpCodes.OK).send(tr);
+    return res.status(httpCodes.OK).send(session);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

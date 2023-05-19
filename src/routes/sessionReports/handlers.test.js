@@ -7,7 +7,7 @@ import {
   updateHandler,
 } from './handlers';
 
-describe('training report handlers', () => {
+describe('session report handlers', () => {
   beforeAll(async () => {
     await EventReportPilot.create({
       id: 99_998,
@@ -39,7 +39,7 @@ describe('training report handlers', () => {
   };
 
   describe('getHandler', () => {
-    it('returns the tr', async () => {
+    it('returns the session', async () => {
       await getHandler({ params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -63,7 +63,7 @@ describe('training report handlers', () => {
       },
     };
 
-    it('returns the tr', async () => {
+    it('returns the session', async () => {
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -87,7 +87,7 @@ describe('training report handlers', () => {
       },
     };
 
-    it('returns the tr', async () => {
+    it('returns the session', async () => {
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
