@@ -14,7 +14,10 @@ export default function Groups() {
   const onDelete = async (groupId) => {
     try {
       await deleteGroup(groupId);
-      setGroups(groups.filter((group) => group.id !== groupId));
+      setGroups({
+        myGroups: groups.myGroups.filter((group) => group.id !== groupId),
+        publicGroups: groups.publicGroups.filter((group) => group.id !== groupId),
+      });
     } catch (err) {
       setError('There was an error deleting your group');
     }
@@ -56,21 +59,23 @@ export default function Groups() {
                 <th scope="col"><span className="usa-sr-only">Actions</span></th>
               </tr>
             </thead>
-            {groups.myGroups.map((group) => (
-              <tr key={group.id}>
-                <td>
-                  {group.name}
-                </td>
-                <td>
-                  {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : null}
-                  {group.isPublic ? 'Public' : 'Private'}
-                </td>
-                <td align="right">
-                  <Link to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-                  <Button type="button" aria-label={`delete ${group.name}`} onClick={() => onDelete(group.id)} unstyled>Delete group</Button>
-                </td>
-              </tr>
-            ))}
+            <tbody>
+              {groups.myGroups.map((group) => (
+                <tr key={group.id}>
+                  <td>
+                    {group.name}
+                  </td>
+                  <td>
+                    {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : null}
+                    {group.isPublic ? 'Public' : 'Private'}
+                  </td>
+                  <td align="right">
+                    <Link to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
+                    <Button type="button" aria-label={`delete ${group.name}`} onClick={() => onDelete(group.id)} unstyled>Delete group</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </Table>
         )}
       </div>
@@ -87,20 +92,22 @@ export default function Groups() {
               </tr>
             </thead>
             {groups.publicGroups.map((group) => (
-              <tr key={group.id}>
-                <td>
-                  {group.name}
-                </td>
-                <td>
-                  {group.isPublic
-                    ? <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />
-                    : <FontAwesomeIcon className="margin-right-1" icon={faLock} />}
-                  {group.isPublic ? 'Public' : 'Private'}
-                </td>
-                <td align="right">
-                  <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
-                </td>
-              </tr>
+              <tbody>
+                <tr key={group.id}>
+                  <td>
+                    {group.name}
+                  </td>
+                  <td>
+                    {group.isPublic
+                      ? <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />
+                      : <FontAwesomeIcon className="margin-right-1" icon={faLock} />}
+                    {group.isPublic ? 'Public' : 'Private'}
+                  </td>
+                  <td align="right">
+                    <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
+                  </td>
+                </tr>
+              </tbody>
             ))}
           </Table>
         )}

@@ -9,10 +9,17 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 import Groups from '../Groups';
+import UserContext from '../../../../UserContext';
 
 describe('Groups', () => {
   const renderGroups = () => {
-    render(<MemoryRouter><Groups /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <Groups />
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
   };
 
   afterEach(() => fetchMock.restore());
@@ -28,10 +35,12 @@ describe('Groups', () => {
       {
         id: 1,
         name: 'group1',
+        userId: 1,
       },
       {
         id: 2,
         name: 'group2',
+        userId: 1,
       },
     ]);
 
@@ -58,6 +67,8 @@ describe('Groups', () => {
       {
         id: 1,
         name: 'group1',
+        userId: 1,
+        isPublic: true,
       },
     ]);
     fetchMock.delete('/api/groups/1', {});
@@ -80,6 +91,8 @@ describe('Groups', () => {
       {
         id: 1,
         name: 'group1',
+        userId: 1,
+        isPublic: false,
       },
     ]);
     fetchMock.delete('/api/groups/1', 500);
