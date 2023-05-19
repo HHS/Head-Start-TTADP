@@ -30,10 +30,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    isPublic: DataTypes.BOOLEAN,
   }, {
     sequelize,
     modelName: 'Group',
-    // timestamps: false,
   });
   return Group;
 };
