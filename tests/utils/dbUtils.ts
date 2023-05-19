@@ -1,9 +1,7 @@
-import { exec } from 'child_process';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-import { Sequelize } from 'sequelize'
-import path from 'path';
 import db from '../../src/models';
 import { calledFromTestFileOrDirectory } from './testOnly';
+import { auditLogger } from '../../src/logger';
 
 const clear = async () => {
   await db.sequelize.query(`
@@ -16,8 +14,6 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
-  console.log(migrationDir);
-
   const umzug = new Umzug({
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
     migrations: {
@@ -26,8 +22,8 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
         const migration = require(path);
         return {
             name,
-            up: async () => migration.up(context, Sequelize),
-            down: async () => migration.down(context, Sequelize),
+            up: async () => migration.up(context, db.Sequelize),
+            down: async () => migration.down(context, db.Sequelize),
         };
       },
     },
@@ -37,13 +33,14 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
 
   try {
     const migrations = await umzug.up();
-    console.log(`Successfully executed ${migrations.length} migrations.`);
+    console.log(migrations);
+    auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
   } catch (error) {
     if (error instanceof MigrationError) {
       const original = error.cause;
-      console.error('Error executing migrations:', error.cause, '\n', error);
+      auditLogger.error('Error executing migrations:', error.cause, '\n', error);
     }
-    console.error('Error executing migrations:', error);
+    auditLogger.error('Error executing migrations:', error);
     throw error;
   }
 }
