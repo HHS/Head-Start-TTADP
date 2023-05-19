@@ -37,7 +37,12 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalled();
     });
 
-    it('throws an error when not found by eventId', async () => {
+    it('400 when no params', async () => {
+      await getHandler({ params: {} }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('404 when not found by eventId', async () => {
       await getHandler({ params: { eventId: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });

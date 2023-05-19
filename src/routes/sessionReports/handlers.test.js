@@ -44,6 +44,11 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
+    it('400 when no params', async () => {
+      await getHandler({ params: {} }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
     it('returns 404 when not found by id', async () => {
       await getHandler({ params: { id: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
