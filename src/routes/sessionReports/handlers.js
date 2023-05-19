@@ -27,8 +27,14 @@ export const getHandler = async (req, res) => {
       session = await findSessionsByEventId(eventId);
     }
 
+    const params = [id, eventId];
+
+    if (params.every((param) => typeof param === 'undefined')) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+    }
+
     if (!session) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report not found' });
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' });
     }
 
     return res.status(httpCodes.OK).send(session);
