@@ -22,7 +22,7 @@ module.exports = {
         await queryInterface.sequelize.query(`
         -- Collect Pre Count Stats
         DROP TABLE IF EXISTS "PreCountStatsByRegion";
-        CREATE TABLE "PreCountStatsByRegion" AS (
+        CREATE TEMP TABLE "PreCountStatsByRegion" AS (
             SELECT
                 gr."regionId",
                 COUNT(DISTINCT g."id") "GoalsTotal",
