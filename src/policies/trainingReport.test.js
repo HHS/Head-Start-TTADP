@@ -54,17 +54,64 @@ describe('Training Report policies', () => {
     });
   });
 
+  describe('canDelete', () => {
+    it('is true if the user is an admin', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new TrainingReport(admin, reportRegion1);
+      expect(policy.canDelete()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new TrainingReport(authorRegion1, reportRegion1);
+      expect(policy.canDelete()).toBe(true);
+    });
+
+    it('is false if the user is not an admin or the author', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new TrainingReport(authorRegion2, reportRegion1);
+      expect(policy.canDelete()).toBe(false);
+    });
+  });
+
+  describe('canUpdate', () => {
+    it('is true if the user is an admin', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new TrainingReport(admin, reportRegion1);
+      expect(policy.canUpdate()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new TrainingReport(authorRegion1, reportRegion1);
+      expect(policy.canUpdate()).toBe(true);
+    });
+
+    // it('is true if the user is a collaborator', () => {
+    //   const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+    //   reportRegion1.collaboratorIds = [authorRegion2.id];
+    //   const policy = new TrainingReport(authorRegion2, reportRegion1);
+    //   expect(policy.canUpdate()).toBe(true);
+    // });
+
+    it('is false if the user is not an admin, author, or collaborator', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new TrainingReport(authorRegion2, reportRegion1);
+      expect(policy.canUpdate()).toBe(false);
+    });
+  });
+
   describe('canReadInRegion', () => {
     it('is true if the user has read permissions in the region', () => {
       const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
       const policy = new TrainingReport(authorRegion1, reportRegion1);
-      expect(policy.canReadInRegion()).toBe(true);
+      expect(policy.canRead()).toBe(true);
     });
 
     it('is false if the user does not have read permissions in the region', () => {
       const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
       const policy = new TrainingReport(authorRegion2, reportRegion1);
-      expect(policy.canReadInRegion()).toBe(false);
+      expect(policy.canRead()).toBe(false);
     });
   });
 });
