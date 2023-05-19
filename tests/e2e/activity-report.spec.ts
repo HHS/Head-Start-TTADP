@@ -341,8 +341,6 @@ test.describe('Activity Report', () => {
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = getGrants(recipients || '');
 
-    await page.waitForTimeout(10000);
-
     // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     // click on the previously extracted recipient
@@ -418,7 +416,9 @@ test.describe('Activity Report', () => {
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
-    await expect(page.getByText('Behavioral / Mental Health / Trauma')).toBeVisible();
+
+    const topic = page.locator('#main-content > div > div > form > div.ttahub-create-goals-form > div.margin-top-5.ttahub-create-goals-objective-form > ul:nth-child(4) > li');
+    expect(await topic.textContent()).toBe('Behavioral / Mental Health / Trauma');
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
