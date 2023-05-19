@@ -1,9 +1,9 @@
 import SCOPES from '../middleware/scopeConstants';
 
-export default class TrainingReport {
-  constructor(user, trainingReport) {
+export default class SessionReport {
+  constructor(user, sessionReport) {
     this.user = user;
-    this.trainingReport = trainingReport;
+    this.sessionReport = sessionReport;
     this.permissions = user.permissions;
   }
 
@@ -18,20 +18,18 @@ export default class TrainingReport {
   canReadInRegion() {
     if (this.isAdmin()) { return true; }
 
-    return !!this.permissions.find(
-      (p) => (p.scopeId === SCOPES.READ_TRAINING_REPORTS
-        || p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS)
-          && p.regionId === this.trainingReport.regionId,
-    );
+    return !!this.permissions.find((p) => [
+      SCOPES.READ_TRAINING_REPORTS,
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+    ].includes(p.scopeId) && p.regionId === this.sessionReport.regionId);
   }
 
   canWriteInRegion() {
     if (this.isAdmin()) { return true; }
 
-    return !!this.permissions.find(
-      (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS
-          && p.regionId === this.trainingReport.regionId,
-    );
+    return !!this.permissions.find((p) => [
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+    ].includes(p.scopeId) && p.regionId === this.sessionReport.regionId);
   }
 
   canDelete() {
@@ -60,6 +58,6 @@ export default class TrainingReport {
   // }
 
   isAuthor() {
-    return this.user.id === this.trainingReport.ownerId;
+    return this.user.id === this.sessionReport.ownerId;
   }
 }
