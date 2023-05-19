@@ -12,7 +12,9 @@ import { reseed } from '../../../tests/utils/dbUtils';
 export default async function reseedDB(req: Request, res: Response) {
   try {
     const result = await reseed();
-    res.json(result);
+    res
+      .status(result ? 200 : 500)
+      .json(result);
   } catch (e) {
     await handleErrors(req, res, e, 'reseedDB');
   }
