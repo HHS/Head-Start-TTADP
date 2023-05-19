@@ -6,7 +6,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { Link, useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Alert, Button, TextInput } from '@trussworks/react-uswds';
+import {
+  Alert, Button, Checkbox, TextInput,
+} from '@trussworks/react-uswds';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
@@ -14,6 +16,7 @@ import { getRecipientAndGrantsByUser } from '../../fetchers/recipient';
 import MultiSelect from '../../components/MultiSelect';
 import { createGroup, fetchGroup, updateGroup } from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
+import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
 
 const mapGrants = (grants) => grants.map((grant) => ({
   value: grant.id,
@@ -39,6 +42,7 @@ export default function MyGroups({ match }) {
     defaultValues: {
       'new-group-name': '',
       'select-recipients-new-group': [],
+      'is-private': true,
     },
   });
 
@@ -49,6 +53,7 @@ export default function MyGroups({ match }) {
         if (existingGroupData) {
           setValue('new-group-name', existingGroupData.name);
           setValue('select-recipients-new-group', mapGrants(existingGroupData.grants));
+          setValue('is-private', !existingGroupData.isPublic);
         }
       } catch (err) {
         setError('There was an error fetching your group');
@@ -83,12 +88,15 @@ export default function MyGroups({ match }) {
   // very possible that a user will create a group, then navigate to the a page and expect to use
   // it without refreshing, so that data will not be refreshed from the API
   const onSubmit = async (data) => {
+    const post = {
+      grants: data['select-recipients-new-group'].map(({ value }) => (value)),
+      name: data['new-group-name'],
+      isPublic: !data['is-private'],
+    };
+
     try {
       if (!groupId) {
-        const g = await createGroup({
-          grants: data['select-recipients-new-group'].map(({ value }) => (value)),
-          name: data['new-group-name'],
-        });
+        const g = await createGroup(post);
 
         setMyGroups([...myGroups, g]);
       }
@@ -96,8 +104,7 @@ export default function MyGroups({ match }) {
       if (groupId) {
         const g = await updateGroup({
           id: groupId,
-          name: data['new-group-name'],
-          grants: data['select-recipients-new-group'].map(({ value }) => (value)),
+          ...post,
         });
 
         setMyGroups(myGroups.map((group) => {
@@ -167,6 +174,27 @@ export default function MyGroups({ match }) {
               />
             </label>
           </div>
+
+          <div className="margin-top-4 display-flex flex-align-end">
+            <Controller
+              control={control}
+              name="is-private"
+              render={({ onChange: controllerOnChange, value }) => (
+                <>
+                  <Checkbox
+                    id="is-private"
+                    name="is-private"
+                    className="margin-0"
+                    onChange={(e) => controllerOnChange(e.target.checked)}
+                    label="Keep this group private."
+                    checked={value}
+                  />
+                  <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
+                </>
+              )}
+            />
+          </div>
+
           {error && (
             <Alert type="error" className="margin-top-4">
               {error}
