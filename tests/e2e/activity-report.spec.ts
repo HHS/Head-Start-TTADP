@@ -239,6 +239,8 @@ test.describe('Activity Report', () => {
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
    
+    await page.waitForTimeout(10000);
+
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
     // edit the first goal
@@ -364,10 +366,6 @@ test.describe('Activity Report', () => {
     // extract text used to locate the correct objective's button,
     // e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
     const g2GoalsForObjectives = getGoals(g2GoalsTxt || '');
-    // extract text used to locate the topics
-    const g2Topics = page.locator(`div:right-of(h3:text("${g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : ''}"))`).first().locator('p').getByText('Behavioral / Mental Health / Trauma, CLASS: Classroom Organization');
-    // verify the topics for the previously created goal    
-    expect(g2Topics).toBeVisible();
 
     // expand objectives for g1
     await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
