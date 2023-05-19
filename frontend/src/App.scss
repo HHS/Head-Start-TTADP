@@ -18,6 +18,11 @@ a:visited {
   color: $text-ink;
 }
 
+.usa-table.usa-table--borderless td,
+.usa-table.usa-table--borderless th {
+  border-bottom: 1px solid $base-lighter;
+}
+
 .usa-skipnav:focus {
   z-index: 999999;
 }
