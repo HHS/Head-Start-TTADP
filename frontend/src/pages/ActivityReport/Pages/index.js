@@ -52,7 +52,7 @@ const reviewPage = {
           pages.map((p) => ({
             id: p.path,
             title: p.label,
-            content: p.reviewSection(formData),
+            content: p.reviewSection(formData.activityRecipientType),
           }))
         }
         formData={formData}

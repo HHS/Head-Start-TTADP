@@ -69,7 +69,7 @@ NextSteps.defaultProps = {
 const getNextStepsSections = (activityRecipientType) => {
   const isRecipient = activityRecipientType === 'recipient';
   const labelDisplayName = isRecipient ? "Recipient's" : 'Other entities';
-  const subtitleDisplayText = isRecipient ? 'recipient' : 'entity';
+  const subtitleDisplayText = isRecipient ? 'recipient' : 'other entity';
   return [
     {
       title: "Specialist's next steps",
@@ -101,10 +101,9 @@ export default {
   label: 'Next steps',
   path: 'next-steps',
   review: false,
-  reviewSection: (formData) => {
-    const { activityRecipientType } = formData;
-    return (<ReviewSection activityRecipientType={activityRecipientType} />);
-  },
+  reviewSection: (activityRecipientType) => (
+    <ReviewSection activityRecipientType={activityRecipientType} />
+  ),
   render: (_additionalData, formData) => {
     const { activityRecipientType } = formData;
     return (<NextSteps activityRecipientType={activityRecipientType} />);
