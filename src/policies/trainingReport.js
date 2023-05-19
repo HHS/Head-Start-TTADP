@@ -14,8 +14,7 @@ export default class TrainingReport {
   canReadInRegion() {
     return !!this.permissions.find(
       (p) => (p.scopeId === SCOPES.READ_TRAINING_REPORTS
-        || p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS
-        || p.scopeId === SCOPES.APPROVE_TRAINING_REPORTS)
+        || p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS)
           && p.regionId === this.trainingReport.regionId,
     );
   }
