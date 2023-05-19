@@ -1,13 +1,13 @@
 const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
-  class TrainingReportPilot extends Model {
+  class SessionReportPilot extends Model {
     static associate(models) {
-      TrainingReportPilot.belongsTo(models.EventReportPilot, { foreignKey: 'eventId', as: 'event' });
+      SessionReportPilot.belongsTo(models.EventReportPilot, { foreignKey: 'eventId', as: 'event' });
     }
   }
 
-  TrainingReportPilot.init({
+  SessionReportPilot.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -23,8 +23,8 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'TrainingReportPilot',
+    modelName: 'SessionReportPilot',
   });
 
-  return TrainingReportPilot;
+  return SessionReportPilot;
 };

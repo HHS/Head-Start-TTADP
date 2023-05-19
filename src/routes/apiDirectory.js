@@ -27,7 +27,7 @@ import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
 import goalTemplatesRouter from './goalTemplates';
 import eventRouter from './events';
-import trainingReportsRouter from './trainingReports';
+import sessionReportsRouter from './sessionReports';
 import feedRouter from './feeds';
 import { currentUserId } from '../services/currentUser';
 
@@ -73,7 +73,7 @@ router.use('/feeds', feedRouter);
 router.use('/resources', resourcesRouter);
 router.use('/goal-templates', goalTemplatesRouter);
 router.use('/event', eventRouter);
-router.use('/training-reports', trainingReportsRouter);
+router.use('/session-reports', sessionReportsRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

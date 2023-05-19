@@ -32,7 +32,7 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         `
-        CREATE TABLE IF NOT EXISTS "TrainingReportPilots" (
+        CREATE TABLE IF NOT EXISTS "SessionReportPilots" (
           id SERIAL PRIMARY KEY,
           "eventId" INTEGER NOT NULL,
           data JSONB NOT NULL,
@@ -68,7 +68,7 @@ module.exports = {
 
       await Promise.all([
         'EventReportPilots',
-        'TrainingReportPilots',
+        'SessionReportPilots',
       ]
         .map(async (table) => {
           await queryInterface.sequelize.query(

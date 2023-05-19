@@ -1,13 +1,13 @@
 import { createEvent, destroyEvent } from './event';
 import {
-  createTR,
-  destroyTR,
-  findTRById,
-  findTRsByEventId,
-  updateTR,
-} from './trainingReports';
+  createSession,
+  destroySession,
+  findSessionById,
+  findSessionsByEventId,
+  updateSession,
+} from './sessionReports';
 
-describe('training reports service', () => {
+describe('session reports service', () => {
   let eventId;
 
   beforeAll(async () => {
@@ -26,22 +26,22 @@ describe('training reports service', () => {
     await destroyEvent(eventId);
   });
 
-  describe('createTR', () => {
+  describe('createSession', () => {
     it('works', async () => {
-      const created = await createTR({ eventId, data: {} });
+      const created = await createSession({ eventId, data: {} });
 
       expect(created).toMatchObject({
         id: expect.anything(),
         eventId,
       });
 
-      await destroyTR(created.id);
+      await destroySession(created.id);
     });
   });
 
-  describe('updateTR', () => {
+  describe('updateSession', () => {
     it('works', async () => {
-      const created = await createTR({ eventId, data: {} });
+      const created = await createSession({ eventId, data: {} });
 
       const updatedData = {
         eventId,
@@ -49,22 +49,22 @@ describe('training reports service', () => {
           harry: 'potter',
         },
       };
-      const updated = await updateTR(created.id, updatedData);
+      const updated = await updateSession(created.id, updatedData);
 
       expect(updated).toMatchObject({
         eventId,
         data: updatedData.data,
       });
 
-      await destroyTR(created.id);
+      await destroySession(created.id);
     });
 
-    it('creates a new TR when the id cannot be found', async () => {
-      const found = await findTRById(99_999);
+    it('creates a new Session when the id cannot be found', async () => {
+      const found = await findSessionById(99_999);
       expect(found).toBeNull();
 
       const updatedData = { eventId, data: { harry: 'potter' } };
-      const updated = await updateTR(99_999, updatedData);
+      const updated = await updateSession(99_999, updatedData);
 
       expect(updated).toMatchObject({
         id: expect.anything(),
@@ -72,31 +72,31 @@ describe('training reports service', () => {
         data: updatedData.data,
       });
 
-      await destroyTR(updated.id);
+      await destroySession(updated.id);
     });
   });
 
-  describe('findTRById', () => {
+  describe('findSessionById', () => {
     it('works', async () => {
-      const created = await createTR({ eventId, data: {} });
+      const created = await createSession({ eventId, data: {} });
 
-      const found = await findTRById(created.id);
+      const found = await findSessionById(created.id);
 
       expect(found).toMatchObject({
         id: created.id,
         eventId,
       });
 
-      await destroyTR(created.id);
+      await destroySession(created.id);
     });
   });
 
-  describe('findTRsByEventId', () => {
+  describe('findSessionsByEventId', () => {
     it('works', async () => {
-      const created1 = await createTR({ eventId, data: {} });
-      const created2 = await createTR({ eventId, data: {} });
+      const created1 = await createSession({ eventId, data: {} });
+      const created2 = await createSession({ eventId, data: {} });
 
-      const found = await findTRsByEventId(eventId);
+      const found = await findSessionsByEventId(eventId);
 
       expect(found).toEqual(
         expect.arrayContaining([
@@ -111,8 +111,8 @@ describe('training reports service', () => {
         ]),
       );
 
-      await destroyTR(created1.id);
-      await destroyTR(created2.id);
+      await destroySession(created1.id);
+      await destroySession(created2.id);
     });
   });
 });
