@@ -1,27 +1,21 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+} from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, Button, Table } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faUserFriends } from '@fortawesome/free-solid-svg-icons';
-import { fetchGroups, deleteGroup } from '../../../fetchers/groups';
+import {
+  Alert,
+  Table,
+} from '@trussworks/react-uswds';
+import { fetchGroups } from '../../../fetchers/groups';
 import UserContext from '../../../UserContext';
+import MyGroup from './MyGroup';
 
 export default function Groups() {
   const [groups, setGroups] = useState(null);
   const [error, setError] = useState(null);
   const { user } = useContext(UserContext);
-
-  const onDelete = async (groupId) => {
-    try {
-      await deleteGroup(groupId);
-      setGroups({
-        myGroups: groups.myGroups.filter((group) => group.id !== groupId),
-        publicGroups: groups.publicGroups.filter((group) => group.id !== groupId),
-      });
-    } catch (err) {
-      setError('There was an error deleting your group');
-    }
-  };
 
   useEffect(() => {
     async function getGroups() {
@@ -61,19 +55,13 @@ export default function Groups() {
             </thead>
             <tbody>
               {groups.myGroups.map((group) => (
-                <tr key={group.id}>
-                  <td>
-                    {group.name}
-                  </td>
-                  <td>
-                    {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />}
-                    {group.isPublic ? 'Public' : 'Private'}
-                  </td>
-                  <td align="right">
-                    <Link to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-                    <Button type="button" aria-label={`delete ${group.name}`} onClick={() => onDelete(group.id)} unstyled>Delete group</Button>
-                  </td>
-                </tr>
+                <MyGroup
+                  key={group.id}
+                  group={group}
+                  setGroups={setGroups}
+                  groups={groups}
+                  setError={setError}
+                />
               ))}
             </tbody>
           </Table>

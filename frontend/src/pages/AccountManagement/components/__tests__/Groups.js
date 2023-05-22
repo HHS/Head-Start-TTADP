@@ -151,7 +151,18 @@ describe('Groups', () => {
       expect(screen.getByText(/group1/i)).toBeInTheDocument();
     });
 
-    userEvent.click(screen.getByText(/delete/i));
+    act(() => {
+      userEvent.click(screen.getByText(/delete/i));
+    });
+
+    // it shows the modal
+    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument();
+
+    const continueButton = screen.getByRole('button', { name: /continue/i });
+
+    act(() => {
+      userEvent.click(continueButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
@@ -176,6 +187,21 @@ describe('Groups', () => {
     });
 
     userEvent.click(screen.getByText(/delete/i));
+
+    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument();
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+
+    act(() => {
+      userEvent.click(cancelButton);
+      userEvent.click(screen.getByText(/delete/i));
+    });
+
+    const continueButton = screen.getByRole('button', { name: /continue/i });
+
+    act(() => {
+      userEvent.click(continueButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/group1/i)).toBeInTheDocument();
