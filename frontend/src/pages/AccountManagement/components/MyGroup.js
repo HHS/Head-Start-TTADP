@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
@@ -9,11 +9,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import { deleteGroup } from '../../../fetchers/groups';
 import VanillaModal from '../../../components/VanillaModal';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 export default function MyGroup({
   group, setGroups, groups, setError,
 }) {
   const modalRef = useRef();
+
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   const onDelete = async (groupId) => {
     try {
@@ -37,8 +40,8 @@ export default function MyGroup({
         {group.isPublic ? 'Public' : 'Private'}
       </td>
       <td align="right">
-        <Link to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-        <ModalToggleButton opener aria-label={`delete ${group.name}`} modalRef={modalRef} unstyled>Delete group</ModalToggleButton>
+        <Link disabled={isAppLoading} to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
+        <ModalToggleButton disabled={isAppLoading} opener aria-label={`delete ${group.name}`} modalRef={modalRef} unstyled>Delete group</ModalToggleButton>
         <VanillaModal modalRef={modalRef} heading="Are you sure you want to continue?">
           <div>
             <p className="usa-prose">
@@ -48,8 +51,16 @@ export default function MyGroup({
             <Button
               type="button"
               unstyled
+              disabled={isAppLoading}
               onClick={async () => {
-                await onDelete(group.id);
+                setIsAppLoading(true);
+                try {
+                  await onDelete(group.id);
+                } catch (err) {
+                  setError('There was an error deleting your group');
+                } finally {
+                  setIsAppLoading(false);
+                }
               }}
             >
               Continue

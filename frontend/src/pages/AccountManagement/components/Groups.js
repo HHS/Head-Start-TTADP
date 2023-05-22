@@ -10,15 +10,18 @@ import {
 } from '@trussworks/react-uswds';
 import { fetchGroups } from '../../../fetchers/groups';
 import UserContext from '../../../UserContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 import MyGroup from './MyGroup';
 
 export default function Groups() {
   const [groups, setGroups] = useState(null);
   const [error, setError] = useState(null);
   const { user } = useContext(UserContext);
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   useEffect(() => {
     async function getGroups() {
+      setIsAppLoading(true);
       try {
         const response = await fetchGroups();
         setGroups({
@@ -27,13 +30,15 @@ export default function Groups() {
         });
       } catch (err) {
         setGroups({ myGroups: [], publicGroups: [] });
+      } finally {
+        setIsAppLoading(false);
       }
     }
 
-    if (!groups) {
+    if (!groups && !isAppLoading && user.id) {
       getGroups();
     }
-  }, [groups, user.id]);
+  }, [groups, isAppLoading, setIsAppLoading, user.id]);
 
   return (
     <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
@@ -89,7 +94,7 @@ export default function Groups() {
                     {group.user.name}
                   </td>
                   <td align="right">
-                    <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
+                    <Link disabled={isAppLoading} to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
                   </td>
                 </tr>
               ))}

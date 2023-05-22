@@ -119,7 +119,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
 
   // then, we simply need to update the group name
   await Group.update({
-    name: data.name,
+    name: data.name.trim(),
     isPublic: data.isPublic,
   }, {
     where: {
@@ -134,7 +134,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
 export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
   const newGroup = await Group.create({
     userId: data.userId,
-    name: data.name,
+    name: data.name.trim(),
     isPublic: data.isPublic,
   });
 
