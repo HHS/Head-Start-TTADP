@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
 import db from '../../models';
@@ -16,6 +17,11 @@ import GroupPolicy from '../../policies/group';
 
 const NAMESPACE = 'GROUPS';
 const { Group, Grant } = db;
+
+interface Group {
+  id: number;
+  name: string;
+}
 
 const GROUP_ERRORS = {
   ALREADY_EXISTS: 'This group name already exists, please use a different name',
@@ -99,34 +105,42 @@ export async function updateGroup(req: Request, res: Response) {
     const { groupId } = req.params;
     const userId = await currentUserId(req, res);
 
-    const existingGroup = await Group.findOne({
+    const existingGroups = await Group.findAll({
       where: {
-        id: groupId,
+        [Op.or]: [
+          {
+            id: groupId,
+          },
+          {
+            name: req.body.name,
+            id: {
+              [Op.not]: groupId,
+            },
+          },
+        ],
       },
       attribtes: ['userId', 'id'],
     });
 
-    const policy = new GroupPolicy({ id: userId, permissions: [] }, [], existingGroup);
-    if (!policy.ownsGroup()) {
-      res.sendStatus(httpCodes.FORBIDDEN);
-      return;
-    }
-
-    // check for name uniqueness
-    const existingGroupByName = await Group.findOne({
-      where: {
-        name: req.body.name,
-        id: {
-          [Op.not]: groupId,
-        },
-      },
-    });
+    // there can only be one
+    const existingGroupById = existingGroups.find(
+      (g: Group) => g.id === parseInt(groupId, DECIMAL_BASE),
+    );
+    const existingGroupByName = existingGroups.find(
+      (g: Group) => g.name === req.body.name && g.id !== parseInt(groupId, DECIMAL_BASE),
+    );
 
     if (existingGroupByName) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'new-group-name',
         message: GROUP_ERRORS.ALREADY_EXISTS,
       });
+      return;
+    }
+
+    const policy = new GroupPolicy({ id: userId, permissions: [] }, [], existingGroupById);
+    if (!policy.ownsGroup()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
