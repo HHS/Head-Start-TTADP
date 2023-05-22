@@ -239,7 +239,7 @@ describe('Groups Handlers', () => {
         sendStatus: jest.fn(),
       };
 
-      Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 1 });
+      Group.findAll.mockReturnValueOnce([{ id: 1, name: 'Group 1', userId: 1 }]);
       const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1' };
       currentUserId.mockReturnValueOnce(userId);
@@ -266,7 +266,7 @@ describe('Groups Handlers', () => {
         sendStatus: jest.fn(),
       };
 
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
+      Group.findAll.mockReturnValue([{ id: 1, name: 'Group Old', userId: 1 }, { id: 2, name: 'Group 1', userId: 1 }]);
       const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1' };
       currentUserId.mockReturnValueOnce(userId);
@@ -296,7 +296,7 @@ describe('Groups Handlers', () => {
       };
       const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
-      Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 2 });
+      Group.findAll.mockReturnValue([{ id: 1, name: 'Group 1', userId: 2 }]);
       currentUserId.mockReturnValueOnce(userId);
       editGroup.mockReturnValue(groupResponse);
       await updateGroup(req, res);
@@ -320,8 +320,7 @@ describe('Groups Handlers', () => {
         sendStatus: jest.fn(),
       };
       const userId = 1;
-      Group.findOne.mockReturnValue(null);
-      Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 1 });
+      Group.findAll.mockReturnValue([{ id: 1, name: 'Group 1', userId: 1 }]);
       Grant.findAll.mockReturnValueOnce([
         { regionId: 1 },
       ]);
@@ -343,7 +342,7 @@ describe('Groups Handlers', () => {
         json: jest.fn(),
         status: jest.fn(),
       };
-      Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 1 });
+      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
       const userId = 1;
       const groupResponse = 1;
       currentUserId.mockReturnValueOnce(userId);
@@ -362,7 +361,7 @@ describe('Groups Handlers', () => {
         json: jest.fn(),
         sendStatus: jest.fn(),
       };
-      Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 2 });
+      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 2 });
       const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
       currentUserId.mockReturnValueOnce(userId);
@@ -381,7 +380,7 @@ describe('Groups Handlers', () => {
         json: jest.fn(),
         sendStatus: jest.fn(),
       };
-      Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 1 });
+      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
       const userId = 1;
       currentUserId.mockReturnValueOnce(userId);
       destroyGroup.mockRejectedValue(new Error('Error'));
