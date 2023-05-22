@@ -25,7 +25,7 @@ describe('MyGroups', () => {
 
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
-    fetchMock.get('/api/groups', [{ id: 1, name: 'group1' }]);
+    fetchMock.get('/api/groups', [{ id: 1, name: 'group1', isPublic: false }]);
     fetchMock.get('/api/recipient/user', [{
       id: 1,
       name: 'recipient1',
@@ -66,6 +66,7 @@ describe('MyGroups', () => {
           name: 'grant1',
         },
       ],
+      isPublic: false,
     });
 
     act(() => {
@@ -135,6 +136,7 @@ describe('MyGroups', () => {
           name: 'grant1',
         },
       ],
+      isPublic: false,
     });
 
     act(() => {
@@ -147,6 +149,11 @@ describe('MyGroups', () => {
       userEvent.type(input, 'group DING DONG');
     });
 
+    const checkbox = screen.getByRole('checkbox');
+    act(() => {
+      userEvent.click(checkbox);
+    });
+
     fetchMock.post('/api/groups/1', {
       id: 1,
       name: 'group DING DONG',
@@ -155,9 +162,8 @@ describe('MyGroups', () => {
           id: 1,
           name: 'grant1',
         },
-
       ],
-
+      isPublic: true,
     });
     const save = screen.getByText(/Save group/i);
     act(() => {

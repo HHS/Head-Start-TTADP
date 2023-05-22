@@ -66,7 +66,7 @@ export default function Groups() {
                     {group.name}
                   </td>
                   <td>
-                    {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : null}
+                    {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />}
                     {group.isPublic ? 'Public' : 'Private'}
                   </td>
                   <td align="right">
@@ -91,24 +91,21 @@ export default function Groups() {
                 <th scope="col"><span className="usa-sr-only">Actions</span></th>
               </tr>
             </thead>
-            {groups.publicGroups.map((group) => (
-              <tbody>
+            <tbody>
+              {groups.publicGroups.map((group) => (
                 <tr key={group.id}>
                   <td>
                     {group.name}
                   </td>
                   <td>
-                    {group.isPublic
-                      ? <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />
-                      : <FontAwesomeIcon className="margin-right-1" icon={faLock} />}
-                    {group.isPublic ? 'Public' : 'Private'}
+                    {group.user.name}
                   </td>
                   <td align="right">
                     <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
                   </td>
                 </tr>
-              </tbody>
-            ))}
+              ))}
+            </tbody>
           </Table>
         )}
       </div>
