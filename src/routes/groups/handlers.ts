@@ -18,7 +18,7 @@ import GroupPolicy from '../../policies/group';
 const NAMESPACE = 'GROUPS';
 const { Group, Grant } = db;
 
-interface Group {
+interface GQuery {
   id: number;
   name: string;
 }
@@ -124,10 +124,10 @@ export async function updateGroup(req: Request, res: Response) {
 
     // there can only be one
     const existingGroupById = existingGroups.find(
-      (g: Group) => g.id === parseInt(groupId, DECIMAL_BASE),
+      (g: GQuery) => g.id === parseInt(groupId, DECIMAL_BASE),
     );
     const existingGroupByName = existingGroups.find(
-      (g: Group) => g.name === req.body.name && g.id !== parseInt(groupId, DECIMAL_BASE),
+      (g: GQuery) => g.name === req.body.name && g.id !== parseInt(groupId, DECIMAL_BASE),
     );
 
     if (existingGroupByName) {
