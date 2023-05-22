@@ -9,8 +9,10 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
-import MyGroups from '../MyGroups';
+import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
+
+const error = 'This group name already exists, please use a different name';
 
 describe('MyGroups', () => {
   const renderMyGroups = (groupId = null) => {
@@ -126,6 +128,29 @@ describe('MyGroups', () => {
     expect(fetchMock.called()).toBe(true);
   });
 
+  it('you cant create a new group that reuses an existing name', async () => {
+    act(() => {
+      renderMyGroups();
+    });
+    const input = screen.getByLabelText(/Group name/i);
+    await act(async () => {
+      userEvent.type(input, 'group3');
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+    });
+
+    fetchMock.post('/api/groups', {
+      error: GROUP_FIELD_NAMES.NAME,
+      message: error,
+    });
+
+    const save = screen.getByText(/Save group/i);
+    act(() => {
+      userEvent.click(save);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+  });
+
   it('you can edit an existing group', async () => {
     fetchMock.get('/api/groups/1', {
       id: 1,
@@ -154,7 +179,7 @@ describe('MyGroups', () => {
       userEvent.click(checkbox);
     });
 
-    fetchMock.post('/api/groups/1', {
+    fetchMock.put('/api/groups/1', {
       id: 1,
       name: 'group DING DONG',
       grants: [
@@ -170,6 +195,6 @@ describe('MyGroups', () => {
       userEvent.click(save);
     });
 
-    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.called('/api/groups/1')).toBe(true);
   });
 });
