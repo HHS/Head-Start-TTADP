@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
 import db from '../../models';
 import { auditLogger } from '../../logger';
@@ -15,6 +16,11 @@ import GroupPolicy from '../../policies/group';
 
 const NAMESPACE = 'GROUPS';
 const { Group, Grant } = db;
+
+const GROUP_ERRORS = {
+  ALREADY_EXISTS: 'This group name already exists, please use a different name',
+  ERROR_SAVING: 'There was an error saving your group',
+};
 
 export async function getGroups(req: Request, res: Response) {
   try {
@@ -63,11 +69,28 @@ export async function createGroup(req: Request, res: Response) {
       return;
     }
 
+    // check for name uniqueness
+    const existingGroup = await Group.findOne({
+      where: {
+        name: req.body.name,
+      },
+    });
+
+    if (existingGroup) {
+      res.status(httpCodes.ACCEPTED).json({
+        error: 'new-group-name',
+        message: GROUP_ERRORS.ALREADY_EXISTS,
+      });
+      return;
+    }
+
     const groupResponse = await createNewGroup({ ...req.body, userId });
     res.json(groupResponse);
   } catch (e) {
     auditLogger.error(`${NAMESPACE} createGroup ${e}`);
-    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
+    res.status(httpCodes.INTERNAL_SERVER_ERROR).json({
+      message: GROUP_ERRORS.ERROR_SAVING,
+    });
   }
 }
 
@@ -89,6 +112,24 @@ export async function updateGroup(req: Request, res: Response) {
       return;
     }
 
+    // check for name uniqueness
+    const existingGroupByName = await Group.findOne({
+      where: {
+        name: req.body.name,
+        id: {
+          [Op.not]: groupId,
+        },
+      },
+    });
+
+    if (existingGroupByName) {
+      res.status(httpCodes.ACCEPTED).json({
+        error: 'new-group-name',
+        message: GROUP_ERRORS.ALREADY_EXISTS,
+      });
+      return;
+    }
+
     const groupResponse = await editGroup(parseInt(groupId, 10), {
       ...req.body,
       userId,
@@ -96,7 +137,9 @@ export async function updateGroup(req: Request, res: Response) {
     res.json(groupResponse);
   } catch (e) {
     auditLogger.error(`${NAMESPACE} updateGroup ${e}`);
-    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
+    res.status(httpCodes.INTERNAL_SERVER_ERROR).json({
+      message: GROUP_ERRORS.ERROR_SAVING,
+    });
   }
 }
 
