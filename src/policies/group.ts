@@ -1,5 +1,3 @@
-import SCOPES from '../middleware/scopeConstants';
-
 interface Permission {
   regionId: number;
   scopeId: number;
