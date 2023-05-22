@@ -16,6 +16,7 @@ import { getRecipientAndGrantsByUser } from '../../fetchers/recipient';
 import MultiSelect from '../../components/MultiSelect';
 import { createGroup, fetchGroup, updateGroup } from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
+import AppLoadingContext from '../../AppLoadingContext';
 import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
 
 const mapGrants = (grants) => grants.map((grant) => ({
@@ -44,6 +45,8 @@ export default function MyGroups({ match }) {
   // see the comment above "onSubmit" for, well, context
   const { myGroups, setMyGroups } = useContext(MyGroupsContext);
 
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+
   const {
     control,
     handleSubmit,
@@ -60,6 +63,7 @@ export default function MyGroups({ match }) {
 
   useEffect(() => {
     async function getGroup() {
+      setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
         if (existingGroupData) {
@@ -69,6 +73,8 @@ export default function MyGroups({ match }) {
         }
       } catch (err) {
         setError('There was an error fetching your group');
+      } finally {
+        setIsAppLoading(false);
       }
     }
 
@@ -76,23 +82,26 @@ export default function MyGroups({ match }) {
     if (groupId) {
       getGroup();
     }
-  }, [groupId, setValue]);
+  }, [groupId, setIsAppLoading, setValue]);
 
   useEffect(() => {
     // get grants/recipients for user
     async function fetchRecipients() {
+      setIsAppLoading(true);
       try {
         setRecipientsFetched(true);
         const response = await getRecipientAndGrantsByUser();
         setRecipients(mapRecipients(response));
       } catch (err) {
         setError('There was an error fetching your recipients');
+      } finally {
+        setIsAppLoading(false);
       }
     }
     if (!recipientsFetched) {
       fetchRecipients();
     }
-  }, [recipientsFetched]);
+  }, [recipientsFetched, setIsAppLoading]);
 
   // you'll notice that "setMyGroups" is called below
   // - since we fetch that data once, way earlier, in App.js, we must update it here
@@ -100,12 +109,13 @@ export default function MyGroups({ match }) {
   // very possible that a user will create a group, then navigate to the a page and expect to use
   // it without refreshing, so that data will not be refreshed from the API
   const onSubmit = async (data) => {
-    console.log({ data });
     const post = {
       grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
       name: data[GROUP_FIELD_NAMES.NAME],
       isPublic: !data[GROUP_FIELD_NAMES.IS_PRIVATE],
     };
+
+    setIsAppLoading(true);
 
     try {
       if (!groupId) {
@@ -140,6 +150,8 @@ export default function MyGroups({ match }) {
       history.push('/account');
     } catch (err) {
       setError('There was an error saving your group');
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
@@ -180,6 +192,7 @@ export default function MyGroups({ match }) {
                     }}
                     required
                     value={value}
+                    disabled={isAppLoading}
                   />
                 )}
               />
@@ -197,6 +210,7 @@ export default function MyGroups({ match }) {
                 control={control}
                 simple={false}
                 required="Select at least one"
+                disabled={isAppLoading}
               />
             </label>
           </div>
@@ -214,6 +228,7 @@ export default function MyGroups({ match }) {
                     onChange={(e) => controllerOnChange(e.target.checked)}
                     label="Keep this group private."
                     checked={value}
+                    disabled={isAppLoading}
                   />
                   <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
                 </>

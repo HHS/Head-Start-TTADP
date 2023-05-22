@@ -78,7 +78,9 @@ export async function createGroup(req: Request, res: Response) {
     // check for name uniqueness
     const existingGroup = await Group.findOne({
       where: {
-        name: req.body.name,
+        name: {
+          [Op.iLike]: req.body.name.trim(),
+        },
       },
     });
 
@@ -112,7 +114,9 @@ export async function updateGroup(req: Request, res: Response) {
             id: groupId,
           },
           {
-            name: req.body.name,
+            name: {
+              [Op.iLike]: req.body.name.trim(),
+            },
             id: {
               [Op.not]: groupId,
             },

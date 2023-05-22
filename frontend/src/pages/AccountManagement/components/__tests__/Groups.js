@@ -10,14 +10,17 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 import Groups from '../Groups';
 import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('Groups', () => {
   const renderGroups = () => {
     render(
       <MemoryRouter>
-        <UserContext.Provider value={{ user: { id: 1 } }}>
-          <Groups />
-        </UserContext.Provider>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user: { id: 1 } }}>
+            <Groups />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
   };

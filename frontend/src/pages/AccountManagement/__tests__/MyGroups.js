@@ -11,6 +11,7 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const error = 'This group name already exists, please use a different name';
 
@@ -18,9 +19,11 @@ describe('MyGroups', () => {
   const renderMyGroups = (groupId = null) => {
     render(
       <MemoryRouter>
-        <MyGroupsProvider>
-          <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-        </MyGroupsProvider>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <MyGroupsProvider>
+            <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+          </MyGroupsProvider>
+        </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
   };
