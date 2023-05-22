@@ -1,0 +1,23 @@
+post:
+  tags:
+    - event
+  summary: Create a new event
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            ownerId:
+              type: integer
+            pocId:
+              type: integer
+            collaboratorIds:
+              type: array
+              items:
+                type: integer
+            regionId:
+              type: integer
+            data:
+              type: object
