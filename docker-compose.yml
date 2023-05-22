@@ -61,6 +61,18 @@ services:
     ports:
       - 9200:9200
       - 9600:9600 # required for Performance Analyzer
+  testingonly:
+    build:
+      context: .
+    ports:
+      - "9999:9999"
+    depends_on:
+      - db
+    volumes:
+      - ".:/app:rw"
+    command: yarn start:testingonly
+    environment:
+      - POSTGRES_HOST=postgres_docker
 volumes:
   dbdata: {}
   miniodata: {}
