@@ -12,15 +12,11 @@ import { logger } from '../logger';
 
 jest.mock('../logger');
 
-// jest.mock('../lib/s3');
+jest.mock('../lib/s3');
 
-jest.mock('../lib/s3', () => ({
-  downloadFile: jest.fn(),
-}));
-
-jest.mock('bull');
 describe('Import Smart Sheet Events', () => {
   beforeEach(async () => {
+    console.log('\n\n\n\n-----Before All111: ');
     downloadFile.mockReset();
   });
   afterAll(async () => {
