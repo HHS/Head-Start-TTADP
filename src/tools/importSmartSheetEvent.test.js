@@ -13,6 +13,8 @@ jest.mock('../logger');
 
 jest.mock('../lib/s3');
 
+jest.mock('bull');
+
 describe('Import Smart Sheet Events', () => {
   beforeEach(async () => {
   });
@@ -61,7 +63,7 @@ describe('Import Smart Sheet Events', () => {
           },
         },
       });
-
+      expect(createdEvents[0].ownerId).toEqual(ownerId);
       expect(createdEvents.length).toBe(2);
 
       // Assert event 1.
