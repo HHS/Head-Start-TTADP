@@ -31,6 +31,8 @@ export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
   const minPermissions = [
     SCOPE_IDS.READ_ACTIVITY_REPORTS,
     SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+    SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+    SCOPE_IDS.READ_TRAINING_REPORTS,
   ];
 
   if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
