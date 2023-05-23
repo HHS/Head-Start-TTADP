@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
 import parse from 'csv-parse/lib/sync';
@@ -11,8 +12,11 @@ import {
 import { logger } from '../logger';
 
 async function parseCsv(fileKey) {
+  console.log('\n\n\n\n-----Csv1: ');
   let smartSheetEvents = {};
+  console.log('\n\n\n\n-----Csv2: ');
   const { Body: csv } = await downloadFile(fileKey);
+  console.log('\n\n\n\n-----Csv3: ');
 
   [...smartSheetEvents] = parse(csv, {
     skipEmptyLines: true,

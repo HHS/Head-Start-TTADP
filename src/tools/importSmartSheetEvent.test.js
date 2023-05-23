@@ -42,7 +42,9 @@ describe('Import Smart Sheet Events', () => {
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const allEvents = await EventReportPilot.findAll();
         preExistingEventIds = allEvents.map((event) => event.id);
+        console.log('\n\n\n\n-----Before Import: ');
         await importSmartSheetEvent(fileName);
+        console.log('\n\n\n\n-----After Import: ');
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(`Unable to setup Import Plan Events test ${error}`);
@@ -60,16 +62,6 @@ describe('Import Smart Sheet Events', () => {
       });
     });
     it('should import good events', async () => {
-      downloadFile.mockResolvedValue({ Body: readFileSync('EventsTest.csv') });
-      let smartSheetEvents = {};
-      const { Body: csv } = await downloadFile('EventsTest.csv');
-
-      [...smartSheetEvents] = parse(csv, {
-        skipEmptyLines: true,
-        columns: true,
-      });
-      console.log('\n\n\n\n-----File: ', smartSheetEvents);
-      expect(smartSheetEvents.length).toBe(4);
       const createdEvents = await EventReportPilot.findAll({
         where: {
           id: {
