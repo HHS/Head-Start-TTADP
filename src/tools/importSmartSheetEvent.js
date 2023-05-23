@@ -12,11 +12,7 @@ import {
 import { logger } from '../logger';
 
 async function parseCsv(fileKey) {
-  logger.info('\n\n\n\n-----Csv1: ');
-  logger.info('\n\n\n\n-----Csv2: ');
   const { Body: csv } = await downloadFile(fileKey);
-  logger.info('\n\n\n\n-----Csv3: ');
-
   return parse(csv, { skipEmptyLines: true, columns: true });
 }
 
@@ -25,7 +21,6 @@ export default async function importSmartSheetEvent(fileKey) {
 
   try {
     logger.info(`>>> Starting processing of ${smartSheetEvents.length} SmartSheet Events`);
-    logger.info('\n\n\n-----File to Import123: ', smartSheetEvents);
     for await (const smartSheetEvent of smartSheetEvents) {
       logger.info(`Processing Event ID: ${smartSheetEvent['Event ID']} - Creator: ${smartSheetEvent.Creator}`);
 
@@ -36,6 +31,7 @@ export default async function importSmartSheetEvent(fileKey) {
       regionId = regionId.replace(/\D/g, '');
 
       // Get user via creator email.
+      /*
       const creatorEmail = smartSheetEvent.Creator;
       const creator = await User.findOne({
         where: {
@@ -61,23 +57,25 @@ export default async function importSmartSheetEvent(fileKey) {
           },
         },
       });
+      */
+      /*
       if (existingEventReportPilot) {
         logger.info(`Event ID: '${eventId}' already exists in EventReportPilot table. Skipping...`);
         // eslint-disable-next-line no-continue
         continue;
-      } else {
-        await EventReportPilot.create({
-          pocId: 1,
-          collaboratorIds: [1],
-          ownerId,
-          regionId,
-          data: sequelize.cast(JSON.stringify(smartSheetEvent), 'jsonb'),
-        });
-      }
+      } else { */
+      await EventReportPilot.create({
+        pocId: 1,
+        collaboratorIds: [1],
+        ownerId: 1,
+        regionId,
+        data: sequelize.cast(JSON.stringify(smartSheetEvent), 'jsonb'),
+      });
+      // }
     }
     logger.info(`<<< Success! Finished processing of ${smartSheetEvents.length} SmartSheet Events`);
   } catch (err) {
     // eslint-disable-next-line no-console
-    logger.info('Smart Sheet Event Import Error: ', err);
+    console.error(err);
   }
 }
