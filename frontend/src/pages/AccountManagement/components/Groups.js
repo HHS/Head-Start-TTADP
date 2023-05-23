@@ -13,6 +13,7 @@ import { fetchGroups } from '../../../fetchers/groups';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import MyGroup from './MyGroup';
+import WidgetCard from '../../../components/WidgetCard';
 
 const GROUPS_PER_PAGE = 10;
 
@@ -82,13 +83,33 @@ export default function Groups() {
   }
 
   return (
-    <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-      <div className="display-flex flex-align-center">
-        <h2 className="margin-y-0 margin-right-2 font-sans-xl">My groups</h2>
-        <Link to="/account/my-groups" className="usa-button text-white text-no-underline">Create a group</Link>
-      </div>
-      { error ? <Alert type="error" role="alert">{error}</Alert> : null }
+    <WidgetCard
+      header={(
+        <div className="display-flex flex-align-center margin-top-2">
+          <h2 className="margin-bottom-1 margin-top-0 font-sans-xl">My groups</h2>
+          <Link to="/account/my-groups" className="usa-button text-white text-no-underline margin-left-2">Create a group</Link>
+        </div>
+      )}
+      footer={
+      showPaging
+        ? (
+          <div className="display-flex flex-justify flex-align-center padding-x-2">
+            <div>{getPageInfo()}</div>
+            <Pagination
+              className="margin-0"
+              currentPage={currentPage}
+              totalPages={getTotalPages()}
+              onClickNext={() => setCurrentPage(currentPage + 1)}
+              onClickPrevious={() => setCurrentPage(currentPage - 1)}
+              onClickPageNumber={(_e, page) => setCurrentPage(page)}
+            />
+          </div>
+        )
+        : null
+    }
+    >
       <div className="margin-bottom-3 maxw-tablet-lg">
+        { error ? <Alert type="error" role="alert">{error}</Alert> : null }
         <h3>Created by me</h3>
         {!groups || !groups.myGroups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
           <Table fullWidth>
@@ -142,26 +163,9 @@ export default function Groups() {
                 ))}
               </tbody>
             </Table>
-            {
-            showPaging
-              ? (
-                <div className="display-flex flex-justify flex-align-center padding-x-2">
-                  <div>{getPageInfo()}</div>
-                  <Pagination
-                    className="margin-0"
-                    currentPage={currentPage}
-                    totalPages={getTotalPages()}
-                    onClickNext={() => setCurrentPage(currentPage + 1)}
-                    onClickPrevious={() => setCurrentPage(currentPage - 1)}
-                    onClickPageNumber={(_e, page) => setCurrentPage(page)}
-                  />
-                </div>
-              )
-              : null
-          }
           </>
         )}
       </div>
-    </div>
+    </WidgetCard>
   );
 }

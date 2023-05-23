@@ -27,6 +27,8 @@ import { requestVerificationEmail } from '../../fetchers/users';
 
 import EmailVerifier from './EmailVerifier';
 import Groups from './components/Groups';
+import WidgetCard from '../../components/WidgetCard';
+import WidgetHeader from '../../components/WidgetHeader';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -310,9 +312,7 @@ function AccountManagement({ updateUser }) {
       <h1 className="landing margin-top-0 margin-bottom-3">Account Management</h1>
 
       {/* Profile box */}
-      <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h2 className="margin-bottom-1 font-sans-xl">Profile</h2>
-
+      <WidgetCard header={<WidgetHeader>Profile</WidgetHeader>}>
         {/* Avatar w/ name */}
         <div className="margin-bottom-3">
           <h4 className="margin-0 display-flex flex-align-center padding-bottom-3 border-bottom border-gray-20">
@@ -326,15 +326,15 @@ function AccountManagement({ updateUser }) {
           <div className="text-bold">Last login</div>
           <div>{lastLoginFormatted}</div>
         </div>
-      </div>
+      </WidgetCard>
 
-      {/* Profile box */}
+      {/* Groups box */}
       <Groups />
 
       {/* Email preferences box */}
-      <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h2 className="margin-bottom-3 font-sans-xl">Email preferences</h2>
-
+      <WidgetCard
+        header={<WidgetHeader>Email preferences</WidgetHeader>}
+      >
         {showVerifier && (
           <EmailVerifier token={token} updateUser={updateUser} />
         )}
@@ -394,8 +394,7 @@ function AccountManagement({ updateUser }) {
             />
           </FormProvider>
         )}
-
-      </div>
+      </WidgetCard>
     </>
   );
 }

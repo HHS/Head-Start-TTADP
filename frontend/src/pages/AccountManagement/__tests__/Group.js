@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { MemoryRouter } from 'react-router';
 import Group from '../Group';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const endpoint = join('/', 'api', 'groups');
 
@@ -19,7 +20,9 @@ describe('Group', () => {
   const renderGroup = (groupId) => {
     render(
       <MemoryRouter>
-        <Group match={{ params: { groupId }, path: '', url: '' }} />
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <Group match={{ params: { groupId }, path: '', url: '' }} />
+        </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
   };
