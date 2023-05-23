@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { readFileSync } from 'fs';
+import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import importSmartSheetEvent from './importSmartSheetEvent';
 import { downloadFile } from '../lib/s3';
@@ -16,6 +17,7 @@ jest.mock('../lib/s3');
 jest.mock('bull');
 
 describe('Import Smart Sheet Events', () => {
+  let user;
   beforeEach(async () => {
   });
   afterAll(async () => {
@@ -28,12 +30,14 @@ describe('Import Smart Sheet Events', () => {
     let ownerId;
     beforeAll(async () => {
       try {
-        const ownerUser = await User.findOne({
-          where: {
-            email: 'cucumber@hogwarts.com',
-          },
+        user = await User.create({
+          id: faker.datatype.number(),
+          homeRegionId: 1,
+          hsesUsername: faker.datatype.string(),
+          hsesUserId: faker.datatype.string(),
+          email: 'smartsheetevents@ss.com',
         });
-        ownerId = ownerUser.id;
+        ownerId = user.id;
         const fileName = 'EventsTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const allEvents = await EventReportPilot.findAll();
@@ -52,6 +56,13 @@ describe('Import Smart Sheet Events', () => {
           id: {
             [Op.notIn]: preExistingEventIds,
           },
+        },
+      });
+
+      // Clean up user.
+      await User.destroy({
+        where: {
+          id: user.id,
         },
       });
     });
@@ -80,7 +91,7 @@ describe('Import Smart Sheet Events', () => {
         'Reason for Activity': 'Full Enrollment',
         'Target Population(s)': 'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
         'Overall Vision/Goal for the PD Event': 'Participants will explore strategies to reach full enrollment including areas of reaching families in greatest need (homelessness/foster care), right sizing-right programming and developing selection criteria',
-        Creator: 'cucumber@hogwarts.com',
+        Creator: 'smartsheetevents@ss.com',
       });
 
       // Assert event 2.
@@ -97,7 +108,7 @@ describe('Import Smart Sheet Events', () => {
         'Reason for Activity': 'Ongoing Quality Improvement',
         'Target Population(s)': 'None',
         'Overall Vision/Goal for the PD Event': 'Oral Health',
-        Creator: 'cucumber@hogwarts.com',
+        Creator: 'smartsheetevents@ss.com',
       });
 
       // Skip unknown owner.
