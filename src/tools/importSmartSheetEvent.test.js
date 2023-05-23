@@ -31,6 +31,7 @@ describe('Import Smart Sheet Events', () => {
     let preExistingEventIds;
     let ownerId;
     beforeAll(async () => {
+      console.log('\n\n\n\n-----Before All: ');
       try {
         const ownerUser = await User.findOne({
           where: {
@@ -39,6 +40,7 @@ describe('Import Smart Sheet Events', () => {
         });
         ownerId = ownerUser.id;
         const fileName = 'EventsTest.csv';
+        console.log('\n\n\n\n-----Before Mock: ');
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const allEvents = await EventReportPilot.findAll();
         preExistingEventIds = allEvents.map((event) => event.id);
