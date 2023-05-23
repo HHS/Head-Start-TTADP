@@ -15,10 +15,9 @@ jest.mock('../lib/s3');
 
 describe('Import Smart Sheet Events', () => {
   beforeEach(async () => {
-    logger.info('\n\n\n\n-----Before All111: ');
-    downloadFile.mockReset();
   });
   afterAll(async () => {
+    downloadFile.mockReset();
     await db.sequelize.close();
   });
 
@@ -26,7 +25,6 @@ describe('Import Smart Sheet Events', () => {
     let preExistingEventIds;
     let ownerId;
     beforeAll(async () => {
-      logger.info('\n\n\n\n-----Before All: ');
       try {
         const ownerUser = await User.findOne({
           where: {
@@ -35,13 +33,10 @@ describe('Import Smart Sheet Events', () => {
         });
         ownerId = ownerUser.id;
         const fileName = 'EventsTest.csv';
-        logger.info('\n\n\n\n-----Before Mock: ');
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const allEvents = await EventReportPilot.findAll();
         preExistingEventIds = allEvents.map((event) => event.id);
-        logger.info('\n\n\n\n-----Before Import: ');
         await importSmartSheetEvent(fileName);
-        logger.info('\n\n\n\n-----After Import: ');
       } catch (error) {
         // eslint-disable-next-line no-console
         logger.info(`Unable to setup Import Plan Events test ${error}`);
@@ -67,8 +62,6 @@ describe('Import Smart Sheet Events', () => {
         },
       });
 
-      logger.info('\n\n\n-------Data:', createdEvents[0].data);
-      logger.info('\n\n\n-------Data2:', createdEvents);
       // Assert created count.
       expect(createdEvents[0].data).toEqual({
         'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
