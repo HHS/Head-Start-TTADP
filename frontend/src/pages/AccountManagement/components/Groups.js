@@ -9,21 +9,24 @@ import {
   Table,
   Pagination,
 } from '@trussworks/react-uswds';
-import { fetchGroups } from '../../../fetchers/groups';
 import UserContext from '../../../UserContext';
-import AppLoadingContext from '../../../AppLoadingContext';
 import MyGroup from './MyGroup';
 import WidgetCard from '../../../components/WidgetCard';
+import { MyGroupsContext } from '../../../components/MyGroupsProvider';
 
 const GROUPS_PER_PAGE = 10;
 
 export default function Groups() {
-  const [groups, setGroups] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [offset, setOffset] = useState(0);
   const [error, setError] = useState(null);
   const { user } = useContext(UserContext);
-  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const { myGroups, setMyGroups } = useContext(MyGroupsContext);
+
+  const groups = {
+    myGroups: (myGroups || []).filter((group) => group.userId === user.id),
+    publicGroups: (myGroups || []).filter((group) => group.userId !== user.id),
+  };
 
   const getPageInfo = () => {
     if (!groups) return '';
@@ -48,27 +51,6 @@ export default function Groups() {
   useEffect(() => {
     setOffset(GROUPS_PER_PAGE * (currentPage - 1));
   }, [currentPage]);
-
-  useEffect(() => {
-    async function getGroups() {
-      setIsAppLoading(true);
-      try {
-        const response = await fetchGroups();
-        setGroups({
-          myGroups: response.filter((group) => group.userId === user.id),
-          publicGroups: response.filter((group) => group.userId !== user.id),
-        });
-      } catch (err) {
-        setGroups({ myGroups: [], publicGroups: [] });
-      } finally {
-        setIsAppLoading(false);
-      }
-    }
-
-    if (!groups && !isAppLoading && user.id) {
-      getGroups();
-    }
-  }, [groups, isAppLoading, setIsAppLoading, user.id]);
 
   const showPaging = groups && groups.publicGroups.length > GROUPS_PER_PAGE;
 
@@ -125,8 +107,8 @@ export default function Groups() {
                 <MyGroup
                   key={group.id}
                   group={group}
-                  setGroups={setGroups}
-                  groups={groups}
+                  setMyGroups={setMyGroups}
+                  myGroups={myGroups}
                   setError={setError}
                 />
               ))}
@@ -157,7 +139,7 @@ export default function Groups() {
                       {group.user.name}
                     </td>
                     <td align="right">
-                      <Link disabled={isAppLoading} to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
+                      <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
                     </td>
                   </tr>
                 ))}

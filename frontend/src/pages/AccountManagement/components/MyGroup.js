@@ -12,7 +12,7 @@ import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
 
 export default function MyGroup({
-  group, setGroups, groups, setError,
+  group, setMyGroups, myGroups, setError,
 }) {
   const modalRef = useRef();
 
@@ -21,10 +21,7 @@ export default function MyGroup({
   const onDelete = async (groupId) => {
     try {
       await deleteGroup(groupId);
-      setGroups({
-        myGroups: groups.myGroups.filter((g) => g.id !== groupId),
-        publicGroups: groups.publicGroups.filter((g) => g.id !== groupId),
-      });
+      setMyGroups(myGroups.filter((g) => g.id !== groupId));
     } catch (err) {
       setError('There was an error deleting your group');
     }
@@ -78,18 +75,11 @@ MyGroup.propTypes = {
     name: PropTypes.string.isRequired,
     isPublic: PropTypes.bool.isRequired,
   }).isRequired,
-  setGroups: PropTypes.func.isRequired,
-  groups: PropTypes.shape({
-    myGroups: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      isPublic: PropTypes.bool.isRequired,
-    })).isRequired,
-    publicGroups: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      isPublic: PropTypes.bool.isRequired,
-    })).isRequired,
-  }).isRequired,
+  setMyGroups: PropTypes.func.isRequired,
+  myGroups: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    isPublic: PropTypes.bool.isRequired,
+  })).isRequired,
   setError: PropTypes.func.isRequired,
 };
