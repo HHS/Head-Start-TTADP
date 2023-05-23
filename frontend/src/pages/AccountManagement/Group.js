@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
@@ -7,6 +7,8 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Alert } from '@trussworks/react-uswds';
 import colors from '../../colors';
 import { fetchGroup } from '../../fetchers/groups';
+import AppLoadingContext from '../../AppLoadingContext';
+import WidgetCard from '../../components/WidgetCard';
 
 export default function Group({ match }) {
   const { groupId } = match.params;
@@ -17,8 +19,11 @@ export default function Group({ match }) {
     grants: [],
   });
 
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+
   useEffect(() => {
     async function getGroup() {
+      setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
         if (existingGroupData) {
@@ -26,6 +31,8 @@ export default function Group({ match }) {
         }
       } catch (err) {
         setError('There was an error fetching your group');
+      } finally {
+        setIsAppLoading(false);
       }
     }
 
@@ -33,7 +40,7 @@ export default function Group({ match }) {
     if (groupId) {
       getGroup();
     }
-  }, [groupId]);
+  }, [groupId, setIsAppLoading]);
 
   return (
     <>
@@ -49,14 +56,15 @@ export default function Group({ match }) {
         Back to Account Management
       </Link>
 
-      <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
+      <WidgetCard
+        header={<h1 className="margin-top-2 margin-bottom-4 font-serif-xl">{group.name}</h1>}
+      >
         {error ? (
           <Alert type="error" role="alert">
             {error}
           </Alert>
         ) : null}
 
-        <h1 className="margin-top-0 landing">{group.name}</h1>
         <ul className="usa-list usa-list--unstyled">
           {group.grants.map((grant) => (
             <li key={grant.id}>
@@ -64,8 +72,7 @@ export default function Group({ match }) {
             </li>
           ))}
         </ul>
-      </div>
-
+      </WidgetCard>
     </>
   );
 }
