@@ -13,16 +13,11 @@ import { logger } from '../logger';
 
 async function parseCsv(fileKey) {
   logger.info('\n\n\n\n-----Csv1: ');
-  let smartSheetEvents = {};
   logger.info('\n\n\n\n-----Csv2: ');
   const { Body: csv } = await downloadFile(fileKey);
   logger.info('\n\n\n\n-----Csv3: ');
 
-  [...smartSheetEvents] = parse(csv, {
-    skipEmptyLines: true,
-    columns: true,
-  });
-  return smartSheetEvents;
+  return parse(csv, { skipEmptyLines: true, columns: true });
 }
 
 export default async function importSmartSheetEvent(fileKey) {
