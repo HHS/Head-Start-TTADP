@@ -19,12 +19,8 @@ export default function MyGroup({
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   const onDelete = async (groupId) => {
-    try {
-      await deleteGroup(groupId);
-      setMyGroups(myGroups.filter((g) => g.id !== groupId));
-    } catch (err) {
-      setError('There was an error deleting your group');
-    }
+    await deleteGroup(groupId);
+    setMyGroups(myGroups.filter((g) => g.id !== groupId));
   };
 
   return (

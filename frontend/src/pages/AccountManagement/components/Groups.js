@@ -29,7 +29,6 @@ export default function Groups() {
   };
 
   const getPageInfo = () => {
-    if (!groups) return '';
     const from = offset >= groups.publicGroups.length ? 0 : offset + 1;
     const offsetTo = GROUPS_PER_PAGE * currentPage;
     let to;
@@ -43,7 +42,6 @@ export default function Groups() {
   };
 
   const getTotalPages = () => {
-    if (!groups) return 0;
     const totalPages = Math.floor(groups.publicGroups.length / GROUPS_PER_PAGE);
     return groups.publicGroups.length % GROUPS_PER_PAGE > 0 ? totalPages + 1 : totalPages;
   };

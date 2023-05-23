@@ -252,7 +252,7 @@ describe('Groups', () => {
     const group11 = await screen.findByText(/group11/i);
     expect(group11).toBeInTheDocument();
 
-    const nextPage = await screen.findByRole('button', { name: /next page/i });
+    let nextPage = await screen.findByRole('button', { name: /next page/i });
     act(() => {
       userEvent.click(nextPage);
     });
@@ -267,5 +267,31 @@ describe('Groups', () => {
 
     const group11Again = await screen.findByText(/group11/i);
     expect(group11Again).toBeInTheDocument();
+
+    nextPage = await screen.findByRole('button', { name: /next page/i });
+    act(() => {
+      userEvent.click(nextPage);
+    });
+
+    nextPage = await screen.findByRole('button', { name: /next page/i });
+    act(() => {
+      userEvent.click(nextPage);
+    });
+
+    const group31 = await screen.findByText(/group31/i);
+    expect(group31).toBeInTheDocument();
+
+    nextPage = screen.queryByRole('button', { name: /next page/i });
+    expect(nextPage).toBeNull();
+  });
+
+  it('handles null response', async () => {
+    fetchMock.get('/api/groups', null);
+
+    act(() => {
+      renderGroups();
+    });
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/No one has made any groups in your region public yet/i)).toBeInTheDocument();
   });
 });

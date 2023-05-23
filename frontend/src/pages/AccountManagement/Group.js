@@ -26,9 +26,7 @@ export default function Group({ match }) {
       setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
-        if (existingGroupData) {
-          setGroup(existingGroupData);
-        }
+        setGroup(existingGroupData);
       } catch (err) {
         setError('There was an error fetching your group');
       } finally {
@@ -41,6 +39,10 @@ export default function Group({ match }) {
       getGroup();
     }
   }, [groupId, setIsAppLoading]);
+
+  if (!group) {
+    return null;
+  }
 
   return (
     <>
