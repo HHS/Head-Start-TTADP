@@ -136,6 +136,8 @@ const Submitter = ({
               incompletePages={incompletePages}
               approverStatusList={approverStatusList}
               creatorRole={creatorRole}
+              displayId={displayId}
+              reportId={id}
             />
           )}
         {approved
