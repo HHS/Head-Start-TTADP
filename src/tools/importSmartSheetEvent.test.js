@@ -12,7 +12,11 @@ import { logger } from '../logger';
 
 jest.mock('../logger');
 
-jest.mock('../lib/s3');
+// jest.mock('../lib/s3');
+
+jest.mock('../lib/s3', () => ({
+  downloadFile: jest.fn(),
+}));
 
 jest.mock('bull');
 describe('Import Smart Sheet Events', () => {
@@ -41,7 +45,7 @@ describe('Import Smart Sheet Events', () => {
         await importSmartSheetEvent(fileName);
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.log(`Unable to setup Import Plan Goals test ${error}`);
+        console.log(`Unable to setup Import Plan Events test ${error}`);
       }
     });
 
