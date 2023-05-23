@@ -25,6 +25,7 @@ export default async function importSmartSheetEvent(fileKey) {
 
   try {
     logger.info(`>>> Starting processing of ${smartSheetEvents.length} SmartSheet Events`);
+    logger.info('\n\n\n-----File to Import123: ', smartSheetEvents);
     for await (const smartSheetEvent of smartSheetEvents) {
       logger.info(`Processing Event ID: ${smartSheetEvent['Event ID']} - Creator: ${smartSheetEvent.Creator}`);
 

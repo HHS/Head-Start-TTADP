@@ -69,11 +69,6 @@ describe('Import Smart Sheet Events', () => {
       console.log('\n\n\n----- HERE4');
 
       // Assert created count.
-      expect(createdEvents.length).toBe(2);
-
-      // Assert event 1.
-      expect(createdEvents[0].ownerId).toEqual(ownerId);
-      expect(createdEvents[0].regionId).toEqual(1);
       expect(createdEvents[0].data).toEqual({
         'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
         'Event ID': 'R01-PD-23-1035',
@@ -87,6 +82,12 @@ describe('Import Smart Sheet Events', () => {
         'Overall Vision/Goal for the PD Event': 'Participants will explore strategies to reach full enrollment including areas of reaching families in greatest need (homelessness/foster care), right sizing-right programming and developing selection criteria',
         Creator: 'cucumber@hogwarts.com',
       });
+
+      expect(createdEvents.length).toBe(2);
+
+      // Assert event 1.
+      expect(createdEvents[0].ownerId).toEqual(ownerId);
+      expect(createdEvents[0].regionId).toEqual(1);
 
       // Assert event 2.
       expect(createdEvents[1].ownerId).toEqual(ownerId);
