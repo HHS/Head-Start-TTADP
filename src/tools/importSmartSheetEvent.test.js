@@ -74,6 +74,8 @@ describe('Import Smart Sheet Events', () => {
         },
       });
 
+      logger.info('\n\n\n-------Data:', createdEvents[0].data);
+      logger.info('\n\n\n-------Data2:', createdEvents);
       // Assert created count.
       expect(createdEvents[0].data).toEqual({
         'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
