@@ -211,4 +211,58 @@ describe('Groups', () => {
       expect(screen.getByText(/There was an error deleting your group/i)).toBeInTheDocument();
     });
   });
+
+  it('more than 10 groups shows pagination', async () => {
+    const mockGroups = (length) => {
+      const groups = [];
+      // eslint-disable-next-line no-plusplus
+      for (let i = 1; i < length; i++) {
+        groups.push({
+          id: i,
+          name: `group${i}`,
+          userId: 3,
+          isPublic: true,
+          user: {
+            name: 'Tim User',
+          },
+        });
+      }
+      return groups;
+    };
+
+    fetchMock.get('/api/groups', mockGroups(33));
+
+    act(() => {
+      renderGroups();
+    });
+
+    const group1 = await screen.findByText('group1');
+    expect(group1).toBeInTheDocument();
+
+    const page2 = await screen.findByRole('button', { name: /page 2/i });
+    expect(page2).toBeInTheDocument();
+
+    act(() => {
+      userEvent.click(page2);
+    });
+
+    const group11 = await screen.findByText(/group11/i);
+    expect(group11).toBeInTheDocument();
+
+    const nextPage = await screen.findByRole('button', { name: /next page/i });
+    act(() => {
+      userEvent.click(nextPage);
+    });
+
+    const group21 = await screen.findByText(/group21/i);
+    expect(group21).toBeInTheDocument();
+
+    const previousPage = await screen.findByRole('button', { name: /previous page/i });
+    act(() => {
+      userEvent.click(previousPage);
+    });
+
+    const group11Again = await screen.findByText(/group11/i);
+    expect(group11Again).toBeInTheDocument();
+  });
 });
