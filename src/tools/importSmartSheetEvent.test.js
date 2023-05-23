@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { readFileSync } from 'fs';
-import parse from 'csv-parse/lib/sync';
 import { Op } from 'sequelize';
 import importSmartSheetEvent from './importSmartSheetEvent';
 import { downloadFile } from '../lib/s3';
@@ -16,7 +15,7 @@ jest.mock('../lib/s3');
 
 describe('Import Smart Sheet Events', () => {
   beforeEach(async () => {
-    console.log('\n\n\n\n-----Before All111: ');
+    logger.info('\n\n\n\n-----Before All111: ');
     downloadFile.mockReset();
   });
   afterAll(async () => {
@@ -27,7 +26,7 @@ describe('Import Smart Sheet Events', () => {
     let preExistingEventIds;
     let ownerId;
     beforeAll(async () => {
-      console.log('\n\n\n\n-----Before All: ');
+      logger.info('\n\n\n\n-----Before All: ');
       try {
         const ownerUser = await User.findOne({
           where: {
@@ -36,16 +35,16 @@ describe('Import Smart Sheet Events', () => {
         });
         ownerId = ownerUser.id;
         const fileName = 'EventsTest.csv';
-        console.log('\n\n\n\n-----Before Mock: ');
+        logger.info('\n\n\n\n-----Before Mock: ');
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const allEvents = await EventReportPilot.findAll();
         preExistingEventIds = allEvents.map((event) => event.id);
-        console.log('\n\n\n\n-----Before Import: ');
+        logger.info('\n\n\n\n-----Before Import: ');
         await importSmartSheetEvent(fileName);
-        console.log('\n\n\n\n-----After Import: ');
+        logger.info('\n\n\n\n-----After Import: ');
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.log(`Unable to setup Import Plan Events test ${error}`);
+        logger.info(`Unable to setup Import Plan Events test ${error}`);
       }
     });
 

@@ -12,11 +12,11 @@ import {
 import { logger } from '../logger';
 
 async function parseCsv(fileKey) {
-  console.log('\n\n\n\n-----Csv1: ');
+  logger.info('\n\n\n\n-----Csv1: ');
   let smartSheetEvents = {};
-  console.log('\n\n\n\n-----Csv2: ');
+  logger.info('\n\n\n\n-----Csv2: ');
   const { Body: csv } = await downloadFile(fileKey);
-  console.log('\n\n\n\n-----Csv3: ');
+  logger.info('\n\n\n\n-----Csv3: ');
 
   [...smartSheetEvents] = parse(csv, {
     skipEmptyLines: true,
@@ -83,6 +83,6 @@ export default async function importSmartSheetEvent(fileKey) {
     logger.info(`<<< Success! Finished processing of ${smartSheetEvents.length} SmartSheet Events`);
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('Smart Sheet Event Import Error: ', err);
+    logger.info('Smart Sheet Event Import Error: ', err);
   }
 }
