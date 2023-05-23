@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { readFileSync } from 'fs';
 import { Op } from 'sequelize';
 import { listenerCount } from 'process';
@@ -35,7 +36,9 @@ describe('Import Smart Sheet Events', () => {
         ownerId = ownerUser.id;
         const fileName = 'EventsTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+        console.log('\n\n\n----- HERE1');
         const allEvents = await EventReportPilot.findAll();
+        console.log('\n\n\n----- HERE2');
         preExistingEventIds = allEvents.map((event) => event.id);
         await importSmartSheetEvent(fileName);
       } catch (error) {
@@ -55,13 +58,15 @@ describe('Import Smart Sheet Events', () => {
       });
     });
     it('should import good events', async () => {
+      console.log('\n\n\n----- HERE3');
       const createdEvents = await EventReportPilot.findAll({
         where: {
           id: {
-            [Op.notIn]: preExistingEventIds,
+            [Op.notIn]: preExistingEventIds || [],
           },
         },
       });
+      console.log('\n\n\n----- HERE4');
 
       // Assert created count.
       expect(createdEvents.length).toBe(2);
