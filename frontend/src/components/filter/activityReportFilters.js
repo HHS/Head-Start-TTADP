@@ -357,7 +357,7 @@ export const targetPopulationsFilter = {
 
 export const singleOrMultiRecipientsFilter = {
   id: 'singleOrMultiRecipients',
-  display: 'Recipient count',
+  display: 'Number of recipients',
   conditions: SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
   defaultValues: {
     is: 'single-recipient',
