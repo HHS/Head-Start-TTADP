@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { readFileSync } from 'fs';
+import parse from 'csv-parse/lib/sync';
 import { Op } from 'sequelize';
 import importSmartSheetEvent from './importSmartSheetEvent';
 import { downloadFile } from '../lib/s3';
@@ -55,6 +56,16 @@ describe('Import Smart Sheet Events', () => {
       });
     });
     it('should import good events', async () => {
+      downloadFile.mockResolvedValue({ Body: readFileSync('EventsTest.csv') });
+      let smartSheetEvents = {};
+      const { Body: csv } = await downloadFile('EventsTest.csv');
+
+      [...smartSheetEvents] = parse(csv, {
+        skipEmptyLines: true,
+        columns: true,
+      });
+      console.log('\n\n\n\n-----File: ', smartSheetEvents);
+      expect(smartSheetEvents.length).toBe(4);
       const createdEvents = await EventReportPilot.findAll({
         where: {
           id: {
