@@ -19,7 +19,6 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
@@ -145,7 +144,6 @@ const Navigator = ({
   const {
     formState,
     getValues,
-    reset,
     setValue,
     setError,
     watch,
@@ -729,12 +727,6 @@ const Navigator = ({
       setWeAreAutoSaving(false); // enable the save buttons
     }
   }, autoSaveInterval);
-
-  // A new form page is being shown so we need to reset `react-hook-form` so validations are
-  // reset and the proper values are placed inside inputs
-  useDeepCompareEffect(() => {
-    reset(formData);
-  }, [currentPage, reset, formData]);
 
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
