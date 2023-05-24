@@ -14,7 +14,6 @@ export const NEW_OBJECTIVE = () => ({
   files: [],
   resources: [],
   topics: [],
-  roles: [],
   status: 'Not Started',
   isNew: true,
 });
