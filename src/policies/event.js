@@ -24,12 +24,30 @@ export default class EventReport {
     ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
   }
 
-  canWriteInRegion() {
+  /**
+   * Determines if the user has write access to the specified region
+   * or to the region of their current event report.
+   *
+   * @param {string|null} regionId - The ID of the region to check access for.
+   * If null, checks the region of the given event report.
+   *
+   * @returns {boolean} - Returns true if the user has write access to the region,
+   * otherwise returns false.
+   *
+   * @throws {Error} When the regionId is not provided and there is no event report available.
+   */
+  canWriteInRegion(regionId = null) {
     if (this.isAdmin()) { return true; }
+
+    if (regionId == null) {
+      return !!this.permissions.find((p) => [
+        SCOPES.READ_WRITE_TRAINING_REPORTS,
+      ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
+    }
 
     return !!this.permissions.find((p) => [
       SCOPES.READ_WRITE_TRAINING_REPORTS,
-    ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
+    ].includes(p.scopeId) && p.regionId === regionId);
   }
 
   canDelete() {
