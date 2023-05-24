@@ -6,6 +6,10 @@ yarn-error.log
 docs/circleci/test_report.md
 lcov.info
 playwright
+tests/e2e/report
+tests/api/report
+tests/e2e/test-results
+tests/api/test-results
 
 # Ignore /doc => /docs symbolic link created for adr-tools
 /doc
