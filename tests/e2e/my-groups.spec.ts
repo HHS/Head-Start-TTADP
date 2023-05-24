@@ -9,15 +9,21 @@ test('my groups', async ({ page }) => {
   await page.getByTestId('header-avatar').click();
   await page.getByRole('link', { name: 'Account Management' }).click();
 
+
+  const userDataByRecipient = page.waitForResponse(/api\/recipient\/user/)
   // create a  new group
   await page.getByRole('link', { name: 'Create group' }).click();
   await page.getByTestId('textInput').fill('A new group for me');
+  await userDataByRecipient;
 
   await page.locator('[class$="-ValueContainer"]').click();
+
   await page.keyboard.press('Enter');
 
   await blur(page);
   await page.getByRole('button', { name: 'Save group' }).click();
+
+  await page.waitForTimeout(2500);
 
   // navigate to the recipient search page
   const recipientPageLoad = page.waitForResponse(/api\/recipient\/search/)

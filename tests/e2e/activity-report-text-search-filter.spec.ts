@@ -65,9 +65,10 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
     // Requested by.
     await page.getByRole('group', { name: /Who requested this activity\? Use "Regional Office" for TTA not requested by recipient/i }).locator('label').filter({ hasText: 'Recipient' }).click();
-    // await page.getByRole('group', { name: /Reason for activity/i }).getByText('- Select -').click();
-    await page.getByLabel(/reason/i).click();
-    await page.locator('#react-select-9-option-0').click();
+    // reason
+    await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').click();
+    await page.keyboard.type('Change in scope');
+    await page.keyboard.press('Enter');
     await blur(page);
     // Start and End Dates.
     await page.getByLabel(/Start date/i).fill('01/17/2023');
@@ -86,23 +87,26 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByLabel(/Number of participants involved/i).fill('5');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    // Goals page.
-    await page.getByLabel(/select recipient\'s goal/i).click();
-    await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
+    await page.waitForTimeout(3000);
 
-    // Goal title.
+    // Goals page.
+    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
+    .click();
+
+    await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
-    await page.keyboard.type('Learn how to cook.');
-    await blur(page);
+    await page.getByTestId('textarea').fill('Learn how to cook.');
+ 
+    await page.waitForTimeout(3000);
 
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-15-option-0').click();
-    // Objective title.
-    await page.getByLabel('TTA objective/i').fill('Prepare your first meal.');
+    await page.keyboard.press('Enter');
+    await page.getByLabel('TTA objective *').fill('Prepare your first meal');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-19-option-0').click();
     await blur(page);
+
     // Links.
     await page.getByTestId('textInput').click();
     await page.getByTestId('textInput').fill('https://test1.gov');
@@ -120,7 +124,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByLabel(/When do you anticipate completing step 1/i).fill('01/17/2023');
     await page.getByTestId('specialistNextSteps-button').click();
     // Specialist step 2.
-    await page.getByLabel(/Step 2/i).fill('If you can dream it, you can do it.');
+    await page.getByLabel(/Step 2/i).first().fill('If you can dream it, you can do it.');
     await page.getByLabel(/When do you anticipate completing step 2/i).fill('01/17/2023');
     // Recipient step 1.
     await page.getByTestId('recipientNextSteps-input').fill('Just one small positive thought in the morning can change your whole day.');
@@ -304,9 +308,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reason');
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
     await page.getByText('Select reasons to filter by').click();
+    await page.keyboard.type('Change in scope');
     await page.keyboard.press('Enter');
     prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs)
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
@@ -314,9 +318,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is not');
     await page.getByText('Select reasons to filter by').click();
+    await page.keyboard.type('Change in scope');
     await page.keyboard.press('Enter');
     prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();   

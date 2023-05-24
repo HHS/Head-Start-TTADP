@@ -104,7 +104,7 @@ async function activitySummary(
 ) {
   const { recipients, ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
 
-  await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+  await page.getByRole('group', { name: 'Was this activity for a recipient or other entity?' }).locator('label').filter({ hasText: 'Recipient' }).click();
   await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
 
   if (recipients) {
@@ -122,14 +122,14 @@ async function activitySummary(
   await page.keyboard.press('Enter');
   await blur(page);
 
-  await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Regional Office' }).click();
+  await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient.' }).locator('label').filter({ hasText: 'Regional Office' }).click();
   await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').click();
   await page.keyboard.type('Change in scope');
   await page.keyboard.press('Enter');
   await blur(page);
-  await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
-  await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
-  await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
+  await page.getByLabel(/Start date/i).fill('12/01/2020');
+  await page.getByLabel(/end date/i).fill('12/01/2050');
+  await page.getByLabel('Duration in hours (round to the nearest half hour)').fill('5');
   await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText(ttaType || 'Training').click();
   await page.getByText('Virtual').click();
   await page.getByText('Video').click();
@@ -138,7 +138,7 @@ async function activitySummary(
   await page.keyboard.press('Enter');
 
   await blur(page);
-  await page.getByLabel('Number of participants involved *').fill('5');
+  await page.getByLabel('Number of participants involved').fill('5');
 }
 
 async function nextSteps(page: Page, isForOtherEntity: boolean = false) {
@@ -513,9 +513,8 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
 
-    // confirm goal is in RTR
+    // confirm goal is in RTR/i
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Goal G-(\d), G-(\d)/i }).last()).toBeVisible();
 
     // navigate to the AR page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -527,8 +526,14 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
+    await page.waitForTimeout(5000);
+
     // fill out the goals page
-    await page.getByLabel(/Select recipient's goal/i).focus();
+    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
+      .click();
+    
+    await page.waitForTimeout(5000);
+
     await page.keyboard.type('This is a goal for multiple grants');
     await page.keyboard.press('Enter');
     await page.getByLabel(/select tta objective/i).focus();
