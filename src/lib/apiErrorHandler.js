@@ -13,6 +13,7 @@ import { auditLogger as logger } from '../logger';
  */
 async function handleSequelizeError(req, res, error, logContext) {
   try {
+    const err = error.stack || error.message || error;
     const requestErrorId = await createRequestError({
       operation: 'SequelizeError',
       uri: req.originalUrl,
@@ -21,10 +22,10 @@ async function handleSequelizeError(req, res, error, logContext) {
       responseBody: { ...error, errorStack: error.stack },
       responseCode: INTERNAL_SERVER_ERROR,
     });
-    const err = error.stack || error;
     logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${err}`);
-  } catch (err) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to save to db - ${error}`);
+  } catch (e) {
+    const err = e.stack || e.message || e;
+    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${err}`);
   }
   res.status(INTERNAL_SERVER_ERROR).end();
 }
@@ -36,7 +37,7 @@ export const handleError = async (req, res, error, logContext) => {
   if (error instanceof Sequelize.Error) {
     await handleSequelizeError(req, res, error, logContext);
   } else {
-    const err = error.stack || error;
+    const err = error.stack || error.message || error;
     logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${err}`);
     res.status(INTERNAL_SERVER_ERROR).end();
   }
