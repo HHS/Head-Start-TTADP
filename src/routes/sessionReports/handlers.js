@@ -48,7 +48,7 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' });
     }
 
-    const auth = getSessionAuthorization(req, res, session);
+    const auth = await getSessionAuthorization(req, res, session);
 
     if (!auth.canRead()) {
       return res.sendStatus(403);
@@ -94,7 +94,7 @@ export const updateHandler = async (req, res) => {
     }
 
     const session = findSessionById(id);
-    const auth = getSessionAuthorization(req, res, session);
+    const auth = await getSessionAuthorization(req, res, session);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
     const updatedSession = await updateSession(id, req.body);
@@ -109,7 +109,7 @@ export const deleteHandler = async (req, res) => {
     const { id } = req.params;
 
     const session = findSessionById(id);
-    const auth = getSessionAuthorization(req, res, session);
+    const auth = await getSessionAuthorization(req, res, session);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
     await destroySession(id);
