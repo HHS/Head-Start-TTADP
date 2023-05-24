@@ -233,16 +233,16 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v9-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v8-yarn-deps-
+            - v9-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
             - packages/common/node_modules
-          key: v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v9-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
