@@ -27,8 +27,9 @@ const runJob = () => {
   try {
     return updateGrantsRecipients();
   } catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
-    logger.error(error.stack);
+    const e = error?.stack || error?.message || error;
+    auditLogger.error(`Error processing HSES file: ${e}`);
+    logger.error(e);
   }
   return false;
 };
@@ -43,8 +44,9 @@ const runDailyEmailJob = () => {
       await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
     } catch (error) {
-      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-      logger.error(`Daily Email Digest Error: ${error.stack}`);
+      const e = error?.stack || error?.message || error;
+      auditLogger.error(`Error processing Daily Email Digest job: ${e}`);
+      logger.error(`Daily Email Digest Error: ${e}`);
     }
   })();
   return true;
@@ -60,8 +62,9 @@ const runWeeklyEmailJob = () => {
       await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
     } catch (error) {
-      auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
-      logger.error(`Weekly Email Digest Error: ${error.stack}`);
+      const e = error?.stack || error?.message || error;
+      auditLogger.error(`Error processing Weekly Email Digest job: ${e}`);
+      logger.error(`Weekly Email Digest Error: ${e}`);
     }
   })();
   return true;
@@ -88,8 +91,9 @@ const runMonthlyEmailJob = () => {
       await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
     } catch (error) {
-      auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
-      logger.error(`Monthly Email Digest Error: ${error.stack}`);
+      const e = error?.stack || error?.message || error;
+      auditLogger.error(`Error processing Monthly Email Digest job: ${e}`);
+      logger.error(`Monthly Email Digest Error: ${e}`);
     }
   })();
   return true;
