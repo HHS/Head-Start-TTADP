@@ -4,7 +4,7 @@ export default class SessionReport {
   constructor(user, sessionReport) {
     this.user = user;
     this.sessionReport = sessionReport;
-    this.permissions = user.permissions;
+    this.permissions = user.permissions || [];
   }
 
   canCreate() {

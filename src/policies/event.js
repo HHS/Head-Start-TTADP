@@ -4,7 +4,7 @@ export default class EventReport {
   constructor(user, eventReport) {
     this.user = user;
     this.eventReport = eventReport;
-    this.permissions = user.permissions;
+    this.permissions = user.permissions || [];
   }
 
   canCreate() {
