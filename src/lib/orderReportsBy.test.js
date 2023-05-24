@@ -4,10 +4,8 @@ import {
 import orderReportsBy from './orderReportsBy';
 
 describe('orderReportsBy', () => {
-
   it('should sort by author', () => {
     const result = orderReportsBy('author', 'ASC');
-    console.log('result is', result);
     expect(result).toEqual([[sequelize.literal('authorName ASC')]]);
   });
 
@@ -25,7 +23,7 @@ describe('orderReportsBy', () => {
     const result = orderReportsBy('regionId', 'DESC');
     expect(result).toEqual([
       ['regionId', 'DESC'],
-      ['id', 'DESC']
+      ['id', 'DESC'],
     ]);
   });
 
@@ -33,7 +31,7 @@ describe('orderReportsBy', () => {
     const result = orderReportsBy('activityRecipients', 'ASC');
     expect(result).toEqual([
       [sequelize.literal('recipientName ASC')],
-      [sequelize.literal('otherEntityName ASC')]
+      [sequelize.literal('otherEntityName ASC')],
     ]);
   });
 
@@ -66,5 +64,4 @@ describe('orderReportsBy', () => {
     const result = orderReportsBy('invalid', 'ASC');
     expect(result).toEqual('');
   });
-
 });
