@@ -57,7 +57,7 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
 
-    const auth = getEventAuthorization(req, res, event);
+    const auth = await getEventAuthorization(req, res, event);
 
     if (!auth.canRead()) {
       return res.sendStatus(403);
@@ -76,7 +76,7 @@ export const createHandler = async (req, res) => {
     }
 
     const { regionId } = req.body;
-    const auth = getEventAuthorization(req, res, { regionId });
+    const auth = await getEventAuthorization(req, res, { regionId });
     if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
 
     const event = await createEvent(req.body);
@@ -95,7 +95,7 @@ export const updateHandler = async (req, res) => {
     }
 
     const { regionId } = req.body;
-    const auth = getEventAuthorization(req, res, { regionId });
+    const auth = await getEventAuthorization(req, res, { regionId });
     if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
 
     const event = await updateEvent(eventId, req.body);
@@ -114,7 +114,7 @@ export const deleteHandler = async (req, res) => {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
 
-    const auth = getEventAuthorization(req, res, event);
+    const auth = await getEventAuthorization(req, res, event);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
     await destroyEvent(eventId);
