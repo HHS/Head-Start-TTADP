@@ -62,8 +62,7 @@ export default async function importSmartSheetEvent(fileKey) {
         continue;
       } else {
         await EventReportPilot.create({
-          pocId: 1,
-          collaboratorIds: [1],
+          collaboratorIds: [],
           ownerId,
           regionId,
           data: sequelize.cast(JSON.stringify(smartSheetEvent), 'jsonb'),
