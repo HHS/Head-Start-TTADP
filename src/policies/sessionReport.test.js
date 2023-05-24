@@ -87,13 +87,6 @@ describe('Session Report policies', () => {
       expect(policy.canUpdate()).toBe(true);
     });
 
-    // it('is true if the user is a collaborator', () => {
-    //   const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
-    //   reportRegion1.collaboratorIds = [authorRegion2.id];
-    //   const policy = new SessionReport(authorRegion2, reportRegion1);
-    //   expect(policy.canUpdate()).toBe(true);
-    // });
-
     it('is false if the user is not an admin, author, or collaborator', () => {
       const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
       const policy = new SessionReport(authorRegion2, reportRegion1);
