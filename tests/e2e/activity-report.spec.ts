@@ -236,10 +236,16 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
 
+    await page.waitForTimeout(3000);
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.waitForTimeout(10000);
+
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
    
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
+
+    await page.getByRole('button', { name: /Goals and objectives Complete/i }).click();
 
     // edit the first goal
     await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
@@ -526,20 +532,22 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
 
     // fill out the goals page
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
       .click();
     
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
 
     await page.keyboard.type('This is a goal for multiple grants');
     await page.keyboard.press('Enter');
-    await page.getByLabel(/select tta objective/i).focus();
-    await page.keyboard.type('A new objective');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.waitForTimeout(2000);
+    await page.keyboard.type('A new objective'); 
+    await page.locator('#react-select-19-option-1').click();
+
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
     await page.getByTestId('dropdown').selectOption('In Progress');
