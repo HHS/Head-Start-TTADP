@@ -169,7 +169,7 @@ class CollaboratorRoles{
 class EventReportPilots{
  * id : integer : <generated>
  * ownerId : integer
- * pocId : integer
+ pocId : integer
  * collaboratorIds : integer[]
  * regionId : integer
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
