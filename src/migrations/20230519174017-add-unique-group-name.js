@@ -14,7 +14,14 @@ module.exports = {
       );
 
       await queryInterface.sequelize.query(
-        `ALTER TABLE "Groups"
+        `
+        -- append the id to all groups that don't have distinct names
+        UPDATE "Groups" SET "name" = "name" || "id" WHERE "name" IN (
+            SELECT "name" FROM "Groups" GROUP BY ("name") HAVING COUNT(id) > 1
+        );
+        
+        -- add unique constraint
+        ALTER TABLE "Groups"
         ADD CONSTRAINT "Groups_name_key" UNIQUE (name);`,
         { transaction },
       );
