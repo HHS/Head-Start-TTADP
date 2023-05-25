@@ -26,10 +26,10 @@ export default function MyGroup({
 
   return (
     <tr key={group.id}>
-      <td>
+      <td data-label="Group name">
         {group.name}
       </td>
-      <td>
+      <td data-label="Group access">
         {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />}
         {group.isPublic ? 'Public' : 'Private'}
       </td>
