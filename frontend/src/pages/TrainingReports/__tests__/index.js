@@ -2,10 +2,14 @@ import React from 'react';
 import {
   render, screen, act,
 } from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS } from '@ttahub/common';
 import RegionalGoalDashboard from '../index';
 import UserContext from '../../../UserContext';
+
+const history = createMemoryHistory();
 
 describe('TrainingReports', () => {
   const nonCentralOfficeUser = {
@@ -19,9 +23,12 @@ describe('TrainingReports', () => {
   const renderTrainingReports = (u) => {
     const user = u || nonCentralOfficeUser;
     render(
-      <UserContext.Provider value={{ user }}>
-        <RegionalGoalDashboard />
-      </UserContext.Provider>,
+      <Router history={history}>
+        <UserContext.Provider value={{ user }}>
+          <RegionalGoalDashboard />
+        </UserContext.Provider>
+        ,
+      </Router>,
     );
   };
 

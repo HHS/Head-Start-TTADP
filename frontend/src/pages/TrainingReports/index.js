@@ -1,15 +1,31 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { Link, useHistory } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './index.scss';
+import {
+  Alert, Grid, Button,
+} from '@trussworks/react-uswds';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 import UserContext from '../../UserContext';
+import colors from '../../colors';
+import WidgetContainer from '../../components/WidgetContainer';
+import Tabs from '../../components/Tabs';
 
+const tabValues = [
+  { key: 'Not started', value: 'not-started' },
+  { key: 'In progress', value: 'in-progress' },
+  { key: 'Completed', value: 'complete' }];
 export default function TrainingReports() {
   const { user } = useContext(UserContext);
-
+  // const [eventStatus, setEvenStatus] = useState([]);
+  // const events = [];
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
+
+  const [showAlert, updateShowAlert] = useState(true);
 
   const regionLabel = () => {
     if (defaultRegion === 14) {
@@ -21,13 +37,74 @@ export default function TrainingReports() {
     return '';
   };
 
+  const history = useHistory();
+
+  let msg;
+  const message = history.location.state && history.location.state.message;
+  if (message) {
+    msg = (
+      <>
+        You successfully
+        {' '}
+        {message.status}
+        {' '}
+        report
+        {' '}
+        <Link to={`/activity-reports/${message.reportId}`}>
+          {message.displayId}
+        </Link>
+        {' '}
+        on
+        {' '}
+        {message.time}
+      </>
+    );
+  }
+
   return (
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
       <>
+        {showAlert && message && (
+          <Alert
+            type="success"
+            role="alert"
+            noIcon
+            cta={(
+              <Button
+                role="button"
+                unstyled
+                aria-label="dismiss alert"
+                onClick={() => updateShowAlert(false)}
+              >
+                <span className="fa-sm margin-right-2">
+                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
+                </span>
+              </Button>
+            )}
+          >
+            {msg}
+          </Alert>
+        )}
         <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
-        <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
-        Coming soon!
+        <Grid>
+          <Grid row gap>
+            <Grid>
+              <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
+            </Grid>
+          </Grid>
+          <Grid row>
+            <WidgetContainer
+              title="Events"
+              loading={false}
+              loadingLabel="Training events loading"
+              showPaging={false}
+              showHeaderBorder={false}
+            >
+              <Tabs tabs={tabValues} ariaLabel="Training events" />
+            </WidgetContainer>
+          </Grid>
+        </Grid>
       </>
     </div>
 
