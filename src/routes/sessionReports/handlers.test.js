@@ -43,7 +43,6 @@ describe('session report handlers', () => {
     mockResponse.send.mockClear();
   });
 
-
   describe('getHandler', () => {
     it('returns the session', async () => {
       await getHandler({ params: { id: 99_999 } }, mockResponse);
