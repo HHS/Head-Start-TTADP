@@ -106,7 +106,6 @@ export default function Groups() {
                   key={group.id}
                   group={group}
                   setMyGroups={setMyGroups}
-                  myGroups={myGroups}
                   setError={setError}
                 />
               ))}
