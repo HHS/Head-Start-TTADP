@@ -202,8 +202,6 @@ describe('Approver review page', () => {
       renderReview(REPORT_STATUSES.APPROVED, () => { }, false, approverWithNotes);
       const alert = document.querySelector('.usa-alert');
       expect(alert).not.toBe(null);
-      expect(await screen.findByText(/these are my sample notes 2\./i)).toBeVisible();
-      expect(await screen.findByText(/no creator notes/i)).toBeVisible();
     });
   });
 

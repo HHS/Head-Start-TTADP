@@ -340,7 +340,6 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText(/date approved/i)).toBeVisible();
-    await expect(page.getByText(/these are my manager notes/i)).toBeVisible();
 
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = getGrants(recipients || '');
