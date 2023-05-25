@@ -1,20 +1,32 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import './index.scss';
-// import UserContext from '../../UserContext';
+import { allRegionsUserHasPermissionTo } from '../../permissions';
+import UserContext from '../../UserContext';
 
 export default function TrainingReports() {
-  // const { user } = useContext(UserContext);
+  const { user } = useContext(UserContext);
+
+  const regions = allRegionsUserHasPermissionTo(user);
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
+
+  const regionLabel = () => {
+    if (defaultRegion === 14) {
+      return 'all regions';
+    }
+    if (defaultRegion > 0) {
+      return `region ${defaultRegion.toString()}`;
+    }
+    return '';
+  };
 
   return (
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
       <>
         <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
-        <h1 className="landing margin-top-0 margin-bottom-3">
-          Training reports
-        </h1>
+        <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
         Coming soon!
       </>
     </div>
