@@ -69,7 +69,7 @@ describe('Goals DB service', () => {
 
       // Goal.
       goal = await Goal.create({
-        name: 'Goal for Objectives with leading and trailing values',
+        name: '    Goal for Objectives with leading and trailing values    ',
         status: 'Draft',
         endDate: null,
         isFromSmartsheetTtaPlan: false,
