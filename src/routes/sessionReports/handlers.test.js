@@ -38,6 +38,12 @@ describe('session report handlers', () => {
     })),
   };
 
+  beforeEach(() => {
+    mockResponse.status.mockClear();
+    mockResponse.send.mockClear();
+  });
+
+
   describe('getHandler', () => {
     it('returns the session', async () => {
       await getHandler({ params: { id: 99_999 } }, mockResponse);
