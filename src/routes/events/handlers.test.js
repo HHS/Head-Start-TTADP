@@ -75,6 +75,9 @@ describe('event handlers', () => {
 
   describe('createHandler', () => {
     const mockRequest = {
+      session: {
+        userId: 1,
+      },
       body: {
         ownerId: 99_999,
         pocId: 99_999,
@@ -102,6 +105,9 @@ describe('event handlers', () => {
 
   describe('updateHandler', () => {
     const mockRequest = {
+      session: {
+        userId: 1,
+      },
       params: {
         eventId: 99_999,
       },
@@ -140,7 +146,7 @@ describe('event handlers', () => {
         data: {},
       });
 
-      await deleteHandler({ params: { eventId: event.id } }, mockResponse);
+      await deleteHandler({ session: { userId: 1 }, params: { eventId: event.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });

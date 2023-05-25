@@ -45,7 +45,7 @@ describe('session report handlers', () => {
 
   describe('getHandler', () => {
     it('returns the session', async () => {
-      await getHandler({ params: { id: 99_999 } }, mockResponse);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -67,6 +67,7 @@ describe('session report handlers', () => {
 
   describe('createHandler', () => {
     const mockRequest = {
+      session: { userId: 1 },
       body: {
         eventId: 99_998,
         data: {},
@@ -91,6 +92,7 @@ describe('session report handlers', () => {
 
   describe('updateHandler', () => {
     const mockRequest = {
+      session: { userId: 1 },
       params: { id: 99_999 },
       body: {
         data: {},
@@ -117,7 +119,7 @@ describe('session report handlers', () => {
   describe('deleteHandler', () => {
     it('returns 200', async () => {
       const created = await createSession({ eventId: 99_998, data: {} });
-      await deleteHandler({ params: { id: created.id } }, mockResponse);
+      await deleteHandler({ session: { userId: 1 }, params: { id: created.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
