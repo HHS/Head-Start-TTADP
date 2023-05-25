@@ -24,8 +24,7 @@ async function handleSequelizeError(req, res, error, logContext) {
     });
     logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${err}`);
   } catch (e) {
-    const err = e?.stack || e?.message || e;
-    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${err}`);
+    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
   }
   res.status(INTERNAL_SERVER_ERROR).end();
 }
