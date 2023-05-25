@@ -7,12 +7,12 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faUserFriends } from '@fortawesome/free-solid-svg-icons';
-import { deleteGroup } from '../../../fetchers/groups';
+import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
 import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
 
 export default function MyGroup({
-  group, setMyGroups, myGroups, setError,
+  group, setMyGroups, setError,
 }) {
   const modalRef = useRef();
 
@@ -20,7 +20,8 @@ export default function MyGroup({
 
   const onDelete = async (groupId) => {
     await deleteGroup(groupId);
-    setMyGroups(myGroups.filter((g) => g.id !== groupId));
+    const updatedGroups = await fetchGroups();
+    setMyGroups(updatedGroups);
   };
 
   return (
@@ -72,10 +73,5 @@ MyGroup.propTypes = {
     isPublic: PropTypes.bool.isRequired,
   }).isRequired,
   setMyGroups: PropTypes.func.isRequired,
-  myGroups: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    name: PropTypes.string.isRequired,
-    isPublic: PropTypes.bool.isRequired,
-  })).isRequired,
   setError: PropTypes.func.isRequired,
 };

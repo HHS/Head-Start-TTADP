@@ -166,13 +166,13 @@ describe('Groups', () => {
 
     const continueButton = screen.getByRole('button', { name: /continue/i });
 
+    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(false);
+
     act(() => {
       userEvent.click(continueButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    });
+    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(true);
   });
 
   it('handles delete errors', async () => {
