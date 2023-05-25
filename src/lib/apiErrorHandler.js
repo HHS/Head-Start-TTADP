@@ -13,16 +13,17 @@ import { auditLogger as logger } from '../logger';
  */
 async function handleSequelizeError(req, res, error, logContext) {
   try {
-    const err = error?.stack || error?.message || error;
+    const responseBody = typeof error === 'object' && error !== null ? { ...error, errorStack: error?.stack } : error;
+    const requestBody = typeof req.body === 'object' ? { ...req.body } : {};
     const requestErrorId = await createRequestError({
       operation: 'SequelizeError',
       uri: req.originalUrl,
       method: req.method,
-      requestBody: { ...req.body },
-      responseBody: { ...error, errorStack: error?.stack },
+      requestBody,
+      responseBody,
       responseCode: INTERNAL_SERVER_ERROR,
     });
-    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${err}`);
+    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${error}`);
   } catch (e) {
     logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
   }
