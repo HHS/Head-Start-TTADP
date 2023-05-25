@@ -1,7 +1,17 @@
 import {} from 'dotenv/config';
 import { option } from 'yargs';
 import importSmartSheetEvent from './importSmartSheetEvent';
-import { logger } from '../logger';
+import { logger, auditLogger } from '../logger';
+
+async function runImportSmartSheetEvent(file) {
+  try {
+    await importSmartSheetEvent(file);
+    process.exit(0);
+  } catch (e) {
+    auditLogger.error(e);
+    process.exit(1);
+  }
+}
 
 const { argv } = option('file', {
   alias: 'f',
@@ -17,4 +27,4 @@ if (!file) {
   process.exit(1);
 }
 
-importSmartSheetEvent(file);
+runImportSmartSheetEvent(file);
