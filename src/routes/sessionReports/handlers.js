@@ -97,7 +97,7 @@ export const updateHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
     }
 
-    const session = findSessionById(id);
+    const session = await findSessionById(id);
     const auth = await getSessionAuthorization(req, res, session);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
@@ -116,7 +116,7 @@ export const deleteHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
     }
 
-    const session = findSessionById(id);
+    const session = await findSessionById(id);
     const auth = await getSessionAuthorization(req, res, session);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
