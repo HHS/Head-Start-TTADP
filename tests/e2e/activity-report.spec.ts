@@ -177,12 +177,18 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await blur(page);
+    await page.waitForTimeout(3000);
+
+    await page.getByTestId('select-tta-objective').click(); 
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(3000);   
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-21-option-0').click();
+    await page.getByTestId('objective-topics').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
 
     // save draft doesn't work with invalid resources
@@ -224,11 +230,12 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.getByTestId('select-tta-objective').click();    
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.getByTestId('objective-topics').click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -458,8 +465,8 @@ test.describe('Activity Report', () => {
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
-    await expect(page.getByText('Behavioral / Mental Health / Trauma')).toBeVisible();
-    await expect(page.getByText('CLASS: Classroom Organization')).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: 'CLASS: Classroom Organization' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
     expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
@@ -537,15 +544,17 @@ test.describe('Activity Report', () => {
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
       .click();
     
-    await page.waitForTimeout(2000);
+      await page.waitForTimeout(2000);
 
     await page.keyboard.type('This is a goal for multiple grants');
     await page.keyboard.press('Enter');
 
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.waitForTimeout(2000);
+
+    await page.getByTestId('select-tta-objective').click();  
     await page.keyboard.type('A new objective'); 
-    await page.locator('#react-select-19-option-1').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter')
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).focus();
     await page.keyboard.type('This is a TTA provided for objective');

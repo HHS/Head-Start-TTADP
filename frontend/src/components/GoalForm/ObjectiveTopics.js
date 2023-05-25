@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Label,
+  FormGroup,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
@@ -86,20 +86,22 @@ export default function ObjectiveTopics({
         <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
-        <Label htmlFor={inputName}>
-          <>
-            Topics
-            {' '}
-            <Req doNotRead />
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled margin-left-1"
-              ref={drawerTriggerRef}
-            >
-              Tell me more
-            </button>
-          </>
-        </Label>
+        <div className="display-flex">
+          <label className="usa-label" htmlFor={inputName} data-testid="objective-topics">
+            <>
+              Topics
+              {' '}
+              <Req doNotRead />
+            </>
+          </label>
+          <button
+            type="button"
+            className="ttahub-objectives-topics--drawer-trigger usa-button usa-button--unstyled margin-left-1"
+            ref={drawerTriggerRef}
+          >
+            Tell me more
+          </button>
+        </div>
         {error}
         <Select
           inputName={inputName}

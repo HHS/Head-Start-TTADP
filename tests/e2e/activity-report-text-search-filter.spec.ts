@@ -100,11 +100,12 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.waitForTimeout(3000);
 
     // Objective.
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.getByTestId('select-tta-objective').click();    
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').fill('Prepare your first meal');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-19-option-0').click();
+    await page.getByTestId('objective-topics').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
 
     // Links.

@@ -1,7 +1,8 @@
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
-import { Label, ModalToggleButton } from '@trussworks/react-uswds';
+import { ModalToggleButton } from '@trussworks/react-uswds';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { OBJECTIVE_PROP } from './constants';
@@ -33,7 +34,8 @@ export default function ObjectiveSelect({
           </ModalToggleButton>
         )}
       </div>
-      <Label className="ttahub-objective-select-label">
+
+      <label data-testid="select-tta-objective" className="usa-label ttahub-objective-select-label">
         Select TTA objective
         <Req />
         {noObjectiveError}
@@ -47,7 +49,7 @@ export default function ObjectiveSelect({
           value={selectedObjectives}
           required
         />
-      </Label>
+      </label>
 
       <Modal
         modalRef={modalRef}
