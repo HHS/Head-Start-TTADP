@@ -23,15 +23,20 @@ describe('event handlers', () => {
     await EventReportPilot.destroy({ where: { id: 99_999 } });
   });
 
-  describe('getHandler', () => {
-    const mockResponse = {
+  const mockResponse = {
+    send: jest.fn(),
+    status: jest.fn(() => ({
       send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
+      end: jest.fn(),
+    })),
+  };
 
+  beforeEach(() => {
+    mockResponse.status.mockClear();
+    mockResponse.send.mockClear();
+  });
+
+  describe('getHandler', () => {
     it('returns the event', async () => {
       await getHandler({ params: { eventId: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalled();
@@ -78,13 +83,6 @@ describe('event handlers', () => {
         data: {},
       },
     };
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
 
     it('returns the event', async () => {
       await createHandler(mockRequest, mockResponse);
@@ -115,13 +113,6 @@ describe('event handlers', () => {
         data: {},
       },
     };
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
 
     it('returns the event', async () => {
       await updateHandler(mockRequest, mockResponse);
@@ -140,14 +131,6 @@ describe('event handlers', () => {
   });
 
   describe('deleteHandler', () => {
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
-
     it('works', async () => {
       const event = await createEvent({
         ownerId: 99_999,
