@@ -92,7 +92,7 @@ export default function Groups() {
         { error ? <Alert type="error" role="alert">{error}</Alert> : null }
         <h3>Created by me</h3>
         {!groups || !groups.myGroups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
-          <Table fullWidth>
+          <Table fullWidth stackedStyle="default">
             <thead>
               <tr>
                 <th scope="col">Group name</th>
@@ -118,7 +118,7 @@ export default function Groups() {
         <h3>Created by others (public)</h3>
         {!groups || !groups.publicGroups.length ? <p className="usa-prose">No one has made any groups in your region public yet</p> : (
           <>
-            <Table fullWidth>
+            <Table fullWidth stackedStyle="default">
               <thead>
                 <tr>
                   <th scope="col">Group name</th>
@@ -129,14 +129,14 @@ export default function Groups() {
               <tbody>
                 {groupsForDisplay.map((group) => (
                   <tr key={group.id}>
-                    <td>
+                    <td data-label="Group name">
                       {group.name}
                     </td>
-                    <td>
+                    <td data-label="Group owner">
                       {group.user.name}
                     </td>
                     <td align="right">
-                      <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">View</Link>
+                      <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
                     </td>
                   </tr>
                 ))}
