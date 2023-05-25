@@ -85,7 +85,7 @@ describe('session report handlers', () => {
     });
 
     it('returns 500 when fields are missing', async () => {
-      await createHandler({ body: {} }, mockResponse);
+      await createHandler({ body: { eventId: 99_998 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
