@@ -203,7 +203,11 @@ const createActivityReportObjectiveFileMetaData = async (
     defaults: newFile,
   });
   await ActivityReportObjectiveFile
-    .create({ activityReportId: reportId, objectiveId, fileId: file.id });
+    .create({
+      activityReportId: reportId,
+      activityReportObjectiveId: objectiveId,
+      fileId: file.id,
+    });
   return file.dataValues;
 };
 

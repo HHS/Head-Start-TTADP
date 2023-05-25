@@ -15,6 +15,7 @@ import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
@@ -249,6 +250,17 @@ function App() {
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="resources_dashboard" renderNotFound>
                 <ResourcesDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-reports"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReports user={user} />
               </FeatureFlag>
             </AppWrapper>
           )}
