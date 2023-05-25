@@ -75,7 +75,7 @@ export const createHandler = async (req, res) => {
     // Get associated event to use for authorization for region write
     const event = await findEventById(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const auth = getEventAuthorization(req, res, event);
+    const auth = await getEventAuthorization(req, res, event);
     if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
 
     const session = await createSession(req.body);
@@ -93,6 +93,10 @@ export const updateHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' });
     }
 
+    if (id === undefined) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
+    }
+
     const session = findSessionById(id);
     const auth = await getSessionAuthorization(req, res, session);
     if (!auth.canDelete()) { return res.sendStatus(403); }
@@ -107,6 +111,10 @@ export const updateHandler = async (req, res) => {
 export const deleteHandler = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (id === undefined) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
+    }
 
     const session = findSessionById(id);
     const auth = await getSessionAuthorization(req, res, session);

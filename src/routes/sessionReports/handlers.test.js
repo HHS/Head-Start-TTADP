@@ -89,6 +89,7 @@ describe('session report handlers', () => {
       params: { id: 99_999 },
       body: {
         data: {},
+        eventId: 99_998,
       },
     };
 
@@ -98,12 +99,12 @@ describe('session report handlers', () => {
     });
 
     it('returns 400 when there is no body', async () => {
-      await updateHandler({ body: null }, mockResponse);
+      await updateHandler({ params: {}, body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
-    it('returns 500 when fields are missing', async () => {
-      await updateHandler({ body: {} }, mockResponse);
+    it('returns 500 when body fields are missing', async () => {
+      await updateHandler({ params: { id: 1 }, body: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
