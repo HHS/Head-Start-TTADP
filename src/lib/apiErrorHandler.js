@@ -37,8 +37,7 @@ export const handleError = async (req, res, error, logContext) => {
   if (error instanceof Sequelize.Error) {
     await handleSequelizeError(req, res, error, logContext);
   } else {
-    const err = error?.stack || error?.message || error;
-    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${err}`);
+    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${error}`);
     res.status(INTERNAL_SERVER_ERROR).end();
   }
 };
