@@ -38,3 +38,6 @@ newrelic_agent.log
 *.sql
 .vscode/settings.json
 .vscode/settings.json
+**/__pycache__/**
+
+

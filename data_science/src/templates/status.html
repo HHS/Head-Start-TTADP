@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Status Page</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <style>
+        body { background-color: #fafafa; font-family: Arial, sans-serif; }
+        .container { margin: auto; width: 50%; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Status</h1>
+        <h2>Latest Records</h2>
+        <ul id="records">
+            {% for record in records %}
+            <li>Record ID: {{record.id}}, Goal: {{record.goal}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+    function refreshRecords() {
+        $.getJSON('/status_json', function(data) {
+            var records = '';
+            $.each(data.records, function(key, val) {
+                records += '<li>Record ID: ' + val.id + ', Goal: ' + val.goal + '</li>';
+            });
+            $('#records').html(records);
+        });
+    }
+
+    // Refresh records every 5 seconds
+    setInterval(refreshRecords, 5000);
+    </script>
+</body>
+</html>

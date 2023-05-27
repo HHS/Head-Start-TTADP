@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Matched Goals</h1>
+    <ul>
+    {% for goal in matched_goals %}
+        <li>{{ goal }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Select User</h1>
+    <form action="/select_user" method="post">
+        <label for="user_id">User ID:</label><br>
+        <select id="user_id" name="user_id">
+            {% for user_id in user_ids %}
+                <option value="{{ user_id }}">{{ user_id }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Submit">
+    </form>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+<div class="background-element">
+    <div class="mask-overlay">
+
+        {% block content %}
+
+    <div id="profile">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginButton" class="btn btn-primary">Login</button>
+    <button id="logoutButton" class="btn btn-primary">Logout</button>
+    </div>
+
+    <div class="content">
+    <h1>Duplicate Goals NLP Demo</h1>
+    <p>Data generation status: <span id="dataGenStatus">{{ is_generating_data }}</span></p>
+    <button id="startButton">Start data generation</button>
+    <button id="stopButton">Stop data generation</button>
+    <button id="clearButton">Clear database</button>
+    <!-- <div id="ticker"></div> -->
+    <div id="response">
+    </div>
+    <div>
+        <form id="userForm">
+            <label for="user_id">User ID:</label><br>
+            <select id="user_id" name="user_id">
+                {% for user_id in user_ids %}
+                    <option value="{{ user_id }}">{{ user_id }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="Submit">
+        </form>
+        <h2>Matched Goals:</h2>
+        <h3 id="goalCount">Matched Goals Count: </h3>
+        <ul id="matchedGoalsList">
+            {% for goal in matched_goals %}
+                <li>{{ goal }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    </div>
+    {% endblock %}
+</div>
+</div>

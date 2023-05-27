@@ -5,6 +5,7 @@
 - HTML/CSS
 - Postgres
 - Bash
+- Python
 
 ## Frameworks & Libraries
 - React
@@ -32,5 +33,5 @@
 
 ## Documentation
 - Github
-- Swagger/Redoc
+- Swagger/Redoc/FastAPI
 - PlantUML

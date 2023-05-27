@@ -59,3 +59,19 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+  data_science:
+    build:
+      context: ./data_science
+      dockerfile: ./data_science.dockerfile
+    ports:
+      - "9300:9300"
+    command: [ "-m", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${DATA_SCIENCE_PORT}", "server:app", "--reload", "--log-level", "debug"]
+    # command: ["help('modules')"]
+    env_file: .env
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=postgres_docker
+    volumes:
+      - "./data_science/src:/app:rw"
+
