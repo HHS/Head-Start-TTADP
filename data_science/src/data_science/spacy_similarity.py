@@ -16,14 +16,14 @@ def calculate_batch_similarity(batch):
 
     return sim_scores
 
-def my_calc_similarity(user_id, list_of_goals, list_of_ids, batch_size=500):
+def my_calc_similarity(recipient_id, list_of_goals, list_of_goal_ids, batch_size=500):
     matched_goals = []
     num_goals = len(list_of_goals)
 
     for i in range(0, num_goals, batch_size):
         end = min(i + batch_size, num_goals)
         current_batch = list_of_goals[i:end]
-        current_ids = list_of_ids[i:end]
+        current_ids = list_of_goal_ids[i:end]
 
         batch_sim_scores = calculate_batch_similarity(current_batch)
 
@@ -36,8 +36,7 @@ def my_calc_similarity(user_id, list_of_goals, list_of_ids, batch_size=500):
                 if i + j > i + k:
                     continue
                 matched_goals.append({
-                    "goal1_id": i + j, "goal1": list_of_goals[i + j],
-                    "goal2_id": i + k, "goal2": list_of_goals[i + k]
+                    "goal1_id": current_ids[j], "goal1": list_of_goals[i + j],
+                    "goal2_id": current_ids[k], "goal2": list_of_goals[i + k]
                 })
-                
     return matched_goals

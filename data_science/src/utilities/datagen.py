@@ -1,4 +1,4 @@
-# math import e
+from math import e
 import random
 import string
 from cfenv import AppEnv
@@ -42,29 +42,48 @@ def data_generator():
         cur.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
         conn.commit()
 
-        # Check if the 'public.goals' table exists and if not, create it.
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS "Goals" (
-                id uuid PRIMARY KEY,
-                goal text NOT NULL,
-                goal_user_id uuid NOT NULL
-            );
-        """)
-
         num_iterations = 0
+        recipient_ids = [i for i in range(10000, 10005)]  # Only 5 recipients
+        grant_ids = [i for i in range(20000, 20005)]  # Only 5 grants, one for each recipient
+        numbers = [i for i in range(50000, 50005)]  # Unique numbers for Grants, one for each grant
 
-        # generate random unique user ids
-        # user_ids = [str(uuid.uuid4()) for _ in range(5)]
-        # grant_ids = [str(uuid.uuid4()) for _ in range(5)]
-        recipient_ids = [random.randint(1000, 9999) for _ in range(5)]
-        grant_ids = [random.randint(1000, 9999) for _ in range(5)]
+        # Insert recipients and grants outside of the loop
+        for i in range(5):  # Assuming we have 5 recipients and grants
+            recipient_id = recipient_ids[i]
+            grant_id = grant_ids[i]
+            number = numbers[i]
+            
+            try:
+                cur.execute(
+                    '''
+                    INSERT INTO "Recipients" 
+                        (id ) 
+                    VALUES (%s) ON CONFLICT (id) DO NOTHING;
+                    ''',
+                    (recipient_id, )
+                )
+                cur.execute(
+                    '''
+                    INSERT INTO "Grants" 
+                    (id, "recipientId", "number")
+                    VALUES (%s, %s, %s) ON CONFLICT (id) DO NOTHING;
+                    ''',
+                    (grant_id, recipient_id, number)
+                )
+                conn.commit()
+                print(f"Inserted grant {grant_id} for user {recipient_id}")
+            except Exception as e:
+                print(f"Error: {e}")
+                conn.rollback()
 
         while not stop_event.is_set() and num_iterations < 10000:
+            # Pick a random recipient and their corresponding grant for the new goal
+            idx = random.randint(0, 4)  # Index for recipient and grant
+            recipient_id = recipient_ids[idx]
+            grant_id = grant_ids[idx]
             on_approved_ar = bool(random.getrandbits(1))
+            on_ar = bool(random.getrandbits(1))
             now = datetime.now()
-            # Randomly select a user id from generated user ids
-            recipient_id = random.choice(recipient_ids)
-            grant_id = random.choice(grant_ids)
 
             # Generate a goal
             num_words = random.randint(3, 20)
@@ -80,29 +99,19 @@ def data_generator():
             elif random.random() < 0.5:
                 goal_text = random.choice(predefined_goals)
 
-            # goal_id = str(uuid.uuid4())
-            goal_id = random.randint(1, 9999)
+            ranint = random.randint(1, 9999)
             try:
                 cur.execute(
                     '''
                     INSERT INTO "Goals" 
-                        (id, name, "grantId", "createdAt", "updatedAt", "onApprovedAr") 
-                    VALUES (%s, %s, %s, %s, %s);
+                        (id, name, "grantId", "createdAt", "updatedAt", "onApprovedAR", "onAR") 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s);
                     ''',
-                    (goal_id, goal_text, grant_id, now, now, on_approved_ar)
-                )
-                
-                cur.execute(
-                    'INSERT INTO "Recipient" (id) VALUES (%s);',
-                    (recipient_id,)
-                )
-                cur.execute(
-                    'INSERT INTO "Grants"  (id, "recipientId") VALUES (%s, %s);',
-                    (grant_id, recipient_id)
+                    (ranint, goal_text, grant_id, now, now, on_approved_ar, on_ar)
                 )
                 conn.commit()
                 goal_counter += 1
-                print(f"Inserted goal {goal_id} on grant {grant_id} for user {recipient_id} with text: {goal_text}")
+                print(f"Inserted goal {ranint} on grant {grant_id} for user {recipient_id} with text: {goal_text}")
 
             except Exception as e:
                 print(f"Error: {e}")
@@ -111,6 +120,6 @@ def data_generator():
             sleep(1)
             num_iterations += 1
         print("Finished generating data!")
-        
+    
 # Start the data generator in a new thread
 data_gen_thread = Thread(target=data_generator)

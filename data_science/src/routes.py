@@ -98,15 +98,16 @@ def setup_main_routes(app):
     def compute_similarities(recipient_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
         rows = execute_db_query(
             '''
-            SELECT *
+            SELECT g."id", g."name"
             FROM "Goals" g
             JOIN "Grants" gr ON g."grantId" = gr.id
             JOIN "Recipients" r ON gr."recipientId" = r.id
-            WHERE r.id = %s;
+            WHERE r.id = 10000 AND g.name IS NOT NULL;
             ''',
             (recipient_id,)
         )
-        cur_goals_list = [row['goal'] for row in rows]
+        rows = [row for row in rows if row['name'] is not None]
+        cur_goals_list = [row['name'] for row in rows]
         cur_goal_ids = [row['id'] for row in rows]
         matched_goals = my_calc_similarity(recipient_id, cur_goals_list, cur_goal_ids)
         return {"matched_goals": matched_goals}

@@ -31,7 +31,6 @@ $(document).ready(function() {
         $("#response").html("Status: Logged out");
     });
     
-    
     $("#startButton").click(function() {
         $.ajax({
             url: '/start_datagen',
@@ -49,36 +48,6 @@ $(document).ready(function() {
                 $("#response").html("Failed to start data generation");
             }
         });
-    });
-    
-    // Fetch user IDs and populate the form
-    $.ajax({
-        url: '/fetch_recipients_ids',
-        type: 'get',
-        headers: {
-        "Authorization": 'Bearer ' + localStorage.getItem('token')
-        },
-        success: function(data, status) {
-        $("#response").html("Status: " + status);
-        
-        // Populate user IDs in the select dropdown
-        var select = $("#user_id");
-        select.empty(); // Remove old options
-        
-        // Check if user_ids property exists and is an array
-        if (Array.isArray(data.user_ids)) {
-            data.user_ids.forEach(function(obj) {
-            var userId = obj.id;
-            var option = $("<option></option>").attr("value", userId).text(userId);
-            select.append(option);
-            });
-        } else {
-            $("#response").html("Invalid server response");
-        }
-        },
-        error: function() {
-        $("#response").html("Failed to fetch user IDs");
-        }
     });
     $("#stopButton").click(function() {
         $.ajax({
@@ -115,21 +84,35 @@ $(document).ready(function() {
             }
         });
     });
-    
-    // var userId = $.ajax({
-    //     url: '/fetch_recipients_ids',
-    //     type: 'get',
-    //     headers: {
-    //         "Authorization": 'Bearer ' + localStorage.getItem('token')
-    //     },
-    //     success: function(data, status) {
-    //         $("#response").html("Status: " + data.status);
-    //         $("#user_id").val();
-    //     },
-    //     error: function() {
-    //         $("#response").html("Failed to fetch user_ids");
-    //     }
-    // });
+    // Fetch user IDs and populate the form
+    $.ajax({
+        url: '/fetch_recipients_ids',
+        type: 'get',
+        headers: {
+        "Authorization": 'Bearer ' + localStorage.getItem('token')
+        },
+        success: function(data, status) {
+        $("#response").html("Status: " + status);
+        
+        // Populate user IDs in the select dropdown
+        var select = $("#user_id");
+        select.empty(); // Remove old options
+        
+        // Check if user_ids property exists and is an array
+        if (Array.isArray(data.user_ids)) {
+            data.user_ids.forEach(function(obj) {
+            var userId = obj.id;
+            var option = $("<option></option>").attr("value", userId).text(userId);
+            select.append(option);
+            });
+        } else {
+            $("#response").html("Invalid server response");
+        }
+        },
+        error: function() {
+        $("#response").html("Failed to fetch user IDs");
+        }
+    });
 
     $("#userForm").submit(function(e) {
         e.preventDefault();
@@ -147,17 +130,16 @@ $(document).ready(function() {
                 data.matched_goals.forEach(function(goal) {
                     var li = "<li>Goal1 ID: " + goal.goal1_id + ", Goal1: " + goal.goal1 +"<br> Goal2 ID: " + goal.goal2_id + ", Goal2: " + goal.goal2 + "</li>";
                     ul.append(li);
-                }
-                );
+                });
+                console.log("Data object: ", data);  // Add this line
+                console.log("Matched Goals Count: ", data.matched_goals.length);  // And this line
                 // Display the count    
                 $("#goalCount").text("Matched Goals Count: " + data.matched_goals.length);
             },
+            
             error: function() {
-                $("#response").html("Failed to compute similarities");
-
+                $("#response").html("Status: " + data.status);            
             }
-            });
-               // Display the count
-                $("#goalCount").text("Matched Goals Count: " + data.matched_goals.length);
         });
-    });
+    }); 
+});
