@@ -385,6 +385,7 @@ jobs:
           name: Test data_science
           command:  |
             cd data_science/src
+            source venv/bin/activate
             # install pytest and coverage
             pip install pytest pytest-cov
 
