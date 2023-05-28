@@ -339,12 +339,6 @@ jobs:
             ./grype sbom:./reports/data_science/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
             echo "scan results saved in $OUTPUT_FILE"
       - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Run seeders
-          command: yarn db:seed:ci
-      - run:
           name: Test data_science
           command:  |
             # install pytest and coverage
