@@ -1,6 +1,7 @@
 ---
 applications:
   - name: tta-smarthub-((env))
+    path: ./
     buildpacks:
       - nodejs_buildpack
     env:
@@ -41,3 +42,23 @@ applications:
         instances: ((worker_instances))
         command: yarn start:worker
         memory: ((worker_memory))
+  - name: tta-data-science-((env))
+    path: ./data-science/src
+    buildpacks:
+      - python_buildpack
+    env:
+      AUTH_BASE: ((AUTH_BASE))
+      AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
+      AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+      LOG_JSON_FORMAT: "true"
+      LOG_LEVEL: ((LOG_LEVEL))
+      NEW_RELIC_APP_NAME: tta-data-science-((env))
+      NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
+      REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
+    services:
+      - ttahub-((env))
+    processes:
+      - type: app
+        instances: ((web_instances))
+        command: gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT server:app --reload --log-level debug
+        memory: ((web_memory))
