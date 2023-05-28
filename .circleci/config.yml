@@ -266,6 +266,9 @@ jobs:
           path: reports
       - store_artifacts:  # store frontend lint reports
           path: frontend/reports
+      - run:
+          name: Remove Data_Science dir to prevent file collision on deploy
+          command: rm -rf data_science
       - persist_to_workspace:
           root: .
           paths:
@@ -303,7 +306,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .
+            - data_science
     resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
