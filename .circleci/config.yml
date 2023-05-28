@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  node: circleci/node@5.0.2
+  node: cimg/node@5.0.2
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
@@ -11,7 +11,7 @@ executors:
       - image: cimg/node:16.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
+      - image: cimg/postgres:12.4
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
@@ -21,7 +21,7 @@ executors:
       - image: cimg/python:3.9.7-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
+      - image: cimg/postgres:12.4
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
@@ -31,7 +31,7 @@ executors:
       - image: cimg/node:16.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
+      - image: cimg/postgres:12.4
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
@@ -62,6 +62,16 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
+  create_combined_pipfreeze:
+    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
+    parameters:
+      filename:
+        type: string
+        default: "combined-requirements.txt"
+    steps:
+      - run:
+          name: Combine requirements.txt files to single file
+          command: cat data_science/src/requirements.txt data_science/src/models/requirements.txt > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -252,6 +262,38 @@ jobs:
             - node_modules
             - frontend/node_modules
             - packages/common/node_modules
+          key: v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
+  build_and_lint_ds:
+    executor: docker-executor
+    steps:
+      - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version e.g. v7-yarn...
+            - v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v10-yarn-deps-
+      - run: yarn deps
+      - save_cache:
+          paths:
+            - data_science/src
           key: v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend

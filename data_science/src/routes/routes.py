@@ -5,7 +5,7 @@ from utilities.auth import User, get_current_active_user, get_current_user
 from utilities.db import connect_to_db
 from utilities.datagen import data_generator, is_generating_data, stop_event
 from threading import Thread
-from data_science.spacy_similarity import my_calc_similarity
+from models.spacy_similarity import my_calc_similarity
 from fastapi.templating import Jinja2Templates
 from fastapi import Request, APIRouter, Depends, HTTPException, status, FastAPI
 
