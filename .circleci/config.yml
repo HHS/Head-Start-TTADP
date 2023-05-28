@@ -315,7 +315,7 @@ jobs:
           root: .
           paths:
             - .
-      - resource_class: large
+    resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
