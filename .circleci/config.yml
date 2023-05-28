@@ -359,7 +359,7 @@ jobs:
           command: |
             mkdir -p reports/data_science
             curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
-            ./syft data_science/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}" 
+            ./syft data_science/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE" 
             echo "scan results saved in $OUTPUT_FILE"
           # echo $GITHUB_PAT | ./syft login ghcr.io -u $GITHUB_USERNAME --password-stdin  -vv
           # echo $GITHUB_PAT | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
@@ -371,7 +371,7 @@ jobs:
             OUTPUT_FILE: ./reports/grype.json
           command: |
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-            ./grype sbom:./reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
+            ./grype sbom:./reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
             echo "scan results saved in $OUTPUT_FILE"
       - run:
           name: Test data_science
@@ -395,6 +395,8 @@ jobs:
           command: tar -cvzf data-science-coverage-artifacts.tar coverage/
       - store_artifacts:
           path: coverage/
+      - store_artifacts:
+          path:  data-science-coverage-artifacts.tar
       - store_test_results:
           path: reports/
     resource_class: large
