@@ -366,12 +366,12 @@ jobs:
       - run:
           name: Grype Docker image
           environment:
-            GRYPE_VERSION: v0.61.1
+            GRYPE_VERSION: v0.62.2
             OUTPUT_FORMAT: sarif
             OUTPUT_FILE: reports/grype.json
           command: |
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-            ./grype sbom:./reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
+            ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
             echo "scan results saved in $OUTPUT_FILE"
       - run:
           name: Test data_science
