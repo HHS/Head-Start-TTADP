@@ -284,7 +284,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ./data_science
+          at: .
       - create_combined_pipfreeze
       - restore_cache:
           keys:
@@ -295,7 +295,9 @@ jobs:
       - run:
           name: Install python dependencies
           command: |
-            pip install -r src/requirements.txt
+            pwd
+            tree
+            pip install -r python_path/src/requirements.txt
 
       - save_cache:
           paths:
