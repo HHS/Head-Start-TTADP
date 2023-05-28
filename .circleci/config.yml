@@ -384,6 +384,7 @@ jobs:
       - run:
           name: Test data_science
           command:  |
+            cd data_science/src
             # install pytest and coverage
             pip install pytest pytest-cov
 
