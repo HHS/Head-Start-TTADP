@@ -64,7 +64,7 @@ commands:
     steps:
       - run:
           name: Combine requirements.txt files to single file
-          command: cat data_science/src/requirements.txt data_science/src/models/requirements.txt > << parameters.filename >>
+          command: cat data_science/src/requirements.lock data_science/src/models/requirements.lock > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
