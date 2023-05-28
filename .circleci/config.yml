@@ -280,9 +280,9 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-pip...
-            - v1-pip-deps-{{ checksum "combined-requirements.txt" }}
+            - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
             # If checksum is new, restore partial cache
-            - v1-pip-deps-
+            - v2-pip-deps-
       - run:
           name: Install python dependencies
           command: |
