@@ -7,12 +7,10 @@ from .db import connect_to_db
 import uuid
 from time import sleep
 from threading import Thread, Event
-from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from datetime import datetime
 
 env = AppEnv()
-Psycopg2Instrumentor().instrument()
+
 
 # Predefined goals
 predefined_goals = []
@@ -23,6 +21,7 @@ goal_counter = 0
 
 # Stop event for the thread
 stop_event = Event()
+
 
 def data_generator():
     global goal_counter
@@ -39,36 +38,40 @@ def data_generator():
         fake = Faker()
 
         # Enable uuid-ossp extension if not done yet
-        cur.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+        cur.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
         conn.commit()
 
         num_iterations = 0
         recipient_ids = [i for i in range(10000, 10005)]  # Only 5 recipients
-        grant_ids = [i for i in range(20000, 20005)]  # Only 5 grants, one for each recipient
-        numbers = [i for i in range(50000, 50005)]  # Unique numbers for Grants, one for each grant
+        grant_ids = [
+            i for i in range(20000, 20005)
+        ]  # Only 5 grants, one for each recipient
+        numbers = [
+            i for i in range(50000, 50005)
+        ]  # Unique numbers for Grants, one for each grant
 
         # Insert recipients and grants outside of the loop
         for i in range(5):  # Assuming we have 5 recipients and grants
             recipient_id = recipient_ids[i]
             grant_id = grant_ids[i]
             number = numbers[i]
-            
+
             try:
                 cur.execute(
-                    '''
+                    """
                     INSERT INTO "Recipients" 
                         (id ) 
                     VALUES (%s) ON CONFLICT (id) DO NOTHING;
-                    ''',
-                    (recipient_id, )
+                    """,
+                    (recipient_id,),
                 )
                 cur.execute(
-                    '''
+                    """
                     INSERT INTO "Grants" 
                     (id, "recipientId", "number")
                     VALUES (%s, %s, %s) ON CONFLICT (id) DO NOTHING;
-                    ''',
-                    (grant_id, recipient_id, number)
+                    """,
+                    (grant_id, recipient_id, number),
                 )
                 conn.commit()
                 print(f"Inserted grant {grant_id} for user {recipient_id}")
@@ -87,7 +90,7 @@ def data_generator():
 
             # Generate a goal
             num_words = random.randint(3, 20)
-            goal_text = ' '.join(fake.words(nb=num_words))
+            goal_text = " ".join(fake.words(nb=num_words))
 
             # Add random punctuation to the end of the goal text
             punctuation = random.choice(string.punctuation)
@@ -102,16 +105,18 @@ def data_generator():
             ranint = random.randint(1, 9999)
             try:
                 cur.execute(
-                    '''
+                    """
                     INSERT INTO "Goals" 
                         (id, name, "grantId", "createdAt", "updatedAt", "onApprovedAR", "onAR") 
                     VALUES (%s, %s, %s, %s, %s, %s, %s);
-                    ''',
-                    (ranint, goal_text, grant_id, now, now, on_approved_ar, on_ar)
+                    """,
+                    (ranint, goal_text, grant_id, now, now, on_approved_ar, on_ar),
                 )
                 conn.commit()
                 goal_counter += 1
-                print(f"Inserted goal {ranint} on grant {grant_id} for user {recipient_id} with text: {goal_text}")
+                print(
+                    f"Inserted goal {ranint} on grant {grant_id} for user {recipient_id} with text: {goal_text}"
+                )
 
             except Exception as e:
                 print(f"Error: {e}")
@@ -120,6 +125,7 @@ def data_generator():
             sleep(1)
             num_iterations += 1
         print("Finished generating data!")
-    
+
+
 # Start the data generator in a new thread
 data_gen_thread = Thread(target=data_generator)

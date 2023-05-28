@@ -4,43 +4,45 @@ import numpy as np
 from unittest.mock import patch, MagicMock
 from data_science.spacy_similarity import calculate_batch_similarity, my_calc_similarity
 
-def test_calculate_batch_similarity():
-    batch = ["This is a test", "This is another test"]
-    
-    with patch("data_science.spacy_similarity.nlp", return_value=MagicMock(vector=np.array([1, 1]))) as mock_nlp:
-        result = calculate_batch_similarity(batch)
-        assert result.shape == (2, 2)
-        mock_nlp.assert_called()
 
-@pytest.mark.parametrize(
-    "user_id, list_of_goals, list_of_ids, expected_output",
-    [
-        (
-            "test_user",
-            ["This is a test", "This is another test"],
-            ["id1", "id2"],
-            [
-                {
-                    "goal1_id": 0,
-                    "goal1": "This is a test",
-                    "goal2_id": 1,
-                    "goal2": "This is another test",
-                }
-            ],
-        ),
-        (
-            "test_user",
-            ["This is a test"],
-            ["id1"],
-            [],
-        ),
-    ],
-)
+def test_my_calc_similarity():
+    recipient_id = "TestRecipient"
+    list_of_goals = ["TestGoal1", "TestGoal2", "TestGoal3"]
+    list_of_goal_ids = [1, 2, 3]
+    batch_size = 2
+    nlp_mock = MagicMock()
+    nlp_mock.return_value.vector = np.array([1, 1, 1])  # return some dummy vector
 
-def test_my_calc_similarity(user_id, list_of_goals, list_of_ids, expected_output):
-    sim_matrix_size = len(list_of_goals)
-    mock_sim_matrix = np.ones((sim_matrix_size, sim_matrix_size))
-    
-    with patch("data_science.spacy_similarity.calculate_batch_similarity", return_value=mock_sim_matrix):
-        result = my_calc_similarity(user_id, list_of_goals, list_of_ids)
-        assert result == expected_output
+    # Adjust the expected result according to the actual logic of your function
+    expected_result = [
+        {"goal1_id": 1, "goal1": "TestGoal1", "goal2_id": 2, "goal2": "TestGoal2"}
+    ]
+    actual_result = my_calc_similarity(
+        recipient_id, list_of_goals, list_of_goal_ids, nlp_mock, batch_size
+    )
+
+    assert (
+        actual_result == expected_result
+    ), f"Expected {expected_result}, but got {actual_result}"
+
+
+def test_my_calc_similarity_empty():
+    recipient_id = "TestRecipient"
+    list_of_goals = []
+    list_of_goal_ids = []
+    batch_size = 2
+    nlp_mock = MagicMock()  # Provide a mock here too
+    nlp_mock.return_value.vector = np.array([1, 1, 1])  # return some dummy vector
+
+    expected_result = []
+    actual_result = my_calc_similarity(
+        recipient_id,
+        list_of_goals,
+        list_of_goal_ids,
+        nlp_mock,
+        batch_size,  # Provide the mock here
+    )
+
+    assert (
+        actual_result == expected_result
+    ), f"Expected {expected_result}, but got {actual_result}"

@@ -16,6 +16,16 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  docker-python-executor:
+    docker:
+      - image: cimg/python:3.9.7-browsers
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+      - image: circleci/postgres:12.4-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
   docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:16.19.1-browsers
@@ -207,7 +217,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-224/newrelic-config-update"
+    default: "nlp_api"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "mb/TTAHUB-1530/goal-template"
@@ -293,6 +303,69 @@ jobs:
           path: coverage/
       - store_artifacts:
           path: backend-coverage-artifacts.tar
+      - store_test_results:
+          path: reports/
+    resource_class: large
+  test_data_science:
+    executor: docker-python-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Syft Docker image
+          environment:
+            SYFT_VERSION: v0.80.0
+            IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
+            OUTPUT_FORMAT: json
+            OUTPUT_FILE:  reports/data_science/syft_sbom.json
+          command: |
+            mkdir -p reports/data_science
+            curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
+            ./syft data_science/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}" 
+            echo "scan results saved in $OUTPUT_FILE"
+          # echo $GITHUB_PAT | ./syft login ghcr.io -u $GITHUB_USERNAME --password-stdin  -vv
+          # echo $GITHUB_PAT | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
+      - run:
+          name: Grype Docker image
+          environment:
+            GRYPE_VERSION: v0.61.1
+            OUTPUT_FORMAT: sarif
+            OUTPUT_FILE: reports/data_science/grype.json
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
+            ./grype sbom:./reports/data_science/syft_sbom.json --vv -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
+            echo "scan results saved in $OUTPUT_FILE"
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Run seeders
+          command: yarn db:seed:ci
+      - run:
+          name: Test data_science
+          command:  |
+            # install pytest and coverage
+            pip install pytest pytest-cov
+
+            # run tests in the target folder and collect coverage
+            pytest --cov=data_science --cov=middleware --cov=utilities --cov=.
+
+            # generate coverage report relative to target folder
+            coverage report --show-missing --skip-covered --omit=*/tests/*
+
+            # generate html coverage report
+            coverage html -d coverage/data_science --skip-covered --omit=*/tests
+
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf data-science-coverage-artifacts.tar coverage/data_sciance
+      - store_artifacts:
+          path: coverage/
+      - store_artifacts:
+          path: data-science-coverage-artifacts.tar
       - store_test_results:
           path: reports/
     resource_class: large
@@ -647,6 +720,9 @@ workflows:
           requires:
             - build_and_lint
       - test_api:
+          requires:
+            - build_and_lint
+      - test_data_science:
           requires:
             - build_and_lint
       - cucumber_test:
