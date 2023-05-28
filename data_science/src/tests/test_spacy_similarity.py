@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from unittest.mock import patch, MagicMock
-from data_science.spacy_similarity import calculate_batch_similarity, my_calc_similarity
+from models.spacy_similarity import calculate_batch_similarity, my_calc_similarity
 
 
 def test_my_calc_similarity():

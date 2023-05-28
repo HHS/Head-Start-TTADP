@@ -350,12 +350,12 @@ jobs:
       - setup_remote_docker:
           version: 20.10.14
       - run:
-          name: Syft Docker image
+          name: Syft SBOM
           environment:
             SYFT_VERSION: v0.80.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
-            OUTPUT_FILE:  reports/data_science/syft_sbom.json
+            OUTPUT_FILE:  reports/syft_sbom.json
           command: |
             mkdir -p reports/data_science
             curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
@@ -368,7 +368,7 @@ jobs:
           environment:
             GRYPE_VERSION: v0.61.1
             OUTPUT_FORMAT: sarif
-            OUTPUT_FILE: reports/data_science/grype.json
+            OUTPUT_FILE: reports/grype.json
           command: |
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
             ./grype sbom:./reports/data_science/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
@@ -388,15 +388,13 @@ jobs:
             coverage report --show-missing --skip-covered --omit=*/tests/*
 
             # generate html coverage report
-            coverage html -d coverage/data_science --skip-covered --omit=*/tests
+            coverage html -d coverage/ --skip-covered --omit=*/tests
 
       - run:
           name: Compress coverage artifacts
-          command: tar -cvzf data-science-coverage-artifacts.tar coverage/data_sciance
+          command: tar -cvzf data-science-coverage-artifacts.tar coverage/
       - store_artifacts:
           path: coverage/
-      - store_artifacts:
-          path: data-science-coverage-artifacts.tar
       - store_test_results:
           path: reports/
     resource_class: large
