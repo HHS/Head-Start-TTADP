@@ -280,21 +280,27 @@ jobs:
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
   build_and_lint_ds:
-    executor: docker-executor
+    executor: docker-python-executor
     steps:
       - checkout
-      - create_combined_yarnlock
+      - attach_workspace:
+          at: ./data_science
+      - create_combined_pipfreeze
       - restore_cache:
           keys:
-            # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # To manually bust the cache, increment the version e.g. v7-pip...
+            - v1-pip-deps-{{ checksum "combined-requirements.txt" }}
             # If checksum is new, restore partial cache
-            - v10-yarn-deps-
-      - run: yarn deps
+            - v1-pip-deps-
+      - run:
+          name: Install python dependencies
+          command: |
+            pip install -r src/requirements.txt
+
       - save_cache:
           paths:
-            - data_science/src
-          key: v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - data_science
+          key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -304,13 +310,11 @@ jobs:
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
-          path: frontend/reports
+          path: data_science/reports
       - persist_to_workspace:
           root: .
           paths:
             - .
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -353,7 +357,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: .
+          at: ./data_science/
       - setup_remote_docker:
           version: 20.10.14
       - run:
