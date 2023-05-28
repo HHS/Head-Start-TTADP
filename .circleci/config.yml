@@ -336,7 +336,7 @@ jobs:
             OUTPUT_FILE: reports/data_science/grype.json
           command: |
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-            ./grype sbom:./reports/data_science/syft_sbom.json --vv -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
+            ./grype sbom:./reports/data_science/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
             echo "scan results saved in $OUTPUT_FILE"
       - run:
           name: Run migrations ci
