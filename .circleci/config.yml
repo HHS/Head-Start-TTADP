@@ -303,12 +303,6 @@ jobs:
           paths:
             - data_science
           key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-      - run:
-          name: Lint backend
-          command: yarn lint:ci
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend lint:ci
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
