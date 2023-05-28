@@ -296,7 +296,8 @@ jobs:
             cd data_science/src
             python3 -m venv venv
             source venv/bin/activate
-            pip install -r requirements.txt
+            pip install -U pip setuptools virtualenv wheel
+            pip install -U -r requirements.txt
 
       - save_cache:
           paths:
