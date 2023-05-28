@@ -352,12 +352,12 @@ jobs:
       - run:
           name: Syft SBOM
           environment:
-            SYFT_VERSION: v0.80.0
+            SYFT_VERSION: v0.82.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
             OUTPUT_FILE:  reports/syft_sbom.json
           command: |
-            mkdir -p reports/data_science
+            mkdir -p reports/
             curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
             ./syft data_science/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE" 
             echo "scan results saved in $OUTPUT_FILE"
@@ -376,6 +376,7 @@ jobs:
       - run:
           name: Test data_science
           command:  |
+            mkdir -p coverage/
             cd data_science/src
             source venv/bin/activate
             # install pytest and coverage
