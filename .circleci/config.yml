@@ -283,8 +283,6 @@ jobs:
     executor: docker-python-executor
     steps:
       - checkout
-      - attach_workspace:
-          at: .
       - create_combined_pipfreeze
       - restore_cache:
           keys:
@@ -317,6 +315,7 @@ jobs:
           root: .
           paths:
             - .
+      - resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
