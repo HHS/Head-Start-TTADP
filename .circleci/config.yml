@@ -355,7 +355,7 @@ jobs:
             SYFT_VERSION: v0.80.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
-            OUTPUT_FILE:  reports/syft_sbom.json
+            OUTPUT_FILE:  ./reports/syft_sbom.json
           command: |
             mkdir -p reports/data_science
             curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
@@ -368,10 +368,10 @@ jobs:
           environment:
             GRYPE_VERSION: v0.61.1
             OUTPUT_FORMAT: sarif
-            OUTPUT_FILE: reports/grype.json
+            OUTPUT_FILE: ./reports/grype.json
           command: |
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-            ./grype sbom:./reports/data_science/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
+            ./grype sbom:./reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "${OUTPUT_FILE}"
             echo "scan results saved in $OUTPUT_FILE"
       - run:
           name: Test data_science
