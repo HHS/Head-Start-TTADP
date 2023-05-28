@@ -355,7 +355,7 @@ jobs:
             SYFT_VERSION: v0.82.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
-            OUTPUT_FILE:  ../../reports/syft_sbom.json
+            OUTPUT_FILE:  reports/syft_sbom.json
           command: |
             mkdir -p reports/
             curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
@@ -368,7 +368,7 @@ jobs:
           environment:
             GRYPE_VERSION: v0.62.2
             OUTPUT_FORMAT: sarif
-            OUTPUT_FILE: ../../reports/grype.json
+            OUTPUT_FILE: reports/grype.json
           command: |
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
             ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
@@ -383,12 +383,12 @@ jobs:
             pip install pytest pytest-cov
 
             # run tests in the target folder and collect coverage
-            pytest -rpP --cov=data_science --cov=middleware --cov=utilities --cov=. --junitxml=../../reports/junit.xml
+            pytest -rpP --cov=data_science --cov=middleware --cov=utilities --cov=. --junitxml=~/project/reports/junit.xml
 
             # generate coverage report relative to target folder
             coverage report --show-missing --skip-covered 
             # generate html coverage report
-            coverage html -d coverage/ --skip-covered 
+            coverage html -d ~/project/coverage/ --skip-covered 
 
       - run:
           name: Compress coverage artifacts
