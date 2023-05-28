@@ -294,6 +294,8 @@ jobs:
           name: Install python dependencies
           command: |
             cd data_science/src
+            python3 -m venv venv
+            source venv/bin/activate
             pip install -r requirements.txt
 
       - save_cache:
