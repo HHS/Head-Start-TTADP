@@ -376,7 +376,7 @@ jobs:
       - run:
           name: Test data_science
           command:  |
-            mkdir -p coverage/
+            mkdir -p coverage/data_science
             cd data_science/src
             source venv/bin/activate
             # install pytest and coverage
@@ -388,13 +388,15 @@ jobs:
             # generate coverage report relative to target folder
             coverage report --show-missing --skip-covered 
             # generate html coverage report
-            coverage html -d ~/project/coverage/ --skip-covered 
+            coverage html -d ~/project/coverage/data_science --skip-covered 
 
       - run:
           name: Compress coverage artifacts
-          command: tar -cvzf data-science-coverage-artifacts.tar coverage/
+          command: tar -cvzf data-science-coverage-artifacts.tar coverage/data_science/
       - store_artifacts:
           path: coverage/
+      - store_artifacts:
+          path: reports/
       - store_artifacts:
           path:  data-science-coverage-artifacts.tar
       - store_test_results:
