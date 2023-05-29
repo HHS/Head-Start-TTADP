@@ -1,6 +1,7 @@
 ---
 applications:
   - name: tta-smarthub-((env))
+    strategy: rolling
     path: ./
     buildpacks:
       - nodejs_buildpack
@@ -44,6 +45,7 @@ applications:
         memory: ((worker_memory))
   - name: tta-data-science-((env))
     path: ./data-science/src
+    strategy: rolling
     buildpacks:
       - python_buildpack
     env:
