@@ -44,7 +44,7 @@ applications:
         command: yarn start:worker
         memory: ((worker_memory))
   - name: tta-data-science-((env))
-    path: ./data-science/src
+    path: .data_science/src
     strategy: rolling
     buildpacks:
       - python_buildpack
