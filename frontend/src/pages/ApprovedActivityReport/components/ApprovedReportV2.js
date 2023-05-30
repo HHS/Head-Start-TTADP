@@ -109,7 +109,7 @@ function calculateGoalsAndObjectives(report) {
     report.goalsAndObjectives.forEach((goal) => {
       striped = !striped;
 
-      const goalSection = {
+      let goalSection = {
         heading: 'Goal summary',
         data: {
           'Recipient\'s goal': (
@@ -123,6 +123,22 @@ function calculateGoalsAndObjectives(report) {
         },
         striped,
       };
+
+      // Add anticipated close date if we have it.
+      if (goal.activityReportGoals && goal.activityReportGoals.length) {
+        goalSection = {
+          ...goalSection.heading,
+          data: {
+            ...goalSection.data,
+            'Anticipated close date': (
+              <>
+                { goal.activityReportGoals[0].endDate}
+              </>
+            ),
+          },
+          striped: true,
+        };
+      }
 
       const { prompts } = goal;
       if (prompts && prompts.length) {
@@ -146,7 +162,7 @@ function calculateGoalsAndObjectives(report) {
 
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, deliveryMethod, additionalNotes: creatorNotes, virtualDeliveryType,
+    reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
 
   // first table
@@ -162,9 +178,6 @@ export default function ApprovedReportV2({ data }) {
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
-
-  // Approver Notes.
-  const managerNotes = data.approvers.map((a) => `${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
@@ -186,14 +199,13 @@ export default function ApprovedReportV2({ data }) {
 
   // next steps table
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const nextStepsLabel = recipientType === 'Recipients' ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const nextStepsLabel = isRecipient ? 'Recipient\'s next steps' : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
-
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
@@ -326,22 +338,6 @@ export default function ApprovedReportV2({ data }) {
           ...recipientNextSteps,
         ]}
       />
-
-      <ApprovedReportSection
-        key={`review-and-submit-${reportId}`}
-        className="no-print"
-        title="Review and submit"
-        sections={[
-          {
-            data: {
-              'Creator notes': creatorNotes,
-              'Manager notes': managerNotes,
-            },
-            striped: true,
-          },
-        ]}
-      />
-
     </Container>
   );
 }
