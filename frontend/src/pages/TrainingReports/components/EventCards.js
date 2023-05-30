@@ -8,17 +8,14 @@ function EventCards({
   events,
 }) {
   return (
-    <Container>
-      <div className="padding-x-3 padding-y-2">
-        {events.map((event) => (
-          <EventCard
-            key={`event-row-${event.id}`}
-            event={event}
-          />
-        ))}
-
-      </div>
-    </Container>
+    <div className="padding-x-3 padding-y-2">
+      {events.map((event) => (
+        <EventCard
+          key={`event-row-${event.id}`}
+          event={event}
+        />
+      ))}
+    </div>
   );
 }
 
