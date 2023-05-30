@@ -2,7 +2,7 @@ import React, {
   useMemo, useState, useEffect, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
-import { useForm } from 'react-hook-form/dist/index.ie11';
+import { useForm } from 'react-hook-form';
 import {
   Button,
   Label,

@@ -7,7 +7,7 @@ import {
 import React from 'react';
 import PropTypes from 'prop-types';
 import fetchMock from 'fetch-mock';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import GoalForm from '../GoalForm';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 

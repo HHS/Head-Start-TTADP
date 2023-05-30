@@ -5,9 +5,9 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Fieldset } from '@trussworks/react-uswds';
+import { Alert, Fieldset, Button } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useController } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
 import { IN_PROGRESS } from '../../../components/Navigator/constants';
@@ -24,6 +24,7 @@ import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -41,7 +42,6 @@ export const validatePrompts = async (promptTitles, trigger) => {
 
 const GoalsObjectives = ({
   reportId,
-  onSaveDraftOetObjectives,
 }) => {
   const {
     watch, setValue, getValues, setError, trigger,
@@ -271,7 +271,6 @@ const GoalsObjectives = ({
       && (
       <OtherEntity
         recipientIds={activityRecipientIds}
-        onSaveDraft={onSaveDraftOetObjectives}
         reportId={reportId}
       />
       )}
@@ -344,7 +343,6 @@ const GoalsObjectives = ({
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  onSaveDraftOetObjectives: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => {
@@ -397,10 +395,59 @@ export default {
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: (_additionalData, _formData, reportId, _onSaveDraftGoal, onSaveDraftOetObjectives) => (
-    <GoalsObjectives
-      reportId={reportId}
-      onSaveDraftOetObjectives={onSaveDraftOetObjectives}
-    />
-  ),
+  render: (
+    _additionalData,
+    formData,
+    reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    weAreAutoSaving,
+  ) => {
+    const { activityRecipientType } = formData;
+    const isOtherEntityReport = activityRecipientType === 'other-entity';
+
+    const Buttons = () => {
+      const {
+        isGoalFormClosed,
+        isObjectivesFormClosed,
+      } = useContext(GoalFormContext);
+
+      const showSaveGoalsAndObjButton = (
+        !isGoalFormClosed
+        && !isObjectivesFormClosed
+      );
+
+      if (showSaveGoalsAndObjButton) {
+        return (
+          <>
+            <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+            <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={async () => onSaveDraft(false)}>Save draft</Button>
+            <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
+          </>
+        );
+      }
+
+      return (
+        <NavigatorButtons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          onUpdatePage={onUpdatePage}
+          path="goals-objectives"
+          position={2}
+        />
+      );
+    };
+
+    return (
+      <>
+        <GoalsObjectives
+          reportId={reportId}
+        />
+        <Buttons />
+      </>
+    );
+  },
 };

@@ -4,7 +4,7 @@ import React, {
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useController, useFormContext } from 'react-hook-form';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';

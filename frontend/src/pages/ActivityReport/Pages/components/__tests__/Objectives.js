@@ -4,7 +4,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
 import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';

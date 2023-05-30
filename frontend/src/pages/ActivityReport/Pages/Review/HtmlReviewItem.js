@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../utils';
 

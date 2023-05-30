@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import fetchMock from 'fetch-mock';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import OtherEntity from '../OtherEntity';
 
 // eslint-disable-next-line react/prop-types
