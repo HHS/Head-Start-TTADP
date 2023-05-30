@@ -14,6 +14,13 @@ function EventCard({
     data,
   } = event;
 
+  const checkForDate = (date) => {
+    if (date) {
+      return moment(date, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT);
+    }
+    return '...';
+  };
+
   return (
     <article
       className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter"
@@ -38,11 +45,11 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event start date</p>
-          <p className="usa-prose margin-y-0">{!startDate ? '...' : moment(startDate, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+          <p className="usa-prose margin-y-0">{checkForDate(startDate)}</p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event end date</p>
-          <p className="usa-prose margin-y-0">{!endDate ? '...' : moment(endDate, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+          <p className="usa-prose margin-y-0">{checkForDate(endDate)}</p>
         </div>
       </div>
     </article>
