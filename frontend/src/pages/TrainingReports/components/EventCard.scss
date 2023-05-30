@@ -46,14 +46,16 @@ $max-width-date-column: 50%;
   margin-bottom: 16px;
 }
 
-
+// Hide tool tip button.
 .ttahub-event-card__event-reason-tool-tip {
   display: none;
 }
 
+// Show tool tip csv.
 .ttahub-event-card__event-reason-csv {
   display: block;
 }
+
 
 
 @media(min-width: 627px) {
@@ -113,8 +115,26 @@ $max-width-date-column: 50%;
     flex-basis: clamp($min-width-reason-column, 20%, 100%);
   }
 
+  // Reason overflow.
+  .ttahub-event-card__event-column__reason p {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 150px;
+  }
+
   // Event Date.
   .ttahub-event-card__event-column__date {
     flex-basis: clamp($min-width-date-column, 12.5%, 100%);
+  }
+
+  // Show tool tip button.
+  .ttahub-event-card__event-reason-tool-tip {
+    display: block;
+  }
+
+  // Hide CSV tool tip list.
+  .ttahub-event-card__event-reason-csv {
+    display: none;
   }
 }

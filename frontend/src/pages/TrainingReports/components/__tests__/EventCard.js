@@ -12,6 +12,7 @@ describe('EventCard', () => {
       'Edit Title': 'This is my event title',
       'Event ID': 'This is my event ID',
       'Event Organizer - Type of Event': 'This is my event organizer',
+      'Reason for Activity': 'New Program/Option\nNew Staff/Turnover',
     },
   };
 
@@ -42,5 +43,6 @@ describe('EventCard', () => {
     expect(screen.getByText('This is my event organizer')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('...')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(2);
   });
 });
