@@ -68,7 +68,7 @@ NextSteps.defaultProps = {
 
 const getNextStepsSections = (activityRecipientType) => {
   const isRecipient = activityRecipientType === 'recipient';
-  const labelDisplayName = isRecipient ? "Recipient's" : 'Other entities';
+  const labelDisplayName = isRecipient ? "Recipient's" : 'Other entity\'s';
   const subtitleDisplayText = isRecipient ? 'recipient' : 'other entity';
   return [
     {
