@@ -40,3 +40,4 @@ newrelic_agent.log
 
 # DB files
 *.sql
+.vscode/settings.json
