@@ -28,7 +28,6 @@ import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
 import goalTemplatesRouter from './goalTemplates';
 import feedRouter from './feeds';
-import testingRouter from './testingOnly';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -72,10 +71,6 @@ router.use('/alerts', siteAlertsRouter);
 router.use('/feeds', feedRouter);
 router.use('/resources', resourcesRouter);
 router.use('/goal-templates', goalTemplatesRouter);
-
-if (isTestingOrCI()) {
-  router.use('/testing', testingRouter);
-}
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

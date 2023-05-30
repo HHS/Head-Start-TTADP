@@ -1,7 +1,30 @@
+import { Sequelize }  from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-import db from '../../src/models';
+// import db from '../../src/models';
 import { calledFromTestFileOrDirectory } from './testOnly';
 import { auditLogger } from '../../src/logger';
+import configs from '../../config/config';
+
+const getDB = () => {
+  const env = process.env.NODE_ENV || 'development';
+  const config = configs[env];
+
+  let sequelize;
+  if (config.use_env_variable) {
+    sequelize = new Sequelize(process.env[config.use_env_variable], config);
+  } else {
+    sequelize = new Sequelize(config.database, config.username, config.password, config);
+  }
+
+  const db = {
+    sequelize,
+    Sequelize,
+  };
+  return db;
+}
+
+const db = getDB();
+
 
 const clear = async () => {
   await db.sequelize.query(`
@@ -28,12 +51,12 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
       },
     },
     context: db.sequelize.getQueryInterface(),
-    logger: console,
+    logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
   });
 
   try {
     const migrations = await umzug.up();
-    console.log(migrations);
+
     auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
   } catch (error) {
     if (error instanceof MigrationError) {
@@ -57,5 +80,16 @@ export const reseed = async () => {
     return false;
   } catch (error) {
     return false;
+  }
+};
+
+export const query = async(command, options) => {
+  try {
+    if (calledFromTestFileOrDirectory()) {
+      return await db.sequelize.query(command, options);
+    }
+    return { error: 'called from non-testing file or directory' };
+  } catch (error) {
+    return { error };
   }
 };

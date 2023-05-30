@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
-import { reseed } from '../../../tests/utils/dbUtils';
+import { reseed, query } from '../../../tests/utils/dbUtils';
 
 /**
  *
@@ -9,7 +9,7 @@ import { reseed } from '../../../tests/utils/dbUtils';
  * @param {Request} req
  * @returns Promise<void>
  */
-export default async function reseedDB(req: Request, res: Response) {
+export async function reseedDB(req: Request, res: Response) {
   try {
     const result = await reseed();
     res
@@ -17,5 +17,17 @@ export default async function reseedDB(req: Request, res: Response) {
       .json(result);
   } catch (e) {
     await handleErrors(req, res, e, 'reseedDB');
+  }
+}
+
+export async function queryDB(req: Request, res: Response) {
+  try {
+    const { command, options } = req.params;
+    const result = await query(command, options);
+    res
+      .status(result ? 200 : 500)
+      .json(result);
+  } catch (e) {
+    await handleErrors(req, res, e, 'queryDB');
   }
 }
