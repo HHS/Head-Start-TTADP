@@ -141,7 +141,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // add creator notes
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('Sample creator notes');
-    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.locator('.ttahub-approver-select__value-container');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us

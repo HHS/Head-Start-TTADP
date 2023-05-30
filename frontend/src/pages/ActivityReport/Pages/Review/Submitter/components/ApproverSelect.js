@@ -74,6 +74,7 @@ function ApproverSelect({
   return (
     <Select
       onBlur={onBlurSelect}
+      classNamePrefix="ttahub-approver-select"
       className="ttahub-multi-select margin-top-1"
       id={`${name}-container`}
       value={getValues(selectValue)}

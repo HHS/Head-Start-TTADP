@@ -104,6 +104,7 @@ export default function ObjectiveTopics({
         </div>
         {error}
         <Select
+          classNamePrefix="ttahub-objectives-topics"
           inputName={inputName}
           inputId={inputName}
           name={inputName}

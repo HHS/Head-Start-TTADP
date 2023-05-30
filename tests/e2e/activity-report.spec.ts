@@ -292,7 +292,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.locator('.ttahub-approver-select__value-container');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -569,7 +569,7 @@ test.describe('Activity Report', () => {
     await nextSteps(page);
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.locator('.ttahub-approver-select__value-container');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -660,7 +660,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.locator('.css-125guah-control').click();
+    await page.locator('.ttahub-objectives-topics__control').click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
@@ -724,12 +724,13 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('.ttahub-objective-select__value-container').click();
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1 o1 title');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-21-option-0').click();
+    await page.locator('.ttahub-objectives-topics__value-container').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('g1 o1 tta');

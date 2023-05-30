@@ -43,6 +43,7 @@ export default function ObjectiveSelect({
           name="objectives"
           onChange={onChange}
           className="usa-select margin-bottom-3"
+          classNamePrefix="ttahub-objective-select"
           options={options}
           styles={selectOptionsReset}
           placeholder="- Select -"
