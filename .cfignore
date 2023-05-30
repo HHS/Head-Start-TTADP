@@ -10,4 +10,5 @@ smartsheet_scripts/
 terraform/
 hses.zip
 temp/
+tests/
 .tmp/

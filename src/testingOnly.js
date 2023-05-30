@@ -1,8 +1,9 @@
 import express from 'express';
-import db from './models';
+import {} from 'dotenv/config';
+import testingRouter from './routes/testingOnly';
 
 const app = express();
 
-app.get('/reseed', (req, res) => {});
+app.use('/testingOnly', testingRouter);
 
-app.listen(9999, () => {});
+app.listen(9999, 'localhost', () => {});
