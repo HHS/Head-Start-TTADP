@@ -55,6 +55,14 @@ export const REGIONAL_SCOPES = {
     name: 'APPROVE_ACTIVITY_REPORTS',
     description: 'Can approve activity reports in the region',
   },
+  [SCOPE_IDS.READ_WRITE_TRAINING_REPORTS]: {
+    name: 'READ_WRITE_TRAINING_REPORTS',
+    description: 'Can view and create/edit training reports in the region',
+  },
+  [SCOPE_IDS.READ_TRAINING_REPORTS]: {
+    name: 'READ_TRAINING_REPORTS',
+    description: 'Can view training reports in the region',
+  },
 };
 
 export const GLOBAL_SCOPES = {
