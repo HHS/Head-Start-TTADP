@@ -1,0 +1,20 @@
+get:
+  tags:
+    - event
+  summary: Get all events given an owner ID
+  parameters:
+    - name: ownerId
+      in: path
+      description: ID of the owner with which to retrieve events
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../../index.yaml#/components/schemas/event'
