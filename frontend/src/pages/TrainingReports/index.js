@@ -13,6 +13,7 @@ import UserContext from '../../UserContext';
 import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
+import EventCards from './components/EventCards';
 
 const tabValues = [
   { key: 'Not started', value: 'not-started' },
@@ -21,7 +22,34 @@ const tabValues = [
 export default function TrainingReports() {
   const { user } = useContext(UserContext);
   // const [eventStatus, setEvenStatus] = useState([]);
-  // const events = [];
+  const events = [{
+    createdAt: '2021-01-02',
+    updatedAt: '2021-01-03',
+    data: {
+      'Edit Title': 'This is a realy long title that should wrap to the next line and not overflow the container',
+      'Event ID': 'R02-PD-23-1112',
+      'Event Organizer - Type of Event': 'Sample event organizer 1',
+      'Reason for Activity': 'New Program/Option\nNew Staff/Turnover\nOngoing Quality Improvement\nSchool Readiness Goals\nEmergent Needs',
+    },
+  },
+  {
+    createdAt: '2021-02-02',
+    updatedAt: '2021-02-03',
+    data: {
+      'Edit Title': 'Sample event 2',
+      'Event ID': 'Sample event ID 2',
+      'Event Organizer - Type of Event': 'Sample event organizer 2',
+    },
+  },
+  {
+    createdAt: '2021-03-02',
+    updatedAt: '2021-03-03',
+    data: {
+      'Edit Title': 'Sample event 3',
+      'Event ID': 'Sample event ID 3',
+      'Event Organizer - Type of Event': 'Sample event organizer 3',
+    },
+  }];
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
 
@@ -102,6 +130,7 @@ export default function TrainingReports() {
               showHeaderBorder={false}
             >
               <Tabs tabs={tabValues} ariaLabel="Training events" />
+              <EventCards events={events} />
             </WidgetContainer>
           </Grid>
         </Grid>

@@ -15,7 +15,7 @@ export default function RecipientTabs({
   return (
     <div className="ttahub-tabs--tabs no-print">
       <nav className="ttahub-tabs--tabs_nav bg-white" aria-label={ariaLabel}>
-        <ul className="ttahub-tabs--tabs-ul display-flex margin-0 margin-bottom-5 padding-0">
+        <ul className="ttahub-tabs--tabs-ul display-flex margin-0 margin-bottom-0 padding-0">
           {tabs.map((tab) => (
 
             <li className={liClass}>
