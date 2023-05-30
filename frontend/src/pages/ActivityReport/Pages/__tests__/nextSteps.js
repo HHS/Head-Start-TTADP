@@ -88,7 +88,7 @@ describe('next steps review', () => {
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
     expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByText(/first specialist step/i)).toBeVisible();
-    expect(await screen.findByText(/other entities next steps/i)).toBeVisible();
+    expect(await screen.findByText(/other entity's next steps/i)).toBeVisible();
     expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByText(/first other entity step/i)).toBeVisible();
   });
