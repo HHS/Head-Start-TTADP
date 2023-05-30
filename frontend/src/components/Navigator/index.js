@@ -21,7 +21,7 @@ import useInterval from '@use-it/interval';
 import Container from '../Container';
 import SocketAlert from '../SocketAlert';
 import {
-  IN_PROGRESS, COMPLETE, NOT_STARTED,
+  IN_PROGRESS, COMPLETE,
 } from './constants';
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
@@ -112,7 +112,7 @@ const Navigator = ({
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
-    let stateOfPage = pageState ? pageState[p.position] : NOT_STARTED;
+    let stateOfPage = pageState[p.position];
     if (stateOfPage !== COMPLETE) {
       stateOfPage = current ? IN_PROGRESS : pageState[p.position];
     }
