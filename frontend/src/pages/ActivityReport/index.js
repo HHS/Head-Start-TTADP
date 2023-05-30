@@ -18,7 +18,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import pages from './Pages';
-import Navigator from '../../components/Navigator';
+import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
@@ -589,7 +589,7 @@ function ActivityReport({
         }
       }
       >
-        <Navigator
+        <ActivityReportNavigator
           socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}
