@@ -12,6 +12,7 @@ describe('EventCards', () => {
       'Edit Title': 'Sample event 1',
       'Event ID': 'Sample event ID 1',
       'Event Organizer - Type of Event': 'Sample event organizer 1',
+      'Reason for Activity': 'New Program/Option',
     },
   },
   {
@@ -21,6 +22,7 @@ describe('EventCards', () => {
       'Edit Title': 'Sample event 2',
       'Event ID': 'Sample event ID 2',
       'Event Organizer - Type of Event': 'Sample event organizer 2',
+      'Reason for Activity': 'New Staff/Turnover',
     },
   },
   {
@@ -30,6 +32,7 @@ describe('EventCards', () => {
       'Edit Title': 'Sample event 3',
       'Event ID': 'Sample event ID 3',
       'Event Organizer - Type of Event': 'Sample event organizer 3',
+      'Reason for Activity': null,
     },
   },
   ];
@@ -62,12 +65,14 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     expect(screen.getByText('Sample event 2')).toBeInTheDocument();
     expect(screen.getByText('Sample event ID 2')).toBeInTheDocument();
     expect(screen.getByText('Sample event organizer 2')).toBeInTheDocument();
     expect(screen.getByText('02/02/2021')).toBeInTheDocument();
     expect(screen.getByText('02/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Staff/Turnover').length).toBe(1);
 
     expect(screen.getByText('Sample event 3')).toBeInTheDocument();
     expect(screen.getByText('Sample event ID 3')).toBeInTheDocument();

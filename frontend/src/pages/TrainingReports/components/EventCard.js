@@ -4,6 +4,7 @@ import moment from 'moment';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import './EventCard.scss';
 import { eventPropTypes } from '../constants';
+import TooltipList from '../../../components/TooltipList';
 
 function EventCard({
   event,
@@ -41,7 +42,7 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__reason padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Reason</p>
-          <p className="usa-prose margin-y-0">{data['Reason for Activity']}</p>
+          <TooltipList list={data['Reason for Activity'] ? data['Reason for Activity'].split('\n') : []} cardType="event" listType="reason" />
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event start date</p>
