@@ -18,7 +18,7 @@ export async function queryDB(req: Request, res: Response) {
     const { command, options } = req.params;
     const result = await query(command, options);
     res
-      .status(result ? 200 : 500)
+      .status(result[0] ? 200 : 500)
       .json(result);
   } catch (e) {
     await handleErrors(req, res, e, 'queryDB');

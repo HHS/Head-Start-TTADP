@@ -7,7 +7,7 @@ describe('dbUtils', () => {
     await query(`
       ALTER SEQUENCE "Goals_id_seq"
       RESTART WITH 65535;
-    `);
+    `, null);
 
     const wasReseeded = await reseed();
 
@@ -21,6 +21,16 @@ describe('dbUtils', () => {
     expect(lastValue).not.toBe(65535);
   });
   it('test reseed via handler api', async () => {
+    const res = {};
+    res.status = (code) => {
+      expect(code).toBe(200);
+      return res;
+    };
+    res.json = (x) => {
+      const { command } = x[1];
+      expect(command).toBe('ALTER');
+      return res;
+    };
     await queryDB(
       {
         params: {
@@ -30,13 +40,24 @@ describe('dbUtils', () => {
           `,
         },
       },
+      res,
     );
 
-    const wasReseeded = await reseedDB(null, null);
+    res.json = (x) => {
+      expect(x).toBe(true);
+      return res;
+    };
+    await reseedDB(
+      null,
+      res,
+    );
 
-    expect(wasReseeded).toBe(true);
-
-    const [{ lastValue }] = await queryDB(
+    res.json = (x) => {
+      const { lastValue } = x[0][0];
+      expect(lastValue).not.toBe(65535);
+      return res;
+    };
+    await queryDB(
       {
         params: {
           command: `
@@ -46,8 +67,7 @@ describe('dbUtils', () => {
         },
         options: { type: QueryTypes.SELECT },
       },
+      res,
     );
-
-    expect(lastValue).not.toBe(65535);
   });
 });
