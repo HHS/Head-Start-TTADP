@@ -1,5 +1,6 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,42 +15,40 @@ import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
+import { getEventsByStatus } from '../../fetchers/trainingReports';
+import AppLoadingContext from '../../AppLoadingContext';
+import { EVENT_STATUS } from './constants';
 
 const tabValues = [
-  { key: 'Not started', value: 'not-started' },
-  { key: 'In progress', value: 'in-progress' },
-  { key: 'Completed', value: 'complete' }];
-export default function TrainingReports() {
+  { key: 'Not started', value: EVENT_STATUS.NOT_STARTED },
+  { key: 'In progress', value: EVENT_STATUS.IN_PROGRESS },
+  { key: 'Completed', value: EVENT_STATUS.COMPLETE }];
+export default function TrainingReports({ match }) {
+  const { params: { status } } = match;
   const { user } = useContext(UserContext);
-  // const [eventStatus, setEvenStatus] = useState([]);
-  const events = [{
-    createdAt: '2021-01-02',
-    updatedAt: '2021-01-03',
-    data: {
-      'Edit Title': 'This is a realy long title that should wrap to the next line and not overflow the container',
-      'Event ID': 'R02-PD-23-1112',
-      'Event Organizer - Type of Event': 'Sample event organizer 1',
-      'Reason for Activity': 'New Program/Option\nNew Staff/Turnover\nOngoing Quality Improvement\nSchool Readiness Goals\nEmergent Needs',
-    },
-  },
-  {
-    createdAt: '2021-02-02',
-    updatedAt: '2021-02-03',
-    data: {
-      'Edit Title': 'Sample event 2',
-      'Event ID': 'Sample event ID 2',
-      'Event Organizer - Type of Event': 'Sample event organizer 2',
-    },
-  },
-  {
-    createdAt: '2021-03-02',
-    updatedAt: '2021-03-03',
-    data: {
-      'Edit Title': 'Sample event 3',
-      'Event ID': 'Sample event ID 3',
-      'Event Organizer - Type of Event': 'Sample event organizer 3',
-    },
-  }];
+  const [error, updateError] = useState();
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const [displayEvents, setDisplayEvents] = useState([]);
+  useEffect(() => {
+    async function fetchEvents() {
+      setAppLoadingText('Fetching events...');
+      setIsAppLoading(true);
+      // const filterQuery = filtersToQueryString(filtersToApply);
+      try {
+        const events = await getEventsByStatus(status);
+        setDisplayEvents(events);
+        updateError('');
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch events');
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+    fetchEvents();
+  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading]);
+
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
 
@@ -122,6 +121,13 @@ export default function TrainingReports() {
             </Grid>
           </Grid>
           <Grid row>
+            {error && (
+            <Alert className="margin-bottom-2" type="error" role="alert">
+              {error}
+            </Alert>
+            )}
+          </Grid>
+          <Grid row>
             <WidgetContainer
               title="Events"
               loading={false}
@@ -130,7 +136,7 @@ export default function TrainingReports() {
               showHeaderBorder={false}
             >
               <Tabs tabs={tabValues} ariaLabel="Training events" />
-              <EventCards events={events} />
+              <EventCards events={displayEvents} />
             </WidgetContainer>
           </Grid>
         </Grid>
@@ -141,6 +147,7 @@ export default function TrainingReports() {
 }
 
 TrainingReports.propTypes = {
+  match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
