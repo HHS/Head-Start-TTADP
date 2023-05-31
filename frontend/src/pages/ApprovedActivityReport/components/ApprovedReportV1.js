@@ -100,11 +100,6 @@ export default function ApprovedReportV1({ data }) {
     (a) => a.fullName,
   );
 
-  // Approver Notes.
-  const managerNotes = data.approvers.map((a) => `
-        <h2>${a.user.fullName}:</h2>
-        ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
-
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
   const reasons = formatSimpleArray(data.reason);
@@ -121,9 +116,7 @@ export default function ApprovedReportV1({ data }) {
   const attachments = mapAttachments(data.files);
 
   // third table
-  const {
-    context, displayId, additionalNotes,
-  } = data;
+  const { context, displayId } = data;
   const [goalsAndObjectiveHeadings, goalsAndObjectives] = calculateGoalsAndObjectives(data);
 
   // next steps table
@@ -261,22 +254,6 @@ export default function ApprovedReportV1({ data }) {
             [
               specialistNextSteps,
               recipientNextSteps,
-            ]
-          }
-        />
-        <ViewTable
-          className="no-print"
-          caption="Review and Submit"
-          headings={
-            [
-              'Creator notes',
-              'Manager notes',
-            ]
-          }
-          data={
-            [
-              additionalNotes,
-              managerNotes,
             ]
           }
         />

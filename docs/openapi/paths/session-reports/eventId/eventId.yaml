@@ -1,0 +1,20 @@
+get:
+  tags:
+    - training report
+  summary: Get a single training report by its event ID
+  parameters:
+    - name: eventId
+      in: path
+      description: ID of the event with which to retrieve training reports
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../../index.yaml#/components/schemas/sessionReport'

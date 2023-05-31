@@ -379,7 +379,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ...(objective.dataValues
         ? objective.dataValues
         : objective),
-      title: objective.title,
+      title: objective.title.trim(),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -464,7 +464,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title,
+      title: objective.title.trim(),
       value: id,
       ids: [id],
       ttaProvided,
@@ -1136,13 +1136,13 @@ export async function createOrUpdateGoals(goals) {
           status: {
             [Op.not]: 'Closed',
           },
-          name: options.name,
+          name: options.name.trim(),
         },
       });
       if (!newGoal) {
         newGoal = await Goal.create({
           grantId,
-          name: options.name,
+          name: options.name.trim(),
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
           rtrOrder: rtrOrder + 1,
@@ -1156,7 +1156,9 @@ export async function createOrUpdateGoals(goals) {
 
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
-      newGoal.set({ ...options });
+      newGoal.set({
+        ...(options && options.name && { name: options.name.trim() }),
+      });
 
       if (newGoal.status !== status) {
         newGoal.set({ status });
@@ -1879,7 +1881,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.findOne({
           where: {
-            name: goal.name,
+            name: goal.name.trim(),
             grantId,
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
@@ -1890,6 +1892,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           createdVia: 'activityReport',
+          name: goal.name.trim(),
           grantId,
           ...fields,
           status,
@@ -1902,7 +1905,7 @@ export async function saveGoalsForReport(goals, report) {
         }
 
         if (fields.name !== newOrUpdatedGoal.name) {
-          newOrUpdatedGoal.set({ name: fields.name });
+          newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
 
         if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
