@@ -6,33 +6,36 @@ import UserContext from '../../../../UserContext';
 
 describe('EventCards', () => {
   const defaultEvents = [{
-    startDate: '2021-01-02',
-    endDate: '2021-01-03',
+
     data: {
       'Edit Title': 'Sample event 1',
       'Event ID': 'Sample event ID 1',
       'Event Organizer - Type of Event': 'Sample event organizer 1',
       'Reason for Activity': 'New Program/Option',
+      startDate: '2021-01-02',
+      endDate: '2021-01-03',
     },
   },
   {
-    startDate: '2021-02-02',
-    endDate: '2021-02-03',
+
     data: {
       'Edit Title': 'Sample event 2',
       'Event ID': 'Sample event ID 2',
       'Event Organizer - Type of Event': 'Sample event organizer 2',
       'Reason for Activity': 'New Staff/Turnover',
+      startDate: '2021-02-02',
+      endDate: '2021-02-03',
     },
   },
   {
-    startDate: '2021-03-02',
-    endDate: '2021-03-03',
+
     data: {
       'Edit Title': 'Sample event 3',
       'Event ID': 'Sample event ID 3',
       'Event Organizer - Type of Event': 'Sample event organizer 3',
       'Reason for Activity': null,
+      startDate: '2021-03-02',
+      endDate: '2021-03-03',
     },
   },
   ];

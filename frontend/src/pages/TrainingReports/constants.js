@@ -12,6 +12,8 @@ export const dataPropTypes = PropTypes.shape({
   'Event Organizer - Type of Event': PropTypes.string,
   'Event Duration/# NC Days of Support': PropTypes.string,
   'Overall Vision/Goal for the PD Event': PropTypes.string,
+  startDate: PropTypes.string.isRequired,
+  endDate: PropTypes.string.isRequired,
 });
 
 export const eventPropTypes = PropTypes.shape({
@@ -24,3 +26,9 @@ export const eventPropTypes = PropTypes.shape({
   updatedAt: PropTypes.string.isRequired,
   data: PropTypes.arrayOf(dataPropTypes),
 });
+
+export const EVENT_STATUS = {
+  NOT_STARTED: 'not-started',
+  IN_PROGRESS: 'in-progress',
+  COMPLETE: 'complete',
+};

@@ -10,8 +10,6 @@ function EventCard({
   event,
 }) {
   const {
-    startDate,
-    endDate,
     data,
   } = event;
 
@@ -46,11 +44,11 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event start date</p>
-          <p className="usa-prose margin-y-0">{checkForDate(startDate)}</p>
+          <p className="usa-prose margin-y-0">{checkForDate(data.startDate)}</p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event end date</p>
-          <p className="usa-prose margin-y-0">{checkForDate(endDate)}</p>
+          <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
         </div>
       </div>
     </article>
