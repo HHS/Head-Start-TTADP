@@ -6,11 +6,6 @@ from cfenv import AppEnv
 from dotenv import load_dotenv
 
 
-import os
-import json
-from dotenv import load_dotenv
-
-
 def get_postgres_service():
     """
     Retrieves PostgreSQL service credentials from either VCAP_SERVICES or .env file.
@@ -27,7 +22,7 @@ def get_postgres_service():
         if vcap_services:
             try:
                 vcap_services = json.loads(vcap_services)
-                return vcap_services["postgresql-db"][0]["credentials"]
+                return vcap_services["aws-rds"][0]["credentials"]
             except json.JSONDecodeError as e:
                 raise Exception("Invalid JSON string in VCAP_SERVICES") from e
         else:
@@ -35,17 +30,19 @@ def get_postgres_service():
     else:
         # Fallback on .env if VCAP_SERVICES not found
         postgres_service = {
-            "username": os.getenv("POSTGRES_USERNAME"),
+            "db_name": os.getenv("POSTGRES_DB_NAME"),
+            "host": os.getenv("POSTGRES_HOST"),
+            "name": os.getenv("POSTGRES_NAME"),
             "password": os.getenv("POSTGRES_PASSWORD"),
-            "database": os.getenv("POSTGRES_DB"),
-            "hostname": os.getenv("POSTGRES_HOST"),
             "port": os.getenv("POSTGRES_PORT"),
+            "uri": os.getenv("POSTGRES_URI"),
+            "username": os.getenv("POSTGRES_USERNAME")
         }
 
-    if None in postgres_service.values() or '' in postgres_service.values():
+    if '' in postgres_service.values():
         raise Exception("Some PostgreSQL environment variables are not set.")
 
-        return postgres_service
+    return postgres_service
 
 
 def connect_to_db():
@@ -54,11 +51,11 @@ def connect_to_db():
     # Connect to the PostgreSQL database
     try:
         conn = psycopg2.connect(
-            host=postgres_service["hostname"],
+            host=postgres_service["host"],
             port=postgres_service["port"],
             user=postgres_service["username"],
             password=postgres_service["password"],
-            database=postgres_service["database"],
+            database=postgres_service["db_name"],
         )
     except psycopg2.OperationalError as e:
         print(f"Could not connect to database: {e}")
