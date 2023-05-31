@@ -13,14 +13,14 @@ def test_get_postgres_service():
         {
             "VCAP_SERVICES": json.dumps(
                 {
-                    "postgresql-db": [
+                    "aws-rds": [
                         {
                             "credentials": {
-                                "hostname": "test_hostname",
+                                "host": "test_hostname",
                                 "port": "test_port",
                                 "username": "test_username",
                                 "password": "test_password",
-                                "database": "test_dbname",
+                                "db_name": "test_dbname",
                             }
                         }
                     ]
@@ -30,11 +30,11 @@ def test_get_postgres_service():
     ):
         service = get_postgres_service()
         assert service == {
-            "hostname": "test_hostname",
+            "host": "test_hostname",
             "port": "test_port",
             "username": "test_username",
             "password": "test_password",
-            "database": "test_dbname",
+            "db_name": "test_dbname",
         }
 
 
@@ -65,14 +65,14 @@ def test_connect_to_db():
             {
                 "VCAP_SERVICES": json.dumps(
                     {
-                        "postgresql-db": [
+                        "aws-rds": [
                             {
                                 "credentials": {
-                                    "hostname": "test_hostname",
+                                    "host": "test_hostname",
                                     "port": "test_port",
                                     "username": "test_username",
                                     "password": "test_password",
-                                    "database": "test_dbname",
+                                    "db_name": "test_dbname",
                                 }
                             }
                         ]
@@ -100,14 +100,14 @@ def test_connect_to_db_exception():
             {
                 "VCAP_SERVICES": json.dumps(
                     {
-                        "postgresql-db": [
+                        "aws-rds": [
                             {
                                 "credentials": {
-                                    "hostname": "test_hostname",
+                                    "host": "test_hostname",
                                     "port": "test_port",
                                     "username": "test_username",
                                     "password": "test_password",
-                                    "database": "test_dbname",
+                                    "db_name": "test_dbname",
                                 }
                             }
                         ]

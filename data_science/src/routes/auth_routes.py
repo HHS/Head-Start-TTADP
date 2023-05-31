@@ -18,14 +18,15 @@ from utilities.auth import (
 from typing import Annotated
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, Request, status, APIRouter
 
 from datetime import timedelta
 
-
 templates = Jinja2Templates(directory="templates")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+unauthenticated_router = APIRouter(tags=["unauthenticated"])
+authenticated_router = APIRouter(tags=["authenticated"], dependencies=[Depends(oauth2_scheme), Depends(get_current_active_user)])
 
 def execute_db_query(query, parameters=()):
     conn = connect_to_db()
@@ -36,10 +37,8 @@ def execute_db_query(query, parameters=()):
 
 
 def setup_auth_routes(app):
-    authenticated_router = APIRouter(tags=["authenticated"])
-    unauthenticated_router = APIRouter(tags=["unauthenticated"])
 
-    @app.post("/token", response_model=Token, tags=["auth", "unauthenticated"])
+    @unauthenticated_router.post("/token", response_model=Token, tags=["auth"])
     async def login_for_access_token(
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
     ):
@@ -56,7 +55,7 @@ def setup_auth_routes(app):
         )
         return {"access_token": access_token, "token_type": "bearer"}
 
-    @app.post("/login", tags=["auth", "unauthenticated"])
+    @unauthenticated_router.post("/login", tags=["auth"])
     async def login_browser_access_token(
         request: Request, form_data: OAuth2PasswordRequestForm = Depends()
     ):
@@ -82,13 +81,13 @@ def setup_auth_routes(app):
             "csrf_token": csrf_token,
         }
 
-    @app.get("/users/me/", response_model=User, tags=["auth", "authenticated"])
+    @authenticated_router.get("/users/me/", response_model=User, tags=["auth"])
     async def read_users_me(
         current_user: Annotated[User, Depends(get_current_active_user)]
     ):
         return current_user
 
-    @app.get("/users/me/items/", tags=["auth", "authenticated"])
+    @authenticated_router.get("/users/me/items/", tags=["auth"])
     async def read_own_items(
         current_user: Annotated[User, Depends(get_current_active_user)]
     ):

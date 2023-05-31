@@ -30,7 +30,7 @@ def get_postgres_service():
     else:
         # Fallback on .env if VCAP_SERVICES not found
         postgres_service = {
-            "db_name": os.getenv("POSTGRES_DB_NAME"),
+            "db_name": os.getenv("POSTGRES_DB"),
             "host": os.getenv("POSTGRES_HOST"),
             "name": os.getenv("POSTGRES_NAME"),
             "password": os.getenv("POSTGRES_PASSWORD"),
