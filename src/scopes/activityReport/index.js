@@ -14,6 +14,7 @@ import { withRole, withoutRole } from './role';
 import { withRegion, withoutRegion } from './region';
 import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
+import { withSingleOrMultiRecipients } from './singleOrMultiRecipient';
 import { withoutReason, withReason } from './reason';
 import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 import withStateCode from './stateCode';
@@ -89,6 +90,9 @@ export const topicToQuery = {
   targetPopulations: {
     in: (query) => withTargetPopulations(query),
     nin: (query) => withoutTargetPopulations(query),
+  },
+  singleOrMultiRecipients: {
+    in: (query) => withSingleOrMultiRecipients(query),
   },
   reason: {
     in: (query) => withReason(query),

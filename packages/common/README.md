@@ -10,3 +10,8 @@ Whenever changes to this package are made, you will need to:
 - Run `yarn deps` in the repo root.
 
 When the version is bumped, the `yarn install` (called by `yarn deps`) will see that this package's version is more recent than what currently exists in `node_modules`. It should then pull in the latest version to both projects.
+
+Note: when running yarn deps the yarn.lock file might get updated to be 
+"@ttahub/common@file:./../packages/common":
+in windows it SHOULD be set to
+"@ttahub/common@file:../packages/common":
