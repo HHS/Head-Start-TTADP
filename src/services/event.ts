@@ -106,7 +106,18 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
   };
 }
 
-async function findEventHelperBlob(key: string, value: string): Promise<EventShape[]> {
+interface FindEventHelperBlobOptions {
+  key: string;
+  value: string;
+  regions: number[] | undefined;
+}
+
+async function findEventHelperBlob({ key, value, regions }: FindEventHelperBlobOptions): Promise<EventShape[]> {
+  let whereClause = `data->>'${key}' = '${value}' OR NOT (data ? '${key}')`;
+  if (regions && regions.length) {
+    whereClause += ` AND regionId IN (${regions.join(',')})`;
+  }
+
   const events = EventReportPilot.findAll({
     attributes: [
       'id',
@@ -117,14 +128,10 @@ async function findEventHelperBlob(key: string, value: string): Promise<EventSha
       'data',
     ],
     raw: true,
-    where: sequelize.literal(`data->>'${key}' = '${value}' OR NOT (data ? '${key}')`),
+    where: sequelize.literal(whereClause),
   });
 
-  if (events && events.length) {
-    return events;
-  }
-
-  return null;
+  return events || null;
 }
 
 type WhereOptions = {
@@ -195,8 +202,8 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string): Promise<EventShape[] | null> {
-  return findEventHelperBlob('status', status) as Promise<EventShape[]>;
+export async function findEventsByStatus(status: string, readableRegions: number[]): Promise<EventShape[] | null> {
+  return findEventHelperBlob({ key: 'status', value: status, regions: readableRegions }) as Promise<EventShape[]>;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
