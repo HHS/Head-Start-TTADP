@@ -1,9 +1,9 @@
 import React from 'react';
 import {
-  render, screen, act,
+  render, screen, act, fireEvent, waitFor,
 } from '@testing-library/react';
 import join from 'url-join';
-import { Router } from 'react-router';
+import { Router, MemoryRouter } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -118,6 +118,16 @@ describe('TrainingReports', () => {
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
   });
 
+  it('renders the error message', async () => {
+    // getEventsByStatus throws an error message.
+    fetchMock.get(join(eventUrl, `status/${EVENT_STATUS.NOT_STARTED}`), 500, { overwriteRoutes: true });
+
+    act(() => {
+      renderTrainingReports();
+    });
+    expect(await screen.findByText(/Unable to fetch events/i)).toBeInTheDocument();
+  });
+
   it('renders the not started tab', async () => {
     act(() => {
       renderTrainingReports(nonCentralOfficeUser, EVENT_STATUS.NOT_STARTED);
@@ -183,5 +193,57 @@ describe('TrainingReports', () => {
       renderTrainingReports(centralOfficeUser);
     });
     expect(await screen.findByRole('heading', { name: /training reports - all regions/i })).toBeInTheDocument();
+  });
+
+  test('displays a message', async () => {
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+    const message = {
+      status: 'TESTED',
+      displayId: 'R04-PD-23-1123',
+      time: 'today',
+    };
+
+    const pastLocations = [
+      { pathname: '/training-reports/not-started', state: { message } },
+    ];
+
+    render(
+      <MemoryRouter initialEntries={pastLocations}>
+        <UserContext.Provider value={{ user }}>
+          <AppLoadingContext.Provider value={
+            {
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }
+          }
+          >
+            <TrainingReports match={{ params: { status: EVENT_STATUS.NOT_STARTED } }} />
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toBeVisible();
+
+    const alertButton = await screen.findByLabelText(/dismiss alert/i);
+    expect(alertButton).toBeVisible();
+
+    fireEvent.click(alertButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/you successfully tested training report R04-PD-23-1123 on today/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/dismiss alert/i)).not.toBeInTheDocument();
+    });
   });
 });
