@@ -13,7 +13,7 @@ import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
-import ConnectionError from '../../components/ConnectionError';
+import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 

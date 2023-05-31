@@ -16,7 +16,7 @@ import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
-import ConnectionError from './components/ConnectionError';
+import ConnectionError from '../../../components/ConnectionError';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';

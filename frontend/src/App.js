@@ -50,6 +50,7 @@ import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
+import TrainingReportForm from './pages/TrainingReportForm';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -260,7 +261,18 @@ function App() {
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReports user={user} />
+                <TrainingReports />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReportForm match={match} />
               </FeatureFlag>
             </AppWrapper>
           )}
@@ -302,6 +314,7 @@ function App() {
             </AppWrapper>
           )}
         />
+
         <Route
           exact
           path="/account"
