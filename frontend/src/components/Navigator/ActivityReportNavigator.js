@@ -348,6 +348,8 @@ const ActivityReportNavigator = ({
       prompts,
     );
 
+    console.log({ endDate, allGoals });
+
     // save goal to api, come back with new ids for goal and objectives
     try {
       // we only need save goal if we have a goal name

@@ -94,11 +94,10 @@ const initialData = {
   pageState: { 1: COMPLETE, 2: NOT_STARTED },
   regionId: 1,
   goals: [],
-  objectivesWithoutGoals: [],
   activityRecipients: [],
   activityRecipientType: 'other-entity',
   'goalForEditing.objectives': [],
-  selectedObjectivesWithoutGoals: [{
+  objectivesWithoutGoals: [{
     topics: [{}],
     title: 'test',
     ttaProvided: 'test',
@@ -182,6 +181,25 @@ describe('ActivityReportNavigator - OE reports', () => {
   });
 
   it('saves draft', async () => {
+    renderNavigator();
+
+    // assert fetchmock called to be false
+    await waitFor(() => expect(fetchMock.called()).toBe(false));
+
+    const first = await screen.findByRole('button', { name: 'first page Complete' });
+    await waitFor(() => expect(within(first).getByText('Complete')).toBeVisible());
+
+    const saveAndContinue = await screen.findByRole('button', { name: /draft/i });
+    userEvent.click(saveAndContinue);
+
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
+  });
+
+  it('handles fetch error', async () => {
+    // clear out fetch mock
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', 500);
+
     renderNavigator();
 
     // assert fetchmock called to be false
