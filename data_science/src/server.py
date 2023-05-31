@@ -1,4 +1,3 @@
-
 import uvicorn
 import os
 
@@ -12,6 +11,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware import Middleware
 from itsdangerous import URLSafeSerializer
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from cfenv import AppEnv
 
@@ -25,8 +25,8 @@ class BaseRoute(APIRoute):
         oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
         self.dependencies.append(Depends(oauth2_scheme))
         self.dependencies.append(Depends(get_current_active_user))
-def create_app():
 
+def create_app():
     app = FastAPI(default_route_class=BaseRoute, middleware=[
         Middleware(SessionMiddleware, secret_key=SECRET_KEY, https_only=True),
     ])
@@ -41,6 +41,9 @@ def create_app():
     setup_auth_routes(app)
     return app, port
 
+# These are at the module-level scope
+app, port = create_app()
+FastAPIInstrumentor.instrument_app(app)
+
 if __name__ == '__main__':
-        app, port = create_app()
         uvicorn.run(app, host='0.0.0.0', port=port)
