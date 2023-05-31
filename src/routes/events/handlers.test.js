@@ -155,14 +155,6 @@ describe('event handlers', () => {
   });
 
   describe('getByStatus', () => {
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
-
     it('works', async () => {
       await getByStatus({ params: { status: 'not-started' } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
