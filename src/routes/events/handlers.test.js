@@ -26,15 +26,20 @@ describe('event handlers', () => {
     await EventReportPilot.destroy({ where: { id: 99_999 } });
   });
 
-  describe('getHandler', () => {
-    const mockResponse = {
+  const mockResponse = {
+    send: jest.fn(),
+    status: jest.fn(() => ({
       send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
+      end: jest.fn(),
+    })),
+  };
 
+  beforeEach(() => {
+    mockResponse.status.mockClear();
+    mockResponse.send.mockClear();
+  });
+
+  describe('getHandler', () => {
     it('returns the event', async () => {
       await getHandler({ params: { eventId: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalled();
@@ -73,6 +78,9 @@ describe('event handlers', () => {
 
   describe('createHandler', () => {
     const mockRequest = {
+      session: {
+        userId: 1,
+      },
       body: {
         ownerId: 99_999,
         pocId: 99_999,
@@ -80,13 +88,6 @@ describe('event handlers', () => {
         regionId: 99_999,
         data: {},
       },
-    };
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
     };
 
     it('returns the event', async () => {
@@ -107,6 +108,9 @@ describe('event handlers', () => {
 
   describe('updateHandler', () => {
     const mockRequest = {
+      session: {
+        userId: 1,
+      },
       params: {
         eventId: 99_999,
       },
@@ -117,13 +121,6 @@ describe('event handlers', () => {
         regionId: 99_999,
         data: {},
       },
-    };
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
     };
 
     it('returns the event', async () => {
@@ -143,14 +140,6 @@ describe('event handlers', () => {
   });
 
   describe('deleteHandler', () => {
-    const mockResponse = {
-      send: jest.fn(),
-      status: jest.fn(() => ({
-        send: jest.fn(),
-        end: jest.fn(),
-      })),
-    };
-
     it('works', async () => {
       const event = await createEvent({
         ownerId: 99_999,
@@ -160,7 +149,7 @@ describe('event handlers', () => {
         data: {},
       });
 
-      await deleteHandler({ params: { eventId: event.id } }, mockResponse);
+      await deleteHandler({ session: { userId: 1 }, params: { eventId: event.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
