@@ -66,7 +66,7 @@ const renderReview = (
   const formData = {
     approvers,
     calculatedStatus,
-    displayId: '1',
+    displayId: 'R01-AR-23424',
     id: 1,
     creatorRole,
   };
