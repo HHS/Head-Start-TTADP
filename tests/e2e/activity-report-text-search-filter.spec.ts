@@ -311,7 +311,8 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByText('Select reasons to filter by').click();
     await page.keyboard.press('Enter');
     prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
+
+    await page.getByText('Clear all filtersCancelApply').click();
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs)
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
@@ -321,7 +322,8 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByText('Select reasons to filter by').click();
     await page.keyboard.press('Enter');
     prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
+
+    await page.getByText('Clear all filtersCancelApply').click();
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();   

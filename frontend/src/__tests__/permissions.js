@@ -58,11 +58,15 @@ describe('permissions', () => {
             scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
             regionId: 4,
           },
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 3,
+          },
         ],
       };
       const includeAdmin = true;
       const regions = allRegionsUserHasPermissionTo(user, includeAdmin);
-      expect(regions).toEqual(expect.arrayContaining([14, 3, 4]));
+      expect(regions).toEqual(expect.arrayContaining([14, 3, 4, 3]));
     });
 
     it('returns empty array when user has no permissions', () => {

@@ -44,8 +44,8 @@ export default function Groups() {
                   {group.name}
                 </span>
                 <span>
-                  <Link to={`/account/my-groups/${group.id}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-                  <Button type="button" onClick={() => onDelete(group.id)} unstyled>Delete group</Button>
+                  <Link to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
+                  <Button type="button" aria-label={`delete ${group.name}`} onClick={() => onDelete(group.id)} unstyled>Delete group</Button>
                 </span>
               </li>
             ))}

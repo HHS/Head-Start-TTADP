@@ -166,6 +166,17 @@ class CollaboratorRoles{
  roleId : integer : REFERENCES "Roles".id
 }
 
+class EventReportPilots{
+ * id : integer : <generated>
+ * ownerId : integer
+ pocId : integer
+ * collaboratorIds : integer[]
+ * regionId : integer
+ * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * data : jsonb
+}
+
 class Files{
  * id : integer : <generated>
  * originalFileName : varchar(255)
@@ -250,9 +261,9 @@ class Goals{
  isFromSmartsheetTtaPlan : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ endDate : date
  closeSuspendReason : enum
  closeSuspendContext : text
- endDate : date
  previousStatus : text
  * onApprovedAR : boolean
  firstNotStartedAt : timestamp with time zone
@@ -497,6 +508,7 @@ class Resources{
  * domain : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ title : text
 }
 
 class RoleTopics{
@@ -536,6 +548,14 @@ class Scopes{
  * description : varchar(255)
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+}
+
+class SessionReportPilots{
+ * id : integer : <generated>
+ * data : jsonb
+ * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * eventId : integer : REFERENCES "EventReportPilots".id
 }
 
 class SiteAlerts{
@@ -687,10 +707,10 @@ class ZALActivityReportGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALActivityReportGoalResources{
@@ -832,6 +852,20 @@ class ZALDDL{
  descriptor_id : integer
 }
 
+class ZALEventReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALFiles{
  * id : bigint : <generated>
  * data_id : bigint
@@ -854,10 +888,10 @@ class ZALGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALGoalResources{
@@ -882,10 +916,10 @@ class ZALGoalTemplateFieldPrompts{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALGoalTemplateObjectiveTemplates{
@@ -1280,6 +1314,20 @@ class ZALScopes{
  dml_as : bigint
 }
 
+class ZALSessionReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALSiteAlerts{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1424,6 +1472,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
