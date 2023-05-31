@@ -1,14 +1,7 @@
 import { Request, Response } from 'express';
-import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
 import { reseed, query } from '../../../tests/utils/dbUtils';
 
-/**
- *
- * @param {Request} req
- * @param {Request} req
- * @returns Promise<void>
- */
 export async function reseedDB(req: Request, res: Response) {
   try {
     const result = await reseed();
