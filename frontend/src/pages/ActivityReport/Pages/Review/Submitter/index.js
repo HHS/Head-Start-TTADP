@@ -6,7 +6,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import Container from '../../../../../components/Container';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
-import Approved from './Approved';
+import Approved from '../Approved';
 import Submitted from './Submitted';
 
 const Submitter = ({
@@ -136,6 +136,8 @@ const Submitter = ({
               incompletePages={incompletePages}
               approverStatusList={approverStatusList}
               creatorRole={creatorRole}
+              displayId={displayId}
+              reportId={id}
             />
           )}
         {approved
