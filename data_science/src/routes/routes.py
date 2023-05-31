@@ -120,7 +120,7 @@ def setup_main_routes(app):
             FROM "Goals" g
             JOIN "Grants" gr ON g."grantId" = gr.id
             JOIN "Recipients" r ON gr."recipientId" = r.id
-            WHERE r.id = 10000 AND g.name IS NOT NULL;
+            WHERE r.id = %s AND g.name IS NOT NULL;
             """,
             (recipient_id,),
         )

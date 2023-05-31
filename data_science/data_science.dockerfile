@@ -25,7 +25,7 @@ RUN $VIRTUAL_ENV/bin/pip install --upgrade setuptools wheel psutil cleanpy --no-
     cleanpy -v -f -a /opt/venv/
 
 # Final stage
-FROM gcr.io/distroless/python3-debian11:debug as finalp
+FROM gcr.io/distroless/python3-debian11:debug as final
 ENV PYTHONPATH=/app:/packages
 COPY --from=python_install /packages /packages
 # COPY ./src /app #this would be for productio, but the dockercompose mounts the src folder to the container
