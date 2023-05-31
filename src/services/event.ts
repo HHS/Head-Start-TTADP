@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { DataTypes, cast } from 'sequelize';
+import { cast } from 'sequelize';
 import db from '../models';
 import {
   EventShape,
@@ -8,6 +8,7 @@ import {
 } from './types/event';
 
 const {
+  sequelize,
   EventReportPilot,
   SessionReportPilot,
 } = db;
@@ -105,6 +106,27 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
   };
 }
 
+async function findEventHelperBlob(key: string, value: string): Promise<EventShape[]> {
+  const events = EventReportPilot.findAll({
+    attributes: [
+      'id',
+      'ownerId',
+      'pocId',
+      'collaboratorIds',
+      'regionId',
+      'data',
+    ],
+    raw: true,
+    where: sequelize.literal(`data->>'${key}' = '${value}' OR NOT (data ? '${key}')`),
+  });
+
+  if (events && events.length) {
+    return events;
+  }
+
+  return null;
+}
+
 type WhereOptions = {
   id?: number;
   ownerId?: number;
@@ -171,6 +193,10 @@ export async function findEventsByCollaboratorId(id: number): Promise<EventShape
 
 export async function findEventsByRegionId(id: number): Promise<EventShape[] | null> {
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
+}
+
+export async function findEventsByStatus(status: string): Promise<EventShape[] | null> {
+  return findEventHelperBlob('status', status) as Promise<EventShape[]>;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {

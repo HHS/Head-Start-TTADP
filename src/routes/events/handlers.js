@@ -9,11 +9,23 @@ import {
   findEventsByRegionId,
   updateEvent,
   destroyEvent,
+  findEventsByStatus,
 } from '../../services/event';
 
 const namespace = 'SERVICE:EVENTS';
 
 const logContext = { namespace };
+
+export const getByStatus = async (req, res) => {
+  try {
+    const { status } = req.params;
+    const events = await findEventsByStatus(status);
+
+    return res.status(httpCodes.OK).send(events);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
 
 export const getHandler = async (req, res) => {
   try {
