@@ -86,7 +86,8 @@ export const reseed = async () => {
 export const query = async(command, options) => {
   try {
     if (calledFromTestFileOrDirectory()) {
-      return await db.sequelize.query(command, options);
+      const [results, metadata] = await db.sequelize.query(command, options);
+      return [results, metadata];
     }
     return { error: 'called from non-testing file or directory' };
   } catch (error) {
