@@ -175,10 +175,10 @@ const GOAL_SUSPEND_REASONS = [
 exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
 const GOAL_SOURCES = [
-  'RTTAPA development',
   'Federal monitoring issues, including CLASS and RANs',
-  'Regional office priority',
+  'RTTAPA development',
   'Recipient request',
+  'Regional office priority',
   'Training event follow-up',
 ];
 
