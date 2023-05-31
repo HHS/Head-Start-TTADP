@@ -302,18 +302,6 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
   return Promise.resolve(null);
 };
 
-export const processNotificationQueue = () => {
-  // Notifications
-  notificationQueue.on('failed', onFailedNotification);
-  notificationQueue.on('completed', onCompletedNotification);
-
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
-};
-
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
   // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
@@ -617,21 +605,6 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
   }
 }
 
-export const onFailedNotificationQueue = (job, error) => {
-  auditLogger.error(`job ${job.name} failed for user ${job.data.user.id} with error ${error}`);
-  logDigestEmailNotification(job, false, error);
-};
-
-export const onCompletedNotificationQueue = (job, result) => {
-  if (result != null) {
-    logger.info(`Successfully sent ${job.name} notification for ${job.data.user.id}`);
-    logDigestEmailNotification(job, true, result);
-  } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.user.id} because SEND_NOTIFICATIONS is not set`);
-    logDigestEmailNotification(job, false, { SEND_NOTIFICATIONS: 'off' });
-  }
-};
-
 /**
  * Retrieves the correct template based on parameters and send a digest email.
  *
@@ -682,10 +655,16 @@ export const notifyDigest = (job, transport = defaultTransport) => {
   return null;
 };
 
-export const processNotificationDigestQueue = () => {
-  // Digests
-  notificationQueue.on('failed', onFailedNotificationQueue);
-  notificationQueue.on('completed', onCompletedNotificationQueue);
+export const processNotificationQueue = () => {
+  // Notifications
+  notificationQueue.on('failed', onFailedNotification);
+  notificationQueue.on('completed', onCompletedNotification);
+
+  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
+  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
+  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
 
   notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
   notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);

@@ -30,11 +30,11 @@ const onCompletedScanQueue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
   }
 };
-const processScanQueue = (maxJobsPerWorker) => {
+const processScanQueue = () => {
   // File Scanning
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
-  scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
+  scanQueue.process((job) => processFile(job.data.key));
 };
 
 export {
