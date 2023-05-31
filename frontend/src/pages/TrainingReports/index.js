@@ -75,9 +75,9 @@ export default function TrainingReports({ match }) {
         {' '}
         {message.status}
         {' '}
-        report
+        training report
         {' '}
-        <Link to={`/activity-reports/${message.reportId}`}>
+        <Link to={`/session-reports/${message.reportId}`}>
           {message.displayId}
         </Link>
         {' '}
