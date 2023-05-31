@@ -5,7 +5,7 @@ import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import Review from './Review';
-import Approved from './Approved';
+import Approved from '../Approved';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
