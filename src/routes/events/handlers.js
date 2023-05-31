@@ -28,7 +28,9 @@ export const getEventAuthorization = async (req, res, report) => {
 export const getByStatus = async (req, res) => {
   try {
     const { status } = req.params;
-    const events = await findEventsByStatus(status);
+
+    const auth = await getEventAuthorization(req, res, {});
+    const events = await findEventsByStatus(status, auth.readableRegions);
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {

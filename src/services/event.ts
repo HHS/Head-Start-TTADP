@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
-import { cast } from 'sequelize';
+import { Op, cast } from 'sequelize';
+import { auditLogger } from '../logger';
 import db from '../models';
 import {
   EventShape,
@@ -36,7 +37,7 @@ const validateFields = (request, requiredFields) => {
  * @throws {Error} If any required fields are missing in the request data.
  */
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'collaboratorIds', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -62,8 +63,18 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
-  await SessionReportPilot.destroy({ where: { eventId: id } });
-  await EventReportPilot.destroy({ where: { id } });
+  try {
+    auditLogger.info(`Deleting session reports for event ${id}`);
+    await SessionReportPilot.destroy({ where: { eventId: id } });
+  } catch (e) {
+    auditLogger.error(`Error deleting session reports for event ${id}:`, e);
+  }
+  try {
+    auditLogger.info(`Deleting event report for event ${id}`);
+    await EventReportPilot.destroy({ where: { id } });
+  } catch (e) {
+    auditLogger.error(`Error deleting event report for event ${id}:`, e);
+  }
 }
 
 async function findEventHelper(where: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
@@ -113,9 +124,23 @@ interface FindEventHelperBlobOptions {
 }
 
 async function findEventHelperBlob({ key, value, regions }: FindEventHelperBlobOptions): Promise<EventShape[]> {
-  let whereClause = `data->>'${key}' = '${value}' OR NOT (data ? '${key}')`;
+  // let whereClause = `data->>'${key}' = '${value}' OR NOT (data ? '${key}')`;
+  // if (regions && regions.length) {
+  //   whereClause += ` AND regionId IN (${regions.join(',')})`;
+  // }
+
+  const where = {
+    data: {
+      [Op.or]: [
+        { [key]: value },
+        { [key]: { [Op.eq]: null } },
+      ],
+    },
+  };
+
   if (regions && regions.length) {
-    whereClause += ` AND regionId IN (${regions.join(',')})`;
+    // @ts-ignore
+    where.regionId = regions;
   }
 
   const events = EventReportPilot.findAll({
@@ -128,7 +153,7 @@ async function findEventHelperBlob({ key, value, regions }: FindEventHelperBlobO
       'data',
     ],
     raw: true,
-    where: sequelize.literal(whereClause),
+    where,
   });
 
   return events || null;
@@ -158,7 +183,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     return createEvent(request);
   }
 
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'collaboratorIds', 'regionId', 'data']);
 
   const {
     ownerId,
