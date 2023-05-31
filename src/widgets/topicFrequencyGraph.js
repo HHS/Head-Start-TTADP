@@ -77,8 +77,6 @@ export async function topicFrequencyGraph(scopes) {
     getAllTopics(),
   ]);
 
-  console.log('topicsAndParticipants', topicsAndParticipants.length, topicsAndParticipants);
-
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
 
   // Get all DB topics.
