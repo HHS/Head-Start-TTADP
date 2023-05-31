@@ -7,6 +7,7 @@ import {
   findEventsByPocId,
   findEventsByCollaboratorId,
   findEventsByRegionId,
+  findEventsByStatus,
 } from './event';
 
 describe('event service', () => {
@@ -15,7 +16,9 @@ describe('event service', () => {
     regionId: num,
     pocId: num,
     collaboratorIds: [num],
-    data: {},
+    data: {
+      status: 'active',
+    },
   });
 
   describe('createEvent', () => {
@@ -110,6 +113,16 @@ describe('event service', () => {
         const found = await findEventsByRegionId(created.regionId);
         expect(found[0]).toHaveProperty('id');
         expect(found[0]).toHaveProperty('ownerId', 98_989);
+        await destroyEvent(created.id);
+      });
+    });
+
+    describe('findEventsByStatus', () => {
+      it('works', async () => {
+        const created = await createAnEvent(98_989);
+        const found = await findEventsByStatus('active');
+        expect(found[0]).toHaveProperty('id');
+        expect(found[0]).toHaveProperty('data.status', 'active');
         await destroyEvent(created.id);
       });
     });

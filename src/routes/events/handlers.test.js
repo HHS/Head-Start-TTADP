@@ -3,6 +3,7 @@ import {
   createHandler,
   updateHandler,
   deleteHandler,
+  getByStatus,
 } from './handlers';
 import { EventReportPilot } from '../../models';
 import { createEvent } from '../../services/event';
@@ -15,7 +16,9 @@ describe('event handlers', () => {
       pocId: 99_999,
       regionId: 99_999,
       collaboratorIds: [99_998, 99_999],
-      data: {},
+      data: {
+        status: 'not-started',
+      },
     });
   });
 
@@ -158,6 +161,21 @@ describe('event handlers', () => {
       });
 
       await deleteHandler({ params: { eventId: event.id } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+  });
+
+  describe('getByStatus', () => {
+    const mockResponse = {
+      send: jest.fn(),
+      status: jest.fn(() => ({
+        send: jest.fn(),
+        end: jest.fn(),
+      })),
+    };
+
+    it('works', async () => {
+      await getByStatus({ params: { status: 'not-started' } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
