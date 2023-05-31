@@ -1,13 +1,15 @@
 bcrypt
 cfenv
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl
 Faker
 fastapi
 gunicorn
-spacy==3.5.0
-en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl
+httpx
+itsdangerous
 Jinja2
 numpy
 opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-httpx
 opentelemetry-instrumentation-psycopg2
 passlib
 passlib
@@ -16,6 +18,6 @@ python-dotenv
 python-jose
 python-multipart
 scikit-learn
+spacy==3.5.0
 sympy
 uvicorn
-itsdangerous
