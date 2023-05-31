@@ -22,7 +22,7 @@ import {
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import ConnectionError from './components/ConnectionError';
+import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import HtmlReviewItem from './Review/HtmlReviewItem';
