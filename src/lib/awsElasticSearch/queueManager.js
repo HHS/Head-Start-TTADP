@@ -76,7 +76,10 @@ const processAWSElasticsearchQueue = () => {
   awsElasticsearchQueue.on('completed', onCompletedAWSElasticsearchQueue);
   // Process AWS Elasticsearch Queue Items:
   // Create Index Document
-  awsElasticsearchQueue.process(AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT, addIndexDocument);
+  awsElasticsearchQueue.process(
+    AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
+    addIndexDocument,
+  );
   // Update Index Document
   awsElasticsearchQueue.process(
     AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
