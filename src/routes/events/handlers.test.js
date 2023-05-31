@@ -156,7 +156,13 @@ describe('event handlers', () => {
 
   describe('getByStatus', () => {
     it('works', async () => {
-      await getByStatus({ params: { status: 'not-started' } }, mockResponse);
+      await getByStatus(
+        {
+          session: { userId: 1 },
+          params: { status: 'not-started' },
+        },
+        mockResponse,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });

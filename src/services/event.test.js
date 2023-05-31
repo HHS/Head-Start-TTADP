@@ -1,3 +1,4 @@
+import { auditLogger } from '../logger';
 import {
   createEvent,
   updateEvent,
@@ -62,69 +63,58 @@ describe('event service', () => {
       expect(updated).toHaveProperty('id');
       expect(updated).toHaveProperty('ownerId', 123);
 
-      await destroyEvent(updated.id);
+      await destroyEvent(99_999);
     });
   });
 
   describe('finders', () => {
-    describe('findEventById', () => {
-      it('works', async () => {
-        const created = await createAnEvent(98_989);
-        const found = await findEventById(created.id);
-        expect(found).toHaveProperty('id');
-        expect(found).toHaveProperty('ownerId', 98_989);
-        await destroyEvent(created.id);
-      });
+    it('findEventById', async () => {
+      const created = await createAnEvent(98_989);
+      const found = await findEventById(created.id);
+      expect(found).toHaveProperty('id');
+      expect(found).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
     });
 
-    describe('findEventsByOwnerId', () => {
-      it('works', async () => {
-        const created = await createAnEvent(98_989);
-        const found = await findEventsByOwnerId(created.ownerId);
-        expect(found[0]).toHaveProperty('id');
-        expect(found[0]).toHaveProperty('ownerId', 98_989);
-        await destroyEvent(created.id);
-      });
+    it('findEventsByOwnerId', async () => {
+      const created = await createAnEvent(98_989);
+      const found = await findEventsByOwnerId(created.ownerId);
+      expect(found[0]).toHaveProperty('id');
+      expect(found[0]).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
     });
 
-    describe('findEventsByPocId', () => {
-      it('works', async () => {
-        const created = await createAnEvent(98_989);
-        const found = await findEventsByPocId(created.pocId);
-        expect(found[0]).toHaveProperty('id');
-        expect(found[0]).toHaveProperty('ownerId', 98_989);
-        await destroyEvent(created.id);
-      });
+    it('findEventsByPocId', async () => {
+      const created = await createAnEvent(98_989);
+      const found = await findEventsByPocId(created.pocId);
+      expect(found[0]).toHaveProperty('id');
+      expect(found[0]).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
     });
 
-    describe('findEventsByCollaboratorId', () => {
-      it('works', async () => {
-        const created = await createAnEvent(98_989);
-        const found = await findEventsByCollaboratorId(created.collaboratorIds[0]);
-        expect(found[0]).toHaveProperty('id');
-        expect(found[0]).toHaveProperty('ownerId', 98_989);
-        await destroyEvent(created.id);
-      });
+    it('findEventsByCollaboratorId', async () => {
+      const created = await createAnEvent(98_989);
+      const found = await findEventsByCollaboratorId(created.collaboratorIds[0]);
+      expect(found[0]).toHaveProperty('id');
+      expect(found[0]).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
     });
 
-    describe('findEventsByRegionId', () => {
-      it('works', async () => {
-        const created = await createAnEvent(98_989);
-        const found = await findEventsByRegionId(created.regionId);
-        expect(found[0]).toHaveProperty('id');
-        expect(found[0]).toHaveProperty('ownerId', 98_989);
-        await destroyEvent(created.id);
-      });
+    it('findEventsByRegionId', async () => {
+      const created = await createAnEvent(98_989);
+      const found = await findEventsByRegionId(created.regionId);
+      expect(found[0]).toHaveProperty('id');
+      expect(found[0]).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
     });
 
-    describe('findEventsByStatus', () => {
-      it('works', async () => {
-        const created = await createAnEvent(98_989);
-        const found = await findEventsByStatus('active');
-        expect(found[0]).toHaveProperty('id');
-        expect(found[0]).toHaveProperty('data.status', 'active');
-        await destroyEvent(created.id);
-      });
+    it('findEventsByStatus', async () => {
+      const created = await createAnEvent(98_989);
+      const found = await findEventsByStatus('active');
+      const lastFoundIndex = found.length - 1;
+      expect(found[lastFoundIndex]).toHaveProperty('id');
+      expect(found[lastFoundIndex].data).toHaveProperty('status', 'active');
+      await destroyEvent(created.id);
     });
   });
 });
