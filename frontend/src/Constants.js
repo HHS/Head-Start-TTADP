@@ -20,6 +20,7 @@ export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
 export const REGION_CONDITIONS = [IS];
+export const SINGLE_OR_MULTI_RECIPIENT_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
@@ -54,6 +55,14 @@ export const REGIONAL_SCOPES = {
   [SCOPE_IDS.APPROVE_ACTIVITY_REPORTS]: {
     name: 'APPROVE_ACTIVITY_REPORTS',
     description: 'Can approve activity reports in the region',
+  },
+  [SCOPE_IDS.READ_WRITE_TRAINING_REPORTS]: {
+    name: 'READ_WRITE_TRAINING_REPORTS',
+    description: 'Can view and create/edit training reports in the region',
+  },
+  [SCOPE_IDS.READ_TRAINING_REPORTS]: {
+    name: 'READ_TRAINING_REPORTS',
+    description: 'Can view training reports in the region',
   },
 };
 

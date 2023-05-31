@@ -8,6 +8,7 @@ import {
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
   MY_REPORTS_FILTER_CONDITIONS,
+  SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -15,6 +16,7 @@ import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
+import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
@@ -63,15 +65,26 @@ const defaultDateValues = {
   'is on or before': '',
 };
 
+export const fixQueryWhetherStringOrArray = (query) => {
+  if (Array.isArray(query)) {
+    return query.join(', ');
+  }
+  return query;
+};
+
 export const startDateFilter = {
   id: 'startDate',
   display: 'Date started',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+
+    const smushed = fixQueryWhetherStringOrArray(query);
+
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
@@ -336,6 +349,23 @@ export const targetPopulationsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterPopulationSelect
       inputId={`population-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const singleOrMultiRecipientsFilter = {
+  id: 'singleOrMultiRecipients',
+  display: 'Number of recipients',
+  conditions: SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  defaultValues: {
+    is: 'single-recipient',
+  },
+  displayQuery: mapDisplayValue,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSingleOrMultiRecipientsSelect
+      inputId={`single-or-multi-recipients-${condition.replace(/ /g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

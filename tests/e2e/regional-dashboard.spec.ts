@@ -19,6 +19,8 @@ test('Regional Dashboard', async ({ page }) => {
   await page.keyboard.press('Tab');
   await page.keyboard.type('Rhode Island');
   await page.keyboard.press('Enter');
+
+  await page.getByTestId('filters').click();
   await page.getByRole('button', { name: 'apply filters for regional dashboard' }).click();
 
   // remove the remaining filter
