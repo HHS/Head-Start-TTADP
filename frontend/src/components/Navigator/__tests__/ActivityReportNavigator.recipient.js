@@ -95,19 +95,22 @@ const initialData = {
   regionId: 1,
   goals: [],
   activityRecipients: [],
-  activityRecipientType: 'other-entity',
-  'goalForEditing.objectives': [],
-  objectivesWithoutGoals: [{
-    topics: [{}],
-    title: 'test',
-    ttaProvided: 'test',
-    resources: ['http://www.test.com'],
-  }],
+  activityRecipientType: 'recipient',
+  goalName: 'test',
+  'goalForEditing.objectives': [
+    {
+      topics: [{}],
+      title: 'test',
+      ttaProvided: 'test',
+      resources: ['http://www.test.com'],
+    },
+  ],
+  objectivesWithoutGoals: [],
   goalPrompts: ['test-prompt', 'test-prompt-error'],
   'test-prompt': ['test'],
 };
 
-describe('ActivityReportNavigator - OE reports', () => {
+describe('ActivityReportNavigator - recipient reports', () => {
   beforeAll(async () => {
     jest.useFakeTimers();
   });
@@ -160,7 +163,7 @@ describe('ActivityReportNavigator - OE reports', () => {
   };
 
   beforeEach(() => {
-    fetchMock.post('/api/activity-reports/objectives', []);
+    fetchMock.post('/api/activity-reports/goals', []);
   });
 
   afterEach(() => {
@@ -198,7 +201,7 @@ describe('ActivityReportNavigator - OE reports', () => {
   it('handles fetch error', async () => {
     // clear out fetch mock
     fetchMock.restore();
-    fetchMock.post('/api/activity-reports/objectives', 500);
+    fetchMock.post('/api/activity-reports/goals', 500);
 
     renderNavigator();
 
