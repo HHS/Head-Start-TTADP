@@ -50,6 +50,37 @@ export default class EventReport {
     ].includes(p.scopeId) && p.regionId === regionId);
   }
 
+  /**
+   * Returns an array of region IDs for which the user has read permission
+   * on training reports.
+   *
+   * @returns {number[]} An array of readable region IDs.
+   * @throws {Error} if permissions data is missing or invalid.
+   */
+  get readableRegions() {
+    const viablePermissions = this.permissions.filter((p) => [
+      SCOPES.READ_TRAINING_REPORTS,
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+    ].includes(p.scopeId));
+
+    return viablePermissions.map((p) => Number(p.regionId));
+  }
+
+  /**
+   * Returns an array of region IDs for which the user has write permission
+   * on training reports.
+   *
+   * @returns {number[]} An array of writable region IDs.
+   * @throws {Error} if permissions data is missing or invalid.
+   */
+  get writableRegions() {
+    const viablePermissions = this.permissions.filter((p) => [
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+    ].includes(p.scopeId));
+
+    return viablePermissions.map((p) => Number(p.regionId));
+  }
+
   canDelete() {
     return this.isAdmin() || this.isAuthor();
   }
