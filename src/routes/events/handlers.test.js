@@ -3,6 +3,7 @@ import {
   createHandler,
   updateHandler,
   deleteHandler,
+  getByStatus,
 } from './handlers';
 import { EventReportPilot } from '../../models';
 import { createEvent } from '../../services/event';
@@ -15,7 +16,9 @@ describe('event handlers', () => {
       pocId: 99_999,
       regionId: 99_999,
       collaboratorIds: [99_998, 99_999],
-      data: {},
+      data: {
+        status: 'not-started',
+      },
     });
   });
 
@@ -147,6 +150,19 @@ describe('event handlers', () => {
       });
 
       await deleteHandler({ session: { userId: 1 }, params: { eventId: event.id } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+  });
+
+  describe('getByStatus', () => {
+    it('works', async () => {
+      await getByStatus(
+        {
+          session: { userId: 1 },
+          params: { status: 'not-started' },
+        },
+        mockResponse,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });

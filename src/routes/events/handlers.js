@@ -11,6 +11,7 @@ import {
   findEventsByRegionId,
   updateEvent,
   destroyEvent,
+  findEventsByStatus,
 } from '../../services/event';
 import { userById } from '../../services/users';
 
@@ -22,6 +23,19 @@ export const getEventAuthorization = async (req, res, report) => {
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
   return new EventReport(user, report);
+};
+
+export const getByStatus = async (req, res) => {
+  try {
+    const { status } = req.params;
+
+    const auth = await getEventAuthorization(req, res, {});
+    const events = await findEventsByStatus(status, auth.readableRegions);
+
+    return res.status(httpCodes.OK).send(events);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
 };
 
 export const getHandler = async (req, res) => {
