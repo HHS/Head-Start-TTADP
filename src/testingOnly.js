@@ -8,5 +8,5 @@ app.use('/testingOnly', testingRouter);
 
 app.listen(9999, 'localhost', () => {});
 
-const doNothing = () => {};
-doNothing();
+// eslint-disable-next-line import/prefer-default-export
+export const doNothing = () => {};

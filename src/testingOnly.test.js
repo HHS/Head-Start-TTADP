@@ -34,6 +34,7 @@ describe('testingOnly', () => {
     });
 
     // eslint-disable-next-line global-require
-    const testingOnly = require('./testingOnly');
+    const { doNothing } = require('./testingOnly');
+    doNothing();
   });
 });
