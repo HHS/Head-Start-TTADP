@@ -11,6 +11,24 @@ import {
 } from '../models';
 import { logger } from '../logger';
 
+const splitArrayTransformer = (value) => value.split(',').map((item) => item.trim());
+
+const transformers = {
+  reasons: splitArrayTransformer,
+  targetPopulations: splitArrayTransformer,
+};
+
+const mappings = {
+  Audience: 'audience',
+  Creator: 'creator',
+  'Edit Title': 'eventName',
+  'Event Duration/#NC Days of Support': 'eventDuration',
+  'Event ID': 'eventId',
+  'Overall Vision/Goal for the PD Event': 'vision',
+  'Reason for Activity': 'reasons',
+  'Target Population(s)': 'targetPopulations',
+};
+
 async function parseCsv(fileKey) {
   const { Body: csv } = await downloadFile(fileKey);
   return parse(csv, { skipEmptyLines: true, columns: true });
@@ -61,11 +79,26 @@ export default async function importSmartSheetEvent(fileKey) {
         // eslint-disable-next-line no-continue
         continue;
       } else {
+        // convert smartSheetEvent to use mappings
+        const eventReportPilotData = {
+          originalImported: smartSheetEvent,
+        };
+        Object.keys(smartSheetEvent).forEach((key) => {
+          const mappedKey = mappings[key];
+          if (mappedKey && transformers[mappedKey]) {
+            eventReportPilotData[mappedKey] = transformers[mappedKey](smartSheetEvent[key]);
+          } else if (mappedKey) {
+            eventReportPilotData[mappedKey] = smartSheetEvent[key];
+          } else {
+            eventReportPilotData[key] = smartSheetEvent[key];
+          }
+        });
+
         await EventReportPilot.create({
           collaboratorIds: [],
           ownerId,
           regionId,
-          data: sequelize.cast(JSON.stringify(smartSheetEvent), 'jsonb'),
+          data: sequelize.cast(JSON.stringify(eventReportPilotData), 'jsonb'),
         });
       }
     }
