@@ -420,3 +420,66 @@ export async function setFlag(flag, on = true) {
   const result = sequelize.query(query, { type: QueryTypes.UPDATE });
   return result;
 }
+
+/**
+ * @param {number} regionId flag to set
+ * @returns {Promise<Array>} result as a promise resolving to an array of empty array and the number of records affected
+ */
+
+export async function getEventReportUsersByRegion(regionId) {
+  const scopeId = SCOPES.READ_WRITE_TRAINING_REPORTS;
+
+  const roles = [
+    'ECM',
+    'GSM',
+    'RPM',
+  ];
+
+  const users = await User.findAll({
+    where: {
+      [Op.or]: [
+        {
+          '$permissions.scopeId$': {
+            [Op.eq]: scopeId,
+          },
+        },
+        {
+          '$roles.name$': {
+            [Op.in]: roles,
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: Role,
+        as: 'roles',
+      },
+      {
+        model: Permission,
+        as: 'permissions',
+        required: true,
+        where: {
+          regionId,
+        },
+      },
+    ],
+  });
+
+  const results = {
+    pointOfContact: [],
+    collaborators: [],
+  };
+
+  users.forEach((user) => {
+    if (user.roles.some((role) => roles.includes(role.name))) {
+      results.pointOfContact.push(user);
+    }
+
+    if (user.permissions.some((permission) => permission.scopeId === scopeId)) {
+      results.collaborators.push(user);
+    }
+  });
+
+  return users;
+}

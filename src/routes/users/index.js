@@ -7,6 +7,7 @@ import {
   getUserStatistics,
   getActiveUsers,
   setFeatureFlag,
+  getEventReportUsers,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 
@@ -19,7 +20,7 @@ router.get('/collaborators', transactionWrapper(getPossibleCollaborators));
 router.get('/stateCodes', transactionWrapper(getPossibleStateCodes));
 router.get('/statistics', transactionWrapper(getUserStatistics));
 router.get('/active-users', transactionWrapper(getActiveUsers));
-
+router.get('/event-report-users', transactionWrapper(getEventReportUsers));
 router.post('/verify-email/:token', transactionWrapper(verifyEmailToken));
 router.post('/send-verification-email', transactionWrapper(requestVerificationEmail));
 router.post('/feature-flags', transactionWrapper(setFeatureFlag));
