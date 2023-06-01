@@ -422,11 +422,11 @@ export async function setFlag(flag, on = true) {
 }
 
 /**
- * @param {number} regionId flag to set
- * @returns {Promise<Array>} result as a promise resolving to an array of empty array and the number of records affected
+ * @param {number} regionId region to get users for
+ * @returns {Promise<Array>} result as a promise resolving to an array of users
  */
 
-export async function getEventReportUsersByRegion(regionId) {
+export async function getTrainingReportUsersByRegion(regionId) {
   const scopeId = SCOPES.READ_WRITE_TRAINING_REPORTS;
 
   const roles = [
@@ -481,5 +481,5 @@ export async function getEventReportUsersByRegion(regionId) {
     }
   });
 
-  return users;
+  return results;
 }

@@ -7,7 +7,7 @@ import {
   getUserStatistics,
   getActiveUsers,
   setFeatureFlag,
-  getEventReportUsers,
+  getTrainingReportUsers,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 
@@ -20,7 +20,7 @@ router.get('/collaborators', transactionWrapper(getPossibleCollaborators));
 router.get('/stateCodes', transactionWrapper(getPossibleStateCodes));
 router.get('/statistics', transactionWrapper(getUserStatistics));
 router.get('/active-users', transactionWrapper(getActiveUsers));
-router.get('/event-report-users', transactionWrapper(getEventReportUsers));
+router.get('/training-report-users', transactionWrapper(getTrainingReportUsers)); // todo - update redoc with new route
 router.post('/verify-email/:token', transactionWrapper(verifyEmailToken));
 router.post('/send-verification-email', transactionWrapper(requestVerificationEmail));
 router.post('/feature-flags', transactionWrapper(setFeatureFlag));
