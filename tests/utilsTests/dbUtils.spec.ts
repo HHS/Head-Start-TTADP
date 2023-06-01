@@ -4,7 +4,7 @@ test.describe('get /query', () => {
 
   test('/', async ({ request }) => {
     let response = await request.post(
-      'http://localhost:9999/testingOnly/query/',
+      'testingOnly/query/',
       {
         data: {
           command: 'ALTER SEQUENCE "Goals_id_seq" RESTART WITH 65535;',
@@ -18,7 +18,7 @@ test.describe('get /query', () => {
     expect(response.status()).toBe(200);
 
     response = await request.post(
-      'http://localhost:9999/testingOnly/query/',
+      'testingOnly/query/',
       {
         data: {
           command: 'SELECT last_value AS "lastValue" FROM "Goals_id_seq";',
