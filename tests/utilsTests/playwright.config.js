@@ -11,7 +11,7 @@ const config = {
       use: {
         // see https://playwright.dev/docs/api/class-testoptions
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:9999',
+        baseURL: 'http://localhost:9999/',
       },
     },
   ],
