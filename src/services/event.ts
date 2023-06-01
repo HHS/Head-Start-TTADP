@@ -35,7 +35,7 @@ const validateFields = (request, requiredFields) => {
  * @throws {Error} If any required fields are missing in the request data.
  */
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -76,6 +76,7 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
       'collaboratorIds',
       'regionId',
       'data',
+      'updatedAt',
     ],
     where,
     raw: true,
@@ -102,6 +103,7 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
     data: event?.data ?? {},
+    updatedAt: event?.updatedAt,
   };
 }
 
@@ -129,7 +131,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     return createEvent(request);
   }
 
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'regionId', 'data']);
 
   const {
     ownerId,
