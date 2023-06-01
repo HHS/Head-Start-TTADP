@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { eventPropTypes } from '../constants';
 import EventCard from './EventCard';
 
@@ -19,7 +20,6 @@ function EventCards({
 }
 
 EventCards.propTypes = {
-  events: eventPropTypes.isRequired,
+  events: PropTypes.arrayOf(PropTypes.shape(eventPropTypes)).isRequired,
 };
-
 export default EventCards;

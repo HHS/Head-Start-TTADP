@@ -19,12 +19,10 @@ export const dataPropTypes = PropTypes.shape({
 export const eventPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   ownerId: PropTypes.number.isRequired,
-  pocId: PropTypes.number.isRequired,
+  pocId: PropTypes.number,
   collaboratorIds: PropTypes.arrayOf(PropTypes.number),
   regionId: PropTypes.number.isRequired,
-  createdAt: PropTypes.string.isRequired,
-  updatedAt: PropTypes.string.isRequired,
-  data: PropTypes.arrayOf(dataPropTypes),
+  data: PropTypes.shape(dataPropTypes),
 });
 
 export const EVENT_STATUS = {

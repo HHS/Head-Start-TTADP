@@ -6,7 +6,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import './Tabs.scss';
 import colors from '../colors';
 
-export default function RecipientTabs({
+export default function Tabs({
   tabs, backLink, ariaLabel,
 }) {
   const linkClass = 'display-block padding-2 ttahub-tabs--tabs_link';
@@ -18,7 +18,7 @@ export default function RecipientTabs({
         <ul className="ttahub-tabs--tabs-ul display-flex margin-0 margin-bottom-0 padding-0">
           {tabs.map((tab) => (
 
-            <li className={liClass}>
+            <li className={liClass} key={`tab-list-item-${tab.value}`}>
               <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/training-reports/${tab.value}`}>{tab.key}</NavLink>
             </li>
           ))}
@@ -30,15 +30,15 @@ export default function RecipientTabs({
   );
 }
 
-RecipientTabs.propTypes = {
+Tabs.propTypes = {
   tabs: PropTypes.arrayOf(PropTypes.shape({
-    key: PropTypes.number,
-    value: PropTypes.element,
+    key: PropTypes.string,
+    value: PropTypes.string,
   })).isRequired,
   backLink: PropTypes.node,
   ariaLabel: PropTypes.string.isRequired,
 };
 
-RecipientTabs.defaultProps = {
+Tabs.defaultProps = {
   backLink: null,
 };
