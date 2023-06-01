@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
+import { reseed } from '../utils/common';
 import { root, validateSchema } from './common';
 
 test.describe('get /widgets/:widgetId', () => {
+
+  test.beforeAll(async ({ request }) => {
+    await reseed(request);
+  });
 
   test('overview', async ({ request }) => {
     const response = await request.get(`${root}/widgets/overview`);
