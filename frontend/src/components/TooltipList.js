@@ -29,6 +29,6 @@ export default function TooltipList({ list, cardType, listType }) {
 
 TooltipList.propTypes = {
   list: PropTypes.arrayOf(PropTypes.string).isRequired,
-  listType: PropTypes.arrayOf(PropTypes.string).isRequired,
-  cardType: PropTypes.arrayOf(PropTypes.string).isRequired,
+  listType: PropTypes.string.isRequired,
+  cardType: PropTypes.string.isRequired,
 };
