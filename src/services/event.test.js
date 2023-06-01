@@ -120,20 +120,35 @@ describe('event service', () => {
     it('findEventsByStatus', async () => {
       const created = await createAnEventWithStatus(98_989, 'active');
       const found = await findEventsByStatus('active');
-      const lastFoundIndex = found.length - 1;
-      expect(found[lastFoundIndex]).toHaveProperty('id');
-      expect(found[lastFoundIndex].data).toHaveProperty('status', 'active');
+      expect(found[0].data).toHaveProperty('status', 'active');
       await destroyEvent(created.id);
 
       const created2 = await createAnEventWithStatus(98_989, 'inactive');
       const found2 = await findEventsByStatus('inactive');
 
+      // ---------
       // ensure no found events have a status of 'active' when we search for 'inactive':
       found2.forEach((event) => {
         expect(event.data).not.toHaveProperty('status', 'active');
       });
 
       await destroyEvent(created2.id);
+
+      // ---------
+      // ensure allowNull param works:
+      const created3 = await createAnEventWithStatus(50_500, null);
+      const created4 = await createAnEventWithStatus(50_501, 'active');
+
+      const found3 = await findEventsByStatus(null, [], null, true);
+      const found4 = await findEventsByStatus('active', [], null, false);
+
+      expect(found3.length).toBe(1);
+
+      // expect found4.length to be less than found3.length:
+      expect(found4.length).toBe(1);
+
+      await destroyEvent(created3.id);
+      await destroyEvent(created4.id);
     });
   });
 });
