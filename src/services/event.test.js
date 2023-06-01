@@ -1,3 +1,5 @@
+import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+
 import {
   createEvent,
   updateEvent,
@@ -118,18 +120,19 @@ describe('event service', () => {
     });
 
     it('findEventsByStatus', async () => {
-      const created = await createAnEventWithStatus(98_989, 'active');
-      const found = await findEventsByStatus('active');
-      expect(found[0].data).toHaveProperty('status', 'active');
+      const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
+      const found = await findEventsByStatus(TRS.IN_PROGRESS);
+      expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
       await destroyEvent(created.id);
 
-      const created2 = await createAnEventWithStatus(98_989, 'inactive');
-      const found2 = await findEventsByStatus('inactive');
+      const created2 = await createAnEventWithStatus(98_989, TRS.NOT_STARTED);
+      const found2 = await findEventsByStatus(TRS.NOT_STARTED);
 
       // ---------
-      // ensure no found events have a status of 'active' when we search for 'inactive':
+      // ensure no found events have a status of TRS.IN_PROGRESS
+      // if we search for TRS.NOT_STARTED:
       found2.forEach((event) => {
-        expect(event.data).not.toHaveProperty('status', 'active');
+        expect(event.data).not.toHaveProperty('status', TRS.IN_PROGRESS);
       });
 
       await destroyEvent(created2.id);
@@ -137,10 +140,15 @@ describe('event service', () => {
       // ---------
       // ensure allowNull param works:
       const created3 = await createAnEventWithStatus(50_500, null);
-      const created4 = await createAnEventWithStatus(50_501, 'active');
+      const created4 = await createAnEventWithStatus(50_501, TRS.IN_PROGRESS);
 
       const found3 = await findEventsByStatus(null, [], null, true);
-      const found4 = await findEventsByStatus('active', [], null, false);
+      const found4 = await findEventsByStatus(
+        TRS.IN_PROGRESS,
+        [],
+        null,
+        false,
+      );
 
       expect(found3.length).toBe(1);
 
