@@ -67,33 +67,44 @@ NextSteps.defaultProps = {
   activityRecipientType: '',
 };
 
-const sections = [
-  {
-    title: "Specialist's next steps",
-    anchor: 'specialist-next-steps',
-    items: [
-      { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
-    ],
-  },
-  {
-    title: "Recipient's next steps",
-    anchor: 'recipient-next-steps',
-    items: [
-      { label: 'What has the recipient agreed to do next?', name: 'recipientNextSteps', path: 'note' },
-    ],
-  },
-];
+const getNextStepsSections = (activityRecipientType) => {
+  const isRecipient = activityRecipientType === 'recipient';
+  const labelDisplayName = isRecipient ? "Recipient's" : 'Other entity\'s';
+  const subtitleDisplayText = isRecipient ? 'recipient' : 'other entity';
+  return [
+    {
+      title: "Specialist's next steps",
+      anchor: 'specialist-next-steps',
+      items: [
+        { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
+      ],
+    },
+    {
+      title: `${labelDisplayName} next steps`,
+      anchor: 'recipient-next-steps',
+      items: [
+        { label: `What has the ${subtitleDisplayText} agreed to do next?`, name: 'recipientNextSteps', path: 'note' },
+      ],
+    },
+  ];
+};
 
-const ReviewSection = () => (
-  <ReviewPage sections={sections} path="next-steps" />
+const ReviewSection = ({ activityRecipientType }) => (
+  <ReviewPage sections={getNextStepsSections(activityRecipientType)} path="next-steps" />
 );
+
+ReviewSection.propTypes = {
+  activityRecipientType: PropTypes.string.isRequired,
+};
 
 export default {
   position: 4,
   label: 'Next steps',
   path: 'next-steps',
   review: false,
-  reviewSection: () => <ReviewSection />,
+  reviewSection: (activityRecipientType) => (
+    <ReviewSection activityRecipientType={activityRecipientType} />
+  ),
   render: (
     _additionalData,
     formData,
