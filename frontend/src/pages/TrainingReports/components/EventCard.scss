@@ -67,11 +67,6 @@ $max-width-date-column: 50%;
 
 
 @media(min-width: 1125px) {
-
-  .ttahub-event-card__event-column__title {
-    color:blue;
-  }
-
   // Title.
   .ttahub-event-card__event-column__title {
     flex-basis: clamp($min-width-reason-column, 40%, 100%);
