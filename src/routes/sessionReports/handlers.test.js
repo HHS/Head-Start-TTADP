@@ -38,9 +38,14 @@ describe('session report handlers', () => {
     })),
   };
 
+  beforeEach(() => {
+    mockResponse.status.mockClear();
+    mockResponse.send.mockClear();
+  });
+
   describe('getHandler', () => {
     it('returns the session', async () => {
-      await getHandler({ params: { id: 99_999 } }, mockResponse);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -62,6 +67,7 @@ describe('session report handlers', () => {
 
   describe('createHandler', () => {
     const mockRequest = {
+      session: { userId: 1 },
       body: {
         eventId: 99_998,
         data: {},
@@ -79,16 +85,18 @@ describe('session report handlers', () => {
     });
 
     it('returns 500 when fields are missing', async () => {
-      await createHandler({ body: {} }, mockResponse);
+      await createHandler({ body: { eventId: 99_998 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 
   describe('updateHandler', () => {
     const mockRequest = {
+      session: { userId: 1 },
       params: { id: 99_999 },
       body: {
         data: {},
+        eventId: 99_998,
       },
     };
 
@@ -98,12 +106,12 @@ describe('session report handlers', () => {
     });
 
     it('returns 400 when there is no body', async () => {
-      await updateHandler({ body: null }, mockResponse);
+      await updateHandler({ params: {}, body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
-    it('returns 500 when fields are missing', async () => {
-      await updateHandler({ body: {} }, mockResponse);
+    it('returns 500 when body fields are missing', async () => {
+      await updateHandler({ params: { id: 1 }, body: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
@@ -111,7 +119,7 @@ describe('session report handlers', () => {
   describe('deleteHandler', () => {
     it('returns 200', async () => {
       const created = await createSession({ eventId: 99_998, data: {} });
-      await deleteHandler({ params: { id: created.id } }, mockResponse);
+      await deleteHandler({ session: { userId: 1 }, params: { id: created.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
