@@ -1,4 +1,3 @@
-import { auditLogger } from '../logger';
 import {
   createEvent,
   updateEvent,
@@ -19,6 +18,16 @@ describe('event service', () => {
     collaboratorIds: [num],
     data: {
       status: 'active',
+    },
+  });
+
+  const createAnEventWithStatus = async (num, status) => createEvent({
+    ownerId: num,
+    regionId: num,
+    pocId: num,
+    collaboratorIds: [num],
+    data: {
+      status,
     },
   });
 
@@ -109,12 +118,22 @@ describe('event service', () => {
     });
 
     it('findEventsByStatus', async () => {
-      const created = await createAnEvent(98_989);
+      const created = await createAnEventWithStatus(98_989, 'active');
       const found = await findEventsByStatus('active');
       const lastFoundIndex = found.length - 1;
       expect(found[lastFoundIndex]).toHaveProperty('id');
       expect(found[lastFoundIndex].data).toHaveProperty('status', 'active');
       await destroyEvent(created.id);
+
+      const created2 = await createAnEventWithStatus(98_989, 'inactive');
+      const found2 = await findEventsByStatus('inactive');
+
+      // ensure no found events have a status of 'active' when we search for 'inactive':
+      found2.forEach((event) => {
+        expect(event.data).not.toHaveProperty('status', 'active');
+      });
+
+      await destroyEvent(created2.id);
     });
   });
 });
