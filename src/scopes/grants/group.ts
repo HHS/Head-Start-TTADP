@@ -5,11 +5,12 @@ import { idClause } from '../utils';
 const constructLiteral = (query: string[], userId: number): string => {
   const where = idClause(query);
   return sequelize.literal(`(
-    SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (
-        SELECT "id" FROM "Groups" WHERE "id" IN (
-          ${where}
-        ) AND ("userId" = ${userId} OR "isPublic" = true)
-      )
+      SELECT DISTINCT "grantId" 
+      FROM "GroupGrants" gg
+      JOIN "Groups" g
+      ON  gg."groupId" = g."id"
+      WHERE g."id" IN (${where})
+      AND (g."userId" = ${userId} OR g."isPublic" = true)
     )`);
 };
 

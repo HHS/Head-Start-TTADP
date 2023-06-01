@@ -27,7 +27,7 @@ module.exports = {
       );
 
       // add isUnique boolean column to the Groups table
-      await queryInterface.addColumn('Groups', 'isPublic', { type: Sequelize.BOOLEAN }, { transaction });
+      await queryInterface.addColumn('Groups', 'isPublic', { type: Sequelize.BOOLEAN, default: false }, { transaction });
 
       await queryInterface.sequelize.query(`
         UPDATE "Groups"
