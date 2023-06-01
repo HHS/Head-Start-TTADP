@@ -73,6 +73,7 @@ services:
     command: yarn start:testingonly
     environment:
       - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=development
 volumes:
   dbdata: {}
   miniodata: {}

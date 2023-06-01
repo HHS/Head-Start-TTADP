@@ -1,6 +1,5 @@
 import { Sequelize }  from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-// import db from '../../src/models';
 import { calledFromTestFileOrDirectory } from './testOnly';
 import { auditLogger } from '../../src/logger';
 import configs from '../../config/config';
@@ -16,15 +15,13 @@ const getDB = () => {
     sequelize = new Sequelize(config.database, config.username, config.password, config);
   }
 
-  const db = {
+  return {
     sequelize,
     Sequelize,
   };
-  return db;
 }
 
 const db = getDB();
-
 
 const clear = async () => {
   await db.sequelize.query(`
@@ -68,7 +65,6 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   }
 }
 
-
 export const reseed = async () => {
   try {
     if (calledFromTestFileOrDirectory()) {
@@ -83,7 +79,7 @@ export const reseed = async () => {
   }
 };
 
-export const query = async(command, options) => {
+export const query = async(command, options = {}) => {
   try {
     if (calledFromTestFileOrDirectory()) {
       const [results, metadata] = await db.sequelize.query(command, options);
