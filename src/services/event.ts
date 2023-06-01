@@ -121,29 +121,38 @@ interface FindEventHelperBlobOptions {
   key: string;
   value: string;
   regions: number[] | undefined;
+  fallbackValue?: string;
+  allowNull?: boolean;
 }
 
-async function findEventHelperBlob({ key, value, regions }: FindEventHelperBlobOptions): Promise<EventShape[]> {
-  // let whereClause = `data->>'${key}' = '${value}' OR NOT (data ? '${key}')`;
-  // if (regions && regions.length) {
-  //   whereClause += ` AND regionId IN (${regions.join(',')})`;
-  // }
+async function findEventHelperBlob({
+  key,
+  value,
+  regions,
+  fallbackValue,
+  allowNull = false,
+}: FindEventHelperBlobOptions): Promise<EventShape[]> {
+  const getClause = () => {
+    if (allowNull) {
+      return {
+        [Op.or]: [
+          { [key]: value },
+          { [key]: { [Op.eq]: null } },
+        ],
+      };
+    }
 
-  const where = {
-    data: {
-      [Op.or]: [
-        { [key]: value },
-        { [key]: { [Op.eq]: null } },
-      ],
-    },
+    return { [key]: value };
   };
+
+  const where = { data: { ...getClause() } };
 
   if (regions && regions.length) {
     // @ts-ignore
     where.regionId = regions;
   }
 
-  const events = EventReportPilot.findAll({
+  const events = await EventReportPilot.findAll({
     attributes: [
       'id',
       'ownerId',
@@ -156,6 +165,19 @@ async function findEventHelperBlob({ key, value, regions }: FindEventHelperBlobO
     where,
   });
 
+  // if a fallbackValue was provided for this key search
+  if (events && events.length && fallbackValue) {
+    // if key is null or undefined, we assign its value to the fallback value
+    return events.map((event) => {
+      if (!event.data[key]) {
+        // eslint-disable-next-line no-param-reassign
+        event.data[key] = fallbackValue;
+      }
+      return event;
+    });
+  }
+
+  // otherwise just return the events as-is, or null
   return events || null;
 }
 
@@ -227,8 +249,14 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[]): Promise<EventShape[] | null> {
-  return findEventHelperBlob({ key: 'status', value: status, regions: readableRegions }) as Promise<EventShape[]>;
+export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = true): Promise<EventShape[] | null> {
+  return findEventHelperBlob({
+    key: 'status',
+    value: status,
+    regions: readableRegions,
+    fallbackValue,
+    allowNull,
+  }) as Promise<EventShape[]>;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
