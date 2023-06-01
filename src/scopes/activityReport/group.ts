@@ -12,8 +12,7 @@ const constructLiteral = (query: string[], userId: number): string => {
       JOIN "Groups" g
       ON gg."groupId" = g.id
       WHERE g."id" IN (${where}) 
-      AND (g."userId" = ${userId} OR g."isPublic" = true)
-    )
+      AND (g."userId" = ${userId} OR g."isPublic" = true)    
   )`);
 };
 
