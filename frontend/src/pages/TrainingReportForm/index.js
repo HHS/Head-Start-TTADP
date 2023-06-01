@@ -4,6 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
+import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
@@ -13,19 +14,37 @@ import { startCase } from 'lodash';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { publishLocation } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import useARLocalStorage from '../../hooks/useARLocalStorage';
 import {
-  LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
   defaultValues,
 } from './constants';
+import { getTrainingReportUsers } from '../../fetchers/users';
+import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import pages from './pages';
+import AppLoadingContext from '../../AppLoadingContext';
 
 const INTERVAL_DELAY = 30000; // THIRTY SECONDS
+
+const resetFormData = (reset, event) => {
+  const {
+    data,
+    updatedAt,
+    ...fields
+  } = event;
+
+  const form = {
+    ...data,
+    ...fields,
+  };
+
+  reset({
+    ...defaultValues,
+    ...form,
+  });
+};
 
 export default function TrainingReportForm({ match }) {
   const { params: { currentPage, trainingReportId } } = match;
@@ -40,7 +59,7 @@ export default function TrainingReportForm({ match }) {
    */
 
   // this error is for errors fetching reports, its the top error
-  const [error] = useState();
+  const [error, setError] = useState();
 
   // this is the error that appears in the sidebar
   const [errorMessage, updateErrorMessage] = useState();
@@ -55,38 +74,31 @@ export default function TrainingReportForm({ match }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   /* ============
-   * these are the hooks that handle the interface with
+   * this hook handles the interface with
    * local storage
    */
 
-  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(trainingReportId), defaultValues,
-  );
-  const [initialAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId), {
-      recipients: {
-        grants: [],
-        otherEntities: [],
-      },
-      collaborators: [],
-      availableApprovers: [],
-    },
+  const [additionalData, updateAdditionalData, localStorageAvailable] = useLocalStorage(
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId), { users: [] },
   );
 
-  const [editable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY(trainingReportId), (trainingReportId === 'new'), currentPage !== 'review',
-  );
+  const [reportFetched, setReportFetched] = useState(false);
+  const [additionalDataFetched, setAdditionalDataFetched] = useState(false);
 
   /* ============
   */
 
   const hookForm = useForm({
     mode: 'onBlur',
-    defaultValues: formData,
+    defaultValues,
     shouldUnregister: false,
   });
 
+  const eventRegion = hookForm.watch('eventRegion');
+  const formData = hookForm.getValues();
+
   const { user } = useContext(UserContext);
+  const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
   const {
     socket,
@@ -99,24 +111,67 @@ export default function TrainingReportForm({ match }) {
     if (trainingReportId === 'new' || !currentPage) {
       return;
     }
-    const newPath = `/training-repors/${trainingReportId}/${currentPage}`;
+    const newPath = `/training-reports/${trainingReportId}/${currentPage}`;
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 
   useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
 
   useEffect(() => {
-    // fetch data if trainingReportId is not "new"
+    const loading = !reportFetched || !additionalDataFetched;
+    setIsAppLoading(loading);
+  }, [additionalDataFetched, reportFetched, setIsAppLoading]);
 
-  }, []);
+  useEffect(() => {
+    // fetch available users
+    async function fetchUsers() {
+      if (!eventRegion || additionalDataFetched) {
+        return;
+      }
 
-  const updatePage = (position) => {
-    if (!editable) {
-      return;
+      try {
+        const users = await getTrainingReportUsers(eventRegion);
+        updateAdditionalData({ users });
+      } catch (e) {
+        updateErrorMessage('Error fetching collaborators and points of contact');
+      } finally {
+        setAdditionalDataFetched(true);
+      }
     }
 
+    fetchUsers();
+  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData]);
+
+  useEffect(() => {
+    // fetch event report data
+    async function fetchReport() {
+      if (!trainingReportId || reportFetched) {
+        return;
+      }
+      try {
+        const event = await eventById(trainingReportId);
+        resetFormData(hookForm.reset, event);
+
+        reportId.current = trainingReportId;
+      } catch (e) {
+        setError('Error fetching training report');
+      } finally {
+        setReportFetched(true);
+      }
+    }
+    fetchReport();
+  }, [hookForm.reset, isAppLoading, reportFetched, trainingReportId]);
+
+  useEffect(() => {
+    // set error if no training report id
+    if (!trainingReportId) {
+      setError('No training report id provided');
+    }
+  }, [trainingReportId]);
+
+  const updatePage = (position) => {
     const state = {};
-    if (trainingReportId === 'new' && reportId.current !== 'new') {
+    if (reportId.current) {
       state.showLastUpdatedTime = true;
     }
 
@@ -131,19 +186,42 @@ export default function TrainingReportForm({ match }) {
     );
   }
 
-  const onSaveDraft = async (data) => {
-    console.log('onSaveDraft', data);
-  };
-  const onSaveAndContinue = async (data) => {
-    console.log('onSaveAndContinue', data);
+  const onSave = async () => {
+    try {
+    // grab the newest data from the form
+      const {
+        ownerId,
+        pocId,
+        collaboratorIds,
+        regionId,
+        ...data
+      } = hookForm.getValues();
+
+      // PUT it to the backend
+      const updatedEvent = await updateEvent(trainingReportId, {
+        data,
+        ownerId: ownerId || null,
+        pocId: pocId || null,
+        collaboratorIds: collaboratorIds || [],
+        regionId: regionId || null,
+      });
+
+      resetFormData(hookForm.reset, updatedEvent);
+      updateLastSaveTime(moment(updatedEvent.updatedAt));
+    } catch (err) {
+      setError('There was an error saving the training report. Please try again later.');
+    }
   };
 
-  const onSave = async (data) => {
-    console.log('onSave', data);
+  const onSaveDraft = async () => {
+    await onSave();
+  };
+  const onSaveAndContinue = async () => {
+    await onSave();
   };
 
-  const onFormSubmit = async (data) => {
-    console.log('onFormSubmit', data);
+  const onFormSubmit = async () => {
+    // logic forthcoming
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
@@ -187,16 +265,15 @@ export default function TrainingReportForm({ match }) {
           <Navigator
             socketMessageStore={messageStore}
             key={currentPage}
-            editable={editable}
+            editable
             updatePage={updatePage}
             reportCreator={reportCreator}
             lastSaveTime={lastSaveTime}
             updateLastSaveTime={updateLastSaveTime}
             reportId={reportId.current}
             currentPage={currentPage}
-            additionalData={initialAdditionalData}
+            additionalData={additionalData}
             formData={formData}
-            updateFormData={updateFormData}
             pages={pages}
             onFormSubmit={onFormSubmit}
             onSave={onSave}
