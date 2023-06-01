@@ -30,7 +30,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    isPublic: DataTypes.BOOLEAN,
+    isPublic: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'Group',
