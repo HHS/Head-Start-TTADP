@@ -27,7 +27,7 @@ function EventCard({
     >
       <div className="display-flex flex-wrap margin-y-2">
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Event Title</p>
+          <p className="usa-prose text-bold margin-y-0">Event title</p>
           <p className="usa-prose margin-y-0">{data['Edit Title']}</p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">

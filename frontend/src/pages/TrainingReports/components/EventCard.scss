@@ -11,8 +11,9 @@ $max-width-date-column: 50%;
   margin-bottom: 1rem;
 }
 
+// reset font sizes
 .ttahub-event-card,
-.ttahub-event-card .smart-hub-tooltip {
+.ttahub-event-card .smart-hub-tooltip  .smart-hub--ellipsis {
   font-size: 1.06rem;
 }
 
@@ -65,11 +66,15 @@ $max-width-date-column: 50%;
 }
 
 
-@media(min-width: 1215px) {
+@media(min-width: 1125px) {
+
+  .ttahub-event-card__event-column__title {
+    color:blue;
+  }
 
   // Title.
   .ttahub-event-card__event-column__title {
-    flex-basis: clamp($min-width-title-column, 60%, 100%);
+    flex-basis: clamp($min-width-reason-column, 40%, 100%);
   }
 
   // Event ID.
@@ -82,14 +87,14 @@ $max-width-date-column: 50%;
     flex-basis: clamp($min-width-organizer-column, 20%, 100%);
   }
 
-  // Event Reason.
+  // Event Reason (over title).
   .ttahub-event-card__event-column__reason {
-    flex-basis: clamp($min-width-reason-column, 20%, 100%);
+    flex-basis: clamp($min-width-reason-column, 40%, 100%);
   }
 
-  // Event Date.
+  // Event Date (over id).
   .ttahub-event-card__event-column__date {
-    flex-basis: clamp($min-width-date-column, 12.5%, 100%);
+    flex-basis: clamp($min-width-id-column, 15%, 100%);
   }
 }
 
@@ -120,7 +125,7 @@ $max-width-date-column: 50%;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    max-width: 150px;
+    max-width: 200px;
   }
 
   // Event Date.
