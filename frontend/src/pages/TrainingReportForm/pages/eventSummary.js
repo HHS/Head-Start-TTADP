@@ -2,10 +2,11 @@ import React, {
   useContext,
   useState,
 } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Select from 'react-select';
 import {
-  TARGET_POPULATIONS as targetPopulations,
+  TARGET_POPULATIONS,
   REASONS,
 } from '@ttahub/common';
 import { useFormContext, Controller } from 'react-hook-form';
@@ -29,7 +30,7 @@ import Req from '../../../components/Req';
 
 const placeholderText = '- Select -';
 
-const EventSummary = () => {
+const EventSummary = ({ additionalData }) => {
   const {
     register,
     control,
@@ -58,15 +59,18 @@ const EventSummary = () => {
 
   const { eventId, eventName } = data;
 
-  // we need to add three additional reasons to the AR reason list
-  const reasons = [
-    ...REASONS,
+  // we need to add three additional target populations to the AR target populations list
+  const targetPopulations = [
+    ...TARGET_POPULATIONS,
     'Children/Families affected by systemic discrimination/bias/exclusion',
     'Children/Families affected by traumatic events',
     'Parents/Families impacted by health disparities',
   ];
 
-  reasons.sort();
+  // sort the reasons alphabetically
+  targetPopulations.sort();
+
+  const { users: { collaborators, pointOfContact } } = additionalData;
 
   return (
     <>
@@ -75,7 +79,7 @@ const EventSummary = () => {
       </Helmet>
       <IndicatesRequiredField />
 
-      <ReadOnlyField label="Event id">
+      <ReadOnlyField label="Event ID">
         {eventId}
       </ReadOnlyField>
 
@@ -110,6 +114,8 @@ const EventSummary = () => {
               name="eventOrganizer"
               className="usa-select"
               styles={selectOptionsReset}
+              getOptionLabel={(option) => option.fullName}
+              getOptionValue={(option) => option.id}
               components={{
                 DropdownIndicator: null,
               }}
@@ -117,6 +123,7 @@ const EventSummary = () => {
                 controllerOnChange(s);
               }}
               inputRef={register({ required: 'Select one' })}
+              options={[]}
             />
           )}
           control={control}
@@ -148,7 +155,7 @@ const EventSummary = () => {
             labelProperty="user.fullName"
             simple={false}
             placeholderText={placeholderText}
-            options={[]}
+            options={collaborators}
           />
         </FormItem>
       </div>
@@ -174,6 +181,9 @@ const EventSummary = () => {
                 controllerOnChange(s);
               }}
               inputRef={register({ required: 'Select one' })}
+              getOptionLabel={(option) => option.fullName}
+              getOptionValue={(option) => option.id}
+              options={pointOfContact}
             />
           )}
           control={control}
@@ -277,12 +287,12 @@ const EventSummary = () => {
       <div className="margin-top-2">
         <FormItem
           label="Reasons"
-          name="reason"
+          name="reasons"
         >
           <MultiSelect
-            name="reason"
+            name="reasons"
             control={control}
-            options={reasons.map((reason) => ({ value: reason, label: reason }))}
+            options={REASONS.map((reason) => ({ value: reason, label: reason }))}
             required="Select at least one"
             placeholderText={placeholderText}
           />
@@ -306,6 +316,20 @@ const EventSummary = () => {
       </div>
     </>
   );
+};
+
+const userProp = {
+  id: PropTypes.number,
+  name: PropTypes.string,
+};
+
+EventSummary.propTypes = {
+  additionalData: PropTypes.shape({
+    users: PropTypes.shape({
+      pointOfContact: PropTypes.arrayOf(PropTypes.shape(userProp)),
+      collaborators: PropTypes.arrayOf(PropTypes.shape(userProp)),
+    }),
+  }).isRequired,
 };
 
 const ReviewSection = () => <></>;
@@ -332,7 +356,7 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     _reportId,
     isAppLoading,
@@ -341,7 +365,7 @@ export default {
     onUpdatePage,
   ) => (
     <>
-      <EventSummary />
+      <EventSummary additionalData={additionalData} />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}
