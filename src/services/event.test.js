@@ -33,6 +33,14 @@ describe('event service', () => {
     },
   });
 
+  const createAnEventWithData = async (num, data) => createEvent({
+    ownerId: num,
+    regionId: num,
+    pocId: num,
+    collaboratorIds: [num],
+    data,
+  });
+
   describe('createEvent', () => {
     it('works', async () => {
       const created = await createAnEvent(98_989);
@@ -121,7 +129,7 @@ describe('event service', () => {
 
     it('findEventsByStatus', async () => {
       const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
-      const found = await findEventsByStatus(TRS.IN_PROGRESS);
+      const found = await findEventsByStatus(TRS.IN_PROGRESS, [], null, false);
       expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
       await destroyEvent(created.id);
 
@@ -150,13 +158,46 @@ describe('event service', () => {
         false,
       );
 
-      expect(found3.length).toBe(1);
-
-      // expect found4.length to be less than found3.length:
+      expect(found3.length).toBeGreaterThan(1);
       expect(found4.length).toBe(1);
 
       await destroyEvent(created3.id);
       await destroyEvent(created4.id);
+    });
+
+    it('findEventsByStatus sort order', async () => {
+      // when a data.startDate and data.title are provided,
+      // the results should be sorted by startDate, then title in ASC order (oldest to newest):
+      await createAnEventWithData(11_111, { startDate: '2020-01-02', title: 'C' });
+      await createAnEventWithData(11_112, { startDate: '2020-01-03', title: 'B' });
+      await createAnEventWithData(11_113, { startDate: '2020-01-01', title: 'A' });
+
+      const found = await findEventsByStatus(null, [], null, true);
+
+      // expect date to be priority sorted, followed by title:
+      expect(found[0].data).toHaveProperty('startDate', '2020-01-01');
+      expect(found[1].data).toHaveProperty('startDate', '2020-01-02');
+      expect(found[2].data).toHaveProperty('startDate', '2020-01-03');
+
+      await destroyEvent(found[0].id);
+      await destroyEvent(found[1].id);
+      await destroyEvent(found[2].id);
+
+      // when startDate is missing, title is used for sorting:
+      await createAnEventWithData(11_111, { title: 'C' });
+      await createAnEventWithData(11_112, { title: 'B' });
+      await createAnEventWithData(11_113, { title: 'A' });
+
+      const found2 = await findEventsByStatus(null, [], null, true);
+
+      // expect date to be priority sorted, followed by title:
+      expect(found2[0].data).toHaveProperty('title', 'A');
+      expect(found2[1].data).toHaveProperty('title', 'B');
+      expect(found2[2].data).toHaveProperty('title', 'C');
+
+      await destroyEvent(found2[0].id);
+      await destroyEvent(found2[1].id);
+      await destroyEvent(found2[2].id);
     });
   });
 });
