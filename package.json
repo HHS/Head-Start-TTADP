@@ -14,7 +14,7 @@
     "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\" \"yarn start:testingonly\"",
     "start:web": "node ./build/server/src/index.js",
     "start:worker": "node ./build/server/src/worker.js",
-    "start:testingonly": "node ./build/server/src/testingOnly.js",
+    "start:testingonly": "tsx watch ./src/testingOnly.js",
     "server": "tsx watch src/index.ts",
     "worker": "tsx watch src/worker.ts",
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",

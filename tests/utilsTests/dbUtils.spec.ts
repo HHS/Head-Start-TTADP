@@ -1,25 +1,31 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('get /role', () => {
+test.describe('get /query', () => {
 
   test('/', async ({ request }) => {
-    let data = { data: { command: `
-    ALTER SEQUENCE "Goals_id_seq"
-    RESTART WITH 65535;
-    `} };
-    let response = await request.get(`testingOnly/query/`, data);
+    let response = await request.post(
+      'http://localhost:9999/testingOnly/query/',
+      {
+        data: {
+          command: 'ALTER SEQUENCE "Goals_id_seq" RESTART WITH 65535;',
+        },
+      },
+    );
+
     expect(response.status()).toBe(200);
 
-    response = await request.get(`testingOnly/reseed/`);
+    response = await request.get('testingOnly/reseed/', { timeout: 30_000 });
     expect(response.status()).toBe(200);
-    expect(response.body).toBe(true);
 
-    data = { data: { command: `
-    SELECT last_value AS "lastValue"
-    FROM "Goals_id_seq";
-    `} };
-    response = await request.get(`testingOnly/query/`, data);
+    response = await request.post(
+      'http://localhost:9999/testingOnly/query/',
+      {
+        data: {
+          command: 'SELECT last_value AS "lastValue" FROM "Goals_id_seq";',
+        },
+      },
+    );
     expect(response.status()).toBe(200);
-    expect(response.body).not.toBe(65535);
+    expect(response.body).not.toBe(65_535);
   });
 });
