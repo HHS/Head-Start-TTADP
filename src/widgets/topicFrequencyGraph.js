@@ -1,5 +1,4 @@
 import { Op, QueryTypes } from 'sequelize';
-import { uniq } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
@@ -37,7 +36,7 @@ export async function topicFrequencyGraph(scopes) {
       attributes: [
         [
           sequelize.literal(`(
-            SELECT ARRAY_REMOVE(ARRAY_AGG(x.topic), null)
+            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic), null)
             FROM (
               SELECT ar.topic
               FROM UNNEST(COALESCE("ActivityReport"."topics",array[]::varchar[])) ar(topic)
@@ -87,7 +86,7 @@ export async function topicFrequencyGraph(scopes) {
 
   return topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
-    const allTopics = uniq(report.topics).map((t) => lookUpTopic.get(t));
+    const allTopics = report.topics.map((t) => lookUpTopic.get(t));
 
     // Loop all topics array and update totals.
     allTopics.forEach((topic) => {
