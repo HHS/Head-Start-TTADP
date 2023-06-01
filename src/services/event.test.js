@@ -74,7 +74,7 @@ describe('event service', () => {
       expect(updated).toHaveProperty('id');
       expect(updated).toHaveProperty('ownerId', 123);
 
-      await destroyEvent(99_999);
+      await destroyEvent(updated.id);
     });
   });
 
