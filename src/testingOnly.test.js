@@ -1,4 +1,19 @@
+import request from 'supertest';
+import app from './testingOnly';
+import { auditLogger } from './logger';
+
 describe('testingOnly', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('calls anonymous function', async () => {
+    jest.spyOn(auditLogger, 'info');
+    const response = await request(app).get('/whatever');
+    expect(response.statusCode).toEqual(404);
+    expect(auditLogger.info).toHaveBeenCalledWith('TestingOnly listening on port 9999');
+  });
+
   test('load testingOnly', async () => {
     jest.mock('express', () => {
       const use = jest.fn((route, callback) => {
@@ -26,15 +41,15 @@ describe('testingOnly', () => {
         return instance;
       }
 
-      const express = jest.fn(createExpressInstance);
+      const mock = jest.fn(createExpressInstance);
 
-      express.Router = jest.fn(() => mockRouter);
+      mock.Router = jest.fn(() => mockRouter);
 
-      return express;
+      return mock;
     });
 
-    // eslint-disable-next-line global-require
-    const { doNothing } = require('./testingOnly');
-    doNothing();
+    // // eslint-disable-next-line global-require
+    // const { doNothing } = require('./testingOnly');
+    // doNothing();
   });
 });
