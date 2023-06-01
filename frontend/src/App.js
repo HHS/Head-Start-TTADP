@@ -268,7 +268,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
