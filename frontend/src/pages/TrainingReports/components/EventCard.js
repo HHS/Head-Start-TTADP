@@ -5,6 +5,7 @@ import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import './EventCard.scss';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
+import ContextMenu from '../../../components/ContextMenu';
 
 function EventCard({
   event,
@@ -20,12 +21,15 @@ function EventCard({
     return '...';
   };
 
+  const contextMenuLabel = `Actions for event ${event.id}`;
+  const menuItems = [];
+
   return (
     <article
       className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter"
       data-testid="eventCard"
     >
-      <div className="display-flex flex-wrap margin-y-2">
+      <div className="display-flex flex-wrap margin-y-2 position-relative">
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event title</p>
           <p className="usa-prose margin-y-0">{data['Edit Title']}</p>
@@ -49,6 +53,14 @@ function EventCard({
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event end date</p>
           <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
+        </div>
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu position-absolute right-0">
+          { true && (
+          <ContextMenu
+            label={contextMenuLabel}
+            menuItems={menuItems}
+          />
+          )}
         </div>
       </div>
     </article>
