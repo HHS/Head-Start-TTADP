@@ -7,3 +7,6 @@ const app = express();
 app.use('/testingOnly', testingRouter);
 
 app.listen(9999, 'localhost', () => {});
+
+const doNothing = () => {};
+doNothing();
