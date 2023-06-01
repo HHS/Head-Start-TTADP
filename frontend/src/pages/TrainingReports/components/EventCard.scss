@@ -1,11 +1,12 @@
 @use '../../../colors' as *;
 
-$min-width-title-column: 216px;
+$min-width-title-column: 200px;
 $min-width-id-column: 107px;
 $min-width-organizer-column: 150px;
 $min-width-reason-column: 160px;
 $min-width-date-column: 115px;
 $max-width-date-column: 50%;
+$min-width-menu-column: 20px;
 
 .ttahub-event-card {
   margin-bottom: 1rem;
@@ -13,7 +14,7 @@ $max-width-date-column: 50%;
 
 // reset font sizes
 .ttahub-event-card,
-.ttahub-event-card .smart-hub-tooltip  .smart-hub--ellipsis {
+.ttahub-event-card .smart-hub-tooltip .smart-hub--ellipsis {
   font-size: 1.06rem;
 }
 
@@ -42,6 +43,10 @@ $max-width-date-column: 50%;
   flex-basis: clamp($min-width-date-column, 100%, 100%);
 }
 
+// Event Context Menu.
+.ttahub-event-card__event-column__menu {
+  flex-basis: clamp($min-width-menu-column, 2%, 100%);
+}
 
 .ttahub-event-card__event-column:not(:last-child) {
   margin-bottom: 16px;
@@ -57,47 +62,51 @@ $max-width-date-column: 50%;
   display: block;
 }
 
-
-
 @media(min-width: 627px) {
   .ttahub-event-card__event-column:not(:nth-child(n+3):nth-child(-n+5)) {
     margin-bottom: 16px;
   }
 }
 
-
 @media(min-width: 1125px) {
+
   // Title.
   .ttahub-event-card__event-column__title {
-    flex-basis: clamp($min-width-reason-column, 40%, 100%);
+    flex-basis: clamp($min-width-reason-column, 40%, 40%);
   }
 
   // Event ID.
   .ttahub-event-card__event-column__id {
-    flex-basis: clamp($min-width-id-column, 15%, 100%);
+    flex-basis: clamp($min-width-id-column, 15%, 15%);
   }
 
   // Event Organizer.
   .ttahub-event-card__event-column__organizer {
-    flex-basis: clamp($min-width-organizer-column, 20%, 100%);
+    flex-basis: clamp($min-width-organizer-column, 20%, 20%);
   }
 
   // Event Reason (over title).
   .ttahub-event-card__event-column__reason {
-    flex-basis: clamp($min-width-reason-column, 40%, 100%);
+    flex-basis: clamp($min-width-reason-column, 40%, 40%);
   }
 
   // Event Date (over id).
   .ttahub-event-card__event-column__date {
-    flex-basis: clamp($min-width-id-column, 15%, 100%);
+    flex-basis: clamp($min-width-id-column, 15%, 15%);
   }
+
+  // Event Context Menu.
+  .ttahub-event-card__event-column__menu {
+    flex-basis: clamp($min-width-menu-column, 2%, 2%);
+  }
+
 }
 
 @media(min-width: 1475px) {
 
   // Title.
   .ttahub-event-card__event-column__title {
-    flex-basis: clamp($min-width-title-column, 25%, 100%);
+    flex-basis: clamp($min-width-title-column, 24%, 100%);
   }
 
   // Event ID.
@@ -107,7 +116,7 @@ $max-width-date-column: 50%;
 
   // Event Organizer.
   .ttahub-event-card__event-column__organizer {
-    flex-basis: clamp($min-width-organizer-column, 18%, 100%);
+    flex-basis: clamp($min-width-organizer-column, 15%, 100%);
   }
 
   // Event Reason.
@@ -126,6 +135,11 @@ $max-width-date-column: 50%;
   // Event Date.
   .ttahub-event-card__event-column__date {
     flex-basis: clamp($min-width-date-column, 12.5%, 100%);
+  }
+
+  // Event Context Menu.
+  .ttahub-event-card__event-column__menu {
+    flex-basis: clamp($min-width-menu-column, 2%, 100%);
   }
 
   // Show tool tip button.
