@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-We need to determine the most suitable approach for archiving growing audit logs. The data retention period specified by OCIO is 6 years. While we plan to leave the TTA Hub data used for analytics intact, the audit logs providing a historic view of how that data changed, need to be managed. The main reason behind the need to implement an archiving strategy is to ensure the rapidly growing data doesn't stand in the way of the application performance. We have identified two alternatives for archiving the audit logs:
+We need to determine the most suitable approach for archiving growing audit logs. The data retention period specified by OCIO is 6 years. While we plan to leave the TTA Hub data used for analytics intact, the audit logs providing a historic view of how that data changed need to be managed. The main reason behind the need to implement an archiving strategy is to ensure the rapidly growing data doesn't stand in the way of the application performance. We have identified two alternatives for archiving the audit logs:
 
 1. Postpone Archiving: The first option is to postpone archiving until the end of the 6-year data retention period. This means that no specific archiving mechanism will be implemented until that time.
 
