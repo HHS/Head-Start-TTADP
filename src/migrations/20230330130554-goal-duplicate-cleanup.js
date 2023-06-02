@@ -2268,7 +2268,7 @@ module.exports = {
 
         FROM "CollectStats"
         ORDER BY id;
-        DROP IF EXISTS TABLE "PreCountStatsByRegion" ;
+        DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
           `, { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
