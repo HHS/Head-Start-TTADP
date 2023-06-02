@@ -18,6 +18,11 @@ a:visited {
   color: $text-ink;
 }
 
+.usa-table.usa-table--borderless td,
+.usa-table.usa-table--borderless th {
+  border-bottom: 1px solid $base-lighter;
+}
+
 .usa-skipnav:focus {
   z-index: 999999;
 }
@@ -328,4 +333,17 @@ fill: #1B1B1B;
 
 .text-ttahub-blue {
   color: $ttahub-blue;
+}
+
+/* ========== pagination overrides ========== */
+
+/* Selected Page */
+.ttahub-app .usa-pagination .usa-current {
+  background-color: $ttahub-medium-blue;
+}
+
+/* Hover on Page Number Button */
+.ttahub-app .usa-pagination .usa-pagination__button:hover {
+  border-color: $ttahub-medium-blue;
+  border-bottom: 1px solid;
 }
