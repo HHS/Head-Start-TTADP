@@ -72,7 +72,7 @@ router.use('/alerts', siteAlertsRouter);
 router.use('/feeds', feedRouter);
 router.use('/resources', resourcesRouter);
 router.use('/goal-templates', goalTemplatesRouter);
-router.use('/event', eventRouter);
+router.use('/events', eventRouter);
 router.use('/session-reports', sessionReportsRouter);
 
 const getUser = async (req, res) => {

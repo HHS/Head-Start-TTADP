@@ -322,6 +322,7 @@ class Groups{
  name : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ isPublic : boolean
  * userId : integer : REFERENCES "Users".id
 }
 
