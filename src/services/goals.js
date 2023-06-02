@@ -1853,6 +1853,9 @@ export async function saveGoalsForReport(goals, report) {
         ...fields
       } = goal;
 
+      // make sure we have a nice, trim name
+      const goalName = fields.name ? fields.name.trim() : '';
+
       // does a goal exist for this ID & grantId combination?
       newOrUpdatedGoal = existingGoals.find((extantGoal) => (
         (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
@@ -1862,7 +1865,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.findOne({
           where: {
-            name: goal.name.trim(),
+            name: goalName,
             grantId,
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
@@ -1873,7 +1876,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           createdVia: 'activityReport',
-          name: goal.name.trim(),
+          name: goalName,
           grantId,
           ...fields,
           status,
@@ -1882,7 +1885,7 @@ export async function saveGoalsForReport(goals, report) {
 
       if (!newOrUpdatedGoal.onApprovedAR) {
         if (fields.name !== newOrUpdatedGoal.name) {
-          newOrUpdatedGoal.set({ name: fields.name.trim() }, { individualHooks: true });
+          newOrUpdatedGoal.set({ name: goalName }, { individualHooks: true });
         }
 
         if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
