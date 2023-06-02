@@ -2,6 +2,7 @@
 set -e
 
 common_changed=false
+common_package_json_changed=false
 frontend_yarn_lock_changed=false
 backend_yarn_lock_changed=false
 files=$(git diff --cached --name-only)
@@ -12,6 +13,11 @@ do
   # check if packages/common/src/index.js was changed
   if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
     common_changed=true
+  fi
+
+  # check if packages/common/package.json was changed
+  if [ -e "$f" ] && [[ $f == packages/common/package.json ]]; then
+    common_package_json_changed=true
   fi
   
   # check if frontend/yarn.lock was changed
@@ -45,8 +51,13 @@ do
 done
 
 if [ $common_changed = true ]; then
+  if [ $common_package_json_changed = false ]; then
+    echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please run 'yarn deps' in the frontend and backend directories."
+    exit 1
+  fi
+
   if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
-    echo "ERROR: common/index.js was changed, but yarn.lock was not updated. Please run 'yarn deps' in the frontend and backend directories."
+    echo "ERROR: common/src/index.js was changed, but yarn.lock was not updated. Please run 'yarn deps' in the frontend and backend directories."
     exit 1
   fi
 fi
