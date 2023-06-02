@@ -2120,7 +2120,7 @@
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
 "@ttahub/common@file:./packages/common":
-  version "1.0.6"
+  version "1.0.7"
 
 "@types/babel__core@^7.0.0":
   version "7.1.19"
