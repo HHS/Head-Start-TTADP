@@ -10,6 +10,7 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 import AccountManagement from '..';
 import UserContext from '../../../UserContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 describe('AccountManagement', () => {
   const now = new Date();
@@ -45,11 +46,13 @@ describe('AccountManagement', () => {
 
     render(
       <MemoryRouter>
-        <UserContext.Provider value={{ user }}>
-          <AccountManagement
-            updateUser={() => {}}
-          />
-        </UserContext.Provider>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <AccountManagement
+              updateUser={() => {}}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
   };

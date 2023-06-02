@@ -19,11 +19,13 @@ import {
 
 describe('Groups service', () => {
   let mockUser;
+  let mockUserTwo;
   let recipient;
   let grantOne;
   let grantTwo;
   let existingGroupToEdit;
   let groupToDelete;
+  let publicGroup;
 
   beforeAll(async () => {
     mockUser = await User.create({
@@ -34,9 +36,23 @@ describe('Groups service', () => {
       hsesUsername: faker.internet.email(),
     });
 
+    mockUserTwo = await User.create({
+      name: faker.name.findName(),
+      email: faker.internet.email(),
+      password: faker.internet.password(),
+      hsesUserId: faker.internet.email(),
+      hsesUsername: faker.internet.email(),
+    });
+
     await Permission.create({
       regionId: 1,
       userId: mockUser.id,
+      scopeId: SCOPES.READ_REPORTS,
+    });
+
+    await Permission.create({
+      regionId: 1,
+      userId: mockUserTwo.id,
       scopeId: SCOPES.READ_REPORTS,
     });
 
@@ -69,6 +85,7 @@ describe('Groups service', () => {
     existingGroupToEdit = await Group.create({
       name: 'Group 1',
       userId: mockUser.id,
+      isPublic: false,
     });
 
     // add the first grant to the group
@@ -81,11 +98,24 @@ describe('Groups service', () => {
     groupToDelete = await Group.create({
       name: 'Group 2',
       userId: mockUser.id,
+      isPublic: false,
     });
 
     // add the second grant to the group
     await GroupGrant.create({
       groupId: groupToDelete.id,
+      grantId: grantTwo.id,
+    });
+
+    // create a public group
+    publicGroup = await Group.create({
+      name: 'Public Group',
+      userId: mockUserTwo.id,
+      isPublic: true,
+    });
+
+    await GroupGrant.create({
+      groupId: publicGroup.id,
       grantId: grantTwo.id,
     });
   });
@@ -99,7 +129,7 @@ describe('Groups service', () => {
 
     await Group.destroy({
       where: {
-        userId: mockUser.id,
+        userId: [mockUser.id, mockUserTwo.id],
       },
     });
 
@@ -117,13 +147,13 @@ describe('Groups service', () => {
 
     await Permission.destroy({
       where: {
-        userId: mockUser.id,
+        userId: [mockUser.id, mockUserTwo.id],
       },
     });
 
     await User.destroy({
       where: {
-        id: mockUser.id,
+        id: [mockUser.id, mockUserTwo.id],
       },
     });
 
@@ -132,8 +162,13 @@ describe('Groups service', () => {
 
   describe('groups', () => {
     it('returns a list of groups', async () => {
-      const result = await groups(mockUser.id);
-      expect(result).toHaveLength(2);
+      const result = await groups(mockUser.id, [1]);
+      expect(result).toHaveLength(3);
+
+      const groupNames = result.map((gr) => gr.name);
+      expect(groupNames).toContain('Group 1');
+      expect(groupNames).toContain('Group 2');
+      expect(groupNames).toContain('Public Group');
     });
   });
 
@@ -153,11 +188,13 @@ describe('Groups service', () => {
         name: 'Group 3',
         grants: [grantOne.id, grantTwo.id],
         userId: mockUser.id,
+        isPublic: false,
       });
 
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('name');
       expect(result.name).toBe('Group 3');
+      expect(result.isPublic).toBe(false);
       expect(result).toHaveProperty('grants');
       expect(result.grants).toHaveLength(2);
     });
@@ -169,11 +206,13 @@ describe('Groups service', () => {
         name: 'Group 1 Edited',
         grants: [grantTwo.id],
         userId: mockUser.id,
+        isPublic: true,
       });
 
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('name');
       expect(result.name).toBe('Group 1 Edited');
+      expect(result.isPublic).toBe(true);
 
       const currentGroupGrants = await GroupGrant.findAll({
         where: {
