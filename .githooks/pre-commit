@@ -8,7 +8,7 @@ files=$(git diff --cached --name-only)
 
 for f in $files
 do
-  
+
   # check if packages/common/src/index.js was changed
   if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
     common_changed=true
@@ -44,8 +44,7 @@ do
   fi
 done
 
-if [ $common_changed ]; then
-  echo "Common changed"
+if [ $common_changed = true ]; then
   if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
     echo "ERROR: common/index.js was changed, but yarn.lock was not updated. Please run 'yarn deps' in the frontend and backend directories."
     exit 1
