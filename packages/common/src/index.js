@@ -112,8 +112,8 @@ const REPORT_STATUSES = {
 exports.REPORT_STATUSES = REPORT_STATUSES;
 
 const TRAINING_REPORT_STATUSES = {
-  NOT_STARTED: 'not_started',
-  IN_PROGRESS: 'in_progress',
+  NOT_STARTED: 'not-started',
+  IN_PROGRESS: 'in-progress',
   COMPLETE: 'complete',
 };
 exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
