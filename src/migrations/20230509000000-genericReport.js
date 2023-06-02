@@ -134,11 +134,11 @@ module.exports = {
       // TODO: need to add statuses for reports
       await queryInterface.sequelize.query(`
         INSERT INTO "Statuses"
-        ("name", "validFor", "createdAt", "updatedAt")
+        ("name", "validFor", "createdAt", "updatedAt", "isTerminal")
         VALUES
-        ${Object.values(GOAL_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.GOAL}', current_timestamp, current_timestamp)`).join(',\n')},
-        ${Object.values(OBJECTIVE_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.OBJECTIVE}', current_timestamp, current_timestamp)`).join(',\n')},
-        ${Object.values(APPROVAL_STATUSES).map((status) => `('${status}', '${ENTITY_TYPE.COLLABORATOR}', current_timestamp, current_timestamp)`).join(',\n')}
+        ${Object.values(GOAL_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.GOAL}', current_timestamp, current_timestamp, false)`).join(',\n')},
+        ${Object.values(OBJECTIVE_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.OBJECTIVE}', current_timestamp, current_timestamp, false)`).join(',\n')},
+        ${Object.values(APPROVAL_STATUSES).map((status) => `('${status}', '${ENTITY_TYPE.COLLABORATOR}', current_timestamp, current_timestamp, false)`).join(',\n')}
        ;
       `, { transaction });
       await queryInterface.sequelize.query(`

@@ -876,6 +876,7 @@ class SiteAlerts{
 class Statuses{
  * id : integer : <generated>
  * name : text
+ * isTerminal : boolean
  * validFor : enum
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
@@ -2356,6 +2357,7 @@ Resources "1" --[#black,dashed,thickness=2]--{  "n" ReportResources : resource, 
 Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collaboratorRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaboratorRoles : role, reportCollaboratorRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
+Roles "1" --[#black,dashed,thickness=2]--{  "n" Roles : mapsToRole, mapsFromRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
 Statuses "1" --[#black,dashed,thickness=2]--{  "n" ReportCollaborators : status, reportCollaborators
@@ -2371,6 +2373,7 @@ Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, object
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTemplateTopics : topic, reportObjectiveTemplateTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ReportObjectiveTopics : topic, reportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
+Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, activityReportCollaborators
