@@ -210,7 +210,7 @@ parameters:
     default: "TTAHUB-224/newrelic-config-update"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "mb/TTAHUB-1530/goal-template"
+    default: "mb/TTAHUB-1740/public-access-groups"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -233,16 +233,16 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v11-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v8-yarn-deps-
+            - v11-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
             - packages/common/node_modules
-          key: v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v11-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -391,6 +391,7 @@ jobs:
           command: yarn e2e:api
       - store_artifacts:
           path: playwright/api
+    resource_class: large
   test_utils:
     executor: docker-postgres-elasticsearch-executor
     environment:
