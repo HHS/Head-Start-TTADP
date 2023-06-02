@@ -174,12 +174,20 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     let group;
+    let publicGroup;
     let grant;
 
     beforeAll(async () => {
       group = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
         userId: mockUser.id,
+        isPublic: false,
+      });
+
+      publicGroup = await Group.create({
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        userId: mockUserTwo.id,
+        isPublic: true,
       });
 
       grant = await createGrant({
@@ -191,6 +199,11 @@ describe('filtersToScopes', () => {
 
       await GroupGrant.create({
         groupId: group.id,
+        grantId: grant.id,
+      });
+
+      await GroupGrant.create({
+        groupId: publicGroup.id,
         grantId: grant.id,
       });
 
@@ -211,16 +224,20 @@ describe('filtersToScopes', () => {
 
     afterAll(async () => {
       await ActivityRecipient.destroy({
-        where: { activityReportId: [reportIncluded.id, reportExcluded.id] },
+        where: {
+          activityReportId: [
+            reportIncluded.id, reportExcluded.id,
+          ],
+        },
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded.id, reportExcluded.id] },
       });
       await GroupGrant.destroy({
-        where: { groupId: group.id },
+        where: { groupId: [group.id, publicGroup.id] },
       });
       await Group.destroy({
-        where: { id: group.id },
+        where: { id: [group.id, publicGroup.id] },
       });
       await Grant.destroy({
         where: { id: grant.id },
@@ -234,12 +251,35 @@ describe('filtersToScopes', () => {
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportIncluded.id]));
+      const groupIds = found.map((f) => f.id);
+      expect(groupIds).toContain(reportIncluded.id);
+    });
+
+    it('filters by public group', async () => {
+      const filters = { 'group.in': [String(publicGroup.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      const groupIds = found.map((f) => f.id);
+      expect(groupIds).toContain(reportIncluded.id);
     });
 
     it('filters out by group', async () => {
       const filters = { 'group.nin': [String(group.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      const foundIds = found.map((f) => f.id);
+      expect(foundIds).toContain(reportExcluded.id);
+      expect(foundIds).toContain(globallyExcludedReport.id);
+    });
+
+    it('filters out by public group', async () => {
+      const filters = { 'group.nin': [String(publicGroup.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
