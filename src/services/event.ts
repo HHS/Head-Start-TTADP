@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
-import { DataTypes, cast } from 'sequelize';
+import { Op, cast } from 'sequelize';
+import { auditLogger } from '../logger';
 import db from '../models';
 import {
   EventShape,
@@ -8,6 +9,7 @@ import {
 } from './types/event';
 
 const {
+  sequelize,
   EventReportPilot,
   SessionReportPilot,
 } = db;
@@ -35,7 +37,7 @@ const validateFields = (request, requiredFields) => {
  * @throws {Error} If any required fields are missing in the request data.
  */
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'collaboratorIds', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -61,8 +63,18 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
-  await SessionReportPilot.destroy({ where: { eventId: id } });
-  await EventReportPilot.destroy({ where: { id } });
+  try {
+    auditLogger.info(`Deleting session reports for event ${id}`);
+    await SessionReportPilot.destroy({ where: { eventId: id } });
+  } catch (e) {
+    auditLogger.error(`Error deleting session reports for event ${id}:`, e);
+  }
+  try {
+    auditLogger.info(`Deleting event report for event ${id}`);
+    await EventReportPilot.destroy({ where: { id } });
+  } catch (e) {
+    auditLogger.error(`Error deleting event report for event ${id}:`, e);
+  }
 }
 
 async function findEventHelper(where: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
@@ -105,6 +117,71 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
   };
 }
 
+interface FindEventHelperBlobOptions {
+  key: string;
+  value: string;
+  regions: number[] | undefined;
+  fallbackValue?: string;
+  allowNull?: boolean;
+}
+
+async function findEventHelperBlob({
+  key,
+  value,
+  regions,
+  fallbackValue,
+  allowNull = false,
+}: FindEventHelperBlobOptions): Promise<EventShape[]> {
+  const getClause = () => {
+    if (allowNull) {
+      return {
+        [Op.or]: [
+          { [key]: value },
+          { [key]: { [Op.eq]: null } },
+        ],
+      };
+    }
+
+    return { [key]: value };
+  };
+
+  const where = { data: { ...getClause() } };
+
+  if (regions && regions.length) {
+    // @ts-ignore
+    where.regionId = regions;
+  }
+
+  const events = await EventReportPilot.findAll({
+    attributes: [
+      'id',
+      'ownerId',
+      'pocId',
+      'collaboratorIds',
+      'regionId',
+      'data',
+    ],
+    raw: true,
+    where,
+    order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+  });
+
+  // if a fallbackValue was provided for this key search
+  if (events && events.length && fallbackValue) {
+    // if key is null or undefined, we assign its value to the fallback value
+    return events.map((event) => {
+      if (!event.data[key]) {
+        // eslint-disable-next-line no-param-reassign
+        event.data[key] = fallbackValue;
+      }
+      return event;
+    });
+  }
+
+  // otherwise just return the events as-is, or null
+  return events || null;
+}
+
 type WhereOptions = {
   id?: number;
   ownerId?: number;
@@ -129,7 +206,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     return createEvent(request);
   }
 
-  validateFields(request, ['ownerId', 'pocId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'collaboratorIds', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -171,6 +248,16 @@ export async function findEventsByCollaboratorId(id: number): Promise<EventShape
 
 export async function findEventsByRegionId(id: number): Promise<EventShape[] | null> {
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
+}
+
+export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = true): Promise<EventShape[] | null> {
+  return findEventHelperBlob({
+    key: 'status',
+    value: status,
+    regions: readableRegions,
+    fallbackValue,
+    allowNull,
+  }) as Promise<EventShape[]>;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {

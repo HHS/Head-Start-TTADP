@@ -1,61 +1,150 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+} from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, Button } from '@trussworks/react-uswds';
-import { fetchGroups, deleteGroup } from '../../../fetchers/groups';
+import {
+  Alert,
+  Table,
+  Pagination,
+} from '@trussworks/react-uswds';
+import UserContext from '../../../UserContext';
+import MyGroup from './MyGroup';
+import WidgetCard from '../../../components/WidgetCard';
+import { MyGroupsContext } from '../../../components/MyGroupsProvider';
+
+const GROUPS_PER_PAGE = 10;
 
 export default function Groups() {
-  const [groups, setGroups] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [offset, setOffset] = useState(0);
   const [error, setError] = useState(null);
+  const { user } = useContext(UserContext);
+  const { myGroups, setMyGroups } = useContext(MyGroupsContext);
 
-  const onDelete = async (groupId) => {
-    try {
-      await deleteGroup(groupId);
-      setGroups(groups.filter((group) => group.id !== groupId));
-    } catch (err) {
-      setError('There was an error deleting your group');
+  const groups = {
+    myGroups: (myGroups || []).filter((group) => group.userId === user.id),
+    publicGroups: (myGroups || []).filter((group) => group.userId !== user.id),
+  };
+
+  const getPageInfo = () => {
+    const from = offset >= groups.publicGroups.length ? 0 : offset + 1;
+    const offsetTo = GROUPS_PER_PAGE * currentPage;
+    let to;
+    if (offsetTo > groups.publicGroups.length) {
+      to = groups.publicGroups.length;
+    } else {
+      to = offsetTo;
     }
+
+    return `${from}-${to} of ${groups.publicGroups.length}`;
+  };
+
+  const getTotalPages = () => {
+    const totalPages = Math.floor(groups.publicGroups.length / GROUPS_PER_PAGE);
+    return groups.publicGroups.length % GROUPS_PER_PAGE > 0 ? totalPages + 1 : totalPages;
   };
 
   useEffect(() => {
-    async function getGroups() {
-      try {
-        const response = await fetchGroups();
-        setGroups(response);
-      } catch (err) {
-        setGroups([]);
-      }
-    }
+    setOffset(GROUPS_PER_PAGE * (currentPage - 1));
+  }, [currentPage]);
 
-    if (!groups) {
-      getGroups();
-    }
-  }, [groups]);
+  const showPaging = groups && groups.publicGroups.length > GROUPS_PER_PAGE;
+
+  let groupsForDisplay = [];
+
+  if (groups) {
+    groupsForDisplay = groups.publicGroups;
+  }
+
+  if (showPaging) {
+    groupsForDisplay = groupsForDisplay.slice(offset, offset + GROUPS_PER_PAGE);
+  }
 
   return (
-    <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-      <h2 className="margin-bottom-1 font-sans-xl">My groups</h2>
-      { error ? <Alert type="error" role="alert">{error}</Alert> : null }
-      <div className="margin-bottom-3">
-        {!groups || !groups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
-          <ul className="usa-list usa-list--unstyled maxw-tablet margin-bottom-3">
-            {groups.map((group) => (
-              <li key={group.id} className="margin-bottom-3 desktop:display-flex border-bottom border-gray-5 flex-justify padding-2">
-                <span>
-                  {group.name}
-                </span>
-                <span>
-                  <Link to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-                  <Button type="button" aria-label={`delete ${group.name}`} onClick={() => onDelete(group.id)} unstyled>Delete group</Button>
-                </span>
-              </li>
-            ))}
-          </ul>
+    <WidgetCard
+      header={(
+        <div className="display-flex flex-align-center margin-top-2">
+          <h2 className="margin-bottom-1 margin-top-0 font-sans-xl">My groups</h2>
+          <Link to="/account/my-groups" className="usa-button text-white text-no-underline margin-left-2">Create a group</Link>
+        </div>
+      )}
+      footer={
+      showPaging
+        ? (
+          <div className="display-flex flex-justify flex-align-center padding-x-2">
+            <div>{getPageInfo()}</div>
+            <Pagination
+              className="margin-0"
+              currentPage={currentPage}
+              totalPages={getTotalPages()}
+              onClickNext={() => setCurrentPage(currentPage + 1)}
+              onClickPrevious={() => setCurrentPage(currentPage - 1)}
+              onClickPageNumber={(_e, page) => setCurrentPage(page)}
+            />
+          </div>
+        )
+        : null
+    }
+    >
+      <div className="margin-bottom-3 maxw-tablet-lg">
+        { error ? <Alert type="error" role="alert">{error}</Alert> : null }
+        <h3>Created by me</h3>
+        {!groups || !groups.myGroups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
+          <Table fullWidth stackedStyle="default">
+            <thead>
+              <tr>
+                <th scope="col">Group name</th>
+                <th scope="col">Group access</th>
+                <th scope="col"><span className="usa-sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.myGroups.map((group) => (
+                <MyGroup
+                  key={group.id}
+                  group={group}
+                  setMyGroups={setMyGroups}
+                  setError={setError}
+                />
+              ))}
+            </tbody>
+          </Table>
         )}
       </div>
 
-      <div className="margin-bottom-3">
-        <Link to="/account/my-groups" className="usa-button text-white text-no-underline">Create group</Link>
+      <div className="margin-bottom-3 maxw-tablet-lg">
+        <h3>Created by others (public)</h3>
+        {!groups || !groups.publicGroups.length ? <p className="usa-prose">No one has made any groups in your region public yet</p> : (
+          <>
+            <Table fullWidth stackedStyle="default">
+              <thead>
+                <tr>
+                  <th scope="col">Group name</th>
+                  <th scope="col">Group owner</th>
+                  <th scope="col"><span className="usa-sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupsForDisplay.map((group) => (
+                  <tr key={group.id}>
+                    <td data-label="Group name">
+                      {group.name}
+                    </td>
+                    <td data-label="Group owner">
+                      {group.user.name}
+                    </td>
+                    <td align="right">
+                      <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </>
+        )}
       </div>
-    </div>
+    </WidgetCard>
   );
 }
