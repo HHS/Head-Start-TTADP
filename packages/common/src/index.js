@@ -111,6 +111,13 @@ const REPORT_STATUSES = {
 };
 exports.REPORT_STATUSES = REPORT_STATUSES;
 
+const TRAINING_REPORT_STATUSES = {
+  NOT_STARTED: 'not_started',
+  IN_PROGRESS: 'in_progress',
+  COMPLETE: 'complete',
+};
+exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
+
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool (ages 3-5)',
@@ -187,6 +194,8 @@ const SCOPE_IDS = {
   READ_ACTIVITY_REPORTS: 4,
   APPROVE_ACTIVITY_REPORTS: 5,
   UNLOCK_APPROVED_REPORTS: 6,
+  READ_WRITE_TRAINING_REPORTS: 7,
+  READ_TRAINING_REPORTS: 8,
 };
 exports.SCOPE_IDS = SCOPE_IDS;
 

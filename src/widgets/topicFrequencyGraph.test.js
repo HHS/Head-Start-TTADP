@@ -435,7 +435,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 3, // 1 from AR 3 from ARO's.
+        count: 2, // 1 from AR 3 from ARO's.
       },
       {
         topic: 'Communication',
@@ -781,7 +781,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 3,
+        count: 2,
       },
       {
         topic: 'Communication',
@@ -953,7 +953,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 2,
+        count: 1,
       },
       {
         topic: 'Communication',
