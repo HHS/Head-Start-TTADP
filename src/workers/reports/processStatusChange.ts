@@ -3,6 +3,8 @@
 */
 import { Op } from 'sequelize';
 import db from '../../models';
+import objectiveFile from '../../models/objectiveFile';
+import objectiveTemplateFile from '../../models/objectiveTemplateFile';
 
 const {
   ReportRecipient,
@@ -15,6 +17,10 @@ const {
   Goal,
   ReportObjectiveTemplate,
   ObjectiveTemplate,
+  Objective,
+  ObjectiveFile,
+  ObjectiveResource,
+  ObjectiveTopic,
 } = db;
 
 interface GoalData {
@@ -92,12 +98,12 @@ const createReportGoalsForRecipients = async (
     .filter(({ goalId }) => !existingRecipientReportGoals.find((errg) => errg.goalId === goalId));
 
   if (goalDatasNeedingReportGoal.length > 0) {
-    await Goal.bulkCreate(goalDatasNeedingReportGoal.map((grantId) => ({
+    await ReportGoal.bulkCreate(goalDatasNeedingReportGoal.map((grantId) => ({
       ...goal,
       grantId,
     })));
 
-    return Goal.findAll({
+    return ReportGoal.findAll({
       attributes: [
         ['id', 'goalId'],
         'grantId',
@@ -111,6 +117,182 @@ const createReportGoalsForRecipients = async (
     });
   }
   return existingRecipientGoals;
+};
+
+const createObjectivesForRecipients = async (
+  objectiveTemplateId:number,
+  goalIds:number[],
+  objective,
+):Promise<GoalData[]> => {
+  // collect all recipient goals that already exist
+  const existingRecipientObjectives = await Objective.findAll({
+    attributes: [
+      ['id', 'objective'],
+      'goalId',
+      'objectiveTemplateId',
+    ],
+    where: {
+      goalId: { [Op.in]: goalIds },
+      objectiveTemplateId,
+      // TODO: do we need to chack status
+    },
+  });
+
+  const goalIdsNeedingObjective = goalIds
+    .filter((goalId) => !existingRecipientObjectives.find((ero) => ero.goalId === goalId));
+
+  if (goalIdsNeedingObjective.length > 0) {
+    await Objective.bulkCreate(goalIdsNeedingObjective.map((goalId) => ({
+      ...objective,
+      goalId,
+    })));
+
+    return Objective.findAll({
+      attributes: [
+        ['id', 'objective'],
+        'goalId',
+        'objectiveTemplateId',
+      ],
+      where: {
+        goalId: { [Op.in]: goalIds },
+        objectiveTemplateId,
+        // TODO: do we need to chack status
+      },
+    });
+  }
+  return existingRecipientObjectives;
+};
+
+const createObjectiveMetaDataForRecipients = async (
+  objectives:{ objectiveId:number, objectiveTemplateId: number}[],
+) => {
+  const [
+    existingRecipientObjectiveFiles,
+    existingRecipientObjectiveResources,
+    existingRecipientObjectiveTopics,
+    neededReportObjectiveFiles,
+    neededReportObjectiveResources,
+    neededReportObjectiveTopics,
+  ] = await Promise.all([
+    await ObjectiveFile.findAll({
+      attributes: [
+        ['id', 'objectiveFileId'],
+        ['fileId', 'fileId'],
+        ['objectiveId', 'objectiveId'],
+        [null, 'objectiveTemplateId'], // TODO: fix this
+      ],
+      group: [
+        'id',
+        'fileId',
+        'objectiveId',
+        null, // TODO: fix this
+      ],
+      where: { objectiveId: { [Op.in]: objectiveIds } },
+      include: [{
+        model: Objective,
+        as: 'objective',
+        required: true,
+        atttributes: [],
+      }],
+    }),
+    await ObjectiveResource.findAll({
+      attributes: [
+        ['id', 'objectiveFileId'],
+        ['resourceId', 'resourceId'],
+        ['objectiveId', 'objectiveId'],
+        [null, 'objectiveTemplateId'], // TODO: fix this
+      ],
+      group: [
+        'id',
+        'resourceId',
+        'objectiveId',
+        null, // TODO: fix this
+      ],
+      where: { objectiveId: { [Op.in]: objectiveIds } },
+      include: [{
+        model: Objective,
+        as: 'objective',
+        required: true,
+        atttributes: [],
+      }],
+    }),
+    await ObjectiveTopic.findAll({
+      attributes: [
+        ['id', 'objectiveFileId'],
+        ['topicId', 'topicId'],
+        ['objectiveId', 'objectiveId'],
+        [null, 'objectiveTemplateId'], // TODO: fix this
+      ],
+      group: [
+        'id',
+        'topicId',
+        'objectiveId',
+        null, // TODO: fix this
+      ],
+      where: { objectiveId: { [Op.in]: objectiveIds } },
+      include: [{
+        model: Objective,
+        as: 'objective',
+        required: true,
+        atttributes: [],
+      }],
+    }),
+    await ReportObjectiveTemplateFile.findAll({
+
+      include: [{
+        model: ReportObjectiveTemplate,
+        as: 'reportObjectiveTemplate',
+        required: true,
+        attributes: [],
+        include: [{
+          model: ReportObjective,
+          as: 'reportObjectives',
+          required: true,
+          attributes: [],
+          where: { objectiveId: { [Op.in]: objectiveIds } },
+        }],
+      }],
+    }),
+    await ReportObjectiveTemplateResource.findAll({
+
+      include: [{
+        model: ReportObjectiveTemplate,
+        as: 'reportObjectiveTemplate',
+        required: true,
+        attributes: [],
+        include: [{
+          model: ReportObjective,
+          as: 'reportObjectives',
+          required: true,
+          attributes: [],
+          where: { objectiveId: { [Op.in]: objectiveIds } },
+        }],
+      }],
+    }),
+    await ReportObjectiveTemplateTopic.findAll({
+
+      include: [{
+        model: ReportObjectiveTemplate,
+        as: 'reportObjectiveTemplate',
+        required: true,
+        attributes: [],
+        include: [{
+          model: ReportObjective,
+          as: 'reportObjectives',
+          required: true,
+          attributes: [],
+          where: { objectiveId: { [Op.in]: objectiveIds } },
+        }],
+      }],
+    }),
+  ]);
+
+  const objectiveIdsNeedingFileIds = objectives
+    .flatMap(({ objectiveId, objectiveTemplateId }) => neededReportObjectiveFiles
+      .filter((nrof) => nrof.objectiveTemplateId === objectiveTemplateId)
+      .map((nrof) => ({ objectiveId, objectiveTemplateId, ...nrof })))
+    .filter((nrof) => !existingRecipientObjectiveFiles.find((erof) => nrof.objectiveId === erof.objectiveId
+      && nrof.fileId === erof.fileId));
 };
 
 // propogate generation of all goals and objectives to all recipients on report
