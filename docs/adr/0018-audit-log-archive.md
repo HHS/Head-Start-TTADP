@@ -1,4 +1,3 @@
-
 # ADR: Archiving Growing Audit Logs
 
 ## Status
@@ -24,7 +23,7 @@ After evaluating the advantages and disadvantages of both alternatives, we have 
 ## Consequences
 The chosen alternative has the following consequences:
 
-1. Compliance with Data Retention Policy: Archiving the audit logs quarterly aligns with the data retention period specified by OCIO, ensuring compliance with organizational policies and regulatory requirements.
+1. Compliance with Data Retention Policy: Since we are not proposing to archive the primary data, archiving the audit logs quarterly aligns with the data retention period specified by OCIO, ensuring compliance with organizational policies and regulatory requirements.
 
 2. Timely Data Archiving: By implementing a quarterly archiving process, we ensure that the audit logs are regularly backed up and archived. This minimizes the risk of data loss or corruption and facilitates easier retrieval if needed.
 
