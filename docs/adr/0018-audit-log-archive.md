@@ -8,7 +8,7 @@ We need to determine the most suitable approach for archiving growing audit logs
 
 1. Postpone Archiving: The first option is to postpone archiving until the end of the 6-year data retention period. This means that no specific archiving mechanism will be implemented until that time.
 
-2. Quarterly Archiving using Node.js cron and JavaScript/TypeScript: The second option is to implement a quarterly archiving process using Node.js cron functionality with JavaScript/TypeScript code. The code will retrieve the data from Postgres and save it to an S3 bucket. The S3 bucket already has server-side encryption enabled.
+2. Periodic Archiving, e.g. quaterly or monthly using Node.js cron and JavaScript/TypeScript: The second option is to implement a periodic archiving process using Node.js cron functionality with JavaScript/TypeScript code. The code will retrieve the data from Postgres and save it to an S3 bucket. The S3 bucket already has server-side encryption enabled.
 
 ### Advantages and disadvantages of option 1:
 By not implementing anything now, we don't incur costs of implementing the archiving, testing for accuracy, and the development of an admin UI to allow for seamless restores as needed. However, by allowing the audit logs to grow we are running a risk of a general application response time slowdown as well as significantly increased times to backup the database.
@@ -17,17 +17,18 @@ By not implementing anything now, we don't incur costs of implementing the archi
 The main advantage of implementing an archiving strategy now is that our application performance will not be impacted by rapidly growing audit log data. The production backups will operate as they do now without unnecessary slowdowns. A disadvantage of this option is that we will need to dedicate resources to implement, test and monitor the solution.
 
 
+
 ## Decision
-After evaluating the advantages and disadvantages of both alternatives, we have decided to proceed with the second option: Quarterly Archiving to S3 using Node.js cron.
+After evaluating the advantages and disadvantages of both alternatives, we have decided to proceed with the second option: Periodic Archiving to S3 using Node.js cron.
 
 ## Consequences
 The chosen alternative has the following consequences:
 
-1. Compliance with Data Retention Policy: Since we are not proposing to archive the primary data, archiving the audit logs quarterly aligns with the data retention period specified by OCIO, ensuring compliance with organizational policies and regulatory requirements.
+1. Compliance with Data Retention Policy: Since we are not proposing to archive the primary data, archiving the audit logs periodically aligns with the data retention period specified by OCIO, ensuring compliance with organizational policies and regulatory requirements.
 
-2. Timely Data Archiving: By implementing a quarterly archiving process, we ensure that the audit logs are regularly backed up and archived. This minimizes the risk of data loss or corruption and facilitates easier retrieval if needed.
+2. Timely Data Archiving: By implementing a periodic archiving process, we ensure that the audit logs are regularly backed up and archived. This minimizes the risk of data loss or corruption and facilitates easier retrieval if needed.
 
-3. Reduced Storage Burden: Archiving the audit logs quarterly helps manage storage requirements effectively. By offloading older data to S3, we can free up space in the production database, optimizing its performance.
+3. Reduced Storage Burden: Archiving the audit logs periodically helps manage storage requirements effectively. By offloading older data to S3, we can free up space in the production database, optimizing its performance.
 
 4. Data Security: The utilization of server-side encryption in the S3 bucket ensures that the archived audit logs are stored securely at rest.
 
