@@ -510,8 +510,9 @@ class Resources{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  title : text
+ nationalCenters : text
  metadata : jsonb
-!issue='column missing from model' <color:#d54309>metadataUpdatedAt</color>: timestamp with time zone
+ metadataUpdatedAt : timestamp with time zone
 }
 
 class RoleTopics{

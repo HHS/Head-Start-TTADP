@@ -10,28 +10,50 @@ const getResourceMetaDataJob = async (job) => {
   } = job.data;
   let res;
   try {
+    // Determine if this is an ECLKC resource.
+    const isEclkc = resourceUrl.includes('eclkc.ohs.acf.hhs.gov');
+
     // Use axios to get url info.
     res = await axios.get(resourceUrl, { maxRedirects: 3 });
 
-    // Get page title.
+    // Scrape Title & National Centers from ECLKC resources.
     const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
+    // eslint-disable-next-line max-len
 
-    // If we found a title, update the resource.
+    // Find the meta tag with name="national-centers".
+    const foundNationalCenters = isEclkc ? res.data.match(/<meta[^>]*=*"national-centers"[^>]*content="([^"]+)"[^>]*>/) : null;
+
+    // Update object to save.
+    const updateObj = {};
+
+    // If we found a title, add to update the resource.
     if (foundTitle && foundTitle.length >= 1) {
       // Get title.
       const titleToUpdate = foundTitle[1].trim();
 
       // Update URL in DB.
-      const updatedCnt = await Resource.update({
-        title: titleToUpdate,
-      }, {
+      updateObj.title = titleToUpdate;
+    }
+
+    // If we found a national centers, add to update the resource.
+    if (foundNationalCenters && foundNationalCenters.length >= 1) {
+      // Get national centers.
+      const nationalCentersToUpdate = foundNationalCenters[1].trim();
+
+      // Update URL in DB.
+      updateObj.nationalCenters = nationalCentersToUpdate;
+    }
+
+    // If we have values to update then update the resource, else retry.
+    if (Object.keys(updateObj).length > 0) {
+      const updatedCnt = await Resource.update(updateObj, {
         where: { url: resourceUrl },
         individualHooks: false,
       });
 
       // If we don't update anything throw an error to retry.
       if (updatedCnt[0] === 0) {
-        throw Error('Failed to update resource title.');
+        throw Error('Failed to update resource.');
       }
     } else {
       auditLogger.info(`Resource Queue: Warning, unable to retrieve resource title for resource '${resourceUrl}'.`);
@@ -40,7 +62,7 @@ const getResourceMetaDataJob = async (job) => {
 
     // Attempt to get the resource metadata (if valid ECLKC resource).
     // Sample: https://eclkc.ohs.acf.hhs.gov/mental-health/article/head-start-heals-campaign?_format=json
-    if (resourceUrl.includes('eclkc.ohs.acf.hhs.gov')) {
+    if (isEclkc) {
       try {
         const metadataUrl = `${resourceUrl}?_format=json`;
         res = await axios.get(metadataUrl, { maxRedirects: 3 });
@@ -74,7 +96,7 @@ const getResourceMetaDataJob = async (job) => {
         };
 
         // Update URL in DB.
-        const updatedCnt = await Resource.update({
+        await Resource.update({
           metadata: metadataObj,
           metadataUpdatedAt: new Date(),
         }, {
@@ -82,7 +104,7 @@ const getResourceMetaDataJob = async (job) => {
           individualHooks: false,
         });
       } catch (error) {
-        auditLogger.error(`Resource Queue: Unable to retrieve ECLKC metadata for Resource (ID: ${resourceId} URL: ${resourceUrl}), please make sure this is a valid address:`, error);
+        auditLogger.error(`Resource Queue: Unable to retrieve ECLKC metadata for Resource (ID: ${resourceId} URL: ${resourceUrl}).`, error);
       }
     } else {
       auditLogger.info(`Resource Queue: Warning, not a ECLKC resource SKIPPING metadata collection for: '${resourceUrl}'.`);
