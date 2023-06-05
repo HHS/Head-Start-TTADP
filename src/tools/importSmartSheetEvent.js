@@ -27,6 +27,7 @@ const mappings = {
   'Overall Vision/Goal for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
   'Target Population(s)': 'targetPopulations',
+  'Event Organizer - Type of Event': 'eventOrganizer',
 };
 
 async function parseCsv(fileKey) {
@@ -80,9 +81,7 @@ export default async function importSmartSheetEvent(fileKey) {
         continue;
       } else {
         // convert smartSheetEvent to use mappings
-        const eventReportPilotData = {
-          originalImported: smartSheetEvent,
-        };
+        const eventReportPilotData = {};
         Object.keys(smartSheetEvent).forEach((key) => {
           const mappedKey = mappings[key];
           if (mappedKey && transformers[mappedKey]) {
@@ -99,6 +98,7 @@ export default async function importSmartSheetEvent(fileKey) {
           ownerId,
           regionId,
           data: sequelize.cast(JSON.stringify(eventReportPilotData), 'jsonb'),
+          imported: sequelize.cast(JSON.stringify(smartSheetEvent), 'jsonb'),
         });
       }
     }
