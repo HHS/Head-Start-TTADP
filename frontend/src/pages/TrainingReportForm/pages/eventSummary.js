@@ -133,16 +133,40 @@ const EventSummary = ({ additionalData }) => {
           name="eventCollaborators"
           required
         >
-          <MultiSelect
-            name="eventCollaborators"
+          <Controller
+            render={({ onChange: controllerOnChange, value }) => (
+              <Select
+                isMulti
+                value={value}
+                inputId="eventCollaborators"
+                name="eventCollaborators"
+                className="usa-select"
+                styles={selectOptionsReset}
+                components={{
+                  DropdownIndicator: null,
+                }}
+                onChange={(s) => {
+                  controllerOnChange(s);
+                }}
+                inputRef={register({ required: 'Select one' })}
+                getOptionLabel={(option) => option.fullName}
+                getOptionValue={(option) => option.id}
+                options={collaborators}
+              />
+            )}
             control={control}
-            required
-            valueProperty="user.id"
-            labelProperty="user.fullName"
-            simple={false}
-            placeholderText={placeholderText}
-            options={collaborators}
+            rules={{
+              validate: (value) => {
+                if (!value || value.length === 0) {
+                  return 'Select collaborators';
+                }
+                return true;
+              },
+            }}
+            name="eventCollaborators"
+            defaultValue={[]}
           />
+
         </FormItem>
       </div>
 
@@ -155,7 +179,6 @@ const EventSummary = ({ additionalData }) => {
           render={({ onChange: controllerOnChange, value }) => (
             <Select
               value={value}
-              id="eventRegionPointOfContact"
               inputId="eventRegionPointOfContact"
               name="eventRegionPointOfContact"
               className="usa-select"
