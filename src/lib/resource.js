@@ -11,7 +11,6 @@ const getPageScrapeValues = async (resourceUrl, isEclkc) => {
   // Scrape Title & National Centers from ECLKC resources.
   const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
   // eslint-disable-next-line max-len
-
   // Find the meta tag with name="national-centers".
   const foundNationalCenters = isEclkc ? res.data.match(/<meta[^>]*=*"national-centers"[^>]*content="([^"]+)"[^>]*>/) : null;
 
