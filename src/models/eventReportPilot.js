@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
     },
     imported: {
       type: DataTypes.JSONB,
-      allowNull: false,
+      allowNull: true,
     },
   }, {
     sequelize,
