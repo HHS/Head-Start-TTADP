@@ -11,7 +11,8 @@ import {
 } from '../models';
 import { logger } from '../logger';
 
-const splitArrayTransformer = (value) => value.split(',').map((item) => item.trim());
+// eslint-disable-next-line max-len
+const splitArrayTransformer = (value, transformer = '|') => value.split(transformer).map((item) => item.trim());
 
 const transformers = {
   reasons: splitArrayTransformer,
@@ -69,7 +70,7 @@ export default async function importSmartSheetEvent(fileKey) {
         where: {
           id: {
             [Op.in]: sequelize.literal(
-              `(SELECT id FROM "EventReportPilots" WHERE data->>'Event ID' = '${eventId}')`,
+              `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`,
             ),
           },
         },
