@@ -12,7 +12,7 @@ import {
   submittedDigest,
   approvedDigest,
   notificationQueue as notificationQueueMock,
-  notificationDigestQueue as notificationDigestQueueMock,
+  notificationQueue as notificationDigestQueueMock,
   notifyRecipientReportApproved,
 } from '.';
 import {
