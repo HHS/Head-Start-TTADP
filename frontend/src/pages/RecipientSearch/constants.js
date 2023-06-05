@@ -2,7 +2,12 @@
 import { regionFilter } from '../../components/filter/activityReportFilters';
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const RECIPIENT_SEARCH_FILTER_CONFIG = [
+const RECIPIENT_SEARCH_FILTER_CONFIG = [
   groupsFilter,
   regionFilter,
 ];
+
+// sort by display prop
+RECIPIENT_SEARCH_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { RECIPIENT_SEARCH_FILTER_CONFIG };
