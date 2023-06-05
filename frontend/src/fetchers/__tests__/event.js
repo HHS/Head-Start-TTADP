@@ -4,7 +4,7 @@ import { eventById, updateEvent } from '../event';
 
 describe('eventById', () => {
   beforeEach(() => {
-    fetchMock.get('/api/event/id/1', {
+    fetchMock.get('/api/events/id/1', {
       id: 1,
       name: 'test event',
     });
@@ -18,14 +18,14 @@ describe('eventById', () => {
     const event = await eventById(1);
 
     expect(fetchMock.called()).toBe(true);
-    expect(fetchMock.lastUrl()).toBe('/api/event/id/1');
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
     expect(event).toEqual({ id: 1, name: 'test event' });
   });
 });
 
 describe('updateEvent', () => {
   beforeEach(() => {
-    fetchMock.put('/api/event/id/1', {
+    fetchMock.put('/api/events/id/1', {
       id: 1,
       name: 'updated test event',
     });
@@ -40,7 +40,7 @@ describe('updateEvent', () => {
     const event = await updateEvent(1, eventData);
 
     expect(fetchMock.called()).toBe(true);
-    expect(fetchMock.lastUrl()).toBe('/api/event/id/1');
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
 
     const lastOptions = fetchMock.lastOptions();
     expect(lastOptions.method).toBe('PUT');
