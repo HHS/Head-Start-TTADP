@@ -15,7 +15,7 @@ module.exports = {
       );
 
       // Training collab scope
-      queryInterface.bulkInsert(
+      await queryInterface.bulkInsert(
         'Scopes',
         [
           {
@@ -29,6 +29,12 @@ module.exports = {
         },
         { transaction },
       );
+
+      // add an "imported" column to EventReportPilots
+      await queryInterface.addColumn('EventReportPilots', 'imported', {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      }, { transaction });
     });
   },
 
@@ -47,6 +53,9 @@ module.exports = {
       );
       await queryInterface.sequelize.query('DELETE FROM "Permissions" WHERE "scopeId" = 9;', { transaction });
       await queryInterface.sequelize.query('DELETE FROM "Scopes" WHERE id = 9;', { transaction });
+
+      // remove the "imported" column from EventReportPilots
+      await queryInterface.removeColumn('EventReportPilots', 'imported', { transaction });
     });
   },
 };
