@@ -10,8 +10,7 @@ describe('Semaphore', () => {
   });
 
   it('should block threads when max currentConcurrency is reached', async () => {
-    const maxConcurrency = 1;
-    const semaphore = new Semaphore(maxConcurrency);
+    const semaphore = new Semaphore();
 
     // Acquire first lock
     await semaphore.acquire();
