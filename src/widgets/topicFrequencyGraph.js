@@ -1,5 +1,6 @@
 import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniq } from 'lodash';
 import {
   ActivityReport,
   ActivityReportObjective,
@@ -86,7 +87,7 @@ export async function topicFrequencyGraph(scopes) {
 
   return topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
-    const allTopics = report.topics.map((t) => lookUpTopic.get(t));
+    const allTopics = uniq(report.topics).map((t) => lookUpTopic.get(t));
 
     // Loop all topics array and update totals.
     allTopics.forEach((topic) => {

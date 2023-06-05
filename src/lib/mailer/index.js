@@ -15,9 +15,10 @@ import {
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 
 export const notificationQueue = newQueue('notifications');
-export const notificationDigestQueue = newQueue('digestNotifications');
+// export const notificationQueue = newQueue('digestNotifications');
 
 const {
   SMTP_HOST,
@@ -63,6 +64,21 @@ export const frequencyToInterval = (freq) => {
       break;
   }
   return date;
+};
+
+export const onFailedNotification = (job, error) => {
+  auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
+  logEmailNotification(job, false, error);
+};
+
+export const onCompletedNotification = (job, result) => {
+  if (result != null) {
+    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
+    logEmailNotification(job, true, result);
+  } else {
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
+    logEmailNotification(job, false, { preferences: 'off' });
+  }
 };
 
 /**
@@ -401,7 +417,7 @@ export async function collaboratorDigest(freq, subjectFreq) {
         freq,
         subjectFreq,
       };
-      notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -439,7 +455,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -477,7 +493,7 @@ export async function submittedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -516,7 +532,7 @@ export async function approvedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -578,7 +594,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
       return data;
     });
 
@@ -637,6 +653,24 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     });
   }
   return null;
+};
+
+export const processNotificationQueue = () => {
+  // Notifications
+  notificationQueue.on('failed', onFailedNotification);
+  notificationQueue.on('completed', onCompletedNotification);
+
+  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
+  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
+  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
+
+  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
 };
 
 /**
