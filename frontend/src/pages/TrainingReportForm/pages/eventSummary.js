@@ -269,7 +269,6 @@ const EventSummary = ({ additionalData }) => {
               isStartDate
               inputId="startDate"
               endDate={endDate}
-              key={`startDate-${startDate}`}
             />
           </FormItem>
 

@@ -4,10 +4,25 @@ import { render, screen, act } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
-import eventSummary from '../eventSummary';
+import eventSummary, { isPageComplete } from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 
 describe('eventSummary', () => {
+  describe('isPageComplete', () => {
+    it('returns true if form state is valid', () => {
+      const formState = {
+        isValid: true,
+      };
+      expect(isPageComplete({}, formState)).toBe(true);
+    });
+
+    it('returns true otherwise', () => {
+      const formState = {
+        isValid: false,
+      };
+      expect(isPageComplete({}, formState)).toBe(true);
+    });
+  });
   describe('review', () => {
     it('renders correctly', async () => {
       act(() => {
@@ -70,13 +85,16 @@ describe('eventSummary', () => {
       userEvent.type(startDate, '01/01/2021');
 
       const endDate = await screen.findByLabelText(/Event end Date/i, { selector: '#endDate' });
-      userEvent.type(endDate, '01/01/2021');
+      userEvent.type(endDate, '01/02/2021');
+
+      userEvent.clear(startDate);
+      userEvent.type(startDate, '01/03/2021');
 
       await selectEvent.select(screen.getByLabelText(/Event region point of contact/i), 'Ted User');
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
-
       await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women']);
       await selectEvent.select(screen.getByLabelText(/reasons/i), ['Complaint']);
+      await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
