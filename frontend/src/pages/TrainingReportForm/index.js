@@ -168,7 +168,6 @@ export default function TrainingReportForm({ match }) {
       try {
         const event = await eventById(trainingReportId);
         resetFormData(hookForm.reset, event);
-
         reportId.current = trainingReportId;
       } catch (e) {
         setError('Error fetching training report');
@@ -222,7 +221,6 @@ export default function TrainingReportForm({ match }) {
         collaboratorIds: collaboratorIds || [],
         regionId: regionId || null,
       });
-
       resetFormData(hookForm.reset, updatedEvent);
       updateLastSaveTime(moment(updatedEvent.updatedAt));
     } catch (err) {
@@ -230,10 +228,14 @@ export default function TrainingReportForm({ match }) {
     }
   };
 
-  const onSaveDraft = async () => {
-    await onSave();
-  };
   const onSaveAndContinue = async () => {
+    await hookForm.trigger();
+
+    const hasErrors = Object.keys(hookForm.formState.errors).length > 0;
+    if (hasErrors) {
+      return;
+    }
+
     await onSave();
   };
 
@@ -297,7 +299,7 @@ export default function TrainingReportForm({ match }) {
             errorMessage={errorMessage}
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}
-            onSaveDraft={onSaveDraft}
+            onSaveDraft={onSave}
             onSaveAndContinue={onSaveAndContinue}
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
