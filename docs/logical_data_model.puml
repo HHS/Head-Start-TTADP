@@ -320,7 +320,7 @@ class Groups{
  name : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
-!issue='column missing from model' <color:#d54309>isPublic</color>: boolean
+ isPublic : boolean
  * userId : integer : REFERENCES "Users".id
 }
 
