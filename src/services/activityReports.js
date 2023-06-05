@@ -592,7 +592,6 @@ export async function activityReports(
   if (excludeLegacy) {
     where.legacyId = { [Op.eq]: null };
   }
-
   const reports = await ActivityReport.findAndCountAll(
     {
       where,
@@ -695,7 +694,6 @@ export async function activityReports(
       subQuery: false,
     },
   );
-
   const reportIds = reports.rows.map(({ id }) => id);
 
   const recipients = await ActivityRecipient.findAll({

@@ -1,5 +1,3 @@
-import SCOPES from '../middleware/scopeConstants';
-
 interface Permission {
   regionId: number;
   scopeId: number;
@@ -18,6 +16,7 @@ interface GrantType {
 interface GroupType {
   id: number;
   userId: number;
+  isPublic: boolean;
 }
 
 export default class Group {
@@ -42,5 +41,9 @@ export default class Group {
 
   ownsGroup() {
     return this.user.id === this.group.userId;
+  }
+
+  isPublic() {
+    return this.group.isPublic && this.canAddToGroup();
   }
 }

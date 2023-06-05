@@ -6,8 +6,9 @@ import join from 'url-join';
 import {
   screen, render, fireEvent,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import App from '../../App';
-import { mockRSSData } from '../../testHelpers';
+import { mockRSSData, mockWindowProperty } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter', permissions: [] };
@@ -57,6 +58,31 @@ describe('HeaderUserMenu', () => {
       it('displays the admin button', async () => {
         const adminLink = screen.getByRole('link', { name: 'Admin' });
         expect(adminLink).toBeVisible();
+      });
+
+      describe('as admin user doing an impersonation', () => {
+        const setItem = jest.fn();
+        const getItem = jest.fn(() => true);
+        const removeItem = jest.fn();
+
+        jest.mock('../../hooks/helpers', () => ({
+          storageAvailable: jest.fn(() => true),
+        }));
+
+        mockWindowProperty('sessionStorage', {
+          setItem,
+          getItem,
+          removeItem,
+        });
+
+        afterAll(() => jest.restoreAllMocks());
+
+        it('displays the admin button', async () => {
+          const btn = await screen.findByRole('button', { name: /stop impersonating/i });
+          expect(btn).toBeVisible();
+          userEvent.click(btn);
+          expect(removeItem).toHaveBeenCalled();
+        });
       });
     });
 
