@@ -33,17 +33,15 @@ describe('TrainingReportForm', () => {
     // the basic app before stuff
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/users/statistics', {});
-    fetchMock.getOnce('/api/users/training-report-users?regionId=1', [{
-      users: {
-        pointOfContact: [],
-        collaborators: [],
-      },
-    }]);
+    fetchMock.get('/api/users/training-report-users?regionId=1', {
+      pointOfContact: [],
+      collaborators: [],
+    });
   });
 
   it('renders training report form', async () => {
-    fetchMock.getOnce('/api/event/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1,
+    fetchMock.getOnce('/api/events/id/1', {
+      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
     });
 
     act(() => {
@@ -54,8 +52,8 @@ describe('TrainingReportForm', () => {
   });
 
   it('redirects to event summary', async () => {
-    fetchMock.getOnce('/api/event/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1,
+    fetchMock.getOnce('/api/events/id/1', {
+      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
     });
 
     act(() => {
@@ -69,23 +67,27 @@ describe('TrainingReportForm', () => {
   });
 
   it('fetches event report data', async () => {
-    fetchMock.getOnce('/api/event/id/123', { regionId: '1', reportId: 1 });
+    fetchMock.getOnce('/api/events/id/123', {
+      regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+    });
     renderTrainingReportForm('123', 'event-summary');
-    expect(fetchMock.called('/api/event/id/123')).toBe(true);
+    expect(fetchMock.called('/api/events/id/123')).toBe(true);
   });
 
   it('displays error when event report fails to load', async () => {
-    fetchMock.getOnce('/api/event/id/123', 500);
+    fetchMock.getOnce('/api/events/id/123', 500);
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
     });
 
-    expect(fetchMock.called('/api/event/id/123')).toBe(true);
+    expect(fetchMock.called('/api/events/id/123')).toBe(true);
     expect(await screen.findByText(/error fetching training report/i)).toBeInTheDocument();
   });
 
   it('displays "no training report id provided" error', async () => {
-    fetchMock.getOnce('/api/event/id/123', 500);
+    fetchMock.getOnce('/api/events/id/123', {
+      regionId: '1', reportId: 1, data: {}, collaboratorIds: [], ownerId: 1,
+    });
     act(() => {
       renderTrainingReportForm('', 'event-summary');
     });
@@ -94,32 +96,40 @@ describe('TrainingReportForm', () => {
   });
 
   it('tests the on save event', async () => {
-    fetchMock.getOnce('/api/event/id/123', { regionId: '1', reportId: 1, data: {} });
+    fetchMock.getOnce('/api/events/id/123', {
+      regionId: '1', reportId: 1, data: {}, collaboratorIds: [], ownerId: 1,
+    });
     renderTrainingReportForm('123', 'event-summary');
     expect(fetchMock.called('/api/event/id/123')).toBe(true);
 
-    fetchMock.put('/api/event/id/123', { regionId: '1', reportId: 1, data: {} });
+    fetchMock.put('/api/events/id/123', { regionId: '1', reportId: 1, data: {} });
     const onSaveAndContinueButton = screen.getByText(/save and continue/i);
     act(() => {
       userEvent.click(onSaveAndContinueButton);
     });
 
     // check that fetch mock was called with a put request
-    expect(fetchMock.called('/api/event/id/123', { method: 'PUT' })).toBe(true);
+    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true);
   });
 
   it('tests the on save draft event', async () => {
-    fetchMock.getOnce('/api/event/id/123', { regionId: '1', reportId: 1, data: {} });
-    renderTrainingReportForm('123', 'event-summary');
-    expect(fetchMock.called('/api/event/id/123')).toBe(true);
+    fetchMock.getOnce('/api/events/id/123', {
+      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+    });
+    act(() => {
+      renderTrainingReportForm('123', 'event-summary');
+    });
+    expect(fetchMock.called('/api/events/id/123')).toBe(true);
 
-    fetchMock.put('/api/event/id/123', { regionId: '1', reportId: 1, data: {} });
+    fetchMock.put('/api/events/id/123', {
+      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+    });
     const onSaveDraftButton = screen.getByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
     });
 
     // check that fetch mock was called with a put request
-    expect(fetchMock.called('/api/event/id/123', { method: 'PUT' })).toBe(true);
+    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true);
   });
 });

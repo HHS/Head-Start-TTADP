@@ -248,6 +248,8 @@ export default function TrainingReportForm({ match }) {
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
+  // const hasPermissions = canViewTrainingReportForm(user, formData);
+
   return (
     <div className="smart-hub-training-report">
       { error
