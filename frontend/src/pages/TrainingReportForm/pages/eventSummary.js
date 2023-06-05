@@ -1,5 +1,4 @@
 import React, {
-  useContext,
   useState,
   useEffect,
 } from 'react';
@@ -18,12 +17,10 @@ import {
   Radio,
 } from '@trussworks/react-uswds';
 import MultiSelect from '../../../components/MultiSelect';
-import NetworkContext from '../../../NetworkContext';
 import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import ReadOnlyField from '../../../components/ReadOnlyField';
-import ConnectionError from '../../../components/ConnectionError';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
@@ -42,8 +39,6 @@ const EventSummary = ({ additionalData }) => {
   const data = getValues();
   const startDate = watch('startDate');
   const endDate = watch('endDate');
-
-  const { connectionActive } = useContext(NetworkContext);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -143,7 +138,6 @@ const EventSummary = ({ additionalData }) => {
       </div>
 
       <div className="margin-top-2">
-        {!connectionActive ? <ConnectionError /> : null }
         <FormItem
           label="Event collaborators"
           name="collaboratorIds"
@@ -360,7 +354,7 @@ EventSummary.propTypes = {
   }).isRequired,
 };
 
-const ReviewSection = () => <></>;
+const ReviewSection = () => <><h2>Event summary</h2></>;
 
 export const isPageComplete = (_formData, formState) => {
   const { isValid } = formState;

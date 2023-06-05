@@ -8,6 +8,15 @@ import eventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 
 describe('eventSummary', () => {
+  describe('review', () => {
+    it('renders correctly', async () => {
+      act(() => {
+        render(<>{eventSummary.reviewSection()}</>);
+      });
+
+      expect(await screen.findByRole('heading', { name: /event summary/i })).toBeInTheDocument();
+    });
+  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
 
