@@ -175,6 +175,7 @@ class EventReportPilots{
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
+ imported : jsonb
 }
 
 class Files{
@@ -320,6 +321,7 @@ class Groups{
  name : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ isPublic : boolean
  * userId : integer : REFERENCES "Users".id
 }
 
