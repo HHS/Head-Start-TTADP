@@ -100,7 +100,7 @@ describe('TrainingReportForm', () => {
       regionId: '1', reportId: 1, data: {}, collaboratorIds: [], ownerId: 1,
     });
     renderTrainingReportForm('123', 'event-summary');
-    expect(fetchMock.called('/api/event/id/123')).toBe(true);
+    expect(fetchMock.called('/api/events/id/123')).toBe(true);
 
     fetchMock.put('/api/events/id/123', { regionId: '1', reportId: 1, data: {} });
     const onSaveAndContinueButton = screen.getByText(/save and continue/i);
