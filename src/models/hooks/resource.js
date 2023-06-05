@@ -27,6 +27,11 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 const afterCreate = async (sequelize, instance, options) => {
   if (!instance.title) {
+    // This is to resolve a recursive reference issue:
+    // Service: /services/resourceQueue Imports: /lib/resource
+    // Lib: /lib/resource Imports: /models/{Resource}
+    // Model: /models/{Resource} Imports: /models/hooks/resource
+    // Hook: /models/hooks/resource Imports: /services/resourceQueue
     // eslint-disable-next-line global-require
     const { addGetResourceMetadataToQueue } = require('../../services/resourceQueue');
     addGetResourceMetadataToQueue(instance.id, instance.url);
