@@ -19,7 +19,7 @@ import {
   ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
-export const RESOURCES_DASHBOARD_FILTER_CONFIG = [
+const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -38,3 +38,7 @@ export const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   topicsFilter,
   ttaTypeFilter,
 ];
+
+RESOURCES_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { RESOURCES_DASHBOARD_FILTER_CONFIG };
