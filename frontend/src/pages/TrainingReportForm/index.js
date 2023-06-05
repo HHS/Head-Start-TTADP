@@ -10,7 +10,6 @@ import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import useInterval from '@use-it/interval';
-import { startCase } from 'lodash';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { publishLocation } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -126,7 +125,7 @@ export default function TrainingReportForm({ match }) {
   } = useSocket(user);
 
   useEffect(() => {
-    if (trainingReportId === 'new' || !currentPage) {
+    if (!trainingReportId || !currentPage) {
       return;
     }
     const newPath = `/training-reports/${trainingReportId}/${currentPage}`;
@@ -243,7 +242,6 @@ export default function TrainingReportForm({ match }) {
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
-  const tagClass = formData.status === 'Completed' ? 'smart-hub--tag-approved' : '';
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
@@ -266,11 +264,6 @@ export default function TrainingReportForm({ match }) {
               Regional/National Training Report
             </h1>
           </div>
-        </Grid>
-        <Grid col="auto" className="flex-align-self-center">
-          {formData.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
-          )}
         </Grid>
       </Grid>
       <NetworkContext.Provider value={
