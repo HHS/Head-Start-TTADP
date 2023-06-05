@@ -18,7 +18,7 @@ import {
   ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
-export const DASHBOARD_FILTER_CONFIG = [
+const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -36,3 +36,8 @@ export const DASHBOARD_FILTER_CONFIG = [
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort by display prop
+DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { DASHBOARD_FILTER_CONFIG };
