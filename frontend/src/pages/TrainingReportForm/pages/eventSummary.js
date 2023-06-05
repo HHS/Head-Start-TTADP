@@ -1,6 +1,7 @@
 import React, {
   useContext,
   useState,
+  useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -45,7 +46,17 @@ const EventSummary = ({ additionalData }) => {
   const { connectionActive } = useContext(NetworkContext);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
-  const [endDateKey, setEndDateKey] = useState('endDate');
+  const [endDateKey, setEndDateKey] = useState('endDate-');
+
+  useEffect(() => {
+    // it's annoying that this is necessary but
+    // it's the only way to get the end date to re-render
+    // on initial load that I could figure out
+    const newKey = `endDate-${endDate}`;
+    if (endDateKey !== newKey) {
+      setEndDateKey(newKey);
+    }
+  }, [endDate, endDateKey]);
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
@@ -56,7 +67,10 @@ const EventSummary = ({ additionalData }) => {
     setEndDateKey(`endDate-${newEnd}`);
   };
 
-  const { eventId, eventName } = data;
+  const {
+    eventId,
+    eventName,
+  } = data;
 
   // we need to add three additional target populations to the AR target populations list
   const targetPopulations = [
@@ -70,6 +84,11 @@ const EventSummary = ({ additionalData }) => {
   targetPopulations.sort();
 
   const { users: { collaborators, pointOfContact } } = additionalData;
+
+  const eventOrganizerOptions = [
+    'Regional PD Event (with National Centers)',
+    'IST TTA/Visit',
+  ].map((option) => ({ value: option, label: option }));
 
   return (
     <>
@@ -94,22 +113,19 @@ const EventSummary = ({ additionalData }) => {
         <Controller
           render={({ onChange: controllerOnChange, value }) => (
             <Select
-              value={value}
-              id="eventOrganizer"
+              value={eventOrganizerOptions.find((option) => option.value === value)}
               inputId="eventOrganizer"
               name="eventOrganizer"
               className="usa-select"
               styles={selectOptionsReset}
-              getOptionLabel={(option) => option.fullName}
-              getOptionValue={(option) => option.id}
               components={{
                 DropdownIndicator: null,
               }}
               onChange={(s) => {
-                controllerOnChange(s);
+                controllerOnChange(s.value);
               }}
               inputRef={register({ required: 'Select one' })}
-              options={[]}
+              options={eventOrganizerOptions}
             />
           )}
           control={control}
@@ -122,7 +138,7 @@ const EventSummary = ({ additionalData }) => {
             },
           }}
           name="eventOrganizer"
-          defaultValue={[]}
+          defaultValue=""
         />
       </div>
 
@@ -130,23 +146,25 @@ const EventSummary = ({ additionalData }) => {
         {!connectionActive ? <ConnectionError /> : null }
         <FormItem
           label="Event collaborators"
-          name="eventCollaborators"
+          name="collaboratorIds"
           required
         >
           <Controller
             render={({ onChange: controllerOnChange, value }) => (
               <Select
                 isMulti
-                value={value}
-                inputId="eventCollaborators"
-                name="eventCollaborators"
+                value={collaborators.filter((collaborator) => (
+                  value.includes(collaborator.id)
+                ))}
+                inputId="collaboratorIds"
+                name="collaboratorIds"
                 className="usa-select"
                 styles={selectOptionsReset}
                 components={{
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s);
+                  controllerOnChange(s.map((option) => option.id));
                 }}
                 inputRef={register({ required: 'Select one' })}
                 getOptionLabel={(option) => option.fullName}
@@ -163,7 +181,7 @@ const EventSummary = ({ additionalData }) => {
                 return true;
               },
             }}
-            name="eventCollaborators"
+            name="collaboratorIds"
             defaultValue={[]}
           />
 
@@ -171,23 +189,23 @@ const EventSummary = ({ additionalData }) => {
       </div>
 
       <div className="margin-top-2">
-        <Label htmlFor="eventRegionPointOfContact">
+        <Label htmlFor="pocId">
           Event region point of contact
           <Req />
         </Label>
         <Controller
           render={({ onChange: controllerOnChange, value }) => (
             <Select
-              value={value}
-              inputId="eventRegionPointOfContact"
-              name="eventRegionPointOfContact"
+              value={pointOfContact.find((option) => option.id === value)}
+              inputId="pocId"
+              name="pocId"
               className="usa-select"
               styles={selectOptionsReset}
               components={{
                 DropdownIndicator: null,
               }}
               onChange={(s) => {
-                controllerOnChange(s);
+                controllerOnChange(s.id);
               }}
               inputRef={register({ required: 'Select one' })}
               getOptionLabel={(option) => option.fullName}
@@ -204,7 +222,7 @@ const EventSummary = ({ additionalData }) => {
               return true;
             },
           }}
-          name="eventRegionPointOfContact"
+          name="pocId"
           defaultValue=""
         />
       </div>
@@ -257,6 +275,7 @@ const EventSummary = ({ additionalData }) => {
               isStartDate
               inputId="startDate"
               endDate={endDate}
+              key={`startDate-${startDate}`}
             />
           </FormItem>
 
