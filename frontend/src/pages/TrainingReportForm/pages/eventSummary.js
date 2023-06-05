@@ -318,7 +318,7 @@ const EventSummary = ({ additionalData }) => {
             name="targetPopulations"
             control={control}
             required="Select at least one"
-            options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
+            options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
             placeholderText="- Select -"
           />
         </FormItem>
