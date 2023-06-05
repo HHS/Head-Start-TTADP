@@ -10,7 +10,7 @@ test('my groups', async ({ page }) => {
   await page.getByRole('link', { name: 'Account Management' }).click();
 
   // create a  new group
-  await page.getByRole('link', { name: 'Create group' }).click();
+  await page.getByRole('link', { name: 'Create a group' }).click();
   await page.getByTestId('textInput').fill('A new group for me');
 
   await page.locator('[class$="-ValueContainer"]').click();

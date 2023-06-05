@@ -166,6 +166,17 @@ class CollaboratorRoles{
  roleId : integer : REFERENCES "Roles".id
 }
 
+class EventReportPilots{
+ * id : integer : <generated>
+ * ownerId : integer
+ pocId : integer
+ * collaboratorIds : integer[]
+ * regionId : integer
+ * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * data : jsonb
+}
+
 class Files{
  * id : integer : <generated>
  * originalFileName : varchar(255)
@@ -309,6 +320,7 @@ class Groups{
  name : text
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ isPublic : boolean
  * userId : integer : REFERENCES "Users".id
 }
 
@@ -537,6 +549,14 @@ class Scopes{
  * description : varchar(255)
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+}
+
+class SessionReportPilots{
+ * id : integer : <generated>
+ * data : jsonb
+ * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * eventId : integer : REFERENCES "EventReportPilots".id
 }
 
 class SiteAlerts{
@@ -829,6 +849,20 @@ class ZALDDL{
  * ddl_timestamp : timestamp with time zone
  ddl_by : integer
  * ddl_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALEventReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
 }
@@ -1281,6 +1315,20 @@ class ZALScopes{
  dml_as : bigint
 }
 
+class ZALSessionReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALSiteAlerts{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1425,6 +1473,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file

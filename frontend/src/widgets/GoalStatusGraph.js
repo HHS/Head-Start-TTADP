@@ -118,7 +118,7 @@ export function GoalStatusChart({ data, loading }) {
         <ModalToggleButton unstyled className="usa-button usa-button--unstyled usa-prose" modalRef={modalRef} opener>
           What does each status mean?
         </ModalToggleButton>
-        <VanillaModal modalRef={modalRef} heading="Goal status guide">
+        <VanillaModal modalRef={modalRef} heading="Goal status guide" className="maxw-tablet">
           <>
             <h3 className="margin-bottom-0">Not started</h3>
             <p className="usa-prose margin-0">Goal is approved, but TTA hasn&apos;t begun. Goal cannot be edited.</p>
