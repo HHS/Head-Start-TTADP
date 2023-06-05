@@ -26,8 +26,18 @@ import Navigator from '../../components/Navigator';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 
+// websocket publish location interval
 const INTERVAL_DELAY = 30000; // THIRTY SECONDS
 
+/**
+ * this is just a simple handler to "flatten"
+ * the JSON column data into the form
+ *
+ * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
+ *  replaces the form with those values; it also calls the standard form.reset event
+ * @param {*} event - not an HTML event, but the event object from the database, which has some
+ * information stored at the top level of the object, and some stored in a data column
+ */
 const resetFormData = (reset, event) => {
   const {
     data,
@@ -50,6 +60,7 @@ export default function TrainingReportForm({ match }) {
   const { params: { currentPage, trainingReportId } } = match;
   const reportId = useRef();
 
+  // for redirects if a page is not provided
   const history = useHistory();
 
   /* ============
@@ -79,9 +90,16 @@ export default function TrainingReportForm({ match }) {
    */
 
   const [additionalData, updateAdditionalData, localStorageAvailable] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId), { users: [] },
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId), {
+      users: {
+        pointOfContact: [],
+        collaborators: [],
+      },
+    },
   );
 
+  // we use both of these to determine if we're in the loading screen state
+  // (see the use effect below)
   const [reportFetched, setReportFetched] = useState(false);
   const [additionalDataFetched, setAdditionalDataFetched] = useState(false);
 
@@ -94,7 +112,7 @@ export default function TrainingReportForm({ match }) {
     shouldUnregister: false,
   });
 
-  const eventRegion = hookForm.watch('eventRegion');
+  const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);

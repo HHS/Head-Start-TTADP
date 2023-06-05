@@ -23,7 +23,6 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import ConnectionError from '../../../components/ConnectionError';
-import { REGIONS } from '../../../Constants';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
@@ -86,19 +85,6 @@ const EventSummary = ({ additionalData }) => {
       <ReadOnlyField label="Event name">
         {eventName}
       </ReadOnlyField>
-
-      <div className="margin-top-2">
-        <Label htmlFor="eventRegion">
-          Region
-          <Req />
-        </Label>
-        <Dropdown id="eventRegion" name="eventRegion" inputRef={register({ required: 'Select one' })}>
-          <option name="default" disabled hidden value={0}>Select a region...</option>
-          {REGIONS.map((number) => (
-            <option key={number} value={number}>{number}</option>
-          ))}
-        </Dropdown>
-      </div>
 
       <div className="margin-top-2">
         <Label htmlFor="eventOrganizer">
@@ -196,7 +182,7 @@ const EventSummary = ({ additionalData }) => {
             },
           }}
           name="eventRegionPointOfContact"
-          defaultValue={[]}
+          defaultValue=""
         />
       </div>
 
