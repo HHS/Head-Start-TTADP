@@ -1,9 +1,14 @@
+import faker from '@faker-js/faker';
 import db, {
   User, Permission,
 } from '../models';
 
 import {
-  usersWithPermissions, userById, userByEmail, setFlag,
+  usersWithPermissions,
+  userById,
+  userByEmail,
+  setFlag,
+  getTrainingReportUsersByRegion,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -184,6 +189,77 @@ describe('Users DB service', () => {
       await setFlag('anv_statistics', true);
       const user = await User.findOne({ where: { id: 53 } });
       expect(user.flags[0]).toBe(undefined);
+    });
+  });
+
+  describe('getTrainingReportUsersByRegion', () => {
+    const userIds = [
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+    ];
+    const users = [
+      {
+        id: userIds[0],
+        regionId: 5,
+        scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[1],
+        regionId: 5,
+        scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[2],
+        regionId: 5,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[3],
+        regionId: 7,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[4],
+        regionId: 5,
+        scopeId: SCOPES.SITE_ACCESS,
+      },
+    ];
+
+    beforeEach(async () => {
+      await Promise.all(
+        users.map((u) => User.create({
+          id: u.id,
+          name: u.id,
+          hsesUsername: u.id,
+          hsesUserId: u.id,
+          permissions: [{
+            userId: u.id,
+            regionId: u.regionId,
+            scopeId: u.scopeId,
+          }],
+        }, { include: [{ model: Permission, as: 'permissions' }] })),
+      );
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: userIds } });
+    });
+
+    it('returns a list of users that have permissions on the region', async () => {
+      const result = await getTrainingReportUsersByRegion(5);
+
+      const collaboratorIds = result.collaborators.map((u) => u.id);
+      const pointOfContact = result.pointOfContact.map((u) => u.id);
+
+      expect(collaboratorIds.includes(userIds[0])).toBeTruthy();
+      expect(collaboratorIds.includes(userIds[1])).toBeTruthy();
+      expect(collaboratorIds.length).toBe(2);
+
+      expect(pointOfContact.includes(userIds[2])).toBeTruthy();
+      expect(pointOfContact.length).toBe(1);
     });
   });
 });
