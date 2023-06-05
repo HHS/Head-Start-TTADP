@@ -83,7 +83,7 @@ export default function ObjectiveTopics({
         stickyFooter
         title="Topic guidance"
       >
-        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="topic" contentSelector="table" />
+        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
