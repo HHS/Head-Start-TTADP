@@ -1,11 +1,10 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react';
-import moment from 'moment';
-import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import './EventCard.scss';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
 import ContextMenu from '../../../components/ContextMenu';
+import { checkForDate } from '../../../utils';
 
 function EventCard({
   event,
@@ -13,13 +12,6 @@ function EventCard({
   const {
     data,
   } = event;
-
-  const checkForDate = (date) => {
-    if (date) {
-      return moment(date, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT);
-    }
-    return '...';
-  };
 
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
@@ -44,7 +36,7 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__reason padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Reason</p>
-          <TooltipList list={data['Reason for Activity'] ? data['Reason for Activity'].split('\n') : []} cardType="event" listType="reason" />
+          <TooltipList list={data['Reason for Activity'] ? data['Reason for Activity'].split('\n') : []} cardType="event" listType="reasons" />
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event start date</p>

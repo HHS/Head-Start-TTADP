@@ -9,6 +9,7 @@ import {
   QUERY_CONDITIONS,
   DATE_FMT,
   DATE_FORMAT,
+  DATE_DISPLAY_FORMAT,
 } from './Constants';
 
 /**
@@ -73,6 +74,16 @@ export const getDistinctSortedArray = (arr) => {
   distinctList = [...new Set(distinctList)];
   distinctList = distinctList.sort();
   return distinctList;
+};
+
+/**
+ * Check for a valid date otherwise return '...'.
+ */
+export const checkForDate = (date) => {
+  if (date) {
+    return moment(date, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT);
+  }
+  return '...';
 };
 
 /**
