@@ -118,6 +118,36 @@ describe('TrainingReports', () => {
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
   });
 
+  it('renders user without a home region', async () => {
+    const noHomneRegionUser = {
+      homeRegionId: null,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    act(() => {
+      renderTrainingReports(noHomneRegionUser);
+    });
+
+    expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /training reports - region 2/i })).toBeInTheDocument();
+  });
+
+  it('renders user without a region', async () => {
+    const noRegionUser = {
+      homeRegionId: null,
+    };
+
+    act(() => {
+      renderTrainingReports(noRegionUser);
+    });
+
+    expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /training reports -/i })).toBeInTheDocument();
+  });
+
   it('renders the error message', async () => {
     // getEventsByStatus throws an error message.
     fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}`), 500, { overwriteRoutes: true });
