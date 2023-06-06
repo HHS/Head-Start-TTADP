@@ -221,12 +221,3 @@ const ALERT_SIZES = {
     LARGE: 'large'
 };
 exports.ALERT_SIZES = ALERT_SIZES;
-
-const TRAINING_REPORT_STATUSES = {
-  DRAFT: 'draft',
-  NOT_STARTED: 'Not started',
-  IN_PROGRESS: 'In progress',
-  COMPLETED: 'Completed',  
-};
-
-exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
