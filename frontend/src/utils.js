@@ -83,7 +83,7 @@ export const checkForDate = (date) => {
   if (date) {
     return moment(date, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT);
   }
-  return '...';
+  return '---';
 };
 
 /**

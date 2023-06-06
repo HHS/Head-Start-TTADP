@@ -43,7 +43,7 @@ describe('EventCard', () => {
     expect(screen.getByText('This is my event ID')).toBeInTheDocument();
     expect(screen.getByText('This is my event organizer')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
-    expect(screen.getByText('...')).toBeInTheDocument();
+    expect(screen.getByText('---')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(2);
   });
 });

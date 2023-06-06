@@ -48,7 +48,7 @@ $min-width-menu-column: 20px;
   flex-basis: clamp($min-width-menu-column, 2%, 100%);
 }
 
-.ttahub-event-card__event-column:not(:last-child) {
+.ttahub-event-card__event-column:not(:nth-last-child(2)) {
   margin-bottom: 16px;
 }
 
@@ -62,13 +62,16 @@ $min-width-menu-column: 20px;
   display: block;
 }
 
-@media(min-width: 627px) {
-  .ttahub-event-card__event-column:not(:nth-child(n+3):nth-child(-n+5)) {
+@media(min-width: 1125px) {
+
+  .ttahub-event-card__event-column:not(:nth-child(n+1):nth-child(-n+3)) {
+    margin-bottom: 0px;
+  }
+
+
+  .ttahub-event-card__event-column:not(:last-child) {
     margin-bottom: 16px;
   }
-}
-
-@media(min-width: 1125px) {
 
   // Title.
   .ttahub-event-card__event-column__title {
@@ -103,6 +106,10 @@ $min-width-menu-column: 20px;
 }
 
 @media(min-width: 1475px) {
+
+  .ttahub-event-card__event-column:not(:last-child) {
+    margin-bottom: 0px;
+  }
 
   // Title.
   .ttahub-event-card__event-column__title {
