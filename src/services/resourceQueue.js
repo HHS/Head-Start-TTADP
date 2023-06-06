@@ -1,6 +1,7 @@
 import newQueue from '../lib/queue';
 import { RESOURCE_ACTIONS } from '../constants';
-import { auditLogger } from '../logger';
+import { logger, auditLogger } from '../logger';
+import { getResourceMetaDataJob } from '../lib/resource';
 
 const resourceQueue = newQueue('resource');
 
@@ -29,7 +30,30 @@ const addGetResourceMetadataToQueue = async (id, url) => {
   );
 };
 
+const onFailedResourceQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+const onCompletedResourceQueue = (job, result) => {
+  if (result.status === 200 || result.status === 201 || result.status === 202) {
+    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+  } else {
+    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+  }
+};
+const processResourceQueue = () => {
+  // Resource Queue.
+  resourceQueue.on('failed', onFailedResourceQueue);
+  resourceQueue.on('completed', onCompletedResourceQueue);
+
+  // Get resource metadata.
+  resourceQueue.process(
+    RESOURCE_ACTIONS.GET_METADATA,
+    getResourceMetaDataJob,
+  );
+};
+
 export {
   resourceQueue,
   addGetResourceMetadataToQueue,
+  onFailedResourceQueue,
+  onCompletedResourceQueue,
+  processResourceQueue,
 };

@@ -127,7 +127,7 @@ describe('Groups', () => {
     const group1 = await screen.findByText(/group1/i);
     expect(group1).toBeInTheDocument();
 
-    expect(screen.getByText(/No one has made any groups in your region public yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
   });
 
   it('handles fetch errors', async () => {
@@ -292,6 +292,6 @@ describe('Groups', () => {
       renderGroups();
     });
     expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    expect(screen.getByText(/No one has made any groups in your region public yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
   });
 });
