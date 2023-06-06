@@ -234,12 +234,20 @@ test.describe('Activity Report', () => {
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
+    await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
+    await page.waitForTimeout(10000);
+
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.waitForTimeout(10000);
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
    
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
+
+    await page.getByRole('button', { name: /Goals and objectives complete/i }).click();
+    await page.waitForTimeout(5000);
 
     // edit the first goal
     await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
@@ -524,19 +532,30 @@ test.describe('Activity Report', () => {
 
     const regionNumber = await getRegionNumber(page);
 
+    await page.waitForTimeout(10000);
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
+    await blur(page);
+    await page.waitForTimeout(10000);
     // fill out the goals page
     await page.getByLabel(/Select recipient's goal/i).focus();
     await page.keyboard.type('This is a goal for multiple grants');
     await page.keyboard.press('Enter');
+
+    await page.waitForTimeout(10000);
     await page.getByLabel(/select tta objective/i).focus();
     await page.keyboard.type('A new objective');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+
+    await blur(page);
+    await page.waitForTimeout(5000);
+
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
     await page.getByTestId('dropdown').selectOption('In Progress');
+
+    await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -649,7 +668,11 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
+    await blur(page);
     await page.getByRole('button', { name: 'Save objectives' }).click();
+
+    await page.waitForTimeout(5000);
+
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // skip supporting attachments
