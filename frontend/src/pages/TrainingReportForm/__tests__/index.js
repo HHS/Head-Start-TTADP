@@ -69,6 +69,20 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
   });
 
+  it('displays an error when failing to fetch users', async () => {
+    fetchMock.reset();
+    fetchMock.get('/api/users/training-report-users?regionId=1', 500);
+
+    fetchMock.getOnce('/api/events/id/123', {
+      regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+    });
+    act(() => {
+      renderTrainingReportForm('123', 'event-summary');
+    });
+
+    await waitFor(() => expect(screen.getByText(/Error fetching collaborators and points of contact/i)).toBeInTheDocument());
+  });
+
   it('fetches event report data', async () => {
     fetchMock.getOnce('/api/events/id/123', {
       regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
@@ -181,5 +195,47 @@ describe('TrainingReportForm', () => {
 
     // check that fetch mock was called with a put request
     await waitFor(() => expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true));
+  });
+
+  it('shows an error when failing to save', async () => {
+    fetchMock.getOnce('/api/events/id/123', {
+      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+    });
+    act(() => {
+      renderTrainingReportForm('123', 'event-summary');
+    });
+    expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
+
+    fetchMock.put('/api/events/id/123', 500);
+    const onSaveDraftButton = screen.getByText(/save draft/i);
+    act(() => {
+      userEvent.click(onSaveDraftButton);
+    });
+
+    await waitFor(() => expect(screen.getByText(/There was an error saving the training report. Please try again later./i)).toBeInTheDocument());
+  });
+
+  it('updates the page via the side menu', async () => {
+    fetchMock.get('/api/events/id/1', {
+      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+    });
+
+    fetchMock.put('/api/events/id/1', {
+      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+    });
+
+    act(() => {
+      renderTrainingReportForm('1', 'event-summary');
+    });
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+
+    const visionGoal = await screen.findByRole('button', { name: /vision and goal/i });
+
+    act(() => {
+      userEvent.click(visionGoal);
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
   });
 });
