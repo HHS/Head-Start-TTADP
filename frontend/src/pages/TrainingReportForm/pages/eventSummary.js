@@ -1,6 +1,5 @@
 import React, {
   useState,
-  useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -24,6 +23,11 @@ import ReadOnlyField from '../../../components/ReadOnlyField';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
+import {
+  eventSummaryFields,
+  pageComplete,
+  pageTouched,
+} from '../constants';
 
 const placeholderText = '- Select -';
 
@@ -42,16 +46,6 @@ const EventSummary = ({ additionalData }) => {
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
-
-  useEffect(() => {
-    // it's annoying that this is necessary but
-    // it's the only way to get the end date to re-render
-    // on initial load that I could figure out
-    const newKey = `endDate-${endDate}`;
-    if (endDateKey !== newKey) {
-      setEndDateKey(newKey);
-    }
-  }, [endDate, endDateKey]);
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
@@ -353,22 +347,12 @@ EventSummary.propTypes = {
   }).isRequired,
 };
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
-
-export const isPageComplete = (_formData, formState) => {
-  const { isValid } = formState;
-  if (isValid) {
-    return true;
-  }
-
-  // todo -
-  // validate formData
-
-  return true;
-};
-
+const fields = Object.keys(eventSummaryFields);
 const path = 'event-summary';
 const position = 1;
+
+const ReviewSection = () => <><h2>Event summary</h2></>;
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
@@ -376,6 +360,8 @@ export default {
   path,
   reviewSection: () => <ReviewSection />,
   review: false,
+  fields,
+  isPageTouched: (hookForm) => pageTouched(hookForm.formState.touched, fields),
   render: (
     additionalData,
     _formData,
