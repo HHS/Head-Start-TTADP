@@ -116,7 +116,7 @@ export default function Groups() {
 
       <div className="margin-bottom-3 maxw-tablet-lg">
         <h3>Created by others (public)</h3>
-        {!groups || !groups.publicGroups.length ? <p className="usa-prose">No one has made any groups in your region public yet</p> : (
+        {!groups || !groups.publicGroups.length ? <p className="usa-prose">No one in your region has created a public group.</p> : (
           <>
             <Table fullWidth stackedStyle="default">
               <thead>
