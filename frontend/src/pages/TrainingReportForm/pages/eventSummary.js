@@ -31,7 +31,7 @@ import {
 
 const placeholderText = '- Select -';
 
-const EventSummary = ({ additionalData }) => {
+const EventSummary = ({ additionalData, datePickerKey }) => {
   const {
     register,
     control,
@@ -256,6 +256,7 @@ const EventSummary = ({ additionalData }) => {
               mm/dd/yyyy
             </div>
             <ControlledDatePicker
+              key={`startDate-${datePickerKey}`}
               control={control}
               name="startDate"
               value={startDate}
@@ -283,7 +284,7 @@ const EventSummary = ({ additionalData }) => {
               inputId="endDate"
               value={endDate}
               minDate={startDate}
-              key={endDateKey}
+              key={`${endDateKey}-${datePickerKey}`}
             />
           </FormItem>
         </div>
@@ -345,6 +346,7 @@ EventSummary.propTypes = {
       collaborators: PropTypes.arrayOf(PropTypes.shape(userProp)),
     }),
   }).isRequired,
+  datePickerKey: PropTypes.string.isRequired,
 };
 
 const fields = Object.keys(eventSummaryFields);
@@ -370,9 +372,14 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    datePickerKey,
   ) => (
     <>
-      <EventSummary additionalData={additionalData} />
+      <EventSummary
+        additionalData={additionalData}
+        datePickerKey={datePickerKey}
+      />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}
