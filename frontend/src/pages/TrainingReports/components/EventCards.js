@@ -7,7 +7,7 @@ import EventCard from './EventCard';
 const translateEventStatus = (status) => {
   switch (status) {
     case EVENT_STATUS.NOT_STARTED:
-      return 'You have no un-started events.';
+      return 'You have no events with a “not started” status.';
     case EVENT_STATUS.IN_PROGRESS:
       return 'You have no events in progress.';
     case EVENT_STATUS.COMPLETE:

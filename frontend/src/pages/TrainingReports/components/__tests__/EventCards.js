@@ -88,7 +88,7 @@ describe('EventCards', () => {
 
   it('renders correctly if there are no not started events', () => {
     renderEventCards([], EVENT_STATUS.NOT_STARTED);
-    expect(screen.getByText('You have no un-started events.')).toBeInTheDocument();
+    expect(screen.getByText('You have no events with a “not started” status.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no complete events', () => {
@@ -96,7 +96,7 @@ describe('EventCards', () => {
     expect(screen.getByText('You have no completed events.')).toBeInTheDocument();
   });
 
-  it('renders correctly if there are no in progres events', () => {
+  it('renders correctly if there are no in progress events', () => {
     renderEventCards([], EVENT_STATUS.IN_PROGRESS);
     expect(screen.getByText('You have no events in progress.')).toBeInTheDocument();
   });
