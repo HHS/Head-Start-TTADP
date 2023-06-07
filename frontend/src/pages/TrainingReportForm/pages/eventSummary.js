@@ -1,6 +1,5 @@
 import React, {
   useState,
-  useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -27,7 +26,7 @@ import Req from '../../../components/Req';
 
 const placeholderText = '- Select -';
 
-const EventSummary = ({ additionalData }) => {
+const EventSummary = ({ additionalData, datePickerKey }) => {
   const {
     register,
     control,
@@ -42,16 +41,6 @@ const EventSummary = ({ additionalData }) => {
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
-
-  useEffect(() => {
-    // it's annoying that this is necessary but
-    // it's the only way to get the end date to re-render
-    // on initial load that I could figure out
-    const newKey = `endDate-${endDate}`;
-    if (endDateKey !== newKey) {
-      setEndDateKey(newKey);
-    }
-  }, [endDate, endDateKey]);
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
@@ -262,6 +251,7 @@ const EventSummary = ({ additionalData }) => {
               mm/dd/yyyy
             </div>
             <ControlledDatePicker
+              key={`startDate-${datePickerKey}`}
               control={control}
               name="startDate"
               value={startDate}
@@ -289,7 +279,7 @@ const EventSummary = ({ additionalData }) => {
               inputId="endDate"
               value={endDate}
               minDate={startDate}
-              key={endDateKey}
+              key={`${endDateKey}-${datePickerKey}`}
             />
           </FormItem>
         </div>
@@ -351,6 +341,7 @@ EventSummary.propTypes = {
       collaborators: PropTypes.arrayOf(PropTypes.shape(userProp)),
     }),
   }).isRequired,
+  datePickerKey: PropTypes.string.isRequired,
 };
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
@@ -384,9 +375,14 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    datePickerKey,
   ) => (
     <>
-      <EventSummary additionalData={additionalData} />
+      <EventSummary
+        additionalData={additionalData}
+        datePickerKey={datePickerKey}
+      />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}

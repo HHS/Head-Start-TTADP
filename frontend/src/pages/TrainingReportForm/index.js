@@ -102,6 +102,10 @@ export default function TrainingReportForm({ match }) {
   const [reportFetched, setReportFetched] = useState(false);
   const [additionalDataFetched, setAdditionalDataFetched] = useState(false);
 
+  // this holds the key for the date pickers to force re-render
+  // as the truss component doesn't re-render when the default value changes
+  const [datePickerKey, setDatePickerKey] = useState('-');
+
   /* ============
   */
 
@@ -173,6 +177,7 @@ export default function TrainingReportForm({ match }) {
         setError('Error fetching training report');
       } finally {
         setReportFetched(true);
+        setDatePickerKey(Date.now().toString());
       }
     }
     fetchReport();
@@ -278,6 +283,7 @@ export default function TrainingReportForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
+            datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}
             editable

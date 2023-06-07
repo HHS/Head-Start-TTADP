@@ -70,6 +70,8 @@ describe('eventSummary', () => {
               jest.fn(),
               onSaveDraft,
               jest.fn(),
+              false,
+              'key',
             )}
           </NetworkContext.Provider>
         </FormProvider>
