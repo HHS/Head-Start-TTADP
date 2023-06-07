@@ -1,25 +1,26 @@
-import uvicorn
 import os
-
-from routes.auth_routes import setup_auth_routes
-from utilities.auth import get_current_active_user
-from routes.routes import setup_main_routes
-from fastapi.staticfiles import StaticFiles
+from cfenv import AppEnv
 from fastapi import FastAPI, Depends
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.routing import APIRoute
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.middleware import Middleware
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.staticfiles import StaticFiles
 from itsdangerous import URLSafeSerializer
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-
-from cfenv import AppEnv
+from routes.auth_routes import setup_auth_routes
+from routes.routes import setup_main_routes
+from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
+import uvicorn
+from middleware import add_process_time_header
 
 SECRET_KEY = "your-secret-key"
 SIGNED_COOKIE_SALT = "your-cookie-salt"
 serializer = URLSafeSerializer(SECRET_KEY, salt=SIGNED_COOKIE_SALT)
 
 class BaseRoute(APIRoute):
+    """
+    BaseRoute class extends APIRoute and adds OAuth2PasswordBearer and get_current_active_user dependencies.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -27,12 +28,16 @@ class BaseRoute(APIRoute):
         self.dependencies.append(Depends(get_current_active_user))
 
 def create_app():
-    app = FastAPI(default_route_class=BaseRoute, middleware=[
-        Middleware(SessionMiddleware, secret_key=SECRET_KEY, https_only=True),
-    ])
+    """
+    create_app function creates a FastAPI app, mounts static files, sets up routes and returns the app and port.
+    """
+    app = FastAPI(default_route_class=BaseRoute)
+    app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, https_only=True)
+    app.middleware("http")(add_process_time_header)
+
 
     env = AppEnv()
-    port = int(os.getenv("DATA_SCIENCE_PORT", 8000))
+    port = int(os.getenv("DATA_SCIENCE_PORT", "8000"))
 
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -46,4 +51,4 @@ app, port = create_app()
 FastAPIInstrumentor.instrument_app(app)
 
 if __name__ == '__main__':
-        uvicorn.run(app, host='0.0.0.0', port=port)
+    uvicorn.run(app, host='0.0.0.0', port=port)

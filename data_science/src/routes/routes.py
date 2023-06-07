@@ -1,48 +1,56 @@
-from typing import Annotated
+import threading
+from typing import Annotated, Dict, List, Union
+
 import psycopg2.extras
-from utilities.auth import User, get_current_active_user, get_current_user
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.templating import Jinja2Templates
+
+from models.spacy_similarity import my_calc_similarity
+from utilities.auth import User, get_current_active_user
 from utilities.db import connect_to_db
 from utilities.datagen import data_generator, is_generating_data, stop_event
-from threading import Thread
-from models.spacy_similarity import my_calc_similarity
-from fastapi.templating import Jinja2Templates
-from fastapi import Request, APIRouter, Depends, HTTPException, status, FastAPI
-from fastapi.security import OAuth2PasswordBearer
 
 templates = Jinja2Templates(directory="templates")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 unauthenticated_router = APIRouter(tags=["unauthenticated"])
-authenticated_router = APIRouter(tags=["authenticated"], dependencies=[Depends(oauth2_scheme), Depends(get_current_active_user)])
+authenticated_router = APIRouter(
+    tags=["authenticated"],
+    dependencies=[Depends(oauth2_scheme), Depends(get_current_active_user)],
+)
 
-def execute_db_query(query, parameters=()):
+
+def execute_db_query(query: str, parameters: Union[Tuple, List, Dict] = ()) -> List[Dict]:
     conn = connect_to_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute(query, parameters)
     rows = cur.fetchall()
-    return rows
+    return [dict(row) for row in rows]
 
-def setup_main_routes(app):
 
+def setup_main_routes(app: FastAPI) -> None:
     @unauthenticated_router.get("/", tags=["unauthenticated"])
     def index(request: Request):
         return templates.TemplateResponse("index.html", {"request": request})
 
-    @authenticated_router.post("/start_datagen", tags=["datagen"])
-    def start_generating_data():
-        global is_generating_data, data_gen_thread, stop_event
+    @authenticated_router.post("/dev/start_datagen", tags=["datagen"])
+    def start_generating_data() -> Dict[str, str]:
+        global is_generating_data
+        global data_gen_thread
+        global stop_event
         if not is_generating_data:
             stop_event.clear()  # Reset the stop_event
             is_generating_data = True
-            data_gen_thread = Thread(target=data_generator)
+            data_gen_thread = threading.Thread(target=data_generator)
             data_gen_thread.start()
         return {"status": "Data generation started"}
 
-    @authenticated_router.post("/stop_datagen",  tags=["datagen"])
-    def stop_generating_data(
-    ):
+    @authenticated_router.post("/dev/stop_datagen", tags=["datagen"])
+    def stop_generating_data() -> Dict[str, str]:
         print("Stop button pressed")
-        global is_generating_data, stop_event
+        global is_generating_data
+        global stop_event
         if is_generating_data:
             is_generating_data = False
             stop_event.set()
@@ -50,9 +58,10 @@ def setup_main_routes(app):
                 data_gen_thread.join()  # It will now successfully join because of the 'stop_event'
         return {"status": "Data generation stopped"}
 
-    @authenticated_router.post("/clear_datagen_db",tags=["datagen"])
-    def clear_database():
-        global is_generating_data, stop_event
+    @authenticated_router.post("/dev/clear_datagen_db", tags=["datagen"])
+    def clear_database() -> Dict[str, str]:
+        global is_generating_data
+        global stop_event
         if is_generating_data:
             is_generating_data = False
             stop_event.set()
@@ -64,15 +73,13 @@ def setup_main_routes(app):
             cur.execute('DELETE FROM "Goals";')
             conn.commit()
             print("Database cleared successfully.")
-        except Exception as e:
-            print(f"Error occurred while clearing the database: {e}")
+        except Exception as error:
+            print(f"Error occurred while clearing the database: {error}")
             conn.rollback()
         return {"status": "Database cleared"}
 
-    @authenticated_router.get("/last_five_entries_auth", tags=["db_query" ])
-    async def last_five_entries_auth(
-
-    ):
+    @authenticated_router.get("/last_five_entries_auth", tags=["db_query"])
+    async def last_five_entries_auth() -> Dict[str, List[Dict]]:
         conn = connect_to_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute('SELECT * FROM "Goals" ORDER BY id DESC LIMIT 5;')
@@ -81,22 +88,21 @@ def setup_main_routes(app):
 
     @authenticated_router.get("/fetch_recipients_ids", tags=["db_query"])
     def fetch_recipient_ids(
-        request: Request,
         current_user: Annotated[User, Depends(get_current_active_user)],
-    ):
+    ) -> Dict[str, List[Dict]]:
         rows = execute_db_query(
             """
             SELECT DISTINCT id FROM "Recipients";
             """
         )
-        return {"user_ids": [dict(row) for row in rows]}
+        return {"user_ids": rows}
 
     @authenticated_router.get(
         "/compute_similarities/{recipient_id}", tags=["data_science"]
     )
     def compute_similarities(
         recipient_id: str,
-    ):
+    ) -> Dict[str, List[Dict]]:
         rows = execute_db_query(
             """
             SELECT g."id", g."name"
@@ -114,14 +120,14 @@ def setup_main_routes(app):
         return {"matched_goals": matched_goals}
 
     @authenticated_router.get("/protected_endpoint")
-    def protected_endpoint(
-    ):
+    def protected_endpoint() -> Dict[str, str]:
         # Only authenticated users can access this endpoint
         return {"message": "Hello, authenticated user!"}
 
     @unauthenticated_router.get("/unprotected_endpoint")
-    def unprotected_endpoint():
+    def unprotected_endpoint() -> Dict[str, str]:
         # This endpoint is accessible to all users
         return {"message": "Hello, everyone!"}
+
     app.include_router(authenticated_router)
     app.include_router(unauthenticated_router)

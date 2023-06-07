@@ -1,13 +1,29 @@
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import normalize
+"""
+This module provides functions for calculating similarity between sentences using spaCy and sklearn.
+"""
+
 import numpy as np
 import spacy
+
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
+
 
 nlp = spacy.load("en_core_web_sm")
 ALPHA = 0.9
 
 
 def calculate_batch_similarity(batch, nlp):
+    """
+    Calculates the cosine similarity between a batch of sentences.
+
+    Args:
+        batch (list): A list of sentences.
+        nlp (spacy.Language): A spaCy language model.
+
+    Returns:
+        numpy.ndarray: A 2D array of cosine similarity scores.
+    """
     sentence_embeddings = np.array([nlp(goal).vector for goal in batch])
     # Normalize the embeddings to improve calculation
     sentence_embeddings_norm = normalize(sentence_embeddings)
@@ -16,9 +32,18 @@ def calculate_batch_similarity(batch, nlp):
     return sim_scores
 
 
-def my_calc_similarity(
-    recipient_id, list_of_goals, list_of_goal_ids, nlp, batch_size=500
-):
+def my_calc_similarity(list_of_goals, list_of_goal_ids, batch_size=500):
+    """
+    Calculates the similarity between a list of goals.
+
+    Args:
+        list_of_goals (list): A list of goals.
+        list_of_goal_ids (list): A list of goal IDs.
+        batch_size (int, optional): The batch size to use for calculating similarity. Defaults to 500.
+
+    Returns:
+        list: A list of matched goals.
+    """
     matched_goals = []
     num_goals = len(list_of_goals)
 
