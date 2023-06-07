@@ -256,7 +256,7 @@ export default function TrainingReportForm({ match }) {
         },
         ownerId: ownerId || null,
         pocId: pocId || null,
-        collaboratorIds: collaboratorIds || [],
+        collaboratorIds,
         regionId: regionId || null,
       });
       resetFormData(hookForm.reset, updatedEvent);

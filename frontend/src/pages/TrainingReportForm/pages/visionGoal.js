@@ -61,7 +61,7 @@ const fields = Object.keys(visionGoalFields);
 const path = 'vision-goal';
 const position = 2;
 
-const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
