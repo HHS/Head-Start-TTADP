@@ -51,6 +51,7 @@ const Navigator = ({
   onSaveAndContinue,
   showSavedDraft,
   updateShowSavedDraft,
+  datePickerKey,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -180,6 +181,7 @@ const Navigator = ({
                     onSaveDraft,
                     onUpdatePage,
                     weAreAutoSaving,
+                    datePickerKey,
                   )}
                 </Form>
                 <DismissingComponentWrapper
@@ -251,6 +253,7 @@ Navigator.propTypes = {
   }),
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func.isRequired,
+  datePickerKey: PropTypes.string,
 };
 
 Navigator.defaultProps = {
@@ -266,6 +269,7 @@ Navigator.defaultProps = {
     name: null,
     role: null,
   },
+  datePickerKey: '',
 };
 
 export default Navigator;
