@@ -169,7 +169,7 @@ describe('TrainingReportForm', () => {
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
     });
-    expect(fetchMock.called('/api/events/id/123')).toBe(true);
+    expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
 
     fetchMock.put('/api/events/id/123', {
       regionId: '1', reportId: 1, data: {}, ownerId: 1,
@@ -180,6 +180,6 @@ describe('TrainingReportForm', () => {
     });
 
     // check that fetch mock was called with a put request
-    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true);
+    await waitFor(() => expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true));
   });
 });
