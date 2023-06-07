@@ -6,7 +6,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { Link, useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Alert, Button, TextInput } from '@trussworks/react-uswds';
+import {
+  Alert, Button, Checkbox, FormGroup, TextInput,
+} from '@trussworks/react-uswds';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
@@ -14,6 +16,8 @@ import { getRecipientAndGrantsByUser } from '../../fetchers/recipient';
 import MultiSelect from '../../components/MultiSelect';
 import { createGroup, fetchGroup, updateGroup } from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
+import AppLoadingContext from '../../AppLoadingContext';
+import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
 
 const mapGrants = (grants) => grants.map((grant) => ({
   value: grant.id,
@@ -25,6 +29,12 @@ const mapRecipients = (recipients) => recipients.map((recipient) => ({
   options: mapGrants(recipient.grants),
 }));
 
+export const GROUP_FIELD_NAMES = {
+  NAME: 'new-group-name',
+  RECIPIENTS: 'select-recipients-new-group',
+  IS_PRIVATE: 'is-private',
+};
+
 export default function MyGroups({ match }) {
   const { groupId } = match.params;
   const [recipients, setRecipients] = useState([]);
@@ -35,23 +45,36 @@ export default function MyGroups({ match }) {
   // see the comment above "onSubmit" for, well, context
   const { myGroups, setMyGroups } = useContext(MyGroupsContext);
 
-  const { control, handleSubmit, setValue } = useForm({
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    setError: setFormError,
+    errors: formErrors,
+  } = useForm({
     defaultValues: {
-      'new-group-name': '',
-      'select-recipients-new-group': [],
+      [GROUP_FIELD_NAMES.NAME]: '',
+      [GROUP_FIELD_NAMES.RECIPIENTS]: [],
+      [GROUP_FIELD_NAMES.IS_PRIVATE]: true,
     },
   });
 
   useEffect(() => {
     async function getGroup() {
+      setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
         if (existingGroupData) {
-          setValue('new-group-name', existingGroupData.name);
-          setValue('select-recipients-new-group', mapGrants(existingGroupData.grants));
+          setValue(GROUP_FIELD_NAMES.NAME, existingGroupData.name);
+          setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapGrants(existingGroupData.grants));
+          setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !existingGroupData.isPublic);
         }
       } catch (err) {
         setError('There was an error fetching your group');
+      } finally {
+        setIsAppLoading(false);
       }
     }
 
@@ -59,23 +82,26 @@ export default function MyGroups({ match }) {
     if (groupId) {
       getGroup();
     }
-  }, [groupId, setValue]);
+  }, [groupId, setIsAppLoading, setValue]);
 
   useEffect(() => {
     // get grants/recipients for user
     async function fetchRecipients() {
+      setIsAppLoading(true);
       try {
         setRecipientsFetched(true);
         const response = await getRecipientAndGrantsByUser();
         setRecipients(mapRecipients(response));
       } catch (err) {
         setError('There was an error fetching your recipients');
+      } finally {
+        setIsAppLoading(false);
       }
     }
     if (!recipientsFetched) {
       fetchRecipients();
     }
-  }, [recipientsFetched]);
+  }, [recipientsFetched, setIsAppLoading]);
 
   // you'll notice that "setMyGroups" is called below
   // - since we fetch that data once, way earlier, in App.js, we must update it here
@@ -83,12 +109,21 @@ export default function MyGroups({ match }) {
   // very possible that a user will create a group, then navigate to the a page and expect to use
   // it without refreshing, so that data will not be refreshed from the API
   const onSubmit = async (data) => {
+    const post = {
+      grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
+      name: data[GROUP_FIELD_NAMES.NAME],
+      isPublic: !data[GROUP_FIELD_NAMES.IS_PRIVATE],
+    };
+
+    setIsAppLoading(true);
+
     try {
       if (!groupId) {
-        const g = await createGroup({
-          grants: data['select-recipients-new-group'].map(({ value }) => (value)),
-          name: data['new-group-name'],
-        });
+        const g = await createGroup(post);
+        if (g.error) {
+          setFormError(g.error, { message: g.message, shouldFocus: true });
+          return;
+        }
 
         setMyGroups([...myGroups, g]);
       }
@@ -96,9 +131,13 @@ export default function MyGroups({ match }) {
       if (groupId) {
         const g = await updateGroup({
           id: groupId,
-          name: data['new-group-name'],
-          grants: data['select-recipients-new-group'].map(({ value }) => (value)),
+          ...post,
         });
+
+        if (g.error) {
+          setFormError(g.error, { message: g.message, shouldFocus: true });
+          return;
+        }
 
         setMyGroups(myGroups.map((group) => {
           if (group.id === g.id) {
@@ -111,8 +150,12 @@ export default function MyGroups({ match }) {
       history.push('/account');
     } catch (err) {
       setError('There was an error saving your group');
+    } finally {
+      setIsAppLoading(false);
     }
   };
+
+  const nameError = formErrors[GROUP_FIELD_NAMES.NAME];
 
   return (
     <>
@@ -124,49 +167,75 @@ export default function MyGroups({ match }) {
         Back to Account Management
       </Link>
       <h1 className="margin-top-0 landing">My groups</h1>
-
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
         <h2 className="margin-bottom-2">Create group</h2>
         <IndicatesRequiredField />
         <form onSubmit={handleSubmit(onSubmit)} className="maxw-mobile-lg">
-          <div className="margin-top-4">
-            <label htmlFor="new-group-name" className="display-block margin-bottom-1">
-              Group name
-              {' '}
-              <Req />
-            </label>
-            <Controller
-              control={control}
-              name="new-group-name"
-              render={({ onChange: controllerOnChange, value }) => (
-                <TextInput
-                  id="new-group-name"
-                  name="new-group-name"
-                  className="margin-top-0"
-                  onChange={(e) => {
-                    controllerOnChange(e.target.value);
-                  }}
-                  required
-                  value={value}
-                />
-              )}
-            />
+          <FormGroup error={nameError}>
+            <div className="margin-top-4">
+              <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
+                Group name
+                {' '}
+                <Req />
+              </label>
+              {nameError && <span className="usa-error-message">{nameError.message}</span>}
+              <Controller
+                control={control}
+                name={GROUP_FIELD_NAMES.NAME}
+                render={({ onChange: controllerOnChange, value }) => (
+                  <TextInput
+                    id={GROUP_FIELD_NAMES.NAME}
+                    name={GROUP_FIELD_NAMES.NAME}
+                    className="margin-top-0"
+                    onChange={(e) => {
+                      controllerOnChange(e.target.value);
+                    }}
+                    required
+                    value={value}
+                    disabled={isAppLoading}
+                  />
+                )}
+              />
 
-          </div>
+            </div>
+          </FormGroup>
           <div className="margin-top-4">
             <label className="display-block margin-bottom-1">
               Recipients
               {' '}
               <Req />
               <MultiSelect
-                name="select-recipients-new-group"
+                name={GROUP_FIELD_NAMES.RECIPIENTS}
                 options={recipients}
                 control={control}
                 simple={false}
                 required="Select at least one"
+                disabled={isAppLoading}
               />
             </label>
           </div>
+
+          <div className="margin-top-4 display-flex flex-align-end">
+            <Controller
+              control={control}
+              name={GROUP_FIELD_NAMES.IS_PRIVATE}
+              render={({ onChange: controllerOnChange, value }) => (
+                <>
+                  <Checkbox
+                    id={GROUP_FIELD_NAMES.IS_PRIVATE}
+                    name={GROUP_FIELD_NAMES.IS_PRIVATE}
+                    className="margin-0"
+                    onChange={(e) => controllerOnChange(e.target.checked)}
+                    label="Keep this group private."
+                    checked={value}
+                    disabled={isAppLoading}
+                  />
+                  <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
+                </>
+              )}
+            />
+          </div>
+
           {error && (
             <Alert type="error" className="margin-top-4">
               {error}

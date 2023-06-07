@@ -5,12 +5,14 @@ import {
   updateHandler,
   getHandler,
   deleteHandler,
+  getByStatus,
 } from './handlers';
 
 const router = express.Router();
 
 router.get('/id/:eventId', transactionWrapper(getHandler));
 router.get('/regionId/:regionId', transactionWrapper(getHandler));
+router.get('/:status', transactionWrapper(getByStatus));
 router.get('/ownerId/:ownerId', transactionWrapper(getHandler));
 router.get('/pocId/:pocId', transactionWrapper(getHandler));
 router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler));
