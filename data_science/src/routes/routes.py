@@ -1,5 +1,5 @@
 import threading
-from typing import Annotated, Dict, List, Union
+from typing import Annotated, Dict, List, Union,Tuple
 
 import psycopg2.extras
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
@@ -22,11 +22,14 @@ authenticated_router = APIRouter(
 
 
 def execute_db_query(query: str, parameters: Union[Tuple, List, Dict] = ()) -> List[Dict]:
-    conn = connect_to_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute(query, parameters)
-    rows = cur.fetchall()
-    return [dict(row) for row in rows]
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cur.execute(query, parameters)
+        rows = cur.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 def setup_main_routes(app: FastAPI) -> None:
@@ -116,7 +119,7 @@ def setup_main_routes(app: FastAPI) -> None:
         rows = [row for row in rows if row["name"] is not None]
         cur_goals_list = [row["name"] for row in rows]
         cur_goal_ids = [row["id"] for row in rows]
-        matched_goals = my_calc_similarity(recipient_id, cur_goals_list, cur_goal_ids)
+        matched_goals = my_calc_similarity(cur_goals_list, cur_goal_ids)
         return {"matched_goals": matched_goals}
 
     @authenticated_router.get("/protected_endpoint")

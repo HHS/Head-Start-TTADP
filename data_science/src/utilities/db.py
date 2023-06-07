@@ -58,6 +58,5 @@ def connect_to_db():
             database=postgres_service["db_name"],
         )
     except psycopg2.OperationalError as e:
-        print(f"Could not connect to database: {e}")
-        return None
+        raise Exception(f"Could not connect to database: {e}")
     return conn

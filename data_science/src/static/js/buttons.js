@@ -33,7 +33,7 @@ $(document).ready(function() {
     
     $("#startButton").click(function() {
         $.ajax({
-            url: '/start_datagen',
+            url: '/dev/start_datagen',
             type: 'post',
             headers: {
                 "Authorization": 'Bearer ' + localStorage.getItem('token')
@@ -51,7 +51,7 @@ $(document).ready(function() {
     });
     $("#stopButton").click(function() {
         $.ajax({
-            url: '/stop_datagen',
+            url: '/dev/stop_datagen',
             type: 'post',
             headers: {
                 "Authorization": 'Bearer ' + localStorage.getItem('token')
@@ -69,7 +69,7 @@ $(document).ready(function() {
 
     $("#clearButton").click(function() {
         $.ajax({
-            url: '/clear_datagen_db',
+            url: '/dev/clear_datagen_db',
             type: 'post',
             headers: {
                 "Authorization": 'Bearer ' + localStorage.getItem('token')

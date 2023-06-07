@@ -11,7 +11,7 @@ from routes.routes import setup_main_routes
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 import uvicorn
-from middleware import add_process_time_header
+from middleware.process_time import add_process_time_header
 
 SECRET_KEY = "your-secret-key"
 SIGNED_COOKIE_SALT = "your-cookie-salt"
