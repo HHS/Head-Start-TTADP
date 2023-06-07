@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import EventCards from '../EventCards';
 import UserContext from '../../../../UserContext';
+import { EVENT_STATUS } from '../../constants';
 
 describe('EventCards', () => {
   const defaultEvents = [{
@@ -51,11 +52,12 @@ describe('EventCards', () => {
     ],
   };
 
-  const renderEventCards = (events = defaultEvents) => {
+  const renderEventCards = (events = defaultEvents, eventType = EVENT_STATUS.NOT_STARTED) => {
     render((
       <UserContext.Provider value={{ user: DEFAULT_USER }}>
         <EventCards
           events={events}
+          eventType={eventType}
         />
       </UserContext.Provider>));
   };
@@ -82,5 +84,25 @@ describe('EventCards', () => {
     expect(screen.getByText('Sample event organizer 3')).toBeInTheDocument();
     expect(screen.getByText('03/02/2021')).toBeInTheDocument();
     expect(screen.getByText('03/03/2021')).toBeInTheDocument();
+  });
+
+  it('renders correctly if there are no not started events', () => {
+    renderEventCards([], EVENT_STATUS.NOT_STARTED);
+    expect(screen.getByText('You have no un-started events.')).toBeInTheDocument();
+  });
+
+  it('renders correctly if there are no complete events', () => {
+    renderEventCards([], EVENT_STATUS.COMPLETE);
+    expect(screen.getByText('You have no completed events.')).toBeInTheDocument();
+  });
+
+  it('renders correctly if there are no in progres events', () => {
+    renderEventCards([], EVENT_STATUS.IN_PROGRESS);
+    expect(screen.getByText('You have no events in progress.')).toBeInTheDocument();
+  });
+
+  it('renders correctly if there are no in unknown events', () => {
+    renderEventCards([], 'blah');
+    expect(screen.getByText('You have no events.')).toBeInTheDocument();
   });
 });
