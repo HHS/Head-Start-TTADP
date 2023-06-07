@@ -94,7 +94,7 @@ def test_connect_to_db():
 def test_connect_to_db_exception():
     # Mock psycopg2.connect to raise OperationalError
     with patch("psycopg2.connect") as mock_connect:
-        mock_connect.side_effect = psycopg2.OperationalError
+        mock_connect.side_effect = psycopg2.OperationalError("Database connection failed")
         with patch.dict(
             "os.environ",
             {
@@ -115,5 +115,7 @@ def test_connect_to_db_exception():
                 )
             },
         ):
-            connection = connect_to_db()
-            assert connection is None
+            with pytest.raises(Exception) as e_info:
+                connect_to_db()
+            assert str(e_info.value) == "Could not connect to database: Database connection failed"
+
