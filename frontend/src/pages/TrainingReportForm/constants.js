@@ -15,6 +15,7 @@ export const eventSummaryFields = {
   trainingType: 'Series',
   reasons: [],
   targetPopulations: [],
+  status: 'Not started',
 };
 
 export const visionGoalFields = {
@@ -28,6 +29,8 @@ export const defaultFormValues = {
 };
 
 export const defaultValues = {
+  ...defaultFormValues,
+  id: 0,
   ownerId: null,
   eventId: '',
   eventName: '',
@@ -35,8 +38,8 @@ export const defaultValues = {
   pageState: {
     1: NOT_STARTED,
     2: NOT_STARTED,
+    3: NOT_STARTED,
   },
-  ...defaultFormValues,
 };
 export const pageComplete = (
   hookForm,
