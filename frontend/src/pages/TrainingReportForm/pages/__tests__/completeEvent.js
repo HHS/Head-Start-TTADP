@@ -178,5 +178,29 @@ describe('completeEvent', () => {
 
       expect(onSubmit).not.toHaveBeenCalled();
     });
+
+    it('will submit if all sessions are complete', async () => {
+      fetchMock.getOnce(sessionsUrl, [
+        { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      ]);
+
+      act(() => {
+        render(<RenderCompleteEvent />);
+      });
+
+      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+      act(() => {
+        userEvent.selectOptions(statusSelect, 'Complete');
+      });
+      expect(statusSelect).toHaveValue('Complete');
+
+      const submitButton = await screen.findByRole('button', { name: /submit/i });
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
+      expect(onSubmit).toHaveBeenCalledWith('Complete');
+    });
   });
 });

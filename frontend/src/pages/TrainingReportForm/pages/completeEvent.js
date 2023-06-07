@@ -38,9 +38,17 @@ const CompleteEvent = ({
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
   // form is explicitly submitted
-  const [updatedStatus, setUpdatedStatus] = useState(formData.status);
+  const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'Not started');
 
   const areAllSessionsComplete = sessions && sessions.length && sessions.every((session) => session.data.status === 'Complete');
+
+  useEffect(() => {
+    // we want to set the status to in progress if the user adds a session
+    // and the status was previously not started
+    if (sessions && sessions.length && updatedStatus === 'Not started') {
+      setUpdatedStatus('In progress');
+    }
+  }, [sessions, updatedStatus]);
 
   useEffect(() => {
     async function getSessions() {

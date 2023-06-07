@@ -11,6 +11,7 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import useInterval from '@use-it/interval';
 import { FormProvider, useForm } from 'react-hook-form';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import useSocket, { publishLocation } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
@@ -168,7 +169,7 @@ export default function TrainingReportForm({ match }) {
   useEffect(() => {
     // fetch event report data
     async function fetchReport() {
-      if (!trainingReportId || reportFetched) {
+      if (!trainingReportId || !currentPage || reportFetched) {
         return;
       }
       try {
@@ -183,7 +184,7 @@ export default function TrainingReportForm({ match }) {
       }
     }
     fetchReport();
-  }, [hookForm.reset, isAppLoading, reportFetched, trainingReportId]);
+  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, trainingReportId]);
 
   useEffect(() => {
     // set error if no training report id
@@ -192,7 +193,59 @@ export default function TrainingReportForm({ match }) {
     }
   }, [trainingReportId]);
 
-  const whereWeAre = pages.find((p) => p.path === currentPage);
+  useDeepCompareEffect(() => {
+    const whereWeAre = pages.find((p) => p.path === currentPage);
+    if (!whereWeAre) {
+      return;
+    }
+
+    // the reducer takes the current page state and updates it based on the
+    // pages provided to the navigator
+    const ns = pages.reduce((newState, page) => {
+      // we don't include the review page in the page state, as that is
+      // derived from the event status
+      if (page.review) {
+        return newState;
+      }
+
+      // each page has a function that determines if it is complete
+      // based on whether all the fields on it have been filled out
+      const isComplete = page.isPageComplete(hookForm);
+
+      // we create a new state object so that we can return a new object
+      // and satisfy eslint's no-param-reassign rule
+      const state = { ...newState };
+
+      // if the page is complete, it's complete
+      // hard to argue with that
+      if (isComplete) {
+        state[page.position] = COMPLETE;
+      // if the page is not complete, but we're on it, it's in progress
+      // or if it's already been marked as in progress, it's in progress
+      } else if (
+        whereWeAre.position === page.position
+        || newState[page.position] === IN_PROGRESS
+      ) {
+        state[page.position] = IN_PROGRESS;
+      // otherwise, it's not started
+      } else {
+        state[page.position] = NOT_STARTED;
+      }
+
+      // the new state created from the spread of the old
+      return state;
+
+      // and of course, we initialize the reducer with the current page state
+      // as the default value
+    }, { ...pageState });
+
+    if (JSON.stringify(ns) === JSON.stringify(pageState)) {
+      return;
+    }
+
+    // if the new state is different from the old state, we update the form
+    hookForm.setValue('pageState', ns);
+  }, [currentPage, hookForm, pageState]);
 
   const updatePage = (position) => {
     const state = {};
@@ -211,33 +264,11 @@ export default function TrainingReportForm({ match }) {
     );
   }
 
-  const newNavigatorState = () => pages.reduce((newState, page) => {
-    if (page.review) {
-      return pageState;
-    }
-
-    const isComplete = page.isPageComplete(hookForm);
-    const isTouched = page.isPageTouched(hookForm);
-    const newPageState = { ...newState };
-
-    if (isComplete) {
-      newPageState[page.position] = COMPLETE;
-    } else if (whereWeAre.position === page.position || isTouched) {
-      newPageState[page.position] = IN_PROGRESS;
-    } else {
-      newPageState[page.position] = NOT_STARTED;
-    }
-
-    return newPageState;
-  }, { ...pageState });
-
   const onSave = async () => {
     try {
       // reset the error message
       setError('');
       setIsAppLoading(true);
-
-      await hookForm.trigger();
 
       // grab the newest data from the form
       const {
@@ -250,10 +281,7 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data: {
-          ...data,
-          pageState: newNavigatorState(),
-        },
+        data,
         ownerId: ownerId || null,
         pocId: pocId || null,
         collaboratorIds,
@@ -269,6 +297,7 @@ export default function TrainingReportForm({ match }) {
   };
 
   const onSaveAndContinue = async () => {
+    const whereWeAre = pages.find((p) => p.path === currentPage);
     const { fields } = whereWeAre;
     await hookForm.trigger(fields, { shouldFocus: true });
 
@@ -280,16 +309,57 @@ export default function TrainingReportForm({ match }) {
         if (input) input.focus();
       }
 
-      // debugger;
-
       return;
     }
 
     await onSave();
   };
 
-  const onFormSubmit = async () => {
-    // logic forthcoming
+  const onFormSubmit = async (updatedStatus) => {
+    try {
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
+
+      // we check at button click if all the sessions are complete,
+      // so now we just need to see if all the pages are complete
+
+      // if the page is not complete, we need to set an error and bomb out early
+      if (!Object.values(pageState).every((page) => page === COMPLETE) && updatedStatus === 'Complete') {
+        hookForm.setError('status', {
+          message: 'Please complete all required fields before submitting.',
+        });
+
+        return;
+      }
+
+      // grab the newest data from the form
+      const {
+        ownerId,
+        pocId,
+        collaboratorIds,
+        regionId,
+        ...data
+      } = hookForm.getValues();
+
+      // PUT it to the backend
+      const updatedEvent = await updateEvent(trainingReportId, {
+        data: {
+          ...data,
+          status: updatedStatus,
+        },
+        ownerId: ownerId || null,
+        pocId: pocId || null,
+        collaboratorIds,
+        regionId: regionId || null,
+      });
+      resetFormData(hookForm.reset, updatedEvent);
+      updateLastSaveTime(moment(updatedEvent.updatedAt));
+    } catch (err) {
+      setError('There was an error saving the training report. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
+    }
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
@@ -351,6 +421,7 @@ export default function TrainingReportForm({ match }) {
             onSaveAndContinue={onSaveAndContinue}
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
+            formDataStatusProp="status"
           />
         </FormProvider>
       </NetworkContext.Provider>
