@@ -14,7 +14,7 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
 import ObjectiveButton from './components/ObjectiveButton';
-import Topics from './components/Topics';
+import TooltipList from '../TooltipList';
 import './GoalCard.scss';
 import colors from '../../colors';
 import { goalPropTypes } from './constants';
@@ -147,7 +147,7 @@ function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Topics</p>
-          <Topics topics={goalTopics} />
+          <TooltipList list={goalTopics} cardType="goal" listType="topics" />
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
