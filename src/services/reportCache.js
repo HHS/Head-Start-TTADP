@@ -368,6 +368,7 @@ const cacheGoalMetadata = async (
       endDate: goal.endDate,
       isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
+      source: goal.source,
     }, {
       where: { id: activityReportGoalId },
       individualHooks: true,
@@ -383,6 +384,7 @@ const cacheGoalMetadata = async (
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
+      source: goal.source,
       isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
     }, {
