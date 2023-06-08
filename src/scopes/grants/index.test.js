@@ -48,8 +48,11 @@ const possibleIds = recipients.map((recipient) => recipient.id);
 
 describe('grant filtersToScopes', () => {
   let mockUser;
+  let mockUserTwo;
   let group;
   const groupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+  let publicGroup;
+  const publicGroupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
   const specialGrantNumber = String(faker.datatype.number({ min: 2800 }));
   let grantGroupOne;
   let grantGroupTwo;
@@ -174,9 +177,23 @@ describe('grant filtersToScopes', () => {
       hsesUserId: faker.datatype.string(),
     });
 
+    mockUserTwo = await User.create({
+      id: faker.datatype.number(),
+      homeRegionId: 1,
+      hsesUsername: faker.datatype.string(),
+      hsesUserId: faker.datatype.string(),
+    });
+
     group = await Group.create({
       name: groupName,
       userId: mockUser.id,
+      isPublic: false,
+    });
+
+    publicGroup = await Group.create({
+      name: publicGroupName,
+      userId: mockUserTwo.id,
+      isPublic: true,
     });
 
     grantGroupOne = await GroupGrant.create({
@@ -188,18 +205,28 @@ describe('grant filtersToScopes', () => {
       groupId: group.id,
       grantId: grants[1].id,
     });
+
+    await GroupGrant.create({
+      groupId: publicGroup.id,
+      grantId: grants[0].id,
+    });
+
+    await GroupGrant.create({
+      groupId: publicGroup.id,
+      grantId: grants[1].id,
+    });
   });
 
   afterAll(async () => {
     await GroupGrant.destroy({
       where: {
-        groupId: group.id,
+        groupId: [group.id, publicGroup.id],
       },
     });
 
     await Group.destroy({
       where: {
-        userId: mockUser.id,
+        userId: [mockUser.id, mockUserTwo.id],
       },
     });
 
@@ -451,9 +478,37 @@ describe('grant filtersToScopes', () => {
       expect(foundGrants).toEqual(expectedGrants);
     });
 
+    it('filters by public group', async () => {
+      const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
+      const filters = { 'group.in': [String(publicGroup.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      const foundGrants = found.map((f) => f.id).sort();
+      expect(foundGrants).toEqual(expectedGrants);
+    });
+
     it('filters out', async () => {
       const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
       const filters = { 'group.nin': [String(group.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(4);
+      const foundGrants = found.map((f) => f.id).sort();
+      expectedGrants.forEach((grant) => {
+        expect(foundGrants).not.toContain(grant);
+      });
+    });
+
+    it('filters out by public group', async () => {
+      const expectedGrants = [grantGroupOne.grantId, grantGroupTwo.grantId].sort();
+      const filters = { 'group.nin': [String(publicGroup.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },

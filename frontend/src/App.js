@@ -50,6 +50,7 @@ import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
+import Group from './pages/AccountManagement/Group';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -256,11 +257,11 @@ function App() {
         />
         <Route
           exact
-          path="/training-reports"
-          render={() => (
+          path="/training-reports/:status(not-started|in-progress|complete)"
+          render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReports user={user} />
+                <TrainingReports user={user} match={match} />
               </FeatureFlag>
             </AppWrapper>
           )}
@@ -288,6 +289,15 @@ function App() {
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <MyGroups match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/group/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <Group match={match} />
             </AppWrapper>
           )}
         />

@@ -44,7 +44,7 @@ describe('OtherEntity', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', []);
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>

@@ -16,6 +16,7 @@ import {
   recipientFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -392,6 +393,7 @@ describe('Filter Menu', () => {
       otherEntitiesFilter,
       myReportsFilter,
       reportTextFilter,
+      singleOrMultiRecipientsFilter,
       endDateFilter,
     ];
 
