@@ -52,11 +52,15 @@ export default async function importSmartSheetEvent(fileKey) {
 
       // Get user via creator email.
       const creatorEmail = smartSheetEvent.Creator;
-      const creator = await User.findOne({
-        where: {
-          email: creatorEmail.toLowerCase(),
-        },
-      });
+
+      let creator;
+      if (creatorEmail) {
+        creator = await User.findOne({
+          where: {
+            email: creatorEmail.toLowerCase(),
+          },
+        });
+      }
 
       if (!creator) {
         logger.info(`Creator Not Found: '${creatorEmail}' not found in User table. Skipping...`);
