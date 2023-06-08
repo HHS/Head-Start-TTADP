@@ -258,11 +258,11 @@ function App() {
         />
         <Route
           exact
-          path="/training-reports"
-          render={() => (
+          path="/training-reports/:status(not-started|in-progress|complete)"
+          render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReports />
+                <TrainingReports user={user} match={match} />
               </FeatureFlag>
             </AppWrapper>
           )}
