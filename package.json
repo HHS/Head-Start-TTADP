@@ -95,7 +95,9 @@
     "createAwsElasticSearchIndexes": "node ./build/server/src/tools/createAwsElasticSearchIndexesCli.js",
     "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js",
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
-    "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js"
+    "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
+    "importSmartSheetEvent": "node ./build/server/src/tools/importSmartSheetCLI.js",
+    "importSmartSheetEvent:local": "./node_modules/.bin/babel-node ./src/tools/importSmartSheetCLI.js"
   },
   "repository": {
     "type": "git",
@@ -182,7 +184,6 @@
       "<rootDir>/src/app.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
-      "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,
@@ -282,7 +283,7 @@
     "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "1.10.0",
+    "@ttahub/common": "file:./packages/common",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",
