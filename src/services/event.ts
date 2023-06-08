@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { Op, cast } from 'sequelize';
+import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db from '../models';
 import {
@@ -252,13 +253,13 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = true): Promise<EventShape[] | null> {
+export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false): Promise<EventShape[] | null> {
   return findEventHelperBlob({
     key: 'status',
     value: status,
     regions: readableRegions,
     fallbackValue,
-    allowNull,
+    allowNull: status === TRS.NOT_STARTED || allowNull,
   }) as Promise<EventShape[]>;
 }
 
