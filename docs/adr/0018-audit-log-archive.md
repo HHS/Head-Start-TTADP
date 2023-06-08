@@ -19,7 +19,7 @@ The main advantage of implementing an archiving strategy now is that our applica
 
 
 ## Decision
-After evaluating the advantages and disadvantages of both alternatives, we have decided to proceed with the second option: Periodic Archiving to S3 using Node.js cron.
+After evaluating the advantages and disadvantages of both alternatives, we are proposing to proceed with the second option: Periodic Archiving to S3 using Node.js cron.
 
 ## Consequences
 The chosen alternative has the following consequences:
@@ -34,7 +34,7 @@ The chosen alternative has the following consequences:
 
 5. Scalability and Automation: Implementing the archiving process allows for scalability and automation. As the volume of audit logs grows, the code can be enhanced to handle larger data sets efficiently. Automation ensures consistency and eliminates manual intervention, reducing the risk of errors.
 
-6. Development Overhead: Implementing the archiving process may require additional development effort initially, such writing the code, testing and creating a period retrieval strategy. However, these investments can lead to long-term benefits.
+6. Development Overhead: Implementing the archiving process may require additional development effort initially, such as writing the code, testing and creating a period retrieval strategy. However, these investments can lead to long-term benefits.
 
 ## Other Considerations
 The following considerations should be taken into account:
