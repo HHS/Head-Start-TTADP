@@ -13,9 +13,17 @@ jest.mock('bull');
 const mockUser = {
   id: faker.datatype.number(),
   homeRegionId: 1,
-  name: 'user13705748',
+  name: 'John Smith',
   hsesUsername: 'user13705748',
   hsesUserId: 'user13705748',
+};
+
+const mockCollaboratorUser = {
+  id: faker.datatype.number(),
+  homeRegionId: 1,
+  name: 'Bill Jones',
+  hsesUsername: 'collabUser13874748',
+  hsesUserId: 'collabUser13874748',
 };
 
 describe('filtersToScopes', () => {
@@ -189,5 +197,83 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(1);
       expect(found[0].id).toBe(reportWithoutRegion.id);
     });
+  });
+  describe('collaborator', () => {
+    let reportWithCollaborator;
+    let reportWithBothCollaborators;
+    let reportWithOtherCollaborator;
+    let possibleIds;
+
+    beforeAll(async () => {
+      // create user.
+      await User.create(mockUser);
+
+      // Create collaborator user.
+      await User.create(mockCollaboratorUser);
+
+      // create report with region 1.
+      reportWithCollaborator = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocId: mockUser.id,
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: {},
+      });
+
+      // create report with region 2.
+      reportWithBothCollaborators = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocId: mockUser.id,
+        collaboratorIds: [mockCollaboratorUser.id, mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: {},
+      });
+
+      // create report with different region.
+      reportWithOtherCollaborator = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocId: mockUser.id,
+        collaboratorIds: [mockCollaboratorUser.id],
+        regionId: 3,
+        data: {},
+      });
+
+      possibleIds = [reportWithCollaborator.id, reportWithBothCollaborators.id, reportWithOtherCollaborator.id];
+    });
+    afterAll(async () => {
+      // destroy reports.
+      await EventReportPilot.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+
+      // destroy user.
+      await User.destroy({ where: { id: [mockUser.id, mockCollaboratorUser.id] } });
+    });
+
+    it('before returns reports with mock collaborator', async () => {
+      const filters = { 'collaborators.ctn': 'John Smith' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        logging: console.log,
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found[0].id).toBe(reportWithCollaborator.id);
+      expect(found[1].id).toBe(reportWithBothCollaborators.id);
+    });
+
+    it('before returns reports with mock collaborator', async () => {
+      const filters = { 'collaborators.nctn': 'John Smith' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        logging: console.log,
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found[0].id).toBe(reportWithOtherCollaborator.id);
+    });
+
   });
 });

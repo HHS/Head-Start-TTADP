@@ -2,6 +2,7 @@
 import { createFiltersToScopes } from '../utils';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withRegion, withoutRegion } from './region';
+import { withCollaborators, withoutCollaborators } from './collaborators';
 
 export const topicToQuery = {
   startDate: {
@@ -13,6 +14,10 @@ export const topicToQuery = {
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
+  },
+  collaborators: {
+    ctn: (query) => withCollaborators(query),
+    nctn: (query) => withoutCollaborators(query),
   },
 };
 
