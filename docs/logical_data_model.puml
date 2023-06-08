@@ -510,9 +510,6 @@ class Resources{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  title : text
-!issue='column missing from model' <color:#d54309>nationalCenters</color>: text
-!issue='column missing from model' <color:#d54309>metadata</color>: jsonb
-!issue='column missing from model' <color:#d54309>metadataUpdatedAt</color>: timestamp with time zone
 }
 
 class RoleTopics{
@@ -711,10 +708,10 @@ class ZALActivityReportGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALActivityReportGoalResources{
@@ -892,10 +889,10 @@ class ZALGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALGoalResources{
@@ -920,10 +917,10 @@ class ZALGoalTemplateFieldPrompts{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
- * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
+ dml_as : bigint
 }
 
 class ZALGoalTemplateObjectiveTemplates{
