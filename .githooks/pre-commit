@@ -52,7 +52,7 @@ done
 
 if [ $common_changed = true ]; then
   if [ $common_package_json_changed = false ]; then
-    echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to update the version number there."
+    echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to publish a new version."
     exit 1
   fi
 
