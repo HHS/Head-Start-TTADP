@@ -111,6 +111,13 @@ const REPORT_STATUSES = {
 };
 exports.REPORT_STATUSES = REPORT_STATUSES;
 
+const TRAINING_REPORT_STATUSES = {
+  NOT_STARTED: 'not-started',
+  IN_PROGRESS: 'in-progress',
+  COMPLETE: 'complete',
+};
+exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
+
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool (ages 3-5)',

@@ -7,6 +7,7 @@ import {
   act,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
+import userEvent from '@testing-library/user-event';
 import ConditionalFields from '../ConditionalFields';
 
 describe('ConditionalFields', () => {
@@ -91,5 +92,37 @@ describe('ConditionalFields', () => {
 
     await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1']);
     expect(setPrompts).toHaveBeenCalled();
+  });
+
+  it('calls on blur', async () => {
+    const setPrompts = jest.fn();
+    const prompts = [{
+      fieldType: 'multiselect',
+      title: 'Test',
+      prompt: 'What is a test?',
+      options: ['option1', 'option2', 'option3'],
+      validations: {
+        rules: [
+          {
+            name: 'maxSelections',
+            value: 1,
+            message: 'How DARE you',
+          },
+        ],
+      },
+      response: [],
+    }];
+    act(() => {
+      render(<CF prompts={prompts} setPrompts={setPrompts} />);
+    });
+
+    await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1', 'option2']);
+    const btn = document.querySelector('button');
+    userEvent.click(btn);
+    expect(btn).toHaveFocus();
+
+    await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1']);
+    userEvent.click(btn);
+    expect(btn).toHaveFocus();
   });
 });

@@ -9,10 +9,23 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 import Groups from '../Groups';
+import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import MyGroupsProvider from '../../../../components/MyGroupsProvider';
 
 describe('Groups', () => {
   const renderGroups = () => {
-    render(<MemoryRouter><Groups /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <MyGroupsProvider authenticated>
+          <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+            <UserContext.Provider value={{ user: { id: 1 } }}>
+              <Groups />
+            </UserContext.Provider>
+          </AppLoadingContext.Provider>
+        </MyGroupsProvider>
+      </MemoryRouter>,
+    );
   };
 
   afterEach(() => fetchMock.restore());
@@ -28,19 +41,93 @@ describe('Groups', () => {
       {
         id: 1,
         name: 'group1',
+        userId: 1,
+        isPublic: false,
       },
       {
         id: 2,
         name: 'group2',
+        userId: 1,
+        isPublic: true,
+      },
+      {
+        id: 3,
+        name: 'group3',
+        userId: 2,
+        isPublic: true,
+        user: {
+          name: 'Tim User',
+        },
       },
     ]);
 
     act(renderGroups);
 
-    await waitFor(() => {
-      expect(screen.getByText(/group1/i)).toBeInTheDocument();
-      expect(screen.getByText(/group2/i)).toBeInTheDocument();
-    });
+    const group1 = await screen.findByText(/group1/i);
+    const group2 = await screen.findByText(/group2/i);
+
+    // this is a public group from another user
+    const group3 = await screen.findByText(/group3/i);
+
+    expect(group1).toBeInTheDocument();
+    expect(group2).toBeInTheDocument();
+    expect(group3).toBeInTheDocument();
+
+    // group 1 should have the proper buttons for a user owned group
+    const group1row = group1.parentElement.parentElement;
+    expect(group1row.querySelector('a[href="/account/my-groups/1"]')).toBeInTheDocument();
+    const del = group1row.querySelector('button');
+    expect(del).toBeInTheDocument();
+    expect(del.getAttribute('aria-label')).toBe('delete group1');
+
+    // group 3 should have the proper buttons for a public group
+    const group3row = group3.parentElement.parentElement;
+    const group3viewLink = group3row.querySelector('a[href="/account/group/3"]');
+    expect(group3viewLink).toBeInTheDocument();
+    expect(group3viewLink.getAttribute('aria-label')).toBe('view group3');
+    expect(group3row.querySelector('button')).toBeNull();
+
+    // and it shows the user's name
+    expect(screen.getByText(/Tim User/i)).toBeInTheDocument();
+  });
+
+  it('renders only public groups when the user has not created one', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 3,
+        name: 'group3',
+        userId: 2,
+        isPublic: true,
+        user: {
+          name: 'Tim User',
+        },
+      },
+    ]);
+
+    act(renderGroups);
+    // this is a public group from another user
+    const group3 = await screen.findByText(/group3/i);
+    expect(group3).toBeInTheDocument();
+
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+  });
+
+  it('renders only user created groups when there are no public groups', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        userId: 1,
+        isPublic: false,
+      },
+    ]);
+
+    act(renderGroups);
+
+    const group1 = await screen.findByText(/group1/i);
+    expect(group1).toBeInTheDocument();
+
+    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
   });
 
   it('handles fetch errors', async () => {
@@ -58,6 +145,8 @@ describe('Groups', () => {
       {
         id: 1,
         name: 'group1',
+        userId: 1,
+        isPublic: false,
       },
     ]);
     fetchMock.delete('/api/groups/1', {});
@@ -68,11 +157,22 @@ describe('Groups', () => {
       expect(screen.getByText(/group1/i)).toBeInTheDocument();
     });
 
-    userEvent.click(screen.getByText(/delete/i));
-
-    await waitFor(() => {
-      expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    act(() => {
+      userEvent.click(screen.getByText(/delete/i));
     });
+
+    // it shows the modal
+    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument();
+
+    const continueButton = screen.getByRole('button', { name: /continue/i });
+
+    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(false);
+
+    act(() => {
+      userEvent.click(continueButton);
+    });
+
+    expect(fetchMock.called('/api/groups/1', { method: 'delete' })).toBe(true);
   });
 
   it('handles delete errors', async () => {
@@ -80,6 +180,8 @@ describe('Groups', () => {
       {
         id: 1,
         name: 'group1',
+        userId: 1,
+        isPublic: false,
       },
     ]);
     fetchMock.delete('/api/groups/1', 500);
@@ -92,9 +194,104 @@ describe('Groups', () => {
 
     userEvent.click(screen.getByText(/delete/i));
 
+    expect(await screen.findByText(/Are you sure you want to continue\?/i)).toBeInTheDocument();
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+
+    act(() => {
+      userEvent.click(cancelButton);
+      userEvent.click(screen.getByText(/delete/i));
+    });
+
+    const continueButton = screen.getByRole('button', { name: /continue/i });
+
+    act(() => {
+      userEvent.click(continueButton);
+    });
+
     await waitFor(() => {
       expect(screen.getByText(/group1/i)).toBeInTheDocument();
       expect(screen.getByText(/There was an error deleting your group/i)).toBeInTheDocument();
     });
+  });
+
+  it('more than 10 groups shows pagination', async () => {
+    const mockGroups = (length) => {
+      const groups = [];
+      // eslint-disable-next-line no-plusplus
+      for (let i = 1; i < length; i++) {
+        groups.push({
+          id: i,
+          name: `group${i}`,
+          userId: 3,
+          isPublic: true,
+          user: {
+            name: 'Tim User',
+          },
+        });
+      }
+      return groups;
+    };
+
+    fetchMock.get('/api/groups', mockGroups(33));
+
+    act(() => {
+      renderGroups();
+    });
+
+    const group1 = await screen.findByText('group1');
+    expect(group1).toBeInTheDocument();
+
+    const page2 = await screen.findByRole('button', { name: /page 2/i });
+    expect(page2).toBeInTheDocument();
+
+    act(() => {
+      userEvent.click(page2);
+    });
+
+    const group11 = await screen.findByText(/group11/i);
+    expect(group11).toBeInTheDocument();
+
+    let nextPage = await screen.findByRole('button', { name: /next page/i });
+    act(() => {
+      userEvent.click(nextPage);
+    });
+
+    const group21 = await screen.findByText(/group21/i);
+    expect(group21).toBeInTheDocument();
+
+    const previousPage = await screen.findByRole('button', { name: /previous page/i });
+    act(() => {
+      userEvent.click(previousPage);
+    });
+
+    const group11Again = await screen.findByText(/group11/i);
+    expect(group11Again).toBeInTheDocument();
+
+    nextPage = await screen.findByRole('button', { name: /next page/i });
+    act(() => {
+      userEvent.click(nextPage);
+    });
+
+    nextPage = await screen.findByRole('button', { name: /next page/i });
+    act(() => {
+      userEvent.click(nextPage);
+    });
+
+    const group31 = await screen.findByText(/group31/i);
+    expect(group31).toBeInTheDocument();
+
+    nextPage = screen.queryByRole('button', { name: /next page/i });
+    expect(nextPage).toBeNull();
+  });
+
+  it('handles null response', async () => {
+    fetchMock.get('/api/groups', null);
+
+    act(() => {
+      renderGroups();
+    });
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
   });
 });

@@ -1,67 +1,92 @@
-import {
-  sequelize,
-} from '../models';
 import orderReportsBy from './orderReportsBy';
+import { sequelize } from '../models';
 
 describe('orderReportsBy', () => {
-  it('should sort by author', () => {
-    const result = orderReportsBy('author', 'ASC');
-    expect(result).toEqual([[sequelize.literal('authorName ASC')]]);
-  });
-
-  it('should sort by collaborators', () => {
-    const result = orderReportsBy('collaborators', 'DESC');
-    expect(result).toEqual([[sequelize.literal('collaboratorName DESC NULLS LAST')]]);
-  });
-
-  it('should sort by topics', () => {
-    const result = orderReportsBy('topics', 'ASC');
-    expect(result).toEqual([[sequelize.literal('topics ASC')]]);
-  });
-
-  it('should sort by regionId', () => {
-    const result = orderReportsBy('regionId', 'DESC');
-    expect(result).toEqual([
-      ['regionId', 'DESC'],
-      ['id', 'DESC'],
+  it('returns the correct values', () => {
+    let sort = orderReportsBy('author', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        sequelize.literal('authorName asc'),
+      ],
     ]);
-  });
 
-  it('should sort by activityRecipients', () => {
-    const result = orderReportsBy('activityRecipients', 'ASC');
-    expect(result).toEqual([
-      [sequelize.literal('recipientName ASC')],
-      [sequelize.literal('otherEntityName ASC')],
+    sort = orderReportsBy('collaborators', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        sequelize.literal('collaboratorName asc NULLS LAST'),
+      ],
     ]);
-  });
 
-  it('should sort by calculatedStatus', () => {
-    const result = orderReportsBy('calculatedStatus', 'DESC');
-    expect(result).toEqual([['calculatedStatus', 'DESC']]);
-  });
+    sort = orderReportsBy('topics', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        sequelize.literal('topics asc'),
+      ],
+    ]);
 
-  it('should sort by startDate', () => {
-    const result = orderReportsBy('startDate', 'ASC');
-    expect(result).toEqual([['startDate', 'ASC']]);
-  });
+    sort = orderReportsBy('regionId', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        'regionId',
+        'asc',
+      ],
+      [
+        'id',
+        'asc',
+      ],
+    ]);
 
-  it('should sort by updatedAt', () => {
-    const result = orderReportsBy('updatedAt', 'DESC');
-    expect(result).toEqual([['updatedAt', 'DESC']]);
-  });
+    sort = orderReportsBy('activityRecipients', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        sequelize.literal('recipientName asc'),
+      ],
+      [
+        sequelize.literal('otherEntityName asc'),
+      ],
+    ]);
 
-  it('should sort by approvedAt', () => {
-    const result = orderReportsBy('approvedAt', 'ASC');
-    expect(result).toEqual([['approvedAt', 'ASC']]);
-  });
+    sort = orderReportsBy('calculatedStatus', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        'calculatedStatus',
+        'asc',
+      ],
+    ]);
 
-  it('should sort by createdAt', () => {
-    const result = orderReportsBy('createdAt', 'ASC');
-    expect(result).toEqual([['createdAt', 'ASC']]);
-  });
+    sort = orderReportsBy('startDate', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        'startDate',
+        'asc',
+      ],
+    ]);
 
-  it('should default to empty string if sortBy parameter is invalid', () => {
-    const result = orderReportsBy('invalid', 'ASC');
-    expect(result).toEqual('');
+    sort = orderReportsBy('updatedAt', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        'updatedAt',
+        'asc',
+      ],
+    ]);
+
+    sort = orderReportsBy('approvedAt', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        'approvedAt',
+        'asc',
+      ],
+    ]);
+
+    sort = orderReportsBy('createdAt', 'asc');
+    expect(sort).toStrictEqual([
+      [
+        'createdAt',
+        'asc',
+      ],
+    ]);
+
+    sort = orderReportsBy('fuzzbucket', 'desc');
+    expect(sort).toStrictEqual('');
   });
 });
