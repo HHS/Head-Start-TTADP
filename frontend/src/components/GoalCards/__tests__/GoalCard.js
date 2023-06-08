@@ -26,6 +26,7 @@ describe('GoalCard', () => {
         status: 'Closed',
         activityReports: [],
         grantNumbers: ['G-1'],
+        topics: [],
       },
     ],
     previousStatus: null,

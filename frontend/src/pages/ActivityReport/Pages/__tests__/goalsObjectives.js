@@ -226,7 +226,7 @@ describe('goals objectives', () => {
       expect(goalSummary).not.toBeVisible();
       const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
       expect(addNewGoal).toBeVisible();
-      const keys = ['goalForEditing', 'goalName', 'goalEndDate', 'goalIsRttapa'];
+      const keys = ['goalForEditing', 'goalName', 'goalEndDate'];
       keys.forEach((key) => {
         expect(spy).toHaveBeenCalledWith(key, '');
       });
