@@ -2,7 +2,11 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const activityReportResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
+  const a = pos
+    ? ''
+    : `bool_or("Resources"."url" IS NULL
+    OR "Resources"."title" IS NULL)
+    OR`;
 
   return `
   SELECT DISTINCT
@@ -12,11 +16,16 @@ const activityReportResourcePosNeg = (pos = true) => {
   ON "ActivityReportResources"."activityReportId" = "ActivityReports"."id"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportResources"."resourceId"
-  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG(CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title"), CHR(10)))`;
 };
 
 const activityReportGoalResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
+  const a = pos
+    ? ''
+    : `bool_or("Resources"."url" IS NULL
+    OR "Resources"."title" IS NULL)
+    OR`;
 
   return `
   SELECT DISTINCT
@@ -28,11 +37,16 @@ const activityReportGoalResourcePosNeg = (pos = true) => {
   ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
-  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG(CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title"), CHR(10)))`;
 };
 
 const activityReportObjectiveResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
+  const a = pos
+    ? ''
+    : `bool_or("Resources"."url" IS NULL
+    OR "Resources"."title" IS NULL)
+    OR`;
 
   return `
   SELECT DISTINCT
@@ -44,11 +58,16 @@ const activityReportObjectiveResourcePosNeg = (pos = true) => {
   ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
-  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG(CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title"), CHR(10)))`;
 };
 
 const nextStepsResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")';
+  const a = pos
+    ? ''
+    : `bool_or("Resources"."url" IS NULL
+    OR "Resources"."title" IS NULL)
+    OR`;
 
   return `
   SELECT DISTINCT
@@ -60,31 +79,32 @@ const nextStepsResourcePosNeg = (pos = true) => {
   ON "NextSteps"."id" = "NextStepResources"."nextStepId"
   LEFT JOIN "Resources"
   ON "Resources"."id" = "NextStepResources"."resourceId"
-  WHERE CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title")${a}`;
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG(CONCAT_WS(CHR(10), "Resources"."url", "Resources"."title"), CHR(10)))`;
 };
 
 export function withResourceUrl(query) {
-  const search = [`%${query}%`];
+  const search = [`%${query.toLowerCase()}%`];
 
   return {
     [Op.or]: [
-      filterAssociation(activityReportResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportGoalResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportObjectiveResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(nextStepsResourcePosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportResourcePosNeg(true), search, false, 'LIKE'),
+      filterAssociation(activityReportGoalResourcePosNeg(true), search, false, 'LIKE'),
+      filterAssociation(activityReportObjectiveResourcePosNeg(true), search, false, 'LIKE'),
+      filterAssociation(nextStepsResourcePosNeg(true), search, false, 'LIKE'),
     ],
   };
 }
 
 export function withoutResourceUrl(query) {
-  const search = [`%${query}%`];
+  const search = [`%${query.toLowerCase()}%`];
 
   return {
     [Op.and]: [
-      filterAssociation(activityReportResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportGoalResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(nextStepsResourcePosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportResourcePosNeg(false), search, false, 'NOT LIKE'),
+      filterAssociation(activityReportGoalResourcePosNeg(false), search, false, 'NOT LIKE'),
+      filterAssociation(activityReportObjectiveResourcePosNeg(false), search, false, 'NOT LIKE'),
+      filterAssociation(nextStepsResourcePosNeg(false), search, false, 'NOT LIKE'),
     ],
   };
 }

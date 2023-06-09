@@ -4,59 +4,69 @@ import { filterAssociation } from './utils';
 const nextStepsPosNeg = (pos = true) => {
   const a = pos
     ? ''
-    : `"NextSteps".note IS NULL
-    OR`;
-
-  return `
-  SELECT DISTINCT
-    "NextSteps"."activityReportId"
-  FROM "NextSteps"
-  WHERE ${a} LOWER("NextSteps".note)`;
-};
-
-const argsPosNeg = (pos = true) => {
-  const a = pos
-    ? ''
-    : `"ActivityReportGoals".name IS NULL
-    OR`;
-
-  return `
-  SELECT DISTINCT
-    "ActivityReportGoals"."activityReportId"
-  FROM "ActivityReportGoals"
-  WHERE ${a} LOWER("ActivityReportGoals".name)`;
-};
-
-const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
-  const a = pos
-    ? ''
-    : `"ActivityReportObjectives".title IS NULL
-    OR "ActivityReportObjectives"."ttaProvided" IS NULL
-    OR`;
-
-  return `
-  SELECT DISTINCT
-    "ActivityReportObjectives"."activityReportId"
-  FROM "ActivityReportObjectives"postgres
-  WHERE ${a} LOWER(concat_ws(' ', "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided"))`;
-};
-
-const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
-  const a = pos
-    ? ''
-    : `"ActivityReports"."context" IS NULL
-    OR "ActivityReports"."additionalNotes" IS NULL
+    : `bool_or("NextSteps".note IS NULL)
     OR`;
 
   return `
   SELECT DISTINCT
     "ActivityReports"."id"
   FROM "ActivityReports"
-  WHERE ${a} LOWER(concat_ws(' ', "ActivityReports"."context", "ActivityReports"."additionalNotes"))`;
+  LEFT JOIN "NextSteps"
+  ON "NextSteps"."activityReportId" = "ActivityReports"."id"
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG("NextSteps".note, CHR(10)))`;
+};
+
+const argsPosNeg = (pos = true) => {
+  const a = pos
+    ? ''
+    : `bool_or("ActivityReportGoals".name IS NULL)
+    OR`;
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportGoals"
+  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG("ActivityReportGoals".name, CHR(10)))`;
+};
+
+const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
+  const a = pos
+    ? ''
+    : `bool_or("ActivityReportObjectives".title IS NULL
+    OR "ActivityReportObjectives"."ttaProvided" IS NULL)
+    OR`;
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  LEFT JOIN "ActivityReportObjectives"
+  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG(concat_ws(CHR(10), "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided"), CHR(10)))`;
+};
+
+const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
+  const a = pos
+    ? ''
+    : `bool_or("ActivityReports"."context" IS NULL
+    OR "ActivityReports"."additionalNotes" IS NULL)
+    OR`;
+
+  return `
+  SELECT DISTINCT
+    "ActivityReports"."id"
+  FROM "ActivityReports"
+  GROUP BY "ActivityReports"."id"
+  HAVING ${a} LOWER(STRING_AGG(concat_ws(CHR(10), "ActivityReports"."context", "ActivityReports"."additionalNotes"), CHR(10)))`;
 };
 
 export function withReportText(searchText) {
-  const search = [`%${searchText}%`];
+  const search = [`%${searchText.toLowerCase()}%`];
 
   return {
     [Op.or]: [
@@ -69,7 +79,7 @@ export function withReportText(searchText) {
 }
 
 export function withoutReportText(searchText) {
-  const search = [`%${searchText}%`];
+  const search = [`%${searchText.toLowerCase()}%`];
 
   return {
     [Op.and]: [
