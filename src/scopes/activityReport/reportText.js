@@ -66,7 +66,7 @@ const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
 };
 
 export function withReportText(searchText) {
-  const search = [`%${searchText.toLowerCase()}%`];
+  const search = [`%${searchText.map((st) => st.toLowerCase())}%`];
 
   return {
     [Op.or]: [
@@ -79,7 +79,7 @@ export function withReportText(searchText) {
 }
 
 export function withoutReportText(searchText) {
-  const search = [`%${searchText.toLowerCase()}%`];
+  const search = [`%${searchText.map((st) => st.toLowerCase())}%`];
 
   return {
     [Op.and]: [
