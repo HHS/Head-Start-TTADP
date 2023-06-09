@@ -238,7 +238,10 @@ describe('filtersToScopes', () => {
         data: {},
       });
 
-      possibleIds = [reportWithCollaborator.id, reportWithBothCollaborators.id, reportWithOtherCollaborator.id];
+      possibleIds = [
+        reportWithCollaborator.id,
+        reportWithBothCollaborators.id,
+        reportWithOtherCollaborator.id];
     });
     afterAll(async () => {
       // destroy reports.
@@ -252,11 +255,10 @@ describe('filtersToScopes', () => {
       await User.destroy({ where: { id: [mockUser.id, mockCollaboratorUser.id] } });
     });
 
-    it('before returns reports with mock collaborator', async () => {
+    it('before returns reports with mock contains collaborator', async () => {
       const filters = { 'collaborators.ctn': 'John Smith' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
-        logging: console.log,
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
@@ -264,16 +266,14 @@ describe('filtersToScopes', () => {
       expect(found[1].id).toBe(reportWithBothCollaborators.id);
     });
 
-    it('before returns reports with mock collaborator', async () => {
+    it('before returns reports with mock does not contain collaborator', async () => {
       const filters = { 'collaborators.nctn': 'John Smith' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
-        logging: console.log,
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
       expect(found[0].id).toBe(reportWithOtherCollaborator.id);
     });
-
   });
 });
