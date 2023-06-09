@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { Op, cast } from 'sequelize';
+import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db from '../models';
@@ -8,6 +9,7 @@ import {
   CreateEventRequest,
   UpdateEventRequest,
 } from './types/event';
+import scope from '../models/scope';
 
 const {
   sequelize,
@@ -124,6 +126,8 @@ interface FindEventHelperBlobOptions {
   regions: number[] | undefined;
   fallbackValue?: string;
   allowNull?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  scopes: object;
 }
 
 async function findEventHelperBlob({
@@ -132,6 +136,7 @@ async function findEventHelperBlob({
   regions,
   fallbackValue,
   allowNull = false,
+  scopes,
 }: FindEventHelperBlobOptions): Promise<EventShape[]> {
   const getClause = () => {
     if (allowNull) {
@@ -146,9 +151,14 @@ async function findEventHelperBlob({
     return { [key]: value };
   };
 
-  const where = { data: { ...getClause() } };
+  let where: object = { data: { ...getClause() } };
 
-  if (regions && regions.length) {
+  if (scope) {
+    where = {
+      [Op.and]: scopes,
+      ...where,
+    };
+  } else if (regions && regions.length) {
     // @ts-ignore
     where.regionId = regions;
   }
@@ -251,13 +261,14 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false): Promise<EventShape[] | null> {
+export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false, scopes = undefined): Promise<EventShape[] | null> {
   return findEventHelperBlob({
     key: 'status',
     value: status,
     regions: readableRegions,
     fallbackValue,
     allowNull: status === TRS.NOT_STARTED || allowNull,
+    scopes,
   }) as Promise<EventShape[]>;
 }
 
