@@ -75,10 +75,6 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.TEXT,
     },
-    nationalCenters: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
     metadata: {
       type: DataTypes.JSONB,
       allowNull: true,
