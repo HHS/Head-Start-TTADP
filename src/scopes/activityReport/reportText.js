@@ -6,10 +6,8 @@ const nextStepsPosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "NextSteps"
-  ON "NextSteps"."activityReportId" = "ActivityReports"."id"
+    "NextSteps"."activityReportId"
+  FROM "NextSteps"
   WHERE "NextSteps".note${a}`;
 };
 
@@ -18,55 +16,29 @@ const argsPosNeg = (pos = true) => {
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportGoals"
-  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
+    "ActivityReportGoals"."activityReportId"
+  FROM "ActivityReportGoals"
   WHERE "ActivityReportGoals".name${a}`;
 };
 
-const objectiveTitlePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReportObjectives".title';
+const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
+  const a = pos ? '' : ` IS NULL OR concat_ws(' ', "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided")`;
 
   return `
   SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives"
-  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  WHERE "ActivityReportObjectives".title${a}`;
+    "ActivityReportObjectives"."activityReportId"
+  FROM "ActivityReportObjectives"postgres
+  WHERE concat_ws(' ', "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided")${a}`;
 };
 
-const objectiveTtaProvidedPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReportObjectives"."ttaProvided"';
+const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
+  const a = pos ? '' : ` IS NULL OR concat_ws(' ', "ActivityReports"."context", "ActivityReports"."additionalNotes")`;
 
   return `
   SELECT DISTINCT
     "ActivityReports"."id"
   FROM "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives"
-  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  WHERE "ActivityReportObjectives"."ttaProvided"${a}`;
-};
-
-const activityReportContextPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReports"."context"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  WHERE "ActivityReports"."context"${a}`;
-};
-
-const additionalNotesPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReports"."additionalNotes"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  WHERE "ActivityReports"."additionalNotes"${a}`;
+  WHERE concat_ws(' ', "ActivityReports"."context", "ActivityReports"."additionalNotes")${a}`;
 };
 
 export function withReportText(searchText) {
@@ -76,10 +48,8 @@ export function withReportText(searchText) {
     [Op.or]: [
       filterAssociation(nextStepsPosNeg(true), search, false, 'ILIKE'),
       filterAssociation(argsPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(objectiveTitlePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(objectiveTtaProvidedPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportContextPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(additionalNotesPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(objectiveTitleAndTtaProvidedPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportContextandAdditionalNotesPosNeg(true), search, false, 'ILIKE'),
     ],
   };
 }
@@ -91,10 +61,8 @@ export function withoutReportText(searchText) {
     [Op.and]: [
       filterAssociation(nextStepsPosNeg(false), search, false, 'NOT ILIKE'),
       filterAssociation(argsPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTitlePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTtaProvidedPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportContextPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(additionalNotesPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(objectiveTitleAndTtaProvidedPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportContextandAdditionalNotesPosNeg(false), search, false, 'NOT ILIKE'),
     ],
   };
 }
