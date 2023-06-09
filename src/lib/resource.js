@@ -8,7 +8,7 @@ const getPageScrapeValues = async (resourceUrl, isEclkc) => {
   // Use axios to get url info.
   const res = await axios.get(resourceUrl, { maxRedirects: 3 });
 
-  // Scrape Title & National Centers from ECLKC resources.
+  // Scrape Title.
   const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
 
   // If we found a title update it.
