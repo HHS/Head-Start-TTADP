@@ -125,7 +125,6 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toBeCalledWith(
       {
         title: 'Head Start | ECLKC',
-        nationalCenters: 'Health, Behavioral Health, and Safety',
       },
       { where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' }, individualHooks: false },
     );
@@ -171,20 +170,6 @@ describe('resource worker tests', () => {
     );
   });
 
-  it('tests a resource with only national center', async () => {
-    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosOnlyNcResponse));
-    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
-    await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
-
-    // Check title update.
-    expect(mockUpdate).toBeCalledWith(
-      {
-        nationalCenters: 'NC only',
-      },
-      { where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' }, individualHooks: false },
-    );
-  });
-
   it('tests a resource url not found', async () => {
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
@@ -224,7 +209,6 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toBeCalledWith(
       {
         title: 'Head Start | ECLKC',
-        nationalCenters: 'Health, Behavioral Health, and Safety',
       },
       { where: { url: 'https://eclkc.ohs.acf.hhs.gov/mental-health/article/head-start-heals-campaign' }, individualHooks: false },
     );

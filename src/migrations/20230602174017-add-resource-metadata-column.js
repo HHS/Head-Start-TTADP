@@ -13,9 +13,6 @@ module.exports = {
         { transaction },
       );
 
-      // Add national centers.
-      await queryInterface.addColumn('Resources', 'nationalCenters', { type: Sequelize.TEXT }, { transaction });
-
       // Add metadata column.
       await queryInterface.addColumn('Resources', 'metadata', { type: Sequelize.JSONB }, { transaction });
 
@@ -36,9 +33,6 @@ module.exports = {
                 set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
         { transaction },
       );
-
-      // Remove metadata column.
-      await queryInterface.removeColumn('Resources', 'nationalCenters', { transaction });
 
       // Remove metadata column.
       await queryInterface.removeColumn('Resources', 'metadata', { transaction });
