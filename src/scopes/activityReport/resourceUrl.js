@@ -84,7 +84,7 @@ const nextStepsResourcePosNeg = (pos = true) => {
 };
 
 export function withResourceUrl(query) {
-  const search = [`%${query.toLowerCase()}%`];
+  const search = [`%${query.map((st) => st.toLowerCase())}%`];
 
   return {
     [Op.or]: [
@@ -97,7 +97,7 @@ export function withResourceUrl(query) {
 }
 
 export function withoutResourceUrl(query) {
-  const search = [`%${query.toLowerCase()}%`];
+  const search = [`%${query.map((st) => st.toLowerCase())}%`];
 
   return {
     [Op.and]: [
