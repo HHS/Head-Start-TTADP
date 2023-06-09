@@ -2,43 +2,57 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const nextStepsPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "NextSteps".note';
+  const a = pos
+    ? ''
+    : `"NextSteps".note IS NULL
+    OR`;
 
   return `
   SELECT DISTINCT
     "NextSteps"."activityReportId"
   FROM "NextSteps"
-  WHERE "NextSteps".note${a}`;
+  WHERE ${a} LOWER("NextSteps".note)`;
 };
 
 const argsPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReportGoals".name';
+  const a = pos
+    ? ''
+    : `"ActivityReportGoals".name IS NULL
+    OR`;
 
   return `
   SELECT DISTINCT
     "ActivityReportGoals"."activityReportId"
   FROM "ActivityReportGoals"
-  WHERE "ActivityReportGoals".name${a}`;
+  WHERE ${a} LOWER("ActivityReportGoals".name)`;
 };
 
 const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
-  const a = pos ? '' : ` IS NULL OR concat_ws(' ', "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided")`;
+  const a = pos
+    ? ''
+    : `"ActivityReportObjectives".title IS NULL
+    OR "ActivityReportObjectives"."ttaProvided" IS NULL
+    OR`;
 
   return `
   SELECT DISTINCT
     "ActivityReportObjectives"."activityReportId"
   FROM "ActivityReportObjectives"postgres
-  WHERE concat_ws(' ', "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided")${a}`;
+  WHERE ${a} LOWER(concat_ws(' ', "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided"))`;
 };
 
 const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
-  const a = pos ? '' : ` IS NULL OR concat_ws(' ', "ActivityReports"."context", "ActivityReports"."additionalNotes")`;
+  const a = pos
+    ? ''
+    : `"ActivityReports"."context" IS NULL
+    OR "ActivityReports"."additionalNotes" IS NULL
+    OR`;
 
   return `
   SELECT DISTINCT
     "ActivityReports"."id"
   FROM "ActivityReports"
-  WHERE concat_ws(' ', "ActivityReports"."context", "ActivityReports"."additionalNotes")${a}`;
+  WHERE ${a} LOWER(concat_ws(' ', "ActivityReports"."context", "ActivityReports"."additionalNotes"))`;
 };
 
 export function withReportText(searchText) {
@@ -46,10 +60,10 @@ export function withReportText(searchText) {
 
   return {
     [Op.or]: [
-      filterAssociation(nextStepsPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(argsPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(objectiveTitleAndTtaProvidedPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportContextandAdditionalNotesPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(nextStepsPosNeg(true), search, false, 'LIKE'),
+      filterAssociation(argsPosNeg(true), search, false, 'LIKE'),
+      filterAssociation(objectiveTitleAndTtaProvidedPosNeg(true), search, false, 'LIKE'),
+      filterAssociation(activityReportContextandAdditionalNotesPosNeg(true), search, false, 'LIKE'),
     ],
   };
 }
@@ -59,10 +73,10 @@ export function withoutReportText(searchText) {
 
   return {
     [Op.and]: [
-      filterAssociation(nextStepsPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(argsPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTitleAndTtaProvidedPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportContextandAdditionalNotesPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(nextStepsPosNeg(false), search, false, 'NOT LIKE'),
+      filterAssociation(argsPosNeg(false), search, false, 'NOT LIKE'),
+      filterAssociation(objectiveTitleAndTtaProvidedPosNeg(false), search, false, 'NOT LIKE'),
+      filterAssociation(activityReportContextandAdditionalNotesPosNeg(false), search, false, 'NOT LIKE'),
     ],
   };
 }
