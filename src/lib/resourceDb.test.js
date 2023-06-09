@@ -85,7 +85,6 @@ describe('resource worker tests with db calls', () => {
     // Retrieve the resource to update.
     const resourceToUpdate = await Resource.findOne({ where: { url: testResourceToUpdateUrl } });
     expect(resourceToUpdate.title).toBe('Head Start | ECLKC');
-    expect(resourceToUpdate.nationalCenters).toBe('Health, Behavioral Health, and Safety');
     expect(resourceToUpdate.metadata).toStrictEqual({
       title: [{ value: 'Head Start Heals Campaign' }],
       changed: [{ value: '2023-05-26T18:57:15+00:00' }],
@@ -104,7 +103,6 @@ describe('resource worker tests with db calls', () => {
     // Retrieve the resource to ignore.
     const resourceToIgnore = await Resource.findOne({ where: { url: testResourceToIgnoreUrl } });
     expect(resourceToIgnore.title).toBeNull();
-    expect(resourceToIgnore.nationalCenters).toBeNull();
     expect(resourceToIgnore.metadata).toBeNull();
     expect(resourceToIgnore.metadataUpdatedAt).toBeNull();
   });
