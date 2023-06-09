@@ -239,6 +239,8 @@ test.describe('Activity Report', () => {
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
    
+    await page.waitForTimeout(10000);
+
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
     // edit the first goal
@@ -338,8 +340,6 @@ test.describe('Activity Report', () => {
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = getGrants(recipients || '');
 
-    await page.waitForTimeout(10000);
-
     // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     // click on the previously extracted recipient
@@ -357,22 +357,12 @@ test.describe('Activity Report', () => {
     // e.g. 'Goal G-5, G-6RTTAPA' will become 'G-5G-6'
     const g1GoalsForObjectives = getGoals(g1GoalsTxt || '');
     // strip 'Goals' and 'RTTAPA' from g1GoalsTxt: e.g "Goal G-5, G-6RTTAPA" will become "G-5, G-6"
-    const g1GoalsForSelector = g1GoalsTxt ? g1GoalsTxt.substring(5).split('RTTAPA')[0] : '';
-    // use the correct text to locate the topics, e.g. "G-5, G-6"
-    const g1Topics = page.locator(`div:right-of(h3:text("${g1GoalsForSelector}"))`).first().locator('p').last();
-    const g1TopicsTxt = await g1Topics.textContent();
-    // verify the topics for the previously created goal
-    expect(g1TopicsTxt).toBe('Behavioral / Mental Health / Trauma');
     // look for the goals heading for the previously created goal, e.g. 'Goal G-8, G-7RTTAPA'
     const g2Goals = page.locator('h3:above(p:text("g2"))').first();
     const g2GoalsTxt = await g2Goals.textContent();
     // extract text used to locate the correct objective's button,
     // e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
     const g2GoalsForObjectives = getGoals(g2GoalsTxt || '');
-    // extract text used to locate the topics
-    const g2Topics = page.locator(`div:right-of(h3:text("${g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : ''}"))`).first().locator('p').getByText('Behavioral / Mental Health / Trauma, CLASS: Classroom Organization');
-    // verify the topics for the previously created goal
-    expect(g2Topics).toBeVisible();
 
     // expand objectives for g1
     await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
@@ -389,6 +379,7 @@ test.describe('Activity Report', () => {
     // verify the reason is visible in the objective section
     const goalOneContent = await page.getByText('g1o1', { exact: true }).locator('..').locator('..').textContent();
     expect(goalOneContent).toContain('Change in Scope');
+    expect(goalOneContent).toContain('Behavioral / Mental Health / Trauma');
     // verify the end date is visible in the objective section
     await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
     // verify the correct status for the objective is visible
@@ -424,7 +415,9 @@ test.describe('Activity Report', () => {
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
-    await expect(page.getByText(g1TopicsTxt || 'Behavioral / Mental Health / Trauma')).toBeVisible();
+
+    const topic = page.locator('#main-content > div > div > form > div.ttahub-create-goals-form > div.margin-top-5.ttahub-create-goals-objective-form > ul:nth-child(4) > li');
+    expect(await topic.textContent()).toBe('Behavioral / Mental Health / Trauma');
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 

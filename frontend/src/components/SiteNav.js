@@ -92,7 +92,7 @@ const SiteNav = ({
                   <FeatureFlag flag="training_reports">
                     <li>
                       <NavLink
-                        to="/training-reports"
+                        to="/training-reports/not-started"
                       >
                         Training Reports
                       </NavLink>
