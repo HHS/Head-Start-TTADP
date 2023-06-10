@@ -4,8 +4,7 @@ import { filterAssociation } from './utils';
 const activityReportResourcePosNeg = (pos = true) => {
   const a = pos
     ? ''
-    : `bool_or("Resources"."url" IS NULL
-    OR "Resources"."title" IS NULL)
+    : `bool_or("Resources"."url" IS NULL)
     OR`;
 
   return `
@@ -23,8 +22,7 @@ const activityReportResourcePosNeg = (pos = true) => {
 const activityReportGoalResourcePosNeg = (pos = true) => {
   const a = pos
     ? ''
-    : `bool_or("Resources"."url" IS NULL
-    OR "Resources"."title" IS NULL)
+    : `bool_or("Resources"."url" IS NULL)
     OR`;
 
   return `
@@ -44,8 +42,7 @@ const activityReportGoalResourcePosNeg = (pos = true) => {
 const activityReportObjectiveResourcePosNeg = (pos = true) => {
   const a = pos
     ? ''
-    : `bool_or("Resources"."url" IS NULL
-    OR "Resources"."title" IS NULL)
+    : `bool_or("Resources"."url" IS NULL)
     OR`;
 
   return `
@@ -65,8 +62,7 @@ const activityReportObjectiveResourcePosNeg = (pos = true) => {
 const nextStepsResourcePosNeg = (pos = true) => {
   const a = pos
     ? ''
-    : `bool_or("Resources"."url" IS NULL
-    OR "Resources"."title" IS NULL)
+    : `bool_or("Resources"."url" IS NULL)
     OR`;
 
   return `

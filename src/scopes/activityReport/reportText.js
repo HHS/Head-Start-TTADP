@@ -53,8 +53,7 @@ const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
 const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
   const a = pos
     ? ''
-    : `bool_or("ActivityReports"."context" IS NULL
-    OR "ActivityReports"."additionalNotes" IS NULL)
+    : `bool_or("ActivityReports"."context" IS NULL)
     OR`;
 
   return `
