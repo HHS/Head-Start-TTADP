@@ -24,63 +24,60 @@ const getPageScrapeValues = async (resourceUrl, isEclkc) => {
       individualHooks: false,
     });
 
-    // If we don't update anything throw an error to retry.
-    if (updatedCnt[0] === 0) {
-      throw Error('Failed to update db resource.');
-    }
-
     return updatedCnt[0];
   }
 
-  return 0;
+  return -1;
 };
 
 const getMetadataValues = async (resourceId, resourceUrl) => {
   // Attempt to get the resource metadata (if valid ECLKC resource).
   // Sample: https://eclkc.ohs.acf.hhs.gov/mental-health/article/head-start-heals-campaign?_format=json
-  try {
-    const metadataUrl = `${resourceUrl}?_format=json`;
-    const res = await axios.get(metadataUrl, { maxRedirects: 3 });
-    const metadata = res.data;
+  const metadataUrl = `${resourceUrl}?_format=json`;
+  const res = await axios.get(metadataUrl, { maxRedirects: 3 });
+  const metadata = res.data;
+  const { title } = metadata;
 
-    // get created.
-    const { created } = metadata;
-    // get changed.
-    const { changed } = metadata;
-    // get title.
-    const { title } = metadata;
-    // get field_taxonomy_national_centers.
-    // eslint-disable-next-line max-len
-    const fieldTaxonomyNationalCenters = metadata.field_taxonomy_national_centers;
-    // get the field_taxonomy_topic.
-    const fieldTaxonomyTopic = metadata.field_taxonomy_topic;
-    // get the langcode.
-    const { langcode } = metadata;
-    // get the field_context.
-    const fieldContext = metadata.field_context;
-
-    // Create the metadata object.
-    const metadataObj = {
-      created,
-      changed,
-      title,
-      fieldTaxonomyNationalCenters,
-      fieldTaxonomyTopic,
-      langcode,
-      fieldContext,
-    };
-
-    // Update URL in DB.
-    await Resource.update({
-      metadata: metadataObj,
-      metadataUpdatedAt: new Date(),
-    }, {
-      where: { url: resourceUrl },
-      individualHooks: false,
-    });
-  } catch (error) {
-    auditLogger.error(`Resource Queue: Unable to retrieve ECLKC metadata for Resource (ID: ${resourceId} URL: ${resourceUrl}).`, error);
+  if (!title) {
+    return -1;
   }
+  // get created.
+  const { created } = metadata;
+  // get changed.
+  const { changed } = metadata;
+  // get title.
+
+  // get field_taxonomy_national_centers.
+  // eslint-disable-next-line max-len
+  const fieldTaxonomyNationalCenters = metadata.field_taxonomy_national_centers;
+  // get the field_taxonomy_topic.
+  const fieldTaxonomyTopic = metadata.field_taxonomy_topic;
+  // get the langcode.
+  const { langcode } = metadata;
+  // get the field_context.
+  const fieldContext = metadata.field_context;
+
+  // Create the metadata object.
+  const metadataObj = {
+    created,
+    changed,
+    title,
+    fieldTaxonomyNationalCenters,
+    fieldTaxonomyTopic,
+    langcode,
+    fieldContext,
+  };
+
+  // Update URL in DB.
+  const updatedCnt = await Resource.update({
+    title: title[0].value,
+    metadata: metadataObj,
+    metadataUpdatedAt: new Date(),
+  }, {
+    where: { url: resourceUrl },
+    individualHooks: false,
+  });
+  return updatedCnt[0];
 };
 
 const getResourceMetaDataJob = async (job) => {
@@ -89,22 +86,32 @@ const getResourceMetaDataJob = async (job) => {
   } = job.data;
 
   try {
-    // 1.) Determine if this is an ECLKC resource.
+    // Determine if this is an ECLKC resource.
     const isEclkc = resourceUrl.includes('eclkc.ohs.acf.hhs.gov');
 
-    // 2.) Scrape page title for all pages.
-    const updated = await getPageScrapeValues(resourceUrl, isEclkc);
-    if (updated === 0) {
+    let updatedCount;
+    if (!isEclkc) {
+      // Scrape page title for non-eclkc resource.
+      updatedCount = await getPageScrapeValues(resourceUrl, isEclkc);
+      if (updatedCount === -1) {
+        return ({ status: httpCodes.NOT_FOUND, data: { url: resourceUrl } });
+      }
+      if (updatedCount === 0) {
       // We want to cause a retry.
-      auditLogger.info(`Resource Queue: Warning, unable to retrieve resource title for resource '${resourceUrl}'.`);
-      return ({ status: httpCodes.NOT_FOUND, data: { url: resourceUrl } });
-    }
-
-    // 3.) Get metadata (if ECLKC resource).
-    if (isEclkc) {
-      await getMetadataValues(resourceId, resourceUrl);
+        auditLogger.error(`Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}'.`);
+        throw Error('Failed to retrieve resource TITLE, attempting retry...');
+      }
     } else {
-      auditLogger.info(`Resource Queue: Warning, not a ECLKC resource SKIPPING metadata collection for: '${resourceUrl}'.`);
+      // Get metadata for ECLKC resource.
+      updatedCount = await getMetadataValues(resourceId, resourceUrl);
+      if (updatedCount === -1) {
+        return ({ status: httpCodes.NOT_FOUND, data: { url: resourceUrl } });
+      }
+      if (updatedCount === 0) {
+        // We want to cause a retry.
+        auditLogger.error(`Resource Queue: Warning, unable to retrieve resource METADATA for resource '${resourceUrl}'.`);
+        throw Error('Failed to retrieve resource METADATA, attempting retry...');
+      }
     }
 
     logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
