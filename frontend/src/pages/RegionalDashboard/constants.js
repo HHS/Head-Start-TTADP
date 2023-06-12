@@ -12,6 +12,7 @@ import {
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   participantsFilter,
   myReportsFilter,
@@ -24,7 +25,7 @@ import {
 
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const DASHBOARD_FILTER_CONFIG = [
+const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   deliveryMethodFilter,
@@ -41,9 +42,15 @@ export const DASHBOARD_FILTER_CONFIG = [
   reportTextFilter,
   resourceAttachmentFilter,
   resourceUrlFilter,
+  singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort by display prop
+DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { DASHBOARD_FILTER_CONFIG };

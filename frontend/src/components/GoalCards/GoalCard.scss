@@ -1,7 +1,7 @@
 @use '../../colors' as *;
 
 $min-width-text-column: 428px;
-$min-width-topics-column: 220px;
+$min-width-source-column: 220px;
 $min-width-date-column: 140px;
 $max-width-date-column: 50%;
 
@@ -23,22 +23,14 @@ $max-width-date-column: 50%;
   margin-bottom: 16px;
 }
 
-.ttahub-goal-card__goal-topics-tool-tip {
-  display: none;
-}
-
-.ttahub-goal-card__goal-topics-csv {
-  display: block;
-}
-
 @media(min-width: 627px) {
   .ttahub-goal-card__goal-column:not(:nth-child(n+3):nth-child(-n+5)) {
     margin-bottom: 16px;
   }
 }
 
-.ttahub-goal-card__goal-column__goal-topics {
-  flex-basis: clamp($min-width-topics-column, 100%, 100%);
+.ttahub-goal-card__goal-column__goal-source {
+  flex-basis: clamp($min-width-source-column, 100%, 100%);
 
 }
 
@@ -58,34 +50,27 @@ $max-width-date-column: 50%;
     flex-basis: clamp($min-width-text-column, 60%, 100%);
   }
 
-  .ttahub-goal-card__goal-column__goal-topics {
+  .ttahub-goal-card__goal-column__goal-source {
     flex-basis: clamp(200px, 40%, 100%);
   }
 }
 
 @media(min-width: 1475px) {
 
-  .ttahub-goal-card__goal-column__goal-topics p {
+  .ttahub-goal-card__goal-column__goal-source p {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 220px;
   }
 
-  .ttahub-goal-card__goal-topics-csv {
-    display: none;
-  }
-
-  .ttahub-goal-card__goal-topics-tool-tip {
-    display: block;
-  }
 
   .ttahub-goal-card__goal-column__goal-text {
-    flex-basis: clamp($min-width-text-column, 40%, 100%);
+    flex-basis: clamp($min-width-source-column, 40%, 100%);
   }
 
-  .ttahub-goal-card__goal-column__goal-topics {
-    flex-basis: clamp($min-width-topics-column, 20%, $min-width-topics-column);
+  .ttahub-goal-card__goal-column__goal-source {
+    flex-basis: clamp($min-width-source-column, 20%, $min-width-source-column);
   }
 
   .ttahub-goal-card__goal-column__created-on,

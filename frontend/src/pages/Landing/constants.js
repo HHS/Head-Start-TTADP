@@ -11,6 +11,7 @@ import {
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -23,7 +24,7 @@ import {
 
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const LANDING_BASE_FILTER_CONFIG = [
+const LANDING_BASE_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -40,13 +41,14 @@ export const LANDING_BASE_FILTER_CONFIG = [
   resourceAttachmentFilter,
   resourceUrlFilter,
   specialistRoleFilter,
+  singleOrMultiRecipientsFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
 ];
 
-export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
+const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -63,9 +65,16 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   reportTextFilter,
   resourceAttachmentFilter,
   resourceUrlFilter,
+  singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort both by display prop
+LANDING_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+LANDING_FILTER_CONFIG_WITH_REGIONS.sort((a, b) => a.display.localeCompare(b.display));
+
+export { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS };

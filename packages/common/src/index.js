@@ -111,6 +111,13 @@ const REPORT_STATUSES = {
 };
 exports.REPORT_STATUSES = REPORT_STATUSES;
 
+const TRAINING_REPORT_STATUSES = {
+  NOT_STARTED: 'not-started',
+  IN_PROGRESS: 'in-progress',
+  COMPLETE: 'complete',
+};
+exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
+
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool (ages 3-5)',
@@ -174,6 +181,16 @@ const GOAL_SUSPEND_REASONS = [
 ];
 exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
+const GOAL_SOURCES = [
+  'Federal monitoring issues, including CLASS and RANs',
+  'RTTAPA development',
+  'Recipient request',
+  'Regional office priority',
+  'Training event follow-up',
+];
+
+exports.GOAL_SOURCES = GOAL_SOURCES;
+
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
@@ -187,6 +204,8 @@ const SCOPE_IDS = {
   READ_ACTIVITY_REPORTS: 4,
   APPROVE_ACTIVITY_REPORTS: 5,
   UNLOCK_APPROVED_REPORTS: 6,
+  READ_WRITE_TRAINING_REPORTS: 7,
+  READ_TRAINING_REPORTS: 8,
 };
 exports.SCOPE_IDS = SCOPE_IDS;
 

@@ -6,6 +6,8 @@ yarn-error.log
 docs/circleci/test_report.md
 lcov.info
 playwright
+tests/api/report
+tests/e2e/report
 
 # Ignore /doc => /docs symbolic link created for adr-tools
 /doc
@@ -36,3 +38,4 @@ newrelic_agent.log
 
 # DB files
 *.sql
+.vscode/settings.json

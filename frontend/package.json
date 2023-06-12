@@ -15,7 +15,7 @@
     "@fortawesome/pro-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
-    "@ttahub/common": "file:./../packages/common",
+    "@ttahub/common": "1.10.0",
     "@trussworks/react-uswds": "4.1.1",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
