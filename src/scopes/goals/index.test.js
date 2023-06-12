@@ -1111,20 +1111,20 @@ describe('goal filtersToScopes', () => {
         endDate: null,
       });
 
-      const aroRObjective = await Objective.create({
+      const aroObjective = await Objective.create({
         title: faker.lorem.sentence(),
         goalId: aroResourceGoal.id,
         ttaProvided: '',
       });
 
-      await ActivityReportObjective.create({
+      const aroObjectiveAro = await ActivityReportObjective.create({
         activityReportId: aroResourceReport.id,
-        objectiveId: aroRObjective.id,
+        objectiveId: aroObjective.id,
       });
 
       await ActivityReportObjectiveResource.create({
         resourceId: aroResource.id,
-        activityReportObjectiveId: aroRObjective.id,
+        activityReportObjectiveId: aroObjectiveAro.id,
       });
 
       arContextReport = await createReport({
