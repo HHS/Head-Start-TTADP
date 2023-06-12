@@ -219,7 +219,7 @@ export default function TrainingReports({ match }) {
               showHeaderBorder={false}
             >
               <Tabs tabs={tabValues} ariaLabel="Training events" />
-              <EventCards events={displayEvents} />
+              <EventCards events={displayEvents} eventType={status} />
             </WidgetContainer>
           </Grid>
         </Grid>
