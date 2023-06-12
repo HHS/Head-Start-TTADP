@@ -1,11 +1,35 @@
 #!/usr/bin/env bash
 set -e
 
-
+common_changed=false
+common_package_json_changed=false
+frontend_yarn_lock_changed=false
+backend_yarn_lock_changed=false
 files=$(git diff --cached --name-only)
+
 for f in $files
 do
+
+  # check if packages/common/src/index.js was changed
+  if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
+    common_changed=true
+  fi
+
+  # check if packages/common/package.json was changed
+  if [ -e "$f" ] && [[ $f == packages/common/package.json ]]; then
+    common_package_json_changed=true
+  fi
   
+  # check if frontend/yarn.lock was changed
+  if [ -e "$f" ] && [[ $f == frontend/yarn.lock ]]; then
+    frontend_yarn_lock_changed=true
+  fi
+  
+  # check if backend/yarn.lock was changed
+  if [ -e "$f" ] && [[ $f == backend/yarn.lock ]]; then
+    backend_yarn_lock_changed=true
+  fi
+
   # Format any *.tf files that were cached/staged
   if [ -e "$f" ] && [[ $f == *.tf ]]; then
     printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
@@ -25,3 +49,15 @@ do
     git add "$f"
   fi
 done
+
+if [ $common_changed = true ]; then
+  if [ $common_package_json_changed = false ]; then
+    echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to publish a new version."
+    exit 1
+  fi
+
+  if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
+    echo "ERROR: common/src/index.js was changed, but a yarn.lock file was not updated. Please make sure you've updated both yarn.lock files if you've updated the common/index.js file."
+    exit 1
+  fi
+fi

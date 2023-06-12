@@ -178,12 +178,20 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     let group;
+    let publicGroup;
     let grant;
 
     beforeAll(async () => {
       group = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
         userId: mockUser.id,
+        isPublic: false,
+      });
+
+      publicGroup = await Group.create({
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        userId: mockUserTwo.id,
+        isPublic: true,
       });
 
       grant = await createGrant({
@@ -195,6 +203,11 @@ describe('filtersToScopes', () => {
 
       await GroupGrant.create({
         groupId: group.id,
+        grantId: grant.id,
+      });
+
+      await GroupGrant.create({
+        groupId: publicGroup.id,
         grantId: grant.id,
       });
 
@@ -215,16 +228,20 @@ describe('filtersToScopes', () => {
 
     afterAll(async () => {
       await ActivityRecipient.destroy({
-        where: { activityReportId: [reportIncluded.id, reportExcluded.id] },
+        where: {
+          activityReportId: [
+            reportIncluded.id, reportExcluded.id,
+          ],
+        },
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded.id, reportExcluded.id] },
       });
       await GroupGrant.destroy({
-        where: { groupId: group.id },
+        where: { groupId: [group.id, publicGroup.id] },
       });
       await Group.destroy({
-        where: { id: group.id },
+        where: { id: [group.id, publicGroup.id] },
       });
       await Grant.destroy({
         where: { id: grant.id },
@@ -238,12 +255,35 @@ describe('filtersToScopes', () => {
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportIncluded.id]));
+      const groupIds = found.map((f) => f.id);
+      expect(groupIds).toContain(reportIncluded.id);
+    });
+
+    it('filters by public group', async () => {
+      const filters = { 'group.in': [String(publicGroup.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      const groupIds = found.map((f) => f.id);
+      expect(groupIds).toContain(reportIncluded.id);
     });
 
     it('filters out by group', async () => {
       const filters = { 'group.nin': [String(group.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      const foundIds = found.map((f) => f.id);
+      expect(foundIds).toContain(reportExcluded.id);
+      expect(foundIds).toContain(globallyExcludedReport.id);
+    });
+
+    it('filters out by public group', async () => {
+      const filters = { 'group.nin': [String(publicGroup.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
@@ -609,6 +649,178 @@ describe('filtersToScopes', () => {
         expect(found.length).toBe(2);
         expect(found.map((f) => f.id))
           .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+      });
+    });
+
+    describe('single or multi recipient', () => {
+      let multiRecipientReport;
+      let singleRecipientReport;
+      let excludedReport;
+
+      let multiRecipient1;
+      let multiRecipient2;
+
+      let singleRecipient;
+      let singleRecipient2; // Same UEI.
+
+      let excludedRecipient;
+
+      let multiRecipientGrant1;
+      let multiRecipientGrant2;
+      let singleRecipientGrant;
+      let singleRecipientGrant2;
+      let excludedGrant;
+
+      let recipientIds;
+      let grantIds;
+      let reportIds;
+
+      beforeAll(async () => {
+        // Recipients.
+        multiRecipient1 = await Recipient.create({
+          id: faker.datatype.number({ min: 64000 }),
+          name: faker.random.alphaNumeric(6),
+        });
+        multiRecipient2 = await Recipient.create({
+          id: faker.datatype.number({ min: 64000 }),
+          name: faker.random.alphaNumeric(6),
+          uei: faker.datatype.string(12),
+        });
+        singleRecipient = await Recipient.create({
+          id: faker.datatype.number({ min: 64000 }),
+          name: faker.random.alphaNumeric(6),
+          uei: 'sample-single-recipient-same-uei',
+        });
+        singleRecipient2 = await Recipient.create({
+          id: faker.datatype.number({ min: 64000 }),
+          name: faker.random.alphaNumeric(6),
+          uei: 'sample-single-recipient-same-uei',
+        });
+        excludedRecipient = await Recipient.create({
+          id: faker.datatype.number({ min: 64000 }),
+          name: faker.random.alphaNumeric(6),
+          uei: faker.datatype.string(12),
+        });
+
+        recipientIds = [
+          multiRecipient1.id,
+          multiRecipient2.id,
+          singleRecipient.id,
+          singleRecipient2.id,
+          excludedRecipient.id,
+        ];
+
+        // Grants.
+        multiRecipientGrant1 = await Grant.create({
+          id: faker.datatype.number({ min: 64000 }),
+          number: faker.datatype.string(6),
+          uei: faker.datatype.string(12),
+          recipientId: multiRecipient1.id,
+        });
+        multiRecipientGrant2 = await Grant.create({
+          id: faker.datatype.number({ min: 64000 }),
+          number: faker.datatype.string(6),
+          uei: faker.datatype.string(12),
+          recipientId: multiRecipient2.id,
+        });
+        singleRecipientGrant = await Grant.create({
+          id: faker.datatype.number({ min: 64000 }),
+          number: faker.datatype.string(6),
+          uei: faker.datatype.string(12),
+          recipientId: singleRecipient.id,
+        });
+        singleRecipientGrant2 = await Grant.create({
+          id: faker.datatype.number({ min: 64000 }),
+          number: faker.datatype.string(6),
+          uei: faker.datatype.string(12),
+          recipientId: singleRecipient2.id,
+        });
+        excludedGrant = await Grant.create({
+          id: faker.datatype.number({ min: 64000 }),
+          number: faker.datatype.string(6),
+          uei: faker.datatype.string(12),
+          recipientId: excludedRecipient.id,
+        });
+
+        grantIds = [
+          multiRecipientGrant1.id,
+          multiRecipientGrant2.id,
+          singleRecipientGrant.id,
+          singleRecipientGrant2.id,
+        ];
+
+        // Reports.
+        multiRecipientReport = await ActivityReport.create({ ...draftReport });
+        singleRecipientReport = await ActivityReport.create({ ...draftReport });
+        excludedReport = await ActivityReport.create({ ...draftReport });
+
+        reportIds = [multiRecipientReport.id, singleRecipientReport.id, excludedReport.id];
+
+        // Activity Recipients.
+        await ActivityRecipient.create({
+          activityReportId: multiRecipientReport.id,
+          grantId: multiRecipientGrant1.id,
+        });
+
+        await ActivityRecipient.create({
+          activityReportId: multiRecipientReport.id,
+          grantId: multiRecipientGrant2.id,
+        });
+
+        await ActivityRecipient.create({
+          activityReportId: singleRecipientReport.id,
+          grantId: singleRecipientGrant.id,
+        });
+
+        // Same UEI should count as single recipient.
+        await ActivityRecipient.create({
+          activityReportId: singleRecipientReport.id,
+          grantId: singleRecipientGrant2.id,
+        });
+
+        await ActivityRecipient.create({
+          activityReportId: excludedReport.id,
+          grantId: excludedGrant.id,
+        });
+      });
+
+      afterAll(async () => {
+        await ActivityRecipient.destroy({
+          where: {
+            activityReportId: reportIds,
+          },
+        });
+        await ActivityReport.destroy({
+          where: { id: reportIds },
+        });
+        await Grant.destroy({
+          where: { id: grantIds },
+        });
+        await Recipient.destroy({
+          where: { id: recipientIds },
+        });
+      });
+
+      it('retrieves reports with more than one recipient', async () => {
+        const filters = { 'singleOrMultiRecipients.in': ['multi-recipients'] };
+        const { activityReport: scope } = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: reportIds }] },
+        });
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([multiRecipientReport.id]));
+      });
+
+      it('retrieves reports with one recipient', async () => {
+        const filters = { 'singleOrMultiRecipients.in': ['single-recipient'] };
+        const { activityReport: scope } = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: reportIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([singleRecipientReport.id, excludedReport.id]));
       });
     });
 

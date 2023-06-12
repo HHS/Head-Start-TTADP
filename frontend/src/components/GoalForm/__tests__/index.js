@@ -63,6 +63,8 @@ describe('create goal', () => {
 
   const postResponse = [{
     id: 64175,
+    onApprovedAR: false,
+    sources: [],
     prompts: [],
     name: 'This is goal text',
     status: 'Draft',
@@ -134,7 +136,7 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -169,7 +171,7 @@ describe('create goal', () => {
 
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -211,7 +213,7 @@ describe('create goal', () => {
 
     // restore our fetch mock
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -301,7 +303,7 @@ describe('create goal', () => {
     renderForm(recipient);
 
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -323,7 +325,7 @@ describe('create goal', () => {
     expect(alert.textContent).toBe('There was an error saving your goal');
 
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -350,7 +352,7 @@ describe('create goal', () => {
     expect(alert.textContent).toBe(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -437,7 +439,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -473,7 +475,7 @@ describe('create goal', () => {
 
     // restore our fetch mock
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <title>Whats New</title>
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
@@ -592,7 +594,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <title>Whats New</title>
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
@@ -654,7 +656,7 @@ describe('create goal', () => {
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -747,7 +749,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
     fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -819,6 +821,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: null,
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',
@@ -858,14 +861,14 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],
-      grants: [{
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -897,6 +900,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',
@@ -946,6 +950,7 @@ describe('create goal', () => {
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       prompts: [],
+      sources: [],
       grants: [{
         id: 1,
         number: '1',
