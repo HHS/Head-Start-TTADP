@@ -95,15 +95,15 @@ describe('TrainingReports', () => {
 
   beforeEach(async () => {
     // Not started.
-    const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}`);
+    const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
     fetchMock.get(notStartedUrl, notStartedEvents);
 
     // In progress.
-    const inProgressUrl = join(eventUrl, `/${EVENT_STATUS.IN_PROGRESS}`);
+    const inProgressUrl = join(eventUrl, `/${EVENT_STATUS.IN_PROGRESS}?region.in[]=2`);
     fetchMock.get(inProgressUrl, inProgressEvents);
 
     // Complete.
-    const completeUrl = join(eventUrl, `/${EVENT_STATUS.COMPLETE}`);
+    const completeUrl = join(eventUrl, `/${EVENT_STATUS.COMPLETE}?region.in[]=2`);
     fetchMock.get(completeUrl, completeEvents);
   });
 
@@ -150,7 +150,7 @@ describe('TrainingReports', () => {
 
   it('renders the error message', async () => {
     // getEventsByStatus throws an error message.
-    fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}`), 500, { overwriteRoutes: true });
+    fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`), 500, { overwriteRoutes: true });
 
     act(() => {
       renderTrainingReports();
