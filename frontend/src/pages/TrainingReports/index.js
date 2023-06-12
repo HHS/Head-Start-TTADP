@@ -25,7 +25,8 @@ import AriaLiveContext from '../../AriaLiveContext';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { buildDefaultRegionFilters } from '../regionHelpers';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
 
 const FILTER_KEY = 'training-report-filters';
 
@@ -165,6 +166,13 @@ export default function TrainingReports({ match }) {
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
       <>
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
         {showAlert && message && (
           <Alert
             type="success"
