@@ -86,6 +86,7 @@ describe('RTTAPAHistory', () => {
               title: 'Objective 1',
               endDate: '2021-02-01',
               reasons: [],
+              topics: [],
               status: 'Not Started',
               grantNumbers: ['grant-1'],
               activityReports: [
