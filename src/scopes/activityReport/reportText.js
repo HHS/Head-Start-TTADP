@@ -14,7 +14,7 @@ const nextStepsPosNeg = (pos = true) => {
   LEFT JOIN "NextSteps"
   ON "NextSteps"."activityReportId" = "ActivityReports"."id"
   GROUP BY "ActivityReports"."id"
-  HAVING ${a} LOWER(STRING_AGG("NextSteps".note, CHR(10)))`;
+  HAVING ${a} STRING_AGG(LOWER("NextSteps".note), CHR(10))`;
 };
 
 const argsPosNeg = (pos = true) => {
@@ -30,7 +30,7 @@ const argsPosNeg = (pos = true) => {
   LEFT JOIN "ActivityReportGoals"
   ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
   GROUP BY "ActivityReports"."id"
-  HAVING ${a} LOWER(STRING_AGG("ActivityReportGoals".name, CHR(10)))`;
+  HAVING ${a} STRING_AGG(LOWER("ActivityReportGoals".name), CHR(10))`;
 };
 
 const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
@@ -47,7 +47,7 @@ const objectiveTitleAndTtaProvidedPosNeg = (pos = true) => {
   LEFT JOIN "ActivityReportObjectives"
   ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
   GROUP BY "ActivityReports"."id"
-  HAVING ${a} LOWER(STRING_AGG(concat_ws(CHR(10), "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided"), CHR(10)))`;
+  HAVING ${a} STRING_AGG(concat_ws(CHR(10), LOWER("ActivityReportObjectives".title), LOWER("ActivityReportObjectives"."ttaProvided")), CHR(10))`;
 };
 
 const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
@@ -61,7 +61,7 @@ const activityReportContextandAdditionalNotesPosNeg = (pos = true) => {
     "ActivityReports"."id"
   FROM "ActivityReports"
   GROUP BY "ActivityReports"."id"
-  HAVING ${a} LOWER(STRING_AGG(concat_ws(CHR(10), "ActivityReports"."context", "ActivityReports"."additionalNotes"), CHR(10)))`;
+  HAVING ${a} STRING_AGG(concat_ws(CHR(10), LOWER("ActivityReports"."context"), LOWER("ActivityReports"."additionalNotes")), CHR(10))`;
 };
 
 export function withReportText(searchText) {
