@@ -152,8 +152,7 @@ async function findEventHelperBlob({
   };
 
   let where: object = { data: { ...getClause() } };
-
-  if (scope) {
+  if (scopes) {
     where = {
       [Op.and]: scopes,
       ...where,
