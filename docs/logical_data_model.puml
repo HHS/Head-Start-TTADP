@@ -72,6 +72,7 @@ class ActivityReportGoals{
  endDate : date
  isRttapa : enum
  isActivelyEdited : boolean
+ source : enum
  * activityReportId : integer : REFERENCES "ActivityReports".id
  * goalId : integer : REFERENCES "Goals".id
 }
@@ -261,9 +262,9 @@ class Goals{
  isFromSmartsheetTtaPlan : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- endDate : date
  closeSuspendReason : enum
  closeSuspendContext : text
+ endDate : date
  previousStatus : text
  * onApprovedAR : boolean
  firstNotStartedAt : timestamp with time zone
@@ -280,6 +281,7 @@ class Goals{
  isRttapa : enum
  * onAR : boolean : false
  rtrOrder : integer : 1
+ source : enum
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
 }
