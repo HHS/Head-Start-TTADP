@@ -106,7 +106,7 @@ export default function TrainingReports({ match }) {
   const history = useHistory();
 
   let msg;
-  const message = history.location.state && history.location.state.message;
+  const message = 'This is a sample message.';
   if (message) {
     msg = (
       <>
@@ -177,6 +177,7 @@ export default function TrainingReports({ match }) {
           <Alert
             type="success"
             role="alert"
+            className="margin-bottom-2"
             noIcon
             cta={(
               <Button
