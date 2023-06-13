@@ -106,7 +106,7 @@ export default function TrainingReports({ match }) {
   const history = useHistory();
 
   let msg;
-  const message = 'This is a sample message.';
+  const message = history.location.state && history.location.state.message;
   if (message) {
     msg = (
       <>
