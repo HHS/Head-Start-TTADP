@@ -67,7 +67,7 @@ export const renderActivityReport = (id, currentPage = 'activity-summary', showL
         setAppLoadingText: jest.fn(),
       }}
       >
-        <UserContext.Provider value={{ user: { ...user, id: userId } }}>
+        <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
           <ActivityReport
             match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
             location={{
