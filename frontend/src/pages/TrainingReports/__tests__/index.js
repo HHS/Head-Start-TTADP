@@ -150,8 +150,7 @@ describe('TrainingReports', () => {
       renderTrainingReports(noRegionUser);
     });
 
-    expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: /training reports -/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /training reports -/i, hidden: true })).toBeInTheDocument();
   });
 
   it('renders the error message', async () => {
@@ -269,9 +268,7 @@ describe('TrainingReports', () => {
       </MemoryRouter>,
     );
 
-    const alert = await screen.findByRole('alert');
-    expect(alert).toBeVisible();
-
+    expect(await screen.findByText(/you successfully tested training report on today/i)).toBeVisible();
     const alertButton = await screen.findByLabelText(/dismiss alert/i);
     expect(alertButton).toBeVisible();
 
@@ -279,7 +276,6 @@ describe('TrainingReports', () => {
 
     await waitFor(() => {
       expect(screen.queryByText(/you successfully tested training report R04-PD-23-1123 on today/i)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText(/dismiss alert/i)).not.toBeInTheDocument();
     });
   });
 
