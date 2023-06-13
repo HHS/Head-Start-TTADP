@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { Op, cast } from 'sequelize';
+import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import { auditLogger } from '../logger';
@@ -9,7 +9,6 @@ import {
   CreateEventRequest,
   UpdateEventRequest,
 } from './types/event';
-import scope from '../models/scope';
 
 const {
   sequelize,
@@ -127,7 +126,7 @@ interface FindEventHelperBlobOptions {
   fallbackValue?: string;
   allowNull?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  scopes: object;
+  scopes: SequelizeWhereOptions[];
 }
 
 async function findEventHelperBlob({
