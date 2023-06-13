@@ -64,11 +64,6 @@ export default function TrainingReports({ match }) {
       : allRegionsFilters,
   );
 
-  const setFilters = useCallback((newFilters) => {
-    // pass through
-    setFiltersInHook(newFilters);
-  }, [setFiltersInHook]);
-
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
   useEffect(() => {
@@ -131,12 +126,12 @@ export default function TrainingReports({ match }) {
   const onApply = (newFilters, addBackDefaultRegions) => {
     if (addBackDefaultRegions) {
       // We always want the regions to appear in the URL.
-      setFilters([
+      setFiltersInHook([
         ...allRegionsFilters,
         ...newFilters,
       ]);
     } else {
-      setFilters([
+      setFiltersInHook([
         ...newFilters,
       ]);
     }
@@ -152,9 +147,9 @@ export default function TrainingReports({ match }) {
       newFilters.splice(index, 1);
       if (addBackDefaultRegions) {
         // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
+        setFiltersInHook([...allRegionsFilters, ...newFilters]);
       } else {
-        setFilters(newFilters);
+        setFiltersInHook(newFilters);
       }
     }
   };
@@ -170,7 +165,7 @@ export default function TrainingReports({ match }) {
           filters={filters}
           user={user}
           showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
           }
         />
         {showAlert && message && (
