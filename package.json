@@ -95,10 +95,7 @@
     "createAwsElasticSearchIndexes": "node ./build/server/src/tools/createAwsElasticSearchIndexesCli.js",
     "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js",
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
-    "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
-    "importSmartSheetEvent": "node ./build/server/src/tools/importSmartSheetCLI.js",
-    "importSmartSheetEvent:local": "./node_modules/.bin/babel-node ./src/tools/importSmartSheetCLI.js",
-    "publish:common": "yarn --cwd ./packages/common publish"
+    "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js"
   },
   "repository": {
     "type": "git",
@@ -185,6 +182,7 @@
       "<rootDir>/src/app.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,

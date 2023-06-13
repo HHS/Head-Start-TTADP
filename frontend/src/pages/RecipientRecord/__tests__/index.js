@@ -43,6 +43,7 @@ describe('recipient record page', () => {
   };
 
   const theMightyRecipient = {
+    id: 1,
     name: 'the Mighty Recipient',
     grants: [
       {
@@ -64,6 +65,8 @@ describe('recipient record page', () => {
     name: 'This is a goal name',
     status: 'In Progress',
     endDate: '10/08/2021',
+    sources: [],
+    prompts: [],
     grant: {
       id: 1,
       number: '1',
