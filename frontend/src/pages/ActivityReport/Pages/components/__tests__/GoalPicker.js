@@ -11,6 +11,7 @@ import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 
 import GoalPicker from '../GoalPicker';
+import UserContext from '../../../../../UserContext';
 
 const defaultSelectedGoals = [
   {
@@ -41,14 +42,21 @@ const GP = ({ availableGoals, selectedGoals }) => {
       isAppLoading: false,
     }}
     >
-      <FormProvider {...hookForm}>
-        <GoalPicker
-          availableGoals={availableGoals}
-          roles={['central office']}
-          grantIds={[]}
-          reportId={1}
-        />
-      </FormProvider>
+      <UserContext.Provider value={{
+        user: {
+          id: 1, permissions: [], name: 'Ted User', flags: [],
+        },
+      }}
+      >
+        <FormProvider {...hookForm}>
+          <GoalPicker
+            availableGoals={availableGoals}
+            roles={['central office']}
+            grantIds={[]}
+            reportId={1}
+          />
+        </FormProvider>
+      </UserContext.Provider>
     </AppLoadingContext.Provider>
   );
 };
