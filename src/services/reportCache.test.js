@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import faker from '@faker-js/faker';
+import { REPORT_STATUSES, GOAL_SOURCES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -23,11 +24,113 @@ import db, {
   Topic,
 } from '../models';
 import {
+  cacheGoalMetadata,
   cacheObjectiveMetadata,
 } from './reportCache';
 import { processObjectiveForResourcesById } from './resource';
+import { createReport, destroyReport } from '../testUtils';
+import { GOAL_STATUS } from '../constants';
 
-describe('reportCache', () => {
+describe('cacheGoalMetadata', () => {
+  let activityReport;
+  let goal;
+
+  const mockUser = {
+    id: faker.datatype.number(),
+    homeRegionId: 1,
+    name: 'user13706689',
+    hsesUsername: 'user13706689',
+    hsesUserId: 'user13706689',
+  };
+
+  beforeAll(async () => {
+    await User.create(mockUser);
+    const grantId = faker.datatype.number();
+
+    activityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId,
+        },
+      ],
+      userId: mockUser.id,
+    });
+
+    goal = await Goal.create({
+      grantId,
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.DRAFT,
+      timeframe: 'Short Term',
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      endDate: null,
+      isRttapa: null,
+      isActivelyEdited: false,
+      source: GOAL_SOURCES[0],
+    });
+  });
+
+  afterAll(async () => {
+    await ActivityReportGoal.destroy({ where: { activityReportId: activityReport.id } });
+    await destroyReport(activityReport);
+    await Goal.destroy({ where: { id: goal.id } });
+    await User.destroy({ where: { id: mockUser.id } });
+  });
+
+  it('should cache goal metadata', async () => {
+    let arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+      },
+    });
+
+    expect(arg).toHaveLength(0);
+
+    await cacheGoalMetadata(goal, activityReport.id, false);
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+      },
+    });
+
+    expect(arg).toHaveLength(1);
+
+    const data = {
+      name: goal.name,
+      status: GOAL_STATUS.DRAFT,
+      timeframe: 'Short Term',
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      endDate: null,
+      isRttapa: null,
+      isActivelyEdited: false,
+      source: GOAL_SOURCES[0],
+    };
+
+    expect(arg[0].dataValues).toMatchObject(data);
+
+    await cacheGoalMetadata(goal, activityReport.id, true);
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+      },
+    });
+
+    const updatedData = {
+      ...data,
+      isActivelyEdited: true,
+    };
+    expect(arg).toHaveLength(1);
+    expect(arg[0].dataValues).toMatchObject(updatedData);
+  });
+});
+
+describe('cacheObjectiveMetadata', () => {
   const mockUser = {
     name: 'Joe Green',
     phoneNumber: '555-555-554',
@@ -73,6 +176,7 @@ describe('reportCache', () => {
     id: 20850000,
     status: 'Not Started',
     timeframe: 'None',
+    source: GOAL_SOURCES[0],
   };
 
   const mockObjective = {

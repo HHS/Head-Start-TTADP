@@ -243,10 +243,13 @@ describe('ActivityReport', () => {
         activityRecipients: [{
           activityRecipientId: 1,
         }],
-        goals: [],
-        goalsAndObjectives: [
-          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
-          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
+        goals: [
+          {
+            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
+          },
+          {
+            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [], source: '',
+          },
         ],
       };
 
@@ -256,10 +259,13 @@ describe('ActivityReport', () => {
         }, {
           activityRecipientId: 1,
         }],
-        goals: [],
-        goalsAndObjectives: [
-          { name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }] },
-          { name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: 'something' },
+        goals: [
+          {
+            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
+          },
+          {
+            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [], source: '',
+          },
         ],
       };
 
@@ -287,6 +293,7 @@ describe('ActivityReport', () => {
             isActivelyEdited: true,
             name: 'goal 1',
             prompts: [],
+            source: '',
           },
           {
             activityReportGoals: [
@@ -301,6 +308,7 @@ describe('ActivityReport', () => {
             isActivelyEdited: false,
             name: 'goal 2',
             prompts: [],
+            source: '',
           },
         ],
         recipientsWhoHaveGoalsThatShouldBeRemoved: [],
