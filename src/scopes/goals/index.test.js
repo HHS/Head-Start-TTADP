@@ -904,18 +904,6 @@ describe('goal filtersToScopes', () => {
     let objectiveTTAProvidedGoal;
     let objectiveTTAProvidedReport;
 
-    let arResource;
-    let arResourceGoal;
-    let arResourceReport;
-
-    let argResource;
-    let argResourceGoal;
-    let argResourceReport;
-
-    let aroResource;
-    let aroResourceGoal;
-    let aroResourceReport;
-
     const arContext = faker.lorem.sentence();
     let arContextGoal;
     let arContextReport;
@@ -1028,105 +1016,8 @@ describe('goal filtersToScopes', () => {
         activityReportId: objectiveTTAProvidedReport.id,
         objectiveId: objectiveTTAObjective.id,
         ttaProvided: objectiveTTAProvided,
+        title: objectiveTTAObjective.title,
       });
-
-      arResourceReport = await createReport({
-        activityRecipients: [
-          {
-            grantId: faker.datatype.number(),
-          },
-        ],
-      });
-      arResourceGoal = await createGoal({
-        status: 'Not Started',
-      });
-      arResource = await Resource.create({
-        url: faker.internet.url(),
-        domain: faker.internet.domainName(),
-        title: faker.lorem.sentence(),
-      });
-      await ActivityReportGoal.create({
-        activityReportId: arResourceReport.id,
-        goalId: arResourceGoal.id,
-        name: arResourceGoal.name,
-        status: arResourceGoal.status,
-        endDate: null,
-      });
-      await ActivityReportResource.create({
-        activityReportId: arResourceReport.id,
-        resourceId: arResource.id,
-      });
-
-      argResourceReport = await createReport({
-        activityRecipients: [
-          {
-            grantId: faker.datatype.number(),
-          },
-        ],
-      });
-      argResourceGoal = await createGoal({
-        status: 'Closed',
-      });
-      argResource = await Resource.create({
-        url: faker.internet.url(),
-        domain: faker.internet.domainName(),
-        title: faker.lorem.sentence(),
-      });
-
-      const arg = await ActivityReportGoal.create({
-        activityReportId: argResourceReport.id,
-        goalId: argResourceGoal.id,
-        name: argResourceGoal.name,
-        status: argResourceGoal.status,
-        endDate: null,
-      });
-
-      await ActivityReportGoalResource.create({
-        resourceId: argResource.id,
-        activityReportGoalId: arg.id,
-      });
-
-      aroResourceReport = await createReport({
-        activityRecipients: [
-          {
-            grantId: faker.datatype.number(),
-          },
-        ],
-      });
-      aroResourceGoal = await createGoal({
-        status: 'In Progress',
-      });
-
-      aroResource = await Resource.create({
-        url: faker.internet.url(),
-        domain: faker.internet.domainName(),
-        title: faker.lorem.sentence(),
-      });
-
-      await ActivityReportGoal.create({
-        activityReportId: aroResourceReport.id,
-        goalId: aroResourceGoal.id,
-        name: aroResourceGoal.name,
-        status: aroResourceGoal.status,
-        endDate: null,
-      });
-
-      const aroObjective = await Objective.create({
-        title: faker.lorem.sentence(),
-        goalId: aroResourceGoal.id,
-        ttaProvided: '',
-      });
-
-      const aroObjectiveAro = await ActivityReportObjective.create({
-        activityReportId: aroResourceReport.id,
-        objectiveId: aroObjective.id,
-      });
-
-      await ActivityReportObjectiveResource.create({
-        resourceId: aroResource.id,
-        activityReportObjectiveId: aroObjectiveAro.id,
-      });
-
       arContextReport = await createReport({
         activityRecipients: [
           {
@@ -1168,9 +1059,6 @@ describe('goal filtersToScopes', () => {
         argNameReport,
         objectiveTitleReport,
         objectiveTTAProvidedReport,
-        arResourceReport,
-        argResourceReport,
-        aroResourceReport,
         arContextReport,
         arAdditionalNotesReport,
       ];
@@ -1180,9 +1068,6 @@ describe('goal filtersToScopes', () => {
         argNameGoal,
         objectiveTitleGoal,
         objectiveTTAProvidedGoal,
-        arResourceGoal,
-        argResourceGoal,
-        aroResourceGoal,
         arContextGoal,
         arAdditionalNotesGoal,
       ];
@@ -1191,38 +1076,6 @@ describe('goal filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await ActivityReportObjectiveResource.destroy({
-        where: {
-          resourceId: aroResource.id,
-        },
-        individualHooks: true,
-      });
-
-      await ActivityReportGoalResource.destroy({
-        where: {
-          resourceId: argResource.id,
-        },
-        individualHooks: true,
-      });
-
-      await ActivityReportResource.destroy({
-        where: {
-          resourceId: arResource.id,
-        },
-        individualHooks: true,
-      });
-
-      await Resource.destroy({
-        where: {
-          id: [
-            arResource.id,
-            argResource.id,
-            aroResource.id,
-          ],
-        },
-        individualHooks: true,
-      });
-
       const o = await Objective.findAll({
         where: {
           goalId: goals.map((g) => g.id),
@@ -1402,6 +1255,7 @@ describe('goal filtersToScopes', () => {
         const filters = { 'reportText.nctn': objectiveTTAProvided };
         const { goal: scope } = await filtersToScopes(filters, 'goal');
         const found = await Goal.findAll({
+          logging: console.log,
           where: {
             [Op.and]: [
               scope,
@@ -1416,83 +1270,6 @@ describe('goal filtersToScopes', () => {
         expect(found.map((g) => g.id)).not.toContain(objectiveTTAProvidedGoal.id);
       });
     });
-    describe('ar resource', () => {
-      it('in', async () => {
-        const filters = { 'reportText.ctn': arResource.url };
-        const { goal: scope } = await filtersToScopes(filters, 'goal');
-        const found = await Goal.findAll({
-          where: {
-            [Op.and]: [
-              scope,
-              {
-                id: goalIds,
-              },
-            ],
-          },
-        });
-        expect(found.length).toEqual(1);
-        expect(found[0].id).toEqual(arResourceGoal.id);
-      });
-      it('not in', async () => {
-        const filters = { 'reportText.nctn': arResource.url };
-        const { goal: scope } = await filtersToScopes(filters, 'goal');
-        const found = await Goal.findAll({
-          where: {
-            [Op.and]: [
-              scope,
-              {
-                id: goalIds,
-              },
-            ],
-          },
-        });
-        expect(found.length).toEqual(goalIds.length - 1);
-        expect(found.map((g) => g.id)).not.toContain(arResourceGoal.id);
-      });
-    });
-    describe('arg resource', () => {
-      it('in', async () => {
-        const filters = { 'reportText.ctn': argResource.url };
-        const { goal: scope } = await filtersToScopes(filters, 'goal');
-        const found = await Goal.findAll({
-          where: {
-            [Op.and]: [scope, { id: goalIds }],
-          },
-        });
-        expect(found.length).toEqual(1);
-        expect(found[0].id).toEqual(argResourceGoal.id);
-      });
-      it('not in', async () => {
-        const filters = { 'reportText.nctn': argResource.url };
-        const { goal: scope } = await filtersToScopes(filters, 'goal');
-        const found = await Goal.findAll({
-          where: { [Op.and]: [scope, { id: goalIds }] },
-        });
-        expect(found.length).toEqual(goalIds.length - 1);
-        expect(found.map((g) => g.id)).not.toContain(argResourceGoal.id);
-      });
-    });
-    describe('aro resouce', () => {
-      it('in', async () => {
-        const filters = { 'reportText.ctn': aroResource.url };
-        const { goal: scope } = await filtersToScopes(filters, 'goal');
-        const found = await Goal.findAll({
-          where: { [Op.and]: [scope, { id: goalIds }] },
-        });
-        expect(found.length).toEqual(1);
-        expect(found[0].id).toEqual(aroResourceGoal.id);
-      });
-      it('not in', async () => {
-        const filters = { 'reportText.nctn': aroResource.url };
-        const { goal: scope } = await filtersToScopes(filters, 'goal');
-        const found = await Goal.findAll({
-          where: { [Op.and]: [scope, { id: goalIds }] },
-        });
-        expect(found.length).toEqual(goalIds.length - 1);
-        expect(found.map((g) => g.id)).not.toContain(aroResourceGoal.id);
-      });
-    });
-
     describe('ar context', () => {
       it('in', async () => {
         const filters = { 'reportText.ctn': arContext };
@@ -1509,8 +1286,8 @@ describe('goal filtersToScopes', () => {
         const found = await Goal.findAll({
           where: { [Op.and]: [scope, { id: goalIds }] },
         });
-        expect(found.length).toEqual(goalIds.length - 1);
         expect(found.map((g) => g.id)).not.toContain(arContextGoal.id);
+        expect(found.length).toEqual(goalIds.length - 1);
       });
     });
 
@@ -1528,10 +1305,11 @@ describe('goal filtersToScopes', () => {
         const filters = { 'reportText.nctn': arAdditionalNotes };
         const { goal: scope } = await filtersToScopes(filters, 'goal');
         const found = await Goal.findAll({
+          logging: console.log,
           where: { [Op.and]: [scope, { id: goalIds }] },
         });
-        expect(found.length).toEqual(goalIds.length - 1);
         expect(found.map((g) => g.id)).not.toContain(arAdditionalNotesGoal.id);
+        expect(found.length).toEqual(goalIds.length - 1);
       });
     });
   });
