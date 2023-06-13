@@ -12,6 +12,7 @@ const renderWidgetContainer = (
   showPaging = false,
   handlePageChange = () => {},
   error = null,
+  showHeaderBorder = true,
 ) => {
   render(
     <>
@@ -27,6 +28,7 @@ const renderWidgetContainer = (
         perPage={10}
         handlePageChange={handlePageChange}
         error={error}
+        showHeaderBorder={showHeaderBorder}
       >
         This widget has been contained.
       </WidgetContainer>
@@ -70,5 +72,11 @@ describe('Widget Container', () => {
   it('renders error message', async () => {
     renderWidgetContainer(null, null, true, () => {}, 'Sample error message');
     expect(screen.getByText(/Sample error message/i)).toBeInTheDocument();
+  });
+
+  it('hides header border', async () => {
+    renderWidgetContainer('Widget container header', null, true, () => {}, null, false);
+    const containerElement = screen.getByRole('heading', { name: /widget container header/i }).parentElement;
+    expect(containerElement).not.toHaveClass('smart-hub-widget-container-header-border');
   });
 });

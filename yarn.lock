@@ -2119,8 +2119,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@ttahub/common@file:./packages/common":
-  version "1.0.4"
+"@ttahub/common@1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-1.10.0.tgz#e5ba1d0bb86c987036154ae24af74957de3be519"
+  integrity sha512-UICthMOAOPSj7Qm7iSIrKdibcOu4RQ/rNi7vlve3RVQfiMMr59ictNlCf10RPlfzXeFK4xUf2OnP+SlwIrqlQA==
 
 "@types/babel__core@^7.0.0":
   version "7.1.19"
@@ -4570,9 +4572,9 @@ dotenv@^10.0.0:
   integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
 
 dottie@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/dottie/-/dottie-2.0.2.tgz#cc91c0726ce3a054ebf11c55fbc92a7f266dd154"
-  integrity sha512-fmrwR04lsniq/uSr8yikThDTrM7epXHBAAjH9TbeH3rEA8tdCO7mRzB9hdmdGyJCxF8KERo9CITcm3kGuoyMhg==
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/dottie/-/dottie-2.0.4.tgz#9ce42965f45e577a6fa7d988d47852fac70c4e82"
+  integrity sha512-iz64WUOmp/ECQhWMJjTWFzJN/wQ7RJ5v/a6A2OiCwjaGCpNo66WGIjlSf+IULO9DQd0b4cFawLOTbiKSrpKodw==
 
 duration@^0.2.2:
   version "0.2.2"
