@@ -1,5 +1,5 @@
 import React, {
-  useContext, useState, useEffect, useMemo, useCallback,
+  useContext, useState, useEffect, useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
