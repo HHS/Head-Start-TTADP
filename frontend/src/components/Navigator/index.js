@@ -264,6 +264,7 @@ const Navigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
+    const source = getValues('goalSource');
 
     const promptTitles = getValues('goalPrompts');
     let prompts = [];
@@ -282,6 +283,7 @@ const Navigator = ({
       isActivelyBeingEditing: true,
       name,
       endDate,
+      source,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
     };
@@ -318,6 +320,7 @@ const Navigator = ({
     const objectivesFieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
+    const source = getValues('goalSource');
     const formEndDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
@@ -362,6 +365,7 @@ const Navigator = ({
       isActivelyBeingEditing: true,
       name,
       endDate,
+      source,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
     };
@@ -547,6 +551,7 @@ const Navigator = ({
     const fieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(fieldArrayName);
     const name = getValues('goalName');
+    const source = getValues('goalSource');
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
@@ -556,6 +561,7 @@ const Navigator = ({
       isActivelyBeingEditing: false,
       name,
       endDate,
+      source,
       objectives,
       regionId: formData.regionId,
     };
@@ -588,6 +594,7 @@ const Navigator = ({
       setValue('goalForEditing', null);
       setValue('goalName', '');
       setValue('goalEndDate', '');
+      setValue('goalSource', '');
       setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
 

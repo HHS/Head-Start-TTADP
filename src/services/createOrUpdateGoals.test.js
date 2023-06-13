@@ -1,5 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
+import { GOAL_SOURCES } from '@ttahub/common';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
@@ -52,6 +53,7 @@ describe('createOrUpdateGoals', () => {
       name: 'This is some serious goal text',
       status: 'Draft',
       grantId: grants[0].id,
+      source: GOAL_SOURCES[0],
     });
     topic = await Topic.findOne();
 
@@ -203,6 +205,7 @@ describe('createOrUpdateGoals', () => {
     const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
+    expect(updatedGoal.source).toBe(GOAL_SOURCES[0]);
 
     const grantIds = newGoals.map((g) => g.grantIds).flat();
     expect(grantIds.length).toBe(2);
