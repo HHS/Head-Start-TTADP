@@ -1,5 +1,6 @@
 /* eslint-disable no-useless-escape */
 import axios from 'axios';
+import { expect } from '@playwright/test';
 import { getResourceMetaDataJob } from './resource';
 import db, { Resource } from '../models';
 
@@ -83,7 +84,7 @@ const metadata = {
   field_taxonomy_national_centers: [{ target_type: 'taxonomy_term' }],
   field_taxonomy_topic: [{ target_type: 'taxonomy_term' }],
   langcode: [{ value: 'en' }],
-  field_context: [{ value: '<p><img alt=\"Two pairs of hands holding a heart.</p>\r\n' }],
+  field_context: [{ value: '<p><img alt=\"Two pairs of hands holding a heart.</p>' }],
 };
 
 const mockAxios = jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve());
@@ -145,20 +146,158 @@ describe('resource worker tests', () => {
     // Check the update call.
     expect(mockUpdate).toBeCalledWith(
       {
-        title: 'Head Start Heals Campaign',
-        metadata:
-          {
-            changed: [{ value: '2023-05-26T18:57:15+00:00' }],
-            created: [{ value: '2020-04-21T15:20:23+00:00' }],
-            fieldContext: [{ value: '<p><img alt=\"Two pairs of hands holding a heart.</p>\r\n' }],
-            fieldTaxonomyNationalCenters: [{ target_type: 'taxonomy_term' }],
-            fieldTaxonomyTopic: [{ target_type: 'taxonomy_term' }],
-            langcode: [{ value: 'en' }],
-            title: [{ value: 'Head Start Heals Campaign' }],
-          },
+        metadata: {
+          changed: [
+            {
+              value: '2023-05-26T18:57:15+00:00',
+            },
+          ],
+          created: [
+            {
+              value: '2020-04-21T15:20:23+00:00',
+            },
+          ],
+          fieldContext: [
+            {
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
+            },
+          ],
+          fieldTaxonomyNationalCenters: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          fieldTaxonomyTopic: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          field_context: [
+            {
+              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+            },
+          ],
+          field_taxonomy_national_centers: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          field_taxonomy_topic: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          langcode: [
+            {
+              value: 'en',
+            },
+          ],
+          title: [
+            {
+              value: 'Head Start Heals Campaign',
+            },
+          ],
+        },
         metadataUpdatedAt: expect.anything(),
+        title: 'Head Start Heals Campaign',
       },
-      { where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' }, individualHooks: false },
+      {
+        individualHooks: false,
+        returning: true,
+        where: {
+          url: 'http://www.eclkc.ohs.acf.hhs.gov',
+        },
+      },
+    );
+  });
+
+  it('eclkc resource we get metadata but no title', async () => {
+    // Metadata.
+    // eslint-disable-next-line max-len
+    mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: { ...metadata, title: null } }));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    // Scrape.
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    expect(got.status).toBe(200);
+    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+
+    expect(mockUpdate).toBeCalledTimes(2);
+
+    // Check the update call.
+    expect(mockUpdate).toBeCalledWith(
+      {
+        metadata: {
+          changed: [
+            {
+              value: '2023-05-26T18:57:15+00:00',
+            },
+          ],
+          created: [
+            {
+              value: '2020-04-21T15:20:23+00:00',
+            },
+          ],
+          fieldContext: [
+            {
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
+            },
+          ],
+          fieldTaxonomyNationalCenters: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          fieldTaxonomyTopic: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          field_context: [
+            {
+              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+            },
+          ],
+          field_taxonomy_national_centers: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          field_taxonomy_topic: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          langcode: [
+            {
+              value: 'en',
+            },
+          ],
+          title: null,
+        },
+        metadataUpdatedAt: expect.anything(),
+        title: null,
+      },
+      {
+        individualHooks: false,
+        returning: true,
+        where: {
+          url: 'http://www.eclkc.ohs.acf.hhs.gov',
+        },
+      },
+    );
+    // Check title scrape update..
+    expect(mockUpdate).toBeCalledWith(
+      {
+        title: 'Head Start | ECLKC',
+      },
+      {
+        individualHooks: false,
+        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
+      },
     );
   });
 
@@ -181,6 +320,7 @@ describe('resource worker tests', () => {
   });
 
   it('eclkc resource url not found', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
     expect(got.status).toBe(404);
