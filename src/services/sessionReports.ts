@@ -32,7 +32,12 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'data',
     ],
     where,
-    raw: true,
+    include: [
+      {
+        model: db.File,
+        as: 'files',
+      },
+    ],
   };
 
   if (plural) {
@@ -53,6 +58,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     id: session?.id,
     eventId: session?.eventId,
     data: session?.data ?? {},
+    files: session?.files ?? [],
   };
 }
 

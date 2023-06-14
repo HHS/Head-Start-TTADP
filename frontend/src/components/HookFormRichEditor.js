@@ -25,11 +25,12 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
  * ariaLabel: Label describing the editor read by a screen reader
  */
 const HookFormRichEditor = ({
-  name, defaultValue, ariaLabel,
+  name, defaultValue, ariaLabel, required,
 }) => (
   <Controller
     name={name}
     defaultValue={defaultValue}
+    rules={{ required }}
     render={({ onChange, value }) => (
       <RichEditor
         value={value}
@@ -44,10 +45,12 @@ HookFormRichEditor.propTypes = {
   name: PropTypes.string.isRequired,
   defaultValue: PropTypes.string,
   ariaLabel: PropTypes.string.isRequired,
+  required: PropTypes.bool,
 };
 
 HookFormRichEditor.defaultProps = {
   defaultValue: '',
+  required: false,
 };
 
 export default HookFormRichEditor;
