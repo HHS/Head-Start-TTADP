@@ -12,33 +12,27 @@ import { useHistory, Redirect } from 'react-router-dom';
 import useInterval from '@use-it/interval';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { publishLocation } from '../../hooks/useSocket';
-import useLocalStorage from '../../hooks/useLocalStorage';
-import {
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  defaultValues,
-} from './constants';
-import { COMPLETE } from '../../components/Navigator/constants';
-import { getTrainingReportUsers } from '../../fetchers/users';
-import { eventById, updateEvent } from '../../fetchers/event';
+import useHookFormPageState from '../../hooks/useHookFormPageState';
+import { defaultValues } from './constants';
+import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
-import useHookFormPageState from '../../hooks/useHookFormPageState';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 30000; // THIRTY SECONDS
 
 /**
- * this is just a simple handler to "flatten"
- * the JSON column data into the form
- *
- * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
- *  replaces the form with those values; it also calls the standard form.reset event
- * @param {*} event - not an HTML event, but the event object from the database, which has some
- * information stored at the top level of the object, and some stored in a data column
- */
+   * this is just a simple handler to "flatten"
+   * the JSON column data into the form
+   *
+   * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
+   *  replaces the form with those values; it also calls the standard form.reset event
+   * @param {*} event - not an HTML event, but the event object from the database, which has some
+   * information stored at the top level of the object, and some stored in a data column
+   */
 const resetFormData = (reset, event) => {
   const {
     data,
@@ -57,18 +51,19 @@ const resetFormData = (reset, event) => {
   });
 };
 
-export default function TrainingReportForm({ match }) {
-  const { params: { currentPage, trainingReportId } } = match;
-  const reportId = useRef();
+export default function SessionForm({ match }) {
+  const { params: { sessionId, currentPage, trainingReportId } } = match;
+
+  const reportId = useRef(sessionId);
 
   // for redirects if a page is not provided
   const history = useHistory();
 
   /* ============
 
-   * the following errors are a bit confusingly named, but
-   * I'm copying the pattern from the ActivityReport
-   */
+     * the following errors are a bit confusingly named, but
+     * I'm copying the pattern from the ActivityReport
+     */
 
   // this error is for errors fetching reports, its the top error
   const [error, setError] = useState();
@@ -85,31 +80,16 @@ export default function TrainingReportForm({ match }) {
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
-  /* ============
-   * this hook handles the interface with
-   * local storage
-   */
-
-  const [additionalData, updateAdditionalData, localStorageAvailable] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId), {
-      users: {
-        pointOfContact: [],
-        collaborators: [],
-      },
-    },
-  );
-
   // we use both of these to determine if we're in the loading screen state
   // (see the use effect below)
   const [reportFetched, setReportFetched] = useState(false);
-  const [additionalDataFetched, setAdditionalDataFetched] = useState(false);
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
   const [datePickerKey, setDatePickerKey] = useState('-');
 
   /* ============
-  */
+    */
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -117,8 +97,6 @@ export default function TrainingReportForm({ match }) {
     shouldUnregister: false,
   });
 
-  const eventRegion = hookForm.watch('regionId');
-  const pageState = hookForm.watch('pageState');
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
@@ -135,47 +113,50 @@ export default function TrainingReportForm({ match }) {
     if (!trainingReportId || !currentPage) {
       return;
     }
-    const newPath = `/training-reports/${trainingReportId}/${currentPage}`;
+    const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
     setSocketPath(newPath);
-  }, [currentPage, setSocketPath, trainingReportId]);
+  }, [currentPage, sessionId, setSocketPath, trainingReportId]);
 
   useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
 
   useEffect(() => {
-    const loading = !reportFetched || !additionalDataFetched;
+    const loading = !reportFetched;
     setIsAppLoading(loading);
-  }, [additionalDataFetched, reportFetched, setIsAppLoading]);
+  }, [reportFetched, setIsAppLoading]);
 
   useEffect(() => {
-    // fetch available users
-    async function fetchUsers() {
-      if (!eventRegion || additionalDataFetched) {
+    // create a new session
+    async function createNewSession() {
+      if (!trainingReportId || !currentPage || sessionId !== 'new') {
         return;
       }
 
       try {
-        const users = await getTrainingReportUsers(eventRegion);
-        updateAdditionalData({ users });
+        const session = await createSession(trainingReportId);
+
+        // we don't want to refetch if we've extracted the session data
+        setReportFetched(true);
+        resetFormData(hookForm.reset, session);
+        reportId.current = session.id;
+        history.push(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
       } catch (e) {
-        updateErrorMessage('Error fetching collaborators and points of contact');
-      } finally {
-        setAdditionalDataFetched(true);
+        setError('Error creating training report');
       }
     }
 
-    fetchUsers();
-  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData]);
+    createNewSession();
+  }, [currentPage, history, hookForm.reset, sessionId, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data
-    async function fetchReport() {
-      if (!trainingReportId || !currentPage || reportFetched) {
+    async function fetchSession() {
+      if (!trainingReportId || !currentPage || reportFetched || sessionId === 'new') {
         return;
       }
       try {
-        const event = await eventById(trainingReportId);
-        resetFormData(hookForm.reset, event);
-        reportId.current = trainingReportId;
+        const session = await getSessionBySessionId(sessionId);
+        resetFormData(hookForm.reset, session);
+        reportId.current = session.id;
       } catch (e) {
         setError('Error fetching training report');
       } finally {
@@ -183,15 +164,8 @@ export default function TrainingReportForm({ match }) {
         setDatePickerKey(Date.now().toString());
       }
     }
-    fetchReport();
-  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, trainingReportId]);
-
-  useEffect(() => {
-    // set error if no training report id
-    if (!trainingReportId) {
-      setError('No training report id provided');
-    }
-  }, [trainingReportId]);
+    fetchSession();
+  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, sessionId, trainingReportId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
@@ -203,13 +177,13 @@ export default function TrainingReportForm({ match }) {
     }
 
     const page = pages.find((p) => p.position === position);
-    const newPath = `/training-report/${reportId.current}/${page.path}`;
+    const newPath = `/training-report/${trainingReportId}/session/${reportId.current}/${page.path}`;
     history.push(newPath, state);
   };
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/training-report/${trainingReportId}/event-summary`} />
+      <Redirect push to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
     );
   }
 
@@ -222,24 +196,23 @@ export default function TrainingReportForm({ match }) {
       // grab the newest data from the form
       const {
         ownerId,
-        pocId,
-        collaboratorIds,
         regionId,
+        eventId,
         ...data
       } = hookForm.getValues();
 
       // PUT it to the backend
-      const updatedEvent = await updateEvent(trainingReportId, {
+      const updatedSession = await updateSession(sessionId, {
         data,
+        trainingReportId,
         ownerId: ownerId || null,
-        pocId: pocId || null,
-        collaboratorIds,
         regionId: regionId || null,
+        eventId: eventId || null,
       });
-      resetFormData(hookForm.reset, updatedEvent);
-      updateLastSaveTime(moment(updatedEvent.updatedAt));
+      resetFormData(hookForm.reset, updatedSession);
+      updateLastSaveTime(moment(updatedSession.updatedAt));
     } catch (err) {
-      setError('There was an error saving the training report. Please try again later.');
+      setError('There was an error saving the session. Please try again later.');
     } finally {
       setIsAppLoading(false);
     }
@@ -264,52 +237,7 @@ export default function TrainingReportForm({ match }) {
     await onSave();
   };
 
-  const onFormSubmit = async (updatedStatus) => {
-    try {
-      // reset the error message
-      setError('');
-      setIsAppLoading(true);
-
-      // we check at button click if all the sessions are complete,
-      // so now we just need to see if all the pages are complete
-
-      // if the page is not complete, we need to set an error and bomb out early
-      if (!Object.values(pageState).every((page) => page === COMPLETE) && updatedStatus === 'Complete') {
-        hookForm.setError('status', {
-          message: 'Please complete all required fields before submitting.',
-        });
-
-        return;
-      }
-
-      // grab the newest data from the form
-      const {
-        ownerId,
-        pocId,
-        collaboratorIds,
-        regionId,
-        ...data
-      } = hookForm.getValues();
-
-      // PUT it to the backend
-      const updatedEvent = await updateEvent(trainingReportId, {
-        data: {
-          ...data,
-          status: updatedStatus,
-        },
-        ownerId: ownerId || null,
-        pocId: pocId || null,
-        collaboratorIds,
-        regionId: regionId || null,
-      });
-      resetFormData(hookForm.reset, updatedEvent);
-      updateLastSaveTime(moment(updatedEvent.updatedAt));
-    } catch (err) {
-      setError('There was an error saving the training report. Please try again later.');
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
+  const onFormSubmit = async () => {};
 
   const reportCreator = { name: user.name, roles: user.roles };
 
@@ -317,13 +245,13 @@ export default function TrainingReportForm({ match }) {
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   return (
-    <div className="smart-hub-training-report">
+    <div className="smart-hub-training-report--session">
       { error
-      && (
-      <Alert type="warning">
-        {error}
-      </Alert>
-      )}
+        && (
+        <Alert type="warning">
+          {error}
+        </Alert>
+        )}
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
@@ -334,13 +262,7 @@ export default function TrainingReportForm({ match }) {
           </div>
         </Grid>
       </Grid>
-      <NetworkContext.Provider value={
-        {
-          connectionActive: isOnlineMode() && connectionActive,
-          localStorageAvailable,
-        }
-      }
-      >
+      <NetworkContext.Provider value={{ connectionActive: isOnlineMode() && connectionActive }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
@@ -354,7 +276,7 @@ export default function TrainingReportForm({ match }) {
             updateLastSaveTime={updateLastSaveTime}
             reportId={reportId.current}
             currentPage={currentPage}
-            additionalData={additionalData}
+            additionalData={{}}
             formData={formData}
             pages={pages}
             onFormSubmit={onFormSubmit}
@@ -378,6 +300,6 @@ export default function TrainingReportForm({ match }) {
   );
 }
 
-TrainingReportForm.propTypes = {
+SessionForm.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
 };

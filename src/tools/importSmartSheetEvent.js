@@ -57,7 +57,8 @@ export default async function importSmartSheetEvent(fileKey) {
       if (creatorEmail) {
         creator = await User.findOne({
           where: {
-            email: creatorEmail.toLowerCase(),
+            // email: creatorEmail.toLowerCase(),
+            email: 'matt.bevilacqua@adhocteam.us',
           },
         });
       }

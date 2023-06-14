@@ -162,3 +162,13 @@ export function checkGoalTemplateIdParam(req, res, next) {
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
+
+export function checkSessionIdParam(req, res, next) {
+  if (req.params && req.params.sessionId && canBeInt(req.params.sessionId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: sessionId ${req.params ? (req.params.sessionId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}

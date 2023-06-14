@@ -66,7 +66,7 @@ export const createHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' });
     }
 
-    const { eventId } = req.body;
+    const { eventId, data } = req.body;
 
     if (eventId === undefined) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
@@ -78,7 +78,16 @@ export const createHandler = async (req, res) => {
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
 
-    const session = await createSession(req.body);
+    const session = await createSession({
+      eventId,
+      data: {
+        ...data,
+        eventName: event.data.eventName,
+        eventDisplayId: event.data.eventId,
+        regionId: event.regionId,
+        eventOwner: event.ownerId,
+      },
+    });
     return res.status(httpCodes.CREATED).send(session);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
