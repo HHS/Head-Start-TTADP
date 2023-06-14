@@ -125,7 +125,6 @@ interface FindEventHelperBlobOptions {
   regions: number[] | undefined;
   fallbackValue?: string;
   allowNull?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   scopes: SequelizeWhereOptions[];
 }
 
