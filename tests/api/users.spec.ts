@@ -93,7 +93,7 @@ test.describe('get /users/training-report-users', () => {
   });
   test('200', async ({ request }) => {
     const response = await request.get(
-      `${root}/users/training-report-users`,
+      `${root}/users/training-report-users?regionId=1`,
       { headers: { 'playwright-user-id': '1' } }, // has no home region
     );
     expect(response.status()).toBe(200);
