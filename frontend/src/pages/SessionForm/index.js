@@ -9,9 +9,8 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
-import useInterval from '@use-it/interval';
 import { FormProvider, useForm } from 'react-hook-form';
-import useSocket, { publishLocation } from '../../hooks/useSocket';
+import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues } from './constants';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
@@ -117,7 +116,7 @@ export default function SessionForm({ match }) {
     setSocketPath(newPath);
   }, [currentPage, sessionId, setSocketPath, trainingReportId]);
 
-  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
+  usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
     const loading = !reportFetched;
@@ -140,7 +139,7 @@ export default function SessionForm({ match }) {
         reportId.current = session.id;
         history.push(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
       } catch (e) {
-        setError('Error creating training report');
+        setError('Error creating session');
       }
     }
 
@@ -158,7 +157,7 @@ export default function SessionForm({ match }) {
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
       } catch (e) {
-        setError('Error fetching training report');
+        setError('Error fetching session');
       } finally {
         setReportFetched(true);
         setDatePickerKey(Date.now().toString());

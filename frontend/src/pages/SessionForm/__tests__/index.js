@@ -52,6 +52,19 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
   });
 
+  it('handles an error creating a new report', async () => {
+    fetchMock.post(sessionsUrl, 500);
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', 'new');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Error creating session/i)).toBeInTheDocument();
+  });
+
   it('fetches existing session report form', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
@@ -65,7 +78,26 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
 
+    jest.advanceTimersByTime(30000);
+
     expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+  });
+
+  it('handles an error fetching a session', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, 500,
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Error fetching session/i)).toBeInTheDocument();
   });
 
   it('saves draft', async () => {
@@ -89,7 +121,29 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
 
-  it('triggers validation on save and continue', async () => {
+  it('handles error saving draft', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { eventId: 1 },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+
+    fetchMock.put(url, 500);
+    const saveSession = screen.getByText(/Save Session/i);
+    userEvent.click(saveSession);
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    expect(screen.getByText(/There was an error saving the session/i)).toBeInTheDocument();
+  });
+
+  it('saves on save and continue', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(

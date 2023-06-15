@@ -26,7 +26,6 @@ import Req from '../../../components/Req';
 import {
   eventSummaryFields,
   pageComplete,
-  pageTouched,
 } from '../constants';
 
 const placeholderText = '- Select -';
@@ -363,7 +362,6 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   fields,
-  isPageTouched: (hookForm) => pageTouched(hookForm.formState.touched, fields),
   render: (
     additionalData,
     _formData,
