@@ -13,11 +13,11 @@ import {
   Textarea,
   Dropdown,
   Radio,
+  Button,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
@@ -527,20 +527,16 @@ export default {
     isAppLoading,
     onContinue,
     onSaveDraft,
-    onUpdatePage,
+    _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
   ) => (
     <>
       <SessionSummary datePickerKey={datePickerKey} />
-      <NavigatorButtons
-        isAppLoading={isAppLoading}
-        onContinue={onContinue}
-        onSaveDraft={onSaveDraft}
-        path={path}
-        position={position}
-        onUpdatePage={onUpdatePage}
-      />
+      <div className="display-flex">
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>
+      </div>
     </>
   ),
   isPageComplete,
