@@ -35,7 +35,6 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
-import { isValidResourceUrl } from '../../../components/GoalForm/constants';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -57,6 +56,7 @@ const SessionSummary = ({ datePickerKey }) => {
     setValue,
     control,
     formState: { errors },
+    setError,
   } = useFormContext();
 
   const data = getValues();
@@ -85,7 +85,7 @@ const SessionSummary = ({ datePickerKey }) => {
   };
 
   // we also need to fetch topics
-  const [topicOptions, setTopicOptions] = useState([]);
+  const [topicOptions, setTopicOptions] = useState(null);
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
@@ -93,12 +93,13 @@ const SessionSummary = ({ datePickerKey }) => {
         const topics = await getTopics();
         setTopicOptions(topics);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(err);
+        setError('objectiveTopics', { message: 'There was an error fetching topics' });
       }
     }
-    fetchTopics();
-  }, []);
+    if (!topicOptions) {
+      fetchTopics();
+    }
+  }, [setError, topicOptions]);
 
   // for the resource repeater we are using the built in hook-form
   // field array
@@ -112,9 +113,6 @@ const SessionSummary = ({ datePickerKey }) => {
     defaultValue: [
       DEFAULT_RESOURCE,
     ],
-    rules: {
-      isValidUrl: (value) => isValidResourceUrl(value) || 'Enter a valid URL',
-    },
   });
 
   useEffect(() => {
@@ -317,7 +315,7 @@ const SessionSummary = ({ datePickerKey }) => {
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={topicOptions.filter((option) => (
+                value={(topicOptions || []).filter((option) => (
                   value.includes(option.name)
                 ))}
                 inputId="objectiveTopics"
@@ -334,7 +332,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 inputRef={register({ required: 'Select one' })}
                 getOptionLabel={(option) => option.name}
                 getOptionValue={(option) => option.id}
-                options={topicOptions}
+                options={topicOptions || []}
                 isMulti
               />
             )}
