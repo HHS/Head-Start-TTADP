@@ -8,9 +8,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { Op } from 'sequelize';
 import { fileHash } from './fileUtils';
 import db, {
-  Recipient, Grant, Program, sequelize, Goal,
+  Recipient,
+  Grant,
+  Program,
+  sequelize,
+  Goal,
+  GrantPersonnel,
 } from '../models';
 import { logger, auditLogger } from '../logger';
+import { GRANT_PERSONNEL_ROLES } from '../constants';
 
 const fs = require('mz/fs');
 
@@ -25,6 +31,57 @@ function combineNames(firstName, lastName) {
   // filter removes null names (if a user has a firstname but no lastname)
   const joinedName = names.filter((name) => name).join(' ');
   return joinedName === '' ? null : joinedName;
+}
+
+async function getGrantPersonnel(grantId, program) {
+  return GRANT_PERSONNEL_ROLES.flatMap(async (role) => {
+    // Determine if this personnel exists wth a different name.
+    console.log('\n\n\n----- BEFORE SEQUELIZE FIND ONE -----\n\n\n');
+    const existingPersonnel = await GrantPersonnel.findOne({
+      where: {
+        grantId,
+        role,
+        firstName: { [Op.ne]: program[`${role}_first_name`] },
+        lastName: { [Op.ne]: program[`${role}_last_name`] },
+      },
+    });
+    console.log('\n\n\n----- AFTER SEQUELIZE FIND ONE -----\n\n\n');
+
+    // Create personnel object.
+    const personnelToAdd = {
+      grantId,
+      role,
+      prefix: program[`${role}_prefix`],
+      firstName: program[`${role}_first`],
+      lastName: program[`${role}_last`],
+      suffix: program[`${role}_suffix`],
+      title: program[`${role}_title`],
+      email: program[`${role}_email`],
+      effectiveDate: null,
+      active: true,
+      originalPersonnelId: null,
+    };
+
+    if (!existingPersonnel) {
+      // Personnel does not exist, create a new one.
+      console.log('\n\n\n\n----DOES NOT EXIST ADD: ', personnelToAdd);
+      return personnelToAdd;
+    }
+    // Return the updated personnel object and the new personnel object.
+    console.log('\n\n\n\n----EXISTS UPDATE OLD: ', existingPersonnel);
+    return ([
+      {
+        ...personnelToAdd,
+        originalPersonnelId: existingPersonnel.id,
+        effectiveDate: new Date(),
+      },
+      {
+        ...existingPersonnel,
+        active: false,
+      },
+    ]
+    );
+  });
 }
 
 /**
@@ -159,7 +216,7 @@ export async function processFiles(hashSumHex) {
         (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap,
       );
 
-      const programsForDb = programsWithGrants.map((program) => ({
+      const programsForDb = await programsWithGrants.map(async (program) => ({
         id: parseInt(program.grant_program_id, 10),
         grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),
         programType: valueFromXML(program.program_type),
@@ -168,11 +225,22 @@ export async function processFiles(hashSumHex) {
         endDate: valueFromXML(program.grant_program_end_date),
         status: valueFromXML(program.program_status),
         name: valueFromXML(program.program_name),
+        // Get grant personnel.
+        grantPersonnel: await getGrantPersonnel(
+          parseInt(grantAgencyMap[program.grant_agency_id], 10),
+          program,
+        ),
       }));
 
+      console.log('\n\n\n-----Promises NOT resolved:', programsForDb);
+      // Extract an array of all grant personnel to update.
+      const grantPersonnel = programsForDb.map((p) => p.grantPersonnel);
+
+      // Split grants between CDI and non-CDI grants.
       const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
       const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
 
+      // Update non-CDI grants.
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${grantsForDb.length} grants`);
       await Grant.unscoped().bulkCreate(
         nonCdiGrants,
@@ -182,6 +250,7 @@ export async function processFiles(hashSumHex) {
         },
       );
 
+      // Update CDI grants.
       await Grant.unscoped().bulkCreate(
         cdiGrants,
         {
