@@ -1,6 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  act,
+  fireEvent,
+} from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
@@ -75,6 +80,12 @@ describe('eventSummary', () => {
     it('renders event summary', async () => {
       act(() => {
         render(<RenderEventSummary />);
+      });
+
+      const selections = document.querySelectorAll('button, input, textarea, select, a');
+      Array.from(selections).forEach((selection) => {
+        fireEvent.focus(selection);
+        fireEvent.blur(selection);
       });
 
       const startDate = await screen.findByLabelText(/Event start Date/i, { selector: '#startDate' });

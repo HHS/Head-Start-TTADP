@@ -14,6 +14,7 @@ import {
   Dropdown,
   Radio,
   Button,
+  ErrorMessage,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
@@ -135,7 +136,7 @@ const SessionSummary = ({ datePickerKey }) => {
     defaultValue: [],
   });
 
-  const [, setFileUploadErrorMessage] = useState(null);
+  const [fileUploadMessage, setFileUploadErrorMessage] = useState(null);
 
   const [useFiles, setUseFiles] = useState(files.length > 0);
 
@@ -153,8 +154,7 @@ const SessionSummary = ({ datePickerKey }) => {
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
     } catch (error) {
-      console.log({ error });
-      setFileUploadErrorMessage('File(s) could not be uploaded');
+      setFileUploadErrorMessage('File could not be uploaded');
     } finally {
       setIsAppLoading(false);
     }
@@ -167,7 +167,7 @@ const SessionSummary = ({ datePickerKey }) => {
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
     } catch (error) {
-      setFileUploadErrorMessage('File(s) could not be deleted');
+      setFileUploadErrorMessage('File could not be deleted');
     } finally {
       setIsAppLoading(false);
     }
@@ -460,11 +460,11 @@ const SessionSummary = ({ datePickerKey }) => {
 
         { useFiles ? (
           <>
+            <ErrorMessage>{fileUploadMessage}</ErrorMessage>
             <Label htmlFor="files">Attach any non-link resources</Label>
             <span className="usa-hint display-block">Example file types: .docx, .pdf, .ppt (max size 30 MB)</span>
             <Dropzone
               handleDrop={handleDrop}
-              onBlur={() => {}}
               inputName="objectiveFiles"
               setErrorMessage={setFileUploadErrorMessage}
             />

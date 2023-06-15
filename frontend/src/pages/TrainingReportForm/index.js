@@ -9,9 +9,8 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
-import useInterval from '@use-it/interval';
 import { FormProvider, useForm } from 'react-hook-form';
-import useSocket, { publishLocation } from '../../hooks/useSocket';
+import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
@@ -139,7 +138,7 @@ export default function TrainingReportForm({ match }) {
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 
-  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
+  usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
     const loading = !reportFetched || !additionalDataFetched;

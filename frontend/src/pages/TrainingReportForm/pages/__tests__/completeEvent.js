@@ -22,10 +22,11 @@ describe('completeEvent', () => {
     const onSaveForm = jest.fn();
     const onUpdatePage = jest.fn();
 
-    const RenderCompleteEvent = () => {
+    // eslint-disable-next-line react/prop-types
+    const RenderCompleteEvent = ({ defaultValues = defaultFormValues }) => {
       const hookForm = useForm({
         mode: 'onBlur',
-        defaultValues: defaultFormValues,
+        defaultValues,
       });
 
       return (
@@ -201,6 +202,18 @@ describe('completeEvent', () => {
       });
 
       expect(onSubmit).toHaveBeenCalledWith('Complete');
+    });
+
+    it('sets a default status of not started if there is no form status and there are no sessions', async () => {
+      fetchMock.getOnce(sessionsUrl, []);
+
+      act(() => {
+        render(<RenderCompleteEvent defaultValues={{ id: 1 }} />);
+      });
+
+      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+
+      expect(statusSelect).toHaveValue('Not started');
     });
   });
 });
