@@ -19,6 +19,7 @@ export default (sequelize, DataTypes) => {
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
       Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants' });
+      Grant.hasMany(models.GrantPersonnel, { foreignKey: 'grantId', as: 'grantPersonnel' });
       Grant.belongsToMany(models.Group, {
         through: models.GroupGrant,
         foreignKey: 'grantId',
