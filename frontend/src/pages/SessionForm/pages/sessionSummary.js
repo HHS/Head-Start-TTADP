@@ -5,20 +5,16 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useFormContext, Controller, useFieldArray } from 'react-hook-form';
 import {
   TextInput,
   Fieldset,
   Label,
   Textarea,
-  Button,
   Dropdown,
   Radio,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { v4 as uuidv4 } from 'uuid';
 import { getTopics } from '../../../fetchers/topics';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
@@ -28,22 +24,20 @@ import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import Req from '../../../components/Req';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import QuestionTooltip from '../../../components/GoalForm/QuestionTooltip';
-import colors from '../../../colors';
 import {
   sessionSummaryFields,
   pageComplete,
-  pageTouched,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import FileTable from '../../../components/FileUploader/FileTable';
 import Dropzone from '../../../components/FileUploader/Dropzone';
 import PlusButton from '../../../components/GoalForm/PlusButton';
-import { isValidResourceUrl } from '../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
+import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import { isValidResourceUrl } from '../../../components/GoalForm/constants';
 
 const DEFAULT_RESOURCE = {
-  key: uuidv4(),
   value: '',
 };
 
@@ -62,6 +56,7 @@ const SessionSummary = ({ datePickerKey }) => {
     watch,
     setValue,
     control,
+    formState: { errors },
   } = useFormContext();
 
   const data = getValues();
@@ -117,6 +112,9 @@ const SessionSummary = ({ datePickerKey }) => {
     defaultValue: [
       DEFAULT_RESOURCE,
     ],
+    rules: {
+      isValidUrl: (value) => isValidResourceUrl(value) || 'Enter a valid URL',
+    },
   });
 
   useEffect(() => {
@@ -198,6 +196,7 @@ const SessionSummary = ({ datePickerKey }) => {
           label="Session name"
           name="sessionName"
           htmlFor="sessionName"
+          required
         >
           <TextInput
             id="sessionName"
@@ -216,6 +215,7 @@ const SessionSummary = ({ datePickerKey }) => {
             name="startDate"
             id="startDate-label"
             htmlFor="startDate"
+            required
           >
             <div
               className="usa-hint"
@@ -239,6 +239,7 @@ const SessionSummary = ({ datePickerKey }) => {
             name="endDate"
             id="endDate-label"
             htmlFor="endDate"
+            required
           >
             <div
               className="usa-hint"
@@ -271,14 +272,14 @@ const SessionSummary = ({ datePickerKey }) => {
               max={99.5}
               step={0.25}
               inputRef={
-            register({
-              required: 'Enter duration',
-              valueAsNumber: true,
-              pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest quarter hour' },
-              min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
-              max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
-            })
-            }
+                register({
+                  required: 'Enter duration',
+                  valueAsNumber: true,
+                  pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest quarter hour' },
+                  min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
+                  max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
+                })
+              }
             />
           </div>
         </FormItem>
@@ -305,120 +306,114 @@ const SessionSummary = ({ datePickerKey }) => {
       </FormItem>
 
       <div className="margin-top-2">
-        <Label htmlFor="objectiveTopics">
-          Topics
-          <Req />
-        </Label>
-        <Controller
-          render={({ onChange: controllerOnChange, value }) => (
-            <Select
-              value={topicOptions.filter((option) => (
-                value.includes(option.name)
-              ))}
-              inputId="objectiveTopics"
-              name="objectiveTopics"
-              className="usa-select"
-              styles={selectOptionsReset}
-              components={{
-                DropdownIndicator: null,
-              }}
-              onChange={(s) => {
-                controllerOnChange(s.map((o) => o.name));
-              }}
-              inputRef={register({ required: 'Select one' })}
-              getOptionLabel={(option) => option.name}
-              getOptionValue={(option) => option.id}
-              options={topicOptions}
-              isMulti
-            />
-          )}
-          control={control}
-          rules={{
-            validate: (value) => {
-              if (!value || value.length === 0) {
-                return 'Select at least one topic';
-              }
-              return true;
-            },
-          }}
+        <FormItem
+          label="Topics"
           name="objectiveTopics"
-          defaultValue={[]}
-        />
+          required
+        >
+          <Controller
+            render={({ onChange: controllerOnChange, value, onBlur }) => (
+              <Select
+                value={topicOptions.filter((option) => (
+                  value.includes(option.name)
+                ))}
+                inputId="objectiveTopics"
+                name="objectiveTopics"
+                className="usa-select"
+                styles={selectOptionsReset}
+                components={{
+                  DropdownIndicator: null,
+                }}
+                onBlur={onBlur}
+                onChange={(s) => {
+                  controllerOnChange(s.map((o) => o.name));
+                }}
+                inputRef={register({ required: 'Select one' })}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.id}
+                options={topicOptions}
+                isMulti
+              />
+            )}
+            control={control}
+            rules={{
+              validate: (value) => {
+                if (!value || value.length === 0) {
+                  return 'Select at least one topic';
+                }
+                return true;
+              },
+            }}
+            name="objectiveTopics"
+            defaultValue={[]}
+          />
+        </FormItem>
       </div>
 
       <div className="margin-top-2">
-        <Label htmlFor="objectiveTrainers">
-          Who were the trainers for this session?
-          <Req />
-        </Label>
-        <Controller
-          render={({ onChange: controllerOnChange, value: selectedValue }) => (
-            <Select
-              value={TRAINER_OPTIONS.filter((option) => selectedValue.includes(option.label))}
-              inputId="objectiveTrainers"
-              name="objectiveTrainers"
-              className="usa-select"
-              styles={selectOptionsReset}
-              components={{
-                DropdownIndicator: null,
-              }}
-              onChange={(s) => {
-                controllerOnChange(s.map((o) => o.label));
-              }}
-              inputRef={register({ required: 'Select one' })}
-              options={TRAINER_OPTIONS}
-              isMulti
-            />
-          )}
-          control={control}
-          rules={{
-            validate: (value) => {
-              if (!value || value.length === 0) {
-                return 'Select at least one trainer';
-              }
-              return true;
-            },
-          }}
+        <FormItem
+          label="Who were the trainers for this session?"
           name="objectiveTrainers"
-          defaultValue={[]}
-        />
+          required
+        >
+          <Controller
+            render={({ onChange: controllerOnChange, value: selectedValue, onBlur }) => (
+              <Select
+                value={TRAINER_OPTIONS.filter((option) => selectedValue.includes(option.label))}
+                inputId="objectiveTrainers"
+                name="objectiveTrainers"
+                className="usa-select"
+                styles={selectOptionsReset}
+                onBlur={onBlur}
+                components={{
+                  DropdownIndicator: null,
+                }}
+                onChange={(s) => {
+                  controllerOnChange(s.map((o) => o.label));
+                }}
+                inputRef={register({ required: 'Select one' })}
+                options={TRAINER_OPTIONS}
+                isMulti
+              />
+            )}
+            control={control}
+            rules={{
+              validate: (value) => {
+                if (!value || value.length === 0) {
+                  return 'Select at least one trainer';
+                }
+                return true;
+              },
+            }}
+            name="objectiveTrainers"
+            defaultValue={[]}
+          />
+        </FormItem>
       </div>
 
       <div>
-        <Label htmlFor="resources">
+        <p className="usa-prose margin-bottom-0">
           Link to TTA resources used
           <QuestionTooltip
             text="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
           />
-        </Label>
+        </p>
         <div className="ttahub-resource-repeater">
-          {resources.map((r, i) => (
-            <div key={r.key} className="display-flex">
-              <Label htmlFor={`resource-${i + 1}`} className="sr-only">
-                Resource
-                {' '}
-                { i + 1 }
-              </Label>
-              <TextInput
-                type="url"
-                name={`objectiveResources[${i}].value`}
-                inputRef={register({
-                  isValidUrl: (value) => isValidResourceUrl(value) || 'Enter a valid URL',
-                })}
-                defaultValue={r.value}
+          {resources.map((r, i) => {
+            const fieldErrors = errors.objectiveResources ? errors.objectiveResources[i] : null;
+
+            return (
+              <SessionObjectiveResource
+                key={r.id}
+                index={i}
+                errors={errors}
+                fieldErrors={fieldErrors}
+                resource={r}
+                showRemoveButton={resources.length > 1}
+                removeResource={removeResource}
               />
-              { resources.length > 1 ? (
-                <Button className="ttahub-resource-repeater--remove-resource" unstyled type="button" onClick={() => removeResource(i)}>
-                  <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
-                  <span className="sr-only">
-                    remove resource
-                    {' '}
-                    { i + 1 }
-                  </span>
-                </Button>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="ttahub-resource-repeater--add-new margin-top-1 margin-bottom-3">
@@ -525,7 +520,6 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   fields,
-  isPageTouched: (hookForm) => pageTouched(hookForm.formState.touched, fields),
   render: (
     _additionalData,
     _formData,
@@ -538,7 +532,7 @@ export default {
     datePickerKey,
   ) => (
     <>
-      <SessionSummary dataPickerKey={datePickerKey} />
+      <SessionSummary datePickerKey={datePickerKey} />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}
