@@ -247,21 +247,11 @@ export default function TrainingReportForm({ match }) {
 
   const onSaveAndContinue = async () => {
     const whereWeAre = pages.find((p) => p.path === currentPage);
-    const { fields } = whereWeAre;
-    await hookForm.trigger(fields, { shouldFocus: true });
-
-    const hasErrors = Object.keys(hookForm.formState.errors).length > 0;
-    if (hasErrors) {
-      const invalid = document.querySelector('.usa-form-group--error');
-      if (invalid) {
-        const input = invalid.querySelector('input, select, textarea');
-        if (input) input.focus();
-      }
-
-      return;
-    }
-
+    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
+    if (nextPage) {
+      updatePage(nextPage.position);
+    }
   };
 
   const onFormSubmit = async (updatedStatus) => {
