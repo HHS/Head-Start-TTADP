@@ -103,7 +103,7 @@ describe('ConditionalFieldsForHookForm', () => {
   it('renders nothing if the type is not in the field type dictionary', () => {
     const prompts = [{
       response: ['test', 'rest'],
-      fieldTypes: 'adsf',
+      fieldType: 'adsf',
       prompt: 'answer my riddle',
       hint: 'hint',
       options: [
@@ -123,7 +123,7 @@ describe('ConditionalFieldsForHookForm', () => {
         required: true,
       },
     }];
-    render(<Rt isMultiRecipientReport prompts={prompts} />);
+    render(<Rt prompts={prompts} />);
     expect(screen.queryByText('riddle')).toBeNull();
     expect(screen.queryByText('be careful')).toBeNull();
   });
