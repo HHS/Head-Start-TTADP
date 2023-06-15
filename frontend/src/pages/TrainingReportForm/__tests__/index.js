@@ -269,9 +269,8 @@ describe('TrainingReportForm', () => {
       userEvent.click(submitButton);
     });
 
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
-    const lastBody = JSON.parse(fetchMock.lastOptions().body);
-    expect(lastBody.data.status).toEqual('In progress');
+    await waitFor(() => expect(screen.getByText('Status must be complete to submit')).toBeInTheDocument());
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(false));
   });
 
   it('will not complete the form if the form is not complete', async () => {
