@@ -1,6 +1,5 @@
 import AdmZip from 'adm-zip';
 import { toJson } from 'xml2json';
-import { } from 'dotenv/config';
 import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,54 +33,60 @@ function combineNames(firstName, lastName) {
 }
 
 async function getGrantPersonnel(grantId, program) {
-  return GRANT_PERSONNEL_ROLES.flatMap(async (role) => {
+  const grantPersonnelArray = [];
+  for (let i = 0; i <= GRANT_PERSONNEL_ROLES.length; i += 1) {
+    const currentRole = GRANT_PERSONNEL_ROLES[i];
     // Determine if this personnel exists wth a different name.
-    console.log('\n\n\n----- BEFORE SEQUELIZE FIND ONE -----\n\n\n');
-    const existingPersonnel = await GrantPersonnel.findOne({
-      where: {
+    const firstName = program[`${currentRole}_first_name`];
+    const lastName = program[`${currentRole}_last_name`];
+
+    if (firstName && lastName) {
+      // eslint-disable-next-line no-await-in-loop
+      const existingPersonnel = await GrantPersonnel.findOne({
+        where: {
+          grantId,
+          role: currentRole,
+          firstName: { [Op.ne]: firstName },
+          lastName: { [Op.ne]: lastName },
+        },
+      });
+
+      // Create personnel object.
+      const personnelToAdd = {
         grantId,
-        role,
-        firstName: { [Op.ne]: program[`${role}_first_name`] },
-        lastName: { [Op.ne]: program[`${role}_last_name`] },
-      },
-    });
-    console.log('\n\n\n----- AFTER SEQUELIZE FIND ONE -----\n\n\n');
+        role: currentRole,
+        prefix: program[`${currentRole}_prefix`],
+        firstName: program[`${currentRole}_first`],
+        lastName: program[`${currentRole}_last`],
+        suffix: typeof program[`${currentRole}_suffix`] === 'object' ? null : program[`${currentRole}_suffix`],
+        title: program[`${currentRole}_title`],
+        email: program[`${currentRole}_email`],
+        effectiveDate: null,
+        active: true,
+        originalPersonnelId: null,
+      };
 
-    // Create personnel object.
-    const personnelToAdd = {
-      grantId,
-      role,
-      prefix: program[`${role}_prefix`],
-      firstName: program[`${role}_first`],
-      lastName: program[`${role}_last`],
-      suffix: program[`${role}_suffix`],
-      title: program[`${role}_title`],
-      email: program[`${role}_email`],
-      effectiveDate: null,
-      active: true,
-      originalPersonnelId: null,
-    };
-
-    if (!existingPersonnel) {
+      if (!existingPersonnel) {
       // Personnel does not exist, create a new one.
-      console.log('\n\n\n\n----DOES NOT EXIST ADD: ', personnelToAdd);
-      return personnelToAdd;
+        grantPersonnelArray.push(personnelToAdd);
+      } else {
+        // Add the new Grant Personnel record.
+        grantPersonnelArray.push(
+          {
+            ...personnelToAdd,
+            originalPersonnelId: existingPersonnel.id,
+            effectiveDate: new Date(),
+          },
+        );
+        // Also add the old Grant Personnel record with the active flag set to false.
+        grantPersonnelArray.push({
+          ...existingPersonnel,
+          active: false,
+        });
+      }
     }
-    // Return the updated personnel object and the new personnel object.
-    console.log('\n\n\n\n----EXISTS UPDATE OLD: ', existingPersonnel);
-    return ([
-      {
-        ...personnelToAdd,
-        originalPersonnelId: existingPersonnel.id,
-        effectiveDate: new Date(),
-      },
-      {
-        ...existingPersonnel,
-        active: false,
-      },
-    ]
-    );
-  });
+  }
+  return grantPersonnelArray;
 }
 
 /**
@@ -216,7 +221,7 @@ export async function processFiles(hashSumHex) {
         (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap,
       );
 
-      const programsForDb = await programsWithGrants.map(async (program) => ({
+      const programsForDb = await Promise.all(programsWithGrants.map(async (program) => ({
         id: parseInt(program.grant_program_id, 10),
         grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),
         programType: valueFromXML(program.program_type),
@@ -230,9 +235,8 @@ export async function processFiles(hashSumHex) {
           parseInt(grantAgencyMap[program.grant_agency_id], 10),
           program,
         ),
-      }));
+      })));
 
-      console.log('\n\n\n-----Promises NOT resolved:', programsForDb);
       // Extract an array of all grant personnel to update.
       const grantPersonnel = programsForDb.map((p) => p.grantPersonnel);
 
@@ -255,6 +259,15 @@ export async function processFiles(hashSumHex) {
         cdiGrants,
         {
           updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
+          transaction,
+        },
+      );
+
+      // Update grant personnel.
+      await GrantPersonnel.unscoped().bulkCreate(
+        grantPersonnel,
+        {
+          updateOnDuplicate: ['active'],
           transaction,
         },
       );
