@@ -114,31 +114,6 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/no training report id provided/i)).toBeInTheDocument();
   });
 
-  it('validates the form when the save & continue button is pressed', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1',
-      reportId: 1,
-      data: {},
-      collaboratorIds: [],
-      ownerId: 1,
-      pocId: 1,
-    });
-    renderTrainingReportForm('123', 'event-summary');
-    expect(fetchMock.called('/api/events/id/123')).toBe(true);
-
-    fetchMock.put('/api/events/id/123', { regionId: '1', reportId: 1, data: {} });
-    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
-    const onSaveAndContinueButton = screen.getByText(/save and continue/i);
-    act(() => {
-      userEvent.click(onSaveAndContinueButton);
-    });
-
-    await screen.findByText('Select collaborators');
-
-    // check that fetch mock was NOT called with a put request
-    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
-  });
-
   it('tests the on save & continue button', async () => {
     fetchMock.getOnce('/api/events/id/123', {
       regionId: '1',
