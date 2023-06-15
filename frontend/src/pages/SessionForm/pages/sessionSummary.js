@@ -153,6 +153,7 @@ const SessionSummary = ({ datePickerKey }) => {
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
     } catch (error) {
+      console.log({ error });
       setFileUploadErrorMessage('File(s) could not be uploaded');
     } finally {
       setIsAppLoading(false);
@@ -166,8 +167,7 @@ const SessionSummary = ({ datePickerKey }) => {
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
+      setFileUploadErrorMessage('File(s) could not be deleted');
     } finally {
       setIsAppLoading(false);
     }
