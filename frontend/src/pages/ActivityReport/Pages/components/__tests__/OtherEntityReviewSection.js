@@ -29,6 +29,12 @@ describe('OtherEntityReviewSection', () => {
               },
               originalFileName: 'test.txt',
             },
+            {
+              url: {
+                url: 'https://www.google2.com',
+              },
+              originalFileName: 'test.csv',
+            },
           ],
         }],
         calculatedStatus: REPORT_STATUSES.DRAFT,
@@ -50,5 +56,8 @@ describe('OtherEntityReviewSection', () => {
     const link = document.querySelector('a[href="https://www.google.com"]');
     expect(link).toHaveAttribute('target', '_blank');
     expect(screen.getByText(/(opens in new tab)/i)).toBeInTheDocument();
+
+    const link2 = document.querySelector('a[href="https://www.google2.com"]');
+    expect(link2).toHaveAttribute('target', '_self');
   });
 });
