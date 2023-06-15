@@ -9,8 +9,9 @@ export const sessionSummaryFields = {
   objective: '',
   objectiveTopics: [],
   objectiveTrainers: [],
+  objectiveResources: [],
   files: [],
-  addObjectiveFiles: 'no',
+  supportType: '',
 };
 
 export const defaultFormValues = {

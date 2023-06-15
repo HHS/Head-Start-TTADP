@@ -285,7 +285,10 @@ const SessionSummary = ({ datePickerKey }) => {
         </FormItem>
       </div>
 
-      <Label htmlFor="context">Session context</Label>
+      <Label htmlFor="context">
+        Session context
+        <Req />
+      </Label>
       <div className="smart-hub--text-area__resize-vertical margin-top-1">
         <HookFormRichEditor ariaLabel="Context" name="context" id="context" required />
       </div>
@@ -477,14 +480,14 @@ const SessionSummary = ({ datePickerKey }) => {
       </Fieldset>
 
       <div className="margin-top-2">
-        <Label htmlFor="objectiveContentLevel">
-          Content level
+        <Label htmlFor="objectiveSupportType">
+          Support type
           <Req />
         </Label>
 
         <Dropdown
-          id="objectiveContentLevel"
-          name="objectiveContentLevel"
+          id="objectiveSupportType"
+          name="objectiveSupportType"
           inputRef={register({ required: 'Select one' })}
           defaultValue=""
         >
