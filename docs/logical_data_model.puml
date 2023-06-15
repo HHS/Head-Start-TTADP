@@ -262,9 +262,9 @@ class Goals{
  isFromSmartsheetTtaPlan : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ endDate : date
  closeSuspendReason : enum
  closeSuspendContext : text
- endDate : date
  previousStatus : text
  * onApprovedAR : boolean
  firstNotStartedAt : timestamp with time zone
@@ -284,6 +284,23 @@ class Goals{
  source : enum
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
+}
+
+class GrantPersonnel{
+ * id : integer : <generated>
+ * grantId : integer
+ * role : varchar(255)
+ * active : boolean
+ prefix : varchar(255)
+ firstName : varchar(255)
+ lastName : varchar(255)
+ suffix : varchar(255)
+ title : varchar(255)
+ email : varchar(255)
+ effectiveDate : timestamp with time zone
+ originalPersonnelId : integer
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
 }
 
 class Grants{
@@ -512,6 +529,8 @@ class Resources{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  title : text
+ metadata : jsonb
+ metadataUpdatedAt : timestamp with time zone
 }
 
 class RoleTopics{
@@ -979,6 +998,20 @@ class ZALGoals{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALGrantPersonnel{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALGrants{
@@ -1492,6 +1525,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResour
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
+Grants "1" --[#black,dashed,thickness=2]--{  "n" GrantPersonnel : grant, grantPersonnel
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
