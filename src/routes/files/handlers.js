@@ -30,6 +30,8 @@ import { auditLogger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
+import { findSessionById } from '../../services/sessionReports';
+import { findEventById } from '../../services/event';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -135,7 +137,20 @@ const deleteHandler = async (req, res) => {
         await deleteObjectiveFile(of.id);
       }
     } else if (sessionId) {
-      // todo: add session permission check
+      const session = await findSessionById(sessionId);
+      const event = await findEventById(session.eventId);
+
+      const allowedEditors = [
+        ...event.collaboratorIds,
+        event.ownerId,
+        event.pocId,
+      ];
+
+      if (!allowedEditors.includes(userId)) {
+        res.sendStatus(403);
+        return;
+      }
+
       const sof = file.sessionFiles.find(
         (r) => r.sessionReportPilotId === parseInt(sessionId, DECIMAL_BASE),
       );
@@ -345,7 +360,19 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (sessionId) {
-      // todo: add permissions check
+      const session = await findSessionById(sessionId);
+      const event = await findEventById(session.eventId);
+
+      const allowedEditors = [
+        ...event.collaboratorIds,
+        event.ownerId,
+        event.pocId,
+      ];
+
+      if (!allowedEditors.includes(userId)) {
+        return res.sendStatus(403);
+      }
+
       metadata = await createSessionObjectiveFileMetaData(
         originalFilename,
         fileName,
