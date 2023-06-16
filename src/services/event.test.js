@@ -162,7 +162,7 @@ describe('event service', () => {
         false,
       );
 
-      expect(found3.length).toBeGreaterThan(1);
+      expect(found3.map((f) => f.id)).toContain(created3.id);
       expect(found4.length).toBe(1);
 
       await destroyEvent(created3.id);
