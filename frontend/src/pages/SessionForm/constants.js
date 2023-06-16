@@ -13,10 +13,19 @@ export const sessionSummaryFields = {
   objectiveResources: [],
   files: [],
   supportType: '',
+  regionId: '',
+};
+
+export const participantsFields = {
+  participants: [],
+  deliveryMethod: '',
+  numberOfParticipants: '',
+  ttaProvided: '',
 };
 
 export const defaultFormValues = {
   ...sessionSummaryFields,
+  ...participantsFields,
 };
 
 export const defaultValues = {
@@ -26,7 +35,6 @@ export const defaultValues = {
   eventId: '',
   eventDisplayId: '',
   eventName: '',
-  regionId: 0,
   status: 'In progress',
   pageState: {
     1: NOT_STARTED,
