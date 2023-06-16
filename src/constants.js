@@ -172,3 +172,8 @@ export const GRANT_INACTIVATION_REASONS = {
   RELINQUISHED: 'Relinquished',
   UNKNOWN: 'Unknown',
 };
+
+export const DB_MAINTENANCE_TYPE = {
+  AUDIT_ARCHIVE: 'audit archive',
+  BACKUP: 'backup',
+};
