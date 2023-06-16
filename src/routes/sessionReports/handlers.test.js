@@ -1,15 +1,18 @@
+import { get } from 'express-http-context';
 import db from '../../models';
 import {
   createHandler,
   deleteHandler,
   getHandler,
   updateHandler,
+  getParticipants,
 } from './handlers';
 import {
   createSession,
   findSessionById,
   updateSession,
   findSessionsByEventId,
+  getPossibleSessionParticipants,
 } from '../../services/sessionReports';
 import SessionReport from '../../policies/sessionReport';
 import EventReport from '../../policies/event';
@@ -200,6 +203,20 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValueOnce(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getParticipants', () => {
+    it('returns participants', async () => {
+      getPossibleSessionParticipants.mockResolvedValueOnce([]);
+      await getParticipants({ params: { id: 1 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('handles errors', async () => {
+      getPossibleSessionParticipants.mockRejectedValueOnce(new Error('error'));
+      await getParticipants({ params: { id: 1 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 });
