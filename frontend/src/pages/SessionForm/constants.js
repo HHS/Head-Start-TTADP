@@ -2,8 +2,6 @@ import { NOT_STARTED } from '../../components/Navigator/constants';
 
 export const sessionSummaryFields = {
   sessionName: '',
-  endDate: '',
-  startDate: '',
   duration: '',
   context: '',
   objective: '',
