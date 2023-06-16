@@ -21,7 +21,6 @@ import { getTopics } from '../../../fetchers/topics';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import Req from '../../../components/Req';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import QuestionTooltip from '../../../components/GoalForm/QuestionTooltip';
@@ -176,7 +175,7 @@ const SessionSummary = ({ datePickerKey }) => {
   return (
     <>
       <Helmet>
-        <title>Event summary</title>
+        <title>Session summary</title>
       </Helmet>
       <IndicatesRequiredField />
 
@@ -283,13 +282,19 @@ const SessionSummary = ({ datePickerKey }) => {
         </FormItem>
       </div>
 
-      <Label htmlFor="context">
-        Session context
-        <Req />
-      </Label>
-      <div className="smart-hub--text-area__resize-vertical margin-top-1">
-        <HookFormRichEditor ariaLabel="Context" name="context" id="context" required />
-      </div>
+      <FormItem
+        label="Session context"
+        name="context"
+        required
+      >
+        <Textarea
+          id="context"
+          name="context"
+          inputRef={register({
+            required: 'Enter an objective',
+          })}
+        />
+      </FormItem>
 
       <h3>Objective summary</h3>
       <FormItem
