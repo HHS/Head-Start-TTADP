@@ -49,6 +49,8 @@ const TRAINER_OPTIONS = [
 ].map((label, value) => ({ label, value }));
 
 const SessionSummary = ({ datePickerKey }) => {
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+
   const {
     getValues,
     register,
@@ -70,7 +72,7 @@ const SessionSummary = ({ datePickerKey }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
 
-  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  console.log({ startDate, endDate });
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -205,55 +207,53 @@ const SessionSummary = ({ datePickerKey }) => {
         </FormItem>
       </div>
 
-      <Fieldset>
-        <div className="margin-top-2">
-          <FormItem
-            label="Session start date"
+      <div className="margin-top-2">
+        <FormItem
+          label="Session start date"
+          name="startDate"
+          id="startDate-label"
+          htmlFor="startDate"
+          required
+        >
+          <div
+            className="usa-hint"
+          >
+            mm/dd/yyyy
+          </div>
+          <ControlledDatePicker
+            key={`startDate-${datePickerKey}`}
+            control={control}
             name="startDate"
-            id="startDate-label"
-            htmlFor="startDate"
-            required
-          >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
-            <ControlledDatePicker
-              key={`startDate-${datePickerKey}`}
-              control={control}
-              name="startDate"
-              value={startDate}
-              setEndDate={setEndDate}
-              isStartDate
-              inputId="startDate"
-              endDate={endDate}
-            />
-          </FormItem>
+            value={startDate}
+            setEndDate={setEndDate}
+            isStartDate
+            inputId="startDate"
+            endDate={endDate}
+          />
+        </FormItem>
 
-          <FormItem
-            label="Session end date"
-            name="endDate"
-            id="endDate-label"
-            htmlFor="endDate"
-            required
+        <FormItem
+          label="Session end date"
+          name="endDate"
+          id="endDate-label"
+          htmlFor="endDate"
+          required
+        >
+          <div
+            className="usa-hint"
           >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
-            <ControlledDatePicker
-              control={control}
-              name="endDate"
-              inputId="endDate"
-              value={endDate}
-              minDate={startDate}
-              key={`${endDateKey}-${datePickerKey}`}
-            />
-          </FormItem>
-        </div>
-      </Fieldset>
+            mm/dd/yyyy
+          </div>
+          <ControlledDatePicker
+            control={control}
+            name="endDate"
+            inputId="endDate"
+            value={endDate}
+            minDate={startDate}
+            key={`${endDateKey}-${datePickerKey}`}
+          />
+        </FormItem>
+      </div>
 
       <div className="margin-top-2">
         <FormItem
@@ -512,7 +512,7 @@ SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
 };
 
-const fields = Object.keys(sessionSummaryFields);
+const fields = [...Object.keys(sessionSummaryFields), 'endDate', 'startDate'];
 const path = 'session-summary';
 const position = 1;
 

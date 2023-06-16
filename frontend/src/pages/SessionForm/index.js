@@ -40,14 +40,12 @@ const resetFormData = (reset, event) => {
   } = event;
 
   const form = {
+    ...defaultValues,
     ...data,
     ...fields,
   };
 
-  reset({
-    ...defaultValues,
-    ...form,
-  });
+  reset(form);
 };
 
 export default function SessionForm({ match }) {
@@ -85,7 +83,7 @@ export default function SessionForm({ match }) {
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey, setDatePickerKey] = useState(Date.now().toString());
+  const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
 
   /* ============
     */
@@ -160,7 +158,7 @@ export default function SessionForm({ match }) {
         setError('Error fetching session');
       } finally {
         setReportFetched(true);
-        setDatePickerKey(Date.now().toString());
+        setDatePickerKey(`f${Date.now().toString()}`);
       }
     }
     fetchSession();
