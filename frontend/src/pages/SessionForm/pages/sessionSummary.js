@@ -72,8 +72,6 @@ const SessionSummary = ({ datePickerKey }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
 
-  console.log({ startDate, endDate });
-
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
 
