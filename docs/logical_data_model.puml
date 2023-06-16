@@ -286,24 +286,6 @@ class Goals{
  * grantId : integer : REFERENCES "Grants".id
 }
 
-class GrantPersonnel{
- * id : integer : <generated>
- * grantId : integer
- * programId : integer
- * role : varchar(255)
- * active : boolean
- prefix : varchar(255)
- firstName : varchar(255)
- lastName : varchar(255)
- suffix : varchar(255)
- title : varchar(255)
- email : varchar(255)
- effectiveDate : timestamp with time zone
- originalPersonnelId : integer
- * createdAt : timestamp with time zone : now()
- * updatedAt : timestamp with time zone : now()
-}
-
 class Grants{
  * id : integer
  * number : varchar(255)
@@ -481,6 +463,24 @@ class Permissions{
  * userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
  * scopeId : integer : REFERENCES "Scopes".id
+}
+
+class ProgramPersonnel{
+ * id : integer : <generated>
+ * grantId : integer
+ * programId : integer
+ * role : varchar(255)
+ * active : boolean
+ prefix : varchar(255)
+ firstName : varchar(255)
+ lastName : varchar(255)
+ suffix : varchar(255)
+ title : varchar(255)
+ email : varchar(255)
+ effectiveDate : timestamp with time zone
+ originalPersonnelId : integer
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
 }
 
 class Programs{
@@ -1001,20 +1001,6 @@ class ZALGoals{
  dml_as : bigint
 }
 
-class ZALGrantPersonnel{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
- * dml_as : bigint
- * dml_txid : uuid
- session_sig : text
- descriptor_id : integer
-}
-
 class ZALGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1237,6 +1223,20 @@ class ZALPermissions{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALProgramPersonnel{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALPrograms{
@@ -1526,9 +1526,9 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResour
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
-Grants "1" --[#black,dashed,thickness=2]--{  "n" GrantPersonnel : grant, grantPersonnel
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
@@ -1543,7 +1543,7 @@ Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : object
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
-Programs "1" --[#black,dashed,thickness=2]--{  "n" GrantPersonnel : program, grantPersonnel
+Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports

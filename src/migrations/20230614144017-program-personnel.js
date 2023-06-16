@@ -14,7 +14,7 @@ module.exports = {
         { transaction },
       );
 
-      await queryInterface.createTable('GrantPersonnel', {
+      await queryInterface.createTable('ProgramPersonnel', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -90,7 +90,7 @@ module.exports = {
         `,
         { transaction },
       );
-      await Promise.all(['GrantPersonnel'].map(async (table) => {
+      await Promise.all(['ProgramPersonnel'].map(async (table) => {
         await queryInterface.sequelize.query(
           ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
           { raw: true, transaction },

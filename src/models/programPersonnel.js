@@ -3,13 +3,13 @@ const {
 } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
-  class GrantPersonnel extends Model {
+  class ProgramPersonnel extends Model {
     static associate(models) {
-      GrantPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
-      GrantPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      ProgramPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
+      ProgramPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
     }
   }
-  GrantPersonnel.init({
+  ProgramPersonnel.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -66,8 +66,8 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'GrantPersonnel',
+    modelName: 'ProgramPersonnel',
     freezeTableName: true,
   });
-  return GrantPersonnel;
+  return ProgramPersonnel;
 };
