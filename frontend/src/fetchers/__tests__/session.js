@@ -8,6 +8,7 @@ import {
   deleteSession,
   uploadSessionObjectiveFiles,
   deleteSessionObjectiveFile,
+  getPossibleSessionParticipants,
 } from '../session';
 
 const sessionsUrl = join('/', 'api', 'session-reports');
@@ -65,5 +66,12 @@ describe('session fetchers', () => {
     fetchMock.delete(join('/', 'api', 'files', 's', sessionId, fileId), response);
     const result = await deleteSessionObjectiveFile(sessionId, fileId);
     expect(result).toEqual(200);
+  });
+  it('getPossibleSessionParticipants', async () => {
+    const regionId = '1';
+    const response = [{ id: 1 }];
+    fetchMock.get(join(sessionsUrl, 'participants', regionId), response);
+    const result = await getPossibleSessionParticipants(regionId);
+    expect(result).toEqual(response);
   });
 });
