@@ -56,8 +56,8 @@ async function getGrantPersonnel(grantId, program) {
         grantId,
         role: currentRole,
         prefix: program[`${currentRole}_prefix`],
-        firstName: program[`${currentRole}_first`],
-        lastName: program[`${currentRole}_last`],
+        firstName,
+        lastName,
         suffix: typeof program[`${currentRole}_suffix`] === 'object' ? null : program[`${currentRole}_suffix`],
         title: program[`${currentRole}_title`],
         email: program[`${currentRole}_email`],
@@ -264,15 +264,13 @@ export async function processFiles(hashSumHex) {
       );
 
       // Update grant personnel.
-      /*
       await GrantPersonnel.unscoped().bulkCreate(
-        grantPersonnel,
+        grantPersonnel[0],
         {
-          updateOnDuplicate: ['active'],
+          updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
           transaction,
         },
       );
-      */
 
       // Load and Process grant replacement data.
       const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');
