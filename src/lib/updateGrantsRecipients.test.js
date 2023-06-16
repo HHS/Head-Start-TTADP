@@ -4,7 +4,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, GrantPersonnel,
+  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
 
 jest.mock('axios');
@@ -67,12 +67,14 @@ describe('Update HSES data', () => {
   });
 });
 
-describe('Update grants, grant personnel, and recipients', () => {
+describe('Update grants, program personnel, and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await GrantPersonnel.unscoped().destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await ProgramPersonnel.unscoped().destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
     await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
@@ -80,7 +82,9 @@ describe('Update grants, grant personnel, and recipients', () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await GrantPersonnel.unscoped().destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await ProgramPersonnel.unscoped().destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
     await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
@@ -167,31 +171,31 @@ describe('Update grants, grant personnel, and recipients', () => {
     expect(totalGrants.length).toBe(15);
   });
 
-  it('should import or update grant personnel', async () => {
-    const grantPersonnelBefore = await GrantPersonnel.findAll(
+  it('should import or update program personnel', async () => {
+    const programPersonnelBefore = await ProgramPersonnel.findAll(
       {
         where: {
           grantId: { [Op.gt]: SMALLEST_GRANT_ID },
         },
       },
     );
-    expect(grantPersonnelBefore.length).toBe(0);
+    expect(programPersonnelBefore.length).toBe(0);
 
     // Process the files.
     await processFiles();
 
-    const grantPersonnelAdded = await GrantPersonnel.unscoped().findAll(
+    const programPersonnelAdded = await ProgramPersonnel.unscoped().findAll(
       {
         where: {
           grantId: { [Op.gt]: SMALLEST_GRANT_ID },
         },
       },
     );
-    expect(grantPersonnelAdded).toBeDefined();
-    expect(grantPersonnelAdded.length).toBe(16);
+    expect(programPersonnelAdded).toBeDefined();
+    expect(programPersonnelAdded.length).toBe(16);
 
     // Get first program.
-    let personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 1);
+    let personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 1);
     expect(personnelToAssert.length).toBe(4);
 
     // Auth Official Contact.
@@ -231,15 +235,15 @@ describe('Update grants, grant personnel, and recipients', () => {
     expect(personnelToAssert[3].active).toBe(true);
 
     // Get second program.
-    personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 2);
+    personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 2);
     expect(personnelToAssert.length).toBe(4);
 
     // Get third program.
-    personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 3);
+    personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 3);
     expect(personnelToAssert.length).toBe(4);
 
     // Get fourth program.
-    personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 4);
+    personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 4);
     expect(personnelToAssert.length).toBe(4);
   });
 

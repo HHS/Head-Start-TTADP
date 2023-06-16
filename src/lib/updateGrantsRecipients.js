@@ -11,8 +11,7 @@ import db, {
   Grant,
   Program,
   sequelize,
-  Goal,
-  GrantPersonnel,
+  ProgramPersonnel,
 } from '../models';
 import { logger, auditLogger } from '../logger';
 import { GRANT_PERSONNEL_ROLES } from '../constants';
@@ -36,8 +35,8 @@ function getPersonnelFields(role, field, program) {
   return typeof program[`${role}_${field}`] === 'object' ? null : program[`${role}_${field}`];
 }
 
-async function getGrantPersonnel(grantId, programId, program) {
-  const grantPersonnelArray = [];
+async function getProgramPersonnel(grantId, programId, program) {
+  const programPersonnelArray = [];
   for (let i = 0; i <= GRANT_PERSONNEL_ROLES.length; i += 1) {
     const currentRole = GRANT_PERSONNEL_ROLES[i];
     // Determine if this personnel exists wth a different name.
@@ -46,7 +45,7 @@ async function getGrantPersonnel(grantId, programId, program) {
 
     if (firstName && lastName) {
       // eslint-disable-next-line no-await-in-loop
-      const existingPersonnel = await GrantPersonnel.findOne({
+      const existingPersonnel = await ProgramPersonnel.findOne({
         where: {
           grantId,
           programId,
@@ -74,10 +73,10 @@ async function getGrantPersonnel(grantId, programId, program) {
 
       if (!existingPersonnel) {
       // Personnel does not exist, create a new one.
-        grantPersonnelArray.push(personnelToAdd);
+        programPersonnelArray.push(personnelToAdd);
       } else {
         // Add the new Grant Personnel record.
-        grantPersonnelArray.push(
+        programPersonnelArray.push(
           {
             ...personnelToAdd,
             originalPersonnelId: existingPersonnel.id,
@@ -85,14 +84,14 @@ async function getGrantPersonnel(grantId, programId, program) {
           },
         );
         // Also add the old Grant Personnel record with the active flag set to false.
-        grantPersonnelArray.push({
+        programPersonnelArray.push({
           ...existingPersonnel,
           active: false,
         });
       }
     }
   }
-  return grantPersonnelArray;
+  return programPersonnelArray;
 }
 
 /**
@@ -237,7 +236,7 @@ export async function processFiles(hashSumHex) {
         status: valueFromXML(program.program_status),
         name: valueFromXML(program.program_name),
         // Get grant personnel.
-        grantPersonnel: await getGrantPersonnel(
+        programPersonnel: await getProgramPersonnel(
           parseInt(grantAgencyMap[program.grant_agency_id], 10),
           parseInt(program.grant_program_id, 10),
           program,
@@ -245,7 +244,7 @@ export async function processFiles(hashSumHex) {
       })));
 
       // Extract an array of all grant personnel to update.
-      const grantPersonnel = programsForDb.map((p) => p.grantPersonnel).flat();
+      const programPersonnel = programsForDb.map((p) => p.programPersonnel).flat();
 
       // Split grants between CDI and non-CDI grants.
       const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
@@ -305,8 +304,8 @@ export async function processFiles(hashSumHex) {
       );
 
       // Update grant personnel.
-      await GrantPersonnel.unscoped().bulkCreate(
-        grantPersonnel,
+      await ProgramPersonnel.unscoped().bulkCreate(
+        programPersonnel,
         {
           updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
           transaction,

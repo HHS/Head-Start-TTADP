@@ -6,7 +6,7 @@ export default (sequelize, DataTypes) => {
   class Program extends Model {
     static associate(models) {
       Program.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
-      Program.hasMany(models.GrantPersonnel, { foreignKey: 'programId', as: 'grantPersonnel' });
+      Program.hasMany(models.ProgramPersonnel, { foreignKey: 'programId', as: 'programPersonnel' });
     }
   }
   Program.init({
