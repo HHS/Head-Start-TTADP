@@ -30,6 +30,22 @@ import {
 
 const placeholderText = '- Select -';
 
+// we need to add three additional target populations to the AR target populations list
+const targetPopulations = [
+  ...TARGET_POPULATIONS,
+  'Children/Families affected by systemic discrimination/bias/exclusion',
+  'Children/Families affected by traumatic events',
+  'Parents/Families impacted by health disparities',
+];
+
+// sort the reasons alphabetically
+targetPopulations.sort();
+
+const eventOrganizerOptions = [
+  'Regional PD Event (with National Centers)',
+  'IST TTA/Visit',
+].map((option) => ({ value: option, label: option }));
+
 const EventSummary = ({ additionalData, datePickerKey }) => {
   const {
     register,
@@ -60,23 +76,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     eventName,
   } = data;
 
-  // we need to add three additional target populations to the AR target populations list
-  const targetPopulations = [
-    ...TARGET_POPULATIONS,
-    'Children/Families affected by systemic discrimination/bias/exclusion',
-    'Children/Families affected by traumatic events',
-    'Parents/Families impacted by health disparities',
-  ];
-
-  // sort the reasons alphabetically
-  targetPopulations.sort();
-
   const { users: { collaborators, pointOfContact } } = additionalData;
-
-  const eventOrganizerOptions = [
-    'Regional PD Event (with National Centers)',
-    'IST TTA/Visit',
-  ].map((option) => ({ value: option, label: option }));
 
   return (
     <>
@@ -241,53 +241,52 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           </FormItem>
         </div>
       </Fieldset>
-      <Fieldset>
-        <div className="margin-top-2">
-          <FormItem
-            label="Event start date"
-            name="startDate"
-            id="startDate-label"
-            htmlFor="startDate"
-          >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
-            <ControlledDatePicker
-              key={`startDate-${datePickerKey}`}
-              control={control}
-              name="startDate"
-              value={startDate}
-              setEndDate={setEndDate}
-              isStartDate
-              inputId="startDate"
-              endDate={endDate}
-            />
-          </FormItem>
 
-          <FormItem
-            label="Event end date"
-            name="endDate"
-            id="endDate-label"
-            htmlFor="endDate"
+      <div className="margin-top-2">
+        <FormItem
+          label="Event start date"
+          name="startDate"
+          id="startDate-label"
+          htmlFor="startDate"
+        >
+          <div
+            className="usa-hint"
           >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
-            <ControlledDatePicker
-              control={control}
-              name="endDate"
-              inputId="endDate"
-              value={endDate}
-              minDate={startDate}
-              key={`${endDateKey}-${datePickerKey}`}
-            />
-          </FormItem>
-        </div>
-      </Fieldset>
+            mm/dd/yyyy
+          </div>
+          <ControlledDatePicker
+            key={`startDate-${datePickerKey}`}
+            control={control}
+            name="startDate"
+            value={startDate}
+            setEndDate={setEndDate}
+            isStartDate
+            inputId="startDate"
+            endDate={endDate}
+          />
+        </FormItem>
+
+        <FormItem
+          label="Event end date"
+          name="endDate"
+          id="endDate-label"
+          htmlFor="endDate"
+        >
+          <div
+            className="usa-hint"
+          >
+            mm/dd/yyyy
+          </div>
+          <ControlledDatePicker
+            control={control}
+            name="endDate"
+            inputId="endDate"
+            value={endDate}
+            minDate={startDate}
+            key={`${endDateKey}-${datePickerKey}`}
+          />
+        </FormItem>
+      </div>
 
       <div className="margin-top-2">
         <Label htmlFor="trainingType">

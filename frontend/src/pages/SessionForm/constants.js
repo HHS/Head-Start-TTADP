@@ -1,6 +1,9 @@
 import { NOT_STARTED } from '../../components/Navigator/constants';
 
 export const sessionSummaryFields = {
+  // not including start date or end date
+  // because when I do, it seems to befuddle the
+  // loading of the form
   sessionName: '',
   duration: '',
   context: '',
