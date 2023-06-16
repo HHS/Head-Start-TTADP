@@ -14,6 +14,8 @@ jest.mock('./fileUtils', () => ({
   fileHash: () => 'hash',
 }));
 
+jest.mock('bull');
+
 const SMALLEST_GRANT_ID = 1000;
 
 describe('Update HSES data', () => {
@@ -65,7 +67,7 @@ describe('Update HSES data', () => {
   });
 });
 
-describe('Update grants and recipients', () => {
+describe('Update grants, grant personnel, and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
@@ -163,6 +165,82 @@ describe('Update grants and recipients', () => {
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
     expect(totalGrants.length).toBe(15);
+  });
+
+  it('should import or update grant personnel', async () => {
+    const grantPersonnelBefore = await GrantPersonnel.findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(grantPersonnelBefore.length).toBe(0);
+
+    // Process the files.
+    await processFiles();
+
+    const grantPersonnelAdded = await GrantPersonnel.unscoped().findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(grantPersonnelAdded).toBeDefined();
+    expect(grantPersonnelAdded.length).toBe(16);
+
+    // Get first program.
+    let personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 1);
+    expect(personnelToAssert.length).toBe(4);
+
+    // Auth Official Contact.
+    expect(personnelToAssert[0].role).toBe('auth_official_contact');
+    expect(personnelToAssert[0].title).toBe('Board President');
+    expect(personnelToAssert[0].firstName).toBe('F47125');
+    expect(personnelToAssert[0].lastName).toBe('L47125');
+    expect(personnelToAssert[0].prefix).toBe('Mr.');
+    expect(personnelToAssert[0].email).toBe('47125@hsesinfo.org');
+    expect(personnelToAssert[0].active).toBe(true);
+
+    // CEO.
+    expect(personnelToAssert[1].role).toBe('ceo');
+    expect(personnelToAssert[1].title).toBe('CEO');
+    expect(personnelToAssert[1].firstName).toBe('F47126');
+    expect(personnelToAssert[1].lastName).toBe('L47126');
+    expect(personnelToAssert[1].prefix).toBe('Ms.');
+    expect(personnelToAssert[1].email).toBe('47126@hsesinfo.org');
+    expect(personnelToAssert[1].active).toBe(true);
+
+    // Policy Council.
+    expect(personnelToAssert[2].role).toBe('policy_council');
+    expect(personnelToAssert[2].title).toBe(null);
+    expect(personnelToAssert[2].firstName).toBe('F47128');
+    expect(personnelToAssert[2].lastName).toBe('L47128');
+    expect(personnelToAssert[2].prefix).toBe('Ms.');
+    expect(personnelToAssert[2].email).toBe('47128@hsesinfo.org');
+    expect(personnelToAssert[2].active).toBe(true);
+
+    // Director.
+    expect(personnelToAssert[3].role).toBe('director');
+    expect(personnelToAssert[3].title).toBe(null);
+    expect(personnelToAssert[3].firstName).toBe('F47124');
+    expect(personnelToAssert[3].lastName).toBe('L47124');
+    expect(personnelToAssert[3].prefix).toBe('Ms.');
+    expect(personnelToAssert[3].email).toBe('47124@hsesinfo.org');
+    expect(personnelToAssert[3].active).toBe(true);
+
+    // Get second program.
+    personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 2);
+    expect(personnelToAssert.length).toBe(4);
+
+    // Get third program.
+    personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 3);
+    expect(personnelToAssert.length).toBe(4);
+
+    // Get fourth program.
+    personnelToAssert = grantPersonnelAdded.filter((gp) => gp.programId === 4);
+    expect(personnelToAssert.length).toBe(4);
   });
 
   it('includes the grant specialists name and email', async () => {
