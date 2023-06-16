@@ -5,6 +5,7 @@ const {
 export default (sequelize, DataTypes) => {
   class GrantPersonnel extends Model {
     static associate(models) {
+      GrantPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
       GrantPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
     }
   }
@@ -16,6 +17,10 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
     grantId: {
+      allowNull: false,
+      type: DataTypes.INTEGER,
+    },
+    programId: {
       allowNull: false,
       type: DataTypes.INTEGER,
     },

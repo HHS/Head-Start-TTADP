@@ -289,6 +289,7 @@ class Goals{
 class GrantPersonnel{
  * id : integer : <generated>
  * grantId : integer
+ * programId : integer
  * role : varchar(255)
  * active : boolean
  prefix : varchar(255)
@@ -1542,6 +1543,7 @@ Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : object
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
+Programs "1" --[#black,dashed,thickness=2]--{  "n" GrantPersonnel : program, grantPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports

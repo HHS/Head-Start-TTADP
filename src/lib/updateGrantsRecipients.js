@@ -32,19 +32,24 @@ function combineNames(firstName, lastName) {
   return joinedName === '' ? null : joinedName;
 }
 
-async function getGrantPersonnel(grantId, program) {
+function getPersonnelFields(role, field, program) {
+  return typeof program[`${role}_${field}`] === 'object' ? null : program[`${role}_${field}`];
+}
+
+async function getGrantPersonnel(grantId, programId, program) {
   const grantPersonnelArray = [];
   for (let i = 0; i <= GRANT_PERSONNEL_ROLES.length; i += 1) {
     const currentRole = GRANT_PERSONNEL_ROLES[i];
     // Determine if this personnel exists wth a different name.
-    const firstName = program[`${currentRole}_first_name`];
-    const lastName = program[`${currentRole}_last_name`];
+    const firstName = getPersonnelFields(currentRole, 'first_name', program);
+    const lastName = getPersonnelFields(currentRole, 'last_name', program);
 
     if (firstName && lastName) {
       // eslint-disable-next-line no-await-in-loop
       const existingPersonnel = await GrantPersonnel.findOne({
         where: {
           grantId,
+          programId,
           role: currentRole,
           firstName: { [Op.ne]: firstName },
           lastName: { [Op.ne]: lastName },
@@ -53,14 +58,15 @@ async function getGrantPersonnel(grantId, program) {
 
       // Create personnel object.
       const personnelToAdd = {
+        programId,
         grantId,
         role: currentRole,
-        prefix: program[`${currentRole}_prefix`],
+        prefix: getPersonnelFields(currentRole, 'prefix', program),
         firstName,
         lastName,
-        suffix: typeof program[`${currentRole}_suffix`] === 'object' ? null : program[`${currentRole}_suffix`],
-        title: program[`${currentRole}_title`],
-        email: program[`${currentRole}_email`],
+        suffix: getPersonnelFields(currentRole, 'suffix', program),
+        title: getPersonnelFields(currentRole, 'title', program),
+        email: getPersonnelFields(currentRole, 'email', program),
         effectiveDate: null,
         active: true,
         originalPersonnelId: null,
@@ -233,12 +239,13 @@ export async function processFiles(hashSumHex) {
         // Get grant personnel.
         grantPersonnel: await getGrantPersonnel(
           parseInt(grantAgencyMap[program.grant_agency_id], 10),
+          parseInt(program.grant_program_id, 10),
           program,
         ),
       })));
 
       // Extract an array of all grant personnel to update.
-      const grantPersonnel = programsForDb.map((p) => p.grantPersonnel);
+      const grantPersonnel = programsForDb.map((p) => p.grantPersonnel).flat();
 
       // Split grants between CDI and non-CDI grants.
       const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
@@ -259,15 +266,6 @@ export async function processFiles(hashSumHex) {
         cdiGrants,
         {
           updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
-          transaction,
-        },
-      );
-
-      // Update grant personnel.
-      await GrantPersonnel.unscoped().bulkCreate(
-        grantPersonnel[0],
-        {
-          updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
           transaction,
         },
       );
@@ -302,6 +300,15 @@ export async function processFiles(hashSumHex) {
         programsForDb,
         {
           updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
+          transaction,
+        },
+      );
+
+      // Update grant personnel.
+      await GrantPersonnel.unscoped().bulkCreate(
+        grantPersonnel,
+        {
+          updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
           transaction,
         },
       );

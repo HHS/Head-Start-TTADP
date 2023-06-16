@@ -25,6 +25,10 @@ module.exports = {
           allowNull: false,
           type: Sequelize.INTEGER,
         },
+        programId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+        },
         role: {
           allowNull: false,
           type: Sequelize.STRING,
