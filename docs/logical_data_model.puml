@@ -167,6 +167,14 @@ class CollaboratorRoles{
  roleId : integer : REFERENCES "Roles".id
 }
 
+class DBMaintenanceLogs{
+ * id : integer : <generated>
+ * type : enum
+ * data : json
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class EventReportPilots{
  * id : integer : <generated>
  * ownerId : integer
@@ -512,6 +520,8 @@ class Resources{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  title : text
+ metadata : jsonb
+ metadataUpdatedAt : timestamp with time zone
 }
 
 class RoleTopics{
@@ -710,10 +720,10 @@ class ZALActivityReportGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
+ * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
- dml_as : bigint
 }
 
 class ZALActivityReportGoalResources{
@@ -842,6 +852,20 @@ class ZALCollaboratorRoles{
  dml_as : bigint
 }
 
+class ZALDBMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALDDL{
  * id : bigint : <generated>
  command_tag : varchar(255)
@@ -891,10 +915,10 @@ class ZALGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
+ * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
- dml_as : bigint
 }
 
 class ZALGoalResources{
@@ -919,10 +943,10 @@ class ZALGoalTemplateFieldPrompts{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
+ * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
- dml_as : bigint
 }
 
 class ZALGoalTemplateObjectiveTemplates{
