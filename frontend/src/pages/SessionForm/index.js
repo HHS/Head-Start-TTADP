@@ -85,7 +85,7 @@ export default function SessionForm({ match }) {
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey, setDatePickerKey] = useState('-');
+  const [datePickerKey, setDatePickerKey] = useState(Date.now().toString());
 
   /* ============
     */
