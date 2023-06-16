@@ -133,6 +133,7 @@ const Participants = () => {
                 <FormItem
                   label="Number of participants attending in person"
                   name="numberOfParticipantsInPerson"
+                  required
                 >
                   <div className="maxw-card-lg">
                     <TextInput
@@ -158,6 +159,7 @@ const Participants = () => {
                 <FormItem
                   label="Number of participants attending virtually"
                   name="numberOfParticipantsVirtually"
+                  required
                 >
                   <div className="maxw-card-lg">
                     <TextInput
