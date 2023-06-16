@@ -12,7 +12,7 @@ const validateFields = (request, requiredFields) => {
   }
 };
 
-export async function destroySession(id): Promise<void> {
+export async function destroySession(id: number): Promise<void> {
   await SessionReportPilot.destroy({ where: { id } });
 }
 

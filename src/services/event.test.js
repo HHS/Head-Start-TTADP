@@ -1,5 +1,6 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
+import db from '../models';
 import {
   createEvent,
   updateEvent,
@@ -13,6 +14,9 @@ import {
 } from './event';
 
 describe('event service', () => {
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
   const createAnEvent = async (num) => createEvent({
     ownerId: num,
     regionId: num,

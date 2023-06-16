@@ -32,16 +32,16 @@ export const getHandler = async (req, res) => {
       eventId,
     } = req.params;
 
-    if (id) {
-      session = await findSessionById(id);
-    } else if (eventId) {
-      session = await findSessionsByEventId(eventId);
-    }
-
     const params = [id, eventId];
 
     if (params.every((param) => typeof param === 'undefined')) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+    }
+
+    if (id) {
+      session = await findSessionById(id);
+    } else if (eventId) {
+      session = await findSessionsByEventId(eventId);
     }
 
     if (!session) {
