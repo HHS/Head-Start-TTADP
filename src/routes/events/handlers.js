@@ -48,6 +48,12 @@ export const getHandler = async (req, res) => {
       collaboratorId,
     } = req.params;
 
+    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
+
+    if (params.every((param) => typeof param === 'undefined')) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+    }
+
     if (eventId) {
       event = await findEventById(eventId);
     } else if (regionId) {
@@ -58,12 +64,6 @@ export const getHandler = async (req, res) => {
       event = await findEventsByPocId(pocId);
     } else if (collaboratorId) {
       event = await findEventsByCollaboratorId(collaboratorId);
-    }
-
-    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
-
-    if (params.every((param) => typeof param === 'undefined')) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
     if (!event) {
