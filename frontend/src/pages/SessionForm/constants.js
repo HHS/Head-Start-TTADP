@@ -23,9 +23,15 @@ export const participantsFields = {
   ttaProvided: '',
 };
 
+export const nextStepsFields = {
+  specialistNextSteps: [{ note: '', completeDate: '' }],
+  recipientNextSteps: [{ note: '', completeDate: '' }],
+};
+
 export const defaultFormValues = {
   ...sessionSummaryFields,
   ...participantsFields,
+  ...nextStepsFields,
 };
 
 export const defaultValues = {
