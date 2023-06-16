@@ -25,11 +25,11 @@ const placeholderText = '- Select -';
 const Participants = () => {
   const {
     control,
-    getValues,
     register,
     watch,
   } = useFormContext();
-  const { regionId } = getValues();
+
+  const regionId = watch('regionId');
 
   const [recipientOptions, setRecipientOptions] = useState();
   useEffect(() => {
