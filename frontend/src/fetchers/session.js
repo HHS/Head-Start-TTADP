@@ -45,3 +45,8 @@ export const deleteSessionObjectiveFile = async (sessionId, fileId) => {
   );
   return response.status;
 };
+
+export const getPossibleSessionParticipants = async (regionId) => {
+  const response = await get(join(sessionsUrl, 'participants', String(regionId)));
+  return response.json();
+};
