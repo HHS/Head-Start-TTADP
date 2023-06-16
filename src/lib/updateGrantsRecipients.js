@@ -264,6 +264,7 @@ export async function processFiles(hashSumHex) {
       );
 
       // Update grant personnel.
+      /*
       await GrantPersonnel.unscoped().bulkCreate(
         grantPersonnel,
         {
@@ -271,6 +272,7 @@ export async function processFiles(hashSumHex) {
           transaction,
         },
       );
+      */
 
       // Load and Process grant replacement data.
       const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');

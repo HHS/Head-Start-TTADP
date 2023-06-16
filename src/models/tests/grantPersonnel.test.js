@@ -33,7 +33,7 @@ describe('GrantPersonnel', () => {
     grantPersonnel = await GrantPersonnel.create({
       // id: faker.datatype.number({ min: 10000, max: 100000 }),
       grantId: grant.id,
-      role: GRANT_PERSONNEL_ROLES.AUTH_OFFICIAL_CONTACT,
+      role: GRANT_PERSONNEL_ROLES[0],
       active: true,
       prefix: 'Mr.',
       firstName: 'John',
@@ -69,6 +69,7 @@ describe('GrantPersonnel', () => {
 
     await db.sequelize.close();
   });
+
   it('grantPersonnel', async () => {
     // Get Grant Personnel.
     let grantPersonnelToCheck = await GrantPersonnel.findOne({
@@ -80,7 +81,7 @@ describe('GrantPersonnel', () => {
     // Assert all grant personnel values.
     expect(grantPersonnelToCheck).toHaveProperty('id');
     expect(grantPersonnelToCheck.grantId).toEqual(grant.id);
-    expect(grantPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES.AUTH_OFFICIAL_CONTACT);
+    expect(grantPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[0]);
     expect(grantPersonnelToCheck.active).toEqual(true);
     expect(grantPersonnelToCheck.prefix).toEqual('Mr.');
     expect(grantPersonnelToCheck.firstName).toEqual('John');
@@ -92,7 +93,7 @@ describe('GrantPersonnel', () => {
 
     // Update Grant Personnel.
     grantPersonnelToCheck = await grantPersonnel.update({
-      role: GRANT_PERSONNEL_ROLES.POLICY_COUNCIL,
+      role: GRANT_PERSONNEL_ROLES[1],
       active: false,
       prefix: 'Ms.',
       firstName: 'Jane',
@@ -113,7 +114,7 @@ describe('GrantPersonnel', () => {
 
     expect(grantPersonnelToCheck).toHaveProperty('id');
     expect(grantPersonnelToCheck.grantId).toEqual(grant.id);
-    expect(grantPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES.POLICY_COUNCIL);
+    expect(grantPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[1]);
     expect(grantPersonnelToCheck.active).toEqual(false);
     expect(grantPersonnelToCheck.prefix).toEqual('Ms.');
     expect(grantPersonnelToCheck.firstName).toEqual('Jane');
@@ -137,7 +138,6 @@ describe('GrantPersonnel', () => {
         },
       ],
     });
-
     expect(grant.grantPersonnel[0].id).toBe(grantPersonnel.id);
   });
 });

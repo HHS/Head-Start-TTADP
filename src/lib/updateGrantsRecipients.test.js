@@ -29,7 +29,6 @@ describe('Update HSES data', () => {
   });
   afterAll(async () => {
     jest.clearAllMocks();
-    await db.sequelize.close();
   });
   it('retrieves a zip file and extracts it to temp', async () => {
     const on = jest.fn()
@@ -82,7 +81,7 @@ describe('Update grants and recipients', () => {
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
-    // await db.sequelize.close();
+    await db.sequelize.close();
   });
   it('should import or update recipients', async () => {
     const recipientsBefore = await Recipient.findAll(
