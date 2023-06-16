@@ -106,3 +106,30 @@ export async function findSessionById(id: number): Promise<SessionReportShape> {
 export async function findSessionsByEventId(eventId): Promise<SessionReportShape[]> {
   return findSessionHelper({ eventId }, true) as Promise<SessionReportShape[]>;
 }
+
+export async function getPossibleSessionParticipants(
+  regionId: number,
+) : Promise<{ id: number, name: string }[]> {
+  const where = { status: 'Active', regionId };
+
+  return db.Recipient.findAll({
+    attributes: ['id', 'name'],
+    order: ['name'],
+    include: [{
+      where,
+      model: db.Grant,
+      as: 'grants',
+      attributes: ['id', 'name', 'number'],
+      include: [{
+        model: db.Recipient,
+        as: 'recipient',
+      },
+      {
+        model: db.Program,
+        as: 'programs',
+        attributes: ['programType'],
+      },
+      ],
+    }],
+  });
+}
