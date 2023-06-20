@@ -171,6 +171,7 @@ class DBMaintenanceLogs{
  * id : integer : <generated>
  * type : enum
  * data : json
+ isSuccessful : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }

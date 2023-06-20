@@ -24,7 +24,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSON,
     },
     isSuccessful: {
-      type: DataTypes.Boolean,
+      type: DataTypes.BOOLEAN,
     },
   }, {
     sequelize,

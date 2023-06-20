@@ -25,7 +25,7 @@ module.exports = {
           type: Sequelize.JSON,
         },
         isSuccessful: {
-          type: Sequelize.Boolean,
+          type: Sequelize.BOOLEAN,
         },
         createdAt: {
           allowNull: false,
