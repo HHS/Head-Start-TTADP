@@ -11,8 +11,8 @@ export const sessionSummaryFields = {
   objectiveTopics: [],
   objectiveTrainers: [],
   objectiveResources: [],
+  objectiveSupportType: '',
   files: [],
-  supportType: '',
   regionId: '',
 };
 
