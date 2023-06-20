@@ -78,7 +78,7 @@ const CompleteSession = ({
       </div>
 
       <div className="display-flex">
-        <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit event</Button>
+        <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
         <Button id="back-button" outline type="button" onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
