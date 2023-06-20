@@ -132,6 +132,14 @@ const TARGET_POPULATIONS = [
 ];
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
+const EVENT_TARGET_POPULATIONS = [
+  'Children/Families affected by systemic discrimination/bias/exclusion',
+  'Children/Families affected by traumatic events',
+  'Parents/Families impacted by health disparities'
+];
+
+exports.EVENT_TARGET_POPULATIONS = EVENT_TARGET_POPULATIONS;
+
 const USER_ROLES = [
   'Central Office',
   'Other Federal Staff',
