@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-224/newrelic-config-update"
+    default: "TTAHUB-1027/try-zap-latest"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "al-ttahub-1754-training-reports-landing"
@@ -432,7 +432,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-stable:2.11.1
+          command: docker pull owasp/zap2docker-stable:latest
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
