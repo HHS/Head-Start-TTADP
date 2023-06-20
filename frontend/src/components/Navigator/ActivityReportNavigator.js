@@ -27,7 +27,7 @@ import Navigator from '.';
    * {
    *  promptId: number;
    *  title: string;
-   *  value: string | string[] | number | number[] | boolean;
+   *  response: string | string[] | number | number[] | boolean;
    * }
    */
 export function getPrompts(promptTitles, getValues) {
@@ -666,7 +666,7 @@ const ActivityReportNavigator = ({
     } else if (saveGoalsDraft) {
       if (!isNavigation) {
         // Save recipient draft.
-        await onSaveDraftGoal(isAutoSave, isNavigation);
+        await onSaveDraftGoal(isAutoSave);
       } else if (isNavigation) {
         /**
            * if we are navigating, we need to follow slightly different logic for saving.

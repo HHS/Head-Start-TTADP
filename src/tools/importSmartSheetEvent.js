@@ -12,7 +12,7 @@ import {
 import { logger } from '../logger';
 
 // eslint-disable-next-line max-len
-const splitArrayTransformer = (value, transformer = '|') => value.split(transformer).map((item) => item.trim());
+const splitArrayTransformer = (value, splitter = '|') => value.split(splitter).map((item) => item.trim());
 
 const transformers = {
   reasons: splitArrayTransformer,
