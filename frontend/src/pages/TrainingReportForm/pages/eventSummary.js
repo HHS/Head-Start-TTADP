@@ -24,6 +24,11 @@ import ReadOnlyField from '../../../components/ReadOnlyField';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
+import {
+  eventSummaryFields,
+  pageComplete,
+  pageTouched,
+} from '../constants';
 
 const placeholderText = '- Select -';
 
@@ -346,22 +351,12 @@ EventSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
 };
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
-
-export const isPageComplete = (_formData, formState) => {
-  const { isValid } = formState;
-  if (isValid) {
-    return true;
-  }
-
-  // todo -
-  // validate formData
-
-  return true;
-};
-
+const fields = Object.keys(eventSummaryFields);
 const path = 'event-summary';
 const position = 1;
+
+const ReviewSection = () => <><h2>Event summary</h2></>;
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
@@ -369,6 +364,8 @@ export default {
   path,
   reviewSection: () => <ReviewSection />,
   review: false,
+  fields,
+  isPageTouched: (hookForm) => pageTouched(hookForm.formState.touched, fields),
   render: (
     additionalData,
     _formData,

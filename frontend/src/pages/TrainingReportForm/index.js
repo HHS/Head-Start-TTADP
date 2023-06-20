@@ -17,6 +17,7 @@ import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   defaultValues,
 } from './constants';
+import { IN_PROGRESS, COMPLETE, NOT_STARTED } from '../../components/Navigator/constants';
 import { getTrainingReportUsers } from '../../fetchers/users';
 import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -116,6 +117,7 @@ export default function TrainingReportForm({ match }) {
   });
 
   const eventRegion = hookForm.watch('regionId');
+  const pageState = hookForm.watch('pageState');
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
@@ -190,6 +192,8 @@ export default function TrainingReportForm({ match }) {
     }
   }, [trainingReportId]);
 
+  const whereWeAre = pages.find((p) => p.path === currentPage);
+
   const updatePage = (position) => {
     const state = {};
     if (reportId.current) {
@@ -207,9 +211,35 @@ export default function TrainingReportForm({ match }) {
     );
   }
 
+  const newNavigatorState = () => pages.reduce((newState, page) => {
+    if (page.review) {
+      return pageState;
+    }
+
+    const isComplete = page.isPageComplete(hookForm);
+    const isTouched = page.isPageTouched(hookForm);
+    const newPageState = { ...newState };
+
+    if (isComplete) {
+      newPageState[page.position] = COMPLETE;
+    } else if (whereWeAre.position === page.position || isTouched) {
+      newPageState[page.position] = IN_PROGRESS;
+    } else {
+      newPageState[page.position] = NOT_STARTED;
+    }
+
+    return newPageState;
+  }, { ...pageState });
+
   const onSave = async () => {
     try {
-    // grab the newest data from the form
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
+
+      await hookForm.trigger();
+
+      // grab the newest data from the form
       const {
         ownerId,
         pocId,
@@ -220,24 +250,38 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data,
+        data: {
+          ...data,
+          pageState: newNavigatorState(),
+        },
         ownerId: ownerId || null,
         pocId: pocId || null,
-        collaboratorIds: collaboratorIds || [],
+        collaboratorIds,
         regionId: regionId || null,
       });
       resetFormData(hookForm.reset, updatedEvent);
       updateLastSaveTime(moment(updatedEvent.updatedAt));
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
   const onSaveAndContinue = async () => {
-    await hookForm.trigger();
+    const { fields } = whereWeAre;
+    await hookForm.trigger(fields, { shouldFocus: true });
 
     const hasErrors = Object.keys(hookForm.formState.errors).length > 0;
     if (hasErrors) {
+      const invalid = document.querySelector('.usa-form-group--error');
+      if (invalid) {
+        const input = invalid.querySelector('input, select, textarea');
+        if (input) input.focus();
+      }
+
+      // debugger;
+
       return;
     }
 
@@ -252,8 +296,6 @@ export default function TrainingReportForm({ match }) {
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
-
-  // const hasPermissions = canViewTrainingReportForm(user, formData);
 
   return (
     <div className="smart-hub-training-report">

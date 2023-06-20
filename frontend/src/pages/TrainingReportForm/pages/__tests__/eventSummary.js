@@ -10,17 +10,11 @@ import NetworkContext from '../../../../NetworkContext';
 describe('eventSummary', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      const formState = {
-        isValid: true,
-      };
-      expect(isPageComplete({}, formState)).toBe(true);
+      expect(isPageComplete({ getValues: jest.fn(() => true) })).toBe(true);
     });
 
-    it('returns true otherwise', () => {
-      const formState = {
-        isValid: false,
-      };
-      expect(isPageComplete({}, formState)).toBe(true);
+    it('returns false otherwise', () => {
+      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
     });
   });
   describe('review', () => {
