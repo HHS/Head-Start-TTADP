@@ -10,6 +10,7 @@ import { createMemoryHistory } from 'history';
 import SessionForm from '..';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 
 describe('SessionReportForm', () => {
   const sessionsUrl = join('/', 'api', 'session-reports');
@@ -162,5 +163,164 @@ describe('SessionReportForm', () => {
     const saveSession = screen.getByText(/Save and continue/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+  });
+  it('will not submit if every page is not complete', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const formData = {
+      eventId: 1,
+      eventDisplayId: 'R-EVENT',
+      id: 1,
+      ownerId: 1,
+      eventName: 'Test event',
+      status: 'In progress',
+      pageState: {
+        1: IN_PROGRESS,
+        2: COMPLETE,
+        3: COMPLETE,
+      },
+      sessionName: 'Test session',
+      duration: 1,
+      context: '', // context missing
+      objective: 'test objective',
+      objectiveTopics: ['topic'],
+      objectiveTrainers: ['DTL'],
+      objectiveResources: [],
+      files: [],
+      objectiveSupportType: 'Planning',
+      regionId: 1,
+      participants: [],
+      deliveryMethod: 'In person',
+      numberOfParticipants: 1,
+      ttaProvided: 'oH YEAH',
+      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+    };
+
+    fetchMock.get(url, formData);
+
+    act(() => {
+      renderSessionForm('1', 'complete-session', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+    fetchMock.put(url, formData);
+    const submit = screen.getByRole('button', { name: /Submit/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
+
+    expect(await screen.findByText(/Please complete all required fields before submitting/i)).toBeInTheDocument();
+  });
+  it('will not submit if status is not complete', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const formData = {
+      eventId: 1,
+      eventDisplayId: 'R-EVENT',
+      id: 1,
+      ownerId: 1,
+      eventName: 'Test event',
+      status: 'In progress',
+      pageState: {
+        1: IN_PROGRESS,
+        2: COMPLETE,
+        3: COMPLETE,
+      },
+      sessionName: 'Test session',
+      duration: 1,
+      context: '', // context missing
+      objective: 'test objective',
+      objectiveTopics: ['topic'],
+      objectiveTrainers: ['DTL'],
+      objectiveResources: [],
+      files: [],
+      objectiveSupportType: 'Planning',
+      regionId: 1,
+      participants: [],
+      deliveryMethod: 'In person',
+      numberOfParticipants: 1,
+      ttaProvided: 'oH YEAH',
+      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+    };
+
+    fetchMock.get(url, formData);
+
+    act(() => {
+      renderSessionForm('1', 'complete-session', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+    fetchMock.put(url, formData);
+    const submit = screen.getByRole('button', { name: /Submit/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
+
+    expect(await screen.findByText(/Session status must be complete to submit/i)).toBeInTheDocument();
+  });
+  it('will submit if every page & the status is complete', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const formData = {
+      eventId: 1,
+      eventDisplayId: 'R-EVENT',
+      id: 1,
+      ownerId: 1,
+      eventName: 'Test event',
+      status: 'In progress',
+      pageState: {
+        1: IN_PROGRESS,
+        2: COMPLETE,
+        3: COMPLETE,
+      },
+      sessionName: 'Test session',
+      endDate: '01/01/2024',
+      startDate: '01/01/2024',
+      duration: 1,
+      context: 'asasfdsafasdfsdaf',
+      objective: 'test objective',
+      objectiveTopics: ['topic'],
+      objectiveTrainers: ['DTL'],
+      objectiveResources: [],
+      files: [],
+      objectiveSupportType: 'Planning',
+      regionId: 1,
+      participants: [],
+      deliveryMethod: 'In-person',
+      numberOfParticipants: 1,
+      ttaProvided: 'oH YEAH',
+      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+    };
+
+    fetchMock.get(url, formData);
+
+    act(() => {
+      renderSessionForm('1', 'complete-session', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+
+    fetchMock.put(url, formData);
+
+    const submit = screen.getByRole('button', { name: /Submit/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).toBe(true));
   });
 });
