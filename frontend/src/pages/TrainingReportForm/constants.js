@@ -14,21 +14,5 @@ export const defaultValues = {
   eventOrganizer: null,
   collaboratorIds: [],
   ownerId: null,
-  pocId: null,
+  pocId: [],
 };
-
-// export const canViewTrainingReportForm = (user, trainingReport) => {
-//   const { ownerId, collaboratorIds } = trainingReport;
-
-//   // owners can always view
-//   if (user.id === ownerId) {
-//     return true;
-//   }
-
-//   // collaborators can always view
-//   if (collaboratorIds.includes(user.id)) {
-//     return true;
-//   }
-
-//   return false;
-// };
