@@ -1,9 +1,10 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 const { sequelize, DBMaintenanceLog } = require('../../models');
-const db = require('../../constants');
+const constants = require('../../constants');
 const { auditLogger } = require('../../logger');
+const db = require('../../models');
 
-const { DB_MAINTENANCE_TYPE } = db;
+const { DB_MAINTENANCE_TYPE } = constants;
 
 /**
  * Runs a maintenance command on the database table and logs the activity in the maintenance log.
@@ -113,6 +114,15 @@ const tableMaintenanceCommand = async (
 const vacuumTable = async (model: any): Promise<void> => tableMaintenanceCommand('VACUUM FULL', DB_MAINTENANCE_TYPE.VACUUM, model);
 
 /**
+ * Asynchronously reindexes a table in the database.
+ *
+ * @param model - The model of the table to be reindexed.
+ * @returns A Promise that resolves with void when the reindexing is complete.
+ * @throws {Error} If there is an issue with the database maintenance command.
+ */
+const reindexTable = async (model: any): Promise<void> => tableMaintenanceCommand('REINDEX TABLE', DB_MAINTENANCE_TYPE.REINDEX, model);
+
+/**
  * Asynchronously vacuums all tables in the database using Sequelize ORM.
  * @returns A promise that resolves to an array of any type, representing the result of vacuuming
  * each table.
@@ -123,15 +133,6 @@ const vacuumTables = async (): Promise<any[]> => Promise.all(
 );
 
 /**
- * Asynchronously reindexes a table in the database.
- *
- * @param model - The model of the table to be reindexed.
- * @returns A Promise that resolves with void when the reindexing is complete.
- * @throws {Error} If there is an issue with the database maintenance command.
- */
-const reindexTable = async (model: any): Promise<void> => tableMaintenanceCommand('REINDEX TABLE', DB_MAINTENANCE_TYPE.REINDEX, model);
-
-/**
  * Asynchronously reindexes all tables in the database using Sequelize models.
  * @returns A promise that resolves to an array of any type.
  * @throws Throws an error if there is an issue with reindexing a table.
@@ -140,7 +141,50 @@ const reindexTables = async (): Promise<any[]> => Promise.all(
   db.sequelize.models.map(async (model: any) => reindexTable(model)),
 );
 
+/**
+ * Executes daily maintenance tasks asynchronously.
+ * @returns A promise that resolves to an array of results from the executed maintenance tasks.
+ * @throws {Error} If any of the maintenance tasks fail.
+ */
+const dailyMaintenance = async (): Promise<any[]> => {
+  const vacuumTablesPromise = vacuumTables();
+  await Promise.all([vacuumTablesPromise]); // Wait for all vacuumTables promises to resolve
+  const reindexTablesPromise = reindexTables();
+  return Promise.all([vacuumTablesPromise, reindexTablesPromise]);
+};
+
+const dbMaintenance = async (job) => {
+  const {
+    type,
+    // ...data // pass to any maintenance operations that may have had additional data passed.
+  } = job.data;
+
+  let action:Promise<any[]> = Promise.reject();
+
+  switch (type) {
+    case DB_MAINTENANCE_TYPE.VACUUM:
+      action = vacuumTables();
+      break;
+    case DB_MAINTENANCE_TYPE.REINDEX:
+      action = reindexTables();
+      break;
+    case DB_MAINTENANCE_TYPE.DAILY_MAINTENANCE:
+      action = dailyMaintenance();
+      break;
+    default:
+      throw new Error(`Invalid DB maintenance type: ${type}`);
+  }
+
+  return action;
+};
+
 module.exports = {
+  maintenanceCommand,
+  tableMaintenanceCommand,
   vacuumTable,
   reindexTable,
+  vacuumTables,
+  reindexTables,
+  dailyMaintenance,
+  dbMaintenance,
 };
