@@ -305,7 +305,7 @@ export default function TrainingReportForm({ match }) {
         {error}
       </Alert>
       )}
-      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
+      <Helmet titleTemplate="%s - Event | TTA Hub" defaultTitle="Event | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
