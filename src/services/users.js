@@ -431,12 +431,6 @@ export async function getTrainingReportUsersByRegion(regionId) {
   const collaboratorScope = SCOPES.COLLABORATOR_TRAINING_REPORTS;
 
   const users = await User.findAll({
-    attributes: [
-      'id',
-      'name',
-      'roles',
-      'fullName',
-    ],
     where: {
       [Op.or]: {
         '$permissions.scopeId$': {
@@ -449,12 +443,6 @@ export async function getTrainingReportUsersByRegion(regionId) {
     },
     include: [
       {
-        attributes: [
-          'id',
-          'scopeId',
-          'regionId',
-          'userId',
-        ],
         model: Permission,
         as: 'permissions',
         required: true,
