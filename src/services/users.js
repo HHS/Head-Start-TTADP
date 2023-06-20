@@ -449,6 +449,12 @@ export async function getTrainingReportUsersByRegion(regionId) {
     },
     include: [
       {
+        attributes: [
+          'id',
+          'scopeId',
+          'regionId',
+          'userId',
+        ],
         model: Permission,
         as: 'permissions',
         required: true,
