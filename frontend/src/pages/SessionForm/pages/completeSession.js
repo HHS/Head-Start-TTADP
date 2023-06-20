@@ -26,7 +26,7 @@ const CompleteSession = ({
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
   // form is explicitly submitted
-  const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'Not started');
+  const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'In progress');
 
   const onFormSubmit = async () => {
     if (updatedStatus !== 'Complete') {
