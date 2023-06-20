@@ -10,9 +10,11 @@ import { createMemoryHistory } from 'history';
 import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { COMPLETE } from '../../../components/Navigator/constants';
 
 describe('TrainingReportForm', () => {
   const history = createMemoryHistory();
+  const sessionsUrl = '/api/session-reports/eventId/1';
 
   const renderTrainingReportForm = (trainingReportId, currentPage) => render(
     <Router history={history}>
@@ -237,5 +239,130 @@ describe('TrainingReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
+  });
+
+  it('will update status on submit if the updated status is not complete', async () => {
+    fetchMock.get('/api/events/id/1', {
+      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+    });
+
+    fetchMock.put('/api/events/id/1', {
+      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+    });
+
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1', 'complete-event');
+    });
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    expect(statusSelect).toHaveValue('In progress');
+
+    const submitButton = await screen.findByRole('button', { name: /submit/i });
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => expect(screen.getByText('Status must be complete to submit')).toBeInTheDocument());
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(false));
+  });
+
+  it('will not complete the form if the form is not complete', async () => {
+    fetchMock.get('/api/events/id/1', {
+      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+    });
+
+    fetchMock.put('/api/events/id/1', {
+      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+    });
+
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1', 'complete-event');
+    });
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+    expect(statusSelect).toHaveValue('Complete');
+
+    const submitButton = await screen.findByRole('button', { name: /submit/i });
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).not.toBe(true));
+  });
+
+  it('will complete the form if the form is complete', async () => {
+    const completedForm = {
+      regionId: '1',
+      reportId: 1,
+      id: 1,
+      collaboratorIds: [1, 2, 3],
+      ownerId: 1,
+      pocId: 1,
+      data: {
+        eventOrganizer: 'IST TTA/Visit',
+        eventIntendedAudience: 'recipients',
+        startDate: '01/01/2021',
+        endDate: '01/01/2021',
+        trainingType: 'Series',
+        reasons: ['Reason'],
+        targetPopulations: ['Target'],
+        status: 'In progress',
+        vision: 'asdf',
+        goal: 'afdf',
+        eventId: 'E-1',
+        eventName: 'E-1 Event',
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+        },
+      },
+    };
+
+    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.put('/api/events/id/1', completedForm);
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1', 'complete-event');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'GET' })).toBe(true));
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    await waitFor(async () => expect(await screen.findByRole('button', { name: /Event summary complete/i })).toBeInTheDocument());
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+    expect(statusSelect).toHaveValue('Complete');
+
+    const submitButton = await screen.findByRole('button', { name: /submit/i });
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
+    const lastBody = JSON.parse(fetchMock.lastOptions().body);
+    expect(lastBody.data.status).toEqual('Complete');
   });
 });

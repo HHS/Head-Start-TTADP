@@ -28,6 +28,9 @@ export const defaultFormValues = {
 };
 
 export const defaultValues = {
+  ...defaultFormValues,
+  status: 'Not started',
+  id: 0,
   ownerId: null,
   eventId: '',
   eventName: '',
@@ -36,7 +39,6 @@ export const defaultValues = {
     1: NOT_STARTED,
     2: NOT_STARTED,
   },
-  ...defaultFormValues,
 };
 export const pageComplete = (
   hookForm,

@@ -52,6 +52,7 @@ const Navigator = ({
   showSavedDraft,
   updateShowSavedDraft,
   datePickerKey,
+  formDataStatusProp,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -118,7 +119,7 @@ const Navigator = ({
       stateOfPage = current ? IN_PROGRESS : pageState[p.position];
     }
 
-    const state = p.review ? formData.calculatedStatus : stateOfPage;
+    const state = p.review ? formData[formDataStatusProp] : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => {
@@ -159,6 +160,7 @@ const Navigator = ({
             navigatorPages,
             reportCreator,
             lastSaveTime,
+            onUpdatePage,
           )}
           {!page.review
             && (
@@ -254,6 +256,7 @@ Navigator.propTypes = {
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string,
+  formDataStatusProp: PropTypes.string,
 };
 
 Navigator.defaultProps = {
@@ -270,6 +273,7 @@ Navigator.defaultProps = {
     role: null,
   },
   datePickerKey: '',
+  formDataStatusProp: 'calculatedStatus',
 };
 
 export default Navigator;
