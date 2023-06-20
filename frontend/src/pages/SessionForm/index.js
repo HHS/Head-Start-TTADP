@@ -19,6 +19,7 @@ import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
+import { COMPLETE } from '../../components/Navigator/constants';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 30000; // THIRTY SECONDS
@@ -32,15 +33,16 @@ const INTERVAL_DELAY = 30000; // THIRTY SECONDS
    * @param {*} event - not an HTML event, but the event object from the database, which has some
    * information stored at the top level of the object, and some stored in a data column
    */
-const resetFormData = (reset, event) => {
+const resetFormData = (reset, updatedSession, prevData = {}) => {
   const {
     data,
     updatedAt,
     ...fields
-  } = event;
+  } = updatedSession;
 
   const form = {
     ...defaultValues,
+    ...prevData,
     ...data,
     ...fields,
   };
@@ -167,6 +169,8 @@ export default function SessionForm({ match }) {
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
 
+  const pageState = hookForm.watch('pageState');
+
   const updatePage = (position) => {
     const state = {};
     if (reportId.current) {
@@ -191,9 +195,7 @@ export default function SessionForm({ match }) {
       setIsAppLoading(true);
 
       // grab the newest data from the form
-      const {
-        ...data
-      } = hookForm.getValues();
+      const data = hookForm.getValues();
 
       // PUT it to the backend
       const updatedSession = await updateSession(sessionId, {
@@ -201,7 +203,7 @@ export default function SessionForm({ match }) {
         trainingReportId,
         eventId: trainingReportId || null,
       });
-      resetFormData(hookForm.reset, updatedSession);
+
       updateLastSaveTime(moment(updatedSession.updatedAt));
     } catch (err) {
       setError('There was an error saving the session. Please try again later.');
@@ -219,7 +221,48 @@ export default function SessionForm({ match }) {
     }
   };
 
-  const onFormSubmit = async () => {};
+  const onFormSubmit = async (updatedStatus) => {
+    try {
+      await hookForm.trigger();
+
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
+
+      // we check at button click if all the sessions are complete,
+      // so now we just need to see if all the pages are complete
+
+      // if the page is not complete, we need to set an error and bomb out early
+      if (!Object.values(pageState).every((page) => page === COMPLETE) && updatedStatus === 'Complete') {
+        hookForm.setError('status', {
+          message: 'Please complete all required fields before submitting.',
+        });
+
+        return;
+      }
+
+      // grab the newest data from the form
+      const {
+        ...data
+      } = hookForm.getValues();
+
+      // PUT it to the backend
+      await updateSession(sessionId, {
+        data: {
+          ...data,
+          status: updatedStatus,
+        },
+        trainingReportId,
+        eventId: trainingReportId || null,
+      });
+
+      history.push('/training-reports/in-progress', { message: 'Session submitted successfully' });
+    } catch (err) {
+      setError('There was an error saving the session report. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
 
   const reportCreator = { name: user.name, roles: user.roles };
 
@@ -234,7 +277,7 @@ export default function SessionForm({ match }) {
           {error}
         </Alert>
         )}
-      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
+      <Helmet titleTemplate="%s | TTA Hub" defaultTitle="Session | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
