@@ -33,6 +33,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       allowNull: false,
     },
+    imported: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'EventReportPilot',

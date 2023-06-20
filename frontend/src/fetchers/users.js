@@ -11,6 +11,11 @@ export const getActiveUsers = async () => {
   return res.blob();
 };
 
+export const getTrainingReportUsers = async (regionId) => {
+  const res = await get(join('/', 'api', 'users', 'training-report-users', `?regionId=${String(regionId)}`));
+  return res.json();
+};
+
 export const requestVerificationEmail = async () => post(join('/', 'api', 'users', 'send-verification-email'));
 
 export const verifyEmailToken = async (token) => {
