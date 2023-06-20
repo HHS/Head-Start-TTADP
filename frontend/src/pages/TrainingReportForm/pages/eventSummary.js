@@ -194,6 +194,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               getOptionLabel={(option) => option.fullName}
               getOptionValue={(option) => option.id}
               options={pointOfContact}
+              isMulti
             />
           )}
           control={control}
