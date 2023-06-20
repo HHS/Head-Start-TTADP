@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import Select from 'react-select';
 import {
   TARGET_POPULATIONS,
+  EVENT_TARGET_POPULATIONS,
   REASONS,
 } from '@ttahub/common';
 import { useFormContext, Controller } from 'react-hook-form';
@@ -33,9 +34,7 @@ const placeholderText = '- Select -';
 // we need to add three additional target populations to the AR target populations list
 const targetPopulations = [
   ...TARGET_POPULATIONS,
-  'Children/Families affected by systemic discrimination/bias/exclusion',
-  'Children/Families affected by traumatic events',
-  'Parents/Families impacted by health disparities',
+  ...EVENT_TARGET_POPULATIONS,
 ];
 
 // sort the reasons alphabetically
@@ -183,7 +182,9 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
         <Controller
           render={({ onChange: controllerOnChange, value }) => (
             <Select
-              value={pointOfContact.find((option) => option.id === value)}
+              value={pointOfContact.filter((option) => (
+                value.includes(option.id)
+              ))}
               inputId="pocId"
               name="pocId"
               className="usa-select"
@@ -192,12 +193,13 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                 DropdownIndicator: null,
               }}
               onChange={(s) => {
-                controllerOnChange(s.id);
+                controllerOnChange(s.map((option) => option.id));
               }}
               inputRef={register({ required: 'Select one' })}
               getOptionLabel={(option) => option.fullName}
               getOptionValue={(option) => option.id}
               options={pointOfContact}
+              isMulti
             />
           )}
           control={control}
@@ -210,7 +212,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             },
           }}
           name="pocId"
-          defaultValue=""
+          defaultValue={[]}
         />
       </div>
 

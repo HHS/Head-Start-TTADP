@@ -70,8 +70,13 @@ const CompleteEvent = ({
   }, [formData.id, sessions, setIsAppLoading]);
 
   const onFormSubmit = async () => {
-    if (!areAllSessionsComplete && updatedStatus === 'Complete') {
-      setError('status', { message: "Event status can't be complete if not all sessions are complete" });
+    if (updatedStatus !== 'Complete') {
+      setError('status', { message: 'Status must be complete to submit' });
+      return;
+    }
+
+    if (!areAllSessionsComplete) {
+      setError('status', { message: 'All sessions must be complete to submit event' });
       return;
     }
 
