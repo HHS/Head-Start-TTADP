@@ -17,7 +17,13 @@ Whenever changes to this package are made, you will need to:
 
 If your PR depends on the latest version of this package, please don't forget to run `yarn upgrade @ttahub/common` and commit the changes to `package.json` and `yarn.lock`.
 
-### Versions
+## Versions
+### 1.1.3
+Add "event target populations"
 
+###  1.1.2
 #### 1.1.1 
 - Add COLLABORATOR_TRAINING_REPORTS permissions
+
+
+

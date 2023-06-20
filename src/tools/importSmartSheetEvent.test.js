@@ -12,7 +12,6 @@ import { logger } from '../logger';
 
 jest.mock('../logger');
 jest.mock('../lib/s3');
-jest.mock('bull');
 
 describe('Import Smart Sheet Events', () => {
   let user;
@@ -86,8 +85,11 @@ describe('Import Smart Sheet Events', () => {
         eventOrganizer: 'Regional PD Event (with National Centers)',
         audience: 'Recipients',
         'Event Duration/# NC Days of Support': 'Series',
-        reasons: ['Full Enrollment'],
-        targetPopulations: ['Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)'],
+        reasons: ['Full Enrollment', 'Change in Scope'],
+        targetPopulations: [
+          'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
+          'Pregnant Women',
+        ],
         vision: 'Participants will explore strategies to reach full enrollment including areas of reaching families in greatest need (homelessness/foster care), right sizing-right programming and developing selection criteria',
         creator: 'smartsheetevents@ss.com',
       });
