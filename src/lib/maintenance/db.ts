@@ -4,7 +4,7 @@ const constants = require('../../constants');
 const { auditLogger } = require('../../logger');
 const db = require('../../models');
 
-const { DB_MAINTENANCE_TYPE } = constants;
+const { DB_MAINTENANCE_TYPE, MAINTENANCE_TYPE } = constants;
 
 /**
  * Runs a maintenance command on the database table and logs the activity in the maintenance log.
@@ -153,6 +153,16 @@ const dailyMaintenance = async (): Promise<any[]> => {
   return Promise.all([vacuumTablesPromise, reindexTablesPromise]);
 };
 
+/**
+ * Performs maintenance operations on a database based on the given job data.
+ * @async
+ * @param {Object} job - The job object containing the maintenance type and any additional data
+ * required for the operation.
+ * @param {string} job.type - The type of maintenance operation to perform.
+ * @returns {Promise<any[]>} A promise that resolves with an array of results from the maintenance
+ * operation.
+ * @throws {Error} If an invalid DB maintenance type is provided.
+ */
 const dbMaintenance = async (job) => {
   const {
     type,
@@ -178,6 +188,37 @@ const dbMaintenance = async (job) => {
   return action;
 };
 
+/**
+ * Processes a DB maintenance job from the given queue.
+ * @param {Queue} queue - The queue to process the job from.
+ * @returns {void}
+ * @throws {Error} If the job processing fails.
+ */
+const processDBMaintenanceJob = (queue) => queue.process(MAINTENANCE_TYPE.DB, dbMaintenance);
+
+/**
+ * Adds a job to the maintenance queue for database maintenance.
+ * @param type - The type of database maintenance to perform.
+ * @param data - Optional data to be included with the maintenance job.
+ * @returns void
+ * @throws {Error} If an error occurs while adding the job to the maintenance queue.
+ */
+const queueDBMaintenance = (
+  queue,
+  type: typeof DB_MAINTENANCE_TYPE[keyof typeof DB_MAINTENANCE_TYPE],
+  data: object | null = null,
+) => {
+  try {
+    const jobData = {
+      type,
+      ...data,
+    };
+    queue.add(MAINTENANCE_TYPE.DB, jobData);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
 module.exports = {
   maintenanceCommand,
   tableMaintenanceCommand,
@@ -187,4 +228,6 @@ module.exports = {
   reindexTables,
   dailyMaintenance,
   dbMaintenance,
+  processDBMaintenanceJob,
+  queueDBMaintenance,
 };
