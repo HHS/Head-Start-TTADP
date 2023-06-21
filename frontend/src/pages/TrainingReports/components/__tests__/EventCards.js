@@ -7,36 +7,36 @@ import { EVENT_STATUS } from '../../constants';
 
 describe('EventCards', () => {
   const defaultEvents = [{
-
+    id: 1,
     data: {
       eventName: 'Sample event 1',
       eventId: 'Sample event ID 1',
       eventOrganizer: 'Sample event organizer 1',
       reasons: ['New Program/Option'],
-      startDate: '2021-01-02',
-      endDate: '2021-01-03',
+      startDate: '01/02/2021',
+      endDate: '01/03/2021',
     },
   },
   {
-
+    id: 2,
     data: {
       eventName: 'Sample event 2',
       eventId: 'Sample event ID 2',
       eventOrganizer: 'Sample event organizer 2',
       reasons: ['New Staff/Turnover'],
-      startDate: '2021-02-02',
-      endDate: '2021-02-03',
+      startDate: '02/02/2021',
+      endDate: '02/03/2021',
     },
   },
   {
-
+    id: 3,
     data: {
       eventName: 'Sample event 3',
       eventId: 'Sample event ID 3',
       eventOrganizer: 'Sample event organizer 3',
       reasons: null,
-      startDate: '2021-03-02',
-      endDate: '2021-03-03',
+      startDate: '03/02/2021',
+      endDate: '03/03/2021',
     },
   },
   ];

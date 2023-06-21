@@ -19,8 +19,8 @@ const notStartedEvents = [{
     eventId: 'Not started event ID 1',
     eventOrganizer: 'Not started event organizer 1',
     reasons: ['New Program/Option', ' New Staff/Turnover', 'Ongoing Quality Improvement', 'School Readiness Goals', 'Emergent Needs'],
-    startDate: '2021-01-02',
-    endDate: '2021-01-03',
+    startDate: '01/02/2021',
+    endDate: '01/03/2021',
   },
 },
 {
@@ -29,8 +29,8 @@ const notStartedEvents = [{
     eventName: 'Not started event 2',
     eventId: 'Not started event ID 2',
     eventOrganizer: 'Not started event organizer 2',
-    startDate: '2021-02-02',
-    endDate: '2021-02-03',
+    startDate: '02/02/2021',
+    endDate: '02/03/2021',
   },
 },
 ];
@@ -42,8 +42,8 @@ const inProgressEvents = [{
     eventId: 'In progress event ID 1',
     eventOrganizer: 'In progress event organizer 1',
     reasons: ['Emergent Needs'],
-    startDate: '2021-03-02',
-    endDate: '2021-03-03',
+    startDate: '03/02/2021',
+    endDate: '03/03/2021',
   },
 },
 ];
@@ -55,8 +55,8 @@ const completeEvents = [{
     eventId: 'Complete event ID 1',
     eventOrganizer: 'Complete event organizer 1',
     reasons: ['New Staff/Turnover'],
-    startDate: '2021-04-02',
-    endDate: '2021-04-03',
+    startDate: '04/02/2021',
+    endDate: '04/03/2021',
   },
 },
 ];
