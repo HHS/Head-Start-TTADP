@@ -59,8 +59,9 @@ describe('completeEvent', () => {
 
     it('renders complete event page', async () => {
       fetchMock.getOnce(sessionsUrl, [
-        { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-        { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+        { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+        { id: 4, eventId: 1, data: { sessionName: '', status: 'Not started' } },
       ]);
 
       act(() => {
@@ -70,7 +71,7 @@ describe('completeEvent', () => {
       expect(await screen.findByRole('heading', { name: /complete event/i })).toBeInTheDocument();
       expect(await screen.findByRole('cell', { name: /toothbrushing vol 2/i })).toBeInTheDocument();
       expect(await screen.findByRole('cell', { name: /toothbrushing vol 3/i })).toBeInTheDocument();
-      expect(await screen.findAllByRole('cell', { name: /complete/i })).toHaveLength(2);
+      expect(await screen.findAllByRole('cell', { name: /complete/i })).toHaveLength(2); // sessions without names are filtered out
 
       // you can change the status
       const statusSelect = await screen.findByRole('combobox', { name: /status/i });
@@ -158,8 +159,8 @@ describe('completeEvent', () => {
 
     it('wont submit if some sessions aren\'t complete', async () => {
       fetchMock.getOnce(sessionsUrl, [
-        { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-        { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Not started' } },
+        { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Not started' } },
       ]);
 
       act(() => {
@@ -182,8 +183,8 @@ describe('completeEvent', () => {
 
     it('will submit if all sessions are complete', async () => {
       fetchMock.getOnce(sessionsUrl, [
-        { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-        { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+        { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
       ]);
 
       act(() => {
