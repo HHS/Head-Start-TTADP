@@ -71,12 +71,13 @@ const removeFromAuditedTransactions = (options) => {
   }
 };
 
-const generateModelClass = (sequelize, name, schema) => {
+const generateModelClass = (sequelize, name, schema, tableName = null) => {
   const auditModelName = name;
   const auditModel = class extends Model {};
   auditModel.init(schema, {
     sequelize,
     modelName: auditModelName,
+    ...(tableName && { tableName }),
     createdAt: false,
     updatedAt: false,
   });
@@ -133,7 +134,7 @@ const generateZALDDL = (sequelize) => {
     },
   };
 
-  return generateModelClass(sequelize, name, schema);
+  return generateModelClass(sequelize, name, schema, name);
 };
 
 const generateZADescriptor = (sequelize) => {
@@ -152,7 +153,7 @@ const generateZADescriptor = (sequelize) => {
     },
   };
 
-  return generateModelClass(sequelize, name, schema);
+  return generateModelClass(sequelize, name, schema, name);
 };
 
 const generateZAFilter = (sequelize) => {
@@ -175,10 +176,10 @@ const generateZAFilter = (sequelize) => {
     },
   };
 
-  return generateModelClass(sequelize, name, schema);
+  return generateModelClass(sequelize, name, schema, name);
 };
 
-const generateAuditModel = (sequelize, model) => {
+const generateAuditModel = (sequelize, model, passName = false) => {
   const name = `ZAL${model.name}`;
   const schema = {
     id: {
@@ -236,7 +237,7 @@ const generateAuditModel = (sequelize, model) => {
     },
   };
 
-  return generateModelClass(sequelize, name, schema);
+  return generateModelClass(sequelize, name, schema, passName ? name : null);
 };
 
 // eslint-disable-next-line
