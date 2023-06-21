@@ -47,5 +47,4 @@ module.exports = {
   onFailedMaintenance,
   onCompletedMaintenance,
   processMaintenanceQueue,
-  queueDBMaintenance,
 };
