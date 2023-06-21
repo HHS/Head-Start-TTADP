@@ -513,6 +513,8 @@ class Resources{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  title : text
+ metadata : jsonb
+ metadataUpdatedAt : timestamp with time zone
 }
 
 class RoleTopics{
