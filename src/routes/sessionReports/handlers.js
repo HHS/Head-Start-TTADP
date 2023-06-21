@@ -9,6 +9,7 @@ import {
   findSessionById,
   updateSession,
   destroySession,
+  getPossibleSessionParticipants,
 } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
@@ -131,6 +132,16 @@ export const deleteHandler = async (req, res) => {
 
     await destroySession(id);
     return res.status(httpCodes.OK);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const getParticipants = async (req, res) => {
+  try {
+    const { regionId } = req.params; // checked by middleware
+    const participants = await getPossibleSessionParticipants(Number(regionId));
+    return res.status(httpCodes.OK).send(participants);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }
