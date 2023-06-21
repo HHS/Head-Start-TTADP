@@ -55,7 +55,7 @@ const CompleteEvent = ({
       try {
         setIsAppLoading(true);
         const res = await sessionsByEventId(formData.id);
-        setSessions(res);
+        setSessions(res.filter((s) => s.data.sessionName));
       } catch (e) {
         updateError('Unable to load sessions');
         setSessions([]);
@@ -137,7 +137,7 @@ const CompleteEvent = ({
               {sessions.map((session) => (
                 <tr key={session.id}>
                   <td data-label="Session name">
-                    {session.data.name}
+                    {session.data.sessionName}
                   </td>
                   <td data-label="Group status">
                     {sessionStatusIcons[session.data.status]}
