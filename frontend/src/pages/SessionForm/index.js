@@ -192,9 +192,6 @@ export default function SessionForm({ match }) {
 
       // grab the newest data from the form
       const {
-        ownerId,
-        regionId,
-        eventId,
         ...data
       } = hookForm.getValues();
 
@@ -202,9 +199,7 @@ export default function SessionForm({ match }) {
       const updatedSession = await updateSession(sessionId, {
         data,
         trainingReportId,
-        ownerId: ownerId || null,
-        regionId: regionId || null,
-        eventId: eventId || null,
+        eventId: trainingReportId || null,
       });
       resetFormData(hookForm.reset, updatedSession);
       updateLastSaveTime(moment(updatedSession.updatedAt));
