@@ -17,13 +17,13 @@ const { DB_MAINTENANCE_TYPE, MAINTENANCE_TYPE } = constants;
  * @throws {Error} If an error occurs while running the maintenance command.
  */
 const maintenanceCommand = async (
-  command: string,
-  type: typeof DB_MAINTENANCE_TYPE[keyof typeof DB_MAINTENANCE_TYPE],
-  data: any,
-): Promise<void> => {
+  command,
+  type,
+  data,
+) => {
   // Reset the log messages and benchmark data arrays for each operation
-  const logMessages: any[] = [];
-  const logBenchmarkData: any[] = [];
+  const logMessages = [];
+  const logBenchmarkData = [];
 
   // Create a maintenance log entry for this operation
   const log = await DBMaintenanceLog.create({ type, data });
@@ -90,10 +90,10 @@ const maintenanceCommand = async (
  * @throws {Error} If an error occurs during the maintenance operation.
  */
 const tableMaintenanceCommand = async (
-  command: string, // The SQL command to execute
+  command, // The SQL command to execute
   // The type of maintenance command to run
-  type: typeof DB_MAINTENANCE_TYPE[keyof typeof DB_MAINTENANCE_TYPE],
-  model: any, // The Sequelize model object for the table being maintained
+  type,
+  model, // The Sequelize model object for the table being maintained
 ) => {
   // Get the name of the table from the model
   const tableName = model.getTableName();
@@ -111,7 +111,7 @@ const tableMaintenanceCommand = async (
  * @throws {Error} - If there is an error during the table maintenance command execution.
  */
 // This function vacuums a table in the database
-const vacuumTable = async (model: any): Promise<void> => tableMaintenanceCommand('VACUUM FULL', DB_MAINTENANCE_TYPE.VACUUM, model);
+const vacuumTable = async (model) => tableMaintenanceCommand('VACUUM FULL', DB_MAINTENANCE_TYPE.VACUUM, model);
 
 /**
  * Asynchronously reindexes a table in the database.
@@ -120,7 +120,7 @@ const vacuumTable = async (model: any): Promise<void> => tableMaintenanceCommand
  * @returns A Promise that resolves with void when the reindexing is complete.
  * @throws {Error} If there is an issue with the database maintenance command.
  */
-const reindexTable = async (model: any): Promise<void> => tableMaintenanceCommand('REINDEX TABLE', DB_MAINTENANCE_TYPE.REINDEX, model);
+const reindexTable = async (model) => tableMaintenanceCommand('REINDEX TABLE', DB_MAINTENANCE_TYPE.REINDEX, model);
 
 /**
  * Asynchronously vacuums all tables in the database using Sequelize ORM.
@@ -128,8 +128,8 @@ const reindexTable = async (model: any): Promise<void> => tableMaintenanceComman
  * each table.
  * @throws {Error} If there is an error while vacuuming a table.
  */
-const vacuumTables = async (): Promise<any[]> => Promise.all(
-  db.sequelize.models.map(async (model: any) => vacuumTable(model)),
+const vacuumTables = async () => Promise.all(
+  db.sequelize.models.map(async (model) => vacuumTable(model)),
 );
 
 /**
@@ -137,8 +137,8 @@ const vacuumTables = async (): Promise<any[]> => Promise.all(
  * @returns A promise that resolves to an array of any type.
  * @throws Throws an error if there is an issue with reindexing a table.
  */
-const reindexTables = async (): Promise<any[]> => Promise.all(
-  db.sequelize.models.map(async (model: any) => reindexTable(model)),
+const reindexTables = async () => Promise.all(
+  db.sequelize.models.map(async (model) => reindexTable(model)),
 );
 
 /**
@@ -146,7 +146,7 @@ const reindexTables = async (): Promise<any[]> => Promise.all(
  * @returns A promise that resolves to an array of results from the executed maintenance tasks.
  * @throws {Error} If any of the maintenance tasks fail.
  */
-const dailyMaintenance = async (): Promise<any[]> => {
+const dailyMaintenance = async () => {
   const vacuumTablesPromise = vacuumTables();
   await Promise.all([vacuumTablesPromise]); // Wait for all vacuumTables promises to resolve
   const reindexTablesPromise = reindexTables();
@@ -169,7 +169,7 @@ const dbMaintenance = async (job) => {
     // ...data // pass to any maintenance operations that may have had additional data passed.
   } = job.data;
 
-  let action:Promise<any[]> = Promise.reject();
+  let action = Promise.reject();
 
   switch (type) {
     case DB_MAINTENANCE_TYPE.VACUUM:
@@ -205,8 +205,8 @@ const processDBMaintenanceJob = (queue) => queue.process(MAINTENANCE_TYPE.DB, db
  */
 const queueDBMaintenance = (
   queue,
-  type: typeof DB_MAINTENANCE_TYPE[keyof typeof DB_MAINTENANCE_TYPE],
-  data: object | null = null,
+  type,
+  data = null,
 ) => {
   try {
     const jobData = {
