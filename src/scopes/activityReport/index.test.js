@@ -2283,13 +2283,6 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      // Create ES client.
-      client = await getClient();
-
-      // Create new index
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-      await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
       // Create reports.
       const context1 = 'Nothings gonna change my world';
       const context2 = 'I get by with a little help from my friends';
@@ -2321,35 +2314,6 @@ describe('filtersToScopes', () => {
         excludedReport.id,
         globallyExcludedReport.id,
       ];
-
-      // Index reports.
-      await addIndexDocument({
-        data: {
-          indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-          id: includedReport1.id,
-          document: { id: includedReport1.id, context: context1 },
-        },
-      });
-
-      await addIndexDocument(
-        {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: includedReport2.id,
-            document: { id: includedReport2.id, context: context2 },
-          },
-        },
-      );
-
-      await addIndexDocument(
-        {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: excludedReport.id,
-            document: { id: excludedReport.id, context: context3 },
-          },
-        },
-      );
     });
 
     afterAll(async () => {
