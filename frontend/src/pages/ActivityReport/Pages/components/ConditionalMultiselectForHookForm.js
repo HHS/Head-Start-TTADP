@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useController, useFormContext } from 'react-hook-form';
 import { ERROR_FORMAT } from './constants';
 import ConditionalMultiselect from '../../../../components/ConditionalMultiselect';
 import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';

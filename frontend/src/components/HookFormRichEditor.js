@@ -12,8 +12,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Controller } from 'react-hook-form/dist/index.ie11';
-
+import { Controller } from 'react-hook-form';
 import RichEditor from './RichEditor';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 

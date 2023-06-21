@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import React from 'react';
 import fetchMock from 'fetch-mock';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 
