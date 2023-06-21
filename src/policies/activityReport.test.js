@@ -323,6 +323,12 @@ describe('Activity Report policies', () => {
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canGet()).toBeFalsy();
       });
+
+      it('is false for an admin with no other permissions to the report', () => {
+        const report = activityReport(author.id);
+        const policy = new ActivityReport(admin, report);
+        expect(policy.canGet()).toBeFalsy();
+      });
     });
 
     describe('for approved reports', () => {
