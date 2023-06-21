@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
@@ -17,12 +18,11 @@ import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
 import { getEventsByStatus } from '../../fetchers/trainingReports';
 import AppLoadingContext from '../../AppLoadingContext';
-import { EVENT_STATUS } from './constants';
 
-const tabValues = [
-  { key: 'Not started', value: EVENT_STATUS.NOT_STARTED },
-  { key: 'In progress', value: EVENT_STATUS.IN_PROGRESS },
-  { key: 'Completed', value: EVENT_STATUS.COMPLETE }];
+const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
+  key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
+}));
+
 export default function TrainingReports({ match }) {
   const { params: { status } } = match;
   const { user } = useContext(UserContext);
