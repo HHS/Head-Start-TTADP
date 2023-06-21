@@ -1,6 +1,6 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState, reportIsEditable } from '../../../../utils';
