@@ -71,6 +71,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
+  const sessionName = watch('sessionName');
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -172,10 +173,14 @@ const SessionSummary = ({ datePickerKey }) => {
     }
   };
 
+  const pageTitle = `Session summary - ${sessionName && ` ${sessionName}`} ${eventName && ` - ${eventName}`}`;
+
   return (
     <>
       <Helmet>
-        <title>Session summary</title>
+        <title>
+          {pageTitle}
+        </title>
       </Helmet>
       <IndicatesRequiredField />
 
@@ -429,7 +434,6 @@ const SessionSummary = ({ datePickerKey }) => {
         <legend>
           Did you use any TTA resources that aren&apos;t available as a link?
           {' '}
-          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
           <QuestionTooltip
             text={(
               <div>
