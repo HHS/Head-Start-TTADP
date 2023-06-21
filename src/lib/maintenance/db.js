@@ -2,7 +2,6 @@
 const { sequelize, DBMaintenanceLog } = require('../../models');
 const constants = require('../../constants');
 const { auditLogger } = require('../../logger');
-const db = require('../../models');
 
 const { DB_MAINTENANCE_TYPE, MAINTENANCE_TYPE } = constants;
 
@@ -27,20 +26,16 @@ const maintenanceCommand = async (
 
   // Create a maintenance log entry for this operation
   const log = await DBMaintenanceLog.create({ type, data });
-
   try {
     // Run the VACUUM FULL command on the table
     const result = await sequelize.query(command, {
       // Log all messages from the query to the logMessages array
-      logging: (message) => {
+      logging: (message, timingMs) => {
         logMessages.push(message);
+        logBenchmarkData.push(timingMs);
       },
       // Enable benchmarking for the query
       benchmark: true,
-      // Log all benchmark data to the logBenchmarkData array
-      benchmarkLogger: (benchmarkData) => {
-        logBenchmarkData.push(benchmarkData);
-      },
     });
 
     // Update the log entry to indicate that the maintenance activity has been completed.
@@ -52,7 +47,8 @@ const maintenanceCommand = async (
           benchmarks: logBenchmarkData,
         },
         // Check if the log messages contain the word "successfully" to set isSuccessful accordingly
-        isSuccessful: logMessages.some((message) => message.toLowerCase().includes('successfully')),
+        isSuccessful: logMessages.some((message) => message.toLowerCase().includes('successfully')
+          || message.toLowerCase().includes('executed')),
       },
       { where: { id: log.id } },
     );
@@ -69,8 +65,10 @@ const maintenanceCommand = async (
       {
         data: {
           ...log.data,
-          messages: logMessages,
-          benchmarks: logBenchmarkData,
+          ...(logMessages.length > 0 && { messages: logMessages }),
+          ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
+          error: JSON.parse(JSON.stringify(err)),
+          errorMessage: err.message,
         },
         isSuccessful: false,
       },
@@ -99,7 +97,7 @@ const tableMaintenanceCommand = async (
   const tableName = model.getTableName();
 
   // Execute the maintenance command with the table name and return the result
-  return maintenanceCommand(`${command} ${tableName};`, type, { table: tableName });
+  return maintenanceCommand(`${command} "${tableName}";`, type, { table: tableName });
 };
 
 /**
@@ -129,7 +127,7 @@ const reindexTable = async (model) => tableMaintenanceCommand('REINDEX TABLE', D
  * @throws {Error} If there is an error while vacuuming a table.
  */
 const vacuumTables = async () => Promise.all(
-  db.sequelize.models.map(async (model) => vacuumTable(model)),
+  Object.values(sequelize.models).map(async (model) => vacuumTable(model)),
 );
 
 /**
@@ -138,7 +136,7 @@ const vacuumTables = async () => Promise.all(
  * @throws Throws an error if there is an issue with reindexing a table.
  */
 const reindexTables = async () => Promise.all(
-  db.sequelize.models.map(async (model) => reindexTable(model)),
+  Object.values(sequelize.models).map(async (model) => reindexTable(model)),
 );
 
 /**
