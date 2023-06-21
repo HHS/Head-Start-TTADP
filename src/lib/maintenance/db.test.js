@@ -205,7 +205,10 @@ describe('maintenance', () => {
   //     expect(reindexTablesStub).toHaveBeenCalledTimes(0);
   //     expect(auditLoggerErrorSpy).toHaveBeenCalledTimes(1);
   //     expect(auditLoggerErrorSpy)
-  //      .toHaveBeenCalledWith(expect.any(Error), expect.stringContaining('Database maintenance failed'));
+  //      .toHaveBeenCalledWith(
+  //        expect.any(Error),
+  //        expect.stringContaining('Database maintenance failed')
+  //      );
   //   });
   // });
 });
