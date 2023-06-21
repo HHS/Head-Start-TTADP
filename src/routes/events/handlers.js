@@ -1,4 +1,5 @@
 import httpCodes from 'http-codes';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
 import { currentUserId } from '../../services/currentUser';
@@ -27,8 +28,14 @@ export const getEventAuthorization = async (req, res, report) => {
 
 export const getByStatus = async (req, res) => {
   try {
-    const { status } = req.params;
+    const { status: statusParam } = req.params;
     const auth = await getEventAuthorization(req, res, {});
+
+    const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
+    if (!status) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Invalid status' });
+    }
+
     const events = await findEventsByStatus(status, auth.readableRegions);
 
     return res.status(httpCodes.OK).send(events);
