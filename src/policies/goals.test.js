@@ -161,7 +161,7 @@ describe('Goals policies', () => {
       };
 
       const policy = new Goal(user, goal);
-      expect(policy.isOnApprovedActivityReports()).toBe(true);
+      expect(policy.isOnActivityReports()).toBe(true);
     });
   });
 
