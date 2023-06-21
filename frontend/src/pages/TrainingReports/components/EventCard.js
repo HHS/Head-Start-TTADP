@@ -26,6 +26,12 @@ function EventCard({
         history.push(`/training-report/${event.id}/session/new/`);
       },
     });
+    menuItems.push({
+      label: 'Edit event',
+      onClick: () => {
+        history.push(`/training-report/${event.id}/event-summary`);
+      },
+    });
   }
 
   return (
