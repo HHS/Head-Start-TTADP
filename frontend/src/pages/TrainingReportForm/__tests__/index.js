@@ -228,8 +228,8 @@ describe('TrainingReportForm', () => {
     });
 
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
@@ -260,8 +260,8 @@ describe('TrainingReportForm', () => {
     });
 
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
@@ -315,8 +315,8 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/events/id/1', completedForm);
     fetchMock.put('/api/events/id/1', completedForm);
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
@@ -374,8 +374,8 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/events/id/1', completedForm);
     fetchMock.put('/api/events/id/1', 500);
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
