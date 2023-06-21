@@ -275,7 +275,14 @@ const SessionSummary = ({ datePickerKey }) => {
                 register({
                   required: 'Enter duration',
                   valueAsNumber: true,
-                  pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest quarter hour' },
+                  validate: {
+                    mustBeQuarterHalfOrWhole: (value) => {
+                      if (value % 0.25 !== 0) {
+                        return 'Duration must be rounded to the nearest quarter hour';
+                      }
+                      return true;
+                    },
+                  },
                   min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
                   max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                 })
