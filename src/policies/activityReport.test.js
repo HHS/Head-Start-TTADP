@@ -8,14 +8,24 @@ function activityReport(
   approvers,
   submissionStatus = REPORT_STATUSES.DRAFT,
   calculatedStatus = null,
+  raw = true,
 ) {
-  const report = {
+  const report = raw ? {
     userId: author,
     regionId: 1,
     activityReportCollaborators: [],
     approvers: [],
     submissionStatus,
     calculatedStatus,
+  } : {
+    dataValues: {
+      userId: author,
+      regionId: 1,
+      activityReportCollaborators: [],
+      approvers: [],
+      submissionStatus,
+      calculatedStatus,
+    },
   };
 
   if (activityReportCollaborator) {
@@ -423,6 +433,20 @@ describe('Activity Report policies', () => {
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeFalsy();
+    });
+  });
+
+  describe('canReadInRegion', () => {
+    it('works with raw model instance (dataValues)', async () => {
+      const report = activityReport(author.id, null, null, null, null, true);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReadInRegion()).toBeTruthy();
+    });
+
+    it('works with non-raw model instance', async () => {
+      const report = activityReport(author.id, null, null, null, null, false);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReadInRegion()).toBeTruthy();
     });
   });
 });
