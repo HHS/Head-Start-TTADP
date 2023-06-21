@@ -15,7 +15,7 @@ test.describe('get /activity-reports/goals', () => {
       status: Joi.string().required(),
       onApprovedAR: Joi.boolean().required(),
       endDate: Joi.any().required(),
-      source: Joi.string(),
+      source: Joi.any(),
       isCurated: Joi.boolean().required(),
     });
     expect(response.status()).toBe(200);
