@@ -64,6 +64,11 @@ export default class ActivityReport {
     }
 
     if (this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // TTAHUB-xx: Admins should be allowed to read an approved report.
+      if (this.isAdmin()) {
+        return true;
+      }
+
       return this.canReadInRegion();
     }
 
