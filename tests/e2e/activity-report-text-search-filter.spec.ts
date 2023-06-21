@@ -123,7 +123,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('specialistNextSteps-button').click();
     // Specialist step 2.
     await page.getByLabel('Step 2 *').click();
-    await page.getByLabel('Step 2 *').fill('If you can dream it, you can do it.');
+    await page.getByLabel('Step 2 *').fill('I really like math');
     await page.getByLabel('When do you anticipate completing step 2? *').fill('01/17/2023');
     // Recipient step 1.
     await page.getByTestId('recipientNextSteps-input').click();
@@ -243,7 +243,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
     await page.getByLabel('Enter report text').click();
-    await page.getByLabel('Enter report text').fill('you can dream it');
+    await page.getByLabel('Enter report text').fill('like math');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
@@ -253,7 +253,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
     await page.getByLabel('Enter report text').click();
-    await page.getByLabel('Enter report text').fill('you can dream it');
+    await page.getByLabel('Enter report text').fill('like math');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
