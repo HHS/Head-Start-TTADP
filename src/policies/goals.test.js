@@ -138,4 +138,56 @@ describe('Goals policies', () => {
       expect(policy.canReadInRegion(2)).toBe(true);
     });
   });
+
+  describe('isOnActivityReports', () => {
+    it('works', async () => {
+      const goal = {
+        objectives: [
+          {
+            activityReports: [
+              { id: 1, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+            ],
+          },
+        ],
+        grant: { regionId: 2 },
+      };
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.isOnApprovedActivityReports()).toBe(true);
+    });
+  });
+
+  describe('isOnApprovedActivityReports', () => {
+    it('works', async () => {
+      const goal = {
+        objectives: [
+          {
+            activityReports: [
+              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
+            ],
+          },
+        ],
+        grant: { regionId: 2 },
+      };
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.isOnApprovedActivityReports()).toBe(true);
+    });
+  });
 });
