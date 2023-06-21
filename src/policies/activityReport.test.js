@@ -349,6 +349,18 @@ describe('Activity Report policies', () => {
         const policy = new ActivityReport(approver, report);
         expect(policy.canGet()).toBeTruthy();
       });
+
+      it('is true for admins', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          null,
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.APPROVED,
+        );
+        const policy = new ActivityReport(admin, report);
+        expect(policy.canGet()).toBeTruthy();
+      });
     });
   });
 
