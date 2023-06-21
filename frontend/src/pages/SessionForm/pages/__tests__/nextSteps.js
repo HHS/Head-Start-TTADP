@@ -15,11 +15,86 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 describe('nextSteps', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => true) })).toBe(true);
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          specialistNextSteps: [{
+            note: 'Note',
+            completeDate: '01/01/2021',
+          }],
+          recipientNextSteps: [{
+            note: 'Note',
+            completeDate: '01/01/2021',
+          }],
+        })),
+      })).toBe(true);
     });
 
-    it('returns false otherwise', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
+    it('returns false if missing a specialist note', () => {
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          specialistNextSteps: [{
+            note: '',
+            completeDate: '01/01/2021',
+          }],
+          recipientNextSteps: [{
+            note: 'Note',
+            completeDate: '01/01/2021',
+          }],
+        })),
+      })).toBe(false);
+    });
+
+    it('returns false if missing a recipient note', () => {
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          specialistNextSteps: [{
+            note: 'Note',
+            completeDate: '01/01/2021',
+          }],
+          recipientNextSteps: [{
+            note: '',
+            completeDate: '01/01/2021',
+          }],
+        })),
+      })).toBe(false);
+    });
+
+    it('returns false if missing a date', () => {
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          specialistNextSteps: [{
+            note: 'Note',
+            completeDate: '',
+          }],
+          recipientNextSteps: [{
+            note: '',
+            completeDate: '01/01/2021',
+          }],
+        })),
+      })).toBe(false);
+    });
+    it('returns false if invalid date', () => {
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          specialistNextSteps: [{
+            note: 'Note',
+            completeDate: 'Invalid date',
+          }],
+          recipientNextSteps: [{
+            note: '',
+            completeDate: '01/01/2021',
+          }],
+        })),
+      })).toBe(false);
+    });
+
+    it('returns false if empty', () => {
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          specialistNextSteps: [],
+          recipientNextSteps: [],
+        })),
+      })).toBe(false);
     });
   });
   describe('review', () => {
