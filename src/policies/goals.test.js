@@ -119,4 +119,23 @@ describe('Goals policies', () => {
       expect(policy.canCreate()).toBe(true);
     });
   });
+
+  describe('canReadInRegion', () => {
+    it('works', async () => {
+      const goal = {};
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      };
+      const regionId = 2;
+
+      const policy = new Goal(user, goal, regionId);
+
+      expect(policy.canReadInRegion(2)).toBe(true);
+    });
+  });
 });
