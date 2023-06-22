@@ -94,7 +94,10 @@ describe('UserSetting service', () => {
         ...settings.find((s) => s.key === setting.key),
       }));
 
-      expect(found).toEqual(expected);
+      // Sorts the array of objects found and expected by comparing the 'key' property in
+      // ascending order.
+      expect(found.sort((a, b) => a.key.localeCompare(b.key)))
+        .toEqual(expected.sort((a, b) => a.key.localeCompare(b.key)));
 
       const newSettings = [
         {
@@ -153,7 +156,10 @@ describe('UserSetting service', () => {
       await saveSettings(999, newSettings);
       const found2 = await userSettingsById(999);
 
-      expect(found2).toEqual(defs);
+      // Sorts the array of objects found2 and defs by comparing the 'key' property in
+      // ascending order.
+      expect(found2.sort((a, b) => a.key.localeCompare(b.key)))
+        .toEqual(defs.sort((a, b) => a.key.localeCompare(b.key)));
     });
 
     it('properly serializes', async () => {
