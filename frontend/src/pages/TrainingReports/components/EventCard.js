@@ -24,19 +24,19 @@ function EventCard({
       <div className="display-flex flex-wrap position-relative">
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event title</p>
-          <p className="usa-prose margin-y-0">{data['Edit Title']}</p>
+          <p className="usa-prose margin-y-0">{data['Full Event Title']}</p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event ID</p>
-          <p className="usa-prose margin-y-0">{data['Event ID']}</p>
+          <p className="usa-prose margin-y-0">{data.eventId}</p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event organizer</p>
-          <p className="usa-prose margin-y-0">{data['Event Organizer - Type of Event']}</p>
+          <p className="usa-prose margin-y-0">{data.eventOrganizer}</p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__reason padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Reason</p>
-          <TooltipList list={data['Reason for Activity'] ? data['Reason for Activity'].split('\n') : []} cardType="event" listType="reasons" />
+          <TooltipList list={data.reasons} cardType="event" listType="reasons" />
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Event start date</p>
