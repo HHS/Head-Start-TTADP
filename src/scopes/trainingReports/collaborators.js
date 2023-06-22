@@ -11,9 +11,9 @@ FROM "Users" "Users"
 WHERE "Users"."name"`;
 
 export function withCollaborators(names) {
-  return filterAssociation(collaborators, names, false);
+  return filterAssociation(collaborators, names, false, 'ILIKE');
 }
 
 export function withoutCollaborators(names) {
-  return filterAssociation(collaborators, names, true);
+  return filterAssociation(collaborators, names, true, 'ILIKE');
 }

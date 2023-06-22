@@ -8,8 +8,6 @@ import db, {
   sequelize,
 } from '../../models';
 
-jest.mock('bull');
-
 const mockUser = {
   id: faker.datatype.number(),
   homeRegionId: 1,
