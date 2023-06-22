@@ -76,6 +76,7 @@ async function getProgramPersonnel(grantId, programId, program) {
         programPersonnelArray.push(personnelToAdd);
       } else {
         // Add the new Grant Personnel record.
+        console.log('\n\n\n-----Too add!!!: ', personnelToAdd);
         programPersonnelArray.push(
           {
             ...personnelToAdd,
@@ -83,11 +84,13 @@ async function getProgramPersonnel(grantId, programId, program) {
             effectiveDate: new Date(),
           },
         );
-        // Also add the old Grant Personnel record with the active flag set to false.
+        // Also update the old Grant Personnel record with the active flag set to false.
+        console.log('\n\n\n-----Found Existing: ', existingPersonnel);
         programPersonnelArray.push({
-          ...existingPersonnel,
+          ...existingPersonnel.dataValues,
           active: false,
         });
+        console.log('\n\n\n-----Found Existing ALL: ', programPersonnelArray);
       }
     }
   }
@@ -226,6 +229,7 @@ export async function processFiles(hashSumHex) {
         (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap,
       );
 
+      console.log('\n\n\n-------GRANT MAP: ', grantAgencyMap[16242]);
       const programsForDb = await Promise.all(programsWithGrants.map(async (program) => ({
         id: parseInt(program.grant_program_id, 10),
         grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),

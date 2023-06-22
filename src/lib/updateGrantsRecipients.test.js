@@ -172,6 +172,34 @@ describe('Update grants, program personnel, and recipients', () => {
   });
 
   it('should import or update program personnel', async () => {
+    // Create auth_official_contact personnel to update.
+    const personnelToUpdate = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'auth_official_contact',
+      firstName: 'F321_orig',
+      lastName: 'L321_orig',
+      title: 'Governing Board Chairperson_orig',
+      email: '456@example.org',
+      suffix: 'Jr.',
+      prefix: 'Dr.',
+      active: true,
+    });
+
+    // Create director personnel to update.
+    const directorToUpdate = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'director',
+      firstName: 'F3333_orig',
+      lastName: 'L3333_orig',
+      email: '3333_orig@example.org',
+      suffix: 'Jr.',
+      prefix: 'Dr.',
+      active: true,
+    });
+
+    // Check we have no program personnel.
     const programPersonnelBefore = await ProgramPersonnel.findAll(
       {
         where: {
@@ -179,7 +207,7 @@ describe('Update grants, program personnel, and recipients', () => {
         },
       },
     );
-    expect(programPersonnelBefore.length).toBe(0);
+    expect(programPersonnelBefore.length).toBe(2);
 
     // Process the files.
     await processFiles();
@@ -192,7 +220,7 @@ describe('Update grants, program personnel, and recipients', () => {
       },
     );
     expect(programPersonnelAdded).toBeDefined();
-    expect(programPersonnelAdded.length).toBe(16);
+    expect(programPersonnelAdded.length).toBe(18);
 
     // Get first program.
     let personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 1);
@@ -244,7 +272,54 @@ describe('Update grants, program personnel, and recipients', () => {
 
     // Get fourth program.
     personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 4);
-    expect(personnelToAssert.length).toBe(4);
+    expect(personnelToAssert.length).toBe(6);
+
+    // Filter auth_official_contact.
+    const authOfficial = personnelToAssert.filter((gp) => gp.role === 'auth_official_contact');
+    expect(authOfficial.length).toBe(2);
+
+    // Assert that the old personnel was updated.
+    let oldPersonnel = authOfficial.find((gp) => gp.id === personnelToUpdate.id);
+    expect(oldPersonnel).toBeDefined();
+    expect(oldPersonnel.firstName).toBe('F321_orig');
+    expect(oldPersonnel.lastName).toBe('L321_orig');
+    expect(oldPersonnel.title).toBe('Governing Board Chairperson_orig');
+    expect(oldPersonnel.active).toBe(false);
+
+    // Assert the new personnel was added and references the old personnel.
+    let newPersonnel = authOfficial.find((gp) => gp.id !== personnelToUpdate.id);
+    expect(newPersonnel).toBeDefined();
+    expect(newPersonnel.firstName).toBe('F123');
+    expect(newPersonnel.lastName).toBe('L123');
+    expect(newPersonnel.title).toBe('Governing Board Chairperson');
+    expect(newPersonnel.email).toBe('123@example.org');
+    expect(newPersonnel.active).toBe(true);
+    expect(newPersonnel.originalPersonnelId).toBe(oldPersonnel.id);
+    expect(newPersonnel.effectiveDate).not.toBeNull();
+
+    // Filter director.
+    const directorPersonnel = personnelToAssert.filter((gp) => gp.role === 'director');
+    expect(directorPersonnel.length).toBe(2);
+
+    // Assert that the old personnel was updated.
+    oldPersonnel = directorPersonnel.find((gp) => gp.id === directorToUpdate.id);
+    expect(oldPersonnel).toBeDefined();
+    expect(oldPersonnel.firstName).toBe('F3333_orig');
+    expect(oldPersonnel.lastName).toBe('L3333_orig');
+    expect(oldPersonnel.email).toBe('3333_orig@example.org');
+    expect(oldPersonnel.title).toBe(null);
+    expect(oldPersonnel.active).toBe(false);
+
+    // Assert the new personnel was added and references the old personnel.
+    newPersonnel = directorPersonnel.find((gp) => gp.id !== directorToUpdate.id);
+    expect(newPersonnel).toBeDefined();
+    expect(newPersonnel.firstName).toBe('F3333');
+    expect(newPersonnel.lastName).toBe('L3333');
+    expect(oldPersonnel.title).toBe(null);
+    expect(newPersonnel.email).toBe('3333@example.org');
+    expect(newPersonnel.active).toBe(true);
+    expect(newPersonnel.originalPersonnelId).toBe(oldPersonnel.id);
+    expect(newPersonnel.effectiveDate).not.toBeNull();
   });
 
   it('includes the grant specialists name and email', async () => {
