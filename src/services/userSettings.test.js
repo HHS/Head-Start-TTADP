@@ -115,7 +115,10 @@ describe('UserSetting service', () => {
         ...newSettings.find((s) => s.key === setting.key),
       }));
 
-      expect(found2.sort((a, b) => a.key < b.key)).toEqual(expected2.sort((a, b) => a.key < b.key));
+      // Sorts the array of objects found2 and expected2 by comparing the 'key' property in
+      // ascending order.
+      expect(found2.sort((a, b) => a.key.localeCompare(b.key)))
+        .toEqual(expected2.sort((a, b) => a.key.localeCompare(b.key)));
     });
 
     it('properly deletes an override', async () => {
@@ -131,7 +134,10 @@ describe('UserSetting service', () => {
         ...settings.find((s) => s.key === setting.key),
       }));
 
-      expect(found.sort((a, b) => a.key < b.key)).toEqual(expected.sort((a, b) => a.key < b.key));
+      // Sorts the array of objects found and expected by comparing the 'key' property in
+      // ascending order.
+      expect(found.sort((a, b) => a.key.localeCompare(b.key)))
+        .toEqual(expected.sort((a, b) => a.key.localeCompare(b.key)));
 
       const newSettings = [
         {
