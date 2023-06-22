@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
