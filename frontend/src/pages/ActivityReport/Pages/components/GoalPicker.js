@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
-import { useFormContext, useWatch, useController } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
 import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
