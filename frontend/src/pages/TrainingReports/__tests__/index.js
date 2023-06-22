@@ -15,10 +15,10 @@ import { EVENT_STATUS } from '../constants';
 const notStartedEvents = [{
   id: 1,
   data: {
-    'Edit Title': 'Not started event 1',
-    'Event ID': 'Not started event ID 1',
-    'Event Organizer - Type of Event': 'Not started event organizer 1',
-    'Reason for Activity': 'New Program/Option\nNew Staff/Turnover\nOngoing Quality Improvement\nSchool Readiness Goals\nEmergent Needs',
+    'Full Event Title': 'Not started event 1',
+    eventId: 'Not started event ID 1',
+    eventOrganizer: 'Not started event organizer 1',
+    reasons: ['New Program/Option\n', 'New Staff/Turnover\n', 'Ongoing Quality Improvement\n', 'School Readiness Goals\n', 'Emergent Needs'],
     startDate: '2021-01-02',
     endDate: '2021-01-03',
   },
@@ -26,11 +26,12 @@ const notStartedEvents = [{
 {
   id: 2,
   data: {
-    'Edit Title': 'Not started event 2',
-    'Event ID': 'Not started event ID 2',
-    'Event Organizer - Type of Event': 'Not started event organizer 2',
+    'Full Event Title': 'Not started event 2',
+    eventId: 'Not started event ID 2',
+    eventOrganizer: 'Not started event organizer 2',
     startDate: '2021-02-02',
     endDate: '2021-02-03',
+    reasons: [],
   },
 },
 ];
@@ -38,10 +39,10 @@ const notStartedEvents = [{
 const inProgressEvents = [{
   id: 3,
   data: {
-    'Edit Title': 'In progress event 1',
-    'Event ID': 'In progress event ID 1',
-    'Event Organizer - Type of Event': 'In progress event organizer 1',
-    'Reason for Activity': 'Emergent Needs',
+    'Full Event Title': 'In progress event 1',
+    eventId: 'In progress event ID 1',
+    eventOrganizer: 'In progress event organizer 1',
+    reasons: ['Emergent Needs'],
     startDate: '2021-03-02',
     endDate: '2021-03-03',
   },
@@ -51,10 +52,10 @@ const inProgressEvents = [{
 const completeEvents = [{
   id: 4,
   data: {
-    'Edit Title': 'Complete event 1',
-    'Event ID': 'Complete event ID 1',
-    'Event Organizer - Type of Event': 'Complete event organizer 1',
-    'Reason for Activity': 'New Staff/Turnover',
+    'Full Event Title': 'Complete event 1',
+    eventId: 'Complete event ID 1',
+    eventOrganizer: 'Complete event organizer 1',
+    reasons: ['New Staff/Turnover'],
     startDate: '2021-04-02',
     endDate: '2021-04-03',
   },
@@ -222,7 +223,9 @@ describe('TrainingReports', () => {
     act(() => {
       renderTrainingReports(centralOfficeUser);
     });
-    expect(await screen.findByRole('heading', { name: /training reports - all regions/i })).toBeInTheDocument();
+    screen.debug(undefined, 2000000);
+    expect(await screen.findByRole('heading', { name: /training reports \- all regions/i })).toBeInTheDocument();
+    //ByRole('heading', { name: /training reports - all regions/i })).toBeInTheDocument();
   });
 
   test('displays a message', async () => {
