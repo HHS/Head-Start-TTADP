@@ -9,7 +9,6 @@ import {
   Ceased,
   Pencil,
 } from '../../../components/icons';
-import './SessionReportCard.scss';
 
 function SessionCard({
   eventId,
@@ -79,7 +78,7 @@ function SessionCard({
   })();
 
   return (
-    <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
+    <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Session name </span>
         <div>

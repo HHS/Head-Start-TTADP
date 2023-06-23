@@ -6,17 +6,6 @@ import { createMemoryHistory } from 'history';
 import SessionCard from '../SessionCard';
 import UserContext from '../../../../UserContext';
 
-/*
-    sessionName,
-    startDate,
-    endDate,
-    objective,
-    objectiveSupportType,
-    objectiveTopics,
-    objectiveTrainers,
-    status,
-    */
-
 describe('SessionCard', () => {
   const history = createMemoryHistory();
   const defaultSession = {
