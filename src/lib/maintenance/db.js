@@ -1,87 +1,56 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-const { sequelize, DBMaintenanceLog } = require('../../models');
-const constants = require('../../constants');
+const { sequelize, MaintenanceLog } = require('../../models');
+const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger } = require('../../logger');
+const {
+  maintenanceQueue,
+  addQueueProcessor,
+  enqueueMaintenanceJob,
+  maintenanceCommand,
+} = require('./common');
 
-const { DB_MAINTENANCE_TYPE, MAINTENANCE_TYPE } = constants;
+// const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = constants;
+const numOfModels = Object.values(sequelize.models).length;
 
 /**
  * Runs a maintenance command on the database table and logs the activity in the maintenance log.
  *
  * @param {string} command - The SQL command to be executed on the table.
- * @param {DB_MAINTENANCE_TYPE[keyof typeof DB_MAINTENANCE_TYPE]} type - The type of
+ * @param {MAINTENANCE_CATEGORY[keyof typeof MAINTENANCE_CATEGORY]} category - The category of
+ * maintenance activity being performed.
+ * @param {MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE]} type - The type of
  * maintenance activity being performed.
  * @param {*} data - Additional data related to the maintenance activity.
- * @returns {Promise<void>} A Promise that resolves to void.
+ * @returns {Promise<bool>} A Promise that resolves to void.
  * @throws {Error} If an error occurs while running the maintenance command.
  */
-const maintenanceCommand = async (
+const maintenanceDBCommand = async (
   command,
+  category,
   type,
   data,
-) => {
-  // Reset the log messages and benchmark data arrays for each operation
-  const logMessages = [];
-  const logBenchmarkData = [];
-
-  // Create a maintenance log entry for this operation
-  const log = await DBMaintenanceLog.create({ type, data });
-  try {
-    // Run the VACUUM FULL command on the table
-    const result = await sequelize.query(command, {
-      // Log all messages from the query to the logMessages array
-      logging: (message, timingMs) => {
-        logMessages.push(message);
-        logBenchmarkData.push(timingMs);
-      },
-      // Enable benchmarking for the query
-      benchmark: true,
-    });
-
-    // Update the log entry to indicate that the maintenance activity has been completed.
-    const updateResult = await DBMaintenanceLog.update(
-      {
-        data: {
-          ...log.data,
-          messages: logMessages,
-          benchmarks: logBenchmarkData,
-        },
-        // Check if the log messages contain the word "successfully" to set isSuccessful accordingly
-        isSuccessful: logMessages.some((message) => message.toLowerCase().includes('successfully')
-          || message.toLowerCase().includes('executed')),
-      },
-      { where: { id: log.id } },
-    );
-
-    if (updateResult[0] === 1) {
-      // Log successful update
-    }
-  } catch (err) {
-    // Log error message
-    auditLogger.error(`Error occurred while running maintenance command: ${err.message}`);
-
-    // Update the log entry to indicate that the maintenance activity has been completed.
-    await DBMaintenanceLog.update(
-      {
-        data: {
-          ...log.data,
-          ...(logMessages.length > 0 && { messages: logMessages }),
-          ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
-          error: JSON.parse(JSON.stringify(err)),
-          errorMessage: err.message,
-        },
-        isSuccessful: false,
-      },
-      { where: { id: log.id } },
-    );
-  }
-};
+) => maintenanceCommand(
+  async (logMessages, logBenchmarkData) => sequelize.query(command, {
+    // Log all messages from the query to the logMessages array
+    logging: (message, timingMs) => {
+      logMessages.push(message);
+      logBenchmarkData.push(timingMs);
+    },
+    // Enable benchmarking for the query
+    benchmark: true,
+  }),
+  category,
+  type,
+  data,
+);
 
 /**
  * Executes a table maintenance command.
  * @async
  * @param {string} command - The command to be executed.
- * @param {typeof DB_MAINTENANCE_TYPE[keyof typeof DB_MAINTENANCE_TYPE]} type - The type of
+ * @param {typeof MAINTENANCE_CATEGORY[keyof typeof MAINTENANCE_CATEGORY]} category - The
+ * category of database maintenance operation to be performed.
+ * @param {typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE]} type - The type of
  * database maintenance operation to be performed.
  * @param {any} model - The model representing the table to be maintained.
  * @returns {Promise<any>} A promise that resolves with the result of the maintenance operation.
@@ -90,14 +59,16 @@ const maintenanceCommand = async (
 const tableMaintenanceCommand = async (
   command, // The SQL command to execute
   // The type of maintenance command to run
+  category,
   type,
   model, // The Sequelize model object for the table being maintained
 ) => {
+  console.log({command, category, type, model});
   // Get the name of the table from the model
   const tableName = model.getTableName();
 
   // Execute the maintenance command with the table name and return the result
-  return maintenanceCommand(`${command} "${tableName}";`, type, { table: tableName });
+  return maintenanceDBCommand(`${command} "${tableName}";`, category, type, { table: tableName });
 };
 
 /**
@@ -109,7 +80,12 @@ const tableMaintenanceCommand = async (
  * @throws {Error} - If there is an error during the table maintenance command execution.
  */
 // This function vacuums a table in the database
-const vacuumTable = async (model) => tableMaintenanceCommand('VACUUM FULL', DB_MAINTENANCE_TYPE.VACUUM, model);
+const vacuumTable = async (model) => tableMaintenanceCommand(
+  'VACUUM FULL',
+  MAINTENANCE_CATEGORY.DB,
+  MAINTENANCE_TYPE.VACUUM,
+  model,
+);
 
 /**
  * Asynchronously reindexes a table in the database.
@@ -118,7 +94,12 @@ const vacuumTable = async (model) => tableMaintenanceCommand('VACUUM FULL', DB_M
  * @returns A Promise that resolves with void when the reindexing is complete.
  * @throws {Error} If there is an issue with the database maintenance command.
  */
-const reindexTable = async (model) => tableMaintenanceCommand('REINDEX TABLE', DB_MAINTENANCE_TYPE.REINDEX, model);
+const reindexTable = async (model) => tableMaintenanceCommand(
+  'REINDEX TABLE',
+  MAINTENANCE_CATEGORY.DB,
+  MAINTENANCE_TYPE.REINDEX,
+  model,
+);
 
 /**
  * Asynchronously vacuums all tables in the database using Sequelize ORM.
@@ -126,29 +107,95 @@ const reindexTable = async (model) => tableMaintenanceCommand('REINDEX TABLE', D
  * each table.
  * @throws {Error} If there is an error while vacuuming a table.
  */
-const vacuumTables = async () => Promise.all(
-  Object.values(sequelize.models).map(async (model) => vacuumTable(model)),
-);
+const vacuumTables = async (offset = 0, limit = numOfModels) => {
+  const models = Object.values(sequelize.models)
+    .sort((a, b) => a.getTableName().localeCompare(b.getTableName()))
+    .slice(offset, offset + limit);
+
+  return maintenanceCommand(
+    async () => ({
+      isSuccessful: (await Promise.all(models.map(async (model) => vacuumTable(model))))
+        .every((p) => p === true),
+    }),
+    MAINTENANCE_CATEGORY.DB,
+    MAINTENANCE_TYPE.VACUUM_TABLES,
+    {
+      offset,
+      limit,
+      models: models.map((m) => m.getTableName()),
+    },
+  );
+};
 
 /**
  * Asynchronously reindexes all tables in the database using Sequelize models.
  * @returns A promise that resolves to an array of any type.
  * @throws Throws an error if there is an issue with reindexing a table.
  */
-const reindexTables = async () => Promise.all(
-  Object.values(sequelize.models).map(async (model) => reindexTable(model)),
-);
+const reindexTables = async (offset = 0, limit = numOfModels) => {
+  const models = Object.values(sequelize.models)
+    .sort((a, b) => a.getTableName().localeCompare(b.getTableName()))
+    .slice(offset, offset + limit);
+
+  return maintenanceCommand(
+    async () => ({
+      isSuccessful: (await Promise.all(models.map(async (model) => reindexTable(model))))
+        .every((p) => p === true),
+    }),
+    MAINTENANCE_CATEGORY.DB,
+    MAINTENANCE_TYPE.REINDEX_TABLES,
+    {
+      offset,
+      limit,
+      models: models.map((m) => m.getTableName()),
+    },
+  );
+};
 
 /**
  * Executes daily maintenance tasks asynchronously.
  * @returns A promise that resolves to an array of results from the executed maintenance tasks.
  * @throws {Error} If any of the maintenance tasks fail.
  */
-const dailyMaintenance = async () => {
-  const vacuumTablesPromise = vacuumTables();
-  await Promise.all([vacuumTablesPromise]); // Wait for all vacuumTables promises to resolve
-  const reindexTablesPromise = reindexTables();
-  return Promise.all([vacuumTablesPromise, reindexTablesPromise]);
+const dailyMaintenance = async (offset = 0, limit = numOfModels) => maintenanceCommand(
+  async () => {
+    try {
+      const vacuumTablesPromise = vacuumTables(offset, limit);
+      await Promise.all([vacuumTablesPromise]); // Wait for all vacuumTables promises to resolve
+      const reindexTablesPromise = reindexTables(offset, limit);
+      const results = await Promise.all([vacuumTablesPromise, reindexTablesPromise]);
+
+      return { isSuccessful: results.every((r) => r === true) };
+    } catch (err) {
+      return { isSuccessful: false, error: err };
+    }
+  },
+  MAINTENANCE_CATEGORY.DB,
+  MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE,
+  {
+    offset,
+    limit,
+  },
+);
+
+const nextBlock = async (type, percent = null) => {
+  const { offset = 0, limit = numOfModels } = await MaintenanceLog.findOne({
+    where: {
+      category: MAINTENANCE_CATEGORY.DB,
+      type,
+      isSuccessful: true,
+    },
+    order: [['id', 'DESC']],
+    raw: true,
+  });
+  return {
+    offset: offset + limit < numOfModels
+      ? offset + limit
+      : 0,
+    limit: percent === null
+      ? limit
+      : Math.floor(numOfModels * percent),
+  };
 };
 
 /**
@@ -164,20 +211,22 @@ const dailyMaintenance = async () => {
 const dbMaintenance = async (job) => {
   const {
     type,
+    offset = 0,
+    limit = numOfModels,
     // ...data // pass to any maintenance operations that may have had additional data passed.
   } = job.data;
 
-  let action = Promise.reject();
+  let action;
 
   switch (type) {
-    case DB_MAINTENANCE_TYPE.VACUUM:
-      action = vacuumTables();
+    case MAINTENANCE_TYPE.VACUUM:
+      action = vacuumTables(offset, limit);
       break;
-    case DB_MAINTENANCE_TYPE.REINDEX:
-      action = reindexTables();
+    case MAINTENANCE_TYPE.REINDEX:
+      action = reindexTables(offset, limit);
       break;
-    case DB_MAINTENANCE_TYPE.DAILY_MAINTENANCE:
-      action = dailyMaintenance();
+    case MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE:
+      action = dailyMaintenance(offset, limit);
       break;
     default:
       throw new Error(`Invalid DB maintenance type: ${type}`);
@@ -187,12 +236,9 @@ const dbMaintenance = async (job) => {
 };
 
 /**
- * Processes a DB maintenance job from the given queue.
- * @param {Queue} queue - The queue to process the job from.
- * @returns {void}
- * @throws {Error} If the job processing fails.
+ * Adds a queue processor for database maintenance tasks.
  */
-const processDBMaintenanceJob = (queue) => queue.process(MAINTENANCE_TYPE.DB, dbMaintenance);
+addQueueProcessor(MAINTENANCE_CATEGORY.DB, dbMaintenance);
 
 /**
  * Adds a job to the maintenance queue for database maintenance.
@@ -201,24 +247,22 @@ const processDBMaintenanceJob = (queue) => queue.process(MAINTENANCE_TYPE.DB, db
  * @returns void
  * @throws {Error} If an error occurs while adding the job to the maintenance queue.
  */
-const queueDBMaintenance = (
-  queue,
+const enqueueDBMaintenanceJob = async (
   type,
-  data = null,
-) => {
-  try {
-    const jobData = {
-      type,
-      ...data,
-    };
-    queue.add(MAINTENANCE_TYPE.DB, jobData);
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
+  data,
+  percent = null,
+) => enqueueMaintenanceJob(
+  MAINTENANCE_CATEGORY.DB,
+  {
+    type,
+    ...(!data
+      ? await nextBlock(type, percent)
+      : data),
+  },
+);
 
 module.exports = {
-  maintenanceCommand,
+  maintenanceCommand: maintenanceDBCommand,
   tableMaintenanceCommand,
   vacuumTable,
   reindexTable,
@@ -226,6 +270,5 @@ module.exports = {
   reindexTables,
   dailyMaintenance,
   dbMaintenance,
-  processDBMaintenanceJob,
-  queueDBMaintenance,
+  enqueueDBMaintenanceJob,
 };
