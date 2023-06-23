@@ -15,6 +15,7 @@ describe('EventCard', () => {
       startDate: '01/02/2021',
       endDate: null,
     },
+    sessionReports: [],
   };
 
   const DEFAULT_USER = {

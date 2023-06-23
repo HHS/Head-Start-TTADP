@@ -13,7 +13,7 @@ import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
-import ObjectiveButton from './components/ObjectiveButton';
+import ExpanderButton from '../ExpanderButton';
 import TooltipList from '../TooltipList';
 import './GoalCard.scss';
 import colors from '../../colors';
@@ -163,11 +163,13 @@ function GoalCard({
       </div>
 
       <div className={internalLeftMargin}>
-        <ObjectiveButton
-          closeOrOpenObjectives={closeOrOpenObjectives}
-          objectiveCount={objectiveCount}
-          objectivesExpanded={objectivesExpanded}
-          goalNumber={goal.goalNumbers.join('')}
+        <ExpanderButton
+          type="objective"
+          ariaLabel="objectives for goal"
+          closeOrOpen={closeOrOpenObjectives}
+          count={objectiveCount}
+          expanded={objectivesExpanded}
+          number={goal.goalNumbers.join('')}
         />
       </div>
       {objectives.map((obj) => (

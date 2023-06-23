@@ -1,11 +1,14 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
+import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
 import './EventCard.scss';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
 import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
+import ExpanderButton from '../../../components/ExpanderButton';
+import SessionCard from './SessionCard';
 
 function EventCard({
   event,
@@ -13,7 +16,9 @@ function EventCard({
   const history = useHistory();
 
   const {
+    id,
     data,
+    sessionReports,
   } = event;
 
   const contextMenuLabel = `Actions for event ${event.id}`;
@@ -33,6 +38,12 @@ function EventCard({
       },
     });
   }
+
+  const [reportsExpanded, setReportsExpanded] = useState(false);
+
+  const closeOrOpenReports = () => {
+    setReportsExpanded(!reportsExpanded);
+  };
 
   return (
     <article
@@ -73,6 +84,27 @@ function EventCard({
           )}
         </div>
       </div>
+
+      <div className="margin-top-3">
+        <ExpanderButton
+          type="report"
+          ariaLabel="reports for event"
+          closeOrOpen={closeOrOpenReports}
+          count={event.sessionReports.length}
+          expanded={reportsExpanded}
+          number={data.eventId}
+        />
+      </div>
+
+      {sessionReports.map((s) => (
+        <SessionCard
+          key={`session_${uuidv4()}`}
+          eventId={id}
+          session={s}
+          expanded={reportsExpanded}
+        />
+      ))}
+
     </article>
   );
 }

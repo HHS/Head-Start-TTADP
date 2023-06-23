@@ -22,6 +22,7 @@ const notStartedEvents = [{
     startDate: '01/02/2021',
     endDate: '01/03/2021',
   },
+  sessionReports: [],
 },
 {
   id: 2,
@@ -32,6 +33,7 @@ const notStartedEvents = [{
     startDate: '02/02/2021',
     endDate: '02/03/2021',
   },
+  sessionReports: [],
 },
 ];
 
@@ -45,6 +47,7 @@ const inProgressEvents = [{
     startDate: '03/02/2021',
     endDate: '03/03/2021',
   },
+  sessionReports: [],
 },
 ];
 
@@ -58,6 +61,7 @@ const completeEvents = [{
     startDate: '04/02/2021',
     endDate: '04/03/2021',
   },
+  sessionReports: [],
 },
 ];
 
