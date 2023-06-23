@@ -167,15 +167,6 @@ class CollaboratorRoles{
  roleId : integer : REFERENCES "Roles".id
 }
 
-class DBMaintenanceLogs{
- * id : integer : <generated>
- * type : enum
- * data : json
- isSuccessful : boolean
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
-}
-
 class EventReportPilots{
  * id : integer : <generated>
  * ownerId : integer
@@ -347,6 +338,16 @@ class MailerLogs{
  result : json
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+}
+
+class MaintenanceLogs{
+ * id : integer : <generated>
+ * category : enum
+ * type : enum
+ * data : json
+ isSuccessful : boolean
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
 }
 
 class NextStepResources{
@@ -854,20 +855,6 @@ class ZALCollaboratorRoles{
  dml_as : bigint
 }
 
-class ZALDBMaintenanceLogs{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
- * dml_as : bigint
- * dml_txid : uuid
- session_sig : text
- descriptor_id : integer
-}
-
 class ZALDDL{
  * id : bigint : <generated>
  command_tag : varchar(255)
@@ -1061,6 +1048,20 @@ class ZALMailerLogs{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+class ZALMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALNextStepResources{

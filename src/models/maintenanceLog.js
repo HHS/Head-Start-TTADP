@@ -1,12 +1,12 @@
 const { Model } = require('sequelize');
-const { DB_MAINTENANCE_TYPE } = require('../constants');
+const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../constants');
 
 export default (sequelize, DataTypes) => {
-  class DBMaintenanceLog extends Model {
+  class MaintenanceLog extends Model {
     static associate(models) {
     }
   }
-  DBMaintenanceLog.init({
+  MaintenanceLog.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -15,9 +15,13 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
+    category: {
+      allowNull: false,
+      type: DataTypes.DataTypes.ENUM(Object.values(MAINTENANCE_CATEGORY)),
+    },
     type: {
       allowNull: false,
-      type: DataTypes.DataTypes.ENUM(Object.values(DB_MAINTENANCE_TYPE)),
+      type: DataTypes.DataTypes.ENUM(Object.values(MAINTENANCE_TYPE)),
     },
     data: {
       allowNull: false,
@@ -28,7 +32,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'DBMaintenanceLog',
+    modelName: 'MaintenanceLog',
   });
-  return DBMaintenanceLog;
+  return MaintenanceLog;
 };

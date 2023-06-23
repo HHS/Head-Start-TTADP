@@ -2,23 +2,27 @@ const {
   prepMigration,
   removeTables,
 } = require('../lib/migration');
-const { DB_MAINTENANCE_TYPE } = require('../constants');
+const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../constants');
 
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
 
-      await queryInterface.createTable('DBMaintenanceLogs', {
+      await queryInterface.createTable('MaintenanceLogs', {
         id: {
           type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
+        category: {
+          allowNull: false,
+          type: Sequelize.DataTypes.ENUM(Object.values(MAINTENANCE_CATEGORY)),
+        },
         type: {
           allowNull: false,
-          type: Sequelize.DataTypes.ENUM(Object.values(DB_MAINTENANCE_TYPE)),
+          type: Sequelize.DataTypes.ENUM(Object.values(MAINTENANCE_TYPE)),
         },
         data: {
           allowNull: false,
@@ -41,7 +45,7 @@ module.exports = {
   down: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
-      await removeTables(queryInterface, transaction, ['DBMaintenanceLogs']);
+      await removeTables(queryInterface, transaction, ['MaintenanceLogs']);
     });
   },
 };
