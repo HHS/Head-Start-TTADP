@@ -8,102 +8,135 @@ const queueProcessors = {};
 
 /**
  * Logs an error message to the audit logger when a maintenance job fails.
- * @param job - The maintenance job that failed.
- * @param error - The error that caused the failure.
- * @returns void
- * @throws This function does not throw any exceptions or errors.
+ *
+ * @param {Object} job - The maintenance job that failed.
+ * @param {Error} error - The error that caused the job to fail.
  */
-const onFailedMaintenance = (job, error) => auditLogger
-  .error(`job ${job.name} failed for report ${job.data.type} with error ${error}`);
+const onFailedMaintenance = (job, error) => {
+  // Log an error message with details about the failed job and error.
+  auditLogger.error(`job ${job.name} failed for report ${job.data.type} with error ${error}`);
+};
 
 /**
- * Handles the completion of a maintenance job.
- * @param {object} job - The maintenance job that was completed.
- * @param {any} result - The result of the completed job.
- * @returns {void}
- * @throws This function does not throw any exceptions or errors.
+ * This function is a callback that logs the result of a maintenance job.
+ * @param {Object} job - The maintenance job object.
+ * @param {any} result - The result of the maintenance job.
  */
 const onCompletedMaintenance = (job, result) => {
+  // Check if the result is not null
   if (result != null) {
+    // Log successful maintenance with job name, category and type
     logger.info(`Successfully performed ${job.name} maintenance for ${job.data?.category} ${job.data?.type}`);
   } else {
+    // Log failed maintenance with job name, category and type
     logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.category} ${job.data?.type}`);
   }
 };
 
 /**
- * Adds a processor function to the queue for a given type.
+ * Adds a queue processor to the specified category.
  *
- * @param {string} category - The type of queue to add the processor to.
- * @param {function} processor - The processor function to add to the queue.
- * @throws {TypeError} Will throw an error if the 'type' parameter is not a string or if the
- * 'processor' parameter is not a function.
+ * @param {string} category - The category to add the processor to.
+ * @param {function} processor - The function that processes the queue.
  */
 const addQueueProcessor = (category, processor) => {
+  // Assigns the processor function to the specified category in the queueProcessors object.
   queueProcessors[category] = processor;
 };
 
 /**
- * Adds a processor function to the queue for a given type.
+ * Removes a queue processor for a given category from the queueProcessors object.
  *
- * @param {string} category - The category of processor to add the queue.
- * @param {function} processor - The processor function to add to the queue.
- * @throws {TypeError} Will throw an error if the 'type' parameter is not a string or if the
- * 'processor' parameter is not a function.
+ * @param {string} category - The category of the queue processor to remove.
  */
 const removeQueueProcessor = (category) => {
+  // Check if the category exists in the queueProcessors object
   if (category in queueProcessors) {
+    // If it does, delete the category and its corresponding queue processor
     delete queueProcessors[category];
   }
 };
+
 /**
- * Sets up event listeners for the maintenance queue and processes the DB maintenance task.
- * @returns void
- * @throws {Error} If there is an issue with setting up the event listeners or processing the
- * maintenance task.
+ * This function processes the maintenance queue by attaching event listeners for failed
+ * and completed tasks, and then processing each category using its corresponding processor.
  */
 const processMaintenanceQueue = () => {
+  // Attach event listener for failed tasks
   maintenanceQueue.on('failed', onFailedMaintenance);
+  // Attach event listener for completed tasks
   maintenanceQueue.on('completed', onCompletedMaintenance);
 
+  // Process each category in the queue using its corresponding processor
   Object.entries(queueProcessors)
     .map(([category, processor]) => maintenanceQueue.process(category, processor));
 };
 
 /**
- * Adds a job to the maintenance queue.
- * @param type - The type of database maintenance to perform.
- * @param data - Optional data to be included with the maintenance job.
- * @returns void
- * @throws {Error} If an error occurs while adding the job to the maintenance queue.
+ * Adds a maintenance job to the queue if a processor is defined for the given type.
+ *
+ * @param {string} type - The type of maintenance job to add to the queue.
+ * @param {*} [data=null] - Optional data to include with the maintenance job.
  */
 const enqueueMaintenanceJob = (
   type,
   data = null,
 ) => {
+  // Check if there is a processor defined for the given type
   if (type in queueProcessors) {
     try {
+      // Add the job to the maintenance queue
       maintenanceQueue.add(type, data);
     } catch (err) {
+      // Log any errors that occur when adding the job to the queue
       auditLogger.error(err);
     }
   } else {
+    // If no processor is defined for the given type, log an error
     const error = new Error(`Maintenance Queue Error: no processor defined for ${type}`);
     auditLogger.error(error);
   }
 };
 
 /**
- * Runs a maintenance command on the database table and logs the activity in the maintenance log.
- *
- * @param {string} callback - a function to run.
- * @param {MAINTENANCE_CATEGORY[keyof typeof MAINTENANCE_CATEGORY]} category - The category of
- * maintenance activity being performed.
- * @param {MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE]} type - The type of
- * maintenance activity being performed.
- * @param {*} data - Additional data related to the maintenance activity.
- * @returns {Promise<bool>} A Promise that resolves to void.
- * @throws {Error} If an error occurs while running the maintenance command.
+ * Asynchronous function that creates a maintenance log with the given category, type, and data.
+ * @param {string} category - The category of the maintenance log.
+ * @param {string} type - The type of the maintenance log.
+ * @param {object} data - The data associated with the maintenance log.
+ * @returns {Promise<object>} - A promise that resolves to the created maintenance log object.
+ */
+const createMaintenanceLog = async (category, type, data) => {
+  // Create a new maintenance log object with the given category, type, and data.
+  const log = await MaintenanceLog.create({ category, type, data });
+  // Return the created maintenance log object.
+  return log;
+};
+
+/**
+ * Updates a maintenance log with new data and success status.
+ * @async
+ * @function updateMaintenanceLog
+ * @param {object} log - The maintenance log to be updated.
+ * @param {object} newData - The new data to replace the existing data in the log.
+ * @param {boolean} isSuccessful - The success status of the maintenance log update.
+ * @returns {Promise<void>} - A promise that resolves when the maintenance log has
+ * been successfully updated.
+ */
+const updateMaintenanceLog = async (log, newData, isSuccessful) => {
+  // Update the MaintenanceLog table with the new data and success status for the specified log ID.
+  await MaintenanceLog.update(
+    { data: newData, isSuccessful },
+    { where: { id: log.id } },
+  );
+};
+
+/**
+ * This function is used to execute maintenance commands and log the results.
+ * @param {Function} callback - The function to be executed as part of the maintenance command.
+ * @param {string} category - The category of the maintenance command.
+ * @param {string} type - The type of the maintenance command.
+ * @param {Object} data - Additional data to be logged with the maintenance command.
+ * @returns {boolean} - Whether the maintenance command was successful or not.
  */
 const maintenanceCommand = async (
   callback,
@@ -111,56 +144,45 @@ const maintenanceCommand = async (
   type,
   data = {},
 ) => {
-  // Reset the log messages and benchmark data arrays for each operation
+  // Initialize variables for logging and tracking success
   const logMessages = [];
   const logBenchmarkData = [];
   let isSuccessful = false;
 
-  // Create a maintenance log entry for this operation
-  const log = await MaintenanceLog.create({ category, type, data });
+  // Create a new maintenance log
+  const log = await createMaintenanceLog(category, type, data);
   try {
-    // Run the command
+    // Execute the provided callback function and capture any returned data
     const result = await callback(logMessages, logBenchmarkData);
-    console.log({category, type, result});
 
-    // Check if the log messages contain the word "successfully" to set isSuccessful accordingly
+    // Determine if the maintenance command was successful based on log messages and returned data
     isSuccessful = logMessages.some((message) => message.toLowerCase().includes('successfully')
       || message.toLowerCase().includes('executed'))
       || result?.isSuccessful;
+
+    // Merge any returned data into the original data object and update the maintenance log
     const newData = {
       ...log.data,
       ...(result?.data && { ...result.data }),
       ...(logMessages.length > 0 && { messages: logMessages }),
       ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
     };
-  console.log({category, type, newData});
-
-    // Update the log entry to indicate that the maintenance activity has been completed.
-    await MaintenanceLog.update(
-      { data: newData, isSuccessful },
-      { where: { id: log.id }, logging: console.log },
-    );
-    console.log({category, type});
+    await updateMaintenanceLog(log, newData, isSuccessful);
   } catch (err) {
-    // Log error message
+    // Log any errors that occur during the maintenance command execution
     auditLogger.error(`Error occurred while running maintenance command: ${err.message}`);
 
-    // Update the log entry to indicate that the maintenance activity has been completed.
-    await MaintenanceLog.update(
-      {
-        data: {
-          ...log.data,
-          ...(logMessages.length > 0 && { messages: logMessages }),
-          ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
-          error: JSON.parse(JSON.stringify(err)),
-          errorMessage: err.message,
-        },
-        isSuccessful,
-      },
-      { where: { id: log.id } },
-    );
+    // Update the maintenance log with the error information
+    await updateMaintenanceLog(log, {
+      ...log.data,
+      ...(logMessages.length > 0 && { messages: logMessages }),
+      ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
+      error: JSON.parse(JSON.stringify(err)),
+      errorMessage: err.message,
+    }, isSuccessful);
   }
 
+  // Return whether the maintenance command was successful or not
   return isSuccessful;
 };
 
