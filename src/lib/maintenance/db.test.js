@@ -68,122 +68,149 @@ describe('maintenance', () => {
     });
   });
 
-  // describe('vacuumTable', () => {
-  //   it('should call tableMaintenanceCommand with VACUUM and the given model', async () => {
-  //     const model = DBMaintenanceLog;
-  //     const type = MAINTENANCE_TYPE.VACUUM;
-  //     const command = 'VACUUM FULL';
+  describe('vacuumTable', () => {
+    it('should call tableMaintenanceCommand with VACUUM and the given model', async () => {
+      const model = MaintenanceLog;
+      const type = MAINTENANCE_TYPE.VACUUM;
+      const command = 'VACUUM FULL';
 
-  //     await vacuumTable(model);
+      await vacuumTable(model);
 
-  //     const log = await DBMaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+      const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
-  //     expect(log.type).toBe(type);
-  //     expect(log.isSuccessful).toBe(true);
-  //     expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);
-  //     expect(log.data?.benchmarks.length > 0 && typeof log.data.benchmarks[0]).toBe('number');
-  //   });
-  // });
+      expect(log.type).toBe(type);
+      expect(log.isSuccessful).toBe(true);
+      expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);
+      expect(log.data?.benchmarks.length > 0 && typeof log.data.benchmarks[0]).toBe('number');
+    });
+  });
 
-  // describe('reindexTable', () => {
-  //   it('should call tableMaintenanceCommand with REINDEX and the given model', async () => {
-  //     const model = DBMaintenanceLog;
-  //     const type = MAINTENANCE_TYPE.REINDEX;
-  //     const command = 'REINDEX TABLE';
+  describe('reindexTable', () => {
+    it('should call tableMaintenanceCommand with REINDEX and the given model', async () => {
+      const model = MaintenanceLog;
+      const type = MAINTENANCE_TYPE.REINDEX;
+      const command = 'REINDEX TABLE';
 
-  //     await reindexTable(model);
+      await reindexTable(model);
 
-  //     const log = await DBMaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+      const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
-  //     expect(log.type).toBe(type);
-  //     expect(log.isSuccessful).toBe(true);
-  //     expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);
-  //     expect(log.data?.benchmarks.length > 0 && typeof log.data.benchmarks[0]).toBe('number');
-  //   });
-  // });
+      expect(log.type).toBe(type);
+      expect(log.isSuccessful).toBe(true);
+      expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);
+      expect(log.data?.benchmarks.length > 0 && typeof log.data.benchmarks[0]).toBe('number');
+    });
+  });
 
-  // describe('vacuumTables', () => {
-  //   it('should call vacuumTable for each model in the database', async () => {
-  //     const listOfModels = Object.values(sequelize.models);
-  //     const numOfModels = listOfModels.length;
-  //     const preLog = await DBMaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+  describe('vacuumTables', () => {
+    it('should call vacuumTable for each model in the database', async () => {
+      const offset = 5;
+      const limit = 5;
+      const listOfModels = Object.values(sequelize.models)
+        .sort((a, b) => b.getTableName().localeCompare(a.getTableName()))
+        .slice(offset, offset + limit);
+      const numOfModels = listOfModels.length;
+      const preLog = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
-  //     await vacuumTables();
+      await vacuumTables(offset, limit);
 
-  //     const type = MAINTENANCE_TYPE.VACUUM;
-  //     const command = 'VACUUM FULL';
+      const type = MAINTENANCE_TYPE.VACUUM;
+      const command = 'VACUUM FULL';
 
-  //     const logs = await DBMaintenanceLog.findAll({
-  //       where: { id: { [Op.gt]: preLog.id } },
-  //       order: [['id', 'DESC']],
-  //       raw: true,
-  //     });
+      const logs = await MaintenanceLog.findAll({
+        where: { id: { [Op.gt]: preLog.id } },
+        order: [['id', 'DESC']],
+        raw: true,
+      });
 
-  //     expect(logs.length).toBe(numOfModels);
-  //     expect(logs.every((log) => log.isSuccessful)).toBe(true);
-  //     expect(logs.every((log) => log.type === type)).toBe(true);
-  //     expect(logs.every((log) => log.data?.messages.length > 0
-  //       && log.data.messages[0].includes(command))).toBe(true);
-  //     expect(logs.every((log) => log.data?.benchmarks.length > 0
-  //       && typeof log.data.benchmarks[0] === 'number')).toBe(true);
-  //   });
-  // });
+      expect(logs.length).toBe(numOfModels + 1);
+      expect(logs.every((log) => log.isSuccessful)).toBe(true);
+      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM
+        || log.type === MAINTENANCE_TYPE.VACUUM_TABLES)).toBe(true);
+      expect(logs.every((log) => (log.data?.messages?.length > 0
+        && (log.data.messages[0].includes('VACUUM FULL')))
+        || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
+      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
+        && typeof log.data.benchmarks[0] === 'number')
+        || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
+    });
+  });
 
-  // describe('reindexTables', () => {
-  //   it('should call reindexTable for each model in the database', async () => {
-  //     const listOfModels = Object.values(sequelize.models);
-  //     const numOfModels = listOfModels.length;
-  //     const preLog = await DBMaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+  describe('reindexTables', () => {
+    it('should call reindexTable for each model in the database', async () => {
+      const offset = 5;
+      const limit = 5;
+      const listOfModels = Object.values(sequelize.models)
+        .sort((a, b) => b.getTableName().localeCompare(a.getTableName()))
+        .slice(offset, offset + limit);
+      const numOfModels = listOfModels.length;
+      const preLog = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
-  //     await reindexTables();
+      await reindexTables(offset, limit);
 
-  //     const type = MAINTENANCE_TYPE.REINDEX;
-  //     const command = 'REINDEX TABLE';
+      const type = MAINTENANCE_TYPE.REINDEX;
+      const command = 'REINDEX TABLE';
 
-  //     const logs = await DBMaintenanceLog.findAll({
-  //       where: { id: { [Op.gt]: preLog.id } },
-  //       order: [['id', 'DESC']],
-  //       raw: true,
-  //     });
+      const logs = await MaintenanceLog.findAll({
+        where: { id: { [Op.gt]: preLog.id } },
+        order: [['id', 'DESC']],
+        raw: true,
+      });
 
-  //     expect(logs.length).toBe(numOfModels);
-  //     expect(logs.every((log) => log.isSuccessful)).toBe(true);
-  //     expect(logs.every((log) => log.type === type)).toBe(true);
-  //     expect(logs.every((log) => log.data?.messages.length > 0
-  //       && log.data.messages[0].includes(command))).toBe(true);
-  //     expect(logs.every((log) => log.data?.benchmarks.length > 0
-  //       && typeof log.data.benchmarks[0] === 'number')).toBe(true);
-  //   });
-  // });
+      expect(logs.length).toBe(numOfModels + 1);
+      expect(logs.every((log) => log.isSuccessful)).toBe(true);
+      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
+        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES)).toBe(true);
+      expect(logs.every((log) => (log.data?.messages?.length > 0
+        && (log.data.messages[0].includes('REINDEX TABLE')))
+        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
+      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
+        && typeof log.data.benchmarks[0] === 'number')
+        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
+    });
+  });
 
-  // describe('dailyMaintenance', () => {
-  //   it('should call vacuumTables and reindexTables', async () => {
-  //     const listOfModels = Object.values(sequelize.models);
-  //     const numOfModels = listOfModels.length;
-  //     const preLog = await DBMaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+  describe('dailyMaintenance', () => {
+    it('should call vacuumTables and reindexTables', async () => {
+      const offset = 5;
+      const limit = 5;
+      const listOfModels = Object.values(sequelize.models)
+        .sort((a, b) => b.getTableName().localeCompare(a.getTableName()))
+        .slice(offset, offset + limit);
+      const numOfModels = listOfModels.length;
+      const preLog = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
-  //     await dailyMaintenance();
+      await dailyMaintenance(offset, limit);
 
-  //     const type = MAINTENANCE_TYPE.REINDEX;
-  //     const command = 'REINDEX TABLE';
+      const type = MAINTENANCE_TYPE.REINDEX;
+      const command = 'REINDEX TABLE';
 
-  //     const logs = await DBMaintenanceLog.findAll({
-  //       where: { id: { [Op.gt]: preLog.id } },
-  //       order: [['id', 'DESC']],
-  //       raw: true,
-  //     });
+      const logs = await MaintenanceLog.findAll({
+        where: { id: { [Op.gt]: preLog.id } },
+        order: [['id', 'DESC']],
+        raw: true,
+      });
 
-  //     expect(logs.length).toBe(numOfModels * 2);
-  //     expect(logs.every((log) => log.isSuccessful)).toBe(true);
-  //     expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-  //       || log.type === MAINTENANCE_TYPE.VACUUM)).toBe(true);
-  //     expect(logs.every((log) => log.data?.messages.length > 0
-  //       && (log.data.messages[0].includes('REINDEX TABLE')
-  //         || log.data.messages[0].includes('VACUUM FULL')))).toBe(true);
-  //     expect(logs.every((log) => log.data?.benchmarks.length > 0
-  //       && typeof log.data.benchmarks[0] === 'number')).toBe(true);
-  //   });
-  // });
+      expect(logs.length).toBe((numOfModels + 1) * 2 + 1);
+      expect(logs.every((log) => log.isSuccessful)).toBe(true);
+      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
+        || log.type === MAINTENANCE_TYPE.VACUUM
+        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE)).toBe(true);
+      expect(logs.every((log) => (log.data?.messages?.length > 0
+        && (log.data.messages[0].includes('REINDEX TABLE')
+          || log.data.messages[0].includes('VACUUM FULL')))
+        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+          || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+          || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE))).toBe(true);
+      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
+        && typeof log.data.benchmarks[0] === 'number')
+        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+          || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+          || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE))).toBe(true);
+    });
+  });
 
   describe('dbMaintenance', () => {
     it('test - vacuum', async () => {
@@ -217,8 +244,7 @@ describe('maintenance', () => {
       expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM
         || log.type === MAINTENANCE_TYPE.VACUUM_TABLES)).toBe(true);
       expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM FULL')))
+        && (log.data.messages[0].includes('VACUUM FULL')))
         || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
       expect(logs.every((log) => (log.data?.benchmarks?.length > 0
         && typeof log.data.benchmarks[0] === 'number')
@@ -287,7 +313,7 @@ describe('maintenance', () => {
       const command = 'REINDEX TABLE';
 
       const logs = await MaintenanceLog.findAll({
-        where: { id: { [Op.gt]: preLog.id } },
+        where: { id: { [Op.gt]: (preLog?.id || 0) } },
         order: [['id', 'DESC']],
         raw: true,
       });
