@@ -105,9 +105,14 @@ const enqueueMaintenanceJob = (
  * @param {object} data - The data associated with the maintenance log.
  * @returns {Promise<object>} - A promise that resolves to the created maintenance log object.
  */
-const createMaintenanceLog = async (category, type, data) => {
+const createMaintenanceLog = async (category, type, data, triggeredById) => {
   // Create a new maintenance log object with the given category, type, and data.
-  const log = await MaintenanceLog.create({ category, type, data });
+  const log = await MaintenanceLog.create({
+    category,
+    type,
+    data,
+    triggeredById,
+  });
   // Return the created maintenance log object.
   return log;
 };
@@ -136,6 +141,7 @@ const updateMaintenanceLog = async (log, newData, isSuccessful) => {
  * @param {string} category - The category of the maintenance command.
  * @param {string} type - The type of the maintenance command.
  * @param {Object} data - Additional data to be logged with the maintenance command.
+ * @param {integer} triggeredById - The id of the maintenance log that triggered this command.
  * @returns {boolean} - Whether the maintenance command was successful or not.
  */
 const maintenanceCommand = async (
@@ -143,17 +149,18 @@ const maintenanceCommand = async (
   category,
   type,
   data = {},
+  triggeredById = null,
 ) => {
   // Initialize variables for logging and tracking success
   const logMessages = [];
-  const logBenchmarkData = [];
+  const logBenchmarks = [];
   let isSuccessful = false;
 
   // Create a new maintenance log
-  const log = await createMaintenanceLog(category, type, data);
+  const log = await createMaintenanceLog(category, type, data, triggeredById);
   try {
     // Execute the provided callback function and capture any returned data
-    const result = await callback(logMessages, logBenchmarkData);
+    const result = await callback(logMessages, logBenchmarks, log.id);
 
     // Determine if the maintenance command was successful based on log messages and returned data
     isSuccessful = logMessages.some((message) => message.toLowerCase().includes('successfully')
@@ -165,7 +172,7 @@ const maintenanceCommand = async (
       ...log.data,
       ...(result?.data && { ...result.data }),
       ...(logMessages.length > 0 && { messages: logMessages }),
-      ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
+      ...(logBenchmarks.length > 0 && { benchmarks: logBenchmarks }),
     };
     await updateMaintenanceLog(log, newData, isSuccessful);
   } catch (err) {
@@ -176,7 +183,7 @@ const maintenanceCommand = async (
     await updateMaintenanceLog(log, {
       ...log.data,
       ...(logMessages.length > 0 && { messages: logMessages }),
-      ...(logBenchmarkData.length > 0 && { benchmarks: logBenchmarkData }),
+      ...(logBenchmarks.length > 0 && { benchmarks: logBenchmarks }),
       error: JSON.parse(JSON.stringify(err)),
       errorMessage: err.message,
     }, isSuccessful);
