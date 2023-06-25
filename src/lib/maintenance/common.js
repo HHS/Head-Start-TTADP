@@ -45,6 +45,14 @@ const addQueueProcessor = (category, processor) => {
 };
 
 /**
+ * Checks if the specified category has a queue processor.
+ *
+ * @param {string} category - The category to check for a queue processor.
+ * @returns {boolean} - Returns true if the category has a queue processor, false otherwise.
+ */
+const hasQueueProcessor = (category) => !!queueProcessors[category];
+
+/**
  * Removes a queue processor for a given category from the queueProcessors object.
  *
  * @param {string} category - The category of the queue processor to remove.
@@ -75,25 +83,25 @@ const processMaintenanceQueue = () => {
 /**
  * Adds a maintenance job to the queue if a processor is defined for the given type.
  *
- * @param {string} type - The type of maintenance job to add to the queue.
+ * @param {string} category - The type of maintenance job to add to the queue.
  * @param {*} [data=null] - Optional data to include with the maintenance job.
  */
 const enqueueMaintenanceJob = (
-  type,
+  category,
   data = null,
 ) => {
   // Check if there is a processor defined for the given type
-  if (type in queueProcessors) {
+  if (category in queueProcessors) {
     try {
       // Add the job to the maintenance queue
-      maintenanceQueue.add(type, data);
+      maintenanceQueue.add(category, data);
     } catch (err) {
       // Log any errors that occur when adding the job to the queue
       auditLogger.error(err);
     }
   } else {
     // If no processor is defined for the given type, log an error
-    const error = new Error(`Maintenance Queue Error: no processor defined for ${type}`);
+    const error = new Error(`Maintenance Queue Error: no processor defined for ${category}`);
     auditLogger.error(error);
   }
 };
@@ -194,10 +202,15 @@ const maintenanceCommand = async (
 };
 
 module.exports = {
-  maintenanceQueue,
-  onFailedMaintenance,
-  onCompletedMaintenance,
+  testingOnly: {
+    maintenanceQueue,
+    onFailedMaintenance,
+    onCompletedMaintenance,
+    createMaintenanceLog,
+    updateMaintenanceLog,
+  },
   addQueueProcessor,
+  hasQueueProcessor,
   removeQueueProcessor,
   processMaintenanceQueue,
   enqueueMaintenanceJob,
