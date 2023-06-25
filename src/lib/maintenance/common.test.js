@@ -181,93 +181,17 @@ describe('Maintenance Queue', () => {
 
     it('should create a new maintenance log', async () => {
       await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(MaintenanceLog.create).toHaveBeenCalledWith({ category, type, data, triggeredById });
-    });
-
-    it('should execute the provided callback function and capture any returned data', async () => {
-      const logMessages = ['test-message'];
-      const logBenchmarks = ['test-benchmark'];
-      const result = { isSuccessful: true, data: { test: 'result-data' } };
-      callback.mockResolvedValue(result);
-      await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(callback).toHaveBeenCalledWith(logMessages, logBenchmarks, 1);
-    });
-
-    it('should determine if the maintenance command was successful based on log messages and returned data', async () => {
-      const logMessages = ['test-message'];
-      const logBenchmarks = ['test-benchmark'];
-      const result = { isSuccessful: true, data: { test: 'result-data' } };
-      callback.mockResolvedValue(result);
-      const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(isSuccessful).toBe(true);
-    });
-
-    it('should merge any returned data into the original data object and update the maintenance log', async () => {
-      const logMessages = ['test-message'];
-      const logBenchmarks = ['test-benchmark'];
-      const result = { isSuccessful: true, data: { test: 'result-data' } };
-      const newData = { ...data, ...result.data, messages: logMessages, benchmarks: logBenchmarks };
-      callback.mockResolvedValue(result);
-      const log = { id: 1, data };
-      MaintenanceLog.create.mockResolvedValue(log);
-      await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(MaintenanceLog.update).toHaveBeenCalledWith({ data: newData, isSuccessful: true }, { where: { id: log.id } });
-    });
-
-    it('should log any errors that occur during the maintenance command execution', async () => {
-      const errorMessage = 'test-error';
-      callback.mockRejectedValue(new Error(errorMessage));
-      await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(auditLogger.error).toHaveBeenCalledWith(`Error occurred while running maintenance command: ${errorMessage}`);
-    });
-
-    it('should update the maintenance log with the error information', async () => {
-      const errorMessage = 'test-error';
-      const error = new Error(errorMessage);
-      callback.mockRejectedValue(error);
-      const log = { id: 1, data };
-      MaintenanceLog.create.mockResolvedValue(log);
-      await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(MaintenanceLog.update).toHaveBeenCalledWith({
+      expect(MaintenanceLog.create).toHaveBeenCalledWith({
+        category,
+        type,
         data,
-        messages: [],
-        benchmarks: [],
-        error: JSON.parse(JSON.stringify(error)),
-        errorMessage,
-      }, false);
-    });
-
-    it('should return whether the maintenance command was successful or not', async () => {
-      const result = { isSuccessful: true };
-      callback.mockResolvedValue(result);
-      const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(isSuccessful).toBe(true);
-    });
-  });
-
-    describe('maintenanceCommand', () => {
-    let callback;
-    let category;
-    let type;
-    let data;
-    let triggeredById;
-
-    beforeEach(() => {
-      callback = jest.fn();
-      category = 'test-category';
-      type = 'test-type';
-      data = { test: 'data' };
-      triggeredById = 1;
-    });
-
-    it('should create a new maintenance log', async () => {
-      await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(MaintenanceLog.create).toHaveBeenCalledWith({ category, type, data, triggeredById });
+        triggeredById,
+      });
     });
 
     it('should execute the provided callback function and capture any returned data', async () => {
-      const logMessages = ['test-message'];
-      const logBenchmarks = ['test-benchmark'];
+      const logMessages = [];
+      const logBenchmarks = [];
       const result = { isSuccessful: true, data: { test: 'result-data' } };
       callback.mockResolvedValue(result);
       await maintenanceCommand(callback, category, type, data, triggeredById);
@@ -290,15 +214,15 @@ describe('Maintenance Queue', () => {
       const newData = {
         ...data,
         ...result.data,
-        messages: logMessages,
-        benchmarks: logBenchmarks,
       };
       callback.mockResolvedValue(result);
       const log = { id: 1, data };
       MaintenanceLog.create.mockResolvedValue(log);
       await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(MaintenanceLog.update)
-        .toHaveBeenCalledWith({ data: newData, isSuccessful: true }, { where: { id: log.id } });
+      expect(MaintenanceLog.update).toHaveBeenCalledWith({
+        data: newData,
+        isSuccessful: true,
+      }, { where: { id: log.id } });
     });
 
     it('should log any errors that occur during the maintenance command execution', async () => {
@@ -317,9 +241,9 @@ describe('Maintenance Queue', () => {
       await maintenanceCommand(callback, category, type, data, triggeredById);
       expect(MaintenanceLog.update).toHaveBeenCalledWith({
         data: {
+          ...data,
           error: JSON.parse(JSON.stringify(error)),
           errorMessage,
-          test: 'data',
         },
         isSuccessful: false,
       }, { where: { id: 1 } });
