@@ -3,17 +3,20 @@ const { processMaintenanceQueue } = require('./common');
 const { enqueueDBMaintenanceJob } = require('./db');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 
-const runMaintenanceCronJobs = (timezone) => {
+const runMaintenanceCronJobs = (
+  timezone = 'America/New_York',
+  /**
+   * This cron expression breaks down as follows:
+   *  0 - The minute when the job will run (in this case, 0 minutes past the hour)
+   *  23 - The hour when the job will run (in this case, 11 pm)
+   *  * - The day of the month when the job will run (in this case, any day of the month)
+   *  * - The month when the job will run (in this case, any month)
+   *  * - The day of the week when the job will run (in this case, any day of the week)
+   * */
+  schedule = '0 23 * * *',
+) => {
   const dailyDB = new CronJob(
-    /**
-     * This cron expression breaks down as follows:
-     *  0 - The minute when the job will run (in this case, 0 minutes past the hour)
-     *  23 - The hour when the job will run (in this case, 11 pm)
-     *  * - The day of the month when the job will run (in this case, any day of the month)
-     *  * - The month when the job will run (in this case, any month)
-     *  * - The day of the week when the job will run (in this case, any day of the week)
-     * */
-    '0 23 * * *',
+    schedule,
     () => enqueueDBMaintenanceJob(
       MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE,
       null,
