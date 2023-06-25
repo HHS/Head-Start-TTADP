@@ -26,6 +26,7 @@ const maintenanceDBCommand = async (
   category,
   type,
   data,
+  triggeredById,
 ) => maintenanceCommand(
   // Execute the given SQL command using Sequelize with logging and benchmarking.
   async (logMessages, logBenchmarkData) => sequelize.query(command, {
@@ -39,6 +40,7 @@ const maintenanceDBCommand = async (
   category,
   type,
   data,
+  triggeredById,
 );
 
 /**
@@ -56,11 +58,12 @@ const tableMaintenanceCommand = async (
   category,
   type,
   model,
+  triggeredById,
 ) => {
   // Get the name of the table from the model
   const tableName = model.getTableName();
   // Execute the maintenance command on the table using the maintenanceDBCommand function
-  return maintenanceDBCommand(`${command} "${tableName}";`, category, type, { table: tableName });
+  return maintenanceDBCommand(`${command} "${tableName}";`, category, type, { table: tableName }, triggeredById);
 };
 
 /**
@@ -70,13 +73,14 @@ const tableMaintenanceCommand = async (
  * @param {string} model - The name of the database table to perform the vacuum operation on.
  * @returns {Promise<void>}
  */
-const vacuumTable = async (model) => tableMaintenanceCommand(
+const vacuumTable = async (model, triggeredById = null) => tableMaintenanceCommand(
   // Execute the tableMaintenanceCommand function with the 'VACUUM FULL' command, maintenance
   // category DB, maintenance type VACUUM, and the provided model parameter.
   'VACUUM FULL',
   MAINTENANCE_CATEGORY.DB,
   MAINTENANCE_TYPE.VACUUM,
   model,
+  triggeredById,
 );
 
 /**
@@ -84,11 +88,12 @@ const vacuumTable = async (model) => tableMaintenanceCommand(
  * @param {string} model - The name of the database table to be reindexed.
  * @returns {Promise} A promise that resolves when the reindexing is complete.
  */
-const reindexTable = async (model) => tableMaintenanceCommand(
+const reindexTable = async (model, triggeredById = null) => tableMaintenanceCommand(
   'REINDEX TABLE', // SQL command to reindex a table
   MAINTENANCE_CATEGORY.DB, // Maintenance category for database maintenance commands
   MAINTENANCE_TYPE.REINDEX, // Maintenance type for reindexing
   model, // Name of the table to be reindexed
+  triggeredById,
 );
 
 /**
@@ -98,7 +103,7 @@ const reindexTable = async (model) => tableMaintenanceCommand(
  * @returns {Promise} - A promise that resolves to an object indicating whether the vacuuming was
  * successful or not.
  */
-const vacuumTables = async (offset = 0, limit = numOfModels) => {
+const vacuumTables = async (offset = 0, limit = numOfModels, triggeredById = null) => {
   // Get all models from Sequelize and sort them alphabetically by table name.
   const models = Object.values(sequelize.models)
     .sort((a, b) => a.getTableName().localeCompare(b.getTableName()))
@@ -106,8 +111,11 @@ const vacuumTables = async (offset = 0, limit = numOfModels) => {
 
   // Call maintenanceCommand function with an async function that vacuums each model's table.
   return maintenanceCommand(
-    async () => ({
-      isSuccessful: (await Promise.all(models.map(async (model) => vacuumTable(model))))
+    async (logMessages, logBenchmarks, triggered) => ({
+      isSuccessful: (await Promise.all(models.map(async (model) => vacuumTable(
+        model,
+        triggered,
+      ))))
         .every((p) => p === true),
     }),
     MAINTENANCE_CATEGORY.DB,
@@ -117,6 +125,7 @@ const vacuumTables = async (offset = 0, limit = numOfModels) => {
       limit,
       models: models.map((m) => m.getTableName()),
     },
+    triggeredById,
   );
 };
 
@@ -127,7 +136,7 @@ const vacuumTables = async (offset = 0, limit = numOfModels) => {
  * @returns {Promise<object>} - A promise that resolves to an object with a boolean indicating
  * if the reindexing was successful.
  */
-const reindexTables = async (offset = 0, limit = numOfModels) => {
+const reindexTables = async (offset = 0, limit = numOfModels, triggeredById = null) => {
   // Get all models from sequelize and sort them by table name.
   const models = Object.values(sequelize.models)
     .sort((a, b) => a.getTableName().localeCompare(b.getTableName()))
@@ -135,8 +144,11 @@ const reindexTables = async (offset = 0, limit = numOfModels) => {
 
   // Call maintenanceCommand with a callback function that reindexes each model's table.
   return maintenanceCommand(
-    async () => ({
-      isSuccessful: (await Promise.all(models.map(async (model) => reindexTable(model))))
+    async (logMessages, logBenchmarks, triggered) => ({
+      isSuccessful: (await Promise.all(models.map(async (model) => reindexTable(
+        model,
+        triggered,
+      ))))
         .every((p) => p === true),
     }),
     MAINTENANCE_CATEGORY.DB,
@@ -146,6 +158,7 @@ const reindexTables = async (offset = 0, limit = numOfModels) => {
       limit,
       models: models.map((m) => m.getTableName()),
     },
+    triggeredById,
   );
 };
 
@@ -158,13 +171,13 @@ const reindexTables = async (offset = 0, limit = numOfModels) => {
  * error if one occurred.
  */
 const dailyMaintenance = async (offset = 0, limit = numOfModels) => maintenanceCommand(
-  async () => {
+  async (logMessages, logBenchmarks, triggeredById) => {
     try {
       // Vacuum tables to reclaim space and improve performance.
-      const vacuumTablesPromise = vacuumTables(offset, limit);
+      const vacuumTablesPromise = vacuumTables(offset, limit, triggeredById);
       await Promise.all([vacuumTablesPromise]);
       // Reindex tables to optimize queries.
-      const reindexTablesPromise = reindexTables(offset, limit);
+      const reindexTablesPromise = reindexTables(offset, limit, triggeredById);
       // Wait for both promises to resolve.
       const results = await Promise.all([vacuumTablesPromise, reindexTablesPromise]);
 

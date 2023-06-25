@@ -11,7 +11,7 @@ module.exports = {
 
       await queryInterface.createTable('MaintenanceLogs', {
         id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.BIGINT,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -30,6 +30,16 @@ module.exports = {
         },
         isSuccessful: {
           type: Sequelize.BOOLEAN,
+        },
+        triggeredById: {
+          type: Sequelize.BIGINT,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'MaintenanceLogs',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           allowNull: false,

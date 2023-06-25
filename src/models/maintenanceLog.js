@@ -4,11 +4,13 @@ const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../constants');
 export default (sequelize, DataTypes) => {
   class MaintenanceLog extends Model {
     static associate(models) {
+      MaintenanceLog.belongsTo(models.MaintenanceLog, { foreignKey: 'triggeredById', as: 'triggeredBy' });
+      MaintenanceLog.hasMany(models.MaintenanceLog, { foreignKey: 'triggeredById', as: 'triggered' });
     }
   }
   MaintenanceLog.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: null,
       comment: null,
@@ -29,6 +31,10 @@ export default (sequelize, DataTypes) => {
     },
     isSuccessful: {
       type: DataTypes.BOOLEAN,
+    },
+    triggeredById: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
     },
   }, {
     sequelize,

@@ -341,13 +341,14 @@ class MailerLogs{
 }
 
 class MaintenanceLogs{
- * id : integer : <generated>
+ * id : bigint : <generated>
  * category : enum
  * type : enum
  * data : json
  isSuccessful : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ triggeredById : bigint : REFERENCES "MaintenanceLogs".id
 }
 
 class NextStepResources{
@@ -1523,6 +1524,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles
