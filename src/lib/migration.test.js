@@ -68,6 +68,7 @@ describe('setAuditLoggingState', () => {
     await setAuditLoggingState(queryInterface, transaction);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
+    // eslint-disable-next-line @typescript-eslint/quotes
       `SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');`,
       { transaction },
     );
