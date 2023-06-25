@@ -146,7 +146,12 @@ describe('Maintenance Queue', () => {
       };
       MaintenanceLog.create.mockResolvedValue(expectedLog);
       const log = await createMaintenanceLog(category, type, data, triggeredById);
-      expect(MaintenanceLog.create).toHaveBeenCalledWith({ category, type, data, triggeredById });
+      expect(MaintenanceLog.create).toHaveBeenCalledWith({
+        category,
+        type,
+        data,
+        triggeredById,
+      });
       expect(log).toEqual(expectedLog);
     });
   });
