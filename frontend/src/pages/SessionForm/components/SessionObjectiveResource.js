@@ -26,7 +26,7 @@ export default function SessionObjectiveResource({
   const { register } = useFormContext();
 
   return (
-    <FormGroup error={fieldErrors} className="ttahub-session-form--objective-form-group">
+    <FormGroup error={fieldErrors} className={`ttahub-session-form--objective-form-group ${fieldErrors ? 'margin-top-2' : ''}`}>
       <Label htmlFor={`objectiveResources.${index}.value`} className="sr-only">
         Resource
         {' '}
