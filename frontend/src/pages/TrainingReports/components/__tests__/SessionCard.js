@@ -11,6 +11,7 @@ describe('SessionCard', () => {
   const defaultSession = {
     id: 1,
     data: {
+      regionId: 1,
       sessionName: 'This is my session title',
       startDate: '01/02/2021',
       endDate: '01/03/2021',
@@ -23,6 +24,7 @@ describe('SessionCard', () => {
   };
 
   const DEFAULT_USER = {
+    id: 1,
     name: 'test@test.com',
     homeRegionId: 1,
     permissions: [
@@ -33,10 +35,9 @@ describe('SessionCard', () => {
     ],
   };
 
-  const renderSessionCard = (session = defaultSession) => {
-    console.log('\n\n\n---123: ', session);
+  const renderSessionCard = async (session = defaultSession, passedUser = DEFAULT_USER) => {
     render((
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
+      <UserContext.Provider value={{ user: passedUser }}>
         <Router history={history}>
           <SessionCard
             eventId={1}
@@ -57,6 +58,25 @@ describe('SessionCard', () => {
 
     expect(screen.getByText(/trainer 1, trainer 2/i)).toBeInTheDocument();
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
+  });
+
+  it('hides edit link', () => {
+    renderSessionCard(defaultSession, { ...DEFAULT_USER, permissions: [] });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the edit link with the correct permissions', () => {
+    renderSessionCard(defaultSession,
+      {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        }],
+      });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/edit session/i)).toBeInTheDocument();
   });
 
   it('renders complete status', () => {
