@@ -306,7 +306,7 @@ const SessionSummary = ({ datePickerKey }) => {
         />
       </FormItem>
 
-      <h3>Objective summary</h3>
+      <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
       <FormItem
         label="Session objective"
         name="objective"
