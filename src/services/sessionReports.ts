@@ -123,6 +123,7 @@ export async function getPossibleSessionParticipants(
       include: [{
         model: db.Recipient,
         as: 'recipient',
+        attributes: ['id', 'name'],
       },
       {
         model: db.Program,
