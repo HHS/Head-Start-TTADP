@@ -6,20 +6,23 @@ import {
   getUserStatistics,
   getActiveUsers,
   setFeatureFlag,
+  getTrainingReportUsers,
 } from './handlers';
 import {
-  userById, usersWithPermissions, statisticsByUser, setFlag,
+  userById, usersWithPermissions, statisticsByUser, setFlag, getTrainingReportUsersByRegion,
 } from '../../services/users';
 import User from '../../policies/user';
 import { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
+import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
   statisticsByUser: jest.fn(),
   setFlag: jest.fn(),
+  getTrainingReportUsersByRegion: jest.fn(),
 }));
 
 jest.mock('../../services/currentUser', () => ({
@@ -369,6 +372,87 @@ describe('User handlers', () => {
       userById.mockResolvedValue(null);
       await setFeatureFlag(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('getTrainingReportUsers', () => {
+    const mockUser = {
+      id: '1',
+      name: 'John Doe',
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+        },
+      ],
+    };
+
+    const req = {
+      query: {
+        regionId: '1',
+      },
+    };
+
+    const res = {
+      sendStatus: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return 403 if user does not have write permission in region', async () => {
+      const unauthorizedReq = {
+        ...req,
+        query: {
+          regionId: '4',
+        },
+      };
+      userById.mockResolvedValueOnce(mockUser);
+      currentUserId.mockResolvedValueOnce(1);
+      getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
+
+      await getTrainingReportUsers(unauthorizedReq, res);
+
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(currentUserId).toHaveBeenCalledTimes(1);
+      expect(res.sendStatus).toHaveBeenCalledTimes(1);
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(getTrainingReportUsersByRegion).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('should return a list of users with training reports by region', async () => {
+      userById.mockResolvedValueOnce(mockUser);
+      currentUserId.mockResolvedValueOnce(1);
+      getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
+
+      await getTrainingReportUsers(req, res);
+
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(currentUserId).toHaveBeenCalledTimes(1);
+      expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1);
+      expect(res.json).toHaveBeenCalledWith([]);
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('An error occurred');
+      const handleErrors = jest.fn();
+
+      currentUserId.mockResolvedValueOnce(1);
+      getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
+      userById.mockRejectedValueOnce(error);
+      handleErrors.mockResolvedValueOnce();
+
+      await getTrainingReportUsers(req, res);
+
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(getTrainingReportUsersByRegion).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
   });
 });

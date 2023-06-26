@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
-import { useController } from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
 import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';

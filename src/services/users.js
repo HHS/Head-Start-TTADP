@@ -420,3 +420,65 @@ export async function setFlag(flag, on = true) {
   const result = sequelize.query(query, { type: QueryTypes.UPDATE });
   return result;
 }
+
+/**
+ * @param {number} regionId region to get users for
+ * @returns {Promise<Array>} result as a promise resolving to an array of users
+ */
+
+export async function getTrainingReportUsersByRegion(regionId) {
+  const pointOfContactScope = SCOPES.READ_WRITE_TRAINING_REPORTS;
+  const collaboratorScope = SCOPES.COLLABORATOR_TRAINING_REPORTS;
+
+  const users = await User.findAll({
+    exclude: [
+      'email',
+      'phoneNumber',
+      'hsesUserId',
+      'lastLogin',
+      'hsesAuthorities',
+      'hsesUsername',
+    ],
+    where: {
+      [Op.or]: {
+        '$permissions.scopeId$': {
+          [Op.in]: [
+            pointOfContactScope,
+            collaboratorScope,
+          ],
+        },
+      },
+    },
+    include: [
+      {
+        attributes: [
+          'id',
+          'scopeId',
+          'regionId',
+          'userId',
+        ],
+        model: Permission,
+        as: 'permissions',
+        required: true,
+        where: {
+          regionId,
+        },
+      },
+    ],
+  });
+
+  const results = {
+    pointOfContact: [],
+    collaborators: [],
+  };
+
+  users.forEach((user) => {
+    if (user.permissions.some((permission) => permission.scopeId === pointOfContactScope)) {
+      results.pointOfContact.push(user);
+    } else {
+      results.collaborators.push(user);
+    }
+  });
+
+  return results;
+}

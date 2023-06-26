@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 
 import ExternalLink from '../../../../components/ExternalResourceModal';
 import { isValidURL, isExternalURL, isInternalGovernmentLink } from '../../../../utils';

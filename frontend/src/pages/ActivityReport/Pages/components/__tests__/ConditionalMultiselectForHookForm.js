@@ -6,7 +6,7 @@ import {
 import React from 'react';
 import {
   FormProvider, useForm,
-} from 'react-hook-form/dist/index.ie11';
+} from 'react-hook-form';
 import ConditionalMultiselectForHookForm from '../ConditionalMultiselectForHookForm';
 
 describe('ConditionalMultiselectForHookForm', () => {
