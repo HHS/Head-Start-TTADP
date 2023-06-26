@@ -281,7 +281,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByLabel('Enter report text').fill('one small positive thought');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
-    prs = waitForLandingFilterRequests(page);
+    await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
     // Mix with Report ID.
