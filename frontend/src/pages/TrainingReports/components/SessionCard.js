@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { Link } from 'react-router-dom';
+import UserContext from '../../../UserContext';
 import {
   InProgress,
   Closed,
@@ -9,12 +11,15 @@ import {
   Ceased,
   Pencil,
 } from '../../../components/icons';
+import { canEditOrCreateSessionReports } from '../../../permissions';
 
 function SessionCard({
   eventId,
   session,
   expanded,
 }) {
+  const { user } = useContext(UserContext);
+
   const {
     sessionName,
     startDate,
@@ -24,8 +29,10 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
+    regionId,
   } = session.data;
 
+  const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
   const mapStatusToDisplay = [
     {
       stored: 'In Progress',
@@ -83,12 +90,18 @@ function SessionCard({
         <span className="margin-right-3 minw-15">Session name </span>
         <div>
           {sessionName}
-          <span className="margin-left-2">
-            <Pencil />
-            <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
-              Edit session
-            </Link>
-          </span>
+          {
+            hasEditPermissions
+              ? (
+                <span className="margin-left-2">
+                  <Pencil />
+                  <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
+                    Edit session
+                  </Link>
+                </span>
+              )
+              : null
+      }
         </div>
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">
@@ -127,6 +140,7 @@ function SessionCard({
 export const sessionPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   data: PropTypes.shape({
+    regionId: PropTypes.number.isRequired,
     sessionName: PropTypes.string.isRequired,
     startDate: PropTypes.string.isRequired,
     endDate: PropTypes.string.isRequired,

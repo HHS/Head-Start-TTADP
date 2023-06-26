@@ -131,6 +131,20 @@ const canEditOrCreateGoals = (user, region) => {
 };
 
 /**
+ * Search the user's permissions for a read/write permisions for a region
+ * @param {*} user - user object
+ * @param {number} region - region id
+ * @returns {boolean} - True if the user has re/write access for a region, false otherwise
+ */
+const canEditOrCreateSessionReports = (user, region) => {
+  const { permissions } = user;
+  return permissions && permissions.find(
+    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
+      && p.regionId === region,
+  ) !== undefined;
+};
+
+/**
  *
  * // probably makes sense to seperate this logic
  * @param {object} user user object
@@ -149,4 +163,5 @@ export {
   getUserRegions,
   canEditOrCreateGoals,
   canChangeGoalStatus,
+  canEditOrCreateSessionReports,
 };
