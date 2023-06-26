@@ -64,6 +64,11 @@ export default class ActivityReport {
     }
 
     if (this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // TTAHUB-1817: Admins should be allowed to read an approved report.
+      if (this.isAdmin()) {
+        return true;
+      }
+
       return this.canReadInRegion();
     }
 
@@ -71,33 +76,42 @@ export default class ActivityReport {
   }
 
   canApproveInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.APPROVE_REPORTS
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.READ_WRITE_REPORTS
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
 
   canReadInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         (permission.scopeId === SCOPES.READ_REPORTS
           || permission.scopeId === SCOPES.APPROVE_REPORTS
           || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
