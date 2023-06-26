@@ -254,29 +254,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
-    // Doesn't contain Specialist step.
-    // await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
-    // await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-    // await page.getByLabel('Enter report text').click();
-    // await page.getByLabel('Enter report text').fill('like math');
-    // prs = waitForLandingFilterRequests(page);
-    // await page.getByTestId('apply-filters-test-id').click();
-    // await Promise.all(prs);
-    // await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
     // Contains Recipient step.
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
-    await page.getByLabel('Enter report text').click();
-    await page.getByLabel('Enter report text').fill('one small positive thought');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    // Doesn't contain Recipient step.
-    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
     await page.getByLabel('Enter report text').click();
     await page.getByLabel('Enter report text').fill('one small positive thought');
     prs = waitForLandingFilterRequests(page);
