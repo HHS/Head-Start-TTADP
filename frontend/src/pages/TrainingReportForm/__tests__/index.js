@@ -291,7 +291,7 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
-      pocId: 1,
+      pocId: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
@@ -350,7 +350,7 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
-      pocId: 1,
+      pocId: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
