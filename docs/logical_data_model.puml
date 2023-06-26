@@ -176,6 +176,7 @@ class EventReportPilots{
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
+ imported : jsonb
 }
 
 class Files{

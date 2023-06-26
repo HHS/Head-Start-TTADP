@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { Button, Textarea } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
