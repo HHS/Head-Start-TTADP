@@ -45,7 +45,9 @@ function mockRecipients(howMany) {
 describe('participants', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => true) })).toBe(true);
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({ recipients: [1], participants: [1] })),
+      })).toBe(true);
     });
 
     it('returns false otherwise', () => {

@@ -1,4 +1,3 @@
-import { get } from 'express-http-context';
 import db from '../../models';
 import {
   createHandler,
