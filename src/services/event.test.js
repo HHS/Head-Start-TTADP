@@ -1,5 +1,5 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
-
+import { Op } from 'sequelize';
 import db from '../models';
 import {
   createEvent,
@@ -202,6 +202,36 @@ describe('event service', () => {
       await destroyEvent(found2[0].id);
       await destroyEvent(found2[1].id);
       await destroyEvent(found2[2].id);
+    });
+
+    it('findEventsByStatus use scopes', async () => {
+      // create events.
+      const event1 = await createAnEventWithData(11_111, { startDate: '2023-01-01', title: 'C' });
+      const event2 = await createAnEventWithData(11_112, { startDate: '2023-02-01', title: 'B' });
+      const event3 = await createAnEventWithData(11_113, { startDate: '2020-03-01', title: 'A' });
+
+      // create scopes.
+      const scopesWhere = [
+        {
+          [Op.and]: [
+            { 'data.startDate': { [Op.gte]: '2023-01-15' } },
+            { 'data.startDate': { [Op.lte]: '2023-02-15' } },
+            { id: [event1.id, event2.id, event3.id] },
+          ],
+        },
+      ];
+
+      // get events that start between 2023-01-15 and 2023-02-10:
+      const found = await findEventsByStatus(null, [], null, true, scopesWhere);
+
+      // expect date to be priority sorted, followed by title:
+      expect(found.length).toBe(1);
+      expect(found[0].data).toHaveProperty('startDate', '2023-02-01');
+
+      // destroy events.
+      await destroyEvent(event1.id);
+      await destroyEvent(event2.id);
+      await destroyEvent(event3.id);
     });
   });
 });
