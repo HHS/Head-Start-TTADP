@@ -72,10 +72,6 @@ export default function SessionForm({ match }) {
 
   /* ============ */
 
-  // this attempts to track whether or not we're online
-  // (or at least, if the backend is responding)
-  const [connectionActive] = useState(true);
-
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
@@ -109,7 +105,7 @@ export default function SessionForm({ match }) {
   } = useSocket(user);
 
   useEffect(() => {
-    if (!trainingReportId || !currentPage) {
+    if (!trainingReportId || !currentPage || !sessionId) {
       return;
     }
     const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
@@ -287,7 +283,7 @@ export default function SessionForm({ match }) {
           </div>
         </Grid>
       </Grid>
-      <NetworkContext.Provider value={{ connectionActive: isOnlineMode() && connectionActive }}>
+      <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
