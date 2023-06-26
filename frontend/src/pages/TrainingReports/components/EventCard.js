@@ -88,11 +88,10 @@ function EventCard({
       <div className="margin-top-3">
         <ExpanderButton
           type="report"
-          ariaLabel="reports for event"
+          ariaLabel={`reports for event ${data.eventId}`}
           closeOrOpen={closeOrOpenReports}
           count={event.sessionReports.length}
           expanded={reportsExpanded}
-          number={data.eventId}
         />
       </div>
 

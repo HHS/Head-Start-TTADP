@@ -165,11 +165,10 @@ function GoalCard({
       <div className={internalLeftMargin}>
         <ExpanderButton
           type="objective"
-          ariaLabel="objectives for goal"
+          ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
           closeOrOpen={closeOrOpenObjectives}
           count={objectiveCount}
           expanded={objectivesExpanded}
-          number={goal.goalNumbers.join('')}
         />
       </div>
       {objectives.map((obj) => (
