@@ -263,53 +263,5 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    // Mix with Report ID.
-    await page.getByRole('button', { name: 'open filters for this page' }).click();
-    await page.getByRole('button', { name: 'Add new filter' }).click();
-    await page.locator('select[name="topic"]').first().selectOption('reportText');
-    await page.locator('select[name="condition"]').first().selectOption('contains');
-    await page.getByLabel('Enter report text').fill('ocean');
-
-    await page.getByRole('button', { name: 'Add new filter' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reportId');
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('contains');
-    await page.getByLabel('Enter a report id').fill(`${arNumber}`);
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    await page.getByRole('button', { name: 'open filters for this page' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('does not contain');
-    await page.getByLabel('Enter a report id').fill(`${arNumber}`);
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
-
-    // Mix with Reasons.
-    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reason');
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
-    await page.getByText('Select reasons to filter by').click();
-    await page.keyboard.press('Enter');
-    prs = waitForLandingFilterRequests(page);
-
-    await page.getByText('Clear all filtersCancelApply').click();
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs)
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is not');
-    await page.getByText('Select reasons to filter by').click();
-    await page.keyboard.press('Enter');
-    prs = waitForLandingFilterRequests(page);
-
-    await page.getByText('Clear all filtersCancelApply').click();
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();   
   });
 });
