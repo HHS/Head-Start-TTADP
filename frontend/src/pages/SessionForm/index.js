@@ -20,6 +20,7 @@ import Navigator from '../../components/Navigator';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import { COMPLETE } from '../../components/Navigator/constants';
+import { isValidResourceUrl } from '../../components/GoalForm/constants';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 30000; // THIRTY SECONDS
@@ -195,7 +196,11 @@ export default function SessionForm({ match }) {
 
       // PUT it to the backend
       const updatedSession = await updateSession(sessionId, {
-        data,
+        data: {
+          ...data,
+          objectiveResources: data.objectiveResources.filter((r) => (
+            r && isValidResourceUrl(r.value))),
+        },
         trainingReportId,
         eventId: trainingReportId || null,
       });
