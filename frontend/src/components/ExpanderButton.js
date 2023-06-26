@@ -12,7 +12,6 @@ export default function ExpanderButton({
   closeOrOpen,
   count,
   expanded,
-  number,
   type,
   ariaLabel,
 }) {
@@ -23,9 +22,9 @@ export default function ExpanderButton({
   return (
     <button
       type="button"
-      className={`usa-button--outline usa-button text-no-underline text-middle tta-smarthub--goal-row-${type}s tta-smarthub--goal-row-${type}s-enabled`}
+      className={`usa-button--outline usa-button text-no-underline text-middle tta-smarthub--expander-row-${type}s tta-smarthub--expander-row-${type}s-enabled`}
       onClick={() => closeOrOpen()}
-      aria-label={`${expanded ? 'Hide' : 'View'} ${ariaLabel} ${number}`}
+      aria-label={`${expanded ? 'Hide' : 'View'} ${ariaLabel}`}
     >
       {expanded ? 'Hide' : 'View'}
       {' '}
@@ -47,5 +46,4 @@ ExpanderButton.propTypes = {
   closeOrOpen: PropTypes.func.isRequired,
   count: PropTypes.number.isRequired,
   expanded: PropTypes.bool.isRequired,
-  number: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
