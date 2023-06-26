@@ -43,7 +43,7 @@ const CompleteSession = ({
   ];
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Complete session</title>
       </Helmet>
@@ -82,7 +82,7 @@ const CompleteSession = ({
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
         <Button id="back-button" outline type="button" onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
-    </>
+    </div>
   );
 };
 

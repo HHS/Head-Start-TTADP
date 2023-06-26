@@ -555,13 +555,13 @@ export default {
     _weAreAutoSaving,
     datePickerKey,
   ) => (
-    <>
+    <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>
       </div>
-    </>
+    </div>
   ),
   isPageComplete,
 };

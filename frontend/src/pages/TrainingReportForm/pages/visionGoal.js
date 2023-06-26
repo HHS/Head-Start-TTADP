@@ -15,7 +15,7 @@ const VisionGoal = () => {
   const { register } = useFormContext();
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Vision and goal</title>
       </Helmet>
@@ -52,7 +52,7 @@ const VisionGoal = () => {
           />
         </FormItem>
       </div>
-    </>
+    </div>
   );
 };
 
