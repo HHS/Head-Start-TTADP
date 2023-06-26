@@ -1,11 +1,6 @@
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
-import { validate } from 'uuid';
 import { root, validateSchema } from './common';
-
-test('get /users/collaborators', async ({ request }) => {
-  
-});
 
 test.describe('get /users/collaborators', () => {
   test('no region - 403 case', async ({ request }) => {
