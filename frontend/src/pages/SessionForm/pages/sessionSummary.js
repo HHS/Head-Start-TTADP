@@ -526,7 +526,16 @@ const path = 'session-summary';
 const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => {
+  const { objectiveTrainers, objectiveTopics } = hookForm.getValues();
+
+  if (!objectiveTrainers || !objectiveTrainers.length
+    || !objectiveTopics || !objectiveTopics.length) {
+    return false;
+  }
+
+  return pageComplete(hookForm, fields);
+};
 
 export default {
   position,

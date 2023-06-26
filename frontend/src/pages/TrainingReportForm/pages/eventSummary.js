@@ -354,7 +354,25 @@ const path = 'event-summary';
 const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => {
+  const values = hookForm.getValues();
+
+  const {
+    collaboratorIds,
+    pocId,
+    reasons,
+    targetPopulations: populations,
+  } = values;
+
+  if (!pocId || !pocId.length
+    || !collaboratorIds || !collaboratorIds.length
+    || !reasons || !reasons.length
+    || !populations || !populations.length) {
+    return false;
+  }
+
+  return pageComplete(hookForm, fields);
+};
 
 export default {
   position,

@@ -46,7 +46,12 @@ const flushPromises = async (rerender, ui) => {
 describe('sessionSummary', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => true) })).toBe(true);
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          objectiveTrainers: [1],
+          objectiveTopics: [1],
+        })),
+      })).toBe(true);
     });
 
     it('returns false otherwise', () => {

@@ -234,7 +234,14 @@ const path = 'participants';
 const position = 2;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => {
+  const { recipients, participants } = hookForm.getValues();
+  if (!recipients || !recipients.length || !participants || !participants.length) {
+    return false;
+  }
+
+  return pageComplete(hookForm, fields);
+};
 
 export default {
   position,

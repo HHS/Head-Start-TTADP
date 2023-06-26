@@ -103,7 +103,7 @@ const deleteHandler = async (req, res) => {
     reportId,
     objectiveId,
     fileId,
-    sessionId,
+    eventSessionId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
@@ -136,8 +136,8 @@ const deleteHandler = async (req, res) => {
       if (of) {
         await deleteObjectiveFile(of.id);
       }
-    } else if (sessionId) {
-      const session = await findSessionById(sessionId);
+    } else if (eventSessionId) {
+      const session = await findSessionById(eventSessionId);
       const event = await findEventById(session.eventId);
 
       const allowedEditors = [
@@ -152,7 +152,7 @@ const deleteHandler = async (req, res) => {
       }
 
       const sof = file.sessionFiles.find(
-        (r) => r.sessionReportPilotId === parseInt(sessionId, DECIMAL_BASE),
+        (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE),
       );
       if (sof) {
         await deleteSessionFile(sof.id);

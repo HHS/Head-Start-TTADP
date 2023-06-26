@@ -15,7 +15,14 @@ import NetworkContext from '../../../../NetworkContext';
 describe('eventSummary', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => true) })).toBe(true);
+      expect(isPageComplete({
+        getValues: jest.fn(() => ({
+          pocId: [1],
+          collaboratorIds: [1],
+          reasons: [1],
+          targetPopulations: [1],
+        })),
+      })).toBe(true);
     });
 
     it('returns false otherwise', () => {
