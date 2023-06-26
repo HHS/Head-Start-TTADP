@@ -266,7 +266,6 @@ test.describe('Activity Report Text Search Filter', () => {
 
     // Mix with Report ID.
     await page.getByRole('button', { name: 'open filters for this page' }).click();
-    await page.getByRole('button', { name: 'remove Report text does not contain one small positive thought filter. click apply filters to make your changes' }).click();
     await page.getByRole('button', { name: 'Add new filter' }).click();
     await page.locator('select[name="topic"]').selectOption('reportText');
     await page.locator('select[name="condition"]').selectOption('contains');
