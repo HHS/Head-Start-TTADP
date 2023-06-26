@@ -34,6 +34,7 @@ describe('SessionCard', () => {
   };
 
   const renderSessionCard = (session = defaultSession) => {
+    console.log('\n\n\n---123: ', session);
     render((
       <UserContext.Provider value={{ user: DEFAULT_USER }}>
         <Router history={history}>
@@ -56,5 +57,29 @@ describe('SessionCard', () => {
 
     expect(screen.getByText(/trainer 1, trainer 2/i)).toBeInTheDocument();
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
+  });
+
+  it('renders complete status', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/complete/i)).toBeInTheDocument();
+  });
+
+  it('renders not started status', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Not Started' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/not started/i)).toBeInTheDocument();
+  });
+
+  it('renders suspended status', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Suspended' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/suspended/i)).toBeInTheDocument();
+  });
+
+  it('renders needs status', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'blah' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/needs status/i)).toBeInTheDocument();
   });
 });
