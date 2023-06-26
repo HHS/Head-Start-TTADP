@@ -1,5 +1,28 @@
 import PropTypes from 'prop-types';
 
+import {
+  startDateFilter,
+  regionFilter,
+  collaboratorFilter,
+} from '../../components/filter/trainingReportFilters';
+
+const TRAINING_REPORT_BASE_FILTER_CONFIG = [
+  startDateFilter,
+  collaboratorFilter,
+];
+
+const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
+  startDateFilter,
+  regionFilter,
+  collaboratorFilter,
+];
+
+// sort both by display prop
+TRAINING_REPORT_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+TRAINING_REPORT_CONFIG_WITH_REGIONS.sort((a, b) => a.display.localeCompare(b.display));
+
+export { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS };
+
 export const dataPropTypes = PropTypes.shape({
   Creator: PropTypes.string,
   Audience: PropTypes.string,

@@ -14,6 +14,8 @@ import {
   findEventsByStatus,
 } from '../../services/event';
 import { userById } from '../../services/users';
+import { setReadRegions } from '../../services/accessValidation';
+import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -29,7 +31,11 @@ export const getByStatus = async (req, res) => {
   try {
     const { status } = req.params;
     const auth = await getEventAuthorization(req, res, {});
-    const events = await findEventsByStatus(status, auth.readableRegions);
+    const userId = await currentUserId(req, res);
+
+    const updatedFilters = await setReadRegions(req.query, userId);
+    const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
+    const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
