@@ -50,6 +50,10 @@ const resetFormData = (reset, event) => {
     ...fields,
   };
 
+  if (!form.pocId && form.pocId !== undefined) {
+    form.pocId = [];
+  }
+
   reset({
     ...defaultValues,
     ...form,

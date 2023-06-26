@@ -99,7 +99,7 @@ const CompleteEvent = ({
   }
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Complete event</title>
       </Helmet>
@@ -173,7 +173,7 @@ const CompleteEvent = ({
         <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveForm}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
-    </>
+    </div>
   );
 };
 

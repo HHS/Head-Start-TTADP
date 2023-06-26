@@ -78,7 +78,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const { users: { collaborators, pointOfContact } } = additionalData;
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Event summary</title>
       </Helmet>
@@ -330,7 +330,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           />
         </FormItem>
       </div>
-    </>
+    </div>
   );
 };
 
