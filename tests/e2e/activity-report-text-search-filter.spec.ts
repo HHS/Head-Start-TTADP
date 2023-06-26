@@ -267,8 +267,8 @@ test.describe('Activity Report Text Search Filter', () => {
     // Mix with Report ID.
     await page.getByRole('button', { name: 'open filters for this page' }).click();
     await page.getByRole('button', { name: 'Add new filter' }).click();
-    await page.locator('select[name="topic"]').selectOption('reportText');
-    await page.locator('select[name="condition"]').selectOption('contains');
+    await page.locator('select[name="topic"]').first().selectOption('reportText');
+    await page.locator('select[name="condition"]').first().selectOption('contains');
     await page.getByLabel('Enter report text').fill('ocean');
 
     await page.getByRole('button', { name: 'Add new filter' }).click();
