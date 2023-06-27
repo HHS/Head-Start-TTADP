@@ -1,4 +1,5 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+
 import { Op } from 'sequelize';
 import db from '../models';
 import {
