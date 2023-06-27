@@ -15,6 +15,7 @@ describe('GoalCard', () => {
     reasons: ['Reason 1', 'Reason 2'],
     objectiveCount: 1,
     goalNumbers: ['G-1'],
+    source: 'The inferno',
     objectives: [
       {
         id: 1,
@@ -71,6 +72,13 @@ describe('GoalCard', () => {
   it('shows the checkbox by default', () => {
     renderGoalCard();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('shows goal source', () => {
+    renderGoalCard();
+
+    expect(screen.getByText(/goal source/i)).toBeInTheDocument();
+    expect(screen.getByText(/The inferno/i)).toBeInTheDocument();
   });
 
   it('hides the checkbox when hideCheckbox is true', () => {

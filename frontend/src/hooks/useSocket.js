@@ -6,6 +6,7 @@ import {
   useRef,
   useMemo,
 } from 'react';
+import useInterval from '@use-it/interval';
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL || '';
 
@@ -19,6 +20,12 @@ export function publishLocation(socket, socketPath, user, lastSaveTime) {
       channel: socketPath,
     }));
   }
+}
+
+export function usePublishWebsocketLocationOnInterval(
+  socket, socketPath, user, lastSaveTime, interval,
+) {
+  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), interval);
 }
 
 export default function useSocket(user) {

@@ -9,16 +9,13 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
-import useInterval from '@use-it/interval';
 import { FormProvider, useForm } from 'react-hook-form';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import useSocket, { publishLocation } from '../../hooks/useSocket';
+import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   defaultValues,
 } from './constants';
-import { IN_PROGRESS, COMPLETE, NOT_STARTED } from '../../components/Navigator/constants';
 import { getTrainingReportUsers } from '../../fetchers/users';
 import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -26,6 +23,7 @@ import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
+import useHookFormPageState from '../../hooks/useHookFormPageState';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 30000; // THIRTY SECONDS
@@ -50,6 +48,10 @@ const resetFormData = (reset, event) => {
     ...data,
     ...fields,
   };
+
+  if (!form.pocId && form.pocId !== undefined) {
+    form.pocId = [];
+  }
 
   reset({
     ...defaultValues,
@@ -106,7 +108,7 @@ export default function TrainingReportForm({ match }) {
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey, setDatePickerKey] = useState('-');
+  const [datePickerKey, setDatePickerKey] = useState(Date.now().toString());
 
   /* ============
   */
@@ -118,7 +120,6 @@ export default function TrainingReportForm({ match }) {
   });
 
   const eventRegion = hookForm.watch('regionId');
-  const pageState = hookForm.watch('pageState');
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
@@ -139,7 +140,7 @@ export default function TrainingReportForm({ match }) {
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 
-  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
+  usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
     const loading = !reportFetched || !additionalDataFetched;
@@ -193,59 +194,8 @@ export default function TrainingReportForm({ match }) {
     }
   }, [trainingReportId]);
 
-  useDeepCompareEffect(() => {
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    if (!whereWeAre) {
-      return;
-    }
-
-    // the reducer takes the current page state and updates it based on the
-    // pages provided to the navigator
-    const ns = pages.reduce((newState, page) => {
-      // we don't include the review page in the page state, as that is
-      // derived from the event status
-      if (page.review) {
-        return newState;
-      }
-
-      // each page has a function that determines if it is complete
-      // based on whether all the fields on it have been filled out
-      const isComplete = page.isPageComplete(hookForm);
-
-      // we create a new state object so that we can return a new object
-      // and satisfy eslint's no-param-reassign rule
-      const state = { ...newState };
-
-      // if the page is complete, it's complete
-      // hard to argue with that
-      if (isComplete) {
-        state[page.position] = COMPLETE;
-      // if the page is not complete, but we're on it, it's in progress
-      // or if it's already been marked as in progress, it's in progress
-      } else if (
-        whereWeAre.position === page.position
-        || newState[page.position] === IN_PROGRESS
-      ) {
-        state[page.position] = IN_PROGRESS;
-      // otherwise, it's not started
-      } else {
-        state[page.position] = NOT_STARTED;
-      }
-
-      // the new state created from the spread of the old
-      return state;
-
-      // and of course, we initialize the reducer with the current page state
-      // as the default value
-    }, { ...pageState });
-
-    if (JSON.stringify(ns) === JSON.stringify(pageState)) {
-      return;
-    }
-
-    // if the new state is different from the old state, we update the form
-    hookForm.setValue('pageState', ns);
-  }, [currentPage, hookForm, pageState]);
+  // hook to update the page state in the sidebar
+  useHookFormPageState(hookForm, pages, currentPage);
 
   const updatePage = (position) => {
     const state = {};
@@ -298,21 +248,11 @@ export default function TrainingReportForm({ match }) {
 
   const onSaveAndContinue = async () => {
     const whereWeAre = pages.find((p) => p.path === currentPage);
-    const { fields } = whereWeAre;
-    await hookForm.trigger(fields, { shouldFocus: true });
-
-    const hasErrors = Object.keys(hookForm.formState.errors).length > 0;
-    if (hasErrors) {
-      const invalid = document.querySelector('.usa-form-group--error');
-      if (invalid) {
-        const input = invalid.querySelector('input, select, textarea');
-        if (input) input.focus();
-      }
-
-      return;
-    }
-
+    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
+    if (nextPage) {
+      updatePage(nextPage.position);
+    }
   };
 
   const onFormSubmit = async (updatedStatus) => {
@@ -320,18 +260,6 @@ export default function TrainingReportForm({ match }) {
       // reset the error message
       setError('');
       setIsAppLoading(true);
-
-      // we check at button click if all the sessions are complete,
-      // so now we just need to see if all the pages are complete
-
-      // if the page is not complete, we need to set an error and bomb out early
-      if (!Object.values(pageState).every((page) => page === COMPLETE) && updatedStatus === 'Complete') {
-        hookForm.setError('status', {
-          message: 'Please complete all required fields before submitting.',
-        });
-
-        return;
-      }
 
       // grab the newest data from the form
       const {

@@ -6,13 +6,13 @@ import UserContext from '../../../../UserContext';
 
 describe('EventCard', () => {
   const defaultEvent = {
-
+    id: 1,
     data: {
-      'Edit Title': 'This is my event title',
-      'Event ID': 'This is my event ID',
-      'Event Organizer - Type of Event': 'This is my event organizer',
-      'Reason for Activity': 'New Program/Option\nNew Staff/Turnover',
-      startDate: '2021-01-02',
+      eventName: 'This is my event title',
+      eventId: 'This is my event ID',
+      eventOrganizer: 'This is my event organizer',
+      reasons: ['New Program/Option', 'New Staff/Turnover'],
+      startDate: '01/02/2021',
       endDate: null,
     },
   };
