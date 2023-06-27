@@ -116,6 +116,10 @@ const enqueueMaintenanceJob = (
  * @param {function} job - The function to be executed as the cron job.
  */
 const addCronJob = (category, type, jobCommand, schedule) => {
+  // Check if the category exists, if not create a new object for it
+  if (!maintenanceCronJobs[category]) {
+    maintenanceCronJobs[category] = {};
+  }
   // Accesses the maintenanceCronJobs object and sets the value of the specified category
   // and type to the provided job function.
   maintenanceCronJobs[category][type] = { jobCommand, schedule };
