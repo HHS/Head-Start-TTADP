@@ -12,9 +12,15 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('completeSession', () => {
   describe('render', () => {
+    const defaultPageState = {
+      1: 'Complete',
+      2: 'Complete',
+      3: 'In progress',
+    };
     const defaultFormValues = {
       id: 1,
       status: 'Not started',
+      pageState: defaultPageState,
     };
 
     const onSubmit = jest.fn();
@@ -28,12 +34,14 @@ describe('completeSession', () => {
         defaultValues,
       });
 
+      const formData = hookForm.watch();
+
       return (
         <FormProvider {...hookForm}>
           <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               {completeSession.render(
-                defaultFormValues,
+                formData,
                 onSubmit,
                 {},
                 jest.fn(),
@@ -109,7 +117,7 @@ describe('completeSession', () => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it('will submit if the status is complete', async () => {
+    it('wont submit if the status is complete but all pages are not complete', async () => {
       act(() => {
         render(<RenderCompleteSession />);
       });
@@ -124,11 +132,38 @@ describe('completeSession', () => {
         userEvent.click(submitButton);
       });
 
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('will submit if the status is complete and all pages are complete', async () => {
+      act(() => {
+        render(<RenderCompleteSession
+          defaultValues={{
+            ...defaultFormValues,
+            pageState: {
+              ...defaultPageState,
+              3: 'Complete',
+            },
+          }}
+        />);
+      });
+
+      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+      act(() => {
+        userEvent.selectOptions(statusSelect, 'Complete');
+      });
+
+      const submitButton = await screen.findByRole('button', { name: /submit/i });
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
       expect(onSubmit).toHaveBeenCalled();
     });
+
     it('sets a default status of in progress', async () => {
       act(() => {
-        render(<RenderCompleteSession defaultValues={{ id: 1 }} />);
+        render(<RenderCompleteSession defaultValues={{ id: 1, pageState: defaultPageState }} />);
       });
 
       const statusSelect = await screen.findByRole('combobox', { name: /status/i });

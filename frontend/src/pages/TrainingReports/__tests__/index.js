@@ -95,7 +95,7 @@ describe('TrainingReports', () => {
             }
           }
             >
-              <TrainingReports match={{ params: { status: passedStatus } }} />
+              <TrainingReports match={{ params: { status: passedStatus }, path: '', url: '' }} />
             </AppLoadingContext.Provider>
           </UserContext.Provider>
         </AriaLiveContext.Provider>

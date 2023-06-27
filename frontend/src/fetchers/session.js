@@ -7,7 +7,7 @@ import { uploadFile } from './File';
 const sessionsUrl = join('/', 'api', 'session-reports');
 
 export const createSession = async (eventId) => {
-  const response = await post(sessionsUrl, { eventId, data: {} });
+  const response = await post(sessionsUrl, { eventId, data: { status: 'In progress' } });
   return response.json();
 };
 
