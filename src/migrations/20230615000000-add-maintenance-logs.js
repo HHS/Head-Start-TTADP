@@ -50,12 +50,22 @@ module.exports = {
           type: Sequelize.DATE,
         },
       }, { transaction });
+
+      // Don't log any activity on "MaintenanceLogs" table
+      await queryInterface.sequelize.query(`
+      SELECT "ZAFRemoveAuditingOnTable"('MaintenanceLogs');
+      `, { raw: true, transaction });
     });
   },
   down: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
       await removeTables(queryInterface, transaction, ['MaintenanceLogs']);
+
+      await queryInterface.sequelize.query(`
+      DELETE FROM "ZAFilter"
+      WHERE "tableName" = 'MaintenanceLogs';
+      `, { transaction });
     });
   },
 };
