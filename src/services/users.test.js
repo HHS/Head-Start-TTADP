@@ -9,6 +9,7 @@ import {
   userByEmail,
   setFlag,
   getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -44,6 +45,36 @@ describe('Users DB service', () => {
       expect(user.name).toBe('user 54');
     });
   });
+
+  describe('getUserNamesByIds', () => {
+    beforeEach(async () => {
+      await User.create({
+        id: 54,
+        name: 'user 54',
+        hsesUsername: 'user.54',
+        hsesUserId: '54',
+      });
+      await User.create({
+        id: 55,
+        name: 'user 55',
+        hsesUsername: 'user.55',
+        hsesUserId: '55',
+      });
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: [54, 55] } });
+    });
+
+    it('retrieves the correct userNames', async () => {
+      const users = await getUserNamesByIds([54, 55]);
+      expect(users).toStrictEqual([
+        'user 54',
+        'user 55',
+      ]);
+    });
+  });
+
   describe('userByEmail', () => {
     beforeEach(async () => {
       await User.create({
