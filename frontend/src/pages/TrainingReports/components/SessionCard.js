@@ -7,8 +7,6 @@ import {
   InProgress,
   Closed,
   NoStatus,
-  NotStarted,
-  Ceased,
   Pencil,
 } from '../../../components/icons';
 import { canEditOrCreateSessionReports } from '../../../permissions';
@@ -33,53 +31,21 @@ function SessionCard({
   } = session.data;
 
   const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
-  const mapStatusToDisplay = [
-    {
-      stored: 'In Progress',
-      display: 'In progress',
-    },
-    {
-      stored: 'Complete',
-      display: 'Complete',
-    },
-    {
-      stored: 'Not Started',
-      display: 'Not started',
-    },
-    {
-      stored: 'Needs Status',
-      display: 'Needs status',
-    },
-    {
-      stored: 'Suspended',
-      display: 'Suspended',
-    },
-  ];
 
-  const getGoalDisplayStatusText = () => {
-    let displayStatus = 'Needs status';
-    if (status) {
-      const matchingStatus = mapStatusToDisplay.find((m) => m.stored === status);
-      if (matchingStatus) {
-        displayStatus = matchingStatus.display;
-      }
+  const getSessionDisplayStatusText = () => {
+    if (status && (status === 'In Progress' || status === 'Complete')) {
+      return status;
     }
-    return displayStatus;
+    return 'Needs status';
   };
 
-  const displayObjStatus = getGoalDisplayStatusText();
+  const displaySessionStatus = getSessionDisplayStatusText();
 
-  const getObjectiveStatusIcon = (() => {
-    if (displayObjStatus === 'In progress') {
+  const getSessionStatusIcon = (() => {
+    if (displaySessionStatus === 'In progress') {
       return <InProgress />;
-    } if (displayObjStatus === 'Complete') {
+    } if (displaySessionStatus === 'Complete') {
       return <Closed />;
-    }
-    if (displayObjStatus === 'Not started') {
-      return <NotStarted />;
-    }
-    if (displayObjStatus === 'Suspended') {
-      return <Ceased />;
     }
     return <NoStatus />;
   })();
@@ -130,8 +96,8 @@ function SessionCard({
 
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Status </span>
-        {getObjectiveStatusIcon}
-        {displayObjStatus}
+        {getSessionStatusIcon}
+        {displaySessionStatus}
       </li>
     </ul>
   );

@@ -139,7 +139,8 @@ const canEditOrCreateGoals = (user, region) => {
 const canEditOrCreateSessionReports = (user, region) => {
   const { permissions } = user;
   return permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
+    (p) => (p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
+      || p.scopeId === SCOPE_IDS.ADMIN)
       && p.regionId === region,
   ) !== undefined;
 };

@@ -79,22 +79,23 @@ describe('SessionCard', () => {
     expect(screen.getByText(/edit session/i)).toBeInTheDocument();
   });
 
+  it('shows the edit link with the admin permissions', () => {
+    renderSessionCard(defaultSession,
+      {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPE_IDS.ADMIN,
+          regionId: 1,
+        }],
+      });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/edit session/i)).toBeInTheDocument();
+  });
+
   it('renders complete status', () => {
     renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/complete/i)).toBeInTheDocument();
-  });
-
-  it('renders not started status', () => {
-    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Not Started' } });
-    expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.getByText(/not started/i)).toBeInTheDocument();
-  });
-
-  it('renders suspended status', () => {
-    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Suspended' } });
-    expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.getByText(/suspended/i)).toBeInTheDocument();
   });
 
   it('renders needs status', () => {
