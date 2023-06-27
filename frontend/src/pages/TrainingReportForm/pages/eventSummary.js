@@ -27,10 +27,23 @@ import Req from '../../../components/Req';
 import {
   eventSummaryFields,
   pageComplete,
-  pageTouched,
 } from '../constants';
 
 const placeholderText = '- Select -';
+
+// we need to add three additional target populations to the AR target populations list
+const targetPopulations = [
+  ...TARGET_POPULATIONS,
+  ...EVENT_TARGET_POPULATIONS,
+];
+
+// sort the reasons alphabetically
+targetPopulations.sort();
+
+const eventOrganizerOptions = [
+  'Regional PD Event (with National Centers)',
+  'IST TTA/Visit',
+].map((option) => ({ value: option, label: option }));
 
 const EventSummary = ({ additionalData, datePickerKey }) => {
   const {
@@ -62,24 +75,10 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     eventName,
   } = data;
 
-  // we need to add three additional target populations to the AR target populations list
-  const targetPopulations = [
-    ...TARGET_POPULATIONS,
-    ...EVENT_TARGET_POPULATIONS,
-  ];
-
-  // sort the reasons alphabetically
-  targetPopulations.sort();
-
   const { users: { collaborators, pointOfContact } } = additionalData;
 
-  const eventOrganizerOptions = [
-    'Regional PD Event (with National Centers)',
-    'IST TTA/Visit',
-  ].map((option) => ({ value: option, label: option }));
-
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Event summary</title>
       </Helmet>
@@ -112,7 +111,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               onChange={(s) => {
                 controllerOnChange(s.value);
               }}
-              inputRef={register({ required: 'Select one' })}
+              inputRef={register({ required: 'Select an event organizer' })}
               options={eventOrganizerOptions}
             />
           )}
@@ -153,7 +152,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                 onChange={(s) => {
                   controllerOnChange(s.map((option) => option.id));
                 }}
-                inputRef={register({ required: 'Select one' })}
+                inputRef={register({ required: 'Select at least one collaborator' })}
                 getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
                 options={collaborators}
@@ -163,7 +162,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             rules={{
               validate: (value) => {
                 if (!value || value.length === 0) {
-                  return 'Select collaborators';
+                  return 'Select at least one collaborator';
                 }
                 return true;
               },
@@ -196,7 +195,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               onChange={(s) => {
                 controllerOnChange(s.map((option) => option.id));
               }}
-              inputRef={register({ required: 'Select one' })}
+              inputRef={register({ required: 'Select at least one event region point of contact' })}
               getOptionLabel={(option) => option.fullName}
               getOptionValue={(option) => option.id}
               options={pointOfContact}
@@ -207,7 +206,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           rules={{
             validate: (value) => {
               if (!value || value.length === 0) {
-                return 'Select a point of contact';
+                return 'Select at least one event region point of contact';
               }
               return true;
             },
@@ -244,60 +243,59 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           </FormItem>
         </div>
       </Fieldset>
-      <Fieldset>
-        <div className="margin-top-2">
-          <FormItem
-            label="Event start date"
-            name="startDate"
-            id="startDate-label"
-            htmlFor="startDate"
-          >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
-            <ControlledDatePicker
-              key={`startDate-${datePickerKey}`}
-              control={control}
-              name="startDate"
-              value={startDate}
-              setEndDate={setEndDate}
-              isStartDate
-              inputId="startDate"
-              endDate={endDate}
-            />
-          </FormItem>
 
-          <FormItem
-            label="Event end date"
-            name="endDate"
-            id="endDate-label"
-            htmlFor="endDate"
+      <div className="margin-top-2">
+        <FormItem
+          label="Event start date"
+          name="startDate"
+          id="startDate-label"
+          htmlFor="startDate"
+        >
+          <div
+            className="usa-hint"
           >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
-            <ControlledDatePicker
-              control={control}
-              name="endDate"
-              inputId="endDate"
-              value={endDate}
-              minDate={startDate}
-              key={`${endDateKey}-${datePickerKey}`}
-            />
-          </FormItem>
-        </div>
-      </Fieldset>
+            mm/dd/yyyy
+          </div>
+          <ControlledDatePicker
+            key={`startDate-${datePickerKey}`}
+            control={control}
+            name="startDate"
+            value={startDate}
+            setEndDate={setEndDate}
+            isStartDate
+            inputId="startDate"
+            endDate={endDate}
+          />
+        </FormItem>
+
+        <FormItem
+          label="Event end date"
+          name="endDate"
+          id="endDate-label"
+          htmlFor="endDate"
+        >
+          <div
+            className="usa-hint"
+          >
+            mm/dd/yyyy
+          </div>
+          <ControlledDatePicker
+            control={control}
+            name="endDate"
+            inputId="endDate"
+            value={endDate}
+            minDate={startDate}
+            key={`${endDateKey}-${datePickerKey}`}
+          />
+        </FormItem>
+      </div>
 
       <div className="margin-top-2">
         <Label htmlFor="trainingType">
           Training type
           <Req />
         </Label>
-        <Dropdown id="trainingType" name="trainingType" inputRef={register({ required: 'Select one' })}>
+        <Dropdown id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
           <option>Series</option>
         </Dropdown>
       </div>
@@ -311,7 +309,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             name="reasons"
             control={control}
             options={REASONS.map((reason) => ({ value: reason, label: reason }))}
-            required="Select at least one"
+            required="Select at least on reason"
             placeholderText={placeholderText}
           />
         </FormItem>
@@ -326,13 +324,13 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           <MultiSelect
             name="targetPopulations"
             control={control}
-            required="Select at least one"
+            required="Select at least one target population"
             options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
             placeholderText="- Select -"
           />
         </FormItem>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -356,7 +354,25 @@ const path = 'event-summary';
 const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => {
+  const values = hookForm.getValues();
+
+  const {
+    collaboratorIds,
+    pocId,
+    reasons,
+    targetPopulations: populations,
+  } = values;
+
+  if (!pocId || !pocId.length
+    || !collaboratorIds || !collaboratorIds.length
+    || !reasons || !reasons.length
+    || !populations || !populations.length) {
+    return false;
+  }
+
+  return pageComplete(hookForm, fields);
+};
 
 export default {
   position,
@@ -365,7 +381,6 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   fields,
-  isPageTouched: (hookForm) => pageTouched(hookForm.formState.touched, fields),
   render: (
     additionalData,
     _formData,

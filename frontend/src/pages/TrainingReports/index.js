@@ -1,6 +1,7 @@
 import React, {
   useContext, useState, useEffect, useMemo,
 } from 'react';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -20,7 +21,7 @@ import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
 import { getEventsByStatus } from '../../fetchers/trainingReports';
 import AppLoadingContext from '../../AppLoadingContext';
-import { EVENT_STATUS, TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
+import { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
 import AriaLiveContext from '../../AriaLiveContext';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
@@ -30,10 +31,10 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 
 const FILTER_KEY = 'training-report-filters';
 
-const tabValues = [
-  { key: 'Not started', value: EVENT_STATUS.NOT_STARTED },
-  { key: 'In progress', value: EVENT_STATUS.IN_PROGRESS },
-  { key: 'Completed', value: EVENT_STATUS.COMPLETE }];
+const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
+  key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
+}));
+
 export default function TrainingReports({ match }) {
   const { params: { status } } = match;
   const { user } = useContext(UserContext);
