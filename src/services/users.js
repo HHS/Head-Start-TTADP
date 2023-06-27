@@ -482,3 +482,15 @@ export async function getTrainingReportUsersByRegion(regionId) {
 
   return results;
 }
+
+export async function getUserNamesByIds(ids) {
+  const users = await User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      id: ids,
+    },
+    raw: true,
+  });
+
+  return users.map((u) => u.name);
+}
