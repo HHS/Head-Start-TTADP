@@ -19,7 +19,7 @@ describe('SessionCard', () => {
       objectiveSupportType: 'Implementing',
       objectiveTopics: ['Topic 1', 'Topic 2'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
-      status: 'In Progress',
+      status: 'In progress',
     },
   };
 

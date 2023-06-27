@@ -33,7 +33,7 @@ function SessionCard({
   const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
 
   const getSessionDisplayStatusText = () => {
-    if (status && (status === 'In Progress' || status === 'Complete')) {
+    if (status && (status === 'In progress' || status === 'Complete')) {
       return status;
     }
     return 'Needs status';
@@ -115,11 +115,9 @@ export const sessionPropTypes = PropTypes.shape({
     objectiveTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
     objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.oneOf([
-      'In Progress',
+      'In progress',
       'Complete',
-      'Not Started',
-      'Needs Status',
-      'Suspended',
+      'Needs status',
     ]),
   }).isRequired,
 });
