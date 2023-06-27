@@ -19,22 +19,22 @@ const mockAnnounce = jest.fn();
 const notStartedEvents = [{
   id: 1,
   data: {
-    'Edit Title': 'Not started event 1',
-    'Event ID': 'Not started event ID 1',
-    'Event Organizer - Type of Event': 'Not started event organizer 1',
-    'Reason for Activity': 'New Program/Option\nNew Staff/Turnover\nOngoing Quality Improvement\nSchool Readiness Goals\nEmergent Needs',
-    startDate: '2021-01-02',
-    endDate: '2021-01-03',
+    eventName: 'Not started event 1',
+    eventId: 'Not started event ID 1',
+    eventOrganizer: 'Not started event organizer 1',
+    reasons: ['New Program/Option', ' New Staff/Turnover', 'Ongoing Quality Improvement', 'School Readiness Goals', 'Emergent Needs'],
+    startDate: '01/02/2021',
+    endDate: '01/03/2021',
   },
 },
 {
   id: 2,
   data: {
-    'Edit Title': 'Not started event 2',
-    'Event ID': 'Not started event ID 2',
-    'Event Organizer - Type of Event': 'Not started event organizer 2',
-    startDate: '2021-02-02',
-    endDate: '2021-02-03',
+    eventName: 'Not started event 2',
+    eventId: 'Not started event ID 2',
+    eventOrganizer: 'Not started event organizer 2',
+    startDate: '02/02/2021',
+    endDate: '02/03/2021',
   },
 },
 ];
@@ -42,12 +42,12 @@ const notStartedEvents = [{
 const inProgressEvents = [{
   id: 3,
   data: {
-    'Edit Title': 'In progress event 1',
-    'Event ID': 'In progress event ID 1',
-    'Event Organizer - Type of Event': 'In progress event organizer 1',
-    'Reason for Activity': 'Emergent Needs',
-    startDate: '2021-03-02',
-    endDate: '2021-03-03',
+    eventName: 'In progress event 1',
+    eventId: 'In progress event ID 1',
+    eventOrganizer: 'In progress event organizer 1',
+    reasons: ['Emergent Needs'],
+    startDate: '03/02/2021',
+    endDate: '03/03/2021',
   },
 },
 ];
@@ -55,12 +55,12 @@ const inProgressEvents = [{
 const completeEvents = [{
   id: 4,
   data: {
-    'Edit Title': 'Complete event 1',
-    'Event ID': 'Complete event ID 1',
-    'Event Organizer - Type of Event': 'Complete event organizer 1',
-    'Reason for Activity': 'New Staff/Turnover',
-    startDate: '2021-04-02',
-    endDate: '2021-04-03',
+    eventName: 'Complete event 1',
+    eventId: 'Complete event ID 1',
+    eventOrganizer: 'Complete event organizer 1',
+    reasons: ['New Staff/Turnover'],
+    startDate: '04/02/2021',
+    endDate: '04/03/2021',
   },
 },
 ];
@@ -91,7 +91,7 @@ describe('TrainingReports', () => {
             }
           }
             >
-              <TrainingReports match={{ params: { status: passedStatus } }} />
+              <TrainingReports match={{ params: { status: passedStatus }, path: '', url: '' }} />
             </AppLoadingContext.Provider>
           </UserContext.Provider>
         </AriaLiveContext.Provider>

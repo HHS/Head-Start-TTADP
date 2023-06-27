@@ -1,5 +1,6 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import { Op } from 'sequelize';
+import db from '../models';
 import {
   createEvent,
   updateEvent,
@@ -13,10 +14,13 @@ import {
 } from './event';
 
 describe('event service', () => {
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
   const createAnEvent = async (num) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: num,
+    pocId: [num],
     collaboratorIds: [num],
     data: {
       status: 'active',
@@ -26,7 +30,7 @@ describe('event service', () => {
   const createAnEventWithStatus = async (num, status) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: num,
+    pocId: [num],
     collaboratorIds: [num],
     data: {
       status,
@@ -36,7 +40,7 @@ describe('event service', () => {
   const createAnEventWithData = async (num, data) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: num,
+    pocId: [num],
     collaboratorIds: [num],
     data,
   });
@@ -56,7 +60,7 @@ describe('event service', () => {
 
       const updated = await updateEvent(created.id, {
         ownerId: 123,
-        pocId: 123,
+        pocId: [123],
         regionId: 123,
         collaboratorIds: [123],
         data: {},
@@ -73,7 +77,7 @@ describe('event service', () => {
 
       const updated = await updateEvent(99_999, {
         ownerId: 123,
-        pocId: 123,
+        pocId: [123],
         regionId: 123,
         collaboratorIds: [123],
         data: {},
@@ -158,7 +162,7 @@ describe('event service', () => {
         false,
       );
 
-      expect(found3.length).toBeGreaterThan(1);
+      expect(found3.map((f) => f.id)).toContain(created3.id);
       expect(found4.length).toBe(1);
 
       await destroyEvent(created3.id);

@@ -11,7 +11,7 @@ const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations, value = [], isOnReport, isComplete) => (
+    render: (field, validations, value, isOnReport, isComplete) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}

@@ -1,4 +1,5 @@
 import httpCodes from 'http-codes';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
 import { currentUserId } from '../../services/currentUser';
@@ -29,8 +30,14 @@ export const getEventAuthorization = async (req, res, report) => {
 
 export const getByStatus = async (req, res) => {
   try {
-    const { status } = req.params;
+    const { status: statusParam } = req.params;
     const auth = await getEventAuthorization(req, res, {});
+
+    const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
+    if (!status) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Invalid status' });
+    }
+
     const userId = await currentUserId(req, res);
 
     const updatedFilters = await setReadRegions(req.query, userId);
@@ -54,6 +61,12 @@ export const getHandler = async (req, res) => {
       collaboratorId,
     } = req.params;
 
+    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
+
+    if (params.every((param) => typeof param === 'undefined')) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+    }
+
     if (eventId) {
       event = await findEventById(eventId);
     } else if (regionId) {
@@ -64,12 +77,6 @@ export const getHandler = async (req, res) => {
       event = await findEventsByPocId(pocId);
     } else if (collaboratorId) {
       event = await findEventsByCollaboratorId(collaboratorId);
-    }
-
-    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
-
-    if (params.every((param) => typeof param === 'undefined')) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
     if (!event) {
