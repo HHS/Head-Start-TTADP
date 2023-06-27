@@ -162,13 +162,14 @@ function MultiSelect({
 
   return (
     <Controller
-      render={({ onChange: controllerOnChange, value }) => {
+      render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
           <Selector
             className="ttahub-multi-select margin-top-1"
             id={name}
             value={values}
+            onBlur={onBlur}
             onChange={(event) => {
               if (onItemSelected) {
                 onItemSelected(event);

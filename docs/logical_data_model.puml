@@ -170,13 +170,13 @@ class CollaboratorRoles{
 class EventReportPilots{
  * id : integer : <generated>
  * ownerId : integer
- pocId : integer
  * collaboratorIds : integer[]
  * regionId : integer
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  imported : jsonb
+ pocId : integer[]
 }
 
 class Files{
@@ -263,9 +263,9 @@ class Goals{
  isFromSmartsheetTtaPlan : boolean
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- endDate : date
  closeSuspendReason : enum
  closeSuspendContext : text
+ endDate : date
  previousStatus : text
  * onApprovedAR : boolean
  firstNotStartedAt : timestamp with time zone
@@ -285,6 +285,24 @@ class Goals{
  source : enum
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
+}
+
+!issue='model missing for table'
+class GrantPersonnel #pink;line:red;line.bold;text:red {
+ * id : integer : <generated>
+ * grantId : integer
+ * role : varchar(255)
+ * active : boolean
+ prefix : varchar(255)
+ firstName : varchar(255)
+ lastName : varchar(255)
+ suffix : varchar(255)
+ title : varchar(255)
+ email : varchar(255)
+ effectiveDate : timestamp with time zone
+ originalPersonnelId : integer
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
 }
 
 class Grants{
@@ -574,6 +592,14 @@ class Scopes{
  * updatedAt : timestamp with time zone : now()
 }
 
+class SessionReportPilotFiles{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * fileId : integer : REFERENCES "Files".id
+}
+
 class SessionReportPilots{
  * id : integer : <generated>
  * data : jsonb
@@ -731,10 +757,10 @@ class ZALActivityReportGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
+ * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
- dml_as : bigint
 }
 
 class ZALActivityReportGoalResources{
@@ -912,10 +938,10 @@ class ZALGoalFieldResponses{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
+ * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
- dml_as : bigint
 }
 
 class ZALGoalResources{
@@ -940,10 +966,10 @@ class ZALGoalTemplateFieldPrompts{
  new_row_data : jsonb
  * dml_timestamp : timestamp with time zone
  * dml_by : bigint
+ * dml_as : bigint
  * dml_txid : uuid
  session_sig : text
  descriptor_id : integer
- dml_as : bigint
 }
 
 class ZALGoalTemplateObjectiveTemplates{
@@ -1000,6 +1026,21 @@ class ZALGoals{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
+}
+
+!issue='model missing for table'
+class ZALGrantPersonnel #pink;line:red;line.bold;text:red {
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
 }
 
 class ZALGrants{
@@ -1352,6 +1393,20 @@ class ZALScopes{
  dml_as : bigint
 }
 
+class ZALSessionReportPilotFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALSessionReportPilots{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1515,6 +1570,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, repo
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
+Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
@@ -1566,6 +1622,7 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collab
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics
@@ -1595,6 +1652,7 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherE
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
+Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, files
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates

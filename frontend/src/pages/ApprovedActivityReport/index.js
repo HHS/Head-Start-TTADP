@@ -6,7 +6,7 @@ import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
-import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
+import { canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import {
@@ -76,8 +76,6 @@ export default function ApprovedActivityReport({ match, user }) {
   [report.id]);
 
   useEffect(() => {
-    const allowedRegions = allRegionsUserHasPermissionTo(user);
-
     if (!parseInt(match.params.activityReportId, 10)) {
       setSomethingWentWrong(true);
       return;
@@ -86,14 +84,14 @@ export default function ApprovedActivityReport({ match, user }) {
     async function fetchReport() {
       try {
         const data = await getReport(match.params.activityReportId);
-        if (!allowedRegions.includes(data.regionId)) {
+        // review and submit table
+        setReport(data);
+      } catch (err) {
+        if (err && err.status && (err.status >= 400 && err.status < 500)) {
           setNotAuthorized(true);
           return;
         }
 
-        // review and submit table
-        setReport(data);
-      } catch (err) {
         // eslint-disable-next-line no-console
         console.log(err);
         setSomethingWentWrong(true);
