@@ -6,6 +6,7 @@ import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState, reportIsEditable } from '../../../../utils';
 
 import Section from '../Review/ReviewSection';
+import AttachmentReviewSection from './AttachmentReviewSection';
 
 const OtherEntityReviewSection = () => {
   const { watch } = useFormContext();
@@ -51,28 +52,7 @@ const OtherEntityReviewSection = () => {
                 ))}
               </ul>
             </div>
-            <div className="margin-top-1">
-              <span className="text-bold">Resource attachments:</span>
-              {' '}
-              {
-                objective.files.map((attachment) => (
-                  <li key={attachment.url.url}>
-                    <a
-                      href={attachment.url.url}
-                      target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                      rel="noreferrer"
-                    >
-                      {
-                        `${attachment.originalFileName}
-                         ${attachment.originalFileName.endsWith('.txt')
-                          ? ' (opens in new tab)'
-                          : ''}`
-                      }
-                    </a>
-                  </li>
-                ))
-              }
-            </div>
+            <AttachmentReviewSection attachments={objective.files} />
             <div className="margin-top-1">
               <span className="text-bold">TTA provided:</span>
               {' '}

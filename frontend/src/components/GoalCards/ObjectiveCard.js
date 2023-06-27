@@ -11,7 +11,7 @@ import {
   NoStatus,
   NotStarted,
   Ceased,
-} from './icons';
+} from '../icons';
 import './ObjectiveCard.scss';
 
 function ObjectiveCard({

@@ -5,6 +5,7 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { FormProvider, useForm } from 'react-hook-form';
 import moment from 'moment';
 import {
@@ -137,7 +138,14 @@ const ActivityReportNavigator = ({
     setError,
     watch,
     errors,
+    reset,
   } = hookForm;
+
+  // A new form page is being shown so we need to reset `react-hook-form` so validations are
+  // reset and the proper values are placed inside inputs
+  useDeepCompareEffect(() => {
+    reset(formData);
+  }, [currentPage, reset, formData]);
 
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
