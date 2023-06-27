@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import UserContext from '../../../UserContext';
 import {
@@ -34,10 +34,13 @@ function SessionCard({
   const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
 
   const getSessionDisplayStatusText = () => {
-    if (status && (status === 'In progress' || status === 'Complete')) {
-      return status;
+    switch (status) {
+      case TRAINING_REPORT_STATUSES.IN_PROGRESS:
+      case TRAINING_REPORT_STATUSES.COMPLETE:
+        return status;
+      default:
+        return TRAINING_REPORT_STATUSES.NOT_STARTED;
     }
-    return 'Needs status';
   };
 
   const displaySessionStatus = getSessionDisplayStatusText();

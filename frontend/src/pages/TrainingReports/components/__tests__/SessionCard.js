@@ -101,6 +101,6 @@ describe('SessionCard', () => {
   it('renders needs status', () => {
     renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'blah' } });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.getByText(/needs status/i)).toBeInTheDocument();
+    expect(screen.getByText(/not started/i)).toBeInTheDocument();
   });
 });
