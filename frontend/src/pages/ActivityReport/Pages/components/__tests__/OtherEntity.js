@@ -7,6 +7,8 @@ import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form';
 import OtherEntity from '../OtherEntity';
 
+let setError;
+
 // eslint-disable-next-line react/prop-types
 const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
   const hookForm = useForm({
@@ -15,6 +17,8 @@ const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
       objectivesWithoutGoals,
     },
   });
+
+  setError = hookForm.setError;
 
   return (
     <FormProvider {...hookForm}>
@@ -70,5 +74,17 @@ describe('OtherEntity', () => {
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);
     userEvent.click(button);
     await waitFor(() => expect(screen.queryAllByText(/objective status/i).length).toBe(2));
+  });
+
+  it('displays errors', async () => {
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
+    const button = await screen.findByRole('button', { name: /Add new objective/i });
+    userEvent.click(button);
+    expect(screen.queryAllByText(/objective status/i).length).toBe(1);
+    userEvent.click(button);
+    await waitFor(() => expect(screen.queryAllByText(/objective status/i).length).toBe(2));
+
+    setError('objectivesWithoutGoals[0].title', { type: 'required', message: 'ENTER A TITLE' });
+    await waitFor(() => expect(screen.queryByText(/ENTER A TITLE/i)).toBeVisible());
   });
 });

@@ -18,7 +18,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     pocId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
       allowNull: true,
     },
     collaboratorIds: {
