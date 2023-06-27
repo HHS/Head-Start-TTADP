@@ -1,4 +1,3 @@
-// import { Op } from 'sequelize';
 import {
   saveGoalsForReport, goalsForGrants,
 } from '../goals';

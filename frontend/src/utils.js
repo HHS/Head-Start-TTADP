@@ -79,9 +79,9 @@ export const getDistinctSortedArray = (arr) => {
 /**
  * Check for a valid date otherwise return '...'.
  */
-export const checkForDate = (date) => {
+export const checkForDate = (date, format = 'MM/DD/YYYY') => {
   if (date) {
-    return moment(date, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT);
+    return moment(date, format).format(DATE_DISPLAY_FORMAT);
   }
   return '---';
 };
