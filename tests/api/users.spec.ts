@@ -106,3 +106,21 @@ test.describe('get /users/training-report-users', () => {
     await validateSchema(response, schema, expect);
   });
 });
+
+test.describe('get /users/names', () => {
+  test('400', async ({ request }) => {
+    const response = await request.get(`${root}/users/names`);
+    expect(response.status()).toBe(400);
+  });
+  test('200', async ({ request }) => {
+    const response = await request.get(
+      `${root}/users/names?ids=1&ids=2`,
+      { headers: { 'playwright-user-id': '1' } }, // has no home region
+    );
+    expect(response.status()).toBe(200);
+
+    const schema = Joi.array().items(Joi.string());
+    expect(response.status()).toBe(200);
+    await validateSchema(response, schema, expect);
+  });
+});
