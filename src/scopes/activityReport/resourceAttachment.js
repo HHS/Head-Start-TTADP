@@ -1,34 +1,30 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
-const activityReportFilesPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Files"."originalFileName"';
-
-  return `
+const selectDistinctActivityReports = (join, having) => `
   SELECT DISTINCT
     "ActivityReports"."id"
   FROM "ActivityReports"
-  LEFT JOIN "ActivityReportFiles"
-  ON "ActivityReportFiles"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "Files"
-  ON "Files"."id" = "ActivityReportFiles"."fileId"
-  WHERE "Files"."originalFileName"${a}`;
+  ${join}
+  GROUP BY "ActivityReports"."id"
+  HAVING ${having}`;
+
+const activityReportFilesIncludeExclude = (include = true) => {
+  const a = include ? '' : 'bool_or("Files"."originalFileName" IS NULL) OR';
+
+  return selectDistinctActivityReports(
+    'LEFT JOIN "ActivityReportFiles" ON "ActivityReportFiles"."activityReportId" = "ActivityReports"."id" LEFT JOIN "Files" ON "Files"."id" = "ActivityReportFiles"."fileId"',
+    `${a} LOWER(STRING_AGG("Files"."originalFileName", CHR(10)))`,
+  );
 };
 
-const activityReportObjectiveFilesPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Files"."originalFileName"';
+const activityReportObjectiveFilesIncludeExclude = (include = true) => {
+  const a = include ? '' : 'bool_or("Files"."originalFileName" IS NULL) OR';
 
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives"
-  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "ActivityReportObjectiveFiles"
-  ON "ActivityReportObjectiveFiles"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
-  LEFT JOIN "Files"
-  ON "Files"."id" = "ActivityReportObjectiveFiles"."fileId"
-  WHERE "Files"."originalFileName"${a}`;
+  return selectDistinctActivityReports(
+    'LEFT JOIN "ActivityReportObjectives" ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id" LEFT JOIN "ActivityReportObjectiveFiles" ON "ActivityReportObjectiveFiles"."activityReportObjectiveId" = "ActivityReportObjectives"."id" LEFT JOIN "Files" ON "Files"."id" = "ActivityReportObjectiveFiles"."fileId"',
+    `${a} LOWER(STRING_AGG("Files"."originalFileName", CHR(10)))`,
+  );
 };
 
 export function withResourceAttachment(query) {
@@ -36,8 +32,8 @@ export function withResourceAttachment(query) {
 
   return {
     [Op.or]: [
-      filterAssociation(activityReportFilesPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportObjectiveFilesPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportFilesIncludeExclude(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportObjectiveFilesIncludeExclude(true), search, false, 'ILIKE'),
     ],
   };
 }
@@ -47,8 +43,8 @@ export function withoutResourceAttachment(query) {
 
   return {
     [Op.and]: [
-      filterAssociation(activityReportFilesPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveFilesPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportFilesIncludeExclude(false), search, false, 'NOT ILIKE'),
+      filterAssociation(activityReportObjectiveFilesIncludeExclude(false), search, false, 'NOT ILIKE'),
     ],
   };
 }
