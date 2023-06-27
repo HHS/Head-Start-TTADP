@@ -14,8 +14,6 @@ jest.mock('./fileUtils', () => ({
   fileHash: () => 'hash',
 }));
 
-jest.mock('bull');
-
 const SMALLEST_GRANT_ID = 1000;
 
 describe('Update HSES data', () => {

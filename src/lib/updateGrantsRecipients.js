@@ -31,17 +31,21 @@ function combineNames(firstName, lastName) {
   return joinedName === '' ? null : joinedName;
 }
 
-function getPersonnelFields(role, field, program) {
+function getPersonnelField(role, field, program) {
+  // return if program is not an object.
+  if (typeof program !== 'object') {
+    return null;
+  }
   return typeof program[`${role}_${field}`] === 'object' ? null : program[`${role}_${field}`];
 }
 
 async function getProgramPersonnel(grantId, programId, program) {
   const programPersonnelArray = [];
-  for (let i = 0; i <= GRANT_PERSONNEL_ROLES.length; i += 1) {
+  for (let i = 0; i < GRANT_PERSONNEL_ROLES.length; i += 1) {
     const currentRole = GRANT_PERSONNEL_ROLES[i];
     // Determine if this personnel exists wth a different name.
-    const firstName = getPersonnelFields(currentRole, 'first_name', program);
-    const lastName = getPersonnelFields(currentRole, 'last_name', program);
+    const firstName = getPersonnelField(currentRole, 'first_name', program);
+    const lastName = getPersonnelField(currentRole, 'last_name', program);
 
     if (firstName && lastName) {
       // eslint-disable-next-line no-await-in-loop
@@ -60,12 +64,12 @@ async function getProgramPersonnel(grantId, programId, program) {
         programId,
         grantId,
         role: currentRole,
-        prefix: getPersonnelFields(currentRole, 'prefix', program),
+        prefix: getPersonnelField(currentRole, 'prefix', program),
         firstName,
         lastName,
-        suffix: getPersonnelFields(currentRole, 'suffix', program),
-        title: getPersonnelFields(currentRole, 'title', program),
-        email: getPersonnelFields(currentRole, 'email', program),
+        suffix: getPersonnelField(currentRole, 'suffix', program),
+        title: getPersonnelField(currentRole, 'title', program),
+        email: getPersonnelField(currentRole, 'email', program),
         effectiveDate: null,
         active: true,
         originalPersonnelId: null,
@@ -244,7 +248,7 @@ export async function processFiles(hashSumHex) {
       })));
 
       // Extract an array of all grant personnel to update.
-      const programPersonnel = programsForDb.map((p) => p.programPersonnel).flat();
+      const programPersonnel = programsForDb.flatMap((p) => p.programPersonnel);
 
       // Split grants between CDI and non-CDI grants.
       const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
