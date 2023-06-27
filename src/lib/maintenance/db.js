@@ -2,9 +2,7 @@
 const { CronJob } = require('cron');
 const { sequelize, MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
-const { auditLogger } = require('../../logger');
 const {
-  maintenanceQueue,
   addQueueProcessor,
   enqueueMaintenanceJob,
   maintenanceCommand,
