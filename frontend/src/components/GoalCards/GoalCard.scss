@@ -5,6 +5,10 @@ $min-width-source-column: 220px;
 $min-width-date-column: 140px;
 $max-width-date-column: 50%;
 
+.ttahub-goal-card {
+  margin-bottom: 8px;
+}
+
 // reset font sizes
 .ttahub-goal-card,
 .ttahub-goal-card .smart-hub-tooltip .smart-hub--ellipsis {

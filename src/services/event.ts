@@ -171,7 +171,13 @@ async function findEventHelperBlob({
       'regionId',
       'data',
     ],
-    raw: true,
+    include: [
+      {
+        model: SessionReportPilot,
+        as: 'sessionReports',
+        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+      },
+    ],
     where,
     order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
   });
