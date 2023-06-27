@@ -68,7 +68,7 @@ const Participants = () => {
             name="recipients"
             control={control}
             simple={false}
-            required="Select at least one"
+            required="Select at least one recipient"
             options={options}
             placeholderText={placeholderText}
           />
@@ -88,7 +88,7 @@ const Participants = () => {
               recipientParticipants
                 .map((participant) => ({ value: participant, label: participant }))
             }
-            required="Select at least one"
+            required="Select at least one participant"
           />
         </FormItem>
       </div>
@@ -143,7 +143,7 @@ const Participants = () => {
                       min={1}
                       inputRef={
                         register({
-                          required: 'Enter number of participants',
+                          required: 'Enter number of participants attending in person',
                           valueAsNumber: true,
                           min: {
                             value: 1,
@@ -169,7 +169,7 @@ const Participants = () => {
                       min={1}
                       inputRef={
                         register({
-                          required: 'Enter number of participants',
+                          required: 'Enter number of participants attending virtually',
                           valueAsNumber: true,
                           min: {
                             value: 1,
@@ -221,7 +221,7 @@ const Participants = () => {
           id="ttaProvided"
           name="ttaProvided"
           inputRef={register({
-            required: 'Enter tta provided',
+            required: 'Describe the tta provided',
           })}
         />
       </FormItem>
