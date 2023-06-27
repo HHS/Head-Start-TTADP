@@ -12,7 +12,7 @@ const validateFields = (request, requiredFields) => {
   }
 };
 
-export async function destroySession(id): Promise<void> {
+export async function destroySession(id: number): Promise<void> {
   await SessionReportPilot.destroy({ where: { id } });
 }
 
@@ -32,7 +32,12 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'data',
     ],
     where,
-    raw: true,
+    include: [
+      {
+        model: db.File,
+        as: 'files',
+      },
+    ],
   };
 
   if (plural) {
@@ -53,6 +58,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     id: session?.id,
     eventId: session?.eventId,
     data: session?.data ?? {},
+    files: session?.files ?? [],
   };
 }
 
@@ -99,4 +105,32 @@ export async function findSessionById(id: number): Promise<SessionReportShape> {
 
 export async function findSessionsByEventId(eventId): Promise<SessionReportShape[]> {
   return findSessionHelper({ eventId }, true) as Promise<SessionReportShape[]>;
+}
+
+export async function getPossibleSessionParticipants(
+  regionId: number,
+) : Promise<{ id: number, name: string }[]> {
+  const where = { status: 'Active', regionId };
+
+  return db.Recipient.findAll({
+    attributes: ['id', 'name'],
+    order: ['name'],
+    include: [{
+      where,
+      model: db.Grant,
+      as: 'grants',
+      attributes: ['id', 'name', 'number'],
+      include: [{
+        model: db.Recipient,
+        as: 'recipient',
+        attributes: ['id', 'name'],
+      },
+      {
+        model: db.Program,
+        as: 'programs',
+        attributes: ['programType'],
+      },
+      ],
+    }],
+  });
 }

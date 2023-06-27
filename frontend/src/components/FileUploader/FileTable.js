@@ -86,14 +86,13 @@ const FileTable = ({ onFileRemoved, files }) => {
                       type="button"
                       className="smart-hub--file-tag-button"
                       unstyled
-                      aria-label="remove file"
                       onClick={(e) => {
                         e.preventDefault();
                         handleDelete(currentIndex);
                       }}
                     >
                       <span className="fa-sm">
-                        <FontAwesomeIcon color={colors.textInk} icon={faTrash} />
+                        <FontAwesomeIcon color={colors.textInk} icon={faTrash} aria-label={`remove ${file.originalFileName}`} />
                       </span>
                     </Button>
                   )
