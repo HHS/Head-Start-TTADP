@@ -168,6 +168,7 @@ async function findEventHelperBlob({
       {
         model: SessionReportPilot,
         as: 'sessionReports',
+        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
       },
     ],
     where,
