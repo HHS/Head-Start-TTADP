@@ -72,14 +72,14 @@ export default {
     onSaveDraft,
     onUpdatePage,
   ) => (
-    <>
+    <div className="padding-x-1">
       <NextSteps />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>
         <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
-    </>
+    </div>
   ),
   isPageComplete,
 };

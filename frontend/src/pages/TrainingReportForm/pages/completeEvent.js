@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -14,6 +14,11 @@ import NavigatorHeader from '../../../components/Navigator/components/NavigatorH
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import { InProgress, Closed } from '../../../components/icons';
+
+const pages = {
+  1: 'Event summary',
+  2: 'Vision and goal',
+};
 
 const position = 3;
 const path = 'complete-event';
@@ -33,14 +38,13 @@ const CompleteEvent = ({
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const [error, updateError] = useState();
   const [sessions, setSessions] = useState();
+  const [showSubmissionError, setShowSubmissionError] = useState(false);
 
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
   // form is explicitly submitted
   const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'Not started');
-
-  const areAllSessionsComplete = sessions && sessions.length && sessions.every((session) => session.data.status === 'Complete');
 
   useEffect(() => {
     // we want to set the status to in progress if the user adds a session
@@ -69,14 +73,23 @@ const CompleteEvent = ({
     }
   }, [formData.id, sessions, setIsAppLoading]);
 
+  const areAllSessionsComplete = sessions && sessions.length && sessions.every((session) => session.data.status === 'Complete');
+  const incompleteSessions = !sessions || areAllSessionsComplete ? [] : sessions.filter((session) => session.data.status !== 'Complete');
+
+  const incompletePages = (() => Object.keys(pages)
+    .filter((key) => formData.pageState[key] !== TRAINING_REPORT_STATUSES.COMPLETE)
+    .map((key) => pages[key]))();
+
+  const areAllPagesComplete = incompletePages.length === 0;
+
   const onFormSubmit = async () => {
     if (updatedStatus !== 'Complete') {
-      setError('status', { message: 'Status must be complete to submit' });
+      setError('status', { message: 'Event must be complete to submit' });
       return;
     }
 
-    if (!areAllSessionsComplete) {
-      setError('status', { message: 'All sessions must be complete to submit event' });
+    if (!areAllSessionsComplete || !areAllPagesComplete) {
+      setShowSubmissionError(true);
       return;
     }
 
@@ -99,7 +112,7 @@ const CompleteEvent = ({
   }
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Complete event</title>
       </Helmet>
@@ -173,7 +186,44 @@ const CompleteEvent = ({
         <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveForm}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
-    </>
+
+      {showSubmissionError && (
+        <div className="margin-top-4">
+          <Alert type="error" noIcon>
+            <p className="usa-prose text-bold margin-y-0">Incomplete report</p>
+            {
+              !areAllPagesComplete && (
+                <>
+                  <p className="usa-prose margin-y-0">This report cannot be submitted until all sections are complete. Please review the following sections:</p>
+                  <ul className="usa-list">
+                    {incompletePages.map((page) => (
+                      <li key={`incomplete-page-${page}`}>
+                        {page}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )
+            }
+            {
+              !areAllSessionsComplete && (
+                <>
+                  <p className="usa-prose margin-y-0">This report cannot be submitted until all sessions are complete.</p>
+                  <ul className="usa-list">
+                    {incompleteSessions.map((session) => (
+                      <li key={session.id}>
+                        {session.data.sessionName}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )
+            }
+          </Alert>
+        </div>
+      )}
+
+    </div>
   );
 };
 
@@ -181,6 +231,10 @@ CompleteEvent.propTypes = {
   formData: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,
+    pageState: PropTypes.shape({
+      1: PropTypes.string,
+      2: PropTypes.string,
+    }),
   }),
   onSaveForm: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,

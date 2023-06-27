@@ -16,7 +16,6 @@ import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   defaultValues,
 } from './constants';
-import { COMPLETE } from '../../components/Navigator/constants';
 import { getTrainingReportUsers } from '../../fetchers/users';
 import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -49,6 +48,10 @@ const resetFormData = (reset, event) => {
     ...data,
     ...fields,
   };
+
+  if (!form.pocId && form.pocId !== undefined) {
+    form.pocId = [];
+  }
 
   reset({
     ...defaultValues,
@@ -117,7 +120,6 @@ export default function TrainingReportForm({ match }) {
   });
 
   const eventRegion = hookForm.watch('regionId');
-  const pageState = hookForm.watch('pageState');
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
@@ -258,18 +260,6 @@ export default function TrainingReportForm({ match }) {
       // reset the error message
       setError('');
       setIsAppLoading(true);
-
-      // we check at button click if all the sessions are complete,
-      // so now we just need to see if all the pages are complete
-
-      // if the page is not complete, we need to set an error and bomb out early
-      if (!Object.values(pageState).every((page) => page === COMPLETE) && updatedStatus === 'Complete') {
-        hookForm.setError('status', {
-          message: 'Please complete all required fields before submitting.',
-        });
-
-        return;
-      }
 
       // grab the newest data from the form
       const {

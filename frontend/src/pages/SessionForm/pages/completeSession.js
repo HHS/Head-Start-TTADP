@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Form, Button, Dropdown,
+  Form, Button, Dropdown, Alert,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import Container from '../../../components/Container';
@@ -13,6 +13,12 @@ import NavigatorHeader from '../../../components/Navigator/components/NavigatorH
 
 const position = 4;
 const path = 'complete-session';
+
+const pages = {
+  1: 'Session summary',
+  2: 'Participants',
+  3: 'Next steps',
+};
 
 const CompleteSession = ({
   onSubmit,
@@ -27,10 +33,22 @@ const CompleteSession = ({
   // we need to validate before saving, and we only want the status to change when the
   // form is explicitly submitted
   const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'In progress');
+  const [showSubmissionError, setShowSubmissionError] = useState(false);
+
+  const incompletePages = (() => Object.keys(pages)
+    .filter((key) => formData.pageState[key] !== 'Complete')
+    .map((key) => pages[key]))();
+
+  const areAllPagesComplete = !incompletePages.length;
 
   const onFormSubmit = async () => {
     if (updatedStatus !== 'Complete') {
-      setError('status', { message: 'Session status must be complete to submit' });
+      setError('status', { message: 'Session must be complete to submit' });
+      return;
+    }
+
+    if (incompletePages.length) {
+      setShowSubmissionError(true);
       return;
     }
 
@@ -43,7 +61,7 @@ const CompleteSession = ({
   ];
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Complete session</title>
       </Helmet>
@@ -82,7 +100,30 @@ const CompleteSession = ({
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
         <Button id="back-button" outline type="button" onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
-    </>
+
+      {showSubmissionError && (
+        <div className="margin-top-4">
+          <Alert type="error" noIcon>
+            <p className="usa-prose text-bold margin-y-0">Incomplete report</p>
+            {
+              !areAllPagesComplete && (
+                <>
+                  <p className="usa-prose margin-y-0">This report cannot be submitted until all sections are complete. Please review the following sections:</p>
+                  <ul className="usa-list">
+                    {incompletePages.map((page) => (
+                      <li key={`incomplete-page-${page}`}>
+                        {page}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )
+            }
+          </Alert>
+        </div>
+      )}
+
+    </div>
   );
 };
 
@@ -90,6 +131,11 @@ CompleteSession.propTypes = {
   formData: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,
+    pageState: PropTypes.shape({
+      1: PropTypes.string,
+      2: PropTypes.string,
+      3: PropTypes.string,
+    }),
   }),
   onSaveForm: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,

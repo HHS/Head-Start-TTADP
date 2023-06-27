@@ -78,7 +78,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const { users: { collaborators, pointOfContact } } = additionalData;
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Event summary</title>
       </Helmet>
@@ -111,7 +111,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               onChange={(s) => {
                 controllerOnChange(s.value);
               }}
-              inputRef={register({ required: 'Select one' })}
+              inputRef={register({ required: 'Select an event organizer' })}
               options={eventOrganizerOptions}
             />
           )}
@@ -152,7 +152,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                 onChange={(s) => {
                   controllerOnChange(s.map((option) => option.id));
                 }}
-                inputRef={register({ required: 'Select one' })}
+                inputRef={register({ required: 'Select at least one collaborator' })}
                 getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
                 options={collaborators}
@@ -162,7 +162,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             rules={{
               validate: (value) => {
                 if (!value || value.length === 0) {
-                  return 'Select collaborators';
+                  return 'Select at least one collaborator';
                 }
                 return true;
               },
@@ -195,7 +195,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               onChange={(s) => {
                 controllerOnChange(s.map((option) => option.id));
               }}
-              inputRef={register({ required: 'Select one' })}
+              inputRef={register({ required: 'Select at least one event region point of contact' })}
               getOptionLabel={(option) => option.fullName}
               getOptionValue={(option) => option.id}
               options={pointOfContact}
@@ -206,7 +206,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           rules={{
             validate: (value) => {
               if (!value || value.length === 0) {
-                return 'Select a point of contact';
+                return 'Select at least one event region point of contact';
               }
               return true;
             },
@@ -295,7 +295,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           Training type
           <Req />
         </Label>
-        <Dropdown id="trainingType" name="trainingType" inputRef={register({ required: 'Select one' })}>
+        <Dropdown id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
           <option>Series</option>
         </Dropdown>
       </div>
@@ -309,7 +309,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             name="reasons"
             control={control}
             options={REASONS.map((reason) => ({ value: reason, label: reason }))}
-            required="Select at least one"
+            required="Select at least on reason"
             placeholderText={placeholderText}
           />
         </FormItem>
@@ -324,13 +324,13 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           <MultiSelect
             name="targetPopulations"
             control={control}
-            required="Select at least one"
+            required="Select at least one target population"
             options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
             placeholderText="- Select -"
           />
         </FormItem>
       </div>
-    </>
+    </div>
   );
 };
 

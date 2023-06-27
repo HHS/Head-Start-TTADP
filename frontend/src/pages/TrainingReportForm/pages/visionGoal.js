@@ -15,7 +15,7 @@ const VisionGoal = () => {
   const { register } = useFormContext();
 
   return (
-    <>
+    <div className="padding-x-1">
       <Helmet>
         <title>Vision and goal</title>
       </Helmet>
@@ -31,7 +31,7 @@ const VisionGoal = () => {
             id="vision"
             name="vision"
             inputRef={register({
-              required: 'Enter an event vision',
+              required: 'Descibe the event vision',
             })}
           />
         </FormItem>
@@ -47,12 +47,12 @@ const VisionGoal = () => {
             id="goal"
             name="goal"
             inputRef={register({
-              required: 'Enter an event goal',
+              required: 'Describe the event goal',
             })}
           />
         </FormItem>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -41,7 +41,7 @@ describe('filtersToScopes', () => {
       // create lte report.
       lteEventReportPilot = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [],
         regionId: mockUser.homeRegionId,
         data: {
@@ -52,7 +52,7 @@ describe('filtersToScopes', () => {
       // create gte report.
       gteEventReportPilot = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [],
         regionId: mockUser.homeRegionId,
         data: {
@@ -63,7 +63,7 @@ describe('filtersToScopes', () => {
       // create between report.
       betweenEventReportPilot = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [],
         regionId: mockUser.homeRegionId,
         data: {
@@ -109,13 +109,6 @@ describe('filtersToScopes', () => {
       const filters = { 'startDate.aft': '2021/06/08' };
       const { trainingReport: scope } = await filtersToScopes(filters);
 
-      // get all reports.
-      const testFound = await EventReportPilot.findAll({
-        where: {
-          id: possibleIds.map((id) => id),
-        },
-      });
-
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -137,7 +130,7 @@ describe('filtersToScopes', () => {
       // create report with region 1.
       reportWithRegion1 = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [],
         regionId: mockUser.homeRegionId,
         data: {},
@@ -146,7 +139,7 @@ describe('filtersToScopes', () => {
       // create report with region 2.
       reportWithRegion2 = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [],
         regionId: mockUser.homeRegionId,
         data: {},
@@ -155,7 +148,7 @@ describe('filtersToScopes', () => {
       // create report with different region.
       reportWithoutRegion = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [],
         regionId: 3,
         data: {},
@@ -212,7 +205,7 @@ describe('filtersToScopes', () => {
       // create report with region 1.
       reportWithCollaborator = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
         data: {},
@@ -221,7 +214,7 @@ describe('filtersToScopes', () => {
       // create report with region 2.
       reportWithBothCollaborators = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [mockCollaboratorUser.id, mockUser.id],
         regionId: mockUser.homeRegionId,
         data: {},
@@ -230,7 +223,7 @@ describe('filtersToScopes', () => {
       // create report with different region.
       reportWithOtherCollaborator = await EventReportPilot.create({
         ownerId: mockUser.id,
-        pocId: mockUser.id,
+        pocId: [mockUser.id],
         collaboratorIds: [mockCollaboratorUser.id],
         regionId: 3,
         data: {},

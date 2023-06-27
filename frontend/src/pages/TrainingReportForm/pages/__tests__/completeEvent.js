@@ -12,9 +12,15 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('completeEvent', () => {
   describe('render', () => {
+    const defaultPageState = {
+      1: 'In progress',
+      2: 'Complete',
+    };
+
     const defaultFormValues = {
       id: 1,
       status: 'Not started',
+      pageState: defaultPageState,
     };
 
     const sessionsUrl = '/api/session-reports/eventId/1';
@@ -29,12 +35,14 @@ describe('completeEvent', () => {
         defaultValues,
       });
 
+      const formData = hookForm.watch();
+
       return (
         <FormProvider {...hookForm}>
           <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               {completeEvent.render(
-                defaultFormValues,
+                formData,
                 onSubmit,
                 {},
                 jest.fn(),
@@ -181,7 +189,7 @@ describe('completeEvent', () => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it('will submit if all sessions are complete', async () => {
+    it('will not submit if all sessions but not all pages are complete', async () => {
       fetchMock.getOnce(sessionsUrl, [
         { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
         { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
@@ -202,6 +210,37 @@ describe('completeEvent', () => {
         userEvent.click(submitButton);
       });
 
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('will submit if all sessions and pages are complete', async () => {
+      fetchMock.getOnce(sessionsUrl, [
+        { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+      ]);
+
+      act(() => {
+        render(<RenderCompleteEvent defaultValues={{
+          ...defaultFormValues,
+          pageState: {
+            1: 'Complete',
+            2: 'Complete',
+          },
+        }}
+        />);
+      });
+
+      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+      act(() => {
+        userEvent.selectOptions(statusSelect, 'Complete');
+      });
+      expect(statusSelect).toHaveValue('Complete');
+
+      const submitButton = await screen.findByRole('button', { name: /submit/i });
+      act(() => {
+        userEvent.click(submitButton);
+      });
+
       expect(onSubmit).toHaveBeenCalledWith('Complete');
     });
 
@@ -209,7 +248,7 @@ describe('completeEvent', () => {
       fetchMock.getOnce(sessionsUrl, []);
 
       act(() => {
-        render(<RenderCompleteEvent defaultValues={{ id: 1 }} />);
+        render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState }} />);
       });
 
       const statusSelect = await screen.findByRole('combobox', { name: /status/i });
