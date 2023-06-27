@@ -196,11 +196,10 @@ const createJob = (category, type, timezone, schedule, jobCommand) => {
  * @param {string} category - The name of the category.
  * @param {Object} typeJobs - An object containing the types of jobs and their corresponding
  * commands.
- * @param {Object} schedules - An object containing the schedules for each category and type of job.
  * @param {string} timezone - The timezone to use for the jobs.
  * @returns {Object} - A category object with jobs for each type of job.
  */
-const createCategory = (category, typeJobs, schedules, timezone) => {
+const createCategory = (category, typeJobs, timezone) => {
   // Create an object containing jobs for each type of job in the category.
   const jobs = Object.entries(typeJobs).reduce(
     (
@@ -220,12 +219,11 @@ const createCategory = (category, typeJobs, schedules, timezone) => {
  * Runs maintenance cron jobs based on provided schedules and timezone.
  *
  * @param {string} timezone - The timezone to use for the cron jobs.
- * @param {Object} schedules - An object containing the schedules for each job type.
  * @returns {Array} - An array of categories containing their respective cron jobs.
  */
-const runMaintenanceCronJobs = (timezone = 'America/New_York', schedules = {}) => {
+const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
   const categories = Object.entries(maintenanceCronJobs).reduce((acc, [category, typeJobs]) => {
-    const categoryObj = createCategory(category, typeJobs, schedules, timezone);
+    const categoryObj = createCategory(category, typeJobs, timezone);
     acc[categoryObj.name] = categoryObj.jobs;
     return acc;
   }, {});
