@@ -1,5 +1,4 @@
 const { default: newQueue } = require('../queue');
-const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { MaintenanceLog } = require('../../models');
 const { auditLogger, logger } = require('../../logger');
 
