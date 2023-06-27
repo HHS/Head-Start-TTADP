@@ -15,6 +15,8 @@ import {
   findEventsByStatus,
 } from '../../services/event';
 import { userById } from '../../services/users';
+import { setReadRegions } from '../../services/accessValidation';
+import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -30,13 +32,11 @@ export const getByStatus = async (req, res) => {
   try {
     const { status: statusParam } = req.params;
     const auth = await getEventAuthorization(req, res, {});
-
+    const userId = await currentUserId(req, res);
     const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
-    if (!status) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Invalid status' });
-    }
-
-    const events = await findEventsByStatus(status, auth.readableRegions);
+    const updatedFilters = await setReadRegions(req.query, userId);
+    const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
+    const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {

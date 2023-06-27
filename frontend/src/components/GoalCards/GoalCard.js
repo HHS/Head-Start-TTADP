@@ -14,7 +14,6 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
 import ExpanderButton from '../ExpanderButton';
-import TooltipList from '../TooltipList';
 import './GoalCard.scss';
 import colors from '../../colors';
 import { goalPropTypes } from './constants';
@@ -38,7 +37,6 @@ function GoalCard({
     goalStatus,
     createdOn,
     goalText,
-    goalTopics,
     objectiveCount,
     reasons,
     objectives,
@@ -145,9 +143,9 @@ function GoalCard({
             {determineFlagStatus()}
           </p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Topics</p>
-          <TooltipList list={goalTopics} cardType="goal" listType="topics" />
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Goal source</p>
+          <p className="usa-prose margin-y-0">{goal.source}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
