@@ -10,6 +10,7 @@ import {
   Pencil,
 } from '../../../components/icons';
 import { canEditOrCreateSessionReports } from '../../../permissions';
+import './SessionCard.scss';
 
 function SessionCard({
   eventId,
@@ -55,13 +56,15 @@ function SessionCard({
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Session name </span>
         <div>
-          {sessionName}
+          <span className="margin-right-2">
+            {sessionName}
+          </span>
           {
             hasEditPermissions
               ? (
-                <span className="margin-left-2">
-                  <Pencil />
-                  <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
+                <span>
+                  <Link key={`edit-session-key-${session.id}`} to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
+                    <Pencil />
                     Edit session
                   </Link>
                 </span>
