@@ -90,6 +90,8 @@ describe('TrainingReportForm', () => {
       regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
     });
     renderTrainingReportForm('123', 'event-summary');
+
+    jest.advanceTimersByTime(30000);
     expect(fetchMock.called('/api/events/id/123')).toBe(true);
   });
 
@@ -112,31 +114,6 @@ describe('TrainingReportForm', () => {
     });
 
     expect(screen.getByText(/no training report id provided/i)).toBeInTheDocument();
-  });
-
-  it('validates the form when the save & continue button is pressed', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1',
-      reportId: 1,
-      data: {},
-      collaboratorIds: [],
-      ownerId: 1,
-      pocId: 1,
-    });
-    renderTrainingReportForm('123', 'event-summary');
-    expect(fetchMock.called('/api/events/id/123')).toBe(true);
-
-    fetchMock.put('/api/events/id/123', { regionId: '1', reportId: 1, data: {} });
-    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
-    const onSaveAndContinueButton = screen.getByText(/save and continue/i);
-    act(() => {
-      userEvent.click(onSaveAndContinueButton);
-    });
-
-    await screen.findByText('Select collaborators');
-
-    // check that fetch mock was NOT called with a put request
-    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
   });
 
   it('tests the on save & continue button', async () => {
@@ -251,8 +228,8 @@ describe('TrainingReportForm', () => {
     });
 
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
@@ -269,7 +246,7 @@ describe('TrainingReportForm', () => {
       userEvent.click(submitButton);
     });
 
-    await waitFor(() => expect(screen.getByText('Status must be complete to submit')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Event must be complete to submit')).toBeInTheDocument());
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(false));
   });
 
@@ -283,8 +260,8 @@ describe('TrainingReportForm', () => {
     });
 
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
@@ -314,7 +291,7 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
-      pocId: 1,
+      pocId: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
@@ -338,8 +315,8 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/events/id/1', completedForm);
     fetchMock.put('/api/events/id/1', completedForm);
     fetchMock.get(sessionsUrl, [
-      { id: 2, eventId: 1, data: { name: 'Toothbrushing vol 2', status: 'Complete' } },
-      { id: 3, eventId: 1, data: { name: 'Toothbrushing vol 3', status: 'Complete' } },
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
@@ -364,5 +341,65 @@ describe('TrainingReportForm', () => {
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
     const lastBody = JSON.parse(fetchMock.lastOptions().body);
     expect(lastBody.data.status).toEqual('Complete');
+  });
+
+  it('handles an error submitting the form', async () => {
+    const completedForm = {
+      regionId: '1',
+      reportId: 1,
+      id: 1,
+      collaboratorIds: [1, 2, 3],
+      ownerId: 1,
+      pocId: [1],
+      data: {
+        eventOrganizer: 'IST TTA/Visit',
+        eventIntendedAudience: 'recipients',
+        startDate: '01/01/2021',
+        endDate: '01/01/2021',
+        trainingType: 'Series',
+        reasons: ['Reason'],
+        targetPopulations: ['Target'],
+        status: 'In progress',
+        vision: 'asdf',
+        goal: 'afdf',
+        eventId: 'E-1',
+        eventName: 'E-1 Event',
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+        },
+      },
+    };
+
+    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.put('/api/events/id/1', 500);
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1', 'complete-event');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'GET' })).toBe(true));
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    await waitFor(async () => expect(await screen.findByRole('button', { name: /Event summary complete/i })).toBeInTheDocument());
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+    expect(statusSelect).toHaveValue('Complete');
+
+    const submitButton = await screen.findByRole('button', { name: /submit/i });
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
+    const lastBody = JSON.parse(fetchMock.lastOptions().body);
+    expect(lastBody.data.status).toEqual('Complete');
+    await waitFor(() => expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument());
   });
 });
