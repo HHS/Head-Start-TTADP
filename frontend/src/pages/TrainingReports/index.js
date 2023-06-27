@@ -1,6 +1,8 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
+import React, {
+  useContext, useState, useEffect, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
@@ -18,24 +20,59 @@ import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
 import { getEventsByStatus } from '../../fetchers/trainingReports';
 import AppLoadingContext from '../../AppLoadingContext';
+import { EVENT_STATUS, TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
+import AriaLiveContext from '../../AriaLiveContext';
+import { filtersToQueryString, expandFilters } from '../../utils';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import FilterPanel from '../../components/filter/FilterPanel';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
 
-const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
-  key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
-}));
+const FILTER_KEY = 'training-report-filters';
 
+const tabValues = [
+  { key: 'Not started', value: EVENT_STATUS.NOT_STARTED },
+  { key: 'In progress', value: EVENT_STATUS.IN_PROGRESS },
+  { key: 'Completed', value: EVENT_STATUS.COMPLETE }];
 export default function TrainingReports({ match }) {
   const { params: { status } } = match;
   const { user } = useContext(UserContext);
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
+
+  // Determine Default Region.
+  const regions = allRegionsUserHasPermissionTo(user);
+  const ariaLiveContext = useContext(AriaLiveContext);
+
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const hasMultipleRegions = regions && regions.length > 1;
+
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      && hasMultipleRegions
+      ? [{
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: defaultRegion,
+      }]
+      : allRegionsFilters,
+  );
+
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
   useEffect(() => {
     async function fetchEvents() {
       setAppLoadingText('Fetching events...');
       setIsAppLoading(true);
-      // const filterQuery = filtersToQueryString(filtersToApply);
+      const filterQuery = filtersToQueryString(filtersToApply);
       try {
-        const events = await getEventsByStatus(status);
+        const events = await getEventsByStatus(status, filterQuery);
         setDisplayEvents(events);
         updateError('');
       } catch (e) {
@@ -47,10 +84,7 @@ export default function TrainingReports({ match }) {
       }
     }
     fetchEvents();
-  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading]);
-
-  const regions = allRegionsUserHasPermissionTo(user);
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
+  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filtersToApply]);
 
   const [showAlert, updateShowAlert] = useState(true);
 
@@ -88,14 +122,57 @@ export default function TrainingReports({ match }) {
     );
   }
 
+  // Apply filters.
+  const onApply = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFiltersInHook([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFiltersInHook([
+        ...newFilters,
+      ]);
+    }
+
+    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
+  };
+
+  // Remove Filters.
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFiltersInHook([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFiltersInHook(newFilters);
+      }
+    }
+  };
+
+  const filterConfig = hasMultipleRegions
+    ? TRAINING_REPORT_CONFIG_WITH_REGIONS : TRAINING_REPORT_BASE_FILTER_CONFIG;
+
   return (
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
       <>
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
+          }
+        />
         {showAlert && message && (
           <Alert
             type="success"
             role="alert"
+            className="margin-bottom-2"
             noIcon
             cta={(
               <Button
@@ -126,6 +203,16 @@ export default function TrainingReports({ match }) {
               {error}
             </Alert>
             )}
+          </Grid>
+          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+            <FilterPanel
+              applyButtonAria="apply filters for training reports"
+              filters={filters}
+              onApplyFilters={onApply}
+              onRemoveFilter={onRemoveFilter}
+              filterConfig={filterConfig}
+              allUserRegions={regions}
+            />
           </Grid>
           <Grid row>
             <WidgetContainer
