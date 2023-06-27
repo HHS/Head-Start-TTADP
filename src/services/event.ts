@@ -93,7 +93,12 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
       'updatedAt',
     ],
     where,
-    raw: true,
+    include: [
+      {
+        model: SessionReportPilot,
+        as: 'sessionReports',
+      },
+    ],
   };
 
   if (plural) {
@@ -118,6 +123,7 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
     regionId: event?.regionId,
     data: event?.data ?? {},
     updatedAt: event?.updatedAt,
+    sessionReports: event?.sessionReports ?? [],
   };
 }
 
