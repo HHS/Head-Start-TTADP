@@ -216,7 +216,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
 
-    expect(await screen.findByText(/Please complete all required fields before submitting/i)).toBeInTheDocument();
+    expect(await screen.findByText(/This report cannot be submitted until all sections are complete\. Please review the following sections/i)).toBeInTheDocument();
   });
   it('will not submit if status is not complete', async () => {
     const url = join(sessionsUrl, 'id', '1');
@@ -265,7 +265,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
 
-    expect(await screen.findByText(/Session status must be complete to submit/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Session must be complete to submit/i)).toBeInTheDocument();
   });
   it('will submit if every page & the status is complete', async () => {
     const url = join(sessionsUrl, 'id', '1');

@@ -19,7 +19,6 @@ import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
-import { COMPLETE } from '../../components/Navigator/constants';
 import { isValidResourceUrl } from '../../components/GoalForm/constants';
 
 // websocket publish location interval
@@ -166,8 +165,6 @@ export default function SessionForm({ match }) {
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
 
-  const pageState = hookForm.watch('pageState');
-
   const updatePage = (position) => {
     const state = {};
     if (reportId.current) {
@@ -229,18 +226,6 @@ export default function SessionForm({ match }) {
       // reset the error message
       setError('');
       setIsAppLoading(true);
-
-      // we check at button click if all the sessions are complete,
-      // so now we just need to see if all the pages are complete
-
-      // if the page is not complete, we need to set an error and bomb out early
-      if (!Object.values(pageState).every((page) => page === COMPLETE) && updatedStatus === 'Complete') {
-        hookForm.setError('status', {
-          message: 'Please complete all required fields before submitting.',
-        });
-
-        return;
-      }
 
       // grab the newest data from the form
       const {

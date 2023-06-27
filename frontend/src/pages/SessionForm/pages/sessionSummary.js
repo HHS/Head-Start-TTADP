@@ -205,7 +205,7 @@ const SessionSummary = ({ datePickerKey }) => {
             name="sessionName"
             type="text"
             required
-            inputRef={register({ required: 'Enter a session name' })}
+            inputRef={register({ required: 'Enter session name' })}
           />
         </FormItem>
       </div>
@@ -301,7 +301,7 @@ const SessionSummary = ({ datePickerKey }) => {
           id="context"
           name="context"
           inputRef={register({
-            required: 'Enter an objective',
+            required: 'Describe the session context',
           })}
         />
       </FormItem>
@@ -316,7 +316,7 @@ const SessionSummary = ({ datePickerKey }) => {
           id="objective"
           name="objective"
           inputRef={register({
-            required: 'Enter an objective',
+            required: 'Describe the session objective',
           })}
         />
       </FormItem>
@@ -344,7 +344,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 onChange={(s) => {
                   controllerOnChange(s.map((o) => o.name));
                 }}
-                inputRef={register({ required: 'Select one' })}
+                inputRef={register({ required: 'Select at least one topic' })}
                 getOptionLabel={(option) => option.name}
                 getOptionValue={(option) => option.id}
                 options={topicOptions || []}
@@ -387,7 +387,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 onChange={(s) => {
                   controllerOnChange(s.map((o) => o.label));
                 }}
-                inputRef={register({ required: 'Select one' })}
+                inputRef={register({ required: 'Select at least one trainer' })}
                 options={TRAINER_OPTIONS}
                 isMulti
               />
@@ -500,7 +500,7 @@ const SessionSummary = ({ datePickerKey }) => {
         <Dropdown
           id="objectiveSupportType"
           name="objectiveSupportType"
-          inputRef={register({ required: 'Select one' })}
+          inputRef={register({ required: 'Select a support type' })}
           defaultValue=""
         >
           <option disabled hidden value="">Select one</option>
