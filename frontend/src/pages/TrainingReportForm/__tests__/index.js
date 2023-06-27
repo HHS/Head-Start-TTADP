@@ -246,7 +246,7 @@ describe('TrainingReportForm', () => {
       userEvent.click(submitButton);
     });
 
-    await waitFor(() => expect(screen.getByText('Status must be complete to submit')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Event must be complete to submit')).toBeInTheDocument());
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(false));
   });
 

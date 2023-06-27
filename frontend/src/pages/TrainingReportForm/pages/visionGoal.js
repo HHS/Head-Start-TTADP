@@ -31,7 +31,7 @@ const VisionGoal = () => {
             id="vision"
             name="vision"
             inputRef={register({
-              required: 'Enter an event vision',
+              required: 'Descibe the event vision',
             })}
           />
         </FormItem>
@@ -47,7 +47,7 @@ const VisionGoal = () => {
             id="goal"
             name="goal"
             inputRef={register({
-              required: 'Enter an event goal',
+              required: 'Describe the event goal',
             })}
           />
         </FormItem>
