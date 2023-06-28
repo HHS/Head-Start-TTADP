@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { afterCreate, afterUpdate } = require('./hooks/sessionReportPilot');
 
 export default (sequelize, DataTypes) => {
   class SessionReportPilot extends Model {
@@ -31,6 +32,11 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'SessionReportPilot',
+
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
   });
 
   return SessionReportPilot;
