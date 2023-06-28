@@ -95,6 +95,7 @@ export default function ViewTrainingReport({ match }) {
       'Intended audience': event.data.audience,
       'Start date': event.data.startDate,
       'End date': event.data.endDate,
+      'Training type': event.data['Event Duration/# NC Days of Support'],
       Reasons: event.data.reasons,
       'Target populations': event.data.targetPopulations,
     },
