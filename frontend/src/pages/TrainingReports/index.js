@@ -19,7 +19,7 @@ import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
-import { getEventsByStatus } from '../../fetchers/trainingReports';
+import { getEventsByStatus } from '../../fetchers/event';
 import AppLoadingContext from '../../AppLoadingContext';
 import { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
 import AriaLiveContext from '../../AriaLiveContext';
