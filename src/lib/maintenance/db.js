@@ -208,7 +208,7 @@ const dailyMaintenance = async (offset = 0, limit = numOfModels) => maintenanceC
  */
 const nextBlock = async (type, percent = null) => {
   // Find the latest successful maintenance log for the given type and category.
-  const { offset = 0, limit = numOfModels } = await MaintenanceLog.findOne({
+  const log = await MaintenanceLog.findOne({
     where: {
       category: MAINTENANCE_CATEGORY.DB,
       type,
@@ -217,6 +217,8 @@ const nextBlock = async (type, percent = null) => {
     order: [['id', 'DESC']],
     raw: true,
   });
+
+  const { offset = 0, limit = numOfModels } = log?.data ?? { offset: 0, limit: numOfModels };
   // Calculate the new offset based on the current offset and limit.
   // If the new offset exceeds the total number of models, reset it to 0.
   const newOffset = offset + limit < numOfModels
