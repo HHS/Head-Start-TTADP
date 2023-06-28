@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState } from 'react';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
 import './EventCard.scss';
@@ -24,7 +25,7 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (data.status !== 'Complete') {
+  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
     menuItems.push({
       label: 'Create session',
       onClick: () => {
