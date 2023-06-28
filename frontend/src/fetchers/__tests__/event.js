@@ -1,6 +1,12 @@
 import fetchMock from 'fetch-mock';
-
-import { eventById, sessionsByEventId, updateEvent } from '../event';
+import join from 'url-join';
+import {
+  eventById,
+  sessionsByEventId,
+  updateEvent,
+  getEventsByStatus,
+} from '../event';
+import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
 
 describe('eventById', () => {
   beforeEach(() => {
@@ -67,5 +73,14 @@ describe('sessionsByEventId', () => {
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/session-reports/eventId/1');
     expect(event).toEqual({ id: 1, name: 'updated test event' });
+  });
+});
+
+describe('getEventsByStatus', () => {
+  it('fetches events by status', async () => {
+    const eventUrl2 = join('/', 'api', 'events', EVENT_STATUS.NOT_STARTED);
+    fetchMock.get(eventUrl2, []);
+    await getEventsByStatus(EVENT_STATUS.NOT_STARTED, '');
+    expect(fetchMock.called()).toBeTruthy();
   });
 });
