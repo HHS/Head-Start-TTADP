@@ -1,11 +1,15 @@
+const { Op } = require('sequelize');
 const {
-  testingOnly: {
-    maintenanceQueue,
-    onFailedMaintenance,
-    onCompletedMaintenance,
-    createMaintenanceLog,
-    updateMaintenanceLog,
-  },
+  // testing only
+  maintenanceQueue,
+  onFailedMaintenance,
+  onCompletedMaintenance,
+  createMaintenanceLog,
+  updateMaintenanceLog,
+  backDate,
+  clearMaintenanceLogs,
+  maintenance,
+  // normal exports
   addQueueProcessor,
   hasQueueProcessor,
   removeQueueProcessor,
@@ -13,6 +17,7 @@ const {
   enqueueMaintenanceJob,
   maintenanceCommand,
 } = require('./common');
+const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 
 const { MaintenanceLog } = require('../../models');
 const { auditLogger, logger } = require('../../logger');
@@ -21,6 +26,7 @@ jest.mock('../../models', () => ({
   MaintenanceLog: {
     create: jest.fn(),
     update: jest.fn(),
+    destroy: jest.fn(),
   },
 }));
 
@@ -107,15 +113,23 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category1, processor1);
       addQueueProcessor(category2, processor2);
       processMaintenanceQueue();
-      expect(maintenanceQueue.process).toHaveBeenCalledTimes(2);
+      expect(maintenanceQueue.process).toHaveBeenCalledTimes(3);
       expect(maintenanceQueue.process).toHaveBeenCalledWith(category1, processor1);
       expect(maintenanceQueue.process).toHaveBeenCalledWith(category2, processor2);
+      expect(maintenanceQueue.process)
+        .toHaveBeenCalledWith(
+          MAINTENANCE_CATEGORY.MAINTENANCE,
+          maintenance,
+        );
     });
   });
 
   describe('enqueueMaintenanceJob', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
     it('should add a job to the maintenance queue if a processor is defined for the given category', () => {
-      const data = { test: 'data' };
+      const data = { test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category' };
       const category = 'test-category';
       const processor = jest.fn();
       addQueueProcessor(category, processor);
@@ -135,8 +149,8 @@ describe('Maintenance Queue', () => {
     it('should create a new maintenance log object with the given category, type, and data', async () => {
       const category = 'test-category';
       const type = 'test-type';
-      const data = { test: 'data' };
-      const triggeredById = 1;
+      const data = { test: 'createMaintenanceLog - should create a new maintenance log object with the given category, type, and data' };
+      const triggeredById = null;
       const expectedLog = {
         id: 1,
         category,
@@ -159,7 +173,7 @@ describe('Maintenance Queue', () => {
   describe('updateMaintenanceLog', () => {
     it('should update the MaintenanceLog table with the new data and success status for the specified log ID', async () => {
       const log = { id: 1 };
-      const newData = { test: 'new-data' };
+      const newData = { test: 'updateMaintenanceLog - should update the MaintenanceLog table with the new data and success status for the specified log ID' };
       const isSuccessful = true;
       await updateMaintenanceLog(log, newData, isSuccessful);
       expect(MaintenanceLog.update).toHaveBeenCalledWith(
@@ -169,7 +183,7 @@ describe('Maintenance Queue', () => {
     });
   });
 
-  describe('maintenanceCommand', () => {
+  describe('test maintenanceCommand', () => {
     let callback;
     let category;
     let type;
@@ -180,8 +194,12 @@ describe('Maintenance Queue', () => {
       callback = jest.fn();
       category = 'test-category';
       type = 'test-type';
-      data = { test: 'data' };
+      data = { test: 'maintenanceCommand X hello Jon' };
       triggeredById = 1;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
     });
 
     it('should create a new maintenance log', async () => {
@@ -197,16 +215,17 @@ describe('Maintenance Queue', () => {
     it('should execute the provided callback function and capture any returned data', async () => {
       const logMessages = [];
       const logBenchmarks = [];
-      const result = { isSuccessful: true, data: { test: 'result-data' } };
+      const result = { isSuccessful: true, data };
       callback.mockResolvedValue(result);
-      await maintenanceCommand(callback, category, type, data, triggeredById);
+      const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
       expect(callback).toHaveBeenCalledWith(logMessages, logBenchmarks, 1);
+      expect(isSuccessful).toBe(true);
     });
 
     it('should determine if the maintenance command was successful based on log messages and returned data', async () => {
       const logMessages = ['test-message'];
       const logBenchmarks = ['test-benchmark'];
-      const result = { isSuccessful: true, data: { test: 'result-data' } };
+      const result = { isSuccessful: true, data };
       callback.mockResolvedValue(result);
       const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
       expect(isSuccessful).toBe(true);
@@ -215,7 +234,7 @@ describe('Maintenance Queue', () => {
     it('should merge any returned data into the original data object and update the maintenance log', async () => {
       const logMessages = ['test-message'];
       const logBenchmarks = ['test-benchmark'];
-      const result = { isSuccessful: true, data: { test: 'result-data' } };
+      const result = { isSuccessful: true, data };
       const newData = {
         ...data,
         ...result.data,
@@ -259,6 +278,87 @@ describe('Maintenance Queue', () => {
       callback.mockResolvedValue(result);
       const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
       expect(isSuccessful).toBe(true);
+    });
+  });
+
+  describe('backDate', () => {
+    it('should return a date object shifted back by the specified number of days', () => {
+      const today = new Date();
+      const dateOffSet = 7;
+      const shiftedDate = new Date(today.getTime() - (dateOffSet * 24 * 60 * 60 * 1000));
+      const expectedDateTime = new Date(
+        shiftedDate.getFullYear(),
+        shiftedDate.getMonth(),
+        shiftedDate.getDate(),
+        today.getHours(),
+        today.getMinutes(),
+        today.getSeconds(),
+      );
+      expect(backDate(dateOffSet)).toEqual(expectedDateTime);
+    });
+  });
+
+  const expectObjectWithSymbols = (expected) => expect.objectContaining({
+    where: expect.objectContaining(expected.where),
+  });
+
+  describe('clearMaintenanceLogs', () => {
+    it('should call MaintenanceLog.destroy with the correct options', async () => {
+      const data = { dateOffSet: 7 };
+      const olderThen = backDate(data.dateOffSet);
+      await clearMaintenanceLogs(data, null);
+      expect(MaintenanceLog.destroy).toHaveBeenCalledWith(expectObjectWithSymbols({
+        where: {
+          createdAt: { [Op.lt]: olderThen },
+        },
+      }));
+    });
+
+    it('should pass additional data to the maintenance command', async () => {
+      const data = { dateOffSet: 7, foo: 'bar' };
+      const olderThen = backDate(data.dateOffSet);
+      const result = await clearMaintenanceLogs(data, null);
+      expect(MaintenanceLog.destroy).toHaveBeenCalledWith(expectObjectWithSymbols({
+        where: {
+          createdAt: { [Op.lt]: olderThen },
+        },
+      }));
+    });
+
+    it('should return the result of the maintenance command', async () => {
+      const dataNew = { dateOffSet: 7, testName: 'clearMaintenanceLogs - should return the result of the maintenance command' };
+      MaintenanceLog.create.mockResolvedValue({ id: 1, data: dataNew });
+      MaintenanceLog.destroy.mockResolvedValue(0);
+      const result = await clearMaintenanceLogs(dataNew, null);
+      expect(result).toEqual(true);
+    });
+  });
+
+  describe('maintenance', () => {
+    beforeAll(() => {
+      jest.clearAllMocks();
+    });
+    it('should call clearMaintenanceLogs with provided data when type is CLEAR_MAINTENANCE_LOGS', async () => {
+      const job = {
+        data: {
+          type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
+          dateOffSet: 0.125,
+          test: 'maintenance - should call clearMaintenanceLogs with provided data when type is CLEAR_MAINTENANCE_LOGS',
+        },
+      };
+      MaintenanceLog.create.mockResolvedValue({ id: 1, data: job.data });
+      const olderThen = backDate(job.data.dateOffSet);
+      const action = await maintenance(job);
+      expect(MaintenanceLog.destroy).toHaveBeenCalledWith(expectObjectWithSymbols({
+        where: {
+          createdAt: { [Op.lt]: olderThen },
+        },
+      }));
+    });
+
+    it('should throw an error when an invalid maintenance type is provided', async () => {
+      const job = { data: { type: 'INVALID_TYPE' } };
+      await expect(maintenance(job)).rejects.toThrow('Invalid maintenance type: INVALID_TYPE');
     });
   });
 });
