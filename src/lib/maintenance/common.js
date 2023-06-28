@@ -486,6 +486,7 @@ module.exports = {
   addCronJob,
   hasCronJob,
   removeCronJob,
+  setCronJobSchedule,
   runMaintenanceCronJobs,
   // execute and log maintenance
   maintenanceCommand,
