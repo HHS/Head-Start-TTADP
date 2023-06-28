@@ -20,7 +20,7 @@ import {
   reportTextFilter,
   deliveryMethodFilter,
   resourceAttachmentFilter,
-  resourceUrlFilter,
+  resourceLinkFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -41,7 +41,7 @@ const DASHBOARD_FILTER_CONFIG = [
   reportIdFilter,
   reportTextFilter,
   resourceAttachmentFilter,
-  resourceUrlFilter,
+  resourceLinkFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
