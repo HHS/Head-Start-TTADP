@@ -16,6 +16,7 @@ describe('EventCards', () => {
       startDate: '01/02/2021',
       endDate: '01/03/2021',
     },
+    sessionReports: [],
   },
   {
     id: 2,
@@ -27,6 +28,7 @@ describe('EventCards', () => {
       startDate: '02/02/2021',
       endDate: '02/03/2021',
     },
+    sessionReports: [],
   },
   {
     id: 3,
@@ -38,6 +40,7 @@ describe('EventCards', () => {
       startDate: '03/02/2021',
       endDate: '03/03/2021',
     },
+    sessionReports: [],
   },
   ];
 

@@ -13,7 +13,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorHeader from '../../../components/Navigator/components/NavigatorHeader';
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
-import { InProgress, Closed } from '../../../components/GoalCards/icons';
+import { InProgress, Closed } from '../../../components/icons';
 
 const pages = {
   1: 'Event summary',
