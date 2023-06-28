@@ -308,7 +308,7 @@ export async function processFiles(hashSumHex) {
       );
 
       // Update grant personnel.
-      await ProgramPersonnel.unscoped().bulkCreate(
+      await ProgramPersonnel.bulkCreate(
         programPersonnel,
         {
           updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
