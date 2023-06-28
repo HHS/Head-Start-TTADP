@@ -416,3 +416,35 @@ export const groupsFilter = {
     />
   ),
 };
+
+export const resourceAttachmentFilter = {
+  id: 'resourceAttachment',
+  display: 'Resource attachment',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceAttachment-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource attachment file name"
+    />
+  ),
+};
+
+export const resourceUrlFilter = {
+  id: 'resourceUrl',
+  display: 'Resource URL',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceUrl-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource URL"
+    />
+  ),
+};
