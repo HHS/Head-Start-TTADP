@@ -1,24 +1,21 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
-import UserContext from '../../../UserContext';
 import {
   InProgress,
   Closed,
   NoStatus,
   Pencil,
 } from '../../../components/icons';
-import { canEditOrCreateSessionReports } from '../../../permissions';
 import './SessionCard.scss';
 
 function SessionCard({
   eventId,
   session,
   expanded,
+  hasWritePermissions,
 }) {
-  const { user } = useContext(UserContext);
-
   const {
     sessionName,
     startDate,
@@ -28,10 +25,7 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    regionId,
   } = session.data;
-
-  const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
 
   const getSessionDisplayStatusText = () => {
     switch (status) {
@@ -63,7 +57,7 @@ function SessionCard({
             {sessionName}
           </span>
           {
-            hasEditPermissions
+            hasWritePermissions
               ? (
                 <span>
                   <Link key={`edit-session-key-${session.id}`} to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
@@ -131,5 +125,6 @@ SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
   session: sessionPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
+  hasWritePermissions: PropTypes.bool.isRequired,
 };
 export default SessionCard;
