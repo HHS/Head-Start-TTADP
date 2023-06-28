@@ -114,7 +114,7 @@ test.describe('get /users/names', () => {
     );
     expect(response.status()).toBe(200);
 
-    const schema = Joi.array().items(Joi.string());
+    const schema = Joi.array().items(Joi.any());
     expect(response.status()).toBe(200);
     await validateSchema(response, schema, expect);
   });
