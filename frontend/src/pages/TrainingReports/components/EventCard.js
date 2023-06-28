@@ -1,7 +1,9 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
+import UserContext from '../../../UserContext';
 import './EventCard.scss';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -9,10 +11,16 @@ import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
+import { canEditOrCreateSessionReports } from '../../../permissions';
 
 function EventCard({
   event,
 }) {
+  const { user } = useContext(UserContext);
+  const hasEditPermissions = canEditOrCreateSessionReports(
+    user,
+    parseInt(event.regionId, DECIMAL_BASE),
+  );
   const history = useHistory();
 
   const {
@@ -25,16 +33,29 @@ function EventCard({
   const menuItems = [];
 
   if (event.status !== 'Complete') {
+    if (hasEditPermissions) {
+    // Create session.
+      menuItems.push({
+        label: 'Create session',
+        onClick: () => {
+          history.push(`/training-report/${event.id}/session/new/`);
+        },
+      });
+
+      // Edit event.
+      menuItems.push({
+        label: 'Edit event',
+        onClick: () => {
+          history.push(`/training-report/${event.id}/event-summary`);
+        },
+      });
+    }
+
+    // View event.
     menuItems.push({
-      label: 'Create session',
+      label: 'View event',
       onClick: () => {
-        history.push(`/training-report/${event.id}/session/new/`);
-      },
-    });
-    menuItems.push({
-      label: 'Edit event',
-      onClick: () => {
-        history.push(`/training-report/${event.id}/event-summary`);
+        history.push(`/training-report/view/${event.id}`);
       },
     });
   }
@@ -101,6 +122,7 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
+          hasWritePermissions={hasEditPermissions}
         />
       ))}
 
