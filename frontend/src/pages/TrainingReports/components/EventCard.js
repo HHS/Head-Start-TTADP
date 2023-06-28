@@ -24,7 +24,7 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (event.status !== 'Complete') {
+  if (data.status !== 'Complete') {
     menuItems.push({
       label: 'Create session',
       onClick: () => {
@@ -101,6 +101,7 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
+          eventStatus={data.status}
         />
       ))}
 
