@@ -19,6 +19,8 @@ import {
   ttaTypeFilter,
   reportTextFilter,
   deliveryMethodFilter,
+  resourceAttachmentFilter,
+  resourceUrlFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -38,6 +40,8 @@ const DASHBOARD_FILTER_CONFIG = [
   regionFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceUrlFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
