@@ -32,14 +32,8 @@ export const getByStatus = async (req, res) => {
   try {
     const { status: statusParam } = req.params;
     const auth = await getEventAuthorization(req, res, {});
-
-    const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
-    if (!status) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Invalid status' });
-    }
-
     const userId = await currentUserId(req, res);
-
+    const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
     const updatedFilters = await setReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
     const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
