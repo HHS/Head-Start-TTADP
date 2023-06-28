@@ -267,4 +267,33 @@ describe('ViewTrainingReport', () => {
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
   });
+
+  it('handles a session report missing many fields', async () => {
+    const e = mockEvent();
+    e.sessionReports = [
+      {
+        id: 1,
+        eventId: 1,
+        data: {
+          status: 'In progress',
+          regionId: 3,
+          eventName: 'Sample Session Report with no data',
+          eventOwner: 355,
+          eventDisplayId: 'R03-PD-23-1037',
+        },
+        createdAt: '2023-06-28T11:42:11.695Z',
+        updatedAt: '2023-06-28T11:42:11.695Z',
+      },
+    ];
+
+    fetchMock.getOnce('/api/events/id/1', e);
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Session 1' })).toBeInTheDocument();
+  });
 });

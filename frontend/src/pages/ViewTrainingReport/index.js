@@ -118,7 +118,7 @@ export default function ViewTrainingReport({ match }) {
           'Session name': session.data.sessionName,
           'Session start date': session.data.startDate,
           'Session end date': session.data.endDate,
-          'Session duration': `${session.data.duration} hours`,
+          'Session duration': `${session.data.duration || 0} hours`,
           'Session context': session.data.context,
         },
       }, {
@@ -127,16 +127,16 @@ export default function ViewTrainingReport({ match }) {
           'Session objective': session.data.objective,
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
-          'Resource links': session.data.objectiveResources.map((o) => o.value),
-          'Resource attachments': session.data.files.map((f) => f.originalFileName),
+          'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
+          'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
           'Support type': session.data.objectiveSupportType,
         },
       }, {
         heading: 'Participants',
         striped: true,
         data: {
-          Recipients: session.data.recipients.map((r) => r.label).join(', '),
-          'Recipient participants': session.data.participants.join(', '),
+          Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
+          'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
           'Number of participants': String((
             session.data.numberOfParticipants || 0
@@ -148,8 +148,8 @@ export default function ViewTrainingReport({ match }) {
           'TTA provided': session.data.ttaProvided,
         },
       },
-      formatNextSteps(session.data.specialistNextSteps, 'Specialist\'s next steps', false),
-      formatNextSteps(session.data.recipientNextSteps, 'Recipient\'s next steps', true),
+      formatNextSteps(session.data.specialistNextSteps || [], 'Specialist\'s next steps', false),
+      formatNextSteps(session.data.recipientNextSteps || [], 'Recipient\'s next steps', true),
       ]}
     />
   )) : null;
