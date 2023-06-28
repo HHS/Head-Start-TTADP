@@ -16,6 +16,7 @@ function SessionCard({
   eventId,
   session,
   expanded,
+  eventStatus,
 }) {
   const { user } = useContext(UserContext);
 
@@ -46,13 +47,15 @@ function SessionCard({
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
-    if (displaySessionStatus === 'In progress') {
+    if (displaySessionStatus === TRAINING_REPORT_STATUSES.IN_PROGRESS) {
       return <InProgress />;
-    } if (displaySessionStatus === 'Complete') {
+    } if (displaySessionStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
       return <Closed />;
     }
     return <NoStatus />;
   })();
+
+  const showEditLink = hasEditPermissions && eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
 
   return (
     <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
@@ -63,7 +66,7 @@ function SessionCard({
             {sessionName}
           </span>
           {
-            hasEditPermissions
+            showEditLink
               ? (
                 <span>
                   <Link key={`edit-session-key-${session.id}`} to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
@@ -131,5 +134,6 @@ SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
   session: sessionPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
+  eventStatus: PropTypes.string.isRequired,
 };
 export default SessionCard;
