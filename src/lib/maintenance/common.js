@@ -1,5 +1,8 @@
+const { Op } = require('sequelize');
+const { CronJob } = require('cron');
 const { default: newQueue } = require('../queue');
 const { MaintenanceLog } = require('../../models');
+const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
 
 const maintenanceQueue = newQueue('maintenance');
@@ -287,9 +290,14 @@ const maintenanceCommand = async (
   const logMessages = [];
   const logBenchmarks = [];
   let isSuccessful = false;
-
-  // Create a new maintenance log
-  const log = await createMaintenanceLog(category, type, data, triggeredById);
+  let log;
+  try {
+    // Create a new maintenance log
+    log = await createMaintenanceLog(category, type, data, triggeredById);
+  } catch (err) {
+    auditLogger.error(`Error occurred while logging maintenance command: ${err} ${err.message}`);
+    return false;
+  }
   try {
     // Execute the provided callback function and capture any returned data
     const result = await callback(logMessages, logBenchmarks, log.id);
@@ -297,7 +305,7 @@ const maintenanceCommand = async (
     // Determine if the maintenance command was successful based on log messages and returned data
     isSuccessful = logMessages.some((message) => message.toLowerCase().includes('successfully')
       || message.toLowerCase().includes('executed'))
-      || result?.isSuccessful;
+      || !!result?.isSuccessful;
 
     // Merge any returned data into the original data object and update the maintenance log
     const newData = {
@@ -313,7 +321,7 @@ const maintenanceCommand = async (
 
     // Update the maintenance log with the error information
     await updateMaintenanceLog(log, {
-      ...log.data,
+      ...(log?.data && log.data),
       ...(logMessages.length > 0 && { messages: logMessages }),
       ...(logBenchmarks.length > 0 && { benchmarks: logBenchmarks }),
       error: JSON.parse(JSON.stringify(err)),
@@ -325,8 +333,138 @@ const maintenanceCommand = async (
   return isSuccessful;
 };
 
+/**
+ * Returns a new Date object with the date shifted back by the specified number of days.
+ * @param {number} dateOffSet - The number of days to shift the date back by.
+ * @returns {Date} - A new Date object representing the shifted date and time.
+ */
+const backDate = (dateOffSet) => {
+  // Create a new Date object representing today's date and time.
+  const today = new Date();
+  // Calculate the shifted date by subtracting the specified number of days in milliseconds
+  // from today's date.
+  const shiftedDate = new Date(today.getTime() - (dateOffSet * 24 * 60 * 60 * 1000));
+  // Create a new Date object representing the shifted date and today's time.
+  const shiftedDateTime = new Date(
+    shiftedDate.getFullYear(),
+    shiftedDate.getMonth(),
+    shiftedDate.getDate(),
+    today.getHours(),
+    today.getMinutes(),
+    today.getSeconds(),
+  );
+  // Return the shifted date and time as a Date object.
+  return shiftedDateTime;
+};
+
+/**
+ * Asynchronous function that clears maintenance logs older than a certain date.
+ * @param {Object} data - Additional data to be passed to the maintenance command.
+ * @param {string} triggeredById - ID of the user who triggered the maintenance command.
+ * @returns {Promise} A promise that resolves with the result of the maintenance command.
+ */
+const clearMaintenanceLogs = async (data, triggeredById) => {
+  // Get the date that is a week ago from today's date
+  // If data.dateOffSet exists, use it as the offset value. Otherwise, use 90 as the
+  // default offset value.
+  const olderThen = backDate(data.dateOffSet || 90);
+  return maintenanceCommand(
+    // Call the destroy method on the MaintenanceLog model to delete all logs created
+    // before the specified date
+    async (logMessages, logBenchmarkData, triggered) => {
+      const result = await MaintenanceLog.destroy({
+        where: {
+          createdAt: { [Op.lt]: olderThen },
+          id: { [Op.not]: triggered },
+        },
+        // Log messages and benchmark data for debugging purposes
+        logging: (message, timingMs) => {
+          logMessages.push(message);
+          logBenchmarkData.push(timingMs);
+        },
+        benchmark: true,
+      });
+      return typeof result === 'number'
+        ? { rowsDeleted: result, isSuccessful: true }
+        : result;
+    },
+    MAINTENANCE_CATEGORY.MAINTENANCE,
+    MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
+    {
+      ...data,
+      olderThen,
+    },
+    triggeredById,
+  );
+};
+
+/**
+ * This function performs maintenance operations based on the provided job object.
+ *
+ * @param {Object} job - The job object containing information about the maintenance operation
+ * to perform.
+ * @returns {Promise} - A promise that resolves with the maintenance action to perform.
+ */
+const maintenance = async (job) => {
+  // Destructure the job object to get the maintenance type, offset, limit, and any additional data.
+  const {
+    type,
+    ...data // pass to any maintenance operations that may have had additional data passed.
+  } = job.data;
+
+  let action; // Declare a variable to hold the maintenance action.
+
+  switch (type) {
+    case MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS:
+      // Set the action to vacuumTables function with the provided offset and limit.
+      action = clearMaintenanceLogs(data);
+      break;
+    default:
+      // Throw an error if an invalid maintenance type is provided.
+      throw new Error(`Invalid maintenance type: ${type}`);
+  }
+
+  return action; // Return the maintenance action.
+};
+
+// This code adds a queue processor for maintenance tasks.
+// The MAINTENANCE_CATEGORY.MAINTENANCE is used to identify the category of maintenance task.
+// The maintenance function is passed as the callback function to be executed when
+// a task in this category is processed.
+addQueueProcessor(MAINTENANCE_CATEGORY.MAINTENANCE, maintenance);
+
+// Adds a cron job with the specified maintenance category, type, and function to execute
+addCronJob(
+  MAINTENANCE_CATEGORY.MAINTENANCE, // The maintenance category is "DB"
+  MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // The maintenance type is "DAILY_DB_MAINTENANCE"
+  // The function to execute takes in the category, type, timezone, and schedule parameters
+  (category, type, timezone, schedule) => new CronJob(
+    schedule, // The schedule parameter specifies when the job should run
+    () => enqueueMaintenanceJob(
+      MAINTENANCE_CATEGORY.MAINTENANCE, // constant representing the category of maintenance
+      {
+        type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // shorthand property notation for type: type
+        dateOffSet: 90, // otherwise, merge the provided data object
+      },
+    ),
+    null,
+    true,
+    timezone, // The timezone parameter specifies the timezone in which the job should run
+  ),
+  /**
+   * This cron expression breaks down as follows:
+   *  30 - The minute when the job will run (in this case, 30 minutes past the hour)
+   *  22 - The hour when the job will run (in this case, 10 pm)
+   *  * - The day of the month when the job will run (in this case, any day of the month)
+   *  * - The month when the job will run (in this case, any month)
+   *  * - The day of the week when the job will run (in this case, any day of the week)
+   * */
+  '30 22 * * *',
+);
+
 module.exports = {
-  testingOnly: {
+  // testing only exports
+  ...(process.env.NODE_ENV !== 'production' && {
     maintenanceQueue,
     onFailedMaintenance,
     onCompletedMaintenance,
@@ -334,15 +472,21 @@ module.exports = {
     updateMaintenanceLog,
     createCategory,
     createJob,
-  },
+    backDate,
+    clearMaintenanceLogs,
+    maintenance,
+  }),
+  // queue exports
   addQueueProcessor,
   hasQueueProcessor,
   removeQueueProcessor,
   processMaintenanceQueue,
   enqueueMaintenanceJob,
+  // cron exports
   addCronJob,
   hasCronJob,
   removeCronJob,
   runMaintenanceCronJobs,
+  // execute and log maintenance
   maintenanceCommand,
 };
