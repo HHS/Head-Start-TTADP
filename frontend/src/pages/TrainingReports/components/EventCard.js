@@ -24,6 +24,15 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
+  if (data.status === 'Complete') {
+    menuItems.push({
+      label: 'View event',
+      onClick: () => {
+        history.push(`/training-report/view/${event.id}`);
+      },
+    });
+  }
+
   if (data.status !== 'Complete') {
     menuItems.push({
       label: 'Create session',
