@@ -21,6 +21,9 @@ function EventCard({
     user,
     parseInt(event.regionId, DECIMAL_BASE),
   );
+  const isCollaborator = event.collaboratorIds.includes(user.id);
+  const canEditExisting = hasEditPermissions || (isCollaborator);
+
   const history = useHistory();
 
   const {
@@ -32,33 +35,31 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (event.status !== 'Complete') {
-    if (hasEditPermissions) {
+  if (event.status !== 'Complete' && canEditExisting) {
     // Create session.
-      menuItems.push({
-        label: 'Create session',
-        onClick: () => {
-          history.push(`/training-report/${event.id}/session/new/`);
-        },
-      });
-
-      // Edit event.
-      menuItems.push({
-        label: 'Edit event',
-        onClick: () => {
-          history.push(`/training-report/${event.id}/event-summary`);
-        },
-      });
-    }
-
-    // View event.
     menuItems.push({
-      label: 'View event',
+      label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/view/${event.id}`);
+        history.push(`/training-report/${event.id}/session/new/`);
+      },
+    });
+
+    // Edit event.
+    menuItems.push({
+      label: 'Edit event',
+      onClick: () => {
+        history.push(`/training-report/${event.id}/event-summary`);
       },
     });
   }
+
+  // View event.
+  menuItems.push({
+    label: 'View event',
+    onClick: () => {
+      history.push(`/training-report/view/${event.id}`);
+    },
+  });
 
   const [reportsExpanded, setReportsExpanded] = useState(false);
 
@@ -122,7 +123,7 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
-          hasWritePermissions={hasEditPermissions}
+          hasWritePermissions={canEditExisting}
         />
       ))}
 
