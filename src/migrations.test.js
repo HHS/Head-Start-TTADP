@@ -58,6 +58,7 @@ async function listTree(branchName, filePath = '') {
 
     return tree;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error listing tree:', error.message);
     throw error;
   }
@@ -71,6 +72,7 @@ async function getCurrentBranch() {
     const currentBranch = branchSummary.current;
     return currentBranch;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error getting current branch:', error);
     throw error;
   }
@@ -110,6 +112,7 @@ async function checkFileDatePrefix() {
       const renameCommand = getRenameCommand(file, date);
       results.push(`- File ${file} needs to be renamed. Consider using the following command: ${renameCommand}`);
     });
+    // eslint-disable-next-line no-console
     console.error(results.join('\n'));
   }
   return results;
