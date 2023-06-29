@@ -61,6 +61,7 @@ describe('EventCards', () => {
         <EventCards
           events={events}
           eventType={eventType}
+          onRemoveSession={jest.fn()}
         />
       </UserContext.Provider>));
   };
