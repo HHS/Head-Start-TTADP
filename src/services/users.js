@@ -427,8 +427,10 @@ export async function setFlag(flag, on = true) {
  */
 
 export async function getTrainingReportUsersByRegion(regionId) {
-  const pointOfContactScope = SCOPES.READ_WRITE_TRAINING_REPORTS;
-  const collaboratorScope = SCOPES.COLLABORATOR_TRAINING_REPORTS;
+  // this is weird (poc = collaborators, collaborators = read/write)? but it is the case
+  // as far as I understand it
+  const pointOfContactScope = SCOPES.COLLABORATOR_TRAINING_REPORTS; // regional poc collab
+  const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
 
   const users = await User.findAll({
     exclude: [

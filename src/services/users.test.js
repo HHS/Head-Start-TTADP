@@ -285,12 +285,12 @@ describe('Users DB service', () => {
       const collaboratorIds = result.collaborators.map((u) => u.id);
       const pointOfContact = result.pointOfContact.map((u) => u.id);
 
-      expect(collaboratorIds.includes(userIds[0])).toBeTruthy();
-      expect(collaboratorIds.includes(userIds[1])).toBeTruthy();
-      expect(collaboratorIds.length).toBe(2);
+      expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
+      expect(collaboratorIds.length).toBe(1);
 
-      expect(pointOfContact.includes(userIds[2])).toBeTruthy();
-      expect(pointOfContact.length).toBe(1);
+      expect(pointOfContact.includes(userIds[0])).toBeTruthy();
+      expect(pointOfContact.includes(userIds[1])).toBeTruthy();
+      expect(pointOfContact.length).toBe(2);
     });
   });
 });
