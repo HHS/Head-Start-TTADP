@@ -8,7 +8,10 @@ export default function VanillaModal({
   modalRef,
   className,
 }) {
-  const modalId = `modal-${heading.toLowerCase().replace(/\s/g, '-')}`;
+  // strip everything but letters
+  const regex = /[^a-zA-Z]/g;
+
+  const modalId = `modal-${heading.toLowerCase().replace(regex, '-')}`;
 
   return (
     <Modal
