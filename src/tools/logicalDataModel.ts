@@ -80,9 +80,11 @@ function processClassDefinition(schema, key) {
     ? `class ${key}{\n`
     : `!issue='model missing for table'\nclass ${key} #pink;line:red;line.bold;text:red {\n`;
   const fields = schema.attributes.sort((a, b) => {
-    if (a.reference) return 1;
-    if (b.reference) return -1;
-    return a.ordinal < b.ordinal;
+    const ax = `${!a.allowNull ? '*' : ''}${a.reference ? '!' : ''}${a.name}`;
+    const bx = `${!b.allowNull ? '*' : ''}${b.reference ? '!' : ''}${b.name}`;
+    if (b.name === 'id') return 1;
+    if (a.name === 'id') return -1;
+    return ax.localeCompare(bx);
   });
   const processedFields = [];
   fields.forEach((field) => {
