@@ -16,23 +16,42 @@ function countOccurrencesInFile(fileContent, searchString) {
   };
 }
 
+/**
+ * Checks if a file has been modified in a git repository.
+ *
+ * @param {string} filePath - The path of the file to check.
+ * @returns {Promise<Object>} - A promise that resolves to an object containing the summary,
+ * isFileModified flag, and diffs (if applicable).
+ */
 async function isFileModified(filePath) {
+  // Initialize simpleGit instance
   const git = simpleGit();
+
+  // Create an empty result object
   const result = {};
-  // Get the diff status for the file
+
+  // Get the diff summary for the specified file path
   result.summary = await git.diffSummary(['--', filePath]);
-  result.isModified = result.summary.files.length > 0;
-  if (result.isModified) {
+
+  // Check if the file has been modified
+  result.isFileModified = result.summary.files.length > 0;
+
+  // If the file has been modified, get the detailed diffs
+  if (result.isFileModified) {
+    // Create an empty diffs object
     result.diffs = {};
+
+    // Fetch the diffs for each modified file
     await Promise.all(result.summary.files.map(async ({ file, changes }) => {
+      // Only fetch diffs if there are changes in the file
       if (changes > 0) {
-        const diff = await git.diff(['--', filePath]);
-        result.diffs[file] = diff;
+        // Get the diff for the specified file path
+        result.diffs[file] = await git.diff(['--', filePath]);
       }
     }));
   }
 
-  // Check if the file has been modified
+  // Return the result object
   return result;
 }
 
