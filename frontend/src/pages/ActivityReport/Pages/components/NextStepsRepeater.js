@@ -5,7 +5,7 @@ import {
   FormGroup, Label, Button, Textarea, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
 import colors from '../../../../colors';
