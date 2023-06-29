@@ -52,6 +52,7 @@ describe('EventCard', () => {
         <Router history={history}>
           <EventCard
             event={event}
+            onRemoveSession={jest.fn()}
           />
         </Router>
       </UserContext.Provider>));

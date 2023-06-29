@@ -1,5 +1,5 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
@@ -13,6 +13,7 @@ import SessionCard from './SessionCard';
 
 function EventCard({
   event,
+  onRemoveSession,
 }) {
   const history = useHistory();
 
@@ -110,6 +111,7 @@ function EventCard({
           session={s}
           expanded={reportsExpanded}
           eventStatus={data.status}
+          onRemoveSession={onRemoveSession}
         />
       ))}
 
@@ -119,6 +121,7 @@ function EventCard({
 
 EventCard.propTypes = {
   event: eventPropTypes.isRequired,
+  onRemoveSession: PropTypes.func.isRequired,
 };
 
 export default EventCard;
