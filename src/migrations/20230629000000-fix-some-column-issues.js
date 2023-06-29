@@ -46,7 +46,6 @@ module.exports = {
           transaction,
           timeout: 300000,
           benchmark: true,
-          logging: console.log,
         },
       )));
 
