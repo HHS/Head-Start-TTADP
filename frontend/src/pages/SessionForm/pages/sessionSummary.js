@@ -18,6 +18,7 @@ import {
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
+import { getNationalCenters } from '../../../fetchers/nationalCenters';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
@@ -39,14 +40,6 @@ import SessionObjectiveResource from '../components/SessionObjectiveResource';
 const DEFAULT_RESOURCE = {
   value: '',
 };
-
-// options for the trainers (the 4 national centers)
-const TRAINER_OPTIONS = [
-  'DTL',
-  'HBHS',
-  'PFCE',
-  'PFMO',
-].map((label, value) => ({ label, value }));
 
 const SessionSummary = ({ datePickerKey }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -101,6 +94,23 @@ const SessionSummary = ({ datePickerKey }) => {
       fetchTopics();
     }
   }, [setError, topicOptions]);
+
+  const [trainerOptions, setTrainerOptions] = useState(null);
+  useEffect(() => {
+    async function fetchNationalCenters() {
+      try {
+        const nationalCenters = await getNationalCenters();
+        setTrainerOptions(nationalCenters.map(({ name }) => ({ value: name, label: name })));
+      } catch (err) {
+        setError('objectiveTrainers', { message: 'There was an error fetching national centers' });
+        setTrainerOptions([]);
+      }
+    }
+
+    if (!trainerOptions) {
+      fetchNationalCenters();
+    }
+  }, [setError, trainerOptions]);
 
   // for the resource repeater we are using the built in hook-form
   // field array
@@ -375,7 +385,9 @@ const SessionSummary = ({ datePickerKey }) => {
           <Controller
             render={({ onChange: controllerOnChange, value: selectedValue, onBlur }) => (
               <Select
-                value={TRAINER_OPTIONS.filter((option) => selectedValue.includes(option.label))}
+                value={(
+                  trainerOptions || []
+                ).filter((option) => selectedValue.includes(option.label))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
                 className="usa-select"
@@ -388,7 +400,7 @@ const SessionSummary = ({ datePickerKey }) => {
                   controllerOnChange(s.map((o) => o.label));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
-                options={TRAINER_OPTIONS}
+                options={trainerOptions || []}
                 isMulti
               />
             )}

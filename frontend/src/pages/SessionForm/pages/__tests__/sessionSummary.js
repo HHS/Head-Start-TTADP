@@ -126,6 +126,13 @@ describe('sessionSummary', () => {
         { id: 1, name: 'Behavioral Health' },
         { id: 2, name: 'Complaint' },
       ]);
+
+      fetchMock.get('/api/national-center', [
+        { id: 1, name: 'DTL' },
+        { id: 2, name: 'HBHS' },
+        { id: 3, name: 'PFCE' },
+        { id: 4, name: 'PFMO' },
+      ]);
     });
 
     afterEach(async () => {
