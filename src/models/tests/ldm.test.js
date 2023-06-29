@@ -1,4 +1,5 @@
 import fs from 'fs';
+import simpleGit from 'simple-git';
 
 function countOccurrencesInFile(fileContent, searchString) {
   const fileLines = fileContent.split(/\r?\n/);
@@ -15,11 +16,38 @@ function countOccurrencesInFile(fileContent, searchString) {
   };
 }
 
+async function isFileModified(filePath) {
+  const git = simpleGit();
+  const result = {};
+  // Get the diff status for the file
+  result.summary = await git.diffSummary(['--', filePath]);
+  result.isModified = result.summary.files.length > 0;
+  if (result.isModified) {
+    result.diffs = {};
+    await Promise.all(result.summary.files.map(async ({ file, changes }) => {
+      if (changes > 0) {
+        const diff = await git.diff(['--', filePath]);
+        result.diffs[file] = diff;
+      }
+    }));
+  }
+
+  // Check if the file has been modified
+  return result;
+}
+
 describe('Logical Data Model', () => {
   let fileContent = '';
   beforeAll(async () => {
     fileContent = fs.readFileSync('docs/logical_data_model.puml', 'utf-8');
   });
+  describe('file', () => {
+    it('changed from checkout', async () => {
+      const result = await isFileModified('docs/logical_data_model.puml');
+      expect(result?.diffs?.['docs/logical_data_model.puml']).toStrictEqual('');
+    });
+  });
+
   describe('model', () => {
     it('model missing for table', () => {
       expect(countOccurrencesInFile(fileContent, 'model missing for table'))
