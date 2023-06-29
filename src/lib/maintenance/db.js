@@ -74,11 +74,11 @@ const tableMaintenanceCommand = async (
  * @returns {Promise<void>}
  */
 const vacuumTable = async (model, triggeredById = null) => tableMaintenanceCommand(
-  // Execute the tableMaintenanceCommand function with the 'VACUUM FULL' command, maintenance
+  // Execute the tableMaintenanceCommand function with the 'VACUUM ANALYZE' command, maintenance
   // category DB, maintenance type VACUUM, and the provided model parameter.
-  'VACUUM FULL',
+  'VACUUM ANALYZE',
   MAINTENANCE_CATEGORY.DB,
-  MAINTENANCE_TYPE.VACUUM,
+  MAINTENANCE_TYPE.VACUUM_ANALYZE,
   model,
   triggeredById,
 );
@@ -258,7 +258,7 @@ const dbMaintenance = async (job) => {
   let action; // Declare a variable to hold the maintenance action.
 
   switch (type) {
-    case MAINTENANCE_TYPE.VACUUM:
+    case MAINTENANCE_TYPE.VACUUM_ANALYZE:
       // Set the action to vacuumTables function with the provided offset and limit.
       action = vacuumTables(offset, limit);
       break;

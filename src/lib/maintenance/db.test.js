@@ -1,7 +1,5 @@
 const { Op } = require('sequelize');
-const { auditLogger } = require('../../logger');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
-const common = require('./common');
 const {
   maintenanceCommand,
   tableMaintenanceCommand,
@@ -18,9 +16,9 @@ describe('maintenance', () => {
   describe('maintenanceCommand', () => {
     it('should create a maintenance log entry and execute the command', async () => {
       const category = MAINTENANCE_CATEGORY.DB;
-      const type = MAINTENANCE_TYPE.VACUUM;
+      const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
       const data = {};
-      const command = `VACUUM FULL "${MaintenanceLog.getTableName()}";`;
+      const command = `VACUUM ANALYZE "${MaintenanceLog.getTableName()}";`;
 
       await maintenanceCommand(command, category, type, data);
 
@@ -34,9 +32,9 @@ describe('maintenance', () => {
 
     it('should set isSuccessful to false if the command fails', async () => {
       const category = MAINTENANCE_CATEGORY.DB;
-      const type = MAINTENANCE_TYPE.VACUUM;
+      const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
       const data = {};
-      const command = 'VACUUM FULL my_table;';
+      const command = 'VACUUM ANALYZE my_table;';
 
       await maintenanceCommand(command, category, type, data);
 
@@ -52,9 +50,9 @@ describe('maintenance', () => {
 
   describe('tableMaintenanceCommand', () => {
     it('should execute the maintenance command with the table name', async () => {
-      const command = 'VACUUM FULL';
+      const command = 'VACUUM ANALYZE';
       const category = MAINTENANCE_CATEGORY.DB;
-      const type = MAINTENANCE_TYPE.VACUUM;
+      const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
       const model = MaintenanceLog;
 
       await tableMaintenanceCommand(command, category, type, model);
@@ -71,8 +69,8 @@ describe('maintenance', () => {
   describe('vacuumTable', () => {
     it('should call tableMaintenanceCommand with VACUUM and the given model', async () => {
       const model = MaintenanceLog;
-      const type = MAINTENANCE_TYPE.VACUUM;
-      const command = 'VACUUM FULL';
+      const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
+      const command = 'VACUUM ANALYZE';
 
       await vacuumTable(model);
 
@@ -114,8 +112,8 @@ describe('maintenance', () => {
 
       await vacuumTables(offset, limit);
 
-      const type = MAINTENANCE_TYPE.VACUUM;
-      const command = 'VACUUM FULL';
+      const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
+      const command = 'VACUUM ANALYZE';
 
       const logs = await MaintenanceLog.findAll({
         where: { id: { [Op.gt]: preLog.id } },
@@ -125,10 +123,10 @@ describe('maintenance', () => {
 
       expect(logs.length).toBe(numOfModels + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM
+      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
         || log.type === MAINTENANCE_TYPE.VACUUM_TABLES)).toBe(true);
       expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('VACUUM FULL')))
+        && (log.data.messages[0].includes('VACUUM ANALYZE')))
         || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
       expect(logs.every((log) => (log.data?.benchmarks?.length > 0
         && typeof log.data.benchmarks[0] === 'number')
@@ -194,13 +192,13 @@ describe('maintenance', () => {
       expect(logs.length).toBe((numOfModels + 1) * 2 + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
       expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.VACUUM
+        || log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
         || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
         || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
         || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE)).toBe(true);
       expect(logs.every((log) => (log.data?.messages?.length > 0
         && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM FULL')))
+          || log.data.messages[0].includes('VACUUM ANALYZE')))
         || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
           || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
           || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE))).toBe(true);
@@ -224,14 +222,14 @@ describe('maintenance', () => {
 
       await dbMaintenance({
         data: {
-          type: MAINTENANCE_TYPE.VACUUM,
+          type: MAINTENANCE_TYPE.VACUUM_ANALYZE,
           offset,
           limit,
         },
       });
 
-      const type = MAINTENANCE_TYPE.VACUUM;
-      const command = 'VACUUM FULL';
+      const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
+      const command = 'VACUUM ANALYZE';
 
       const logs = await MaintenanceLog.findAll({
         where: { id: { [Op.gt]: preLog.id } },
@@ -241,10 +239,10 @@ describe('maintenance', () => {
 
       expect(logs.length).toBe(numOfModels + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM
+      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
         || log.type === MAINTENANCE_TYPE.VACUUM_TABLES)).toBe(true);
       expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('VACUUM FULL')))
+        && (log.data.messages[0].includes('VACUUM ANALYZE')))
         || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
       expect(logs.every((log) => (log.data?.benchmarks?.length > 0
         && typeof log.data.benchmarks[0] === 'number')
@@ -285,7 +283,7 @@ describe('maintenance', () => {
         || log.type === MAINTENANCE_TYPE.REINDEX_TABLES)).toBe(true);
       expect(logs.every((log) => (log.data?.messages?.length > 0
         && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM FULL')))
+          || log.data.messages[0].includes('VACUUM ANALYZE')))
         || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
       expect(logs.every((log) => (log.data?.benchmarks?.length > 0
         && typeof log.data.benchmarks[0] === 'number')
@@ -321,13 +319,13 @@ describe('maintenance', () => {
       expect(logs.length).toBe((numOfModels + 1) * 2 + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
       expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.VACUUM
+        || log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
         || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
         || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
         || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE)).toBe(true);
       expect(logs.every((log) => (log.data?.messages?.length > 0
         && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM FULL')))
+          || log.data.messages[0].includes('VACUUM ANALYZE')))
         || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
           || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
           || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE))).toBe(true);
