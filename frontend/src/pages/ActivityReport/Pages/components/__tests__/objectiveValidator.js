@@ -20,6 +20,10 @@ const validObjective = {
 };
 
 describe('validateObjectives', () => {
+  it('returns invalid if no objectives', () => {
+    const res = validateObjectives();
+    expect(res).toEqual(OBJECTIVES_EMPTY);
+  });
   it('returns invalid if empty', () => {
     const res = validateObjectives([]);
     expect(res).toEqual(OBJECTIVES_EMPTY);

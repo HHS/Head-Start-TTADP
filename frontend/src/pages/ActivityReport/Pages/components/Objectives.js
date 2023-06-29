@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';

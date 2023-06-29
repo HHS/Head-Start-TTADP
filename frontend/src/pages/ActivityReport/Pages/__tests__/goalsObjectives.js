@@ -7,7 +7,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
@@ -67,7 +67,7 @@ const RenderGoalsObjectives = ({
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
       <Router history={history}>
         <FormProvider {...hookForm}>
-          {goalsObjectives.render(null, null, 1, null, null)}
+          {goalsObjectives.render(null, { activityRecipientType }, 1, null, null)}
         </FormProvider>
       </Router>
     </NetworkContext.Provider>

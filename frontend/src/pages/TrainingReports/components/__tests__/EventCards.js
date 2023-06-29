@@ -7,37 +7,40 @@ import { EVENT_STATUS } from '../../constants';
 
 describe('EventCards', () => {
   const defaultEvents = [{
-
+    id: 1,
     data: {
-      'Edit Title': 'Sample event 1',
-      'Event ID': 'Sample event ID 1',
-      'Event Organizer - Type of Event': 'Sample event organizer 1',
-      'Reason for Activity': 'New Program/Option',
-      startDate: '2021-01-02',
-      endDate: '2021-01-03',
+      eventName: 'Sample event 1',
+      eventId: 'Sample event ID 1',
+      eventOrganizer: 'Sample event organizer 1',
+      reasons: ['New Program/Option'],
+      startDate: '01/02/2021',
+      endDate: '01/03/2021',
     },
+    sessionReports: [],
   },
   {
-
+    id: 2,
     data: {
-      'Edit Title': 'Sample event 2',
-      'Event ID': 'Sample event ID 2',
-      'Event Organizer - Type of Event': 'Sample event organizer 2',
-      'Reason for Activity': 'New Staff/Turnover',
-      startDate: '2021-02-02',
-      endDate: '2021-02-03',
+      eventName: 'Sample event 2',
+      eventId: 'Sample event ID 2',
+      eventOrganizer: 'Sample event organizer 2',
+      reasons: ['New Staff/Turnover'],
+      startDate: '02/02/2021',
+      endDate: '02/03/2021',
     },
+    sessionReports: [],
   },
   {
-
+    id: 3,
     data: {
-      'Edit Title': 'Sample event 3',
-      'Event ID': 'Sample event ID 3',
-      'Event Organizer - Type of Event': 'Sample event organizer 3',
-      'Reason for Activity': null,
-      startDate: '2021-03-02',
-      endDate: '2021-03-03',
+      eventName: 'Sample event 3',
+      eventId: 'Sample event ID 3',
+      eventOrganizer: 'Sample event organizer 3',
+      reasons: null,
+      startDate: '03/02/2021',
+      endDate: '03/03/2021',
     },
+    sessionReports: [],
   },
   ];
 

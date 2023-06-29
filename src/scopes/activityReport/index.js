@@ -27,6 +27,8 @@ import { withReportText, withoutReportText } from './reportText';
 import { withTtaType, withoutTtaType } from './ttaType';
 import { withGroup, withoutGroup } from './group';
 import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
+import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
+import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 
 export const topicToQuery = {
   reportId: {
@@ -138,6 +140,14 @@ export const topicToQuery = {
   deliveryMethod: {
     in: (query) => withDeliveryMethod(query),
     nin: (query) => withoutDeliveryMethod(query),
+  },
+  resourceAttachment: {
+    ctn: (query) => withResourceAttachment(query),
+    nctn: (query) => withoutResourceAttachment(query),
+  },
+  resourceUrl: {
+    ctn: (query) => withResourceUrl(query),
+    nctn: (query) => withoutResourceUrl(query),
   },
 };
 

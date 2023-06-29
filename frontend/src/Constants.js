@@ -64,6 +64,10 @@ export const REGIONAL_SCOPES = {
     name: 'READ_TRAINING_REPORTS',
     description: 'Can view training reports in the region',
   },
+  [SCOPE_IDS.COLLABORATOR_TRAINING_REPORTS]: {
+    name: 'COLLABORATOR_TRAINING_REPORTS',
+    description: 'Can view training reports in the region',
+  },
 };
 
 export const GLOBAL_SCOPES = {
