@@ -20,6 +20,7 @@ import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
 import { getEventsByStatus } from '../../fetchers/event';
+import { deleteSession } from '../../fetchers/session';
 import AppLoadingContext from '../../AppLoadingContext';
 import { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
 import AriaLiveContext from '../../AriaLiveContext';
@@ -158,6 +159,29 @@ export default function TrainingReports({ match }) {
   const filterConfig = hasMultipleRegions
     ? TRAINING_REPORT_CONFIG_WITH_REGIONS : TRAINING_REPORT_BASE_FILTER_CONFIG;
 
+  const onRemoveSession = async (session) => {
+    try {
+      // delete the session
+      await deleteSession(String(session.id));
+
+      // update the UI
+      // copy these events
+      const events = displayEvents.map((event) => ({ ...event }));
+
+      // find the event (we can modify it in place)
+      const event = events.find((e) => e.id === session.eventId);
+
+      // filter out the session
+      event.sessionReports = event.sessionReports.filter((s) => s.id !== session.id);
+
+      // update the state
+      setDisplayEvents(events);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(e);
+    }
+  };
+
   return (
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
@@ -224,7 +248,11 @@ export default function TrainingReports({ match }) {
               showHeaderBorder={false}
             >
               <Tabs tabs={tabValues} ariaLabel="Training events" />
-              <EventCards events={displayEvents} eventType={status} />
+              <EventCards
+                events={displayEvents}
+                eventType={status}
+                onRemoveSession={onRemoveSession}
+              />
             </WidgetContainer>
           </Grid>
         </Grid>
