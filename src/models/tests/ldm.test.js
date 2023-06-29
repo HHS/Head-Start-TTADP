@@ -44,7 +44,7 @@ describe('Logical Data Model', () => {
   describe('file', () => {
     it('changed from checkout', async () => {
       const result = await isFileModified('docs/logical_data_model.puml');
-      expect(result?.diffs?.['docs/logical_data_model.puml']).toStrictEqual('');
+      expect(result?.diffs?.['docs/logical_data_model.puml']).toStrictEqual(undefined);
     });
   });
 
