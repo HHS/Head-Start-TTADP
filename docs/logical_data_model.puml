@@ -287,24 +287,6 @@ class Goals{
  * grantId : integer : REFERENCES "Grants".id
 }
 
-!issue='model missing for table'
-class GrantPersonnel #pink;line:red;line.bold;text:red {
- * id : integer : <generated>
- * grantId : integer
- * role : varchar(255)
- * active : boolean
- prefix : varchar(255)
- firstName : varchar(255)
- lastName : varchar(255)
- suffix : varchar(255)
- title : varchar(255)
- email : varchar(255)
- effectiveDate : timestamp with time zone
- originalPersonnelId : integer
- * createdAt : timestamp with time zone : now()
- * updatedAt : timestamp with time zone : now()
-}
-
 class Grants{
  * id : integer
  * number : varchar(255)
@@ -1026,21 +1008,6 @@ class ZALGoals{
  session_sig : text
  descriptor_id : integer
  dml_as : bigint
-}
-
-!issue='model missing for table'
-class ZALGrantPersonnel #pink;line:red;line.bold;text:red {
- * id : bigint : <generated>
- * data_id : bigint
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
- * dml_as : bigint
- * dml_txid : uuid
- session_sig : text
- descriptor_id : integer
 }
 
 class ZALGrants{
