@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
 import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -15,7 +16,7 @@ import {
   findEventsByStatus,
 } from '../../services/event';
 import { userById } from '../../services/users';
-import { setReadRegions } from '../../services/accessValidation';
+import { setReadRegions, setTrainingReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
 import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:EVENTS';
@@ -34,8 +35,13 @@ export const getByStatus = async (req, res) => {
     const auth = await getEventAuthorization(req, res, {});
     const userId = await currentUserId(req, res);
     const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
-    const updatedFilters = await setReadRegions(req.query, userId);
+    const updatedFilters = await setTrainingReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
+
+    // If user is a collaborator we want o return all region events and collaborator events.
+    if (await userIsPocRegionalCollaborator(userId)) {
+      scopes.push({ pocId: { [Op.contains]: [userId] } });
+    }
     const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
 
     return res.status(httpCodes.OK).send(events);
@@ -61,8 +67,21 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
+    // Check if user is a collaborator.
+    const userId = await currentUserId(req, res);
+    const scopes = [];
+    if (await userIsPocRegionalCollaborator(userId)) {
+      scopes.push({ pocId: { [Op.contains]: [userId] } });
+    }
+
     if (eventId) {
-      event = await findEventById(eventId);
+      const where = {
+        [Op.and]: [
+          { id: eventId },
+          ...scopes,
+        ],
+      };
+      event = await findEventById(where);
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
@@ -79,7 +98,7 @@ export const getHandler = async (req, res) => {
 
     const auth = await getEventAuthorization(req, res, event);
 
-    if (!auth.canRead()) {
+    if (!auth.canRead() && !auth.isCollaborator()) {
       return res.sendStatus(403);
     }
 

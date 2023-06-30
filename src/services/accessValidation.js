@@ -23,6 +23,31 @@ export async function validateUserAuthForAccess(userId) {
   return userPermission !== null;
 }
 
+export async function userIsPocRegionalCollaborator(userId) {
+  const userPermissions = await Permission.findAll({
+    attributes: ['scopeId', 'userId'],
+    where: {
+      userId,
+    },
+  });
+
+  // the user sees only reports where they are a collaborator
+  // if they don't have the scope READ_WRITE_TRAINING_REPORTS
+  // and the scope READ_TRAINING_REPORTS
+
+  const hasReadReports = userPermissions.some((p) => p.scopeId === SCOPES.READ_TRAINING_REPORTS);
+
+  const hasReadWriteReports = userPermissions.some(
+    (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
+  );
+  const hasCollaborator = userPermissions.some(
+    (p) => p.scopeId === SCOPES.COLLABORATOR_TRAINING_REPORTS,
+  );
+
+  // if they have the other scopes, their access is not limited
+  return hasCollaborator && !hasReadReports && !hasReadWriteReports;
+}
+
 export async function validateUserAuthForAdmin(userId) {
   try {
     const userPermission = await Permission.findOne({
@@ -63,6 +88,26 @@ export async function getUserReadRegions(userId) {
   }
 }
 
+export async function getUserTrainingReportReadRegions(userId) {
+  try {
+    const readRegions = await Permission.findAll({
+      attributes: ['regionId'],
+      where: {
+        userId,
+        [Op.or]: [
+          { scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS },
+          { scopeId: SCOPES.READ_TRAINING_REPORTS },
+          { scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS },
+        ],
+      },
+    });
+    return readRegions.map((p) => p.regionId);
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
+    throw error;
+  }
+}
+
 /**
  *
  * @param {Number} userId
@@ -79,6 +124,35 @@ export async function isCentralOffice(userId) {
 */
 export async function setReadRegions(query, userId) {
   const readRegions = await getUserReadRegions(userId);
+
+  // if region.in is part of query (user has requested specific regions)
+  if ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) {
+    // first check to see if "all regions (central office)" is selected
+    // if so, return all regions has access to
+
+    if (query['region.in'].length === 1 && parseInt(query['region.in'][0], DECIMAL_BASE) === 14) {
+      return {
+        ...query,
+        'region.in': readRegions,
+      };
+    }
+
+    // otherwise return filtered array of all regions user has access to vs requested regions
+    return {
+      ...query,
+      'region.in': query['region.in'].filter((r) => readRegions.includes(parseInt(r, DECIMAL_BASE))),
+    };
+  }
+
+  // otherwise region.in is not in query and we return all read regions
+  return {
+    ...query,
+    'region.in': readRegions,
+  };
+}
+
+export async function setTrainingReportReadRegions(query, userId) {
+  const readRegions = await getUserTrainingReportReadRegions(userId);
 
   // if region.in is part of query (user has requested specific regions)
   if ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) {
