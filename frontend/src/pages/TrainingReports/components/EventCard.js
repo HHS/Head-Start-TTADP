@@ -1,5 +1,6 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
 import './EventCard.scss';
@@ -12,6 +13,7 @@ import SessionCard from './SessionCard';
 
 function EventCard({
   event,
+  onRemoveSession,
 }) {
   const history = useHistory();
 
@@ -24,7 +26,7 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (event.status !== 'Complete') {
+  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
     menuItems.push({
       label: 'Create session',
       onClick: () => {
@@ -38,6 +40,13 @@ function EventCard({
       },
     });
   }
+
+  menuItems.push({
+    label: 'View event',
+    onClick: () => {
+      history.push(`/training-report/view/${event.id}`);
+    },
+  });
 
   const [reportsExpanded, setReportsExpanded] = useState(false);
 
@@ -88,7 +97,7 @@ function EventCard({
       <div className="margin-top-3">
         <ExpanderButton
           type="session"
-          ariaLabel={`reports for event ${data.eventId}`}
+          ariaLabel={`sessions for event ${data.eventId}`}
           closeOrOpen={closeOrOpenReports}
           count={event.sessionReports.length}
           expanded={reportsExpanded}
@@ -101,6 +110,8 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
+          eventStatus={data.status}
+          onRemoveSession={onRemoveSession}
         />
       ))}
 
@@ -110,6 +121,7 @@ function EventCard({
 
 EventCard.propTypes = {
   event: eventPropTypes.isRequired,
+  onRemoveSession: PropTypes.func.isRequired,
 };
 
 export default EventCard;

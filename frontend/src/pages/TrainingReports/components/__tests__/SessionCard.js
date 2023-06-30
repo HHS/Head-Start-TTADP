@@ -35,13 +35,14 @@ describe('SessionCard', () => {
     ],
   };
 
-  const renderSessionCard = async (session = defaultSession, passedUser = DEFAULT_USER) => {
+  const renderSessionCard = async (session = defaultSession, user = DEFAULT_USER, eventStatus = 'In progress') => {
     render((
-      <UserContext.Provider value={{ user: passedUser }}>
+      <UserContext.Provider value={{ user }}>
         <Router history={history}>
           <SessionCard
             eventId={1}
             session={session}
+            eventStatus={eventStatus}
             expanded
           />
         </Router>
@@ -90,6 +91,19 @@ describe('SessionCard', () => {
       });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/edit session/i)).toBeInTheDocument();
+  });
+
+  it('does not show the the edit link on a complete event', () => {
+    renderSessionCard(defaultSession,
+      {
+        id: 1,
+        permissions: [{
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        }],
+      }, 'Complete');
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).toBeNull();
   });
 
   it('renders complete status', () => {
