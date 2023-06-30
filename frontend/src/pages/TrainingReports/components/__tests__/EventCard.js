@@ -10,6 +10,10 @@ describe('EventCard', () => {
   const history = createMemoryHistory();
   const defaultEvent = {
     id: 1,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocId: [],
+    regionId: 1,
     data: {
       eventName: 'This is my event title',
       eventId: 'This is my event ID',
@@ -36,19 +40,20 @@ describe('EventCard', () => {
   };
 
   const DEFAULT_USER = {
+    id: 1,
     name: 'test@test.com',
     homeRegionId: 1,
     permissions: [
       {
-        scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+        scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
         regionId: 1,
       },
     ],
   };
 
-  const renderEventCard = (event = defaultEvent) => {
+  const renderEventCard = (event = defaultEvent, user = DEFAULT_USER) => {
     render((
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
+      <UserContext.Provider value={{ user }}>
         <Router history={history}>
           <EventCard
             event={event}
@@ -80,5 +85,58 @@ describe('EventCard', () => {
     // Collapse Objectives via click.
     expBtn.click();
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
+  });
+
+  it('hides the edit and create options', () => {
+    renderEventCard(defaultEvent, { ...DEFAULT_USER, permissions: [] });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('hides the edit and create options for completed event with write permissions', () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('shows the edit and create options with write permission', () => {
+    renderEventCard(defaultEvent);
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('only shows the view options with view permission', () => {
+    renderEventCard(defaultEvent,
+      {
+        ...DEFAULT_USER,
+        permissions: [{ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId: 1 }],
+      });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('shows the edit and create options for a collaborator without write permission', () => {
+    renderEventCard({
+      ...defaultEvent,
+      pocId: [2],
+    },
+    { ...DEFAULT_USER, id: 2, permissions: [] });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 });

@@ -107,7 +107,6 @@ const canEditOrCreateGoals = (user, region) => {
  */
 const canEditOrCreateSessionReports = (user, region) => {
   const { permissions } = user;
-
   if (isAdmin(user)) {
     return true;
   }
