@@ -1,0 +1,5 @@
+@use '../../../colors' as *;
+
+.ttahub-session-card__session-list a:visited {
+    color: $text-link;
+}

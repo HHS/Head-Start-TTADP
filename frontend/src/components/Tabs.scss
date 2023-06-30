@@ -1,0 +1,30 @@
+@use '../colors.scss' as *;
+
+
+.ttahub-tabs--tabs_nav ul:first-child {
+    padding-left: 32px;
+}
+
+.ttahub-tabs--tabs_link, .ttahub-tabs--tabs_link:visited {
+    color: $text-ink;
+    text-decoration: none;
+}
+
+.ttahub-tabs--tabs_tab {
+    min-width: 6rem;
+    text-align:center;
+}
+
+.ttahub-tabs--tabs_link--active{
+    border-bottom: 4px solid $ttahub-blue;
+    font-weight: bold;
+}
+
+a.ttahub-tabs--tabs_back-to-search, a.ttahub-tabs--tabs_back-to-search:visited {
+    color: $ttahub-blue;
+}
+
+.ttahub-tabs--tabs-ul {
+    border-bottom: 1px solid $base-lighter;
+    padding-bottom: 0px;
+}

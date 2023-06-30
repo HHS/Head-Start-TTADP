@@ -112,6 +112,18 @@ describe('validateGoals', () => {
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
       });
+
+      it('doesn\'t die if there is no setError', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, resources: [{ value: '234runwf78n' }] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).not.toHaveBeenCalled();
+      });
     });
 
     describe('returns false', () => {

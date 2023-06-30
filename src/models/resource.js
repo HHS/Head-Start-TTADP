@@ -75,6 +75,14 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.TEXT,
     },
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
+    metadataUpdatedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
   }, {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),

@@ -20,6 +20,7 @@ export default function WidgetContainer(
     perPage,
     handlePageChange,
     error,
+    showHeaderBorder,
   },
 ) {
   return (
@@ -28,7 +29,7 @@ export default function WidgetContainer(
         !title && !subtitle
           ? null
           : (
-            <div className="smart-hub-widget-container-header padding-3">
+            <div className={`${showHeaderBorder ? 'smart-hub-widget-container-header-border' : ''} padding-3`}>
               <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
               <p className="usa-prose margin-0">{subtitle}</p>
             </div>
@@ -76,6 +77,7 @@ WidgetContainer.propTypes = {
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func,
   error: PropTypes.string,
+  showHeaderBorder: PropTypes.bool,
 };
 
 WidgetContainer.defaultProps = {
@@ -87,5 +89,6 @@ WidgetContainer.defaultProps = {
   offset: 0,
   perPage: 10,
   handlePageChange: () => { },
+  showHeaderBorder: true,
   error: null,
 };
