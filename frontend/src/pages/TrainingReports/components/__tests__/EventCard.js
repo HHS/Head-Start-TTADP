@@ -12,6 +12,7 @@ describe('EventCard', () => {
     id: 1,
     ownerId: 1,
     collaboratorIds: [],
+    pocIds: [],
     regionId: 1,
     data: {
       eventName: 'This is my event title',
@@ -128,7 +129,7 @@ describe('EventCard', () => {
   it('shows the edit and create options for a collaborator without write permission', () => {
     renderEventCard({
       ...defaultEvent,
-      collaboratorIds: [2],
+      pocIds: [2],
     },
     { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
