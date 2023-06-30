@@ -12,7 +12,6 @@ from sklearn.preprocessing import normalize
 nlp = spacy.load("en_core_web_sm")
 ALPHA = 0.9
 
-
 def calculate_batch_similarity(batch, nlp):
     """
     Calculates the cosine similarity between a batch of sentences.
@@ -31,8 +30,7 @@ def calculate_batch_similarity(batch, nlp):
     sim_scores = sentence_embeddings_norm @ sentence_embeddings_norm.T
     return sim_scores
 
-
-def calculate_goal_similarity(goals_list, goal_ids_list, batch_size=500):
+def calculate_similarity_scores(goals_list, goal_ids_list, batch_size=500):
     """
     Calculates the similarity between a list of goals.
 
@@ -42,9 +40,9 @@ def calculate_goal_similarity(goals_list, goal_ids_list, batch_size=500):
         batch_size (int, optional): The batch size to use for calculating similarity. Defaults to 500.
 
     Returns:
-        list: A list of matched goals.
+        list: A list of goals with their IDs and similarity scores.
     """
-    matched_goals = []
+    matched_goals = {}
     num_goals = len(goals_list)
 
     for i in range(0, num_goals, batch_size):
@@ -62,12 +60,12 @@ def calculate_goal_similarity(goals_list, goal_ids_list, batch_size=500):
             for k in cur_potential_idx:
                 if i + j > i + k:
                     continue
-                matched_goals.append(
+                if current_ids[j] not in matched_goals:
+                    matched_goals[current_ids[j]] = []
+                matched_goals[current_ids[j]].append(
                     {
-                        "goal1_id": current_ids[j],
-                        "goal1": goals_list[i + j],
-                        "goal2_id": current_ids[k],
-                        "goal2": goals_list[i + k],
+                        "goal_id": current_ids[k],
+                        "similarity_score": float(cur_sim_scores[k]),
                     }
                 )
-    return matched_goals
+    return [{"evaluated_goal_id": k, "matched_goals": v} for k, v in matched_goals.items()]

@@ -6,18 +6,23 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 
-from models.spacy_similarity import my_calc_similarity
+from models.spacy_similarity import calculate_goal_similarity
+from models.spacy_similarity_scores import calculate_similarity_scores
+
 from utilities.auth import User, get_current_active_user
+from utilities.api_key_auth import get_api_key
 from utilities.db import connect_to_db
 from utilities.datagen import data_generator, is_generating_data, stop_event
 
 templates = Jinja2Templates(directory="templates")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 unauthenticated_router = APIRouter(tags=["unauthenticated"])
 authenticated_router = APIRouter(
     tags=["authenticated"],
-    dependencies=[Depends(oauth2_scheme), Depends(get_current_active_user)],
+    # dependencies=[Depends(oauth2_scheme), Depends(get_current_active_user)],
+    dependencies=[Depends(get_api_key)],
+    
 )
 
 
@@ -101,9 +106,9 @@ def setup_main_routes(app: FastAPI) -> None:
         return {"user_ids": rows}
 
     @authenticated_router.get(
-        "/compute_similarities/{recipient_id}", tags=["data_science"]
+        "/compute_goal_similarities/{recipient_id}", tags=["data_science"]
     )
-    def compute_similarities(
+    def compute_goal_similarities(
         recipient_id: str,
     ) -> Dict[str, List[Dict]]:
         rows = execute_db_query(
@@ -116,11 +121,38 @@ def setup_main_routes(app: FastAPI) -> None:
             """,
             (recipient_id,),
         )
-        rows = [row for row in rows if row["name"] is not None]
-        cur_goals_list = [row["name"] for row in rows]
-        cur_goal_ids = [row["id"] for row in rows]
-        matched_goals = my_calc_similarity(cur_goals_list, cur_goal_ids)
-        return {"matched_goals": matched_goals}
+        if rows is not None:
+            rows = [row for row in rows if row["name"] is not None]
+            cur_goals_list = [row["name"] for row in rows]
+            cur_goal_ids = [row["id"] for row in rows]
+            matched_goals = calculate_goal_similarity(cur_goals_list, cur_goal_ids)
+            return {"matched_goals": matched_goals}
+        else:
+            return {"error": "No rows returned from the database"}
+        
+    @authenticated_router.get(
+        "/compute_similarities_scores/{recipient_id}", tags=["data_science"]
+    )
+    def compute_similarities_scores(
+        recipient_id: str,
+    ) -> Dict[str, List[Dict]]:
+        rows = execute_db_query(
+            """
+            SELECT g."id", g."name"
+            FROM "Goals" g
+            JOIN "Grants" gr ON g."grantId" = gr.id
+            JOIN "Recipients" r ON gr."recipientId" = r.id
+            """,
+            (recipient_id,),
+        )
+        if rows is not None:
+            rows = [row for row in rows if row["name"] is not None]
+            cur_goals_list = [row["name"] for row in rows]
+            cur_goal_ids = [row["id"] for row in rows]
+            matched_goals = calculate_similarity_scores(cur_goals_list, cur_goal_ids)
+            return {"matched_goals": matched_goals}
+        else:
+            return {"error": "No rows returned from the database"}
 
     @authenticated_router.get("/protected_endpoint")
     def protected_endpoint() -> Dict[str, str]:
