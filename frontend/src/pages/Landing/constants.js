@@ -18,11 +18,13 @@ import {
   myReportsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const LANDING_BASE_FILTER_CONFIG = [
+const LANDING_BASE_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -36,6 +38,8 @@ export const LANDING_BASE_FILTER_CONFIG = [
   recipientFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   specialistRoleFilter,
   singleOrMultiRecipientsFilter,
   stateCodeFilter,
@@ -44,7 +48,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
   ttaTypeFilter,
 ];
 
-export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
+const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -59,6 +63,8 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   regionFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
@@ -66,3 +72,9 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort both by display prop
+LANDING_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+LANDING_FILTER_CONFIG_WITH_REGIONS.sort((a, b) => a.display.localeCompare(b.display));
+
+export { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS };

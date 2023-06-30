@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { useController } from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form';
 import {
   DatePicker,
 } from '@trussworks/react-uswds';

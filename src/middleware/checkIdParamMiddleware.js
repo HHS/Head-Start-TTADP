@@ -162,3 +162,13 @@ export function checkGoalTemplateIdParam(req, res, next) {
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
+
+export function checkIdParam(req, res, next, paramName) {
+  if (req.params && req.params[paramName] && canBeInt(req.params[paramName])) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: ${paramName} ${req.params ? (req.params[paramName] || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
