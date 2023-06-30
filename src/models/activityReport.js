@@ -146,6 +146,7 @@ export default (sequelize, DataTypes) => {
     },
     version: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
@@ -193,7 +194,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     submissionStatus: {
-      allowNull: false,
+      allowNull: true,
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {

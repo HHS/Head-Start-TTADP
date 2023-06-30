@@ -126,8 +126,8 @@ class ActivityReportResources{
 class ActivityReports{
  * id : integer : <generated>
  lastUpdatedById : integer : REFERENCES "Users".id
- regionId : integer : REFERENCES "Regions".id
  userId : integer : REFERENCES "Users".id
+ * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  * version : integer : 1
@@ -161,8 +161,8 @@ class ActivityReports{
 
 class CollaboratorRoles{
  * id : integer : <generated>
- roleId : integer : REFERENCES "Roles".id
  * activityReportCollaboratorId : integer : REFERENCES "ActivityReportCollaborators".id
+ * roleId : integer : REFERENCES "Roles".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
@@ -322,9 +322,9 @@ class Groups{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
+ * name : text
  * updatedAt : timestamp with time zone
  isPublic : boolean
- name : text
 }
 
 class MailerLogs{
@@ -500,9 +500,9 @@ class Programs{
 class Recipients{
  * id : integer
  * createdAt : timestamp with time zone : now()
+ * name : varchar(255)
  * updatedAt : timestamp with time zone : now()
  deleted : boolean : false
- name : varchar(255)
  recipientType : varchar(255)
  uei : varchar(255) : ''::character varying
 }
@@ -643,9 +643,9 @@ class UserValidationStatus{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
+ * token : varchar(255)
  * type : varchar(255)
  * updatedAt : timestamp with time zone
- token : varchar(255)
  validatedAt : timestamp with time zone
 }
 
