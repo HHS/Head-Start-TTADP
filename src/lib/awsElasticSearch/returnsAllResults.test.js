@@ -28,6 +28,7 @@ const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 describe('returnsAllResults', () => {
