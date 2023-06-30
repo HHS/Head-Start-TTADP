@@ -50,7 +50,7 @@ describe('Maintenance Queue', () => {
       const job = { name: 'test-job', data: { type: 'test-type' } };
       const error = new Error('test-error');
       onFailedMaintenance(job, error);
-      expect(auditLogger.error).toHaveBeenCalledWith(`job ${job.name} failed for report ${job.data.type} with error ${error}`);
+      expect(auditLogger.error).toHaveBeenCalledWith(`job ${job.name} failed for ${job.data.type} with error ${error}`);
     });
   });
 
@@ -63,10 +63,10 @@ describe('Maintenance Queue', () => {
     });
 
     it('should log failed maintenance when result is null', () => {
-      const job = { name: 'test-job', data: { category: 'test-category', type: 'test-type' } };
+      const job = { name: 'test-job', data: { type: 'test-type' } };
       const result = null;
       onCompletedMaintenance(job, result);
-      expect(logger.error).toHaveBeenCalledWith(`Failed to perform ${job.name} maintenance for ${job.data.category} ${job.data.type}`);
+      expect(logger.error).toHaveBeenCalledWith(`Failed to perform ${job.name} maintenance for ${job.data.type}`);
     });
   });
 
