@@ -111,6 +111,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
+  version: 2,
 };
 
 const submittedReport = {
