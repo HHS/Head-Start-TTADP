@@ -52,6 +52,7 @@ describe('EventCard', () => {
         <Router history={history}>
           <EventCard
             event={event}
+            onRemoveSession={jest.fn()}
           />
         </Router>
       </UserContext.Provider>));
@@ -69,7 +70,7 @@ describe('EventCard', () => {
 
   it('displays sessions', () => {
     renderEventCard();
-    const expBtn = screen.getByRole('button', { name: /view reports for event this is my event id/i });
+    const expBtn = screen.getByRole('button', { name: /view sessions for event this is my event id/i });
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
 
     // Expand Objectives via click.
