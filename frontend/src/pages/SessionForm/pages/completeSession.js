@@ -43,7 +43,7 @@ const CompleteSession = ({
 
   const onFormSubmit = async () => {
     if (updatedStatus !== 'Complete') {
-      setError('status', { message: 'Session must be complete to submit' });
+      setError('status', { message: 'Status must be complete to submit session' });
       return;
     }
 

@@ -34,7 +34,7 @@ function renderEditor(heading, data) {
   );
 }
 
-export default function renderData(heading, data) {
+export default function renderReadOnlyContentData(heading, data) {
   if (Array.isArray(data)) {
     const cleanData = data.filter((d) => d);
     return (
