@@ -33,6 +33,13 @@ export const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
+export const GRANT_PERSONNEL_ROLES = [
+  'auth_official_contact',
+  'ceo',
+  'policy_council',
+  'director',
+];
+
 export const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',

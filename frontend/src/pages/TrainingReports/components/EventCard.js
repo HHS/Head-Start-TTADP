@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useContext } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
 import UserContext from '../../../UserContext';
@@ -15,13 +16,14 @@ import { canEditOrCreateSessionReports } from '../../../permissions';
 
 function EventCard({
   event,
+  onRemoveSession,
 }) {
   const { user } = useContext(UserContext);
   const hasEditPermissions = canEditOrCreateSessionReports(
     user,
     parseInt(event.regionId, DECIMAL_BASE),
   );
-  const isCollaborator = event.pocIds.includes(user.id);
+  const isCollaborator = event.pocId && event.pocId.includes(user.id);
   const canEditExisting = hasEditPermissions || (isCollaborator);
 
   const history = useHistory();
@@ -35,7 +37,7 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (event.status !== 'Complete' && canEditExisting) {
+  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE && canEditExisting) {
     // Create session.
     menuItems.push({
       label: 'Create session',
@@ -110,7 +112,7 @@ function EventCard({
       <div className="margin-top-3">
         <ExpanderButton
           type="session"
-          ariaLabel={`reports for event ${data.eventId}`}
+          ariaLabel={`sessions for event ${data.eventId}`}
           closeOrOpen={closeOrOpenReports}
           count={event.sessionReports.length}
           expanded={reportsExpanded}
@@ -124,6 +126,8 @@ function EventCard({
           session={s}
           expanded={reportsExpanded}
           hasWritePermissions={canEditExisting}
+          eventStatus={data.status}
+          onRemoveSession={onRemoveSession}
         />
       ))}
 
@@ -133,6 +137,7 @@ function EventCard({
 
 EventCard.propTypes = {
   event: eventPropTypes.isRequired,
+  onRemoveSession: PropTypes.func.isRequired,
 };
 
 export default EventCard;

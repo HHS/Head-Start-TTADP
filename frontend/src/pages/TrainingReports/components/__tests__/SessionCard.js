@@ -1,7 +1,6 @@
 import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import SessionCard from '../SessionCard';
 
@@ -22,15 +21,15 @@ describe('SessionCard', () => {
     },
   };
 
-  const renderSessionCard = async (session = defaultSession, hasWritePermissions = true) => {
+  const renderSessionCard = async (session = defaultSession, hasWritePermissions = true, eventStatus = 'In progress') => {
     render((
-
       <Router history={history}>
         <SessionCard
           eventId={1}
           session={session}
-          expanded
           hasWritePermissions={hasWritePermissions}
+          eventStatus={eventStatus}
+          expanded
         />
       </Router>));
   };
@@ -54,22 +53,15 @@ describe('SessionCard', () => {
   });
 
   it('shows the edit link with the correct permissions', () => {
-    renderSessionCard(defaultSession,
-      {
-        id: 1,
-        permissions: [{
-          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-          regionId: 1,
-        }],
-      });
+    renderSessionCard(defaultSession);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/edit session/i)).toBeInTheDocument();
   });
 
-  it('shows the edit link with the admin permissions', () => {
-    renderSessionCard(defaultSession);
+  it('does not show the the edit link on a complete event', () => {
+    renderSessionCard(defaultSession, true, 'Complete');
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.getByText(/edit session/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).toBeNull();
   });
 
   it('renders complete status', () => {

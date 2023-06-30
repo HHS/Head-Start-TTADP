@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import join from 'url-join';
 import {
   render,
@@ -102,21 +103,23 @@ describe('sessionSummary', () => {
           setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
         }}
         >
-          <FormProvider {...hookForm}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {sessionSummary.render(
-                null,
-                defaultFormValues,
-                1,
-                false,
-                jest.fn(),
-                onSaveDraft,
-                jest.fn(),
-                false,
-                'key',
-              )}
-            </NetworkContext.Provider>
-          </FormProvider>
+          <MemoryRouter>
+            <FormProvider {...hookForm}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {sessionSummary.render(
+                  null,
+                  defaultFormValues,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveDraft,
+                  jest.fn(),
+                  false,
+                  'key',
+                )}
+              </NetworkContext.Provider>
+            </FormProvider>
+          </MemoryRouter>
         </AppLoadingContext.Provider>
       );
     };
