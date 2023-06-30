@@ -18,6 +18,9 @@ const mockAnnounce = jest.fn();
 
 const notStartedEvents = [{
   id: 1,
+  ownerId: 1,
+  collaboratorIds: [],
+  pocId: [],
   data: {
     eventName: 'Not started event 1',
     eventId: 'Not started event ID 1',
@@ -30,6 +33,9 @@ const notStartedEvents = [{
 },
 {
   id: 2,
+  ownerId: 1,
+  collaboratorIds: [],
+  pocId: [],
   data: {
     eventName: 'Not started event 2',
     eventId: 'Not started event ID 2',
@@ -43,6 +49,10 @@ const notStartedEvents = [{
 
 const inProgressEvents = [{
   id: 3,
+  ownerId: 1,
+  collaboratorIds: [],
+  pocId: [],
+  regionId: 2,
   data: {
     eventName: 'In progress event 1',
     eventId: 'In progress event ID 1',
@@ -54,6 +64,7 @@ const inProgressEvents = [{
   sessionReports: [{
     id: 1,
     eventId: 3,
+    regionId: 2,
     data: {
       regionId: 2,
       sessionName: 'This is my session title',
@@ -70,6 +81,9 @@ const inProgressEvents = [{
 
 const completeEvents = [{
   id: 4,
+  ownerId: 1,
+  collaboratorIds: [],
+  pocId: [],
   data: {
     eventName: 'Complete event 1',
     eventId: 'Complete event ID 1',
@@ -87,6 +101,7 @@ const eventUrl = join('api', 'events');
 
 describe('TrainingReports', () => {
   const nonCentralOfficeUser = {
+    id: 1,
     homeRegionId: 1,
     permissions: [{
       regionId: 2,
@@ -143,6 +158,7 @@ describe('TrainingReports', () => {
 
   it('renders user without a home region', async () => {
     const noHomeRegionUser = {
+      id: 1,
       homeRegionId: null,
       permissions: [{
         regionId: 2,
@@ -294,6 +310,7 @@ describe('TrainingReports', () => {
 
   it('renders the header with all regions', async () => {
     const centralOfficeUser = {
+      id: 1,
       homeRegionId: 14,
       permissions: [{
         regionId: 2,
@@ -308,6 +325,7 @@ describe('TrainingReports', () => {
 
   test('displays a message', async () => {
     const user = {
+      id: 1,
       name: 'test@test.com',
       homeRegionId: 1,
       permissions: [
@@ -358,6 +376,7 @@ describe('TrainingReports', () => {
   // Filters.
   it('correctly renders data based on filters', async () => {
     const user = {
+      id: 1,
       homeRegionId: 14,
       permissions: [{
         regionId: 1,

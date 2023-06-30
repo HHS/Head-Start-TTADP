@@ -1,9 +1,8 @@
-import React, { useContext, useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import { ModalToggleButton, Button } from '@trussworks/react-uswds';
-import UserContext from '../../../UserContext';
 import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
@@ -12,7 +11,6 @@ import {
   Pencil,
   Trash,
 } from '../../../components/icons';
-import { canEditOrCreateSessionReports } from '../../../permissions';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -34,12 +32,11 @@ function SessionCard({
   eventId,
   session,
   expanded,
+  hasWritePermissions,
   eventStatus,
   onRemoveSession,
 }) {
-  const { user } = useContext(UserContext);
   const modalRef = useRef();
-
   const {
     sessionName,
     startDate,
@@ -49,10 +46,7 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    regionId,
   } = session.data;
-
-  const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
 
   const getSessionDisplayStatusText = () => {
     switch (status) {
@@ -75,7 +69,7 @@ function SessionCard({
     return <NoStatus />;
   })();
 
-  const showControls = hasEditPermissions && eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
+  const showControls = hasWritePermissions && eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
 
   return (
     <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
@@ -169,6 +163,7 @@ SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
   session: sessionPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
+  hasWritePermissions: PropTypes.bool.isRequired,
   eventStatus: PropTypes.string.isRequired,
   onRemoveSession: PropTypes.func.isRequired,
 };
