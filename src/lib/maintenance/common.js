@@ -18,7 +18,7 @@ const maintenanceCronJobs = {};
  */
 const onFailedMaintenance = (job, error) => {
   // Log an error message with details about the failed job and error.
-  auditLogger.error(`job ${job.name} failed for report ${job.data.type} with error ${error}`);
+  auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
 };
 
 /**
@@ -30,10 +30,10 @@ const onCompletedMaintenance = (job, result) => {
   // Check if the result is not null
   if (result != null) {
     // Log successful maintenance with job name, category and type
-    logger.info(`Successfully performed ${job.name} maintenance for ${job.data?.category} ${job.data?.type}`);
+    logger.info(`Successfully performed ${job.name} maintenance for ${job.data?.type}`);
   } else {
     // Log failed maintenance with job name, category and type
-    logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.category} ${job.data?.type}`);
+    logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.type}`);
   }
 };
 

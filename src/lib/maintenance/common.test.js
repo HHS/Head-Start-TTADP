@@ -56,10 +56,10 @@ describe('Maintenance Queue', () => {
 
   describe('onCompletedMaintenance', () => {
     it('should log successful maintenance when result is not null', () => {
-      const job = { name: 'test-job', data: { category: 'test-category', type: 'test-type' } };
+      const job = { name: 'test-job', data: { type: 'test-type' } };
       const result = 'test-result';
       onCompletedMaintenance(job, result);
-      expect(logger.info).toHaveBeenCalledWith(`Successfully performed ${job.name} maintenance for ${job.data.category} ${job.data.type}`);
+      expect(logger.info).toHaveBeenCalledWith(`Successfully performed ${job.name} maintenance for ${job.data.type}`);
     });
 
     it('should log failed maintenance when result is null', () => {
