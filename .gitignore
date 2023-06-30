@@ -7,6 +7,8 @@ docs/circleci/test_report.md
 lcov.info
 playwright
 tests/**/report/*.html
+tests/api/report
+tests/e2e/report
 
 # Ignore /doc => /docs symbolic link created for adr-tools
 /doc

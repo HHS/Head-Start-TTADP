@@ -1,11 +1,6 @@
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
-import { validate } from 'uuid';
 import { root, validateSchema } from './common';
-
-test('get /users/collaborators', async ({ request }) => {
-  
-});
 
 test.describe('get /users/collaborators', () => {
   test('no region - 403 case', async ({ request }) => {
@@ -83,5 +78,26 @@ test.describe('get /users/active-users', () => {
 
     // ensure response header content-type is 'text/csv':
     expect(response.headers()['content-type']).toBe('text/csv; charset=utf-8');
+  });
+});
+
+test.describe('get /users/training-report-users', () => {
+  test('403', async ({ request }) => {
+    const response = await request.get(`${root}/users/training-report-users`);
+    expect(response.status()).toBe(403);
+  });
+  test('200', async ({ request }) => {
+    const response = await request.get(
+      `${root}/users/training-report-users?regionId=1`,
+      { headers: { 'playwright-user-id': '1' } }, // has no home region
+    );
+    expect(response.status()).toBe(200);
+
+    const schema = Joi.object({
+      pointOfContact: Joi.array().items(Joi.any()),
+      collaborators: Joi.array().items(Joi.any()),
+    });
+    expect(response.status()).toBe(200);
+    await validateSchema(response, schema, expect);
   });
 });

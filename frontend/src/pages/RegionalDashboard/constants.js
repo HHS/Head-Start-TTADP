@@ -19,11 +19,13 @@ import {
   ttaTypeFilter,
   reportTextFilter,
   deliveryMethodFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const DASHBOARD_FILTER_CONFIG = [
+const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   deliveryMethodFilter,
@@ -38,6 +40,8 @@ export const DASHBOARD_FILTER_CONFIG = [
   regionFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
@@ -45,3 +49,8 @@ export const DASHBOARD_FILTER_CONFIG = [
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort by display prop
+DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { DASHBOARD_FILTER_CONFIG };

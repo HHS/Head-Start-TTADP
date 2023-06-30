@@ -50,7 +50,9 @@ import MyGroupsProvider from './components/MyGroupsProvider';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
+import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
+import SessionForm from './pages/SessionForm';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -257,11 +259,33 @@ function App() {
         />
         <Route
           exact
-          path="/training-reports"
-          render={() => (
+          path="/training-reports/:status(not-started|in-progress|complete)"
+          render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReports user={user} />
+                <TrainingReports user={user} match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReportForm match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <SessionForm match={match} />
               </FeatureFlag>
             </AppWrapper>
           )}
@@ -312,6 +336,7 @@ function App() {
             </AppWrapper>
           )}
         />
+
         <Route
           exact
           path="/account"

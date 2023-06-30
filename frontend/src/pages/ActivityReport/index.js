@@ -18,7 +18,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import pages from './Pages';
-import Navigator from '../../components/Navigator';
+import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
@@ -28,7 +28,7 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
-import useSocket from '../../hooks/useSocket';
+import useSocket, { publishLocation } from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 
 import {
@@ -42,9 +42,8 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
-import useLocalStorage from '../../hooks/useLocalStorage';
+import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
@@ -108,30 +107,7 @@ export function cleanupLocalStorage(id, replacementKey) {
   }
 }
 
-function setConnectionActiveWithError(e, setConnectionActive) {
-  let connection = false;
-  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
-  // display the "network is unavailable" message
-  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
-    connection = true;
-  }
-  setConnectionActive(connection);
-  return connection;
-}
-
 const INTERVAL_DELAY = 10000; // TEN SECONDS
-
-const publishLocation = (socket, socketPath, user, lastSaveTime) => {
-  // we have to check to see if the socket is open before we send a message
-  // since the interval could be called while the socket is open but is about to close
-  if (socket && socket.readyState === socket.OPEN) {
-    socket.send(JSON.stringify({
-      user: user.name,
-      lastSaveTime,
-      channel: socketPath,
-    }));
-  }
-};
 
 function ActivityReport({
   match, location, region,
@@ -589,7 +565,7 @@ function ActivityReport({
         }
       }
       >
-        <Navigator
+        <ActivityReportNavigator
           socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}

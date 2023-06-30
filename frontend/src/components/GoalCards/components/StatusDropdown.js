@@ -12,7 +12,7 @@ import {
   NotStarted,
   Draft,
   Ceased,
-} from '../icons';
+} from '../../icons';
 import colors from '../../../colors';
 import UserContext from '../../../UserContext';
 import { canChangeGoalStatus } from '../../../permissions';
