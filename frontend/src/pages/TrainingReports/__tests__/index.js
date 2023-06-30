@@ -20,6 +20,7 @@ const notStartedEvents = [{
   id: 1,
   ownerId: 1,
   collaboratorIds: [],
+  pocIds: [],
   data: {
     eventName: 'Not started event 1',
     eventId: 'Not started event ID 1',
@@ -34,6 +35,7 @@ const notStartedEvents = [{
   id: 2,
   ownerId: 1,
   collaboratorIds: [],
+  pocIds: [],
   data: {
     eventName: 'Not started event 2',
     eventId: 'Not started event ID 2',
@@ -49,6 +51,7 @@ const inProgressEvents = [{
   id: 3,
   ownerId: 1,
   collaboratorIds: [],
+  pocIds: [],
   data: {
     eventName: 'In progress event 1',
     eventId: 'In progress event ID 1',
@@ -65,6 +68,7 @@ const completeEvents = [{
   id: 4,
   ownerId: 1,
   collaboratorIds: [],
+  pocIds: [],
   data: {
     eventName: 'Complete event 1',
     eventId: 'Complete event ID 1',

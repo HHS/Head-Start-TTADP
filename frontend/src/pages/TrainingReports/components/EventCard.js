@@ -21,7 +21,7 @@ function EventCard({
     user,
     parseInt(event.regionId, DECIMAL_BASE),
   );
-  const isCollaborator = event.collaboratorIds.includes(user.id);
+  const isCollaborator = event.pocIds.includes(user.id);
   const canEditExisting = hasEditPermissions || (isCollaborator);
 
   const history = useHistory();
