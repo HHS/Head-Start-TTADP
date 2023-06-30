@@ -1,5 +1,7 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
+import { Op } from 'sequelize';
+import db from '../models';
 import {
   createEvent,
   updateEvent,
@@ -13,10 +15,13 @@ import {
 } from './event';
 
 describe('event service', () => {
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
   const createAnEvent = async (num) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: num,
+    pocId: [num],
     collaboratorIds: [num],
     data: {
       status: 'active',
@@ -26,7 +31,7 @@ describe('event service', () => {
   const createAnEventWithStatus = async (num, status) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: num,
+    pocId: [num],
     collaboratorIds: [num],
     data: {
       status,
@@ -36,7 +41,7 @@ describe('event service', () => {
   const createAnEventWithData = async (num, data) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: num,
+    pocId: [num],
     collaboratorIds: [num],
     data,
   });
@@ -56,7 +61,7 @@ describe('event service', () => {
 
       const updated = await updateEvent(created.id, {
         ownerId: 123,
-        pocId: 123,
+        pocId: [123],
         regionId: 123,
         collaboratorIds: [123],
         data: {},
@@ -73,7 +78,7 @@ describe('event service', () => {
 
       const updated = await updateEvent(99_999, {
         ownerId: 123,
-        pocId: 123,
+        pocId: [123],
         regionId: 123,
         collaboratorIds: [123],
         data: {},
@@ -158,7 +163,7 @@ describe('event service', () => {
         false,
       );
 
-      expect(found3.length).toBeGreaterThan(1);
+      expect(found3.map((f) => f.id)).toContain(created3.id);
       expect(found4.length).toBe(1);
 
       await destroyEvent(created3.id);
@@ -198,6 +203,36 @@ describe('event service', () => {
       await destroyEvent(found2[0].id);
       await destroyEvent(found2[1].id);
       await destroyEvent(found2[2].id);
+    });
+
+    it('findEventsByStatus use scopes', async () => {
+      // create events.
+      const event1 = await createAnEventWithData(11_111, { startDate: '2023-01-01', title: 'C' });
+      const event2 = await createAnEventWithData(11_112, { startDate: '2023-02-01', title: 'B' });
+      const event3 = await createAnEventWithData(11_113, { startDate: '2020-03-01', title: 'A' });
+
+      // create scopes.
+      const scopesWhere = [
+        {
+          [Op.and]: [
+            { 'data.startDate': { [Op.gte]: '2023-01-15' } },
+            { 'data.startDate': { [Op.lte]: '2023-02-15' } },
+            { id: [event1.id, event2.id, event3.id] },
+          ],
+        },
+      ];
+
+      // get events that start between 2023-01-15 and 2023-02-10:
+      const found = await findEventsByStatus(null, [], null, true, scopesWhere);
+
+      // expect date to be priority sorted, followed by title:
+      expect(found.length).toBe(1);
+      expect(found[0].data).toHaveProperty('startDate', '2023-02-01');
+
+      // destroy events.
+      await destroyEvent(event1.id);
+      await destroyEvent(event2.id);
+      await destroyEvent(event3.id);
     });
   });
 });

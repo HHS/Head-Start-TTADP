@@ -194,6 +194,7 @@ test.describe('get /recipient', () => {
            }),
           ),                  
         name: Joi.string(),
+        source: Joi.string().allow(null),
         goalTemplateId: Joi.number().allow(null),
         status: Joi.string(),
         regionId: Joi.number(),
@@ -241,7 +242,8 @@ test.describe('get /recipient', () => {
           })
         ),
         grantIds: Joi.array().items(Joi.number()),
-        isNew: Joi.boolean()
+        isNew: Joi.boolean(),
+        endDate: Joi.string().allow(null).allow(''),
       })
     ).min(1);
 

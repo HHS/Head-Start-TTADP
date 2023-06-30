@@ -1,17 +1,32 @@
 # @ttahub/common
 
-This is a CommonJS package and thus no build step is required. There are no dependencies and thus no installation step is required. These are deliberate choices to simplify usage both locally and in CI.
+This is a CommonJS package and thus no build step is required.
 
-# Usage
+## Installation
+
+```bash
+yarn add @ttahub/common
+```
+
+## Developers
 
 Whenever changes to this package are made, you will need to:
 
 - Bump the version in `package.json`.
-- Run `yarn deps` in the repo root.
+- Publish the latest version of the package to npm by running `npm publish` in this directory. There is also a yarn task in the root of the TTAHUB app you can run ```yarn publish:common```
 
-When the version is bumped, the `yarn install` (called by `yarn deps`) will see that this package's version is more recent than what currently exists in `node_modules`. It should then pull in the latest version to both projects.
+If your PR depends on the latest version of this package, please don't forget to run `yarn upgrade @ttahub/common` and commit the changes to `package.json` and `yarn.lock`.
 
-Note: when running yarn deps the yarn.lock file might get updated to be 
-"@ttahub/common@file:./../packages/common":
-in windows it SHOULD be set to
-"@ttahub/common@file:../packages/common":
+## Versions
+### 1.1.4
+Distinguish between training report url params and training report statuses
+
+### 1.1.3
+Add "event target populations"
+
+###  1.1.2
+#### 1.1.1 
+- Add COLLABORATOR_TRAINING_REPORTS permissions
+
+
+

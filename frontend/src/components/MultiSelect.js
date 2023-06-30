@@ -24,7 +24,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
-import { Controller } from 'react-hook-form/dist/index.ie11';
+import { Controller } from 'react-hook-form';
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
@@ -162,13 +162,14 @@ function MultiSelect({
 
   return (
     <Controller
-      render={({ onChange: controllerOnChange, value }) => {
+      render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
           <Selector
             className="ttahub-multi-select margin-top-1"
             id={name}
             value={values}
+            onBlur={onBlur}
             onChange={(event) => {
               if (onItemSelected) {
                 onItemSelected(event);

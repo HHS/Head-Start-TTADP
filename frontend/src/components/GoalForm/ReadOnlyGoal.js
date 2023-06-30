@@ -62,6 +62,12 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
+        {(goal.source && goal.source.length) ? (
+          <div className="margin-bottom-2" key={goal.source}>
+            <h4 className="margin-0">Goal source</h4>
+            <p className="usa-prose margin-0">{goal.source}</p>
+          </div>
+        ) : null}
         {(goal.prompts) && (
           formatPrompts(goal.prompts).map((prompt) => (
             <div className="margin-bottom-2" key={prompt.key}>
@@ -99,6 +105,7 @@ ReadOnlyGoal.propTypes = {
         ]),
       }),
     ),
+    source: PropTypes.string,
     id: PropTypes.number,
     grants: PropTypes.arrayOf(
       PropTypes.shape({

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
-} from 'react-hook-form/dist/index.ie11';
+} from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
