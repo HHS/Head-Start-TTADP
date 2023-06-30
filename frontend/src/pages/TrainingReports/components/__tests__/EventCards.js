@@ -10,7 +10,7 @@ describe('EventCards', () => {
     id: 1,
     ownerId: 1,
     collaboratorIds: [],
-    pocIds: [],
+    pocId: [],
     data: {
       eventName: 'Sample event 1',
       eventId: 'Sample event ID 1',
@@ -25,7 +25,7 @@ describe('EventCards', () => {
     id: 2,
     ownerId: 1,
     collaboratorIds: [],
-    pocIds: [],
+    pocId: [],
     data: {
       eventName: 'Sample event 2',
       eventId: 'Sample event ID 2',
@@ -40,7 +40,7 @@ describe('EventCards', () => {
     id: 3,
     ownerId: 1,
     collaboratorIds: [],
-    pocIds: [],
+    pocId: [],
     data: {
       eventName: 'Sample event 3',
       eventId: 'Sample event ID 3',
@@ -75,6 +75,7 @@ describe('EventCards', () => {
         <EventCards
           events={events}
           eventType={eventType}
+          onRemoveSession={jest.fn()}
         />
       </UserContext.Provider>));
   };
@@ -128,7 +129,7 @@ describe('EventCards', () => {
       id: 1,
       ownerId: 2,
       collaboratorIds: [],
-      pocIds: [2],
+      pocId: [2],
       data: {
         eventName: 'Collab Event 1',
         eventId: 'Collab Event ID 1',
@@ -143,7 +144,7 @@ describe('EventCards', () => {
       id: 2,
       ownerId: 2,
       collaboratorIds: [],
-      pocIds: [3],
+      pocId: [3],
       data: {
         eventName: 'Region event 2',
         eventId: 'Region event ID 2',

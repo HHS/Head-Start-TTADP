@@ -20,7 +20,7 @@ const notStartedEvents = [{
   id: 1,
   ownerId: 1,
   collaboratorIds: [],
-  pocIds: [],
+  pocId: [],
   data: {
     eventName: 'Not started event 1',
     eventId: 'Not started event ID 1',
@@ -35,7 +35,7 @@ const notStartedEvents = [{
   id: 2,
   ownerId: 1,
   collaboratorIds: [],
-  pocIds: [],
+  pocId: [],
   data: {
     eventName: 'Not started event 2',
     eventId: 'Not started event ID 2',
@@ -51,7 +51,8 @@ const inProgressEvents = [{
   id: 3,
   ownerId: 1,
   collaboratorIds: [],
-  pocIds: [],
+  pocId: [],
+  regionId: 2,
   data: {
     eventName: 'In progress event 1',
     eventId: 'In progress event ID 1',
@@ -60,15 +61,29 @@ const inProgressEvents = [{
     startDate: '03/02/2021',
     endDate: '03/03/2021',
   },
-  sessionReports: [],
-},
-];
+  sessionReports: [{
+    id: 1,
+    eventId: 3,
+    regionId: 2,
+    data: {
+      regionId: 2,
+      sessionName: 'This is my session title',
+      startDate: '01/02/2021',
+      endDate: '01/03/2021',
+      objective: 'This is my session objective',
+      objectiveSupportType: 'Implementing',
+      objectiveTopics: ['Topic 1', 'Topic 2'],
+      objectiveTrainers: ['Trainer 1', 'Trainer 2'],
+      status: 'In progress',
+    },
+  }],
+}];
 
 const completeEvents = [{
   id: 4,
   ownerId: 1,
   collaboratorIds: [],
-  pocIds: [],
+  pocId: [],
   data: {
     eventName: 'Complete event 1',
     eventId: 'Complete event ID 1',
@@ -90,7 +105,7 @@ describe('TrainingReports', () => {
     homeRegionId: 1,
     permissions: [{
       regionId: 2,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
     }],
   };
 
@@ -142,7 +157,7 @@ describe('TrainingReports', () => {
   });
 
   it('renders user without a home region', async () => {
-    const noHomneRegionUser = {
+    const noHomeRegionUser = {
       id: 1,
       homeRegionId: null,
       permissions: [{
@@ -152,7 +167,7 @@ describe('TrainingReports', () => {
     };
 
     act(() => {
-      renderTrainingReports(noHomneRegionUser);
+      renderTrainingReports(noHomeRegionUser);
     });
 
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
@@ -199,6 +214,65 @@ describe('TrainingReports', () => {
     expect(await screen.findByText(/not started event organizer 2/i)).toBeInTheDocument();
     expect(await screen.findByText('02/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('02/03/2021')).toBeInTheDocument();
+  });
+
+  describe('delete a session', () => {
+    beforeEach(async () => {
+      act(() => {
+        renderTrainingReports(nonCentralOfficeUser, EVENT_STATUS.IN_PROGRESS);
+      });
+
+      await act(async () => {
+        const button = await screen.findByRole('button', { name: /sessions for event/i });
+        userEvent.click(button);
+      });
+    });
+
+    afterEach(() => {
+      fetchMock.restore();
+    });
+
+    it('handles success', async () => {
+      fetchMock.delete('/api/session-reports/id/1', { message: 'Success!' });
+      expect(await screen.findByText('This is my session title')).toBeInTheDocument();
+      const hideSession = await screen.findByRole('button', { name: /hide sessions for event/i });
+      expect(hideSession).toBeInTheDocument();
+
+      await act(async () => {
+        const deleteButton = await screen.findByRole('button', { name: 'Delete session' });
+        userEvent.click(deleteButton);
+      });
+
+      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this session?')).toBeInTheDocument());
+
+      await act(async () => {
+        const confirmButton = await screen.findByRole('button', { name: 'Delete' });
+        userEvent.click(confirmButton);
+      });
+
+      expect(screen.queryByText('This is my session title')).toBeNull();
+    });
+
+    it('handles failure', async () => {
+      fetchMock.delete('/api/session-reports/id/1', 500);
+      expect(await screen.findByText('This is my session title')).toBeInTheDocument();
+      const hideSession = await screen.findByRole('button', { name: /hide sessions for event/i });
+      expect(hideSession).toBeInTheDocument();
+
+      await act(async () => {
+        const deleteButton = await screen.findByRole('button', { name: 'Delete session' });
+        userEvent.click(deleteButton);
+      });
+
+      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this session?')).toBeInTheDocument());
+
+      await act(async () => {
+        const confirmButton = await screen.findByRole('button', { name: 'Delete' });
+        userEvent.click(confirmButton);
+      });
+
+      expect(await screen.findByText('This is my session title')).toBeInTheDocument();
+    });
   });
 
   it('renders the in progress events tab', async () => {

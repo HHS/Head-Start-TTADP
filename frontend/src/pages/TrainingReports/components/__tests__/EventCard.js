@@ -12,7 +12,7 @@ describe('EventCard', () => {
     id: 1,
     ownerId: 1,
     collaboratorIds: [],
-    pocIds: [],
+    pocId: [],
     regionId: 1,
     data: {
       eventName: 'This is my event title',
@@ -57,6 +57,7 @@ describe('EventCard', () => {
         <Router history={history}>
           <EventCard
             event={event}
+            onRemoveSession={jest.fn()}
           />
         </Router>
       </UserContext.Provider>));
@@ -74,7 +75,7 @@ describe('EventCard', () => {
 
   it('displays sessions', () => {
     renderEventCard();
-    const expBtn = screen.getByRole('button', { name: /view reports for event this is my event id/i });
+    const expBtn = screen.getByRole('button', { name: /view sessions for event this is my event id/i });
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
 
     // Expand Objectives via click.
@@ -96,7 +97,7 @@ describe('EventCard', () => {
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
-    renderEventCard({ ...defaultEvent, status: 'Complete' });
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete' } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
@@ -129,7 +130,7 @@ describe('EventCard', () => {
   it('shows the edit and create options for a collaborator without write permission', () => {
     renderEventCard({
       ...defaultEvent,
-      pocIds: [2],
+      pocId: [2],
     },
     { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
