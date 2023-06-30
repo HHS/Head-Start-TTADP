@@ -96,10 +96,12 @@ export default (sequelize, DataTypes) => {
     onAR: {
       type: DataTypes.BOOLEAN,
       default: false,
+      allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
       default: false,
+      allowNull: false,
     },
     isRttapa: {
       type: DataTypes.ENUM(RTTAPA_ENUM),

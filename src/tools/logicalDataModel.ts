@@ -96,6 +96,9 @@ function processClassDefinition(schema, key) {
     let column = '';
     const issues:string[] = [];
     // mark fields that do not allow null
+    if (field.allowNull !== (modelField?.allowNull ?? true)) {
+      issues.push(`!issue='column should${field.allowNull ? '' : ' not'} allow null'`); //eslint-disable-line
+    }
     if (!field.allowNull) {
       column += ' *';
     }
@@ -413,18 +416,18 @@ export default async function generateUMLFromDB() {
     });
 
     const tables = db.sequelize.models;
-    const schemas = tableData.map((td) => ({
-      table: td.table,
-      model: (db.sequelize.models[td.table]
-        || db.sequelize.models[td.table.slice(0, -1)]
-        || db.sequelize.models[td.table.replace('ies', 'y')]),
-      attributes: td.fields,
-      associations: (db.sequelize.models[td.table]
-        || db.sequelize.models[td.table.slice(0, -1)]
-        || db.sequelize.models[td.table.replace('ies', 'y')])
-        ?.associations,
-    }));
-
+    const schemas = tableData.map((td) => {
+      const model = Object.values(db.sequelize.models).find((m) => m?.getTableName() === td.table);
+      if (!model) {
+        console.log(td.table);
+      }
+      return ({
+        table: td.table,
+        model,
+        attributes: td.fields,
+        associations: model?.associations,
+      });
+    });
     await generateUML(schemas, tables, 'docs');
   } catch (err) {
     auditLogger.error(err);

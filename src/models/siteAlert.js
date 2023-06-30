@@ -57,6 +57,7 @@ export default (sequelize, DataTypes) => {
     },
     size: {
       type: DataTypes.ENUM(possibleSizes),
+      allowNull: false,
     },
   }, {
     sequelize,

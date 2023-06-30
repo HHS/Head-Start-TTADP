@@ -52,7 +52,7 @@ export default (sequelize, DataTypes) => {
     hsesUserId: {
       type: DataTypes.STRING,
       unique: true,
-      allowNull: false,
+      allowNull: true,
     },
     hsesUsername: {
       type: DataTypes.STRING,
@@ -84,7 +84,10 @@ export default (sequelize, DataTypes) => {
         return generateFullName(this.name, this.roles);
       },
     },
-    lastLogin: DataTypes.DATE,
+    lastLogin: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'User',

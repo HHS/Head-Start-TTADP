@@ -19,6 +19,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     eventId: {
       type: DataTypes.INTEGER,

@@ -44,10 +44,26 @@ module.exports = {
         `,
         {
           transaction,
-          timeout: 300000,
-          benchmark: true,
         },
       )));
+
+      await queryInterface.sequelize.query(
+        `
+        ALTER TABLE "ActivityReports"
+        ALTER COLUMN "regionId" SET NOT NULL;
+        ALTER TABLE "CollaboratorRoles"
+        ALTER COLUMN "roleId" SET NOT NULL;
+        ALTER TABLE "Groups"
+        ALTER COLUMN "name" SET NOT NULL;
+        ALTER TABLE "Recipients"
+        ALTER COLUMN "name" SET NOT NULL;
+        ALTER TABLE "UserValidationStatus"
+        ALTER COLUMN "token" SET NOT NULL;
+        `,
+        {
+          transaction,
+        },
+      );
 
       // Disable audit log
       await queryInterface.sequelize.query(

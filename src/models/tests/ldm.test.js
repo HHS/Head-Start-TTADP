@@ -82,6 +82,12 @@ describe('Logical Data Model', () => {
       expect(countOccurrencesInFile(fileContent, 'column type does not match model'))
         .toStrictEqual({ count: 0, matches: [] });
     });
+    it('column allow null match model', () => {
+      expect(countOccurrencesInFile(fileContent, 'column should not allow null'))
+        .toStrictEqual({ count: 0, matches: [] });
+      expect(countOccurrencesInFile(fileContent, 'column should allow null'))
+        .toStrictEqual({ count: 0, matches: [] });
+    });
   });
   describe('associations', () => {
     it('associations need to be defined both directions', () => {

@@ -26,6 +26,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -45,7 +46,7 @@ export default (sequelize, DataTypes) => {
     },
     goals: {
       type: DataTypes.JSONB,
-      allowNull: false,
+      allowNull: true,
     },
     reviewDate: {
       type: DataTypes.DATE,
