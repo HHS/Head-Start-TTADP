@@ -55,6 +55,7 @@ function defaultUser() {
     phoneNumber: faker.phone.phoneNumber(),
     name: faker.name.findName(),
     role: ['Grants Specialist'],
+    lastLoginDate: new Date(),
   };
 }
 
