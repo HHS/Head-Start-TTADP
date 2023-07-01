@@ -175,6 +175,7 @@ describe('grant filtersToScopes', () => {
       homeRegionId: 1,
       hsesUsername: faker.datatype.string(),
       hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
     });
 
     mockUserTwo = await User.create({
@@ -182,6 +183,7 @@ describe('grant filtersToScopes', () => {
       homeRegionId: 1,
       hsesUsername: faker.datatype.string(),
       hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
     });
 
     group = await Group.create({

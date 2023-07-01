@@ -1326,6 +1326,7 @@ describe('resource', () => {
             requester: 'requester',
             regionId: 1,
             targetPopulations: [],
+            version: 2,
           },
           individualHooks: true,
           raw: true,
