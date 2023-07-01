@@ -60,6 +60,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       lastUpdatedById: user.id,
       ECLKCResourcesUsed: ['test'],
       activityRecipients: [{ activityRecipientId: 30 }],
+      version: 2,
     });
 
     // create activity report goal

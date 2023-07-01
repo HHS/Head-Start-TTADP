@@ -84,6 +84,7 @@ describe('getGoalsForReport', () => {
       lastUpdatedById: user.id,
       ECLKCResourcesUsed: ['test'],
       activityRecipients: [{ activityRecipientId: 30 }],
+      version: 2,
     });
 
     // Create activity report objective

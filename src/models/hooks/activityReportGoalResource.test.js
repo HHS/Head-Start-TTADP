@@ -29,6 +29,7 @@ const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 jest.mock('bull');
