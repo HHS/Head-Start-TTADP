@@ -18,6 +18,7 @@ export default function findOrCreateUser(data) {
       return User.findOrCreate({
         where: {
           hsesUsername: data.hsesUsername,
+          lastLogin: new Date(),
         },
         defaults: data,
       }).then(([user, created]) => {
