@@ -46,6 +46,7 @@ const mockUser = {
   name: 'user13706689',
   hsesUsername: 'user13706689',
   hsesUserId: 'user13706689',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -54,6 +55,7 @@ const mockUserTwo = {
   name: 'user137065478',
   hsesUsername: 'user137065478',
   hsesUserId: 'user137065478',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -62,12 +64,14 @@ const mockManager = {
   name: 'user50565590',
   hsesUsername: 'user50565590',
   hsesUserId: 'user50565590',
+  lastLogin: new Date(),
 };
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const submittedReport = {
@@ -96,6 +100,7 @@ const deletedReport = {
   submissionStatus: REPORT_STATUSES.DELETED,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const approverApproved = {

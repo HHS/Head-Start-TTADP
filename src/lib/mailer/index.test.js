@@ -65,6 +65,7 @@ const mockUser = {
   hsesUsername: 'user2115665161',
   hsesUserId: 'user2115665161',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const digestMockCollab = {
@@ -74,6 +75,7 @@ const digestMockCollab = {
   hsesUserId: 'b',
   hsesUsername: 'b',
   role: [],
+  lastLogin: new Date(),
 };
 
 const digestMockApprover = {
@@ -83,6 +85,7 @@ const digestMockApprover = {
   hsesUserId: 'bu',
   hsesUsername: 'bu',
   role: [],
+  lastLogin: new Date(),
 };
 
 const mockReport = {

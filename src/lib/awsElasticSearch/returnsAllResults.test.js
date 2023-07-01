@@ -22,6 +22,7 @@ const mockUser = {
   name: 'user13706524',
   hsesUsername: 'user13706524',
   hsesUserId: 'user13706524',
+  lastLogin: new Date(),
 };
 
 const draftReport = {

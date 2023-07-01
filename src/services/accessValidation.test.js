@@ -33,6 +33,7 @@ const mockUser = {
       scopeId: SITE_ACCESS,
     },
   ],
+  lastLogin: new Date(),
 };
 
 const setupUser = async (user) => {
