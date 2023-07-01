@@ -28,6 +28,7 @@ const mockUser = {
   hsesUsername: 'user2184932161',
   hsesUserId: 'user2184932161',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const reportObject = {

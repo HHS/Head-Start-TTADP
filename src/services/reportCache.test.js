@@ -41,6 +41,7 @@ describe('cacheGoalMetadata', () => {
     name: 'user13706689',
     hsesUsername: 'user13706689',
     hsesUserId: 'user13706689',
+    lastLogin: new Date(),
   };
 
   beforeAll(async () => {

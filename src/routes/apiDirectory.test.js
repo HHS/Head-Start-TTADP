@@ -29,6 +29,7 @@ const mockUser = {
       scopeId: SCOPES.SITE_ACCESS,
     },
   ],
+  lastLogin: new Date(),
 };
 
 describe('apiDirectory tests', () => {

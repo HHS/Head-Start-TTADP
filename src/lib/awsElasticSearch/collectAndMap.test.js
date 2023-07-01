@@ -27,6 +27,7 @@ const mockUser = {
   hsesUsername: 'JS321423',
   hsesUserId: 'JS321423',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {

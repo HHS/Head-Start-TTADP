@@ -385,6 +385,7 @@ describe('User handlers', () => {
           scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
         },
       ],
+      lastLogin: new Date(),
     };
 
     const req = {

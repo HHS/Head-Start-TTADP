@@ -51,6 +51,7 @@ const mockUser = {
   name: 'user1115665161',
   hsesUsername: 'user1115665161',
   hsesUserId: 'user1115665161',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -59,6 +60,7 @@ const mockUserTwo = {
   name: 'user265157914',
   hsesUserId: 'user265157914',
   hsesUsername: 'user265157914',
+  lastLogin: new Date(),
 };
 
 const mockUserThree = {
@@ -67,6 +69,7 @@ const mockUserThree = {
   name: 'user39861962',
   hsesUserId: 'user39861962',
   hsesUsername: 'user39861962',
+  lastLogin: new Date(),
 };
 
 const mockUserFour = {
@@ -75,6 +78,7 @@ const mockUserFour = {
   name: 'user49861962',
   hsesUserId: 'user49861962',
   hsesUsername: 'user49861962',
+  lastLogin: new Date(),
 };
 
 const mockUserFive = {
@@ -83,6 +87,7 @@ const mockUserFive = {
   name: 'user55861962',
   hsesUserId: 'user55861962',
   hsesUsername: 'user55861962',
+  lastLogin: new Date(),
 
 };
 
@@ -92,6 +97,7 @@ const alertsMockUserOne = {
   name: 'a',
   hsesUserId: 'a',
   hsesUsername: 'a',
+  lastLogin: new Date(),
 };
 
 const alertsMockUserTwo = {
@@ -101,6 +107,7 @@ const alertsMockUserTwo = {
   hsesUserId: 'b',
   hsesUsername: 'b',
   role: [],
+  lastLogin: new Date(),
 };
 
 const digestMockCollabOne = {
@@ -110,6 +117,7 @@ const digestMockCollabOne = {
   hsesUserId: 'b',
   hsesUsername: 'b',
   role: [],
+  lastLogin: new Date(),
 };
 
 const digestMockApprover = {
@@ -119,6 +127,7 @@ const digestMockApprover = {
   hsesUserId: 'b',
   hsesUsername: 'b',
   role: [],
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -129,6 +138,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
+  version: 2,
 };
 
 const submittedReport = {
