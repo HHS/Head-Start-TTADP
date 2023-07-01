@@ -20,6 +20,7 @@ export const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 export const approverUserIds = () => [
