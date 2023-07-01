@@ -127,10 +127,23 @@ describe('filtersToScopes', () => {
     await User.create(mockUserTwo);
     await User.create(mockManager);
     includedUser1 = await User.create({
-      name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
+      name: 'person',
+      hsesUserId: 'user111',
+      hsesUsername: 'user111',
+      lastLogin: new Date(),
     });
-    includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
-    excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' });
+    includedUser2 = await User.create({
+      name: 'another person',
+      hsesUserId: 'user222',
+      hsesUsername: 'user222',
+      lastLogin: new Date(),
+    });
+    excludedUser = await User.create({
+      name: 'excluded',
+      hsesUserId: 'user333',
+      hsesUsername: 'user333',
+      lastLogin: new Date(),
+    });
     globallyExcludedReport = await ActivityReport.create({
       ...draftReport, deliveryMethod: 'method', updatedAt: '2000-01-01',
     }, {
@@ -2404,6 +2417,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,
@@ -2430,6 +2444,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,
@@ -2586,6 +2601,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,

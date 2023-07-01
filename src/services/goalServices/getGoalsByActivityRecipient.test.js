@@ -115,6 +115,7 @@ describe('Goals by Recipient Test', () => {
     reason: ['COVID-19 response', 'Complaint'],
     topics: ['Learning Environments', 'Nutrition', 'Physical Health and Screenings'],
     ttaType: ['type'],
+    version: 2,
   };
 
   const goalReport2 = {
@@ -138,6 +139,7 @@ describe('Goals by Recipient Test', () => {
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
     topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
+    version: 2,
   };
 
   const goalReport3 = {
@@ -161,6 +163,7 @@ describe('Goals by Recipient Test', () => {
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
     topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
+    version: 2,
   };
 
   const goalReport4 = {
@@ -190,6 +193,7 @@ describe('Goals by Recipient Test', () => {
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
     topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
+    version: 2,
   };
 
   const goalReport6 = {
@@ -213,6 +217,7 @@ describe('Goals by Recipient Test', () => {
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
     topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
+    version: 2,
   };
 
   let objectiveIds = [];

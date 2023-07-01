@@ -28,6 +28,7 @@ const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 describe('activityReportObjectiveResource hooks', () => {

@@ -198,6 +198,7 @@ describe('cacheObjectiveMetadata', () => {
     requester: 'requester',
     regionId: 2,
     targetPopulations: [],
+    version: 2,
   };
 
   const mockFiles = [{

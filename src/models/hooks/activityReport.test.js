@@ -93,6 +93,7 @@ describe('activity report model hooks', () => {
         ttaType: ['type'],
         creatorRole: 'TTAC',
         additionalNotes: 'notes',
+        version: 2,
       });
 
       report2 = await ActivityReport.create({
@@ -113,6 +114,7 @@ describe('activity report model hooks', () => {
         topics: ['topics'],
         ttaType: ['type'],
         creatorRole: 'TTAC',
+        version: 2,
       });
 
       await ActivityReportGoal.create({
