@@ -92,6 +92,7 @@ describe('Goals by Recipient Test', () => {
     name: `user${userKey}`,
     hsesUsername: `user${userKey}`,
     hsesUserId: `user${userKey}`,
+    lastLogin: new Date(),
   };
 
   const goalReport1 = {

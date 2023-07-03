@@ -1470,7 +1470,11 @@ describe('filtersToScopes', () => {
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
 
       await User.create({
-        id: possibleIds[0], name: 'u777', hsesUsername: 'u777', hsesUserId: '777',
+        id: possibleIds[0],
+        name: 'u777',
+        hsesUsername: 'u777',
+        hsesUserId: '777',
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1484,7 +1488,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[1], name: 'u778', hsesUsername: 'u778', hsesUserId: '778', role: ['Grantee Specialist'],
+        id: possibleIds[1],
+        name: 'u778',
+        hsesUsername: 'u778',
+        hsesUserId: '778',
+        role: ['Grantee Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1493,7 +1502,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[2], name: 'u779', hsesUsername: 'u779', hsesUserId: '779', role: ['Grants Specialist'],
+        id: possibleIds[2],
+        name: 'u779',
+        hsesUsername: 'u779',
+        hsesUserId: '779',
+        role: ['Grants Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
