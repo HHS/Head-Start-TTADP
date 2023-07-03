@@ -46,6 +46,7 @@ describe('activity report model hooks', () => {
         homeRegionId: 1,
         hsesUsername: faker.datatype.string(),
         hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
       });
 
       mockApprover = await User.create({
@@ -53,6 +54,7 @@ describe('activity report model hooks', () => {
         homeRegionId: 1,
         hsesUsername: faker.datatype.string(),
         hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
       });
 
       grant = await Grant.create({
