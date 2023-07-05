@@ -417,7 +417,10 @@ export default async function generateUMLFromDB() {
 
     const tables = db.sequelize.models;
     const schemas = tableData.map((td) => {
-      const model = Object.values(db.sequelize.models).find((m) => m?.getTableName() === td.table);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model:any = Object.values(db.sequelize.models)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .find((m: any) => m?.getTableName() === td.table);
       return ({
         table: td.table,
         model,
