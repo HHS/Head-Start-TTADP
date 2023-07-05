@@ -10,7 +10,6 @@ const autoPopulateOnAR = (sequelize, instance, options) => {
     instance.set('onAR', false);
     if (!options.fields.includes('onAR')) {
       options.fields.push('onAR');
-      console.log(1);
     }
   }
 };
@@ -23,7 +22,6 @@ const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
     instance.set('onApprovedAR', false);
     if (!options.fields.includes('onApprovedAR')) {
       options.fields.push('onApprovedAR');
-      console.log(1);
     }
   }
 };
