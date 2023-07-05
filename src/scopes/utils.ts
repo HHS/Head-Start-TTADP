@@ -109,3 +109,17 @@ export function filterAssociation(baseQuery, searchTerms, exclude, callback, com
 }
 
 export const idClause = (query: string[]) => query.filter((id: string) => !Number.isNaN(parseInt(id, DECIMAL_BASE))).join(',');
+
+export const scopeToWhere = async (Model, scope) => {
+  let sql;
+  // The db is not contected for this query as the limit is set to zero, it just returns.
+  await Model.findAll({
+    where: scope,
+    limit: 0,
+    logging: (x) => { sql = x; },
+  });
+  const where = sql
+    .substring(sql.indexOf('WHERE') + 'WHERE'.length + 1)
+    .replace(/\sLIMIT\s0;$/, '');
+  return where;
+};
