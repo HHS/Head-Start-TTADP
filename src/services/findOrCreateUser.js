@@ -18,9 +18,8 @@ export default function findOrCreateUser(data) {
       return User.findOrCreate({
         where: {
           hsesUsername: data.hsesUsername,
-          lastLogin: new Date(),
         },
-        defaults: data,
+        defaults: { lastLogin: sequelize.fn('NOW'), ...data },
       }).then(([user, created]) => {
         if (created) {
           auditLogger.info(`Created user ${user.id} with no access permissions`);

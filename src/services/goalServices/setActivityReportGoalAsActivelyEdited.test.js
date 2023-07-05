@@ -29,6 +29,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       name: userName,
       hsesUsername: userName,
       hsesUserId: userName,
+      lastLogin: new Date(),
     });
 
     // Create Goal.

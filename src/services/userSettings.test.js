@@ -31,6 +31,7 @@ describe('UserSetting service', () => {
         hsesUserId: id,
         createdAt: now,
         updatedAt: now,
+        lastLogin: new Date(),
       });
       await Permission.create({
         userId: id,
