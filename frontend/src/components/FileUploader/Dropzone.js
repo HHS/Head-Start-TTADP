@@ -32,6 +32,7 @@ export default function Dropzone({
 
   return (
     <div
+      className="dropzone"
       {...rootPropsNoRole}
     >
       <input {...getInputProps()} onBlur={onBlur} name={inputName} />

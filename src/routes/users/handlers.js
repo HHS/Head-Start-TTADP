@@ -1,8 +1,14 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import UserPolicy from '../../policies/user';
+import EventPolicy from '../../policies/event';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  userById, usersWithPermissions, statisticsByUser, setFlag,
+  userById,
+  usersWithPermissions,
+  statisticsByUser,
+  setFlag,
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { statesByGrantRegion } from '../../services/grant';
@@ -147,5 +153,38 @@ export async function setFeatureFlag(req, res) {
     res.json(result);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportUsers(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.query;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+
+    if (!authorization.canWriteInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await getTrainingReportUsersByRegion(region));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getNamesByIds(req, res) {
+  try {
+    const { ids } = req.query;
+    if (!ids) {
+      res.sendStatus(400);
+      return;
+    }
+    res.json(await getUserNamesByIds(ids));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
 }

@@ -12,8 +12,8 @@ const validateFields = (request, requiredFields) => {
   }
 };
 
-export async function destroySession(id): Promise<void> {
-  await SessionReportPilot.destroy({ where: { id } });
+export async function destroySession(id: number): Promise<void> {
+  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
 type WhereOptions = {
@@ -32,7 +32,12 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'data',
     ],
     where,
-    raw: true,
+    include: [
+      {
+        model: db.File,
+        as: 'files',
+      },
+    ],
   };
 
   if (plural) {
@@ -53,6 +58,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     id: session?.id,
     eventId: session?.eventId,
     data: session?.data ?? {},
+    files: session?.files ?? [],
   };
 }
 
@@ -64,6 +70,8 @@ export async function createSession(request) {
   const created = await SessionReportPilot.create({
     eventId,
     data: cast(JSON.stringify(data), 'jsonb'),
+  }, {
+    individualHooks: true,
   });
 
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
@@ -87,7 +95,10 @@ export async function updateSession(id, request) {
       eventId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
-    { where: { id } },
+    {
+      where: { id },
+      individualHooks: true,
+    },
   );
 
   return findSessionHelper({ id }) as Promise<SessionReportShape>;
@@ -99,4 +110,32 @@ export async function findSessionById(id: number): Promise<SessionReportShape> {
 
 export async function findSessionsByEventId(eventId): Promise<SessionReportShape[]> {
   return findSessionHelper({ eventId }, true) as Promise<SessionReportShape[]>;
+}
+
+export async function getPossibleSessionParticipants(
+  regionId: number,
+) : Promise<{ id: number, name: string }[]> {
+  const where = { status: 'Active', regionId };
+
+  return db.Recipient.findAll({
+    attributes: ['id', 'name'],
+    order: ['name'],
+    include: [{
+      where,
+      model: db.Grant,
+      as: 'grants',
+      attributes: ['id', 'name', 'number'],
+      include: [{
+        model: db.Recipient,
+        as: 'recipient',
+        attributes: ['id', 'name'],
+      },
+      {
+        model: db.Program,
+        as: 'programs',
+        attributes: ['programType'],
+      },
+      ],
+    }],
+  });
 }

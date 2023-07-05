@@ -112,11 +112,26 @@ const REPORT_STATUSES = {
 exports.REPORT_STATUSES = REPORT_STATUSES;
 
 const TRAINING_REPORT_STATUSES = {
-  NOT_STARTED: 'not-started',
-  IN_PROGRESS: 'in-progress',
-  COMPLETE: 'complete',
+  NOT_STARTED: 'Not started',
+  IN_PROGRESS: 'In progress',
+  COMPLETE: 'Complete',
 };
 exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
+
+const TRAINING_REPORT_STATUSES_URL_PARAMS = {
+  'not-started': TRAINING_REPORT_STATUSES.NOT_STARTED,
+  'in-progress': TRAINING_REPORT_STATUSES.IN_PROGRESS,
+  complete: TRAINING_REPORT_STATUSES.COMPLETE,
+};
+
+exports.TRAINING_REPORT_STATUSES_URL_PARAMS = TRAINING_REPORT_STATUSES_URL_PARAMS;
+
+const EVENT_REPORT_STATUSES = {
+  IN_PROGRESS: 'In progress',
+  COMPLETE: 'Complete',
+}
+
+exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
@@ -131,6 +146,14 @@ const TARGET_POPULATIONS = [
   'Dual-Language Learners',
 ];
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
+
+const EVENT_TARGET_POPULATIONS = [
+  'Children/Families affected by systemic discrimination/bias/exclusion',
+  'Children/Families affected by traumatic events',
+  'Parents/Families impacted by health disparities'
+];
+
+exports.EVENT_TARGET_POPULATIONS = EVENT_TARGET_POPULATIONS;
 
 const USER_ROLES = [
   'Central Office',
@@ -206,6 +229,7 @@ const SCOPE_IDS = {
   UNLOCK_APPROVED_REPORTS: 6,
   READ_WRITE_TRAINING_REPORTS: 7,
   READ_TRAINING_REPORTS: 8,
+  COLLABORATOR_TRAINING_REPORTS: 9,
 };
 exports.SCOPE_IDS = SCOPE_IDS;
 
