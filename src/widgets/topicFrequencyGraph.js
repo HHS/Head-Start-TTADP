@@ -102,6 +102,13 @@ export async function topicFrequencyGraph(scopes) {
 }
 
 export async function topicFrequencyGraphViaGoals(scopes) {
+  let sql;
+  await ActivityReport
+    .findAll({ where: scopes.activityReport, limit: 0, logging: (x) => { sql = x; } });
+  const activityReportWhere = sql
+    .substring(sql.indexOf("WHERE"))
+    .replace(/\sLIMIT\s0;$/, '')
+    .replace(/"ActivityReport"/g, 'art');
   const [
     topicsAndParticipants,
     topicMappings,
@@ -120,17 +127,26 @@ export async function topicFrequencyGraphViaGoals(scopes) {
                 JOIN "ActivityReports" art
                 ON ars.id = art.id
                 CROSS JOIN UNNEST(COALESCE("art"."topics",array[]::varchar[])) ar(topic)
+                ${activityReportWhere}
                 UNION ALL
                 SELECT
-                  aro.topic,
-                  ars.id "activityReportId"
-                FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
-                CROSS JOIN UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
+                  t.name topic,
+                  aro."activityReportId" "activityReportId"
+                FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives".id)) aros(id)
+                JOIN "ActivityReportObjectives" aro
+                ON aros.id = aro.id
+                JOIN "ActivityReportObjectiveTopics" arot
+                ON aro.id = arot."activityReportObjectiveId"
+                JOIN "Topics" t
+                ON arot."topicId" = t.id
+                JOIN "ActivityReports" art
+                ON aro."activityReportId" = art.id
+                ${activityReportWhere}
               ),
               "all_topics_with_report_array" AS (
                 SELECT
                   topic,
-                  ARRAY_AGG("activityReportId") "reportIds"
+                  ARRAY_AGG(DISTINCT "activityReportId") "reportIds"
                 FROM all_topics_with_reports atwr
                 GROUP BY topic
               )
@@ -192,25 +208,20 @@ export async function topicFrequencyGraphViaGoals(scopes) {
   // Get all DB topics.
   const topicsResponse = dbTopics.map((topic) => ({
     topic: topic.name,
-    count: 0,
+    reportIds: new Set(),
   }));
 
-  return topicsAndParticipants
-    .reduce((acc, goal) => {
-      // Get array of all topics from this goal's objectives and the reports the objectives
-      // where use on.
-      const allTopics = goal
-        .get('topics')
-        .map(({ topic, reportIds }) => ({ topic: lookUpTopic.get(topic), reportIds }));
+  topicsAndParticipants.forEach((goalData) => {
+    goalData
+      .get('topics')
+      .forEach(({ topic, reportIds }) => {
+        const topicResponce = topicsResponse
+          .find((t) => t.topic === lookUpTopic.get(topic));
 
-      // Loop all topics array and update totals.
-      allTopics.forEach(({ topic, reportIds }) => {
-        const topicIndex = acc.findIndex((t) => t.topic === topic);
-        if (topicIndex !== -1) {
-          acc[topicIndex].count += reportIds.length;
-        }
+        reportIds.forEach((id) => topicResponce.reportIds.add(id));
       });
+  });
 
-      return acc;
-    }, topicsResponse);
+  return topicsResponse
+    .map(({ topic, reportIds }) => ({ topic, count: reportIds.size }));
 }
