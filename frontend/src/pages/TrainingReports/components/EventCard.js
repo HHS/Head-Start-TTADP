@@ -71,7 +71,7 @@ function EventCard({
 
   return (
     <article
-      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter"
+      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2"
       data-testid="eventCard"
     >
       <div className="display-flex flex-wrap position-relative">
