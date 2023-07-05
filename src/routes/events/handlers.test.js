@@ -35,7 +35,7 @@ jest.mock('../../services/event', () => ({
 const mockEvent = {
   id: 99_999,
   ownerId: 99_999,
-  pocId: 99_999,
+  pocId: [99_999],
   regionId: 99_999,
   collaboratorIds: [99_998, 99_999],
   data: {
@@ -128,7 +128,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: 99_999,
+        pocId: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -160,7 +160,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: 99_999,
+        pocId: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},

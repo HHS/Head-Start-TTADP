@@ -6,6 +6,7 @@ export type EventShape = {
   regionId: number;
   data: unknown;
   updatedAt: string;
+  sessionReports: unknown[];
 };
 
 export type CreateEventRequest = {
