@@ -53,6 +53,10 @@ export default function Objectives({
   };
 
   const onInitialObjSelect = (objective) => {
+    console.log({
+      objective,
+    });
+
     append(objective);
 
     // If fields have changed get updated list of used Objective ID's.
