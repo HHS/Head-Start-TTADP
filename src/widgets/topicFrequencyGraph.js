@@ -9,6 +9,7 @@ import {
   Topic,
   sequelize,
 } from '../models';
+import { scopeToWhere } from '../scopes/utils';
 
 const getTopicMappings = async () => sequelize.query(`
 SELECT
@@ -102,13 +103,9 @@ export async function topicFrequencyGraph(scopes) {
 }
 
 export async function topicFrequencyGraphViaGoals(scopes) {
-  let sql;
-  await ActivityReport
-    .findAll({ where: scopes.activityReport, limit: 0, logging: (x) => { sql = x; } });
-  const activityReportWhere = sql
-    .substring(sql.indexOf('WHERE'))
-    .replace(/\sLIMIT\s0;$/, '')
+  const activityReportWhere = scopeToWhere(ActivityReport, scopes.activityReport)
     .replace(/"ActivityReport"/g, 'art');
+
   const [
     topicsAndParticipants,
     topicMappings,
@@ -127,7 +124,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
                 JOIN "ActivityReports" art
                 ON ars.id = art.id
                 CROSS JOIN UNNEST(COALESCE("art"."topics",array[]::varchar[])) ar(topic)
-                ${activityReportWhere}
+                WHERE ${activityReportWhere}
                 UNION ALL
                 SELECT
                   t.name topic,
@@ -141,7 +138,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
                 ON arot."topicId" = t.id
                 JOIN "ActivityReports" art
                 ON aro."activityReportId" = art.id
-                ${activityReportWhere}
+                WHERE ${activityReportWhere}
               ),
               "all_topics_with_report_array" AS (
                 SELECT
