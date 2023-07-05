@@ -106,7 +106,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
   await ActivityReport
     .findAll({ where: scopes.activityReport, limit: 0, logging: (x) => { sql = x; } });
   const activityReportWhere = sql
-    .substring(sql.indexOf("WHERE"))
+    .substring(sql.indexOf('WHERE'))
     .replace(/\sLIMIT\s0;$/, '')
     .replace(/"ActivityReport"/g, 'art');
   const [
