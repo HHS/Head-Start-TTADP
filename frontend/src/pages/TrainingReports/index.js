@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Link, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './index.scss';
@@ -107,19 +107,7 @@ export default function TrainingReports({ match }) {
   if (message) {
     msg = (
       <>
-        You successfully
-        {' '}
-        {message.status}
-        {' '}
-        training report
-        {' '}
-        <Link to={`/session-reports/${message.reportId}`}>
-          {message.displayId}
-        </Link>
-        {' '}
-        on
-        {' '}
-        {message.time}
+        Successfully submitted report
       </>
     );
   }
