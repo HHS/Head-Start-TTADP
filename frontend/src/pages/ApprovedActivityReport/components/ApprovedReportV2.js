@@ -1,7 +1,6 @@
 import React from 'react';
 import moment from 'moment-timezone';
 import Container from '../../../components/Container';
-import ApprovedReportSection from './ApprovedReportSection';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
@@ -9,6 +8,7 @@ import {
 import {
   reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
 } from '../helpers';
+import ReadOnlyContent from '../../../components/ReadOnlyContent';
 
 function formatNextSteps(nextSteps, heading, striped) {
   return nextSteps.map((step, index) => ({
@@ -254,7 +254,7 @@ export default function ApprovedReportV2({ data }) {
           : null }
       </div>
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`activity-summary-${reportId}`}
         title="Activity summary"
         sections={[
@@ -310,13 +310,13 @@ export default function ApprovedReportV2({ data }) {
         ]}
       />
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`goals-and-objectives-${reportId}`}
         title="Goals and objectives"
         sections={goalSections}
       />
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`supporting-attachments${reportId}`}
         title="Supporting attachments"
         sections={
@@ -330,7 +330,7 @@ export default function ApprovedReportV2({ data }) {
           }
       />
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`next-steps${reportId}`}
         title="Next steps"
         sections={[

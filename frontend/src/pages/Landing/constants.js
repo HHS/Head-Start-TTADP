@@ -18,6 +18,8 @@ import {
   myReportsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -36,6 +38,8 @@ const LANDING_BASE_FILTER_CONFIG = [
   recipientFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   specialistRoleFilter,
   singleOrMultiRecipientsFilter,
   stateCodeFilter,
@@ -59,6 +63,8 @@ const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   regionFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,

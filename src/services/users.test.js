@@ -1,9 +1,15 @@
+import faker from '@faker-js/faker';
 import db, {
   User, Permission,
 } from '../models';
 
 import {
-  usersWithPermissions, userById, userByEmail, setFlag,
+  usersWithPermissions,
+  userById,
+  userByEmail,
+  setFlag,
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -39,6 +45,36 @@ describe('Users DB service', () => {
       expect(user.name).toBe('user 54');
     });
   });
+
+  describe('getUserNamesByIds', () => {
+    beforeEach(async () => {
+      await User.create({
+        id: 54,
+        name: 'user 54',
+        hsesUsername: 'user.54',
+        hsesUserId: '54',
+      });
+      await User.create({
+        id: 55,
+        name: 'user 55',
+        hsesUsername: 'user.55',
+        hsesUserId: '55',
+      });
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: [54, 55] } });
+    });
+
+    it('retrieves the correct userNames', async () => {
+      const users = await getUserNamesByIds([54, 55]);
+      expect(users).toStrictEqual([
+        'user 54',
+        'user 55',
+      ]);
+    });
+  });
+
   describe('userByEmail', () => {
     beforeEach(async () => {
       await User.create({
@@ -184,6 +220,77 @@ describe('Users DB service', () => {
       await setFlag('anv_statistics', true);
       const user = await User.findOne({ where: { id: 53 } });
       expect(user.flags[0]).toBe(undefined);
+    });
+  });
+
+  describe('getTrainingReportUsersByRegion', () => {
+    const userIds = [
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
+    ];
+    const users = [
+      {
+        id: userIds[0],
+        regionId: 5,
+        scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[1],
+        regionId: 5,
+        scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[2],
+        regionId: 5,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[3],
+        regionId: 7,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      },
+      {
+        id: userIds[4],
+        regionId: 5,
+        scopeId: SCOPES.SITE_ACCESS,
+      },
+    ];
+
+    beforeEach(async () => {
+      await Promise.all(
+        users.map((u) => User.create({
+          id: u.id,
+          name: u.id,
+          hsesUsername: u.id,
+          hsesUserId: u.id,
+          permissions: [{
+            userId: u.id,
+            regionId: u.regionId,
+            scopeId: u.scopeId,
+          }],
+        }, { include: [{ model: Permission, as: 'permissions' }] })),
+      );
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: userIds } });
+    });
+
+    it('returns a list of users that have permissions on the region', async () => {
+      const result = await getTrainingReportUsersByRegion(5);
+
+      const collaboratorIds = result.collaborators.map((u) => u.id);
+      const pointOfContact = result.pointOfContact.map((u) => u.id);
+
+      expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
+      expect(collaboratorIds.length).toBe(1);
+
+      expect(pointOfContact.includes(userIds[0])).toBeTruthy();
+      expect(pointOfContact.includes(userIds[1])).toBeTruthy();
+      expect(pointOfContact.length).toBe(2);
     });
   });
 });

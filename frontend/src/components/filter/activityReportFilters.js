@@ -156,6 +156,38 @@ export const reportTextFilter = {
   ),
 };
 
+export const resourceLinkFilter = {
+  id: 'resourceUrl',
+  display: 'Resource link',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceLink-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource link text"
+    />
+  ),
+};
+
+export const resourceAttachmentFilter = {
+  id: 'resourceAttachment',
+  display: 'Resource attachment',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceAttachment-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource attachment file name"
+    />
+  ),
+};
+
 export const otherEntitiesFilter = {
   id: 'otherEntities',
   display: 'Other entities',

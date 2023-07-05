@@ -1,4 +1,6 @@
+import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
 import { currentUserId } from '../../services/currentUser';
@@ -14,6 +16,8 @@ import {
   findEventsByStatus,
 } from '../../services/event';
 import { userById } from '../../services/users';
+import { setReadRegions, setTrainingReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
+import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -27,9 +31,18 @@ export const getEventAuthorization = async (req, res, report) => {
 
 export const getByStatus = async (req, res) => {
   try {
-    const { status } = req.params;
+    const { status: statusParam } = req.params;
     const auth = await getEventAuthorization(req, res, {});
-    const events = await findEventsByStatus(status, auth.readableRegions);
+    const userId = await currentUserId(req, res);
+    const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
+    const updatedFilters = await setTrainingReportReadRegions(req.query, userId);
+    const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
+
+    // If user is a collaborator we want o return all region events and collaborator events.
+    if (await userIsPocRegionalCollaborator(userId)) {
+      scopes.push({ pocId: { [Op.contains]: [userId] } });
+    }
+    const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
@@ -48,8 +61,21 @@ export const getHandler = async (req, res) => {
       collaboratorId,
     } = req.params;
 
+    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
+
+    if (params.every((param) => typeof param === 'undefined')) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+    }
+
+    // Check if user is a collaborator.
+    const userId = await currentUserId(req, res);
+    const scopes = [];
+    if (await userIsPocRegionalCollaborator(userId)) {
+      scopes.push({ pocId: { [Op.contains]: [userId] } });
+    }
+
     if (eventId) {
-      event = await findEventById(eventId);
+      event = await findEventById(eventId, scopes);
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
@@ -60,19 +86,13 @@ export const getHandler = async (req, res) => {
       event = await findEventsByCollaboratorId(collaboratorId);
     }
 
-    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
-
-    if (params.every((param) => typeof param === 'undefined')) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
-    }
-
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
 
     const auth = await getEventAuthorization(req, res, event);
 
-    if (!auth.canRead()) {
+    if (!auth.canRead() && !auth.isCollaborator()) {
       return res.sendStatus(403);
     }
 

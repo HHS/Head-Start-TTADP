@@ -56,37 +56,6 @@ export const canUnlockReports = (user) => _.some(
   ),
 );
 
-// /**
-//  * Return all regions that user has a read access to.
-//  * Permissions that qualify this criteria are:
-//  * Read Activity Reports
-//  * Read Write Activity Reports
-//  * @param {*} - user object
-//  * @param {includeAdmin} - flag to include/exclude admin permissions
-//  * @returns {array} - An array of integers, where each integer signifies a region.
-//  */
-// export const allRegionsUserHasReadTo = (user, includeAdmin) => {
-//   const permissions = _.get(user, 'permissions');
-
-//   if (!permissions) return [];
-
-//   const minPermissions = [
-//     SCOPE_IDS.READ_ACTIVITY_REPORTS,
-//     SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-//   ];
-
-//   if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
-
-//   const regions = [];
-//   permissions.forEach((perm) => {
-//     if (minPermissions.includes(perm.scopeId)) {
-//       regions.push(perm.regionId);
-//     }
-//   });
-
-//   return _.uniq(regions);
-// };
-
 /**
  * Search the user's permissions for any region they have read/write permissions to.
  * Return *first* region that matches this criteria. Otherwise return -1.
@@ -131,6 +100,24 @@ const canEditOrCreateGoals = (user, region) => {
 };
 
 /**
+ * Search the user's permissions for a read/write permisions for a region
+ * @param {*} user - user object
+ * @param {number} region - region id
+ * @returns {boolean} - True if the user has re/write access for a region, false otherwise
+ */
+const canEditOrCreateSessionReports = (user, region) => {
+  const { permissions } = user;
+  if (isAdmin(user)) {
+    return true;
+  }
+
+  return permissions && permissions.find(
+    (p) => (p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS)
+      && p.regionId === region,
+  ) !== undefined;
+};
+
+/**
  *
  * // probably makes sense to seperate this logic
  * @param {object} user user object
@@ -149,4 +136,5 @@ export {
   getUserRegions,
   canEditOrCreateGoals,
   canChangeGoalStatus,
+  canEditOrCreateSessionReports,
 };

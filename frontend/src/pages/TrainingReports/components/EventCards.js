@@ -19,6 +19,7 @@ const translateEventStatus = (status) => {
 function EventCards({
   events,
   eventType,
+  onRemoveSession,
 }) {
   return (
     <div className="padding-x-3 padding-y-2">
@@ -28,6 +29,7 @@ function EventCards({
             <EventCard
               key={`event-row-${event.id}`}
               event={event}
+              onRemoveSession={onRemoveSession}
             />
           ))
           : <p className="usa-prose text-bold margin-y-0 padding-2">{translateEventStatus(eventType)}</p>
@@ -39,5 +41,6 @@ function EventCards({
 EventCards.propTypes = {
   events: PropTypes.arrayOf(PropTypes.shape(eventPropTypes)).isRequired,
   eventType: PropTypes.string.isRequired,
+  onRemoveSession: PropTypes.func.isRequired,
 };
 export default EventCards;
