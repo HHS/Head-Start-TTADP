@@ -51,6 +51,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.DRAFT,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     }));
 
     // create an alert that's already ended
