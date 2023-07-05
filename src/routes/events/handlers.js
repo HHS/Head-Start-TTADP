@@ -75,13 +75,7 @@ export const getHandler = async (req, res) => {
     }
 
     if (eventId) {
-      const where = {
-        [Op.and]: [
-          { id: eventId },
-          ...scopes,
-        ],
-      };
-      event = await findEventById(where);
+      event = await findEventById(eventId, scopes);
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
