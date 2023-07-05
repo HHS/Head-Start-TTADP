@@ -79,7 +79,7 @@ export async function destroyEvent(id: number): Promise<void> {
   }
 }
 
-async function findEventHelper(where: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
+async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
   let event;
 
   const query = {
@@ -252,8 +252,14 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventById(id: number): Promise<EventShape | null> {
-  return findEventHelper({ id }) as Promise<EventShape>;
+export async function findEventById(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+  const where = {
+    [Op.and]: [
+      { id },
+      ...scopes,
+    ],
+  };
+  return findEventHelper(where) as Promise<EventShape>;
 }
 
 export async function findEventsByOwnerId(id: number): Promise<EventShape[] | null> {
