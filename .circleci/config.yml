@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-1027/try-zap-latest"
+    default: "fix-deploys"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "al-ttahub-519-grant-personnel"
