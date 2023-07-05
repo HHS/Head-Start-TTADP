@@ -33,6 +33,7 @@ describe('getGoalsForReport', () => {
       name: userName,
       hsesUsername: userName,
       hsesUserId: userName,
+      lastLogin: new Date(),
     });
 
     // Create Included Goal.

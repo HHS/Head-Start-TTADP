@@ -25,12 +25,14 @@ describe('Users DB service', () => {
         name: 'user 54',
         hsesUsername: 'user.54',
         hsesUserId: '54',
+        lastLogin: new Date(),
       });
       await User.create({
         id: 55,
         name: 'user 55',
         hsesUsername: 'user.55',
         hsesUserId: '55',
+        lastLogin: new Date(),
       });
     });
 
@@ -52,6 +54,7 @@ describe('Users DB service', () => {
         email: 'user50@test.gov',
         hsesUsername: 'user50',
         hsesUserId: '50',
+        lastLogin: new Date(),
       });
       await User.create({
         id: 51,
@@ -59,6 +62,7 @@ describe('Users DB service', () => {
         email: 'user51@test.gov',
         hsesUsername: 'user51',
         hsesUserId: '51',
+        lastLogin: new Date(),
       });
     });
 
@@ -112,6 +116,7 @@ describe('Users DB service', () => {
             regionId: u.regionId,
             scopeId: u.scopeId,
           }],
+          lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
       );
     });
@@ -164,6 +169,7 @@ describe('Users DB service', () => {
             regionId: u.regionId,
             scopeId: u.scopeId,
           }],
+          lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
       );
     });
@@ -240,6 +246,7 @@ describe('Users DB service', () => {
             regionId: u.regionId,
             scopeId: u.scopeId,
           }],
+          lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
       );
     });
