@@ -8,6 +8,7 @@ import {
   statisticsByUser,
   setFlag,
   getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { statesByGrantRegion } from '../../services/grant';
@@ -170,6 +171,19 @@ export async function getTrainingReportUsers(req, res) {
     }
 
     res.json(await getTrainingReportUsersByRegion(region));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getNamesByIds(req, res) {
+  try {
+    const { ids } = req.query;
+    if (!ids) {
+      res.sendStatus(400);
+      return;
+    }
+    res.json(await getUserNamesByIds(ids));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
