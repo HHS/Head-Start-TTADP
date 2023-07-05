@@ -480,6 +480,7 @@ describe('Activity report service', () => {
           regionId: 1,
           ttaType: [],
           lastUpdatedById: 1,
+          version: 2,
         };
 
         const report = await createOrUpdate(emptyReport);

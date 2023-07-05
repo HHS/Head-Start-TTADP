@@ -15,6 +15,7 @@ describe('site alerts', () => {
       email: faker.internet.email(),
       homeRegionId: 1,
       hsesUsername: faker.internet.userName(),
+      lastLogin: new Date(),
     });
 
     // Create a published alert
