@@ -7,6 +7,7 @@ import React, {
 import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -231,7 +232,10 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data,
+        data: {
+          ...data,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
         ownerId: ownerId || null,
         pocId: pocId || null,
         collaboratorIds,
