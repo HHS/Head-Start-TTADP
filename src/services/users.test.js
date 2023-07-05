@@ -55,12 +55,14 @@ describe('Users DB service', () => {
         name: 'user 54',
         hsesUsername: 'user.54',
         hsesUserId: '54',
+        lastLogin: new Date(),
       });
       await User.create({
         id: 55,
         name: 'user 55',
         hsesUsername: 'user.55',
         hsesUserId: '55',
+        lastLogin: new Date(),
       });
     });
 
