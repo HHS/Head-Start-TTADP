@@ -33,6 +33,7 @@ describe('Import Smart Sheet Events', () => {
           hsesUsername: faker.datatype.string(),
           hsesUserId: faker.datatype.string(),
           email: 'smartsheetevents@ss.com',
+          lastLogin: new Date(),
         });
         ownerId = user.id;
         const fileName = 'EventsTest.csv';
