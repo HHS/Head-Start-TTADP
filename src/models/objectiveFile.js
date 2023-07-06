@@ -30,12 +30,12 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
       allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
       allowNull: false,
     },
   }, {

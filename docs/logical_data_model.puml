@@ -77,7 +77,7 @@ class ActivityReportGoals{
  closeSuspendContext : text
  closeSuspendReason : enum
  endDate : date
- isActivelyEdited : boolean
+ isActivelyEdited : boolean : false
  isRttapa : enum
  name : text
  source : enum
@@ -301,7 +301,7 @@ class Goals{
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
- * onApprovedAR : boolean
+ * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
  closeSuspendContext : text
@@ -495,7 +495,7 @@ class Objectives{
  objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
  otherEntityId : integer : REFERENCES "OtherEntities".id
  * createdAt : timestamp with time zone : now()
- * onApprovedAR : boolean
+ * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone : now()
  createdVia : enum

@@ -147,6 +147,7 @@ export default (sequelize, DataTypes) => {
     version: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 1,
     },
     duration: {
       type: DataTypes.DECIMAL(3, 1),

@@ -95,6 +95,20 @@ module.exports = {
         },
       );
 
+      await queryInterface.sequelize.query(
+        `
+        ALTER TABLE "ActivityReportGoals"
+        ALTER COLUMN "isActivelyEdited" SET DEFAULT false;
+        ALTER TABLE "Goals"
+        ALTER COLUMN "onApprovedAR" SET DEFAULT false;
+        ALTER TABLE "Objectives"
+        ALTER COLUMN "onApprovedAR" SET DEFAULT false;
+        `,
+        {
+          transaction,
+        },
+      );
+
       // Disable audit log
       await queryInterface.sequelize.query(
         `

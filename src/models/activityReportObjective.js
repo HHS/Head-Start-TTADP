@@ -47,6 +47,7 @@ export default (sequelize, DataTypes) => {
     arOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 1,
     },
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
