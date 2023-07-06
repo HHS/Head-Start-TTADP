@@ -17,6 +17,7 @@ import { createSession, getSessionBySessionId, updateSession } from '../../fetch
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
+import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import { isValidResourceUrl } from '../../components/GoalForm/constants';
@@ -203,6 +204,7 @@ export default function SessionForm({ match }) {
       });
 
       updateLastSaveTime(moment(updatedSession.updatedAt));
+      updateShowSavedDraft(true);
     } catch (err) {
       setError('There was an error saving the session. Please try again later.');
     } finally {
@@ -214,6 +216,7 @@ export default function SessionForm({ match }) {
     const whereWeAre = pages.find((p) => p.path === currentPage);
     const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
+    updateShowSavedDraft(false);
     if (nextPage) {
       updatePage(nextPage.position);
     }
@@ -242,7 +245,7 @@ export default function SessionForm({ match }) {
         eventId: trainingReportId || null,
       });
 
-      history.push('/training-reports/in-progress', { message: 'Session submitted successfully' });
+      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
     } catch (err) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
@@ -264,6 +267,9 @@ export default function SessionForm({ match }) {
         </Alert>
         )}
       <Helmet titleTemplate="%s | TTA Hub" defaultTitle="Session | TTA Hub" />
+      <BackLink to="/training-reports/in-progress">
+        Back to Training Reports
+      </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
