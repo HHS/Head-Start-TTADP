@@ -212,7 +212,7 @@ export default function TrainingReportForm({ match }) {
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/training-report/${trainingReportId}/event-summary`} />
+      <Redirect to={`/training-report/${trainingReportId}/event-summary`} />
     );
   }
 
