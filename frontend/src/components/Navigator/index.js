@@ -131,6 +131,22 @@ const Navigator = ({
     };
   });
 
+  const DraftAlert = () => (
+    <DismissingComponentWrapper
+      shown={showSavedDraft}
+      updateShown={updateShowSavedDraft}
+      hideFromScreenReader={false}
+    >
+      {lastSaveTime && (
+      <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
+        Draft saved on
+        {' '}
+        {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+      </Alert>
+      )}
+    </DismissingComponentWrapper>
+  );
+
   const newLocal = 'smart-hub-sidenav-wrapper no-print';
   return (
     <Grid row gap>
@@ -185,21 +201,10 @@ const Navigator = ({
                     weAreAutoSaving,
                     datePickerKey,
                     onFormSubmit,
+                    DraftAlert,
                   )}
                 </Form>
-                <DismissingComponentWrapper
-                  shown={showSavedDraft}
-                  updateShown={updateShowSavedDraft}
-                  hideFromScreenReader={false}
-                >
-                  {lastSaveTime && (
-                    <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
-                      Draft saved on
-                      {' '}
-                      {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
-                    </Alert>
-                  )}
-                </DismissingComponentWrapper>
+
               </Container>
             )}
         </div>
