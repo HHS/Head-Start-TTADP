@@ -147,7 +147,6 @@ function processClassDefinition(schema, key) {
       && field.default !== '<generated>'
       && !((field.default === 'null' || field.default === null) && modelField.defaultValue === undefined)
       && !(['updatedAt', 'createdAt'].includes(field.name) && ['now()', 'CURRENT_TIMESTAMP'].includes(field.default))) {
-      console.log(key, '.', field.name, ': ', field.default, ' <=> ', modelField.defaultValue, '\n\n');
       issues.push(`!issue='column default does not match model'`); //eslint-disable-line
     }
     if (field.default) {
