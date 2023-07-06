@@ -103,8 +103,7 @@ export async function topicFrequencyGraph(scopes) {
 }
 
 export async function topicFrequencyGraphViaGoals(scopes) {
-  const activityReportWhere = scopeToWhere(ActivityReport, scopes.activityReport)
-    .replace(/"ActivityReport"/g, 'art');
+  const activityReportWhere = await scopeToWhere(ActivityReport, 'art', scopes.activityReport);
 
   const [
     topicsAndParticipants,
