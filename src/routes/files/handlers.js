@@ -22,6 +22,7 @@ import {
 import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
+import EventPolicy from '../../policies/event';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { getObjectiveById } from '../../services/objectives';
@@ -140,13 +141,9 @@ const deleteHandler = async (req, res) => {
       const session = await findSessionById(eventSessionId);
       const event = await findEventById(session.eventId);
 
-      const allowedEditors = [
-        ...event.collaboratorIds,
-        event.ownerId,
-        event.pocId,
-      ];
+      const eventPolicy = new EventPolicy(user, event);
 
-      if (!allowedEditors.includes(userId)) {
+      if (!eventPolicy.canUpdate()) {
         res.sendStatus(403);
         return;
       }
@@ -363,13 +360,9 @@ const uploadHandler = async (req, res) => {
       const session = await findSessionById(sessionId);
       const event = await findEventById(session.eventId);
 
-      const allowedEditors = [
-        ...event.collaboratorIds,
-        event.ownerId,
-        event.pocId,
-      ];
+      const eventPolicy = new EventPolicy(user, event);
 
-      if (!allowedEditors.includes(userId)) {
+      if (!eventPolicy.canUpdate()) {
         return res.sendStatus(403);
       }
 
