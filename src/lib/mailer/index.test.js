@@ -75,7 +75,6 @@ const digestMockCollab = {
   hsesUserId: 'b',
   hsesUsername: 'b',
   role: [],
-  lastLogin: new Date(),
 };
 
 const digestMockApprover = {
