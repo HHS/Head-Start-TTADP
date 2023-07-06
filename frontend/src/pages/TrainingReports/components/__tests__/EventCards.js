@@ -8,6 +8,9 @@ import { EVENT_STATUS } from '../../constants';
 describe('EventCards', () => {
   const defaultEvents = [{
     id: 1,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocId: [],
     data: {
       eventName: 'Sample event 1',
       eventId: 'Sample event ID 1',
@@ -20,6 +23,9 @@ describe('EventCards', () => {
   },
   {
     id: 2,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocId: [],
     data: {
       eventName: 'Sample event 2',
       eventId: 'Sample event ID 2',
@@ -32,6 +38,9 @@ describe('EventCards', () => {
   },
   {
     id: 3,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocId: [],
     data: {
       eventName: 'Sample event 3',
       eventId: 'Sample event ID 3',
@@ -45,6 +54,7 @@ describe('EventCards', () => {
   ];
 
   const DEFAULT_USER = {
+    id: 1,
     name: 'test@test.com',
     homeRegionId: 1,
     permissions: [
@@ -55,12 +65,17 @@ describe('EventCards', () => {
     ],
   };
 
-  const renderEventCards = (events = defaultEvents, eventType = EVENT_STATUS.NOT_STARTED) => {
+  const renderEventCards = (
+    events = defaultEvents,
+    eventType = EVENT_STATUS.NOT_STARTED,
+    user = DEFAULT_USER,
+  ) => {
     render((
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
+      <UserContext.Provider value={{ user }}>
         <EventCards
           events={events}
           eventType={eventType}
+          onRemoveSession={jest.fn()}
         />
       </UserContext.Provider>));
   };
@@ -107,5 +122,78 @@ describe('EventCards', () => {
   it('renders correctly if there are no in unknown events', () => {
     renderEventCards([], 'blah');
     expect(screen.getByText('You have no events.')).toBeInTheDocument();
+  });
+
+  it('collaborator can edit reports they collaborate on and view reports in their region', () => {
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      collaboratorIds: [],
+      pocId: [2],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'Collab Event ID 1',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        reasons: ['New Program/Option'],
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+      },
+      sessionReports: [],
+    },
+    {
+      id: 2,
+      ownerId: 2,
+      collaboratorIds: [],
+      pocId: [3],
+      data: {
+        eventName: 'Region event 2',
+        eventId: 'Region event ID 2',
+        eventOrganizer: 'Sample Region event organizer 2',
+        reasons: ['New Staff/Turnover'],
+        startDate: '02/02/2021',
+        endDate: '02/03/2021',
+      },
+      sessionReports: [],
+    }];
+
+    const COLLABORATOR_USER = {
+      id: 2,
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [],
+    };
+
+    renderEventCards(collaboratorEvents, EVENT_STATUS.NOT_STARTED, COLLABORATOR_USER);
+
+    // Collaborator Event.
+    expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
+    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
+
+    // Region Event.
+    expect(screen.getByText('Region event 2')).toBeInTheDocument();
+    expect(screen.getByText('Region event ID 2')).toBeInTheDocument();
+    expect(screen.getByText('Sample Region event organizer 2')).toBeInTheDocument();
+    expect(screen.getByText('02/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('02/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Staff/Turnover').length).toBe(1);
+
+    // Show correct actions for collaborator event.
+    let button = screen.getByRole('button', { name: /actions for event 1/i });
+    button.click(button);
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    button.click(button);
+
+    // Show correct actions for region event.
+    button = screen.getByRole('button', { name: /actions for event 2/i });
+    button.click(button);
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 });
