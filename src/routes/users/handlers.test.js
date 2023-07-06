@@ -7,9 +7,15 @@ import {
   getActiveUsers,
   setFeatureFlag,
   getTrainingReportUsers,
+  getNamesByIds,
 } from './handlers';
 import {
-  userById, usersWithPermissions, statisticsByUser, setFlag, getTrainingReportUsersByRegion,
+  userById,
+  usersWithPermissions,
+  statisticsByUser,
+  setFlag,
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from '../../services/users';
 import User from '../../policies/user';
 import { Grant } from '../../models';
@@ -23,6 +29,7 @@ jest.mock('../../services/users', () => ({
   statisticsByUser: jest.fn(),
   setFlag: jest.fn(),
   getTrainingReportUsersByRegion: jest.fn(),
+  getUserNamesByIds: jest.fn(),
 }));
 
 jest.mock('../../services/currentUser', () => ({
@@ -441,17 +448,49 @@ describe('User handlers', () => {
 
     it('should handle errors', async () => {
       const error = new Error('An error occurred');
-      const handleErrors = jest.fn();
 
       currentUserId.mockResolvedValueOnce(1);
       getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
       userById.mockRejectedValueOnce(error);
-      handleErrors.mockResolvedValueOnce();
 
       await getTrainingReportUsers(req, res);
 
       expect(userById).toHaveBeenCalledTimes(1);
       expect(getTrainingReportUsersByRegion).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getNamesByIds', () => {
+    const res = {
+      sendStatus: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return 400 if the request has no ids', async () => {
+      await getNamesByIds({ query: {} }, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(400);
+    });
+
+    it('should return a list of users with training reports by region', async () => {
+      getUserNamesByIds.mockResolvedValueOnce(['TIM', 'TOM']);
+      await getNamesByIds({ query: { ids: [1, 2] } }, res);
+      expect(res.json).toHaveBeenCalledWith(['TIM', 'TOM']);
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('An error occurred');
+      const handleErrors = jest.fn();
+      getUserNamesByIds.mockRejectedValueOnce(error);
+      handleErrors.mockResolvedValueOnce();
+      await getNamesByIds({ query: { ids: [1, 2] } }, res);
       expect(res.json).not.toHaveBeenCalled();
     });
   });
