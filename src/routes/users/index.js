@@ -8,6 +8,7 @@ import {
   getActiveUsers,
   setFeatureFlag,
   getTrainingReportUsers,
+  getNamesByIds,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 
@@ -24,5 +25,6 @@ router.get('/training-report-users', transactionWrapper(getTrainingReportUsers))
 router.post('/verify-email/:token', transactionWrapper(verifyEmailToken));
 router.post('/send-verification-email', transactionWrapper(requestVerificationEmail));
 router.post('/feature-flags', transactionWrapper(setFeatureFlag));
+router.get('/names', transactionWrapper(getNamesByIds));
 
 export default router;
