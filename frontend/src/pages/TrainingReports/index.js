@@ -104,10 +104,11 @@ export default function TrainingReports({ match }) {
 
   let msg;
   const message = history.location.state && history.location.state.message;
+
   if (message) {
     msg = (
       <>
-        Successfully submitted report
+        { message }
       </>
     );
   }

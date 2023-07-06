@@ -335,11 +335,7 @@ describe('TrainingReports', () => {
         },
       ],
     };
-    const message = {
-      status: 'TESTED',
-      displayId: 'R04-PD-23-1123',
-      time: 'today',
-    };
+    const message = 'Successfully submitted report';
 
     const pastLocations = [
       { pathname: '/training-reports/not-started', state: { message } },
