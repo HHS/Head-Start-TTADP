@@ -60,6 +60,14 @@ class ActivityReportGoalResources{
  sourceFields : enum[]
 }
 
+enum enum_ActivityReportGoalResources_sourceFields {
+ name
+ resource
+ timeframe
+}
+
+enum_ActivityReportGoalResources_sourceFields <|-- ActivityReportGoalResources
+
 class ActivityReportGoals{
  * id : integer : <generated>
  * activityReportId : integer : REFERENCES "ActivityReports".id
@@ -94,6 +102,14 @@ class ActivityReportObjectiveResources{
  sourceFields : enum[]
 }
 
+enum enum_ActivityReportObjectiveResources_sourceFields {
+ resource
+ title
+ ttaProvided
+}
+
+enum_ActivityReportObjectiveResources_sourceFields <|-- ActivityReportObjectiveResources
+
 class ActivityReportObjectiveTopics{
  * id : integer : <generated>
  * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
@@ -122,6 +138,16 @@ class ActivityReportResources{
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
+
+enum enum_ActivityReportResources_sourceFields {
+ ECLKCResourcesUsed
+ additionalNotes
+ context
+ nonECLKCResourcesUsed
+ resource
+}
+
+enum_ActivityReportResources_sourceFields <|-- ActivityReportResources
 
 class ActivityReports{
  * id : integer : <generated>
@@ -211,6 +237,14 @@ class GoalResources{
  sourceFields : enum[]
 }
 
+enum enum_GoalResources_sourceFields {
+ name
+ resource
+ timeframe
+}
+
+enum_GoalResources_sourceFields <|-- GoalResources
+
 class GoalTemplateFieldPrompts{
  * id : integer : <generated>
  * goalTemplateId : integer : REFERENCES "GoalTemplates".id
@@ -242,6 +276,13 @@ class GoalTemplateResources{
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
+
+enum enum_GoalTemplateResources_sourceFields {
+ name
+ resource
+}
+
+enum_GoalTemplateResources_sourceFields <|-- GoalTemplateResources
 
 class GoalTemplates{
  * id : integer : <generated>
@@ -349,6 +390,13 @@ class NextStepResources{
  sourceFields : enum[]
 }
 
+enum enum_NextStepResources_sourceFields {
+ note
+ resource
+}
+
+enum_NextStepResources_sourceFields <|-- NextStepResources
+
 class NextSteps{
  * id : integer : <generated>
  * activityReportId : integer : REFERENCES "ActivityReports".id
@@ -380,6 +428,13 @@ class ObjectiveResources{
  sourceFields : enum[]
 }
 
+enum enum_ObjectiveResources_sourceFields {
+ resource
+ title
+}
+
+enum_ObjectiveResources_sourceFields <|-- ObjectiveResources
+
 class ObjectiveTemplateFiles{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
@@ -396,6 +451,13 @@ class ObjectiveTemplateResources{
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
+
+enum enum_ObjectiveTemplateResources_sourceFields {
+ resource
+ title
+}
+
+enum_ObjectiveTemplateResources_sourceFields <|-- ObjectiveTemplateResources
 
 class ObjectiveTemplateTopics{
  * id : integer : <generated>
@@ -663,6 +725,17 @@ class Users{
  name : varchar(255)
  phoneNumber : varchar(255)
 }
+
+enum enum_Users_flags {
+ anv_statistics
+ goal_source
+ regional_goal_dashboard
+ resources_dashboard
+ rttapa_form
+ training_reports
+}
+
+enum_Users_flags <|-- Users
 
 class ZADescriptor{
  * id : integer : <generated>
