@@ -134,7 +134,7 @@ export default function SessionForm({ match }) {
         setReportFetched(true);
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
-        history.push(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
+        history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
       } catch (e) {
         setError('Error creating session');
       }
@@ -179,7 +179,7 @@ export default function SessionForm({ match }) {
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
+      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
     );
   }
 

@@ -12,7 +12,6 @@ import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
 import { canEditOrCreateSessionReports } from '../../../permissions';
-
 import './EventCard.scss';
 
 function EventCard({
