@@ -75,6 +75,27 @@ function toCamelCase(str) {
     .join('');
 }
 
+function processEnum(name, table, schemaEnum, modelEnum) {
+  let uml = modelEnum
+    ? `enum ${name} {\n`
+    : `!issue='${name} enum missing for table ${table}'\nenum ${name} #pink;line:red;line.bold;text:red {\n`;
+
+  schemaEnum?.forEach((sEnum) => {
+    if (!modelEnum?.includes(sEnum)) {
+      uml += ` !issue='value missing from model enum: ${sEnum}'\n`;
+    }
+    uml += ` ${sEnum}\n`;
+  });
+  modelEnum?.forEach((mEnum) => {
+    if (!schemaEnum?.includes(mEnum)) {
+      uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
+    }
+  });
+  uml += '}\n\n';
+  uml += `${name} <|-- ${table}\n\n`;
+  return uml;
+}
+
 function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
@@ -87,6 +108,7 @@ function processClassDefinition(schema, key) {
     return ax.localeCompare(bx);
   });
   const processedFields = [];
+  const foundEnums = [];
   fields.forEach((field) => {
     let modelField;
     processedFields.push(field.name);
@@ -121,7 +143,12 @@ function processClassDefinition(schema, key) {
 
     if (field.default) {
       column += ` : ${field.default}`;
-    } else if (field.reference) {
+    }
+
+    if (field.enumName) {
+      foundEnums.push(processEnum(field.enumName, key, field.enums, modelField.type.type.values));
+    }
+    if (field.reference) {
       column += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
     }
 
@@ -132,6 +159,12 @@ function processClassDefinition(schema, key) {
   });
 
   uml += '}\n\n';
+
+  if (foundEnums.length) {
+    foundEnums.forEach((e) => {
+      uml += e;
+    });
+  }
   return uml;
 }
 
@@ -399,7 +432,20 @@ export default async function generateUMLFromDB() {
                   ELSE column_default
                 END,
             'allowNull', is_nullable = 'YES',
-            'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])')
+            'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])'),
+            'subtype', SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?'),
+            'enumName', CASE
+                WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'enum'
+                THEN SUBSTRING(udt_name FROM '^[_](([^_]+[_]?)+)')
+                else null
+              END,
+            'enums', (
+              SELECT ARRAY_AGG(e.enumlabel ORDER BY e.enumlabel)
+              FROM pg_type t
+              LEFT JOIN pg_enum e
+              ON e.enumtypid = t.oid
+              WHERE '_' || t.typname = col.udt_name
+            )
           )
           ORDER BY ordinal_position ASC
         ) "fields"

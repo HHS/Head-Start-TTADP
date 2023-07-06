@@ -89,6 +89,20 @@ describe('Logical Data Model', () => {
         .toStrictEqual({ count: 0, matches: [] });
     });
   });
+  describe('enums', () => {
+    it('enum missing for table', () => {
+      expect(countOccurrencesInFile(fileContent, 'enum missing for table'))
+        .toStrictEqual({ count: 0, matches: [] });
+    });
+    it('value missing from model enum', () => {
+      expect(countOccurrencesInFile(fileContent, 'value missing from model enum'))
+        .toStrictEqual({ count: 0, matches: [] });
+    });
+    it('value missing from schema enum', () => {
+      expect(countOccurrencesInFile(fileContent, 'value missing from schema enum'))
+        .toStrictEqual({ count: 0, matches: [] });
+    });
+  });
   describe('associations', () => {
     it('associations need to be defined both directions', () => {
       expect(countOccurrencesInFile(fileContent, 'associations need to be defined both directions'))

@@ -65,6 +65,36 @@ module.exports = {
         },
       );
 
+      await queryInterface.sequelize.query(
+        `
+        ALTER TYPE "enum_GoalTemplateResources_sourceFields"
+        RENAME TO "enum_GoalTemplateResources_sourceFields_OLD";
+
+        CREATE TYPE "enum_GoalTemplateResources_sourceFields" AS ENUM (
+          'name',
+          'resource'
+        );
+
+        ALTER TABLE "GoalTemplateResources"
+        RENAME COLUMN "sourceFields" TO "old_sourceFields";
+
+        ALTER TABLE "GoalTemplateResources"
+        ADD COLUMN "sourceFields" "enum_GoalTemplateResources_sourceFields"[];
+
+        UPDATE "GoalTemplateResources"
+        SET "sourceFields" = ARRAY(SELECT UNNEST("old_sourceFields")::TEXT::"enum_GoalTemplateResources_sourceFields");
+
+
+        ALTER TABLE "GoalTemplateResources"
+        DROP COLUMN "old_sourceFields";
+
+        DROP TYPE IF EXISTS "enum_GoalTemplateResources_sourceFields_OLD"
+        `,
+        {
+          transaction,
+        },
+      );
+
       // Disable audit log
       await queryInterface.sequelize.query(
         `
