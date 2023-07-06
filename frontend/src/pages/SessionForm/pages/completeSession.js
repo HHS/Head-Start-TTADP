@@ -18,6 +18,7 @@ const pages = {
   1: 'Session summary',
   2: 'Participants',
   3: 'Next steps',
+  4: 'Complete session',
 };
 
 const CompleteSession = ({
@@ -36,7 +37,9 @@ const CompleteSession = ({
   const [showSubmissionError, setShowSubmissionError] = useState(false);
 
   const incompletePages = (() => Object.keys(pages)
-    .filter((key) => formData.pageState[key] !== 'Complete')
+    // we don't want to include the current page in the list of incomplete pages
+    // or any pages that are already complete
+    .filter((key) => formData.pageState[key] !== 'Complete' && key !== position.toString())
     .map((key) => pages[key]))();
 
   const areAllPagesComplete = !incompletePages.length;
@@ -135,6 +138,7 @@ CompleteSession.propTypes = {
       1: PropTypes.string,
       2: PropTypes.string,
       3: PropTypes.string,
+      4: PropTypes.string,
     }),
   }),
   onSaveForm: PropTypes.func.isRequired,
@@ -148,24 +152,22 @@ CompleteSession.defaultProps = {
 
 export default {
   position,
-  review: true,
+  review: false,
   label: 'Complete session',
   path,
   isPageComplete: (formData) => formData.calculatedStatus === REPORT_STATUSES.SUBMITTED,
   render:
     (
-      formData,
-      onSubmit,
       _additionalData,
-      _onReview,
-      _isApprover,
-      _isPendingApprover,
-      _onResetToDraft,
+      formData,
+      _reportId,
+      _isAppLoading,
+      _onContinue,
       onSaveForm,
-      _navigatorPages,
-      _reportCreator,
-      _lastSaveTime,
       onUpdatePage,
+      _weAreAutoSaving,
+      _datePickerKey,
+      onSubmit,
     ) => (
       <Container skipTopPadding>
         <Form
