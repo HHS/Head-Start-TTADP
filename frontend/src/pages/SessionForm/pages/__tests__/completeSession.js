@@ -41,18 +41,16 @@ describe('completeSession', () => {
           <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               {completeSession.render(
-                formData,
-                onSubmit,
                 {},
-                jest.fn(),
-                false,
+                formData,
+                1,
                 false,
                 jest.fn(),
                 onSaveForm,
-                [],
-                null,
-                null,
                 onUpdatePage,
+                false,
+                '',
+                onSubmit,
               )}
             </NetworkContext.Provider>
           </AppLoadingContext.Provider>
@@ -143,6 +141,7 @@ describe('completeSession', () => {
             pageState: {
               ...defaultPageState,
               3: 'Complete',
+              4: 'Complete',
             },
           }}
         />);

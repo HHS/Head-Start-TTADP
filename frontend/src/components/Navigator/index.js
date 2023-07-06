@@ -184,6 +184,7 @@ const Navigator = ({
                     onUpdatePage,
                     weAreAutoSaving,
                     datePickerKey,
+                    onFormSubmit,
                   )}
                 </Form>
                 <DismissingComponentWrapper
