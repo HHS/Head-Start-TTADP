@@ -26,6 +26,7 @@ const CompleteSession = ({
   formData,
   onSaveForm,
   onUpdatePage,
+  draftAlert,
 }) => {
   const { setError } = useFormContext();
 
@@ -98,6 +99,7 @@ const CompleteSession = ({
         </FormItem>
       </div>
 
+      {draftAlert}
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
@@ -131,6 +133,7 @@ const CompleteSession = ({
 };
 
 CompleteSession.propTypes = {
+  draftAlert: PropTypes.node.isRequired,
   formData: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,
@@ -163,21 +166,23 @@ export default {
       _reportId,
       _isAppLoading,
       _onContinue,
-      onSaveForm,
+      onSaveDraft,
       onUpdatePage,
       _weAreAutoSaving,
       _datePickerKey,
-      onSubmit,
+      onFormSubmit,
+      DraftAlert,
     ) => (
       <Container skipTopPadding>
         <Form
           className="smart-hub--form-large smart-hub--form__activity-report-form"
         >
           <CompleteSession
-            onSubmit={onSubmit}
-            onSaveForm={onSaveForm}
+            onSubmit={onFormSubmit}
+            onSaveForm={onSaveDraft}
             formData={formData}
             onUpdatePage={onUpdatePage}
+            draftAlert={DraftAlert}
           />
         </Form>
       </Container>

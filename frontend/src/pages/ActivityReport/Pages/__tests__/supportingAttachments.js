@@ -19,7 +19,19 @@ const RenderSupportingAttachments = ({ data }) => {
   return (
     <Router history={history}>
       <FormProvider {...hookForm}>
-        {supportingAttachments.render()}
+        {supportingAttachments.render(
+          null,
+          data,
+          1,
+          null,
+          jest.fn(),
+          jest.fn(),
+          jest.fn(),
+          false,
+          '',
+          jest.fn(),
+          () => <></>,
+        )}
       </FormProvider>
     </Router>
   );

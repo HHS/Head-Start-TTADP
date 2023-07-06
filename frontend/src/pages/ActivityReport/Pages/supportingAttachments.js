@@ -104,11 +104,16 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => (
     <>
       <SupportingAttachments
         reportId={reportId}
       />
+      <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}
