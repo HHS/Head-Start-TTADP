@@ -103,6 +103,12 @@ describe('Logical Data Model', () => {
         .toStrictEqual({ count: 0, matches: [] });
     });
   });
+  describe('default', () => {
+    it('column default does not match model', () => {
+      expect(countOccurrencesInFile(fileContent, 'column default does not match model'))
+        .toStrictEqual({ count: 0, matches: [] });
+    });
+  });
   describe('associations', () => {
     it('associations need to be defined both directions', () => {
       expect(countOccurrencesInFile(fileContent, 'associations need to be defined both directions'))

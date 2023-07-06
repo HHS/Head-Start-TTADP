@@ -95,12 +95,12 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
       allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
       allowNull: false,
     },
     isRttapa: {
@@ -154,6 +154,7 @@ export default (sequelize, DataTypes) => {
     rtrOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 1,
     },
     source: {
       type: DataTypes.ENUM(GOAL_SOURCES),

@@ -76,12 +76,12 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
       allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
       allowNull: false,
     },
     createdVia: {
@@ -123,6 +123,7 @@ export default (sequelize, DataTypes) => {
     rtrOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 1,
     },
   }, {
     sequelize,
