@@ -123,7 +123,7 @@ export const scopeToWhere = async (
   alias: string,
   scope: WhereOptions,
 ): Promise<string> => {
-  let sql;
+  let sql = '';
   // The db is not connected for this query as the limit is set to zero, it just returns.
   await model.findAll({
     where: scope,
