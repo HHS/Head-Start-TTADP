@@ -67,7 +67,7 @@ const CompleteSession = ({
       </Helmet>
 
       <NavigatorHeader
-        label="Complete event"
+        label="Complete session"
         formData={formData}
       />
 
