@@ -14,8 +14,8 @@ import {
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
-  <li className="tablet:display-flex desktop:padding-bottom-05 flex-align-start padding-bottom-1">
-    <p className="usa-prose margin-y-0 margin-right-3 minw-15 tablet:text-normal text-bold">
+  <li className="ttahub-session-card__card-data desktop:padding-bottom-05 flex-align-start padding-bottom-1">
+    <p className="ttahub-session-card__card-data-label usa-prose margin-y-0 margin-right-3 minw-15 text-bold">
       {label}
       {' '}
     </p>
