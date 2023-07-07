@@ -3,6 +3,12 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {}
   NationalCenter.init({
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
