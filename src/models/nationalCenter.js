@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { afterDestroy } = require('./hooks/nationalCenter');
 
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {}
@@ -25,6 +26,9 @@ export default (sequelize, DataTypes) => {
   }, {
     paranoid: true,
     sequelize,
+    hooks: {
+      afterDestroy: async (instance) => afterDestroy(sequelize, instance),
+    },
     modelName: 'NationalCenter',
   });
   return NationalCenter;

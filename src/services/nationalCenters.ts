@@ -9,7 +9,7 @@ interface NationalCenterType {
   mapsTo?: number;
 }
 interface NCModel extends NationalCenterType {
-  destroy: () => Promise<void>;
+  destroy: (args: { individualHooks: boolean }) => Promise<void>;
   save: () => Promise<void>;
 }
 
@@ -39,12 +39,14 @@ export async function updateById(id: number, data: { name: string })
     return existing;
   }
 
-  await existing.destroy();
-
-  return NationalCenter.create({
+  const newCenter = await NationalCenter.create({
     name: data.name,
     mapsTo: id,
   });
+
+  await existing.destroy({ individualHooks: true });
+
+  return newCenter;
 }
 
 export async function deleteById(id: number) {
