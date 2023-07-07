@@ -36,9 +36,11 @@ fs
       const modelDef = require(path.join(__dirname, file));
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
-        const auditModel = audit.generateAuditModel(sequelize, model);
         db[model.name] = model;
-        db[auditModel.name] = auditModel;
+        if (model.name !== 'RequestErrors') {
+          const auditModel = audit.generateAuditModel(sequelize, model, model.name === 'UserValidationStatus');
+          db[auditModel.name] = auditModel;
+        }
       }
     } catch (error) {
       auditLogger.error(JSON.stringify({ error, file }));
@@ -54,14 +56,14 @@ fs
 
 {
   const model = audit.generateZADescriptor(sequelize);
-  const auditModel = audit.generateAuditModel(sequelize, model);
+  const auditModel = audit.generateAuditModel(sequelize, model, true);
   db[model.name] = model;
   db[auditModel.name] = auditModel;
 }
 
 {
   const model = audit.generateZAFilter(sequelize);
-  const auditModel = audit.generateAuditModel(sequelize, model);
+  const auditModel = audit.generateAuditModel(sequelize, model, true);
   db[model.name] = model;
   db[auditModel.name] = auditModel;
 }

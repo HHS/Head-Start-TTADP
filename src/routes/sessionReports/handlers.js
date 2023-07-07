@@ -131,7 +131,7 @@ export const deleteHandler = async (req, res) => {
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
     await destroySession(id);
-    return res.status(httpCodes.OK);
+    return res.status(httpCodes.OK).send({ message: 'Session report deleted' });
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

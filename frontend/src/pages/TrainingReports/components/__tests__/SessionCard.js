@@ -1,10 +1,8 @@
 import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import SessionCard from '../SessionCard';
-import UserContext from '../../../../UserContext';
 
 describe('SessionCard', () => {
   const history = createMemoryHistory();
@@ -23,29 +21,17 @@ describe('SessionCard', () => {
     },
   };
 
-  const DEFAULT_USER = {
-    id: 1,
-    name: 'test@test.com',
-    homeRegionId: 1,
-    permissions: [
-      {
-        scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-        regionId: 1,
-      },
-    ],
-  };
-
-  const renderSessionCard = async (session = defaultSession, passedUser = DEFAULT_USER) => {
+  const renderSessionCard = async (session = defaultSession, hasWritePermissions = true, eventStatus = 'In progress') => {
     render((
-      <UserContext.Provider value={{ user: passedUser }}>
-        <Router history={history}>
-          <SessionCard
-            eventId={1}
-            session={session}
-            expanded
-          />
-        </Router>
-      </UserContext.Provider>));
+      <Router history={history}>
+        <SessionCard
+          eventId={1}
+          session={session}
+          hasWritePermissions={hasWritePermissions}
+          eventStatus={eventStatus}
+          expanded
+        />
+      </Router>));
   };
 
   it('renders correctly', () => {
@@ -61,35 +47,21 @@ describe('SessionCard', () => {
   });
 
   it('hides edit link', () => {
-    renderSessionCard(defaultSession, { ...DEFAULT_USER, permissions: [] });
+    renderSessionCard(defaultSession, false);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
   });
 
   it('shows the edit link with the correct permissions', () => {
-    renderSessionCard(defaultSession,
-      {
-        id: 1,
-        permissions: [{
-          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-          regionId: 1,
-        }],
-      });
+    renderSessionCard(defaultSession);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/edit session/i)).toBeInTheDocument();
   });
 
-  it('shows the edit link with the admin permissions', () => {
-    renderSessionCard(defaultSession,
-      {
-        id: 1,
-        permissions: [{
-          scopeId: SCOPE_IDS.ADMIN,
-          regionId: 1,
-        }],
-      });
+  it('does not show the the edit link on a complete event', () => {
+    renderSessionCard(defaultSession, true, 'Complete');
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.getByText(/edit session/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).toBeNull();
   });
 
   it('renders complete status', () => {
