@@ -79,9 +79,14 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => (
     <>
       <VisionGoal />
+      <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}

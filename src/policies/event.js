@@ -86,8 +86,7 @@ export default class EventReport {
   }
 
   canUpdate() {
-    if (!this.canWriteInRegion()) { return false; }
-
+    if (this.canWriteInRegion()) { return true; }
     if (this.isAdmin()) { return true; }
     if (this.isCollaborator()) { return true; }
     if (this.isAuthor()) { return true; }
