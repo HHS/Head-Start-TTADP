@@ -88,10 +88,6 @@ export default function NationalCenters({ match }) {
     } catch (err) {
       setError('Error deleting national center');
     }
-
-    if (modalRef.current.modalIsOpen) {
-      modalRef.current.toggleModal();
-    }
   };
 
   const message = history.location.state && history.location.state.message;
@@ -111,7 +107,7 @@ export default function NationalCenters({ match }) {
             onDelete(selectedCenter);
           }}
         >
-          Delete
+          Yes
         </Button>
       </Modal>
       <div className="ttahub-national-centers-grid">
