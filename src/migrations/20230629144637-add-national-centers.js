@@ -23,6 +23,7 @@ module.exports = {
         name: {
           allowNull: false,
           type: Sequelize.STRING,
+          unique: true,
         },
         mapsTo: {
           allowNull: true,
