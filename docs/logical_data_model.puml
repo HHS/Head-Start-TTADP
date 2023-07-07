@@ -156,7 +156,7 @@ class ActivityReports{
  * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
- * version : integer : 1
+ * version : integer : 2
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
