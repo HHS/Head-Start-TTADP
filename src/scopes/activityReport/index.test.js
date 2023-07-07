@@ -114,6 +114,7 @@ describe('filtersToScopes', () => {
   let globallyExcludedReport;
   let includedUser1;
   let includedUser2;
+  let includedUser3;
   let excludedUser;
   let client;
 
@@ -125,6 +126,7 @@ describe('filtersToScopes', () => {
       name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
     });
     includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
+    includedUser3 = await User.create({ name: 'third person', hsesUserId: 'user536', hsesUsername: 'user536' });
     excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' });
     globallyExcludedReport = await ActivityReport.create({
       ...draftReport, deliveryMethod: 'method', updatedAt: '2000-01-01',
@@ -154,6 +156,7 @@ describe('filtersToScopes', () => {
       mockManager.id,
       includedUser1.id,
       includedUser2.id,
+      includedUser3.id,
       excludedUser.id];
     const reports = await ActivityReport.unscoped().findAll({
       where: {
@@ -1388,6 +1391,99 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('specialistName', () => {
+    let includeCollaboratorReport;
+    let includeCreatorReport;
+    let excludedReport;
+    let possibleIds;
+
+    let includedActivityReportCollaborator1;
+    let includedActivityReportCollaborator2;
+    let excludedActivityReportCollaborator;
+
+    beforeAll(async () => {
+      // Collaborator report.
+      includeCollaboratorReport = await ActivityReport.create({
+        ...draftReport, userId: includedUser3.id,
+      });
+
+      // Creator report.
+      includeCreatorReport = await ActivityReport.create({
+        ...draftReport, userId: includedUser2.id,
+      });
+
+      // Exclude report.
+      excludedReport = await ActivityReport.create(draftReport);
+
+      // Collaborators.
+      includedActivityReportCollaborator1 = await ActivityReportCollaborator.create({
+        activityReportId: includeCollaboratorReport.id, userId: includedUser1.id,
+      });
+
+      includedActivityReportCollaborator2 = await ActivityReportCollaborator.create({
+        activityReportId: includeCreatorReport.id, userId: includedUser3.id,
+      });
+
+      excludedActivityReportCollaborator = await ActivityReportCollaborator.create({
+        activityReportId: excludedReport.id, userId: excludedUser.id,
+      });
+      possibleIds = [
+        includeCollaboratorReport.id,
+        includeCreatorReport.id,
+        excludedReport.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: { id: [includeCollaboratorReport.id, includeCreatorReport.id, excludedReport.id] },
+      });
+      await ActivityReportCollaborator.destroy({
+        where: {
+          id: [
+            includedActivityReportCollaborator1.id,
+            includedActivityReportCollaborator2.id,
+            excludedActivityReportCollaborator.id,
+          ],
+        },
+      });
+    });
+
+    it('finds the report by collaborator', async () => {
+      const filters = { 'specialistName.collaborator': [includedUser1.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCollaboratorReport.id]));
+    });
+
+    it('finds the report by creator', async () => {
+      const filters = { 'specialistName.creator': [includedUser2.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCreatorReport.id]));
+    });
+
+    it('finds the report by both', async () => {
+      const filters = { 'specialistName.both': [includedUser3.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
     });
   });
 
