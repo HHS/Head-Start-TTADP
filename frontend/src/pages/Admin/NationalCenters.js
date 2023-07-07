@@ -29,6 +29,7 @@ export default function NationalCenters({ match }) {
         setNationalCenters(fetchedNationalCenters);
       } catch (e) {
         setError('Error fetching national centers');
+        setNationalCenters([]);
       }
     }
     if (!nationalCenters) {
