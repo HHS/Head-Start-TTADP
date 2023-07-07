@@ -12,6 +12,7 @@ const mockUser = {
   email: 'test@test.com',
   homeRegionId: 1,
   permissions: [],
+  lastLogin: new Date(),
 };
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;

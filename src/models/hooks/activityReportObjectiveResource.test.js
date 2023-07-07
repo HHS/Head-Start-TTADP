@@ -28,6 +28,7 @@ const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 describe('activityReportObjectiveResource hooks', () => {
@@ -49,6 +50,7 @@ describe('activityReportObjectiveResource hooks', () => {
       homeRegionId: 1,
       hsesUsername: faker.datatype.string(),
       hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
     });
 
     arToDestroy = await ActivityReport.create({ ...draftObject, userId: mockUser.id });

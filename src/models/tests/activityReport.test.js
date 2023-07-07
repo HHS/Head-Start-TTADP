@@ -107,6 +107,7 @@ const sampleReport = {
     role: 'Grants Specialist',
     homeRegionId: 1,
   },
+  version: 2,
 };
 
 const mockGoals = [
