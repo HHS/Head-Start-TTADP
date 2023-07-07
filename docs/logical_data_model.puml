@@ -381,6 +381,17 @@ class MailerLogs{
  success : boolean
 }
 
+class MaintenanceLogs{
+ * id : bigint : <generated>
+ * category : enum
+ * type : enum
+ * data : json
+ isSuccessful : boolean
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ triggeredById : bigint : REFERENCES "MaintenanceLogs".id
+}
+
 class NextStepResources{
  * id : integer : <generated>
  * nextStepId : integer : REFERENCES "NextSteps".id
@@ -1139,6 +1150,20 @@ class ZALMailerLogs{
  session_sig : text
 }
 
+class ZALMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
 class ZALNextStepResources{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1628,6 +1653,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles

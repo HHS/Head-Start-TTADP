@@ -19,6 +19,9 @@ import {
 import {
   processNotificationQueue,
 } from './lib/mailer';
+import {
+  processMaintenanceQueue,
+} from './lib/maintenance';
 
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
@@ -39,6 +42,9 @@ async function start() {
 
   // Notifications Queue
   processNotificationQueue();
+
+  // Maintenance Queue
+  processMaintenanceQueue();
 }
 
 // spawn workers and start them

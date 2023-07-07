@@ -188,7 +188,7 @@ const generateZAFilter = (sequelize) => {
   return generateModelClass(sequelize, name, schema, name);
 };
 
-const generateAuditModel = (sequelize, model, passName = false) => {
+const generateAuditModel = (sequelize, model) => {
   const name = `ZAL${model.name}`;
   const schema = {
     id: {
