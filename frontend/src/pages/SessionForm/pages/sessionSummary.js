@@ -90,6 +90,7 @@ const SessionSummary = ({ datePickerKey }) => {
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
+        setTopicOptions([]);
       }
     }
     if (!topicOptions) {
@@ -102,7 +103,7 @@ const SessionSummary = ({ datePickerKey }) => {
     async function fetchNationalCenters() {
       try {
         const nationalCenters = await getNationalCenters();
-        setTrainerOptions(nationalCenters.map(({ name }) => ({ value: name, label: name })));
+        setTrainerOptions(nationalCenters);
       } catch (err) {
         setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
         setTrainerOptions([]);
@@ -385,11 +386,11 @@ const SessionSummary = ({ datePickerKey }) => {
           required
         >
           <Controller
-            render={({ onChange: controllerOnChange, value: selectedValue, onBlur }) => (
+            render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={(
-                  trainerOptions || []
-                ).filter((option) => selectedValue.includes(option.label))}
+                value={(trainerOptions || []).filter((option) => (
+                  value.includes(option.name)
+                ))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
                 className="usa-select"
@@ -399,10 +400,12 @@ const SessionSummary = ({ datePickerKey }) => {
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.label));
+                  controllerOnChange(s.map((o) => o.name));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
                 options={trainerOptions || []}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.id}
                 isMulti
               />
             )}
