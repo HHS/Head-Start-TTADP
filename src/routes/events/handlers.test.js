@@ -35,7 +35,7 @@ jest.mock('../../services/event', () => ({
 const mockEvent = {
   id: 99_999,
   ownerId: 99_999,
-  pocId: 99_999,
+  pocId: [99_999],
   regionId: 99_999,
   collaboratorIds: [99_998, 99_999],
   data: {
@@ -114,6 +114,7 @@ describe('event handlers', () => {
     it('returns 403 when the user cannot read the event', async () => {
       EventReport.mockImplementationOnce(() => ({
         canRead: () => false,
+        isCollaborator: () => false,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
@@ -128,7 +129,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: 99_999,
+        pocId: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -160,7 +161,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: 99_999,
+        pocId: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
