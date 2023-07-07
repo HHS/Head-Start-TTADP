@@ -147,7 +147,9 @@ export default (sequelize, DataTypes) => {
     version: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 1,
+      // NOTE: if/when the default version needs to change. The database default needs to be
+      // changed in coordination
+      defaultValue: 2,
     },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
