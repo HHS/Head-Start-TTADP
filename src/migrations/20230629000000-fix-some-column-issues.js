@@ -109,6 +109,16 @@ module.exports = {
         },
       );
 
+      await queryInterface.sequelize.query(
+        `
+        ALTER TABLE "ActivityReports"
+        ALTER COLUMN "version" SET DEFAULT 2;
+        `,
+        {
+          transaction,
+        },
+      );
+
       // Disable audit log
       await queryInterface.sequelize.query(
         `
