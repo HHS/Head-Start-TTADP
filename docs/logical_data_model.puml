@@ -383,13 +383,13 @@ class MailerLogs{
 
 class MaintenanceLogs{
  * id : bigint : <generated>
- * category : enum
- * type : enum
- * data : json
- isSuccessful : boolean
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
  triggeredById : bigint : REFERENCES "MaintenanceLogs".id
+ * category : enum
+ * createdAt : timestamp with time zone
+ * data : json
+ * type : enum
+ * updatedAt : timestamp with time zone
+ isSuccessful : boolean
 }
 
 class NextStepResources{
@@ -1153,15 +1153,15 @@ class ZALMailerLogs{
 class ZALMaintenanceLogs{
  * id : bigint : <generated>
  * data_id : bigint
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
  * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
  * dml_txid : uuid
- session_sig : text
+ * dml_type : enum
  descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
 }
 
 class ZALNextStepResources{
