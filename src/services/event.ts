@@ -97,6 +97,7 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
       {
         model: SessionReportPilot,
         as: 'sessionReports',
+        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
       },
     ],
   };

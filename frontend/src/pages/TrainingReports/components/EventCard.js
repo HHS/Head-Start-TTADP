@@ -5,7 +5,6 @@ import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
 import UserContext from '../../../UserContext';
-import './EventCard.scss';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
 import ContextMenu from '../../../components/ContextMenu';
@@ -13,6 +12,7 @@ import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
 import { canEditOrCreateSessionReports } from '../../../permissions';
+import './EventCard.scss';
 
 function EventCard({
   event,
@@ -71,10 +71,10 @@ function EventCard({
 
   return (
     <article
-      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter"
+      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2"
       data-testid="eventCard"
     >
-      <div className="display-flex flex-wrap position-relative">
+      <div className="ttahub-event-card__row position-relative">
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event title</p>
           <p className="usa-prose margin-y-0">{data.eventName}</p>
