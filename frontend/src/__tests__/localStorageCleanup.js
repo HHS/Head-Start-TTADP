@@ -6,13 +6,17 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
-import { mockRSSData, mockWindowProperty } from '../testHelpers';
+import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../testHelpers';
 
 const cleanupUrl = '/api/activity-reports/storage-cleanup';
 const feedsUrl = '/api/feeds/whats-new';
 
 describe('localStorageCleanup', () => {
   const removeItem = jest.fn();
+
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
 
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');

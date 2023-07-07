@@ -30,6 +30,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'id',
       'eventId',
       'data',
+      'updatedAt',
     ],
     where,
     include: [
@@ -59,6 +60,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     eventId: session?.eventId,
     data: session?.data ?? {},
     files: session?.files ?? [],
+    updatedAt: session?.updatedAt,
   };
 }
 

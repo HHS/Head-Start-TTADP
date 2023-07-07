@@ -116,6 +116,8 @@ describe('sessionSummary', () => {
                   jest.fn(),
                   false,
                   'key',
+                  jest.fn(),
+                  () => <></>,
                 )}
               </NetworkContext.Provider>
             </FormProvider>

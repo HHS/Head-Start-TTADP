@@ -181,12 +181,6 @@ const CompleteEvent = ({
         </FormItem>
       </div>
 
-      <div className="display-flex">
-        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>
-        <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveForm}>Save draft</Button>
-        <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
-      </div>
-
       {showSubmissionError && (
         <div className="margin-top-4">
           <Alert type="error" noIcon>
@@ -222,6 +216,12 @@ const CompleteEvent = ({
           </Alert>
         </div>
       )}
+
+      <div className="display-flex">
+        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>
+        <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveForm}>Save draft</Button>
+        <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+      </div>
 
     </div>
   );
