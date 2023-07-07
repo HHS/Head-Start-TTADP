@@ -340,12 +340,6 @@ class MailerLogs{
  * updatedAt : timestamp with time zone : now()
 }
 
-class NationalCenters{
-!issue='column type does not match model' * id : <color:#d54309>bigint</color> : <generated>
- * name : varchar(255)
- mapsTo : integer
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
 class MaintenanceLogs{
  * id : bigint : <generated>
  * category : enum
@@ -355,6 +349,15 @@ class MaintenanceLogs{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  triggeredById : bigint : REFERENCES "MaintenanceLogs".id
+}
+
+class NationalCenters{
+ * id : bigint : <generated>
+ * name : varchar(255)
+ mapsTo : integer
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
 }
 
 class NextStepResources{
@@ -1083,8 +1086,21 @@ class ZALMailerLogs{
  dml_as : bigint
 }
 
-class ZALNationalCenters{
 class ZALMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_type : enum
+ old_row_data : jsonb
+ new_row_data : jsonb
+ * dml_timestamp : timestamp with time zone
+ * dml_by : bigint
+ * dml_as : bigint
+ * dml_txid : uuid
+ session_sig : text
+ descriptor_id : integer
+}
+
+class ZALNationalCenters{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_type : enum
