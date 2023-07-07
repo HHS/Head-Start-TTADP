@@ -95,7 +95,7 @@ export default function SessionForm({ match }) {
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
-  const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const {
     socket,
@@ -145,7 +145,7 @@ export default function SessionForm({ match }) {
   useEffect(() => {
     // fetch event report data
     async function fetchSession() {
-      if (!trainingReportId || !currentPage || reportFetched || sessionId === 'new') {
+      if (!currentPage || reportFetched || sessionId === 'new') {
         return;
       }
       try {
@@ -160,7 +160,7 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, sessionId, trainingReportId]);
+  }, [currentPage, hookForm.reset, reportFetched, sessionId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);

@@ -335,5 +335,19 @@ describe('sessionSummary', () => {
 
       expect(yesOnTheFilesSir).toBeChecked();
     });
+
+    it('shows an error if there was one fetching trainers', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/topic', [
+        { id: 1, name: 'Behavioral Health' },
+        { id: 2, name: 'Complaint' },
+      ]);
+      fetchMock.get('/api/national-center', 500);
+      act(() => {
+        render(<RenderSessionSummary />);
+      });
+
+      expect(await screen.findByText(/There was an error fetching objective trainers/i)).toBeInTheDocument();
+    });
   });
 });

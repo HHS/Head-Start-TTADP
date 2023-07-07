@@ -104,7 +104,7 @@ const SessionSummary = ({ datePickerKey }) => {
         const nationalCenters = await getNationalCenters();
         setTrainerOptions(nationalCenters.map(({ name }) => ({ value: name, label: name })));
       } catch (err) {
-        setError('objectiveTrainers', { message: 'There was an error fetching national centers' });
+        setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
         setTrainerOptions([]);
       }
     }
