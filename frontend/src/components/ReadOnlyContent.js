@@ -22,7 +22,7 @@ export default function ReadOnlyContent({
             {section.heading ? <h3 className="ttahub-read-only-content-section--heading font-sans-lg margin-0 margin-bottom-2">{section.heading}</h3> : null}
             {subheadings.map((subheading) => (
               <div className="ttahub-read-only-content-section--heading--section-row tablet:display-flex" key={uuidv4()}>
-                <p className="ttahub-read-only-content-section--heading--section-row-title text-bold usa-prose margin-0 margin-bottom-1 font-sans-3xs">{subheading}</p>
+                <p className="ttahub-read-only-content-section--heading--section-row-title text-bold usa-prose margin-0 margin-bottom-1 font-sans-3xs margin-right-3">{subheading}</p>
                 <p className="ttahub-read-only-content-section--heading--section-row-data usa-prose margin-0 margin-bottom-1 font-sans-3xs">{renderData(subheading, section.data[subheading])}</p>
               </div>
             ))}

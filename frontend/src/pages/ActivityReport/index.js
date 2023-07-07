@@ -366,19 +366,19 @@ function ActivityReport({
 
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage && editable && isPendingApprover) {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 

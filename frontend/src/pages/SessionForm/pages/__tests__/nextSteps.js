@@ -148,6 +148,8 @@ describe('nextSteps', () => {
                 jest.fn(),
                 false,
                 'key',
+                () => {},
+                () => <></>,
               )}
             </NetworkContext.Provider>
           </FormProvider>

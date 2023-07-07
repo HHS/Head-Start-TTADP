@@ -67,7 +67,21 @@ const RenderGoalsObjectives = ({
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
       <Router history={history}>
         <FormProvider {...hookForm}>
-          {goalsObjectives.render(null, { activityRecipientType }, 1, null, null)}
+          {goalsObjectives.render(
+            null,
+            {
+              activityRecipientType,
+            },
+            1,
+            null,
+            jest.fn(),
+            jest.fn(),
+            jest.fn(),
+            false,
+            '',
+            jest.fn(),
+            () => <></>,
+          )}
         </FormProvider>
       </Router>
     </NetworkContext.Provider>

@@ -3,4 +3,5 @@ export type SessionReportShape = {
   eventId: number;
   data: unknown;
   files: unknown[];
+  updatedAt: string;
 };
