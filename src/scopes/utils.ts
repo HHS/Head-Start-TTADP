@@ -109,3 +109,33 @@ export function filterAssociation(baseQuery, searchTerms, exclude, callback, com
 }
 
 export const idClause = (query: string[]) => query.filter((id: string) => !Number.isNaN(parseInt(id, DECIMAL_BASE))).join(',');
+
+/**
+ * Extracts the WHERE clause from a Sequelize model's findAll query and replaces the model name
+ * with an alias.
+ * @param model - The Sequelize model to query.
+ * @param alias - The alias to replace the model name with.
+ * @param scope - The WHERE options for the query.
+ * @returns The modified WHERE clause as a string.
+ */
+export const scopeToWhere = async (
+  model,
+  alias: string,
+  scope: WhereOptions,
+): Promise<string> => {
+  let sql = '';
+  // The db is not connected for this query as the limit is set to zero, it just returns.
+  await model.findAll({
+    where: scope,
+    limit: 0,
+    logging: (x) => { sql = x; },
+  });
+
+  // Extract the WHERE clause from the SQL query
+  const where = sql
+    .substring(sql.indexOf('WHERE') + 'WHERE'.length + 1)
+    .replace(/\sLIMIT\s0;$/, '')
+    .replace(new RegExp(`"${model.name}"`, 'g'), alias);
+
+  return where;
+};

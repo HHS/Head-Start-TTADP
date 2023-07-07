@@ -47,6 +47,7 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import MyGroupsProvider from './components/MyGroupsProvider';
+import ScrollToTop from './components/ScrollToTop';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
@@ -417,6 +418,7 @@ function App() {
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
+          <ScrollToTop />
           {authenticated && (
             <>
               <a className="usa-skipnav" href="#main-content">
