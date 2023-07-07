@@ -65,13 +65,15 @@ describe('visionGoal', () => {
               jest.fn(),
               false,
               'key',
+              jest.fn(),
+              () => <></>,
             )}
           </NetworkContext.Provider>
         </FormProvider>
       );
     };
 
-    it('renders event summary', async () => {
+    it('renders vision & goal', async () => {
       act(() => {
         render(<RenderVisionGoal />);
       });

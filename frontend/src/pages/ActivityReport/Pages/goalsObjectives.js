@@ -407,6 +407,9 @@ export default {
     onSaveDraft,
     onUpdatePage,
     weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    DraftAlert,
   ) => {
     const { activityRecipientType } = formData;
     const isOtherEntityReport = activityRecipientType === 'other-entity';
@@ -449,6 +452,7 @@ export default {
         <GoalsObjectives
           reportId={reportId}
         />
+        <DraftAlert />
         <Buttons />
       </>
     );
