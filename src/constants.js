@@ -1,4 +1,4 @@
-export const FILE_STATUSES = {
+const FILE_STATUSES = {
   UPLOADING: 'UPLOADING',
   UPLOADED: 'UPLOADED',
   UPLOAD_FAILED: 'UPLOAD_FAILED',
@@ -10,22 +10,22 @@ export const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
-export const DATE_FORMAT = 'MM/DD/YYYY';
+const DATE_FORMAT = 'MM/DD/YYYY';
 
-export const REPORTS_PER_PAGE = 10;
-export const RECIPIENTS_PER_PAGE = 12;
-export const GOALS_PER_PAGE = 5;
+const REPORTS_PER_PAGE = 10;
+const RECIPIENTS_PER_PAGE = 12;
+const GOALS_PER_PAGE = 5;
 
-export const SEARCH_RESULTS_PER_PAGE = 23;
+const SEARCH_RESULTS_PER_PAGE = 23;
 
-export const AUTOMATIC_CREATION = 'Automatic';
-export const CURATED_CREATION = 'Curated';
-export const CREATION_METHOD = {
+const AUTOMATIC_CREATION = 'Automatic';
+const CURATED_CREATION = 'Curated';
+const CREATION_METHOD = {
   AUTOMATIC: AUTOMATIC_CREATION,
   CURATED: CURATED_CREATION,
 };
 
-export const GOAL_STATUS = {
+const GOAL_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
@@ -33,14 +33,14 @@ export const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
-export const GRANT_PERSONNEL_ROLES = [
+const GRANT_PERSONNEL_ROLES = [
   'auth_official_contact',
   'ceo',
   'policy_council',
   'director',
 ];
 
-export const OBJECTIVE_STATUS = {
+const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
@@ -48,12 +48,12 @@ export const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
-export const NEXTSTEP_NOTETYPE = {
+const NEXTSTEP_NOTETYPE = {
   SPECIALIST: 'SPECIALIST',
   RECIPIENT: 'RECIPIENT',
 };
 
-export const RESOURCE_ACTIONS = {
+const RESOURCE_ACTIONS = {
   GET_METADATA: 'getMetaData',
 };
 
@@ -61,7 +61,7 @@ export const RESOURCE_ACTIONS = {
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
  */
-export const USER_SETTINGS = {
+const USER_SETTINGS = {
   EMAIL: {
     KEYS: {
       // Email you when an activity report is submitted for your approval.
@@ -85,7 +85,7 @@ export const USER_SETTINGS = {
   },
 };
 
-export const EMAIL_ACTIONS = {
+const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
   NEEDS_ACTION: 'changesRequested',
   SUBMITTED: 'approverAssigned',
@@ -98,33 +98,33 @@ export const EMAIL_ACTIONS = {
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
 };
 
-export const AWS_ELASTICSEARCH_ACTIONS = {
+const AWS_ELASTICSEARCH_ACTIONS = {
   ADD_INDEX_DOCUMENT: 'addIndexDocument',
   UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
   DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
 };
 
-export const S3_ACTIONS = {
+const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
 };
 
-export const EMAIL_DIGEST_FREQ = {
+const EMAIL_DIGEST_FREQ = {
   DAILY: 'today',
   WEEKLY: 'this week',
   MONTHLY: 'this month',
 };
 
-export const DIGEST_SUBJECT_FREQ = {
+const DIGEST_SUBJECT_FREQ = {
   DAILY: 'daily',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
 };
 
-export const PROMPT_FIELD_TYPE = {
+const PROMPT_FIELD_TYPE = {
   MULTISELECT: 'multiselect',
 };
 
-export const SOURCE_FIELD = {
+const SOURCE_FIELD = {
   REPORT: {
     NONECLKC: 'nonECLKCResourcesUsed',
     ECLKC: 'ECLKCResourcesUsed',
@@ -165,17 +165,61 @@ export const SOURCE_FIELD = {
   },
 };
 
-export const RESOURCE_DOMAIN = {
+const RESOURCE_DOMAIN = {
   ECLKC: 'eclkc.ohs.acf.hhs.gov',
 };
 
-export const AWS_ELASTIC_SEARCH_INDEXES = {
+const AWS_ELASTIC_SEARCH_INDEXES = {
   ACTIVITY_REPORTS: 'activityreports',
 };
 
-export const GRANT_INACTIVATION_REASONS = {
+const GRANT_INACTIVATION_REASONS = {
   REPLACED: 'Replaced',
   TERMINATED: 'Terminated',
   RELINQUISHED: 'Relinquished',
   UNKNOWN: 'Unknown',
+};
+
+const MAINTENANCE_TYPE = {
+  VACUUM_ANALYZE: 'VACUUM ANALYZE',
+  REINDEX: 'REINDEX',
+  VACUUM_TABLES: 'VACUUM TABLES',
+  REINDEX_TABLES: 'REINDEX TABLES',
+  DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
+  CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
+};
+
+const MAINTENANCE_CATEGORY = {
+  DB: 'DB',
+  MAINTENANCE: 'MAINTENANCE',
+};
+
+module.exports = {
+  FILE_STATUSES,
+  DATE_FORMAT,
+  REPORTS_PER_PAGE,
+  RECIPIENTS_PER_PAGE,
+  GOALS_PER_PAGE,
+  SEARCH_RESULTS_PER_PAGE,
+  AUTOMATIC_CREATION,
+  CURATED_CREATION,
+  CREATION_METHOD,
+  GOAL_STATUS,
+  GRANT_PERSONNEL_ROLES,
+  OBJECTIVE_STATUS,
+  NEXTSTEP_NOTETYPE,
+  RESOURCE_ACTIONS,
+  USER_SETTINGS,
+  EMAIL_ACTIONS,
+  AWS_ELASTICSEARCH_ACTIONS,
+  S3_ACTIONS,
+  EMAIL_DIGEST_FREQ,
+  DIGEST_SUBJECT_FREQ,
+  PROMPT_FIELD_TYPE,
+  SOURCE_FIELD,
+  RESOURCE_DOMAIN,
+  AWS_ELASTIC_SEARCH_INDEXES,
+  GRANT_INACTIVATION_REASONS,
+  MAINTENANCE_TYPE,
+  MAINTENANCE_CATEGORY,
 };

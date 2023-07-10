@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
     },
     regionId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
     userId: {
       type: DataTypes.STRING,

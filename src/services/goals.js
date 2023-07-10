@@ -268,7 +268,9 @@ export async function saveObjectiveAssociations(
         otopic = await ObjectiveTopic.create({
           objectiveId: objective.id,
           topicId: topic.id,
-        }, { hooks: !!o.objectiveTemplateId });
+        }, {
+          ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+        });
       }
       return otopic;
     })),
@@ -316,7 +318,9 @@ export async function saveObjectiveAssociations(
           ofile = await ObjectiveFile.create({
             fileId: file.id,
             objectiveId: objective.id,
-          }, { hooks: !!o.objectiveTemplateId });
+          }, {
+            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+          });
         }
         return ofile;
       },
@@ -1248,7 +1252,9 @@ export async function createOrUpdateGoals(goals) {
         }
 
         await objective.update({
-          title,
+          ...(!objective.dataValues.onApprovedAR
+            && title.trim() !== objective.dataValues.title.trim()
+            && { title }),
           status: objectiveStatus,
           rtrOrder: index + 1,
         }, { individualHooks: true });

@@ -72,6 +72,7 @@ const sampleReport = {
     role: 'Grants Specialist',
     homeRegionId: 1,
   },
+  version: 2,
 };
 
 describe('Objective status update hook', () => {

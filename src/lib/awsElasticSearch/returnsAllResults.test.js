@@ -22,12 +22,14 @@ const mockUser = {
   name: 'user13706524',
   hsesUsername: 'user13706524',
   hsesUserId: 'user13706524',
+  lastLogin: new Date(),
 };
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 describe('returnsAllResults', () => {

@@ -18,9 +18,11 @@ export default (sequelize, DataTypes) => {
     },
     nextStepId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     sourceFields: {
       allowNull: true,
