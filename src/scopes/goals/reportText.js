@@ -1,13 +1,5 @@
 import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
-
-const selectDistinctActivityReportGoalIds = (join, having) => `
-  SELECT DISTINCT
-    "ActivityReportGoals"."goalId"
-  FROM "ActivityReportGoals"
-  ${join}
-  GROUP BY "ActivityReportGoals"."goalId"
-  HAVING ${having}`;
+import { filterAssociation, selectDistinctActivityReportGoalIds } from './utils';
 
 const nextStepsIncludeExclude = (include = true) => {
   const a = include ? '' : 'bool_or("NextSteps".note IS NULL) OR';
