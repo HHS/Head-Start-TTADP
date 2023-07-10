@@ -98,6 +98,7 @@ const generateZALDDL = (sequelize) => {
     ddl_timestamp: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: null,
     },
     ddl_by: {
       type: DataTypes.INTEGER,
@@ -114,6 +115,7 @@ const generateZALDDL = (sequelize) => {
       type: DataTypes.UUID,
       allowNull: false,
       validate: { isUUID: 'all' },
+      defaultValue: null,
     },
     descriptor_id: {
       type: DataTypes.INTEGER,
@@ -122,15 +124,19 @@ const generateZALDDL = (sequelize) => {
     },
     command_tag: {
       type: DataTypes.STRING,
+      defaultValue: null,
     },
     object_type: {
       type: DataTypes.STRING,
+      defaultValue: null,
     },
     schema_name: {
       type: DataTypes.STRING,
+      defaultValue: null,
     },
     object_identity: {
       type: DataTypes.STRING,
+      defaultValue: null,
     },
   };
 
@@ -150,6 +156,7 @@ const generateZADescriptor = (sequelize) => {
     descriptor: {
       allowNull: false,
       type: DataTypes.TEXT,
+      defaultValue: null,
     },
   };
 
@@ -169,17 +176,19 @@ const generateZAFilter = (sequelize) => {
     tableName: {
       allowNull: true,
       type: DataTypes.STRING,
+      defaultValue: null,
     },
     columnName: {
       allowNull: false,
       type: DataTypes.STRING,
+      defaultValue: null,
     },
   };
 
   return generateModelClass(sequelize, name, schema, name);
 };
 
-const generateAuditModel = (sequelize, model, passName = false) => {
+const generateAuditModel = (sequelize, model) => {
   const name = `ZAL${model.name}`;
   const schema = {
     id: {
@@ -189,34 +198,42 @@ const generateAuditModel = (sequelize, model, passName = false) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    data_id: { type: DataTypes.BIGINT },
+    data_id: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: null,
+    },
     dml_type: {
       type: DataTypes.ENUM(...dmlType),
       allowNull: false,
+      defaultValue: null,
     },
     old_row_data: {
       type: DataTypes.JSONB,
       allowNull: true,
       get() { return tryJsonParse(this.getDataValue('old_row_data')); },
+      defaultValue: null,
     },
     new_row_data: {
       type: DataTypes.JSONB,
       allowNull: true,
       get() { return tryJsonParse(this.getDataValue('new_row_data')); },
+      defaultValue: null,
     },
     dml_timestamp: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: null,
     },
     dml_by: {
       type: DataTypes.BIGINT,
-      allowNull: true,
+      allowNull: false,
       defaultValue: null,
       comment: null,
     },
     dml_as: {
       type: DataTypes.BIGINT,
-      allowNull: true,
+      allowNull: false,
       defaultValue: null,
       comment: null,
     },
@@ -229,6 +246,7 @@ const generateAuditModel = (sequelize, model, passName = false) => {
       type: DataTypes.UUID,
       allowNull: false,
       validate: { isUUID: 'all' },
+      defaultValue: null,
     },
     descriptor_id: {
       type: DataTypes.INTEGER,
@@ -237,7 +255,7 @@ const generateAuditModel = (sequelize, model, passName = false) => {
     },
   };
 
-  return generateModelClass(sequelize, name, schema, passName ? name : null);
+  return generateModelClass(sequelize, name, schema, `ZAL${model.tableName}`);
 };
 
 // eslint-disable-next-line

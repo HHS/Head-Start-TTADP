@@ -22,6 +22,7 @@ export default (sequelize, DataTypes) => {
   NextStep.init({
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     note: {
       allowNull: false,

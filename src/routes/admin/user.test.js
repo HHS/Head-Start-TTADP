@@ -172,6 +172,7 @@ describe('User route handler', () => {
         },
       ],
       roles: [],
+      lastLogin: new Date(),
     };
 
     mockRequest.body = testUpdateUser;

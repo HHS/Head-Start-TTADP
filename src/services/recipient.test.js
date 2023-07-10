@@ -592,6 +592,7 @@ describe('Recipient DB service', () => {
         homeRegionId: 1,
         hsesUsername: faker.datatype.string(),
         hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
       });
 
       await Permission.create({

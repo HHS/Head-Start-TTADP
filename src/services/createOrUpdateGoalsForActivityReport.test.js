@@ -22,6 +22,7 @@ const mockUser = {
   name: 'user1134265161',
   hsesUsername: 'user1134265161',
   hsesUserId: 'user1134265161',
+  lastLogin: new Date(),
 };
 
 const report = {
@@ -43,6 +44,7 @@ const report = {
   ECLKCResourcesUsed: ['test'],
   objectivesWithoutGoals: [],
   goals: [],
+  version: 2,
 };
 
 describe('createOrUpdateGoalsForActivityReport', () => {
