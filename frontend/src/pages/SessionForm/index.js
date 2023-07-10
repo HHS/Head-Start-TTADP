@@ -96,7 +96,7 @@ export default function SessionForm({ match }) {
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
-  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
   const {
     socket,
@@ -161,7 +161,10 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, reportFetched, sessionId]);
+    // isAppLoading is a little out of place but by including it, we
+    // ensure that the correct form data is loading
+    // TODO: Dig into why it's needed and remove it if possible
+  }, [currentPage, isAppLoading, hookForm.reset, reportFetched, sessionId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
