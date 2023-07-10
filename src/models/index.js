@@ -38,7 +38,7 @@ fs
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
         if (model.name !== 'RequestErrors') {
-          const auditModel = audit.generateAuditModel(sequelize, model, model.name === 'UserValidationStatus');
+          const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }
       }
@@ -56,14 +56,14 @@ fs
 
 {
   const model = audit.generateZADescriptor(sequelize);
-  const auditModel = audit.generateAuditModel(sequelize, model, true);
+  const auditModel = audit.generateAuditModel(sequelize, model);
   db[model.name] = model;
   db[auditModel.name] = auditModel;
 }
 
 {
   const model = audit.generateZAFilter(sequelize);
-  const auditModel = audit.generateAuditModel(sequelize, model, true);
+  const auditModel = audit.generateAuditModel(sequelize, model);
   db[model.name] = model;
   db[auditModel.name] = auditModel;
 }

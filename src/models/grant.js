@@ -62,7 +62,10 @@ export default (sequelize, DataTypes) => {
       */
     },
     annualFundingMonth: DataTypes.STRING,
-    cdi: DataTypes.BOOLEAN,
+    cdi: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     status: DataTypes.STRING,
     grantSpecialistName: DataTypes.STRING,
     grantSpecialistEmail: DataTypes.STRING,
@@ -80,6 +83,7 @@ export default (sequelize, DataTypes) => {
     oldGrantId: DataTypes.INTEGER,
     deleted: {
       type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     programTypes: {
       type: DataTypes.VIRTUAL,

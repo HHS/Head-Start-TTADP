@@ -30,6 +30,7 @@ const mockUser = {
   name: 'user8000',
   hsesUsername: 'user8000',
   hsesUserId: '8000',
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -38,6 +39,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
+  version: 2,
 };
 
 const mockGrant = {
