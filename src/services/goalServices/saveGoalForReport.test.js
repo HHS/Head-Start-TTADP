@@ -27,6 +27,7 @@ const mockUser = {
   name: 'user5426861',
   hsesUsername: 'user5426861',
   hsesUserId: '5426861',
+  lastLogin: new Date(),
 };
 
 describe('saveGoalsForReport (more tests)', () => {
@@ -142,6 +143,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'activityReportForNewGoal',
+      version: 2,
     });
 
     // Activity report for multiple recipients
@@ -151,6 +153,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'multiRecipientReport',
+      version: 2,
     });
 
     // Activity report for adding a new recipient.
@@ -160,6 +163,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'addingRecipientReport',
+      version: 2,
     });
 
     // report for reused objective text
@@ -169,6 +173,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: 1,
       activityRecipientType: 'recipient',
       context: 'reportForReusedObjectiveText',
+      version: 2,
     });
 
     reportWeArentWorryingAbout = await ActivityReport.create({
@@ -177,6 +182,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'reportWeArentWorryingAbout',
+      version: 2,
     });
 
     activityReports = [

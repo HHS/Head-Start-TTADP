@@ -120,6 +120,7 @@ const mockManager = {
   hsesUsername: 'user1843',
   homeRegionId: 1,
   email: 'mockManager1843@test.gov',
+  lastLogin: new Date(),
 };
 const secondMockManager = {
   id: 1222,
@@ -127,6 +128,7 @@ const secondMockManager = {
   hsesUsername: 'user1222',
   homeRegionId: 1,
   email: 'mockManager1222@test.gov',
+  lastLogin: new Date(),
 };
 const mockUser = {
   id: 1844,
@@ -134,6 +136,7 @@ const mockUser = {
   hsesUsername: 'user1844',
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
+  lastLogin: new Date(),
 };
 const objectivesWithoutGoals = undefined;
 const report = {
@@ -144,6 +147,7 @@ const report = {
   displayId: 'mockreport-1',
   regionId: 1,
   objectivesWithoutGoals,
+  version: 2,
 };
 
 const activityRecipients = undefined;

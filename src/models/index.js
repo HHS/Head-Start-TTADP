@@ -36,9 +36,11 @@ fs
       const modelDef = require(path.join(__dirname, file));
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
-        const auditModel = audit.generateAuditModel(sequelize, model);
         db[model.name] = model;
-        db[auditModel.name] = auditModel;
+        if (model.name !== 'RequestErrors') {
+          const auditModel = audit.generateAuditModel(sequelize, model);
+          db[auditModel.name] = auditModel;
+        }
       }
     } catch (error) {
       auditLogger.error(JSON.stringify({ error, file }));

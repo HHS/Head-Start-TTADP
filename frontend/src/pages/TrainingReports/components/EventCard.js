@@ -1,18 +1,31 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import PropTypes from 'prop-types';
+import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { useHistory } from 'react-router-dom';
-import './EventCard.scss';
+import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
 import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
+import { canEditOrCreateSessionReports } from '../../../permissions';
+import './EventCard.scss';
 
 function EventCard({
   event,
+  onRemoveSession,
 }) {
+  const { user } = useContext(UserContext);
+  const hasEditPermissions = canEditOrCreateSessionReports(
+    user,
+    parseInt(event.regionId, DECIMAL_BASE),
+  );
+  const isCollaborator = event.pocId && event.pocId.includes(user.id);
+  const canEditExisting = hasEditPermissions || (isCollaborator);
+
   const history = useHistory();
 
   const {
@@ -24,13 +37,16 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (event.status !== 'Complete') {
+  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE && canEditExisting) {
+    // Create session.
     menuItems.push({
       label: 'Create session',
       onClick: () => {
         history.push(`/training-report/${event.id}/session/new/`);
       },
     });
+
+    // Edit event.
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
@@ -38,6 +54,14 @@ function EventCard({
       },
     });
   }
+
+  // View event.
+  menuItems.push({
+    label: 'View event',
+    onClick: () => {
+      history.push(`/training-report/view/${event.id}`);
+    },
+  });
 
   const [reportsExpanded, setReportsExpanded] = useState(false);
 
@@ -47,10 +71,10 @@ function EventCard({
 
   return (
     <article
-      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter"
+      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2"
       data-testid="eventCard"
     >
-      <div className="display-flex flex-wrap position-relative">
+      <div className="ttahub-event-card__row position-relative">
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event title</p>
           <p className="usa-prose margin-y-0">{data.eventName}</p>
@@ -88,7 +112,7 @@ function EventCard({
       <div className="margin-top-3">
         <ExpanderButton
           type="session"
-          ariaLabel={`reports for event ${data.eventId}`}
+          ariaLabel={`sessions for event ${data.eventId}`}
           closeOrOpen={closeOrOpenReports}
           count={event.sessionReports.length}
           expanded={reportsExpanded}
@@ -101,6 +125,9 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
+          hasWritePermissions={canEditExisting}
+          eventStatus={data.status}
+          onRemoveSession={onRemoveSession}
         />
       ))}
 
@@ -110,6 +137,7 @@ function EventCard({
 
 EventCard.propTypes = {
   event: eventPropTypes.isRequired,
+  onRemoveSession: PropTypes.func.isRequired,
 };
 
 export default EventCard;

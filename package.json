@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "16.19.1"
+    "node": "18.16.0"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -116,7 +116,7 @@
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
-    "protobufjs": "^6.11.3",
+    "protobufjs": "^7.2.4",
     "got": "^11.8.5",
     "undici": "^5.10.0",
     "selenium-webdriver": "4.3.0",
@@ -126,7 +126,8 @@
     "cookiejar": "^2.1.4",
     "http-cache-semantics": "^4.1.1",
     "xml2js": "^0.5.0",
-    "semver": "^7.5.3"
+    "semver": "^7.5.3",
+    "tough-cookie": "^4.1.3"
   },
   "eslintConfig": {
     "extends": [
@@ -276,6 +277,7 @@
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.3.0",
     "sinon": "^15.0.0",
+    "simple-git": "^3.19.1",
     "supertest": "^6.1.3",
     "tsx": "^3.12.2",
     "typescript": "4.7.4"
