@@ -7,6 +7,7 @@ import React, {
 import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -21,6 +22,7 @@ import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
+import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
@@ -210,7 +212,7 @@ export default function TrainingReportForm({ match }) {
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/training-report/${trainingReportId}/event-summary`} />
+      <Redirect to={`/training-report/${trainingReportId}/event-summary`} />
     );
   }
 
@@ -231,7 +233,10 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data,
+        data: {
+          ...data,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
         ownerId: ownerId || null,
         pocId: pocId || null,
         collaboratorIds,
@@ -239,6 +244,7 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
       updateLastSaveTime(moment(updatedEvent.updatedAt));
+      updateShowSavedDraft(true);
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
@@ -250,6 +256,7 @@ export default function TrainingReportForm({ match }) {
     const whereWeAre = pages.find((p) => p.path === currentPage);
     const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
+    updateShowSavedDraft(false);
     if (nextPage) {
       updatePage(nextPage.position);
     }
@@ -282,7 +289,9 @@ export default function TrainingReportForm({ match }) {
         regionId: regionId || null,
       });
       resetFormData(hookForm.reset, updatedEvent);
+
       updateLastSaveTime(moment(updatedEvent.updatedAt));
+      history.push('/training-reports/complete', { message: 'You successfully submitted the event.' });
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
@@ -295,6 +304,14 @@ export default function TrainingReportForm({ match }) {
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
+  const backLinkUrl = (() => {
+    if (!formData || !formData.status) {
+      return '/training-reports/not-started';
+    }
+
+    return `/training-reports/${formData.status.replace(' ', '-').toLowerCase()}`;
+  })();
+
   return (
     <div className="smart-hub-training-report">
       { error
@@ -304,6 +321,9 @@ export default function TrainingReportForm({ match }) {
       </Alert>
       )}
       <Helmet titleTemplate="%s - Event | TTA Hub" defaultTitle="Event | TTA Hub" />
+      <BackLink to={backLinkUrl}>
+        Back to Training Reports
+      </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">

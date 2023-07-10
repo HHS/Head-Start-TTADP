@@ -321,6 +321,7 @@ export const bootstrapUsers = async () => {
       homeRegionId: 14,
       role: sequelize.literal('ARRAY[\'Central Office\']::"enum_Users_role"[]'),
       hsesAuthorities: ['ROLE_FEDERAL'],
+      lastLogin: new Date(),
     };
     if (user) {
       id = user.id;

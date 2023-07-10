@@ -335,11 +335,7 @@ describe('TrainingReports', () => {
         },
       ],
     };
-    const message = {
-      status: 'TESTED',
-      displayId: 'R04-PD-23-1123',
-      time: 'today',
-    };
+    const message = 'Successfully submitted report';
 
     const pastLocations = [
       { pathname: '/training-reports/not-started', state: { message } },
@@ -362,7 +358,7 @@ describe('TrainingReports', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText(/you successfully tested training report on today/i)).toBeVisible();
+    expect(await screen.findByText(/Successfully submitted report/i)).toBeVisible();
     const alertButton = await screen.findByLabelText(/dismiss alert/i);
     expect(alertButton).toBeVisible();
 
