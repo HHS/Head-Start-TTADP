@@ -41,6 +41,7 @@ describe('cacheGoalMetadata', () => {
     name: 'user13706689',
     hsesUsername: 'user13706689',
     hsesUserId: 'user13706689',
+    lastLogin: new Date(),
   };
 
   beforeAll(async () => {
@@ -197,6 +198,7 @@ describe('cacheObjectiveMetadata', () => {
     requester: 'requester',
     regionId: 2,
     targetPopulations: [],
+    version: 2,
   };
 
   const mockFiles = [{

@@ -17,6 +17,7 @@ import {
   ErrorMessage,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
+import { Link } from 'react-router-dom';
 import { getTopics } from '../../../fetchers/topics';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ReadOnlyField from '../../../components/ReadOnlyField';
@@ -65,6 +66,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const {
     eventDisplayId,
+    eventId,
     eventName,
     id,
   } = data;
@@ -185,7 +187,7 @@ const SessionSummary = ({ datePickerKey }) => {
       <IndicatesRequiredField />
 
       <ReadOnlyField label="Event ID">
-        {eventDisplayId}
+        <Link to={`/training-report/view/${eventId}`}>{eventDisplayId}</Link>
         { /** todo - once the event "view" page is created, convert this to a link to that */}
       </ReadOnlyField>
 
@@ -554,9 +556,12 @@ export default {
     _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} />
+      <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>

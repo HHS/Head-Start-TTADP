@@ -8,7 +8,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../../App';
-import { mockRSSData, mockWindowProperty } from '../../testHelpers';
+import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter', permissions: [] };
@@ -39,6 +39,10 @@ describe('HeaderUserMenu', () => {
     await screen.findByText('Office of Head Start TTA Hub');
     fireEvent.click(screen.getByTestId('header-avatar'));
   };
+
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
 
   describe('when authenticated', () => {
     describe('as non-admin user', () => {

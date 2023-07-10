@@ -6,6 +6,12 @@ export const getStateCodes = async () => {
   return res.json();
 };
 
+export const getNamesByIds = async (ids) => {
+  const query = ids.map((id) => `ids=${id}`).join('&');
+  const res = await get(join('/', 'api', 'users', 'names', `?${query}`));
+  return res.json();
+};
+
 export const getActiveUsers = async () => {
   const res = await get(join('/', 'api', 'users', 'active-users'));
   return res.blob();

@@ -1,0 +1,41 @@
+@use '../colors.scss' as *;
+
+.ttahub-read-only-content-section {
+    .public-DraftStyleDefault-block {
+        margin: 0;
+    }
+}
+
+// these next two style blocks will only apply on desktop
+.ttahub-read-only-content-section--heading--section-row-data  {
+  flex-basis: max(300px, 75%)
+}
+
+.ttahub-read-only-content-section--heading--section-row-title {
+  flex-basis: min(220px, 25%);
+}
+
+// a reset to squeeze those ul's in
+.ttahub-read-only-content-section--heading--section-row > p > ul {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+}
+
+@media screen {
+  .ttahub-read-only-content-section__striped {
+    background-color: $gray-two;
+  }
+}
+
+// print styles
+
+@media print{
+  .ttahub-read-only-content-section {
+    padding: 0;
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+  }
+}
+
+

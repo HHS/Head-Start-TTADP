@@ -67,6 +67,7 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ProgramPersonnel',
+    tableName: 'ProgramPersonnel',
     freezeTableName: true,
   });
   return ProgramPersonnel;

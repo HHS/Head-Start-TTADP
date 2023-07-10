@@ -34,6 +34,7 @@ describe('Groups service', () => {
       password: faker.internet.password(),
       hsesUserId: faker.internet.email(),
       hsesUsername: faker.internet.email(),
+      lastLogin: new Date(),
     });
 
     mockUserTwo = await User.create({
@@ -42,6 +43,7 @@ describe('Groups service', () => {
       password: faker.internet.password(),
       hsesUserId: faker.internet.email(),
       hsesUsername: faker.internet.email(),
+      lastLogin: new Date(),
     });
 
     await Permission.create({

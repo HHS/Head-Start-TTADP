@@ -1,24 +1,42 @@
-import React, { useContext } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
-import UserContext from '../../../UserContext';
+import { ModalToggleButton, Button } from '@trussworks/react-uswds';
+import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
   Closed,
   NoStatus,
   Pencil,
+  Trash,
 } from '../../../components/icons';
-import { canEditOrCreateSessionReports } from '../../../permissions';
 import './SessionCard.scss';
+
+const CardData = ({ label, children }) => (
+  <li className="ttahub-session-card__card-data desktop:padding-bottom-05 flex-align-start padding-bottom-1">
+    <p className="ttahub-session-card__card-data-label usa-prose margin-y-0 margin-right-3 minw-15 text-bold">
+      {label}
+      {' '}
+    </p>
+    {children}
+  </li>
+);
+
+CardData.propTypes = {
+  label: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 function SessionCard({
   eventId,
   session,
   expanded,
+  hasWritePermissions,
+  eventStatus,
+  onRemoveSession,
 }) {
-  const { user } = useContext(UserContext);
-
+  const modalRef = useRef();
   const {
     sessionName,
     startDate,
@@ -28,10 +46,7 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    regionId,
   } = session.data;
-
-  const hasEditPermissions = canEditOrCreateSessionReports(user, parseInt(regionId, DECIMAL_BASE));
 
   const getSessionDisplayStatusText = () => {
     switch (status) {
@@ -46,65 +61,82 @@ function SessionCard({
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
-    if (displaySessionStatus === 'In progress') {
+    if (displaySessionStatus === TRAINING_REPORT_STATUSES.IN_PROGRESS) {
       return <InProgress />;
-    } if (displaySessionStatus === 'Complete') {
+    } if (displaySessionStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
       return <Closed />;
     }
     return <NoStatus />;
   })();
 
+  const showControls = hasWritePermissions && eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
+
   return (
     <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Session name </span>
-        <div>
-          <span className="margin-right-2">
+      <Modal
+        modalRef={modalRef}
+        heading="Are you sure you want to delete this session?"
+      >
+        <p>Any information you entered will be lost.</p>
+        <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
+        <Button
+          type="button"
+          unstyled
+          onClick={() => {
+            onRemoveSession(session);
+          }}
+        >
+          Delete
+        </Button>
+      </Modal>
+      <CardData label="Session name">
+        <div className="desktop:display-flex">
+          <p className="usa-prose desktop:margin-y-0 margin-top-0 margin-bottom-1 margin-right-2">
             {sessionName}
-          </span>
+          </p>
           {
-            hasEditPermissions
+            showControls
               ? (
-                <span>
-                  <Link key={`edit-session-key-${session.id}`} to={`/training-report/${eventId}/session/${session.id}/session-summary`}>
+                <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
+                  <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`} className="margin-right-4">
                     <Pencil />
                     Edit session
                   </Link>
-                </span>
+                  <ModalToggleButton modalRef={modalRef} unstyled className="text-decoration-underline">
+                    <Trash />
+                    Delete session
+                  </ModalToggleButton>
+                </div>
               )
               : null
       }
         </div>
-      </li>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Session dates </span>
+      </CardData>
+
+      <CardData label="Session dates">
         {`${startDate || ''} - ${endDate || ''}`}
-      </li>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Session objective </span>
+      </CardData>
+
+      <CardData label="Session objective">
         {objective}
-      </li>
+      </CardData>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Support type </span>
+      <CardData label="Support type">
         {objectiveSupportType}
-      </li>
+      </CardData>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Topics </span>
+      <CardData label="Topics">
         {objectiveTopics && objectiveTopics.length > 0 ? objectiveTopics.join(', ') : ''}
-      </li>
+      </CardData>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Trainers </span>
+      <CardData label="Trainers">
         {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join(', ') : ''}
-      </li>
+      </CardData>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Status </span>
+      <CardData label="Status">
         {getSessionStatusIcon}
         {displaySessionStatus}
-      </li>
+      </CardData>
     </ul>
   );
 }
@@ -131,5 +163,8 @@ SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
   session: sessionPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
+  hasWritePermissions: PropTypes.bool.isRequired,
+  eventStatus: PropTypes.string.isRequired,
+  onRemoveSession: PropTypes.func.isRequired,
 };
 export default SessionCard;

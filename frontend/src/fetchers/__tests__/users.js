@@ -1,7 +1,11 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
 import {
-  getStateCodes, requestVerificationEmail, getActiveUsers, getTrainingReportUsers,
+  getStateCodes,
+  requestVerificationEmail,
+  getActiveUsers,
+  getTrainingReportUsers,
+  getNamesByIds,
 } from '../users';
 
 const usersUrl = join('/', 'api', 'users');
@@ -44,6 +48,17 @@ describe('users fetcher', () => {
     );
 
     await getTrainingReportUsers(1);
+
+    expect(fetchMock.called(url)).toBe(true);
+  });
+
+  it('calls /api/users/names', async () => {
+    const url = join('/', 'api', 'users', 'names', '?ids=1');
+    fetchMock.once(
+      url, {},
+    );
+
+    await getNamesByIds([1]);
 
     expect(fetchMock.called(url)).toBe(true);
   });

@@ -26,7 +26,19 @@ const RenderNextSteps = ({
 
   return (
     <FormProvider {...hookForm}>
-      {nextSteps.render(null, { activityRecipientType })}
+      {nextSteps.render(
+        null,
+        { activityRecipientType },
+        1,
+        null,
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        false,
+        '',
+        jest.fn(),
+        () => <></>,
+      )}
     </FormProvider>
   );
 };
