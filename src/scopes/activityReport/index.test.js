@@ -139,15 +139,20 @@ describe('filtersToScopes', () => {
       hsesUsername: 'user222',
       lastLogin: new Date(),
     });
+
+    includedUser3 = await User.create({
+      name: 'third person',
+      hsesUserId: 'user536',
+      hsesUsername: 'user536',
+    });
+
     excludedUser = await User.create({
       name: 'excluded',
       hsesUserId: 'user333',
       hsesUsername: 'user333',
       lastLogin: new Date(),
     });
-    includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
-    includedUser3 = await User.create({ name: 'third person', hsesUserId: 'user536', hsesUsername: 'user536' });
-    excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' });
+
     globallyExcludedReport = await ActivityReport.create({
       ...draftReport, deliveryMethod: 'method', updatedAt: '2000-01-01',
     }, {
