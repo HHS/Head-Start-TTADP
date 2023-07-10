@@ -46,6 +46,7 @@ const mockUser = {
   name: 'user13706689',
   hsesUsername: 'user13706689',
   hsesUserId: 'user13706689',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -54,6 +55,7 @@ const mockUserTwo = {
   name: 'user137065478',
   hsesUsername: 'user137065478',
   hsesUserId: 'user137065478',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -62,12 +64,14 @@ const mockManager = {
   name: 'user50565590',
   hsesUsername: 'user50565590',
   hsesUserId: 'user50565590',
+  lastLogin: new Date(),
 };
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const submittedReport = {
@@ -96,6 +100,7 @@ const deletedReport = {
   submissionStatus: REPORT_STATUSES.DELETED,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const approverApproved = {
@@ -123,7 +128,22 @@ describe('filtersToScopes', () => {
     await User.create(mockUserTwo);
     await User.create(mockManager);
     includedUser1 = await User.create({
-      name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
+      name: 'person',
+      hsesUserId: 'user111',
+      hsesUsername: 'user111',
+      lastLogin: new Date(),
+    });
+    includedUser2 = await User.create({
+      name: 'another person',
+      hsesUserId: 'user222',
+      hsesUsername: 'user222',
+      lastLogin: new Date(),
+    });
+    excludedUser = await User.create({
+      name: 'excluded',
+      hsesUserId: 'user333',
+      hsesUsername: 'user333',
+      lastLogin: new Date(),
     });
     includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
     includedUser3 = await User.create({ name: 'third person', hsesUserId: 'user536', hsesUsername: 'user536' });
@@ -1548,7 +1568,11 @@ describe('filtersToScopes', () => {
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
 
       await User.create({
-        id: possibleIds[0], name: 'u777', hsesUsername: 'u777', hsesUserId: '777',
+        id: possibleIds[0],
+        name: 'u777',
+        hsesUsername: 'u777',
+        hsesUserId: '777',
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1562,7 +1586,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[1], name: 'u778', hsesUsername: 'u778', hsesUserId: '778', role: ['Grantee Specialist'],
+        id: possibleIds[1],
+        name: 'u778',
+        hsesUsername: 'u778',
+        hsesUserId: '778',
+        role: ['Grantee Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1571,7 +1600,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[2], name: 'u779', hsesUsername: 'u779', hsesUserId: '779', role: ['Grants Specialist'],
+        id: possibleIds[2],
+        name: 'u779',
+        hsesUsername: 'u779',
+        hsesUserId: '779',
+        role: ['Grants Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -2495,6 +2529,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,
@@ -2521,6 +2556,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,
@@ -2677,6 +2713,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,

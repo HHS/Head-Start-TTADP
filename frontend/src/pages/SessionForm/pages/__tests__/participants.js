@@ -104,6 +104,8 @@ describe('participants', () => {
                 jest.fn(),
                 false,
                 'key',
+                jest.fn(),
+                () => <></>,
               )}
             </NetworkContext.Provider>
           </FormProvider>

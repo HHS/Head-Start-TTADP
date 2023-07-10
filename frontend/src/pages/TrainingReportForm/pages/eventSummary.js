@@ -391,12 +391,15 @@ export default {
     onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => (
     <>
       <EventSummary
         additionalData={additionalData}
         datePickerKey={datePickerKey}
       />
+      <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}
         onContinue={onContinue}

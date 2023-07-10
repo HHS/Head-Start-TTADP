@@ -97,7 +97,7 @@ function GoalCard({
 
   return (
     <article
-      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full`}
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
