@@ -8,7 +8,6 @@ import db, {
   Goal,
   Objective,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
   Recipient,
   ObjectiveTopic,
   Topic,
@@ -17,10 +16,7 @@ import db, {
   GroupGrant,
   User,
   ActivityReportGoal,
-  ActivityReportGoalResource,
   NextStep,
-  Resource,
-  ActivityReportResource,
 } from '../../models';
 
 const REGION_ID = 10;
@@ -1255,7 +1251,6 @@ describe('goal filtersToScopes', () => {
         const filters = { 'reportText.nctn': objectiveTTAProvided };
         const { goal: scope } = await filtersToScopes(filters, 'goal');
         const found = await Goal.findAll({
-          logging: console.log,
           where: {
             [Op.and]: [
               scope,
