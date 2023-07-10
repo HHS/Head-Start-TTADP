@@ -39,6 +39,7 @@ const mockUser = {
   hsesUsername: 'user3000',
   hsesUserId: '3000',
   email: 'user3000@test.com',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -48,6 +49,7 @@ const mockManager = {
   hsesUsername: 'user3001',
   hsesUserId: '3001',
   email: 'user3001@test.com',
+  lastLogin: new Date(),
 };
 
 const mockCollaboratorOne = {
@@ -57,6 +59,7 @@ const mockCollaboratorOne = {
   hsesUsername: 'user3002',
   hsesUserId: '3002',
   email: 'user3002@test.com',
+  lastLogin: new Date(),
 };
 
 const mockCollaboratorTwo = {
@@ -66,6 +69,7 @@ const mockCollaboratorTwo = {
   hsesUsername: 'user3003',
   hsesUserId: '3003',
   email: 'user3003@test.com',
+  lastLogin: new Date(),
 };
 
 // TODO: Use Activity file link table
@@ -160,6 +164,7 @@ const reportObject = {
     ttaProvidedAndGranteeProgressMade:
       'The CT Office of Early Childhood facilitated the meeting. The agenda included:\n•\tReview and completion of Benchmarks of Quality action plan\n•\tWork group reports: Governance, Family Engagement, Training, Marketing\nThe Office of Early Childhood shared the following information: a new project from the National Center for Pyramid Model Innovations on Equity that targets supporting coaches and programs that are implementing Pyramid; the Pyramid Facebook page; and resources on COVID-19 specific to Early Childhood programs. The training work group shared information about changes in program participation for both Cohort 1 & 2. The work group also shared that over 50 participants attended the Leadership Team training facilitated by CT Master Coaches. Dates for the entire cohort 2 training will be sent to members and all are encouraged to participate. The Governance work group asked for feedback on the posted changes to the governance document on Google Drive before the next meeting. The Family Engagement Work group will report on the upcoming Toolkit resources at the next meeting',
   },
+  version: 2,
 };
 
 describe('processData', () => {

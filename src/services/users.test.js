@@ -9,6 +9,7 @@ import {
   userByEmail,
   setFlag,
   getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -25,12 +26,14 @@ describe('Users DB service', () => {
         name: 'user 54',
         hsesUsername: 'user.54',
         hsesUserId: '54',
+        lastLogin: new Date(),
       });
       await User.create({
         id: 55,
         name: 'user 55',
         hsesUsername: 'user.55',
         hsesUserId: '55',
+        lastLogin: new Date(),
       });
     });
 
@@ -44,6 +47,38 @@ describe('Users DB service', () => {
       expect(user.name).toBe('user 54');
     });
   });
+
+  describe('getUserNamesByIds', () => {
+    beforeEach(async () => {
+      await User.create({
+        id: 54,
+        name: 'user 54',
+        hsesUsername: 'user.54',
+        hsesUserId: '54',
+        lastLogin: new Date(),
+      });
+      await User.create({
+        id: 55,
+        name: 'user 55',
+        hsesUsername: 'user.55',
+        hsesUserId: '55',
+        lastLogin: new Date(),
+      });
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: [54, 55] } });
+    });
+
+    it('retrieves the correct userNames', async () => {
+      const users = await getUserNamesByIds([54, 55]);
+      expect(users).toStrictEqual([
+        'user 54',
+        'user 55',
+      ]);
+    });
+  });
+
   describe('userByEmail', () => {
     beforeEach(async () => {
       await User.create({
@@ -52,6 +87,7 @@ describe('Users DB service', () => {
         email: 'user50@test.gov',
         hsesUsername: 'user50',
         hsesUserId: '50',
+        lastLogin: new Date(),
       });
       await User.create({
         id: 51,
@@ -59,6 +95,7 @@ describe('Users DB service', () => {
         email: 'user51@test.gov',
         hsesUsername: 'user51',
         hsesUserId: '51',
+        lastLogin: new Date(),
       });
     });
 
@@ -112,6 +149,7 @@ describe('Users DB service', () => {
             regionId: u.regionId,
             scopeId: u.scopeId,
           }],
+          lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
       );
     });
@@ -164,6 +202,7 @@ describe('Users DB service', () => {
             regionId: u.regionId,
             scopeId: u.scopeId,
           }],
+          lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
       );
     });
@@ -240,6 +279,7 @@ describe('Users DB service', () => {
             regionId: u.regionId,
             scopeId: u.scopeId,
           }],
+          lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
       );
     });
@@ -254,12 +294,12 @@ describe('Users DB service', () => {
       const collaboratorIds = result.collaborators.map((u) => u.id);
       const pointOfContact = result.pointOfContact.map((u) => u.id);
 
-      expect(collaboratorIds.includes(userIds[0])).toBeTruthy();
-      expect(collaboratorIds.includes(userIds[1])).toBeTruthy();
-      expect(collaboratorIds.length).toBe(2);
+      expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
+      expect(collaboratorIds.length).toBe(1);
 
-      expect(pointOfContact.includes(userIds[2])).toBeTruthy();
-      expect(pointOfContact.length).toBe(1);
+      expect(pointOfContact.includes(userIds[0])).toBeTruthy();
+      expect(pointOfContact.includes(userIds[1])).toBeTruthy();
+      expect(pointOfContact.length).toBe(2);
     });
   });
 });

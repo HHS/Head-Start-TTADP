@@ -13,7 +13,7 @@ const validateFields = (request, requiredFields) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
-  await SessionReportPilot.destroy({ where: { id } });
+  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
 type WhereOptions = {
@@ -30,6 +30,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'id',
       'eventId',
       'data',
+      'updatedAt',
     ],
     where,
     include: [
@@ -59,6 +60,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     eventId: session?.eventId,
     data: session?.data ?? {},
     files: session?.files ?? [],
+    updatedAt: session?.updatedAt,
   };
 }
 
@@ -70,6 +72,8 @@ export async function createSession(request) {
   const created = await SessionReportPilot.create({
     eventId,
     data: cast(JSON.stringify(data), 'jsonb'),
+  }, {
+    individualHooks: true,
   });
 
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
@@ -93,7 +97,10 @@ export async function updateSession(id, request) {
       eventId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
-    { where: { id } },
+    {
+      where: { id },
+      individualHooks: true,
+    },
   );
 
   return findSessionHelper({ id }) as Promise<SessionReportShape>;

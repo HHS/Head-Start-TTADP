@@ -9,6 +9,7 @@ import join from 'url-join';
 import ExternalLink from '../ExternalResourceModal';
 import { isExternalURL, isValidURL } from '../../utils';
 import { GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
+import { mockWindowProperty } from '../../testHelpers';
 
 let windowSpy;
 describe('External Resources', () => {
@@ -125,21 +126,9 @@ describe('External Resources', () => {
   });
 });
 
-// For mocking `process.env`, I got it from https://stackoverflow.com/a/48042799
 describe('utility functions', () => {
-  const OLD_WINDOW = global.window;
-
-  beforeEach(() => {
-    jest.resetModules(); // it clears the cache
-    delete global.window.location;
-    global.window = Object.create(window);
-    global.window.location = {
-      host: 'government.gov',
-    };
-  });
-
-  afterAll(() => {
-    global.window.location = OLD_WINDOW;
+  mockWindowProperty('location', {
+    host: 'government.gov',
   });
 
   it('utility function correctly assumes external URLs', () => {

@@ -254,9 +254,6 @@ describe('Landing page table menus & selections', () => {
           { count: 10, rows: [], recipients: [] },
         );
         fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-        window.location = {
-          assign: jest.fn(),
-        };
       });
 
       it('downloads all reports', async () => {

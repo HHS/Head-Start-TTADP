@@ -14,6 +14,7 @@ const mockUser = {
   name: 'John Smith',
   hsesUsername: 'user13705748',
   hsesUserId: 'user13705748',
+  lastLogin: new Date(),
 };
 
 const mockCollaboratorUser = {
@@ -22,6 +23,7 @@ const mockCollaboratorUser = {
   name: 'Bill Jones',
   hsesUsername: 'collabUser13874748',
   hsesUserId: 'collabUser13874748',
+  lastLogin: new Date(),
 };
 
 describe('filtersToScopes', () => {

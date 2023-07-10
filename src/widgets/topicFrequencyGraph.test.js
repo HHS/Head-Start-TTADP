@@ -31,6 +31,7 @@ const mockUser = {
   hsesUsername: 'user9945620',
   hsesUserId: '9945620',
   role: ['Grants Specialist'],
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -40,6 +41,7 @@ const mockUserTwo = {
   hsesUsername: 'user2245942',
   hsesUserId: 'user2245942',
   role: ['System Specialist'],
+  lastLogin: new Date(),
 };
 
 const mockUserThree = {
@@ -49,6 +51,7 @@ const mockUserThree = {
   hsesUsername: 'user33068305',
   hsesUserId: 'user33068305',
   role: ['Grants Specialist'],
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -72,6 +75,7 @@ const reportObject = {
   participants: ['participants', 'genies'],
   topics: ['Program Planning and Services', 'Child Assessment, Development, Screening'], // One to be mapped from legacy.
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 const regionOneReport = {

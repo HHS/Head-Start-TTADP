@@ -47,12 +47,14 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import MyGroupsProvider from './components/MyGroupsProvider';
+import ScrollToTop from './components/ScrollToTop';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
 import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
+import ViewTrainingReport from './pages/ViewTrainingReport';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -270,6 +272,17 @@ function App() {
         />
         <Route
           exact
+          path="/training-report/view/:trainingReportId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <ViewTrainingReport match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
@@ -405,6 +418,7 @@ function App() {
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
+          <ScrollToTop />
           {authenticated && (
             <>
               <a className="usa-skipnav" href="#main-content">

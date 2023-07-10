@@ -18,6 +18,7 @@ const pages = {
   1: 'Session summary',
   2: 'Participants',
   3: 'Next steps',
+  4: 'Complete session',
 };
 
 const CompleteSession = ({
@@ -25,6 +26,7 @@ const CompleteSession = ({
   formData,
   onSaveForm,
   onUpdatePage,
+  draftAlert,
 }) => {
   const { setError } = useFormContext();
 
@@ -36,14 +38,16 @@ const CompleteSession = ({
   const [showSubmissionError, setShowSubmissionError] = useState(false);
 
   const incompletePages = (() => Object.keys(pages)
-    .filter((key) => formData.pageState[key] !== 'Complete')
+    // we don't want to include the current page in the list of incomplete pages
+    // or any pages that are already complete
+    .filter((key) => formData.pageState[key] !== 'Complete' && key !== position.toString())
     .map((key) => pages[key]))();
 
   const areAllPagesComplete = !incompletePages.length;
 
   const onFormSubmit = async () => {
     if (updatedStatus !== 'Complete') {
-      setError('status', { message: 'Session must be complete to submit' });
+      setError('status', { message: 'Status must be complete to submit session' });
       return;
     }
 
@@ -67,7 +71,7 @@ const CompleteSession = ({
       </Helmet>
 
       <NavigatorHeader
-        label="Complete event"
+        label="Complete session"
         formData={formData}
       />
 
@@ -95,6 +99,7 @@ const CompleteSession = ({
         </FormItem>
       </div>
 
+      {draftAlert}
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
@@ -128,6 +133,7 @@ const CompleteSession = ({
 };
 
 CompleteSession.propTypes = {
+  draftAlert: PropTypes.node.isRequired,
   formData: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,
@@ -135,6 +141,7 @@ CompleteSession.propTypes = {
       1: PropTypes.string,
       2: PropTypes.string,
       3: PropTypes.string,
+      4: PropTypes.string,
     }),
   }),
   onSaveForm: PropTypes.func.isRequired,
@@ -148,34 +155,34 @@ CompleteSession.defaultProps = {
 
 export default {
   position,
-  review: true,
+  review: false,
   label: 'Complete session',
   path,
   isPageComplete: (formData) => formData.calculatedStatus === REPORT_STATUSES.SUBMITTED,
   render:
     (
-      formData,
-      onSubmit,
       _additionalData,
-      _onReview,
-      _isApprover,
-      _isPendingApprover,
-      _onResetToDraft,
-      onSaveForm,
-      _navigatorPages,
-      _reportCreator,
-      _lastSaveTime,
+      formData,
+      _reportId,
+      _isAppLoading,
+      _onContinue,
+      onSaveDraft,
       onUpdatePage,
+      _weAreAutoSaving,
+      _datePickerKey,
+      onFormSubmit,
+      DraftAlert,
     ) => (
       <Container skipTopPadding>
         <Form
           className="smart-hub--form-large smart-hub--form__activity-report-form"
         >
           <CompleteSession
-            onSubmit={onSubmit}
-            onSaveForm={onSaveForm}
+            onSubmit={onFormSubmit}
+            onSaveForm={onSaveDraft}
             formData={formData}
             onUpdatePage={onUpdatePage}
+            draftAlert={DraftAlert}
           />
         </Form>
       </Container>
