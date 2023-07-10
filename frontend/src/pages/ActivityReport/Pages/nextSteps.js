@@ -113,11 +113,16 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => {
     const { activityRecipientType } = formData;
     return (
       <>
         <NextSteps activityRecipientType={activityRecipientType} />
+        <Alert />
         <NavigatorButtons
           isAppLoading={isAppLoading}
           onContinue={onContinue}

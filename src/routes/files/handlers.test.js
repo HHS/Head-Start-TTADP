@@ -46,6 +46,7 @@ const mockUser = {
   hsesUserId: '2046',
   hsesUsername: '2046',
   homeRegionId: 1,
+  lastLogin: new Date(),
 };
 
 const mockSession = jest.fn();
@@ -61,6 +62,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
   regionId: 1,
+  version: 2,
 };
 
 const mockGrant = {

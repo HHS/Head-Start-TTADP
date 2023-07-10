@@ -11,6 +11,7 @@ describe('token service', () => {
       name: 'user 1000',
       hsesUsername: 'user.1000',
       hsesUserId: '1000',
+      lastLogin: new Date(),
     });
   });
 

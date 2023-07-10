@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     sourceFields: {
       allowNull: true,
@@ -43,11 +44,13 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+      allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+      allowNull: false,
     },
   }, {
     sequelize,
