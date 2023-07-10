@@ -1252,7 +1252,9 @@ export async function createOrUpdateGoals(goals) {
         }
 
         await objective.update({
-          title,
+          ...(!objective.dataValues.onApprovedAR
+            && title.trim() !== objective.dataValues.title.trim()
+            && { title }),
           status: objectiveStatus,
           rtrOrder: index + 1,
         }, { individualHooks: true });
