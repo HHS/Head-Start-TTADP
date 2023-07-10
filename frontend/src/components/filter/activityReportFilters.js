@@ -9,6 +9,7 @@ import {
   REGION_CONDITIONS,
   MY_REPORTS_FILTER_CONDITIONS,
   SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  SPECIALIST_NAME_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -218,6 +219,23 @@ export const programSpecialistFilter = {
     />
   ),
 };
+
+export const specialistNameFilter = {
+  id: 'specialistName',
+  display: 'Specialist name',
+  conditions: SPECIALIST_NAME_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`specialist-name-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a specialist name"
+    />
+  ),
+};
+
 export const programTypeFilter = {
   id: 'programType',
   display: 'Program types',
