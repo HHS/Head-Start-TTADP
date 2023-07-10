@@ -5,7 +5,7 @@ import {
   render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import nextSteps, { isPageComplete } from '../nextSteps';
 
@@ -26,7 +26,19 @@ const RenderNextSteps = ({
 
   return (
     <FormProvider {...hookForm}>
-      {nextSteps.render(null, { activityRecipientType })}
+      {nextSteps.render(
+        null,
+        { activityRecipientType },
+        1,
+        null,
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        false,
+        '',
+        jest.fn(),
+        () => <></>,
+      )}
     </FormProvider>
   );
 };

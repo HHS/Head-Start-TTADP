@@ -8,6 +8,7 @@ import {
   deleteFile,
   deleteActivityReportFile,
   deleteObjectiveFile,
+  deleteSessionFile,
   getFileById,
   updateStatus,
   createActivityReportFileMetaData,
@@ -15,11 +16,13 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
   createObjectivesFileMetaData,
+  createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
 import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
+import EventPolicy from '../../policies/event';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { getObjectiveById } from '../../services/objectives';
@@ -28,6 +31,8 @@ import { auditLogger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
+import { findSessionById } from '../../services/sessionReports';
+import { findEventById } from '../../services/event';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -99,6 +104,7 @@ const deleteHandler = async (req, res) => {
     reportId,
     objectiveId,
     fileId,
+    eventSessionId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
@@ -131,13 +137,40 @@ const deleteHandler = async (req, res) => {
       if (of) {
         await deleteObjectiveFile(of.id);
       }
+    } else if (eventSessionId) {
+      const session = await findSessionById(eventSessionId);
+      const event = await findEventById(session.eventId);
+
+      const eventPolicy = new EventPolicy(user, event);
+
+      if (!eventPolicy.canUpdate()) {
+        res.sendStatus(403);
+        return;
+      }
+
+      const sof = file.sessionFiles.find(
+        (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE),
+      );
+      if (sof) {
+        await deleteSessionFile(sof.id);
+      }
     }
 
+    const reportLength = file.reports ? file.reports.length : 0;
+    const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
+    const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
+    const objectiveTemplateFilesLength = file.objectiveTemplateFiles
+      ? file.objectiveTemplateFiles.length : 0;
+    const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
+
+    const canDelete = (reportLength
+      + reportObjectiveLength
+      + objectiveLength
+      + objectiveTemplateFilesLength
+      + sessionLength === 0);
+
     file = await getFileById(fileId);
-    if (file.reports.length
-      + file.reportObjectiveFiles.length
-      + file.objectiveFiles.length
-      + file.objectiveTemplateFiles.length === 0) {
+    if (canDelete) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
@@ -245,6 +278,7 @@ const uploadHandler = async (req, res) => {
     reportObjectiveId,
     objectiveId,
     objectiveTempleteId,
+    sessionId,
   } = fields;
   let buffer;
   let metadata;
@@ -262,8 +296,8 @@ const uploadHandler = async (req, res) => {
     if (!size) {
       return res.status(400).send({ error: 'fileSize required' });
     }
-    if (!reportId && !reportObjectiveId && !objectiveId && !objectiveTempleteId) {
-      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
+    if (!reportId && !reportObjectiveId && !objectiveId && !objectiveTempleteId && !sessionId) {
+      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, or sessionId is required' });
     }
     buffer = fs.readFileSync(path);
 
@@ -322,13 +356,29 @@ const uploadHandler = async (req, res) => {
         reportId,
         size,
       );
+    } else if (sessionId) {
+      const session = await findSessionById(sessionId);
+      const event = await findEventById(session.eventId);
+
+      const eventPolicy = new EventPolicy(user, event);
+
+      if (!eventPolicy.canUpdate()) {
+        return res.sendStatus(403);
+      }
+
+      metadata = await createSessionObjectiveFileMetaData(
+        originalFilename,
+        fileName,
+        sessionId,
+        size,
+      );
     }
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
   try {
     const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-    const url = getPresignedURL(uploadedFile.key);
+    const url = getPresignedURL(uploadedFile.Key);
     await updateStatus(metadata.id, UPLOADED);
     res.status(200).send({ ...metadata, url });
   } catch (err) {

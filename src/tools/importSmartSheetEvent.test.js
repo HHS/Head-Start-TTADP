@@ -11,10 +11,7 @@ import db, {
 import { logger } from '../logger';
 
 jest.mock('../logger');
-
 jest.mock('../lib/s3');
-
-jest.mock('bull');
 
 describe('Import Smart Sheet Events', () => {
   let user;
@@ -36,6 +33,7 @@ describe('Import Smart Sheet Events', () => {
           hsesUsername: faker.datatype.string(),
           hsesUserId: faker.datatype.string(),
           email: 'smartsheetevents@ss.com',
+          lastLogin: new Date(),
         });
         ownerId = user.id;
         const fileName = 'EventsTest.csv';
@@ -66,7 +64,7 @@ describe('Import Smart Sheet Events', () => {
         },
       });
     });
-    it('should import good events', async () => {
+    it('should import and transform good events', async () => {
       const createdEvents = await EventReportPilot.findAll({
         where: {
           id: {
@@ -82,16 +80,19 @@ describe('Import Smart Sheet Events', () => {
       expect(createdEvents[0].regionId).toEqual(1);
       expect(createdEvents[0].data).toEqual({
         'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
-        'Event ID': 'R01-PD-23-1035',
+        eventId: 'R01-PD-23-1035',
         'Full Event Title': 'R01 Reaching More Children and Families',
-        'Edit Title': 'Reaching More Children and Families',
-        'Event Organizer - Type of Event': 'Regional PD Event (with National Centers)',
-        Audience: 'Recipients',
+        eventName: 'Reaching More Children and Families',
+        eventOrganizer: 'Regional PD Event (with National Centers)',
+        audience: 'Recipients',
         'Event Duration/# NC Days of Support': 'Series',
-        'Reason for Activity': 'Full Enrollment',
-        'Target Population(s)': 'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
-        'Overall Vision/Goal for the PD Event': 'Participants will explore strategies to reach full enrollment including areas of reaching families in greatest need (homelessness/foster care), right sizing-right programming and developing selection criteria',
-        Creator: 'smartsheetevents@ss.com',
+        reasons: ['Full Enrollment', 'Change in Scope'],
+        targetPopulations: [
+          'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
+          'Pregnant Women',
+        ],
+        vision: 'Participants will explore strategies to reach full enrollment including areas of reaching families in greatest need (homelessness/foster care), right sizing-right programming and developing selection criteria',
+        creator: 'smartsheetevents@ss.com',
       });
 
       // Assert event 2.
@@ -99,16 +100,16 @@ describe('Import Smart Sheet Events', () => {
       expect(createdEvents[1].regionId).toEqual(3);
       expect(createdEvents[1].data).toEqual({
         'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
-        'Event ID': 'R03-PD-23-1037',
+        eventId: 'R03-PD-23-1037',
         'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-        'Edit Title': 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-        'Event Organizer - Type of Event': 'Regional PD Event (with National Centers)',
-        Audience: 'Recipients',
+        eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+        eventOrganizer: 'Regional PD Event (with National Centers)',
+        audience: 'Recipients',
         'Event Duration/# NC Days of Support': 'Series',
-        'Reason for Activity': 'Ongoing Quality Improvement',
-        'Target Population(s)': 'None',
-        'Overall Vision/Goal for the PD Event': 'Oral Health',
-        Creator: 'smartsheetevents@ss.com',
+        reasons: ['Ongoing Quality Improvement'],
+        targetPopulations: ['None'],
+        vision: 'Oral Health',
+        creator: 'smartsheetevents@ss.com',
       });
 
       // Skip unknown owner.

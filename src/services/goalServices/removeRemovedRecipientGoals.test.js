@@ -73,6 +73,7 @@ describe('removeRemovedRecipientsGoals', () => {
       regionId: 1,
       userId: 1,
       activityRecipientType: 'recipient',
+      version: 2,
     });
 
     await ActivityRecipient.create({
@@ -171,6 +172,7 @@ describe('removeRemovedRecipientsGoals', () => {
       regionId: 1,
       userId: 1,
       activityRecipientType: 'recipient',
+      version: 2,
     });
 
     await ActivityReportGoal.create({

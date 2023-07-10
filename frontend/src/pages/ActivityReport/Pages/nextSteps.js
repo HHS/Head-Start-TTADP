@@ -6,6 +6,7 @@ import { Fieldset } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from './Review/ReviewPage';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -104,9 +105,34 @@ export default {
   reviewSection: (activityRecipientType) => (
     <ReviewSection activityRecipientType={activityRecipientType} />
   ),
-  render: (_additionalData, formData) => {
+  render: (
+    _additionalData,
+    formData,
+    _reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
+  ) => {
     const { activityRecipientType } = formData;
-    return (<NextSteps activityRecipientType={activityRecipientType} />);
+    return (
+      <>
+        <NextSteps activityRecipientType={activityRecipientType} />
+        <Alert />
+        <NavigatorButtons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          onUpdatePage={onUpdatePage}
+          path="next-steps"
+          position={4}
+        />
+      </>
+    );
   },
   isPageComplete,
 };

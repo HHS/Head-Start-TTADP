@@ -13,8 +13,7 @@ import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
-import ObjectiveButton from './components/ObjectiveButton';
-import Topics from './components/Topics';
+import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import colors from '../../colors';
 import { goalPropTypes } from './constants';
@@ -38,7 +37,6 @@ function GoalCard({
     goalStatus,
     createdOn,
     goalText,
-    goalTopics,
     objectiveCount,
     reasons,
     objectives,
@@ -99,7 +97,7 @@ function GoalCard({
 
   return (
     <article
-      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full`}
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
@@ -145,9 +143,9 @@ function GoalCard({
             {determineFlagStatus()}
           </p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Topics</p>
-          <Topics topics={goalTopics} />
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Goal source</p>
+          <p className="usa-prose margin-y-0">{goal.source}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
@@ -163,11 +161,12 @@ function GoalCard({
       </div>
 
       <div className={internalLeftMargin}>
-        <ObjectiveButton
-          closeOrOpenObjectives={closeOrOpenObjectives}
-          objectiveCount={objectiveCount}
-          objectivesExpanded={objectivesExpanded}
-          goalNumber={goal.goalNumbers.join('')}
+        <ExpanderButton
+          type="objective"
+          ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
+          closeOrOpen={closeOrOpenObjectives}
+          count={objectiveCount}
+          expanded={objectivesExpanded}
         />
       </div>
       {objectives.map((obj) => (

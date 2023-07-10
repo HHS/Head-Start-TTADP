@@ -4,7 +4,7 @@ applications:
     strategy: rolling
     path: ./
     buildpacks:
-      - nodejs_buildpack
+      - https://github.com/cloudfoundry/nodejs-buildpack
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
