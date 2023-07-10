@@ -51,7 +51,6 @@ describe('Import Smart Sheet Events', () => {
       await EventReportPilot.destroy({
         where: {
           id: createdEventIds,
-
         },
       });
 
@@ -69,6 +68,7 @@ describe('Import Smart Sheet Events', () => {
             [Op.in]: createdEventIds,
           },
         },
+        order: [['regionId', 'ASC']],
       });
       expect(createdEvents[0].ownerId).toEqual(ownerId);
       expect(createdEvents.length).toBe(2);
