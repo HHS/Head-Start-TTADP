@@ -298,36 +298,6 @@ class GoalTemplates{
 
 class Goals{
  * id : integer : <generated>
-<<<<<<< HEAD
- name : text
- status : varchar(255)
- timeframe : text
- isFromSmartsheetTtaPlan : boolean
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- endDate : date
- closeSuspendReason : enum
- closeSuspendContext : text
- previousStatus : text
- * onApprovedAR : boolean
- firstNotStartedAt : timestamp with time zone
- lastNotStartedAt : timestamp with time zone
- firstInProgressAt : timestamp with time zone
- lastInProgressAt : timestamp with time zone
- firstCeasedSuspendedAt : timestamp with time zone
- lastCeasedSuspendedAt : timestamp with time zone
- firstClosedAt : timestamp with time zone
- lastClosedAt : timestamp with time zone
- firstCompletedAt : timestamp with time zone
- lastCompletedAt : timestamp with time zone
- createdVia : enum
- isRttapa : enum
- * onAR : boolean : false
- rtrOrder : integer : 1
- source : enum
- goalTemplateId : integer : REFERENCES "GoalTemplates".id
- * grantId : integer : REFERENCES "Grants".id
-=======
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
@@ -356,7 +326,6 @@ class Goals{
  source : enum
  status : varchar(255)
  timeframe : text
->>>>>>> origin/main
 }
 
 class Grants{
@@ -425,11 +394,11 @@ class MaintenanceLogs{
 
 class NationalCenters{
  * id : bigint : <generated>
- * name : varchar(255)
- mapsTo : integer
  * createdAt : timestamp with time zone
+ * name : varchar(255)
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
+ mapsTo : integer
 }
 
 class NextStepResources{
@@ -858,27 +827,15 @@ class ZALActivityReportFiles{
 class ZALActivityReportGoalFieldResponses{
  * id : bigint : <generated>
  * data_id : bigint
-<<<<<<< HEAD
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
-=======
  * dml_as : bigint
  * dml_by : bigint
  * dml_timestamp : timestamp with time zone
->>>>>>> origin/main
  * dml_txid : uuid
  * dml_type : enum
  descriptor_id : integer
-<<<<<<< HEAD
- dml_as : bigint
-=======
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
->>>>>>> origin/main
 }
 
 class ZALActivityReportGoalResources{
@@ -1051,27 +1008,15 @@ class ZALFiles{
 class ZALGoalFieldResponses{
  * id : bigint : <generated>
  * data_id : bigint
-<<<<<<< HEAD
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
-=======
  * dml_as : bigint
  * dml_by : bigint
  * dml_timestamp : timestamp with time zone
->>>>>>> origin/main
  * dml_txid : uuid
  * dml_type : enum
  descriptor_id : integer
-<<<<<<< HEAD
- dml_as : bigint
-=======
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
->>>>>>> origin/main
 }
 
 class ZALGoalResources{
@@ -1091,27 +1036,15 @@ class ZALGoalResources{
 class ZALGoalTemplateFieldPrompts{
  * id : bigint : <generated>
  * data_id : bigint
-<<<<<<< HEAD
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
-=======
  * dml_as : bigint
  * dml_by : bigint
  * dml_timestamp : timestamp with time zone
->>>>>>> origin/main
  * dml_txid : uuid
  * dml_type : enum
  descriptor_id : integer
-<<<<<<< HEAD
- dml_as : bigint
-=======
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
->>>>>>> origin/main
 }
 
 class ZALGoalTemplateObjectiveTemplates{
@@ -1159,17 +1092,6 @@ class ZALGoalTemplates{
 class ZALGoals{
  * id : bigint : <generated>
  * data_id : bigint
-<<<<<<< HEAD
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
- * dml_txid : uuid
- session_sig : text
- descriptor_id : integer
- dml_as : bigint
-=======
  * dml_as : bigint
  * dml_by : bigint
  * dml_timestamp : timestamp with time zone
@@ -1179,7 +1101,6 @@ class ZALGoals{
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
->>>>>>> origin/main
 }
 
 class ZALGrants{
@@ -1255,15 +1176,15 @@ class ZALMaintenanceLogs{
 class ZALNationalCenters{
  * id : bigint : <generated>
  * data_id : bigint
- * dml_type : enum
- old_row_data : jsonb
- new_row_data : jsonb
- * dml_timestamp : timestamp with time zone
- * dml_by : bigint
  * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
  * dml_txid : uuid
- session_sig : text
+ * dml_type : enum
  descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
 }
 
 class ZALNextStepResources{
