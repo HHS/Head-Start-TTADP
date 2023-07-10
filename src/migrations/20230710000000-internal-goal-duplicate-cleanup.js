@@ -1,26 +1,14 @@
+const {
+  prepMigration,
+} = require('../lib/migration');
+
 module.exports = {
   up: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      try {
-        const loggedUser = '0';
-        const sessionSig = __filename;
-        const auditDescriptor = 'RUN MIGRATIONS';
-        await queryInterface.sequelize.query(
-          `SELECT
-            set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
-            set_config('audit.transactionId', NULL, TRUE) as "transactionId",
-            set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
-            set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
+      await prepMigration(queryInterface, transaction, __filename);
       try {
         // Delete duplicate goals based on trimmed_hashes, keeping the one with the lowest id
         await queryInterface.sequelize.query(`
-        -- Collect Pre Count Stats
         DROP TABLE IF EXISTS "PreCountStatsByRegion";
         CREATE TEMP TABLE "PreCountStatsByRegion" AS (
             SELECT
@@ -67,14 +55,42 @@ module.exports = {
         FROM "PreCountStatsByRegion";
         SELECT * FROM "PreCountStatsByRegion";
 
+        DROP TABLE IF EXISTS "AllSmashedGoals";
+        CREATE TEMP TABLE "AllSmashedGoals" AS (
+            SELECT
+                g.id "goalId",
+                REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
+                REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
+                        LOWER(g.name),
+                        'grantee(s?)', 'recipient\1', 'gi'),
+                        '\bDLLs?\b', 'dual language learners', 'gi'),
+                        '\bEHS?\b', 'early head start', 'gi'),
+                        '\bELOF?\b', 'head start early learning outcomes framework', 'gi'),
+                        '\bFEI?\b', 'full enrollment initiative', 'gi'),
+                        '\bHS\b', 'head start', 'gi'),
+                        '\bHSELOF\b', 'head start early learning outcomes framework', 'gi'),
+                        '\bOHS\b', 'office of head start', 'gi'),
+                        '\bPBC\b', 'practice based coaching', 'gi'),
+                        '\bPD\b', 'professional development', 'gi'),
+                        '\bSR\b', 'school readiness', 'gi'),
+                        '\bDLL(s?)\b', 'recipient\1', 'gi'),
+                        '[^a-z0-9]', '', 'gi'),
+                        '[ \t]', '', 'gi') "smashedName",
+                TRIM(g.name) "cleanName"
+            FROM "Goals" g
+        );
+        SELECT * FROM "AllSmashedGoals";
+
         DROP TABLE IF EXISTS "SmashedGoals";
         CREATE TEMP TABLE "SmashedGoals" AS (
             SELECT
-                g.id "goalId",
-                (select SUM(n::bigint*ASCII(substring(TRIM(g.name) FROM n FOR 1))) from generate_series(1, character_length(TRIM(g.name))) as n) score,
-                REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(LOWER(g.name), '[^a-z0-9]', '', 'gi'), '[ \t]', '', 'gi'), 'grantees?', 'recipients', 'gi') "smashedName",
-                REGEXP_REPLACE(REGEXP_REPLACE(TRIM(g.name), 'Grantees?', 'Recipients', 'gi'), 'grantees?', 'recipients', 'gi') "cleanName"
-            FROM "Goals" g
+                asg1."goalId",
+                asg1."smashedName",
+                REGEXP_REPLACE((ARRAY_AGG(asg2."cleanName" ORDER BY asg2."goalId" DESC))[1], '^\s+|\s+$', '', 'g') "cleanName"
+            FROM "AllSmashedGoals" asg1
+            LEFT JOIN "AllSmashedGoals" asg2
+            ON MD5(asg1."smashedName") = MD5(asg2."smashedName")
+            GROUP BY 1,2
         );
         SELECT * FROM "SmashedGoals";
 
@@ -101,6 +117,36 @@ module.exports = {
             ORDER BY 5 DESC
         );
         SELECT * FROM "DupGoalsOnARs";
+
+        DROP TABLE IF EXISTS "AdjacentGoals";
+        CREATE TEMP TABLE "AdjacentGoals" AS (
+            SELECT
+            array_remove(ARRAY_AGG(DISTINCT arg."activityReportId"), NULL) "activityReportIds",
+            g."grantId",
+            MD5(TRIM(sg."smashedName")) "goalHash",
+            ARRAY_AGG(DISTINCT g.id ORDER BY g.id) "goalIds",
+            array_remove(ARRAY_AGG(DISTINCT g.id ORDER BY g.id),MIN(g.id)) "toRemoveGoals",
+            MIN(g.id) "toUpdateGoal",
+            COUNT(DISTINCT g.id) "goalCnt",
+            g."status" = 'Closed' "statusClosed"
+            FROM "Goals" g
+            LEFT JOIN ("DupGoalsOnARs"
+                CROSS JOIN UNNEST("DupGoalsOnARs"."goalIds") u("goalId")
+                ) dgoa
+            ON g.id = dgoa."goalId"
+            JOIN "SmashedGoals" sg
+            ON g.id = sg."goalId"
+            AND MD5(g.name) != MD5(sg."cleanName")
+            LEFT JOIN "ActivityReportGoals" arg
+            ON arg."goalId" = g.id
+            LEFT JOIN "GoalTemplates" gt
+            ON g."goalTemplateId" = gt.id
+            WHERE dgoa."goalId" IS NULL
+            GROUP BY 2,3,8
+            HAVING ARRAY_LENGTH(array_remove(ARRAY_AGG(DISTINCT g.id ORDER BY g.id),MIN(g.id)), 1) = 0
+            ORDER BY 5 DESC
+        );
+        SELECT * FROM "AdjacentGoals";
 
         DROP TABLE IF EXISTS "GoalsToModify";
         CREATE TEMP TABLE "GoalsToModify" AS (
@@ -203,14 +249,42 @@ module.exports = {
         );
         SELECT * FROM "GoalsToModify";
 
+        DROP TABLE IF EXISTS "AllSmashedObjectives";
+        CREATE TEMP TABLE "AllSmashedObjectives" AS (
+            SELECT
+                o.id "objectiveId",
+                REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
+                REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
+                        LOWER(o.title),
+                        'grantee(s?)', 'recipient\1', 'gi'),
+                        '\bDLLs?\b', 'dual language learners', 'gi'),
+                        '\bEHS?\b', 'early head start', 'gi'),
+                        '\bELOF?\b', 'head start early learning outcomes framework', 'gi'),
+                        '\bFEI?\b', 'full enrollment initiative', 'gi'),
+                        '\bHS\b', 'head start', 'gi'),
+                        '\bHSELOF\b', 'head start early learning outcomes framework', 'gi'),
+                        '\bOHS\b', 'office of head start', 'gi'),
+                        '\bPBC\b', 'practice based coaching', 'gi'),
+                        '\bPD\b', 'professional development', 'gi'),
+                        '\bSR\b', 'school readiness', 'gi'),
+                        '\bDLLs?\b', 'recipient\1', 'gi'),
+                        '[^a-z0-9]', '', 'gi'),
+                        '[ \t]', '', 'gi') "smashedTitle",
+                TRIM(o.title) "cleanTitle"
+            FROM "Objectives" o
+        );
+        SELECT * FROM "AllSmashedObjectives";
+
         DROP TABLE IF EXISTS "SmashedObjectives";
         CREATE TEMP TABLE "SmashedObjectives" AS (
             SELECT
-                o.id "objectiveId",
-                (select SUM(n::bigint*ASCII(substring(TRIM(o.title) FROM n FOR 1))) from generate_series(1, character_length(TRIM(o.title))) as n) score,
-                REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(LOWER(o.title), '[^a-z0-9]', '', 'gi'), '[ \t]', '', 'gi'), 'grantees?', 'recipients', 'gi') "smashedTitle",
-                REGEXP_REPLACE(REGEXP_REPLACE(TRIM(o.title), 'Grantees?', 'Recipients', 'gi'), 'grantees?', 'recipients', 'gi') "cleanTitle"
-            FROM "Objectives" o
+                aso1."objectiveId",
+                aso1."smashedTitle",
+                REGEXP_REPLACE((ARRAY_AGG(aso2."cleanTitle" ORDER BY aso2."objectiveId" DESC))[1], '^\s+|\s+$', '', 'g') "cleanTitle"
+            FROM "AllSmashedObjectives" aso1
+            LEFT JOIN "AllSmashedObjectives" aso2
+            ON MD5(aso1."smashedTitle") = MD5(aso2."smashedTitle")
+            GROUP BY 1,2
         );
         SELECT * FROM "SmashedObjectives";
 
@@ -1964,6 +2038,7 @@ module.exports = {
         WITH update_goals AS (
             UPDATE "Goals" "g"
             SET
+            "name" = gtm."name",
             "status" = gtm."status",
             "timeframe" = gtm."timeframe",
             "isFromSmartsheetTtaPlan" = gtm."isFromSmartsheetTtaPlan",
