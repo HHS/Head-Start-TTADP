@@ -1,7 +1,13 @@
 import '@testing-library/jest-dom';
+import React from 'react';
 import reactSelectEvent from 'react-select-event';
 import {
-  screen, fireEvent, waitFor, within, act,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+  act,
+  render,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -12,6 +18,7 @@ import {
   history,
   formData,
   renderActivityReport,
+  ReportComponent,
   recipients,
   mockGoalsAndObjectives,
 } from '../testHelpers';
@@ -484,6 +491,230 @@ describe('ActivityReport', () => {
       // we don't expect form controls
       expect(document.querySelector('textarea[name="goalName"]')).toBeNull();
     });
+  });
+
+  it('you can select an existing goal and objective and add a file after saving', async () => {
+    const dispatchEvt = (node, type, data) => {
+      const event = new Event(type, { bubbles: true });
+      Object.assign(event, data);
+      fireEvent(node, event);
+    };
+
+    const mockData = (files) => ({
+      dataTransfer: {
+        files,
+        items: files.map((file) => ({
+          kind: 'file',
+          type: file.type,
+          getAsFile: () => file,
+        })),
+        types: ['Files'],
+      },
+    });
+
+    const file = (name, id) => ({
+      originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
+    });
+
+    fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
+    fetchMock.get('/api/activity-reports/goals?grantIds=10431', [{
+      endDate: null,
+      grantIds: [10431],
+      goalIds: [37502],
+      oldGrantIds: [7764],
+      created: '2023-07-05T17:56:14.755Z',
+      goalTemplateId: 13500,
+      name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+      status: 'In Progress',
+      onApprovedAR: false,
+      source: null,
+      isCurated: false,
+    }]);
+    fetchMock.get('/api/goal-templates?grantIds=10431', []);
+    fetchMock.get('/api/activity-reports/1', {
+      ...formData(),
+      activityRecipientType: 'recipient',
+      activityRecipients: [
+        {
+          id: 10431,
+          activityRecipientId: 10431,
+          name: 'Barton LLC - 04bear012539  - EHS, HS',
+        },
+      ],
+      objectivesWithoutGoals: [],
+      goalsAndObjectives: [],
+    });
+
+    fetchMock.get('/api/goals?reportId=1&goalIds=37502', [{
+      endDate: '',
+      status: 'In Progress',
+      value: 37502,
+      label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+      id: 37502,
+      name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+      grant: {
+        programTypes: [],
+        name: 'Barrows Inc - 08bear010431 ',
+        numberWithProgramTypes: '08bear010431 ',
+        recipientInfo: 'Barrows Inc - 08bear010431 - 359',
+        id: 10431,
+        number: '08bear010431',
+        annualFundingMonth: 'November',
+        cdi: false,
+        status: 'Active',
+        grantSpecialistName: 'Marian Daugherty',
+        grantSpecialistEmail: 'Effie.McCullough@gmail.com',
+        programSpecialistName: 'Eddie Denesik DDS',
+        programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
+        stateCode: 'RI',
+        startDate: '2018-11-01T00:00:00.000Z',
+        endDate: '2023-10-31T00:00:00.000Z',
+        inactivationDate: null,
+        inactivationReason: null,
+        recipientId: 359,
+        oldGrantId: 7764,
+        deleted: false,
+        createdAt: '2021-03-16T01:20:44.754Z',
+        updatedAt: '2022-09-28T15:03:28.432Z',
+        regionId: 1,
+        recipient: {
+          id: 359, uei: 'LS73E9BEHVZ4', name: 'Barrows Inc', recipientType: 'Community Action Agency (CAA)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.284Z',
+        },
+      },
+      objectives: [{
+        id: 95297,
+        label: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
+        title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
+        status: 'Not Started',
+        goalId: 37502,
+        resources: [],
+        activityReportObjectives: [],
+        files: [],
+        topics: [],
+        activityReports: [{
+          displayId: 'R01-AR-23786',
+          endDate: null,
+          startDate: null,
+          submittedDate: null,
+          lastSaved: '07/05/2023',
+          creatorNameWithRole: ', CO',
+          sortedTopics: [],
+          creatorName: ', CO',
+          id: 23786,
+          legacyId: null,
+          userId: 355,
+          lastUpdatedById: 355,
+          ECLKCResourcesUsed: [],
+          nonECLKCResourcesUsed: [],
+          additionalNotes: null,
+          numberOfParticipants: null,
+          deliveryMethod: null,
+          version: 2,
+          duration: null,
+          activityRecipientType: 'recipient',
+          requester: null,
+          targetPopulations: [],
+          virtualDeliveryType: null,
+          reason: [],
+          participants: [],
+          topics: [],
+          programTypes: null,
+          context: '',
+          pageState: {
+            1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+          },
+          regionId: 1,
+          submissionStatus: 'draft',
+          calculatedStatus: 'draft',
+          ttaType: [],
+          updatedAt: '2023-07-05T17:54:13.082Z',
+          approvedAt: null,
+          imported: null,
+          creatorRole: 'Central Office',
+          createdAt: '2023-07-05T17:54:13.082Z',
+          ActivityReportObjective: {
+            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: 'In Progress', ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
+          },
+        }],
+        value: 95297,
+        ids: [95297],
+        recipientIds: [],
+        isNew: false,
+      }],
+      prompts: [],
+      goalNumbers: ['G-37502'],
+      goalIds: [37502],
+      grants: [{
+        id: 10431,
+        number: '08bear010431',
+        annualFundingMonth: 'November',
+        cdi: false,
+        status: 'Active',
+        grantSpecialistName: 'Marian Daugherty',
+        grantSpecialistEmail: 'Effie.McCullough@gmail.com',
+        programSpecialistName: 'Eddie Denesik DDS',
+        programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
+        stateCode: 'RI',
+        startDate: '2018-11-01T00:00:00.000Z',
+        endDate: '2023-10-31T00:00:00.000Z',
+        inactivationDate: null,
+        inactivationReason: null,
+        recipientId: 359,
+        oldGrantId: 7764,
+        deleted: false,
+        createdAt: '2021-03-16T01:20:44.754Z',
+        updatedAt: '2022-09-28T15:03:28.432Z',
+        regionId: 1,
+        recipient: {
+          id: 359, uei: 'LS73E9BEHVZ4', name: 'Barrows Inc', recipientType: 'Community Action Agency (CAA)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.284Z',
+        },
+        numberWithProgramTypes: '08bear010431 ',
+        name: 'Barrows Inc - 08bear010431 ',
+        goalId: 37502,
+      }],
+      grantIds: [10431],
+      isNew: false,
+    }]);
+
+    const { container } = render(
+      <ReportComponent
+        id={1}
+        currentPage="goals-objectives"
+        showLastUpdatedTime={false}
+        userId={1}
+      />,
+
+    );
+
+    await screen.findByRole('heading', { name: 'Goals and objectives' });
+    await act(() => reactSelectEvent.select(
+      screen.getByLabelText(/Recipient's goal/i),
+      'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+    ));
+
+    await act(() => reactSelectEvent.select(
+      screen.getByLabelText(/Select TTA objective/i),
+      'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
+    ));
+
+    const radio = screen.getByLabelText(/Yes/i);
+    act(() => {
+      userEvent.click(radio);
+    });
+
+    const dropzone = container.querySelector('.dropzone');
+
+    fetchMock.post('/api/files/objectives', [{
+      id: 25649, originalFileName: 'BSH_UE_SRD_1.0.2.docx', key: 'dc4b723f-f151-4934-a2b3-5f513c8254a2docx', status: 'UPLOADING', fileSize: 240736, updatedAt: '2023-07-05T18:40:06.130Z', createdAt: '2023-07-05T18:40:06.130Z', url: { url: 'http://minio:9000/ttadp-test/dc4b723f-f151-4934-a2b3-5f513c8254a2docx?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEID%2F20230705%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230705T184006Z&X-Amz-Expires=360&X-Amz-Signature=595be3d29630f8275d206300c7dfce6f5e3d7b16d506b7f47d64db04418cf982&X-Amz-SignedHeaders=host', error: null },
+    }]);
+
+    const e = mockData([file('file', 1)]);
+
+    dispatchEvt(dropzone, 'drop', e);
+
+    await waitFor(() => expect(fetchMock.called('/api/files/objectives', { method: 'POST' })).toBeTruthy());
+
+    expect(await screen.findByText('BSH_UE_SRD_1.0.2.docx')).toBeInTheDocument();
   });
 
   it('you can add a goal and objective and add a file after saving', async () => {

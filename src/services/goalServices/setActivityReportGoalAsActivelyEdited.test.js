@@ -29,6 +29,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       name: userName,
       hsesUsername: userName,
       hsesUserId: userName,
+      lastLogin: new Date(),
     });
 
     // Create Goal.
@@ -60,6 +61,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       lastUpdatedById: user.id,
       ECLKCResourcesUsed: ['test'],
       activityRecipients: [{ activityRecipientId: 30 }],
+      version: 2,
     });
 
     // create activity report goal

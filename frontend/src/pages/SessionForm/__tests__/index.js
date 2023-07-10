@@ -265,7 +265,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
 
-    expect(await screen.findByText(/Session must be complete to submit/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Status must be complete to submit session/i)).toBeInTheDocument();
   });
   it('will submit if every page & the status is complete', async () => {
     const url = join(sessionsUrl, 'id', '1');

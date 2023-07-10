@@ -28,6 +28,7 @@ const mockUser = {
   hsesUsername: 'tg234234',
   hsesUserId: 'tg234234',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {
@@ -47,6 +48,7 @@ const draft = {
   context: 'Lets give some context.',
   nonECLKCResourcesUsed: [],
   ECLKCResourcesUsed: [],
+  version: 2,
 };
 
 const approvedReport = {

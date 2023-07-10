@@ -9,12 +9,17 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
+import { mockDocumentProperty } from '../testHelpers';
 
 const storageCleanup = join('api', 'activity-reports', 'storage-cleanup');
 const whatsNew = join('api', 'feeds', 'whats-new');
 
 describe('App', () => {
   const loginText = 'Log In with HSES';
+
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
 
   beforeEach(async () => {
     fetchMock.get(storageCleanup, []);
