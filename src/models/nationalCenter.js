@@ -42,6 +42,22 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToNationalCenter').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToNationalCenter').get('id')
+          : this.get('id');
+      },
+    },
   }, {
     paranoid: true,
     sequelize,
