@@ -394,11 +394,10 @@ class MaintenanceLogs{
 
 class NationalCenters{
  * id : bigint : <generated>
+ mapsTo : integer : REFERENCES "NationalCenters".id
  * createdAt : timestamp with time zone
- * name : varchar(255)
+ * name : text
  * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
- mapsTo : integer
 }
 
 class NextStepResources{
@@ -1677,6 +1676,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPerso
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles

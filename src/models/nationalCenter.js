@@ -22,7 +22,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       validate: {
         notNull: true,
@@ -33,6 +33,21 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'NationalCenters',
+        },
+        key: 'id',
+      },
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
     },
   }, {
     sequelize,
