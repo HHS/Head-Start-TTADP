@@ -2,7 +2,26 @@ const { Model } = require('sequelize');
 const { afterDestroy } = require('./hooks/nationalCenter');
 
 export default (sequelize, DataTypes) => {
-  class NationalCenter extends Model {}
+    class NationalCenter extends Model {
+    static associate(models) {
+      NationalCenter.belongsTo(models.NationalCenter, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToNationalCenter',
+      });
+      NationalCenter.hasMany(models.NationalCenter, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromNationalCenters',
+      });
+
+      models.NationalCenter.addScope('defaultScope', {
+        include: [{
+          model: models.NationalCenter,
+          as: 'mapsToNationalCenter',
+          required: false,
+        }],
+      });
+    }
+  }
   NationalCenter.init({
     id: {
       type: DataTypes.BIGINT,
