@@ -12,7 +12,7 @@ export function getSpecialistNameSql(role, name) {
       FROM "Users" "Users"
       INNER JOIN "ActivityReportCollaborators" "ActivityReportCollaborators"
       ON "ActivityReportCollaborators"."userId" = "Users"."id"
-      WHERE "Users"."name" ILIKE '${name[0]}'`;
+      WHERE "Users"."name" ILIKE '%${name[0]}%'`;
   }
 
   if (role === 'Both') {
@@ -27,7 +27,7 @@ export function getSpecialistNameSql(role, name) {
         FROM "Users" "Users"
         INNER JOIN "ActivityReports" "ActivityReports"
         ON "ActivityReports"."userId" = "Users"."id"
-        WHERE "Users"."name" ILIKE '${name[0]}'`;
+        WHERE "Users"."name" ILIKE '%${name[0]}%'`;
   }
 
   reportSql = `"ActivityReport"."id" IN (${reportSql})`;
