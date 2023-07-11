@@ -9,6 +9,7 @@ import {
   REGION_CONDITIONS,
   MY_REPORTS_FILTER_CONDITIONS,
   SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  SPECIALIST_NAME_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -26,6 +27,7 @@ import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
+import { useDisplayGroups } from './utils';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -218,6 +220,23 @@ export const programSpecialistFilter = {
     />
   ),
 };
+
+export const specialistNameFilter = {
+  id: 'specialistName',
+  display: 'Specialist name',
+  conditions: SPECIALIST_NAME_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`specialist-name-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a specialist name"
+    />
+  ),
+};
+
 export const programTypeFilter = {
   id: 'programType',
   display: 'Program types',
@@ -439,7 +458,7 @@ export const groupsFilter = {
   display: 'Group',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: useDisplayGroups,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterGroups
       inputId={`group-${condition}-${id}`}
