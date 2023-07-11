@@ -1,3 +1,5 @@
+/* eslint-disable no-useless-escape */
+/* eslint-disable no-octal-escape */
 const {
   prepMigration,
 } = require('../lib/migration');
