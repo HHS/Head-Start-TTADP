@@ -1,5 +1,3 @@
-/* eslint-disable no-useless-escape */
-/* eslint-disable no-octal-escape */
 const {
   prepMigration,
 } = require('../lib/migration');
@@ -64,20 +62,20 @@ module.exports = {
                 REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
                 REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
                         LOWER(g.name),
-                        'grantee(s?)', 'recipient\1', 'gi'),
-                        '\bDLLs?\b', 'dual language learners', 'gi'),
-                        '\bEHS?\b', 'early head start', 'gi'),
-                        '\bELOF?\b', 'head start early learning outcomes framework', 'gi'),
-                        '\bFEI?\b', 'full enrollment initiative', 'gi'),
-                        '\bHS\b', 'head start', 'gi'),
-                        '\bHSELOF\b', 'head start early learning outcomes framework', 'gi'),
-                        '\bOHS\b', 'office of head start', 'gi'),
-                        '\bPBC\b', 'practice based coaching', 'gi'),
-                        '\bPD\b', 'professional development', 'gi'),
-                        '\bSR\b', 'school readiness', 'gi'),
-                        '\bDLL(s?)\b', 'recipient\1', 'gi'),
+                        'grantee(s?)', 'recipient\\1', 'gi'),
+                        '\\bDLLs?\\b', 'dual language learners', 'gi'),
+                        '\\bEHS?\\b', 'early head start', 'gi'),
+                        '\\bELOF?\\b', 'head start early learning outcomes framework', 'gi'),
+                        '\\bFEI?\\b', 'full enrollment initiative', 'gi'),
+                        '\\bHS\\b', 'head start', 'gi'),
+                        '\\bHSELOF\\b', 'head start early learning outcomes framework', 'gi'),
+                        '\\bOHS\\b', 'office of head start', 'gi'),
+                        '\\bPBC\\b', 'practice based coaching', 'gi'),
+                        '\\bPD\\b', 'professional development', 'gi'),
+                        '\\bSR\\b', 'school readiness', 'gi'),
+                        '\\bDLL(s?)\\b', 'recipient\\1', 'gi'),
                         '[^a-z0-9]', '', 'gi'),
-                        '[ \t]', '', 'gi') "smashedName",
+                        '[ \\t]', '', 'gi') "smashedName",
                 TRIM(g.name) "cleanName"
             FROM "Goals" g
         );
@@ -88,7 +86,7 @@ module.exports = {
             SELECT
                 asg1."goalId",
                 asg1."smashedName",
-                REGEXP_REPLACE((ARRAY_AGG(asg2."cleanName" ORDER BY asg2."goalId" DESC))[1], '^\s+|\s+$', '', 'g') "cleanName"
+                REGEXP_REPLACE((ARRAY_AGG(asg2."cleanName" ORDER BY asg2."goalId" DESC))[1], '^\\s+|\\s+$', '', 'g') "cleanName"
             FROM "AllSmashedGoals" asg1
             LEFT JOIN "AllSmashedGoals" asg2
             ON MD5(asg1."smashedName") = MD5(asg2."smashedName")
@@ -258,20 +256,20 @@ module.exports = {
                 REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
                 REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(
                         LOWER(o.title),
-                        'grantee(s?)', 'recipient\1', 'gi'),
-                        '\bDLLs?\b', 'dual language learners', 'gi'),
-                        '\bEHS?\b', 'early head start', 'gi'),
-                        '\bELOF?\b', 'head start early learning outcomes framework', 'gi'),
-                        '\bFEI?\b', 'full enrollment initiative', 'gi'),
-                        '\bHS\b', 'head start', 'gi'),
-                        '\bHSELOF\b', 'head start early learning outcomes framework', 'gi'),
-                        '\bOHS\b', 'office of head start', 'gi'),
-                        '\bPBC\b', 'practice based coaching', 'gi'),
-                        '\bPD\b', 'professional development', 'gi'),
-                        '\bSR\b', 'school readiness', 'gi'),
-                        '\bDLLs?\b', 'recipient\1', 'gi'),
+                        'grantee(s?)', 'recipient\\1', 'gi'),
+                        '\\bDLLs?\\b', 'dual language learners', 'gi'),
+                        '\\bEHS?\\b', 'early head start', 'gi'),
+                        '\\bELOF?\\b', 'head start early learning outcomes framework', 'gi'),
+                        '\\bFEI?\\b', 'full enrollment initiative', 'gi'),
+                        '\\bHS\\b', 'head start', 'gi'),
+                        '\\bHSELOF\\b', 'head start early learning outcomes framework', 'gi'),
+                        '\\bOHS\\b', 'office of head start', 'gi'),
+                        '\\bPBC\\b', 'practice based coaching', 'gi'),
+                        '\\bPD\\b', 'professional development', 'gi'),
+                        '\\bSR\\b', 'school readiness', 'gi'),
+                        '\\bDLLs?\\b', 'recipient\\1', 'gi'),
                         '[^a-z0-9]', '', 'gi'),
-                        '[ \t]', '', 'gi') "smashedTitle",
+                        '[ \\t]', '', 'gi') "smashedTitle",
                 TRIM(o.title) "cleanTitle"
             FROM "Objectives" o
         );
@@ -282,7 +280,7 @@ module.exports = {
             SELECT
                 aso1."objectiveId",
                 aso1."smashedTitle",
-                REGEXP_REPLACE((ARRAY_AGG(aso2."cleanTitle" ORDER BY aso2."objectiveId" DESC))[1], '^\s+|\s+$', '', 'g') "cleanTitle"
+                REGEXP_REPLACE((ARRAY_AGG(aso2."cleanTitle" ORDER BY aso2."objectiveId" DESC))[1], '^\\s+|\\s+$', '', 'g') "cleanTitle"
             FROM "AllSmashedObjectives" aso1
             LEFT JOIN "AllSmashedObjectives" aso2
             ON MD5(aso1."smashedTitle") = MD5(aso2."smashedTitle")
