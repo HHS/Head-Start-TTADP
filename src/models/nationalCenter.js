@@ -1,8 +1,8 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/nationalCenter');
+const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
 
 export default (sequelize, DataTypes) => {
-    class NationalCenter extends Model {
+  class NationalCenter extends Model {
     static associate(models) {
       NationalCenter.belongsTo(models.NationalCenter, {
         foreignKey: 'mapsTo',
@@ -11,14 +11,6 @@ export default (sequelize, DataTypes) => {
       NationalCenter.hasMany(models.NationalCenter, {
         foreignKey: 'mapsTo',
         as: 'mapsFromNationalCenters',
-      });
-
-      models.NationalCenter.addScope('defaultScope', {
-        include: [{
-          model: models.NationalCenter,
-          as: 'mapsToNationalCenter',
-          required: false,
-        }],
       });
     }
   }
@@ -42,27 +34,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    latestName: {
-      type: DataTypes.VIRTUAL(DataTypes.STRING),
-      get() {
-        return this.get('mapsTo')
-          ? this.get('mapsToNationalCenter').get('name')
-          : this.get('name');
-      },
-    },
-    latestId: {
-      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
-      get() {
-        return this.get('mapsTo')
-          ? this.get('mapsToNationalCenter').get('id')
-          : this.get('id');
-      },
-    },
   }, {
-    paranoid: true,
     sequelize,
     hooks: {
-      afterDestroy: async (instance) => afterDestroy(sequelize, instance),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
     modelName: 'NationalCenter',
   });

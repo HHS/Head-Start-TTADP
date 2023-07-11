@@ -11,13 +11,16 @@ interface NationalCenterType {
 interface NCModel extends NationalCenterType {
   destroy: (args: { individualHooks: boolean }) => Promise<void>;
   save: () => Promise<void>;
+  update: (args: { mapsTo: number }, options: { individualHooks: boolean }) => Promise<void>;
 }
 
 export async function findAll(): Promise<NationalCenterType[]> {
   return NationalCenter.findAll({
-    attributes: ['id', 'name'],
+    where: {
+      mapsTo: null,
+    },
+    attributes: ['id', 'name', 'mapsTo'],
     order: [['name', 'ASC']],
-    raw: true,
   });
 }
 
@@ -41,10 +44,11 @@ export async function updateById(id: number, data: { name: string })
 
   const newCenter = await NationalCenter.create({
     name: data.name,
-    mapsTo: id,
-  });
+  }, { individualHooks: false });
 
-  await existing.destroy({ individualHooks: true });
+  await existing.update({
+    mapsTo: newCenter.id,
+  }, { individualHooks: true });
 
   return newCenter;
 }
@@ -52,5 +56,6 @@ export async function updateById(id: number, data: { name: string })
 export async function deleteById(id: number) {
   return NationalCenter.destroy({
     where: { id },
+    individualHooks: true,
   });
 }

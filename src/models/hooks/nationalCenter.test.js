@@ -1,6 +1,7 @@
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import faker from '@faker-js/faker';
 import db from '..';
+import { updateById } from '../../services/nationalCenters';
 
 describe('nationalCenter hooks', () => {
   describe('afterDestroy', () => {
@@ -72,15 +73,15 @@ describe('nationalCenter hooks', () => {
     });
 
     it('should fire the hook and update the session report', async () => {
-      center4 = await db.NationalCenter.create({ name: centerFourName, mapsTo: center3.id });
-
-      await center3.destroy({ individualHooks: true });
+      await updateById(center3.id, { name: centerFourName });
 
       let sessionReportUpdated = await db.SessionReportPilot.findOne({
         where: {
           id: sessionReport2.id,
         },
       });
+
+      center4 = await db.NationalCenter.findOne({ where: { name: centerFourName } });
 
       expect(
         sessionReportUpdated.data.objectiveTrainers,
