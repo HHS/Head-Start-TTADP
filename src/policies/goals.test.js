@@ -1,6 +1,6 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 describe('Goals policies', () => {
   describe('canDelete && canEdit', () => {
@@ -117,6 +117,77 @@ describe('Goals policies', () => {
       const policy = new Goal(user, goal, regionId);
 
       expect(policy.canCreate()).toBe(true);
+    });
+  });
+
+  describe('canReadInRegion', () => {
+    it('works', async () => {
+      const goal = {};
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      };
+      const regionId = 2;
+
+      const policy = new Goal(user, goal, regionId);
+
+      expect(policy.canReadInRegion(2)).toBe(true);
+    });
+  });
+
+  describe('isOnActivityReports', () => {
+    it('works', async () => {
+      const goal = {
+        objectives: [
+          {
+            activityReports: [
+              { id: 1, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+            ],
+          },
+        ],
+        grant: { regionId: 2 },
+      };
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.isOnActivityReports()).toBe(true);
+    });
+  });
+
+  describe('isOnApprovedActivityReports', () => {
+    it('works', async () => {
+      const goal = {
+        objectives: [
+          {
+            activityReports: [
+              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
+            ],
+          },
+        ],
+        grant: { regionId: 2 },
+      };
+      const user = {
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.APPROVE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.isOnApprovedActivityReports()).toBe(true);
     });
   });
 });

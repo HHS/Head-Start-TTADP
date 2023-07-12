@@ -6,12 +6,16 @@ export default function VanillaModal({
   heading,
   children,
   modalRef,
+  className,
 }) {
-  const modalId = `modal-${heading.toLowerCase().replace(/\s/g, '-')}`;
+  // strip everything but letters
+  const regex = /[^a-zA-Z]/g;
+
+  const modalId = `modal-${heading.toLowerCase().replace(regex, '-')}`;
 
   return (
     <Modal
-      className="ttahub-vanilla-modal maxw-tablet"
+      className={`ttahub-vanilla-modal ${className}`}
       ref={modalRef}
       id={modalId}
       aria-labelledby={`${modalId}-heading`}
@@ -30,8 +34,13 @@ export default function VanillaModal({
 VanillaModal.propTypes = {
   heading: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
+  className: PropTypes.string,
   modalRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape(),
   ]).isRequired,
+};
+
+VanillaModal.defaultProps = {
+  className: '',
 };

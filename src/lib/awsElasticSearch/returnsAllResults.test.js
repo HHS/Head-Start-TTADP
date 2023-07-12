@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   User,
 } from '../../models';
-import { REPORT_STATUSES, AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import {
   getClient,
   deleteIndex,
@@ -21,12 +22,14 @@ const mockUser = {
   name: 'user13706524',
   hsesUsername: 'user13706524',
   hsesUserId: 'user13706524',
+  lastLogin: new Date(),
 };
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 describe('returnsAllResults', () => {

@@ -1,15 +1,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
+import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
-
+import { useForm, FormProvider } from 'react-hook-form';
 import Submitter from '../index';
 import NetworkContext from '../../../../../../NetworkContext';
-import { REPORT_STATUSES, SCOPE_IDS } from '../../../../../../Constants';
+
 import UserContext from '../../../../../../UserContext';
 
 const defaultUser = {
@@ -59,14 +59,14 @@ const renderReview = (
   complete = true,
   onSave = () => { },
   resetToDraft = () => { },
-  approvers = [{ status: calculatedStatus, note: '', User: { fullName: 'name' } }],
+  approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
   user = defaultUser,
   creatorRole = null,
 ) => {
   const formData = {
     approvers,
     calculatedStatus,
-    displayId: '1',
+    displayId: 'R01-AR-23424',
     id: 1,
     creatorRole,
   };
@@ -170,9 +170,9 @@ describe('Submitter review page', () => {
 
     it('shows manager notes', async () => {
       const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', User: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', User: { fullName: 'Approved User 1' } },
-        { status: REPORT_STATUSES.APPROVED, User: { fullName: 'Approved User 2' } },
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
+        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', user: { fullName: 'Approved User 1' } },
+        { status: REPORT_STATUSES.APPROVED, user: { fullName: 'Approved User 2' } },
       ];
       renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, () => { }, approvers);
       expect(await screen.findByText(/report needs action\./i)).toBeVisible();
@@ -189,9 +189,9 @@ describe('Submitter review page', () => {
 
     it('displays approvers requesting action', async () => {
       const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', User: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved.', User: { fullName: 'Approved User' } },
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', User: { fullName: 'Needs Action 2' } },
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
+        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved.', user: { fullName: 'Approved User' } },
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', user: { fullName: 'Needs Action 2' } },
       ];
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
       expect(await screen.findByText('Review and re-submit report')).toBeVisible();
@@ -202,8 +202,8 @@ describe('Submitter review page', () => {
 
     it('displays correctly when no approver is requesting action', async () => {
       const approvers = [
-        { status: null, note: 'Report is approved.', User: { fullName: 'Approved User 1' } },
-        { status: null, note: 'Report is approved.', User: { fullName: 'Approved User 2' } },
+        { status: null, note: 'Report is approved.', user: { fullName: 'Approved User 1' } },
+        { status: null, note: 'Report is approved.', user: { fullName: 'Approved User 2' } },
       ];
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
       expect(await screen.findByText(/the following approving manager\(s\) have requested changes to this activity report:/i)).toBeVisible();

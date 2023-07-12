@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
-
-import { REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -44,6 +43,7 @@ function defaultReport() {
     participants: ['participants', 'genies'],
     topics: ['Program Planning and Services'],
     ttaType: ['technical-assistance'],
+    version: 2,
   };
 }
 
@@ -56,6 +56,7 @@ function defaultUser() {
     phoneNumber: faker.phone.phoneNumber(),
     name: faker.name.findName(),
     role: ['Grants Specialist'],
+    lastLogin: new Date(),
   };
 }
 
@@ -82,6 +83,7 @@ function defaultGrant() {
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
+    endDate: new Date(),
   };
 }
 

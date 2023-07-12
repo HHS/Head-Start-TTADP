@@ -1,5 +1,11 @@
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
+import {
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+  DECIMAL_BASE,
+} from '@ttahub/common';
+import { USER_SETTINGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -29,11 +35,7 @@ import { saveObjectivesForReport, getObjectivesByReportId } from '../../services
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import {
-  APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
-} from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
-
 import { logger } from '../../logger';
 import {
   approverAssignedNotification,
@@ -641,6 +643,7 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {

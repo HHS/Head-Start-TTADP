@@ -1,4 +1,5 @@
 /* eslint-disable dot-notation */
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -14,7 +15,7 @@ import db, {
 } from '../../models';
 import { formatModelForAwsElasticsearch } from './modelMapper';
 import { collectModelData } from './datacollector';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import { auditLogger } from '../../logger';
 import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
@@ -26,6 +27,7 @@ const mockUser = {
   hsesUsername: 'JS321423',
   hsesUserId: 'JS321423',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {
@@ -45,6 +47,7 @@ const draft = {
   context: 'Lets give some context.',
   nonECLKCResourcesUsed: [],
   ECLKCResourcesUsed: [],
+  version: 2,
 };
 
 const approvedReport = {

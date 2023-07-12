@@ -254,9 +254,6 @@ describe('Landing page table menus & selections', () => {
           { count: 10, rows: [], recipients: [] },
         );
         fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-        window.location = {
-          assign: jest.fn(),
-        };
       });
 
       it('downloads all reports', async () => {
@@ -306,6 +303,52 @@ describe('Landing page table menus & selections', () => {
         userEvent.click(downloadButton);
         expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith(dateFilterWithRegionOne);
+      });
+
+      it('hides specialist name filter if user can approve reports', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 1,
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+
+        const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
+        fireEvent.click(filterMenuButton);
+
+        // expect 'specialist name' not to be in the document.
+        expect(screen.queryAllByText('Specialist name').length).toBe(0);
+      });
+
+      it('shows specialist name filter if user can approve reports', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 1,
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+            {
+              scopeId: 5,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+
+        const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
+        fireEvent.click(filterMenuButton);
+
+        // expect 'specialist name' to be in the document.
+        expect(await screen.findByText('Specialist name')).toBeVisible();
       });
 
       it('central office correctly shows all regions', async () => {

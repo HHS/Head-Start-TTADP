@@ -1,9 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
+import { SCOPE_IDS } from '@ttahub/common';
 import GoalCard from '../GoalCard';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('GoalCard', () => {
   const goal = {
@@ -16,6 +15,7 @@ describe('GoalCard', () => {
     reasons: ['Reason 1', 'Reason 2'],
     objectiveCount: 1,
     goalNumbers: ['G-1'],
+    source: 'The inferno',
     objectives: [
       {
         id: 1,
@@ -27,10 +27,10 @@ describe('GoalCard', () => {
         status: 'Closed',
         activityReports: [],
         grantNumbers: ['G-1'],
+        topics: [],
       },
     ],
     previousStatus: null,
-    isRttapa: 'No',
   };
 
   const DEFAULT_USER = {
@@ -72,6 +72,13 @@ describe('GoalCard', () => {
   it('shows the checkbox by default', () => {
     renderGoalCard();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('shows goal source', () => {
+    renderGoalCard();
+
+    expect(screen.getByText(/goal source/i)).toBeInTheDocument();
+    expect(screen.getByText(/The inferno/i)).toBeInTheDocument();
   });
 
   it('hides the checkbox when hideCheckbox is true', () => {

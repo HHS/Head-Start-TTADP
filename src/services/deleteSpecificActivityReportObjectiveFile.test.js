@@ -1,6 +1,7 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, FILE_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { FILE_STATUSES } from '../constants';
 import db, {
   Goal,
   Grant,
@@ -23,6 +24,7 @@ const mockUser = {
   name: 'user1134265161',
   hsesUsername: 'user1134265161',
   hsesUserId: 'user1134265161',
+  lastLogin: new Date(),
 };
 
 const report = {
@@ -44,6 +46,7 @@ const report = {
   ECLKCResourcesUsed: ['test'],
   objectivesWithoutGoals: [],
   goals: [],
+  version: 2,
 };
 
 describe('deleteSpecificActivityReportObjectiveFile', () => {
@@ -70,6 +73,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     number: faker.random.alphaNumeric(5),
     cdi: false,
     regionId: 1,
+    startDate: new Date(),
+    endDate: new Date(),
   };
 
   beforeAll(async () => {

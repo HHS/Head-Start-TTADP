@@ -1,9 +1,9 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep, Region,
 } from '../models';
 import filtersToScopes from '../scopes';
 import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
-import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 
 const RECIPIENT_ID = 975107;
@@ -16,6 +16,7 @@ const mockUser = {
   name: 'user1779538',
   hsesUsername: 'user1779538',
   hsesUserId: 'user1779538',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -24,6 +25,7 @@ const mockUserTwo = {
   name: 'user297138',
   hsesUserId: 'user297138',
   hsesUsername: 'user297138',
+  lastLogin: new Date(),
 };
 
 const mockUserThree = {
@@ -32,6 +34,7 @@ const mockUserThree = {
   name: 'user394062',
   hsesUserId: 'user394062',
   hsesUsername: 'user394062',
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -57,6 +60,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 const regionOneReport = {

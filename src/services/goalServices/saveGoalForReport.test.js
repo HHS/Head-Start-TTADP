@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { GOAL_SOURCES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -16,7 +17,6 @@ import db, {
   ObjectiveResource,
   Resource,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
 import { activityReportAndRecipientsById } from '../activityReports';
 import { processObjectiveForResourcesById } from '../resource';
@@ -27,6 +27,7 @@ const mockUser = {
   name: 'user5426861',
   hsesUsername: 'user5426861',
   hsesUserId: '5426861',
+  lastLogin: new Date(),
 };
 
 describe('saveGoalsForReport (more tests)', () => {
@@ -100,6 +101,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -107,6 +110,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -115,6 +120,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: addingRecipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: addingRecipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     addingRecipientGrantTwo = await Grant.create(
@@ -122,6 +129,8 @@ describe('saveGoalsForReport (more tests)', () => {
         id: addingRecipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: addingRecipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -134,6 +143,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'activityReportForNewGoal',
+      version: 2,
     });
 
     // Activity report for multiple recipients
@@ -143,6 +153,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'multiRecipientReport',
+      version: 2,
     });
 
     // Activity report for adding a new recipient.
@@ -152,6 +163,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'addingRecipientReport',
+      version: 2,
     });
 
     // report for reused objective text
@@ -161,6 +173,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: 1,
       activityRecipientType: 'recipient',
       context: 'reportForReusedObjectiveText',
+      version: 2,
     });
 
     reportWeArentWorryingAbout = await ActivityReport.create({
@@ -169,6 +182,7 @@ describe('saveGoalsForReport (more tests)', () => {
       userId: mockUser.id,
       activityRecipientType: 'recipient',
       context: 'reportWeArentWorryingAbout',
+      version: 2,
     });
 
     activityReports = [
@@ -473,6 +487,7 @@ describe('saveGoalsForReport (more tests)', () => {
         objectives: [newObjective],
         grantIds: [grantOne.id],
         status: 'Not Started',
+        source: GOAL_SOURCES[0],
       }];
 
     await saveGoalsForReport(newGoals, savedReport);
@@ -493,6 +508,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(savedGoal.name).toBe(goalName);
     expect(savedGoal.grantId).toBe(grantOne.id);
+    expect(savedGoal.source).toStrictEqual(GOAL_SOURCES[0]);
 
     const afterObjectives = await ActivityReportObjective.findAll({
       where: {
@@ -983,7 +999,7 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(goalIds).toContain(alreadyExtantGoal.id);
 
     // Verify goal and objective are deleted.
-    const objectiveIsDeleted = await Goal.findByPk(objectiveToRemoveId);
+    const objectiveIsDeleted = await Objective.findByPk(objectiveToRemoveId);
     expect(objectiveIsDeleted).toBeNull();
     const goalIsDeleted = await Goal.findByPk(goalToRemoveId);
     expect(goalIsDeleted).toBeNull();

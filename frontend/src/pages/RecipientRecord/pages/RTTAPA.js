@@ -2,7 +2,7 @@ import React, {
   useMemo, useState, useEffect, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
-import { useForm } from 'react-hook-form/dist/index.ie11';
+import { useForm } from 'react-hook-form';
 import {
   Button,
   Label,
@@ -13,7 +13,7 @@ import {
 import { Link, useHistory } from 'react-router-dom';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
-import { DECIMAL_BASE } from '../../../Constants';
+import { DECIMAL_BASE } from '@ttahub/common';
 import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';

@@ -1,4 +1,4 @@
-const { APPROVER_STATUSES, REPORT_STATUSES } = require('../../constants');
+const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
 
 /**
  * Helper function called by model hooks.
@@ -52,6 +52,16 @@ const afterCreate = async (sequelize, instance) => {
     const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
     const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
+    if (newCalculatedStatus === REPORT_STATUSES.APPROVED
+      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+      // if the report is being approved, we need to clear the notes on the approvers
+      await sequelize.models.ActivityReportApprover.update({
+        note: '',
+      }, {
+        where: { activityReportId: instance.activityReportId },
+      });
+    }
+
     await sequelize.models.ActivityReport.update({
       calculatedStatus: newCalculatedStatus,
     }, {
@@ -121,7 +131,7 @@ const afterUpdate = async (sequelize, instance) => {
   // This can not be abstracted into a function.
   // Begin
   const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
-    attributes: ['submissionStatus'],
+    attributes: ['submissionStatus', 'calculatedStatus'],
   });
   // We allow users to create approvers before submitting the report. Calculated
   // status should only exist for submitted reports.
@@ -134,6 +144,17 @@ const afterUpdate = async (sequelize, instance) => {
     const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
     const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
+
+    if (newCalculatedStatus === REPORT_STATUSES.APPROVED
+      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+      // if the report is being approved, we need to clear the notes on the approvers
+      await sequelize.models.ActivityReportApprover.update({
+        note: '',
+      }, {
+        where: { activityReportId: instance.activityReportId },
+      });
+    }
+
     await sequelize.models.ActivityReport.update({
       calculatedStatus: newCalculatedStatus,
     }, {
@@ -173,6 +194,16 @@ const afterUpsert = async (sequelize, created) => {
     const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
     const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
+
+    if (newCalculatedStatus === REPORT_STATUSES.APPROVED
+      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+      // if the report is being approved, we need to clear the notes on the approvers
+      await sequelize.models.ActivityReportApprover.update({
+        note: '',
+      }, {
+        where: { activityReportId: instance.activityReportId },
+      });
+    }
 
     /*
       * Here we check to see if the report will be approved and update the approvedAt

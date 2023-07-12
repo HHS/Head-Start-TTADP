@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import moment from 'moment';
 import httpCodes from 'http-codes';
-import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '../../constants';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   User,
@@ -34,6 +34,7 @@ describe('site alert admin handler', () => {
       email: faker.internet.email(),
       homeRegionId: 1,
       hsesUsername: faker.internet.userName(),
+      lastLogin: new Date(),
     });
 
     await Permission.create({

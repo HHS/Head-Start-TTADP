@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportApprover,
@@ -10,8 +11,6 @@ import {
 import {
   activityReportsForCleanup,
 } from './activityReports';
-import { REPORT_STATUSES } from '../constants';
-
 import { createReport, destroyReport } from '../testUtils';
 
 const RECIPIENT_ID = faker.datatype.number({ min: 900 });
@@ -28,6 +27,7 @@ const mockAuthor = {
   hsesUsername: `USER-${MOCK_AUTHOR_ID}`,
   hsesUserId: `USER-${MOCK_AUTHOR_ID}`,
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const mockCollaborator = {
@@ -37,6 +37,7 @@ const mockCollaborator = {
   hsesUserId: `USER-${MOCK_COLLABORATOR_ID}`,
   hsesUsername: `USER-${MOCK_COLLABORATOR_ID}`,
   role: ['COR'],
+  lastLogin: new Date(),
 };
 
 const mockApprover = {
@@ -46,6 +47,7 @@ const mockApprover = {
   hsesUsername: `USER-${MOCK_APPROVER_ID}`,
   hsesUserId: `USER-${MOCK_APPROVER_ID}`,
   role: [],
+  lastLogin: new Date(),
 };
 
 const mockPhantomUser = {
@@ -55,6 +57,7 @@ const mockPhantomUser = {
   hsesUserId: `USER-${MOCK_PHANTOM_USER_ID}`,
   hsesUsername: `USER-${MOCK_PHANTOM_USER_ID}`,
   role: [],
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -66,6 +69,7 @@ const reportObject = {
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ grantId: RECIPIENT_ID }],
   createdAt: new Date(),
+  version: 2,
 };
 
 const submittedReport = {
@@ -106,7 +110,13 @@ describe('Activity report cleanup service', () => {
       Recipient.create({ name: faker.word.noun(), id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
     ]);
     await Grant.create({
-      id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 1, status: 'Active',
+      id: RECIPIENT_ID,
+      number: 1,
+      recipientId: RECIPIENT_ID,
+      regionId: 1,
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // submitted report

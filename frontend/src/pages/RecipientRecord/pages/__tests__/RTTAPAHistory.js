@@ -6,9 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import RTTAPAHistory from '../RTTAPAHistory';
 import UserContext from '../../../../UserContext';
-import { SCOPE_IDS } from '../../../../Constants';
 
 const rttapaUrl = join('/', 'api', 'rttapa');
 
@@ -86,6 +86,7 @@ describe('RTTAPAHistory', () => {
               title: 'Objective 1',
               endDate: '2021-02-01',
               reasons: [],
+              topics: [],
               status: 'Not Started',
               grantNumbers: ['grant-1'],
               activityReports: [

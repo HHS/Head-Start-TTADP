@@ -1,13 +1,19 @@
 import { Op } from 'sequelize';
 import db from '../models';
 
-const { Group, Grant, GroupGrant } = db;
+const {
+  Group,
+  Grant,
+  GroupGrant,
+  User,
+} = db;
 
 interface GroupData {
   userId: number;
   name: string;
   id?: number;
   grants: number[];
+  isPublic: boolean;
 }
 
 interface GroupGrantData {
@@ -28,17 +34,30 @@ interface GroupResponse {
   name: string;
   grants: GrantsResponse[];
   userId: number;
+  isPublic: boolean;
 }
 
-export async function groups(userId: number): Promise<GroupResponse[]> {
+export async function groups(userId: number, regions: number[] = []): Promise<GroupResponse[]> {
   return Group.findAll({
     where: {
-      userId,
+      [Op.or]: [
+        { userId },
+        {
+          '$grants.regionId$': { [Op.in]: regions },
+          isPublic: true,
+        },
+      ],
     },
     include: [
       {
         model: Grant,
         as: 'grants',
+        attributes: ['id', 'regionId'],
+      },
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name'],
       },
     ],
   });
@@ -100,7 +119,8 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
 
   // then, we simply need to update the group name
   await Group.update({
-    name: data.name,
+    name: data.name.trim(),
+    isPublic: data.isPublic,
   }, {
     where: {
       id: groupId,
@@ -114,7 +134,8 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
 export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
   const newGroup = await Group.create({
     userId: data.userId,
-    name: data.name,
+    name: data.name.trim(),
+    isPublic: data.isPublic,
   });
 
   await Promise.all(data.grants.map(async (grantId) => {

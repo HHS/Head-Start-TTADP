@@ -1,9 +1,9 @@
 import { isEqual } from 'lodash';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
-  REPORT_STATUSES,
 } from '../../Constants';
 
 const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
@@ -51,7 +51,6 @@ export const findWhatsChanged = (object, base) => {
 
       accumulator.goals = [
         ...(base.goals || []),
-        ...(base.goalsAndObjectives || []),
       ].map((goal) => ({
         ...goal,
         grantIds,
@@ -72,6 +71,9 @@ export const findWhatsChanged = (object, base) => {
 
           return true;
         })(),
+        // no multigrant/multirecipient reports should have prompts
+        prompts: grantIds.length < 2 ? goal.prompts : [],
+        source: grantIds.length < 2 ? goal.source : '',
       }));
     }
 
@@ -122,11 +124,20 @@ export const convertGoalsToFormData = (
   ) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = { ...goal, grantIds, objectives: goal.objectives };
+    accumulatedData.goalForEditing = {
+      ...goal,
+      grantIds,
+      objectives: goal.objectives,
+      source: grantIds.length < 2 ? goal.source : '',
+    };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
     // grant ids
-    accumulatedData.goals.push({ ...goal, grantIds });
+    accumulatedData.goals.push({
+      ...goal,
+      grantIds,
+      source: grantIds.length < 2 ? goal.source : '',
+    });
   }
 
   return accumulatedData;
@@ -175,3 +186,5 @@ export const convertReportToFormData = (fetchedReport) => {
     objectivesWithoutGoals,
   };
 };
+
+export const formatTitleForHtmlAttribute = (title) => title.replace(/\s/g, '-').toLowerCase();

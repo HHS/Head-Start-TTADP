@@ -1,13 +1,14 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
 import React from 'react';
 import { Router } from 'react-router';
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import {
   render,
 } from '@testing-library/react';
 import moment from 'moment';
 import ActivityReport from './index';
-import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 
@@ -59,25 +60,39 @@ export const formData = () => ({
   objectivesWithoutGoals: [],
 });
 
+export const ReportComponent = ({
+  id,
+  currentPage = 'activity-summary',
+  showLastUpdatedTime = null,
+  userId = 1,
+}) => (
+  <Router history={history}>
+    <AppLoadingContext.Provider value={{
+      setIsAppLoading: jest.fn(),
+      setAppLoadingText: jest.fn(),
+    }}
+    >
+      <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
+        <ActivityReport
+          match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
+          location={{
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+          }}
+          region={1}
+        />
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>
+  </Router>
+);
+
 export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{
-        setIsAppLoading: jest.fn(),
-        setAppLoadingText: jest.fn(),
-      }}
-      >
-        <UserContext.Provider value={{ user: { ...user, id: userId } }}>
-          <ActivityReport
-            match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
-            location={{
-              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-            }}
-            region={1}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
+    <ReportComponent
+      id={id}
+      currentPage={currentPage}
+      showLastUpdatedTime={showLastUpdatedTime}
+      userId={userId}
+    />,
   );
 };
 

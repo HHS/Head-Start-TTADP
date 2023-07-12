@@ -1,16 +1,23 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import UserPolicy from '../../policies/user';
+import EventPolicy from '../../policies/event';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  userById, usersWithPermissions, statisticsByUser, setFlag,
+  userById,
+  usersWithPermissions,
+  statisticsByUser,
+  setFlag,
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
 } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
-import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
+import getCachedResponse from '../../lib/cache';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -36,7 +43,14 @@ export async function getUserStatistics(req, res) {
     const authorization = new UserPolicy(user);
     // Get regions user can write.
     const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
-    const statistics = await statisticsByUser(user, regions, !canWrite);
+    const key = `statisticsByUser?userId=${user.id}`;
+
+    const statistics = await getCachedResponse(
+      key,
+      async () => JSON.stringify(await statisticsByUser(user, regions, !canWrite)),
+      JSON.parse,
+    );
+
     res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
@@ -139,5 +153,38 @@ export async function setFeatureFlag(req, res) {
     res.json(result);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportUsers(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.query;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+
+    if (!authorization.canWriteInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await getTrainingReportUsersByRegion(region));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getNamesByIds(req, res) {
+  try {
+    const { ids } = req.query;
+    if (!ids) {
+      res.sendStatus(400);
+      return;
+    }
+    res.json(await getUserNamesByIds(ids));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
 }

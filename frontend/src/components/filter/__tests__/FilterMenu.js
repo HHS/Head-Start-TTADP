@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -15,6 +16,7 @@ import {
   recipientFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -29,7 +31,7 @@ import {
   topicsFilter as goalTopicsFilter,
 } from '../goalFilters';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
+
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
@@ -391,6 +393,7 @@ describe('Filter Menu', () => {
       otherEntitiesFilter,
       myReportsFilter,
       reportTextFilter,
+      singleOrMultiRecipientsFilter,
       endDateFilter,
     ];
 

@@ -321,6 +321,7 @@ describe('Audit System', () => {
         email: faker.internet.exampleEmail(),
         hsesUserId: faker.datatype.number(),
         hsesUsername: faker.internet.userName(),
+        lastLogin: new Date(),
       }, { transaction: t });
     });
 

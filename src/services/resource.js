@@ -261,6 +261,7 @@ const filterResourcesForSync = (
       destroy: [],
     };
   }
+
   // pull all of the new and expanded resources in a single pass over the incomingResources.
   const newExpandedResources = incomingResources
     .reduce((resources, resource) => {
@@ -681,6 +682,10 @@ const genericSyncResourcesForEntity = async (
     [resourceTableForeignKey]: resource[resourceTableForeignKey],
     resourceId: resource.resourceId,
     sourceFields: resource.sourceFields,
+    ...(Object.values(resourceTableModel?.rawAttributes)
+      ?.map(({ fieldName }) => fieldName)
+      .includes('onAR')
+      && { onAR: false, onApprovedAR: false }),
   })),
   ...resources.update.map(async (resource) => resourceTableModel.update(
     {

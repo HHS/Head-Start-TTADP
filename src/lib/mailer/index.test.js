@@ -1,4 +1,5 @@
 import { createTransport } from 'nodemailer';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
   collaboratorAssignedNotification,
@@ -11,11 +12,12 @@ import {
   submittedDigest,
   approvedDigest,
   notificationQueue as notificationQueueMock,
-  notificationDigestQueue as notificationDigestQueueMock,
+  notificationQueue as notificationDigestQueueMock,
   notifyRecipientReportApproved,
 } from '.';
 import {
-  EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES,
+  EMAIL_ACTIONS,
+  EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
 } from '../../constants';
 import { auditLogger as logger } from '../../logger';
@@ -32,7 +34,7 @@ const mockManager = {
   email: 'mockManager@test.gov',
 };
 const mockApprover = {
-  User: mockManager,
+  user: mockManager,
   note: 'You are awesome! Nice work!',
 };
 const mockAuthor = {
@@ -63,6 +65,7 @@ const mockUser = {
   hsesUsername: 'user2115665161',
   hsesUserId: 'user2115665161',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const digestMockCollab = {
@@ -81,6 +84,7 @@ const digestMockApprover = {
   hsesUserId: 'bu',
   hsesUsername: 'bu',
   role: [],
+  lastLogin: new Date(),
 };
 
 const mockReport = {
@@ -109,6 +113,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
+  version: 2,
 };
 
 const submittedReport = {

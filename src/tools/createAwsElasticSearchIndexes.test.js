@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable no-underscore-dangle */
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -18,7 +19,7 @@ import {
   search,
 } from '../lib/awsElasticSearch/index';
 import { processActivityReportObjectiveForResourcesById } from '../services/resource';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 import { auditLogger } from '../logger';
 
 const mockUser = {
@@ -27,6 +28,7 @@ const mockUser = {
   hsesUsername: 'tg234234',
   hsesUserId: 'tg234234',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {
@@ -46,6 +48,7 @@ const draft = {
   context: 'Lets give some context.',
   nonECLKCResourcesUsed: [],
   ECLKCResourcesUsed: [],
+  version: 2,
 };
 
 const approvedReport = {
@@ -88,6 +91,8 @@ describe('Create AWS Elastic Search Indexes', () => {
         number: 'ES234234',
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Draft Report (excluded).

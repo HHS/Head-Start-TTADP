@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
@@ -13,7 +13,7 @@ import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
-import ConnectionError from '../../components/ConnectionError';
+import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
@@ -130,8 +130,8 @@ const Draft = ({
           >
             <ApproverSelect
               name="approvers"
-              valueProperty="User.id"
-              labelProperty="User.fullName"
+              valueProperty="user.id"
+              labelProperty="user.fullName"
               options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
             />
           </FormItem>

@@ -1,4 +1,5 @@
-import { REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../constants';
 import {
   ActivityReport,
   User,
@@ -184,7 +185,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 3,
-      User: {
+      user: {
         name: 'Test Approver 1',
 
       },
@@ -193,7 +194,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 4,
-      User: {
+      user: {
         name: 'Test Approver 3',
       },
     },
@@ -201,7 +202,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 5,
-      User: {
+      user: {
         name: 'Test Approver 2',
       },
     },
@@ -407,7 +408,7 @@ describe('activityReportToCsvRecord', () => {
         {
           model: ActivityReportApprover,
           as: 'approvers',
-          include: [{ model: User }],
+          include: [{ model: User, as: 'user' }],
         },
 
         {
@@ -434,7 +435,6 @@ describe('activityReportToCsvRecord', () => {
         },
       ],
     });
-
     const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,

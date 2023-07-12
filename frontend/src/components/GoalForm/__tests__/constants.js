@@ -1,4 +1,10 @@
-import { validateListOfResources } from '../constants';
+import { validateListOfResources, FORM_FIELD_DEFAULT_ERRORS, FORM_FIELD_INDEXES } from '../constants';
+
+describe('form constants', () => {
+  it('the amount of form fields and the amount of default errors should match', () => {
+    expect(Object.keys(FORM_FIELD_INDEXES).length).toBe(FORM_FIELD_DEFAULT_ERRORS.length);
+  });
+});
 
 describe('validateListOfResources', () => {
   it('returns false if there is an invalid resource', () => {

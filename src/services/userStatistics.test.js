@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -28,6 +28,7 @@ const mockUser = {
   hsesUsername: 'user1134265161',
   hsesUserId: 'statisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 // Other user.
@@ -38,6 +39,7 @@ const otherMockUser = {
   hsesUsername: 'otheruser1134265161',
   hsesUserId: 'otherstatisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 // Extra user.
@@ -48,6 +50,7 @@ const extraMockUser = {
   hsesUsername: 'extrauser1134265161',
   hsesUserId: 'extrastatisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 // Outside Region user.
@@ -58,6 +61,7 @@ const outsideRegionMockUser = {
   hsesUsername: 'outsideRegionuser1134265161',
   hsesUserId: 'outsideRegiontatisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 const report = {
@@ -80,6 +84,7 @@ const report = {
   ECLKCResourcesUsed: ['test'],
   objectivesWithoutGoals: [],
   goals: [],
+  version: 2,
 };
 
 describe('statisticsByUser', () => {
@@ -164,6 +169,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientOne.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
     grantTwo = await Grant.create({
       id: faker.datatype.number(),
@@ -171,6 +178,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientTwo.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
     grantThree = await Grant.create({
       id: faker.datatype.number(),
@@ -178,6 +187,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientThree.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     grantFour = await Grant.create({
@@ -186,6 +197,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientFour.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     grantOutsideRegion = await Grant.create({
@@ -194,6 +207,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 2,
       recipientId: recipientOutsideRegion.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // Goals.

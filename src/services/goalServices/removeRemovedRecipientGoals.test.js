@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -9,7 +10,6 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
 
 describe('removeRemovedRecipientsGoals', () => {
@@ -51,6 +51,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientOne.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientOne.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
     grantTwo = await Grant.create(
@@ -58,6 +60,8 @@ describe('removeRemovedRecipientsGoals', () => {
         id: recipientTwo.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
       },
     );
 
@@ -69,6 +73,7 @@ describe('removeRemovedRecipientsGoals', () => {
       regionId: 1,
       userId: 1,
       activityRecipientType: 'recipient',
+      version: 2,
     });
 
     await ActivityRecipient.create({
@@ -167,6 +172,7 @@ describe('removeRemovedRecipientsGoals', () => {
       regionId: 1,
       userId: 1,
       activityRecipientType: 'recipient',
+      version: 2,
     });
 
     await ActivityReportGoal.create({

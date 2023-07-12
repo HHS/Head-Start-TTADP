@@ -1,5 +1,6 @@
 import { validate } from 'uuid';
 import waitFor from 'wait-for-expect';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   File,
   ActivityReport,
@@ -14,13 +15,16 @@ import db, {
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as scanQueue from '../../services/scanQueue';
-import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
+import { FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
+// import { s3Queue } from '../../services/s3Queue';
+import * as s3Queue from '../../services/s3Queue';
 
+jest.mock('bull');
 jest.mock('../../policies/activityReport');
 jest.mock('../../policies/user');
 jest.mock('../../policies/objective');
@@ -35,18 +39,21 @@ const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3');
 jest.mock('../../lib/queue');
+jest.mock('../../services/s3Queue');
 
 const mockUser = {
   id: 2046,
   hsesUserId: '2046',
   hsesUsername: '2046',
   homeRegionId: 1,
+  lastLogin: new Date(),
 };
 
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
 
 const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation(() => jest.fn());
+jest.spyOn(s3Queue, 'addDeleteFileToQueue').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -55,6 +62,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
   regionId: 1,
+  version: 2,
 };
 
 const mockGrant = {
@@ -381,7 +389,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
+        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, or sessionId is required' });
       await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {

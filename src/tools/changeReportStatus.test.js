@@ -1,8 +1,8 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReport,
 } from '../models';
-import { REPORT_STATUSES } from '../constants';
 import changeReportStatus from './changeReportStatus';
 
 jest.mock('../logger');
@@ -24,6 +24,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  version: 2,
 };
 
 describe('changeStatus', () => {

@@ -1,5 +1,10 @@
-import { SCOPE_IDS } from '../Constants';
-import isAdmin, { hasReadWrite, allRegionsUserHasPermissionTo, getRegionWithReadWrite } from '../permissions';
+import { SCOPE_IDS } from '@ttahub/common';
+import isAdmin, {
+  hasReadWrite,
+  allRegionsUserHasPermissionTo,
+  getRegionWithReadWrite,
+  hasApproveActivityReport,
+} from '../permissions';
 
 describe('permissions', () => {
   describe('isAdmin', () => {
@@ -58,11 +63,15 @@ describe('permissions', () => {
             scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
             regionId: 4,
           },
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 3,
+          },
         ],
       };
       const includeAdmin = true;
       const regions = allRegionsUserHasPermissionTo(user, includeAdmin);
-      expect(regions).toEqual(expect.arrayContaining([14, 3, 4]));
+      expect(regions).toEqual(expect.arrayContaining([14, 3, 4, 3]));
     });
 
     it('returns empty array when user has no permissions', () => {
@@ -95,6 +104,32 @@ describe('permissions', () => {
         ],
       };
       expect(hasReadWrite(user)).toBeFalsy();
+    });
+  });
+
+  describe('hasApproveActivityReport', () => {
+    it('returns true if the user has approve activity report permission', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 5,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasApproveActivityReport(user)).toBeTruthy();
+    });
+
+    it('returns false if the user does not have approve activity report permission', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 2,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasApproveActivityReport(user)).toBeFalsy();
     });
   });
 

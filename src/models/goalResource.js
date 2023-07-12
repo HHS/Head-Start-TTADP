@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-// const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/goalResource');
+const { afterDestroy } = require('./hooks/goalResource');
 
 export default (sequelize, DataTypes) => {
   class GoalResource extends Model {
@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     sourceFields: {
       allowNull: true,
@@ -41,14 +42,22 @@ export default (sequelize, DataTypes) => {
         return calculateIsAutoDetectedForGoal(this.get('sourceFields'));
       },
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalResource',
-    // hooks: {
-    //   beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
-    //   afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    // },
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return GoalResource;
 };

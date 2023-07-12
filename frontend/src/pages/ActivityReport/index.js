@@ -16,20 +16,19 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import pages from './Pages';
-import Navigator from '../../components/Navigator';
+import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  REPORT_STATUSES,
-  DECIMAL_BASE,
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
-import useSocket from '../../hooks/useSocket';
+import useSocket, { publishLocation } from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 
 import {
@@ -43,9 +42,8 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
-import useLocalStorage from '../../hooks/useLocalStorage';
+import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
@@ -109,30 +107,7 @@ export function cleanupLocalStorage(id, replacementKey) {
   }
 }
 
-function setConnectionActiveWithError(e, setConnectionActive) {
-  let connection = false;
-  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
-  // display the "network is unavailable" message
-  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
-    connection = true;
-  }
-  setConnectionActive(connection);
-  return connection;
-}
-
 const INTERVAL_DELAY = 10000; // TEN SECONDS
-
-const publishLocation = (socket, socketPath, user, lastSaveTime) => {
-  // we have to check to see if the socket is open before we send a message
-  // since the interval could be called while the socket is open but is about to close
-  if (socket && socket.readyState === socket.OPEN) {
-    socket.send(JSON.stringify({
-      user: user.name,
-      lastSaveTime,
-      channel: socketPath,
-    }));
-  }
-};
 
 function ActivityReport({
   match, location, region,
@@ -258,7 +233,7 @@ function ActivityReport({
 
         // The report can be edited if its in draft OR needs_action state.
 
-        const isMatchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
+        const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
@@ -391,19 +366,19 @@ function ActivityReport({
 
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage && editable && isPendingApprover) {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 
@@ -423,7 +398,7 @@ function ActivityReport({
   };
 
   const onSave = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
         const { startDate, endDate, ...fields } = data;
@@ -510,7 +485,7 @@ function ActivityReport({
   };
 
   const onFormSubmit = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approverIds = data.approvers.map((a) => a.user.id);
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       approverUserIds: approverIds,
@@ -590,7 +565,7 @@ function ActivityReport({
         }
       }
       >
-        <Navigator
+        <ActivityReportNavigator
           socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}

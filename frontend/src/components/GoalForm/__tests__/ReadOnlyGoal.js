@@ -13,6 +13,11 @@ describe('ReadOnlyGoal', () => {
     objectives: [],
     endDate: null,
     id: 1,
+    prompts: [{
+      title: 'All about this goal',
+      ordinal: 1,
+      response: ['vivid', 'ambitious', 'specific'],
+    }],
   };
 
   const renderReadOnlyGoal = (hideEdit = false, onRemove = jest.fn()) => {
@@ -57,7 +62,16 @@ describe('ReadOnlyGoal', () => {
     userEvent.click(removeButton);
 
     expect(onRemove).toHaveBeenCalledWith({
-      endDate: null, grant: {}, id: 1, name: 'Sample goal', objectives: [],
+      endDate: null,
+      grant: {},
+      id: 1,
+      name: 'Sample goal',
+      objectives: [],
+      prompts: [{
+        title: 'All about this goal',
+        ordinal: 1,
+        response: ['vivid', 'ambitious', 'specific'],
+      }],
     });
   });
 });

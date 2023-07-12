@@ -8,6 +8,8 @@ import {
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
   MY_REPORTS_FILTER_CONDITIONS,
+  SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  SPECIALIST_NAME_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -15,6 +17,7 @@ import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
+import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
@@ -24,6 +27,7 @@ import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
+import { useDisplayGroups } from './utils';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -63,15 +67,26 @@ const defaultDateValues = {
   'is on or before': '',
 };
 
+export const fixQueryWhetherStringOrArray = (query) => {
+  if (Array.isArray(query)) {
+    return query.join(', ');
+  }
+  return query;
+};
+
 export const startDateFilter = {
   id: 'startDate',
   display: 'Date started',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+
+    const smushed = fixQueryWhetherStringOrArray(query);
+
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
@@ -143,6 +158,38 @@ export const reportTextFilter = {
   ),
 };
 
+export const resourceLinkFilter = {
+  id: 'resourceUrl',
+  display: 'Resource link',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceLink-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource link text"
+    />
+  ),
+};
+
+export const resourceAttachmentFilter = {
+  id: 'resourceAttachment',
+  display: 'Resource attachment',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceAttachment-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource attachment file name"
+    />
+  ),
+};
+
 export const otherEntitiesFilter = {
   id: 'otherEntities',
   display: 'Other entities',
@@ -173,6 +220,23 @@ export const programSpecialistFilter = {
     />
   ),
 };
+
+export const specialistNameFilter = {
+  id: 'specialistName',
+  display: 'Specialist name',
+  conditions: SPECIALIST_NAME_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`specialist-name-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a specialist name"
+    />
+  ),
+};
+
 export const programTypeFilter = {
   id: 'programType',
   display: 'Program types',
@@ -342,6 +406,23 @@ export const targetPopulationsFilter = {
   ),
 };
 
+export const singleOrMultiRecipientsFilter = {
+  id: 'singleOrMultiRecipients',
+  display: 'Number of recipients',
+  conditions: SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  defaultValues: {
+    is: 'single-recipient',
+  },
+  displayQuery: mapDisplayValue,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSingleOrMultiRecipientsSelect
+      inputId={`single-or-multi-recipients-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const myReportsFilter = {
   id: 'myReports',
   display: 'My reports',
@@ -377,7 +458,7 @@ export const groupsFilter = {
   display: 'Group',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: useDisplayGroups,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterGroups
       inputId={`group-${condition}-${id}`}

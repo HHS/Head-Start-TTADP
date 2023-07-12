@@ -3,12 +3,16 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
   Fieldset, Radio, Grid, TextInput, Checkbox, Label,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
+import {
+  TARGET_POPULATIONS as targetPopulations,
+  REASONS as reasons,
+} from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -18,17 +22,14 @@ import {
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import {
-  REASONS as reasons,
-  TARGET_POPULATIONS as targetPopulations,
-} from '../../../Constants';
-import ConnectionError from './components/ConnectionError';
+import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
 const ActivitySummary = ({
   recipients,
@@ -644,13 +645,36 @@ export default {
   path: 'activity-summary',
   reviewSection: () => <ReviewSection />,
   review: false,
-  render: (additionalData) => {
+  render: (
+    additionalData,
+    _formData,
+    _reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
+  ) => {
     const { recipients, collaborators } = additionalData;
     return (
-      <ActivitySummary
-        recipients={recipients}
-        collaborators={collaborators}
-      />
+      <>
+        <ActivitySummary
+          recipients={recipients}
+          collaborators={collaborators}
+        />
+        <Alert />
+        <NavigatorButtons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          path="activity-summary"
+          position={1}
+          onUpdatePage={onUpdatePage}
+        />
+      </>
     );
   },
   isPageComplete,
