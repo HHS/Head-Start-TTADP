@@ -71,9 +71,14 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => (
     <div className="padding-x-1">
       <NextSteps />
+      <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>

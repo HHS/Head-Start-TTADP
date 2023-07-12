@@ -57,6 +57,7 @@ describe('saveReport', () => {
       phoneNumber: faker.phone.phoneNumber(),
       name: faker.name.findName(),
       role: ['Grants Specialist'],
+      lastLogin: new Date(),
     });
 
     secondUser = await User.create({
@@ -67,6 +68,7 @@ describe('saveReport', () => {
       phoneNumber: faker.phone.phoneNumber(),
       name: faker.name.findName(),
       role: ['Grants Specialist'],
+      lastLogin: new Date(),
     });
 
     await Permission.create({

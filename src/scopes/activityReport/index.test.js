@@ -46,6 +46,7 @@ const mockUser = {
   name: 'user13706689',
   hsesUsername: 'user13706689',
   hsesUserId: 'user13706689',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -54,6 +55,7 @@ const mockUserTwo = {
   name: 'user137065478',
   hsesUsername: 'user137065478',
   hsesUserId: 'user137065478',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -62,12 +64,14 @@ const mockManager = {
   name: 'user50565590',
   hsesUsername: 'user50565590',
   hsesUserId: 'user50565590',
+  lastLogin: new Date(),
 };
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const submittedReport = {
@@ -96,6 +100,7 @@ const deletedReport = {
   submissionStatus: REPORT_STATUSES.DELETED,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const approverApproved = {
@@ -114,6 +119,7 @@ describe('filtersToScopes', () => {
   let globallyExcludedReport;
   let includedUser1;
   let includedUser2;
+  let includedUser3;
   let excludedUser;
   let client;
 
@@ -122,10 +128,31 @@ describe('filtersToScopes', () => {
     await User.create(mockUserTwo);
     await User.create(mockManager);
     includedUser1 = await User.create({
-      name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
+      name: 'person',
+      hsesUserId: 'user111',
+      hsesUsername: 'user111',
+      lastLogin: new Date(),
     });
-    includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
-    excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' });
+    includedUser2 = await User.create({
+      name: 'another person',
+      hsesUserId: 'user222',
+      hsesUsername: 'user222',
+      lastLogin: new Date(),
+    });
+
+    includedUser3 = await User.create({
+      name: 'third person',
+      hsesUserId: 'user536',
+      hsesUsername: 'user536',
+    });
+
+    excludedUser = await User.create({
+      name: 'excluded',
+      hsesUserId: 'user333',
+      hsesUsername: 'user333',
+      lastLogin: new Date(),
+    });
+
     globallyExcludedReport = await ActivityReport.create({
       ...draftReport, deliveryMethod: 'method', updatedAt: '2000-01-01',
     }, {
@@ -154,6 +181,7 @@ describe('filtersToScopes', () => {
       mockManager.id,
       includedUser1.id,
       includedUser2.id,
+      includedUser3.id,
       excludedUser.id];
     const reports = await ActivityReport.unscoped().findAll({
       where: {
@@ -1391,6 +1419,99 @@ describe('filtersToScopes', () => {
     });
   });
 
+  describe('specialistName', () => {
+    let includeCollaboratorReport;
+    let includeCreatorReport;
+    let excludedReport;
+    let possibleIds;
+
+    let includedActivityReportCollaborator1;
+    let includedActivityReportCollaborator2;
+    let excludedActivityReportCollaborator;
+
+    beforeAll(async () => {
+      // Collaborator report.
+      includeCollaboratorReport = await ActivityReport.create({
+        ...draftReport, userId: includedUser3.id,
+      });
+
+      // Creator report.
+      includeCreatorReport = await ActivityReport.create({
+        ...draftReport, userId: includedUser2.id,
+      });
+
+      // Exclude report.
+      excludedReport = await ActivityReport.create(draftReport);
+
+      // Collaborators.
+      includedActivityReportCollaborator1 = await ActivityReportCollaborator.create({
+        activityReportId: includeCollaboratorReport.id, userId: includedUser1.id,
+      });
+
+      includedActivityReportCollaborator2 = await ActivityReportCollaborator.create({
+        activityReportId: includeCreatorReport.id, userId: includedUser3.id,
+      });
+
+      excludedActivityReportCollaborator = await ActivityReportCollaborator.create({
+        activityReportId: excludedReport.id, userId: excludedUser.id,
+      });
+      possibleIds = [
+        includeCollaboratorReport.id,
+        includeCreatorReport.id,
+        excludedReport.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: { id: [includeCollaboratorReport.id, includeCreatorReport.id, excludedReport.id] },
+      });
+      await ActivityReportCollaborator.destroy({
+        where: {
+          id: [
+            includedActivityReportCollaborator1.id,
+            includedActivityReportCollaborator2.id,
+            excludedActivityReportCollaborator.id,
+          ],
+        },
+      });
+    });
+
+    it('finds the report by collaborator', async () => {
+      const filters = { 'specialistName.collaborator': [includedUser1.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
+    });
+
+    it('finds the report by creator', async () => {
+      const filters = { 'specialistName.creator': [includedUser2.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCreatorReport.id]));
+    });
+
+    it('finds the report by both', async () => {
+      const filters = { 'specialistName.both': [includedUser3.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
+    });
+  });
+
   describe('calculatedStatus', () => {
     let includedReportMultApprover;
     let excludedReportMultApprover;
@@ -1452,7 +1573,11 @@ describe('filtersToScopes', () => {
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
 
       await User.create({
-        id: possibleIds[0], name: 'u777', hsesUsername: 'u777', hsesUserId: '777',
+        id: possibleIds[0],
+        name: 'u777',
+        hsesUsername: 'u777',
+        hsesUserId: '777',
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1466,7 +1591,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[1], name: 'u778', hsesUsername: 'u778', hsesUserId: '778', role: ['Grantee Specialist'],
+        id: possibleIds[1],
+        name: 'u778',
+        hsesUsername: 'u778',
+        hsesUserId: '778',
+        role: ['Grantee Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1475,7 +1605,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[2], name: 'u779', hsesUsername: 'u779', hsesUserId: '779', role: ['Grants Specialist'],
+        id: possibleIds[2],
+        name: 'u779',
+        hsesUsername: 'u779',
+        hsesUserId: '779',
+        role: ['Grants Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -2399,6 +2534,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,
@@ -2425,6 +2561,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,
@@ -2581,6 +2718,7 @@ describe('filtersToScopes', () => {
           requester: 'requester',
           regionId: 1,
           targetPopulations: [],
+          version: 2,
         },
         individualHooks: true,
         raw: true,

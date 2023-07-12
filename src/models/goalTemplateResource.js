@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     sourceFields: {
       allowNull: true,

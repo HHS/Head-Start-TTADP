@@ -26,6 +26,7 @@ const mockUser = {
   name: 'user11818461',
   hsesUsername: 'user11818461',
   hsesUserId: 'user11818461',
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -51,6 +52,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 const regionOneReport = {

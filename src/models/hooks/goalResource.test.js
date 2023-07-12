@@ -30,6 +30,8 @@ describe('goalResource hooks', () => {
       goalId: goalToDestroy.id,
       resourceId: resourceToDestroy.id,
       sourceFields: ['resource'],
+      onAR: false,
+      onApprovedAR: false,
     });
   });
 

@@ -46,6 +46,7 @@ export const defaultValues = {
     1: NOT_STARTED,
     2: NOT_STARTED,
     3: NOT_STARTED,
+    4: NOT_STARTED,
   },
 };
 export const pageComplete = (
