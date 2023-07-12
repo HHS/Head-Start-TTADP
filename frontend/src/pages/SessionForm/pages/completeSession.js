@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -158,7 +158,10 @@ export default {
   review: false,
   label: 'Complete session',
   path,
-  isPageComplete: (formData) => formData.calculatedStatus === REPORT_STATUSES.SUBMITTED,
+  isPageComplete: ({ getValues }) => {
+    const { status } = getValues();
+    return status === EVENT_REPORT_STATUSES.COMPLETE;
+  },
   render:
     (
       _additionalData,
