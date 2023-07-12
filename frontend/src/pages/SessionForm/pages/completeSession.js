@@ -4,12 +4,10 @@ import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Form, Button, Dropdown, Alert,
+  Button, Dropdown, Alert,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
-import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NavigatorHeader from '../../../components/Navigator/components/NavigatorHeader';
 
 const position = 4;
 const path = 'complete-session';
@@ -26,10 +24,9 @@ const CompleteSession = ({
   formData,
   onSaveForm,
   onUpdatePage,
-  draftAlert,
+  DraftAlert,
 }) => {
   const { setError } = useFormContext();
-
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
@@ -70,11 +67,6 @@ const CompleteSession = ({
         <title>Complete session</title>
       </Helmet>
 
-      <NavigatorHeader
-        label="Complete session"
-        formData={formData}
-      />
-
       <IndicatesRequiredField />
       <p className="usa-prose">
         Review the information in each section before submitting the session.
@@ -99,7 +91,7 @@ const CompleteSession = ({
         </FormItem>
       </div>
 
-      {draftAlert}
+      <DraftAlert />
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
@@ -133,7 +125,7 @@ const CompleteSession = ({
 };
 
 CompleteSession.propTypes = {
-  draftAlert: PropTypes.node.isRequired,
+  DraftAlert: PropTypes.node.isRequired,
   formData: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,
@@ -176,18 +168,12 @@ export default {
       onFormSubmit,
       DraftAlert,
     ) => (
-      <Container skipTopPadding>
-        <Form
-          className="smart-hub--form-large smart-hub--form__activity-report-form"
-        >
-          <CompleteSession
-            onSubmit={onFormSubmit}
-            onSaveForm={onSaveDraft}
-            formData={formData}
-            onUpdatePage={onUpdatePage}
-            draftAlert={DraftAlert}
-          />
-        </Form>
-      </Container>
+      <CompleteSession
+        onSubmit={onFormSubmit}
+        onSaveForm={onSaveDraft}
+        formData={formData}
+        onUpdatePage={onUpdatePage}
+        DraftAlert={DraftAlert}
+      />
     ),
 };

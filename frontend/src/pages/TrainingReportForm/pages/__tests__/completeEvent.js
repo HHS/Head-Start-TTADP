@@ -52,6 +52,7 @@ describe('completeEvent', () => {
                 false,
                 '',
                 onSubmit,
+                () => <></>,
               )}
             </NetworkContext.Provider>
           </AppLoadingContext.Provider>
@@ -74,7 +75,6 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent />);
       });
 
-      expect(await screen.findByRole('heading', { name: /complete event/i })).toBeInTheDocument();
       expect(await screen.findByRole('cell', { name: /toothbrushing vol 2/i })).toBeInTheDocument();
       expect(await screen.findByRole('cell', { name: /toothbrushing vol 3/i })).toBeInTheDocument();
       expect(await screen.findAllByRole('cell', { name: /complete/i })).toHaveLength(2); // sessions without names are filtered out
