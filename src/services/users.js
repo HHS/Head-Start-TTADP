@@ -467,6 +467,9 @@ export async function getTrainingReportUsersByRegion(regionId) {
         },
       },
     ],
+    order: [
+      [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
+    ],
   });
 
   const results = {
