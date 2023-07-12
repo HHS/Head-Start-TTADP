@@ -26,8 +26,11 @@ function EventCard({
     parseInt(event.regionId, DECIMAL_BASE),
   );
 
+  // Check if user is POC.
+  const isPoc = event.pocId && event.pocId.includes(user.id);
+
   // Check if user has been assigned an event role.
-  const hasEditRole = (event.pocId && event.pocId.includes(user.id))
+  const hasEditRole = isPoc
     || (event.collaboratorIds && event.collaboratorIds.includes(user.id))
     || (event.ownerId === user.id);
 
@@ -59,6 +62,14 @@ function EventCard({
       label: 'Edit event',
       onClick: () => {
         history.push(`/training-report/${event.id}/event-summary`);
+      },
+    });
+  } else if (isPoc) {
+    // Create session.
+    menuItems.push({
+      label: 'Create session',
+      onClick: () => {
+        history.push(`/training-report/${event.id}/session/new/`);
       },
     });
   }
