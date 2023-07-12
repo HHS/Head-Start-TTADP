@@ -3,6 +3,7 @@
 import { _ } from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
 import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
@@ -13,6 +14,7 @@ const models = {
   activityReport,
   grant,
   goal,
+  trainingReport,
 };
 
 async function checkForSearchItems(filters) {

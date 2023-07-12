@@ -22,6 +22,7 @@ import withStateCode from './stateCode';
 import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withGoalType, withoutGoalType } from './goalType';
+import { withGroup, withoutGroup } from './group';
 
 export const topicToQuery = {
   createDate: {
@@ -68,6 +69,10 @@ export const topicToQuery = {
   role: {
     in: (query) => withRoles(query),
     nin: (query) => withoutRoles(query),
+  },
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
   },
   grantNumber: {
     in: (query) => withGrantNumber(query),

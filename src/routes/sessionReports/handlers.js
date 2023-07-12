@@ -9,6 +9,7 @@ import {
   findSessionById,
   updateSession,
   destroySession,
+  getPossibleSessionParticipants,
 } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
@@ -32,16 +33,16 @@ export const getHandler = async (req, res) => {
       eventId,
     } = req.params;
 
-    if (id) {
-      session = await findSessionById(id);
-    } else if (eventId) {
-      session = await findSessionsByEventId(eventId);
-    }
-
     const params = [id, eventId];
 
     if (params.every((param) => typeof param === 'undefined')) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
+    }
+
+    if (id) {
+      session = await findSessionById(id);
+    } else if (eventId) {
+      session = await findSessionsByEventId(eventId);
     }
 
     if (!session) {
@@ -66,7 +67,7 @@ export const createHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' });
     }
 
-    const { eventId } = req.body;
+    const { eventId, data } = req.body;
 
     if (eventId === undefined) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
@@ -78,7 +79,16 @@ export const createHandler = async (req, res) => {
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
 
-    const session = await createSession(req.body);
+    const session = await createSession({
+      eventId,
+      data: {
+        ...data,
+        eventName: event.data.eventName,
+        eventDisplayId: event.data.eventId,
+        regionId: event.regionId,
+        eventOwner: event.ownerId,
+      },
+    });
     return res.status(httpCodes.CREATED).send(session);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
@@ -121,7 +131,17 @@ export const deleteHandler = async (req, res) => {
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
     await destroySession(id);
-    return res.status(httpCodes.OK);
+    return res.status(httpCodes.OK).send({ message: 'Session report deleted' });
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const getParticipants = async (req, res) => {
+  try {
+    const { regionId } = req.params; // checked by middleware
+    const participants = await getPossibleSessionParticipants(Number(regionId));
+    return res.status(httpCodes.OK).send(participants);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

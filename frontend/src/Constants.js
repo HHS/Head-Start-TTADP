@@ -10,12 +10,16 @@ export const IS = 'is';
 export const IS_NOT = 'is not';
 export const WHERE_IM_THE = 'where I\'m the';
 export const WHERE_IM_NOT_THE = 'where I\'m not the';
+export const IS_COLLABORATOR = 'is collaborator';
+export const IS_CREATOR = 'is creator';
+export const IS_BOTH = 'is both';
 
 export const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
 };
 
+export const SPECIALIST_NAME_CONDITIONS = [IS_COLLABORATOR, IS_CREATOR, IS_BOTH];
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
@@ -32,6 +36,9 @@ export const QUERY_CONDITIONS = {
   [IS_NOT]: 'nin[]',
   [WHERE_IM_THE]: 'in[]',
   [WHERE_IM_NOT_THE]: 'nin[]',
+  [IS_COLLABORATOR]: 'collaborator[]',
+  [IS_CREATOR]: 'creator[]',
+  [IS_BOTH]: 'both[]',
 };
 
 export const DATE_CONDITIONS = [
@@ -62,6 +69,10 @@ export const REGIONAL_SCOPES = {
   },
   [SCOPE_IDS.READ_TRAINING_REPORTS]: {
     name: 'READ_TRAINING_REPORTS',
+    description: 'Can view training reports in the region',
+  },
+  [SCOPE_IDS.COLLABORATOR_TRAINING_REPORTS]: {
+    name: 'COLLABORATOR_TRAINING_REPORTS',
     description: 'Can view training reports in the region',
   },
 };

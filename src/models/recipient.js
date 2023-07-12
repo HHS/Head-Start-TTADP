@@ -19,6 +19,8 @@ export default (sequelize, DataTypes) => {
     uei: {
       type: DataTypes.STRING,
       allowNull: true,
+      // eslint-disable-next-line @typescript-eslint/quotes
+      defaultValue: sequelize.literal(`''::character varying`),
     },
     name: {
       type: DataTypes.STRING,
@@ -30,6 +32,7 @@ export default (sequelize, DataTypes) => {
     },
     deleted: {
       type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   }, {
     sequelize,

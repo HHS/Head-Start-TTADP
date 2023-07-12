@@ -28,6 +28,7 @@ const mockUser = {
   hsesUsername: 'user2184932161',
   hsesUserId: 'user2184932161',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -39,6 +40,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
+  version: 2,
 };
 
 jest.mock('bull');

@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
-import { Op, cast } from 'sequelize';
+import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
+import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db from '../models';
@@ -38,7 +39,7 @@ const validateFields = (request, requiredFields) => {
  * @throws {Error} If any required fields are missing in the request data.
  */
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
-  validateFields(request, ['ownerId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -78,7 +79,7 @@ export async function destroyEvent(id: number): Promise<void> {
   }
 }
 
-async function findEventHelper(where: WhereOptions, plural = false): Promise<EventShape | EventShape[] | null> {
+async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
   let event;
 
   const query = {
@@ -89,9 +90,16 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
       'collaboratorIds',
       'regionId',
       'data',
+      'updatedAt',
     ],
     where,
-    raw: true,
+    include: [
+      {
+        model: SessionReportPilot,
+        as: 'sessionReports',
+        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+      },
+    ],
   };
 
   if (plural) {
@@ -115,6 +123,8 @@ async function findEventHelper(where: WhereOptions, plural = false): Promise<Eve
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
     data: event?.data ?? {},
+    updatedAt: event?.updatedAt,
+    sessionReports: event?.sessionReports ?? [],
   };
 }
 
@@ -124,6 +134,7 @@ interface FindEventHelperBlobOptions {
   regions: number[] | undefined;
   fallbackValue?: string;
   allowNull?: boolean;
+  scopes: SequelizeWhereOptions[];
 }
 
 async function findEventHelperBlob({
@@ -132,6 +143,7 @@ async function findEventHelperBlob({
   regions,
   fallbackValue,
   allowNull = false,
+  scopes,
 }: FindEventHelperBlobOptions): Promise<EventShape[]> {
   const getClause = () => {
     if (allowNull) {
@@ -146,9 +158,13 @@ async function findEventHelperBlob({
     return { [key]: value };
   };
 
-  const where = { data: { ...getClause() } };
-
-  if (regions && regions.length) {
+  let where: object = { data: { ...getClause() } };
+  if (scopes) {
+    where = {
+      [Op.and]: scopes,
+      ...where,
+    };
+  } else if (regions && regions.length) {
     // @ts-ignore
     where.regionId = regions;
   }
@@ -162,7 +178,13 @@ async function findEventHelperBlob({
       'regionId',
       'data',
     ],
-    raw: true,
+    include: [
+      {
+        model: SessionReportPilot,
+        as: 'sessionReports',
+        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+      },
+    ],
     where,
     order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
   });
@@ -207,7 +229,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     return createEvent(request);
   }
 
-  validateFields(request, ['ownerId', 'collaboratorIds', 'regionId', 'data']);
+  validateFields(request, ['ownerId', 'regionId', 'data']);
 
   const {
     ownerId,
@@ -231,8 +253,14 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventById(id: number): Promise<EventShape | null> {
-  return findEventHelper({ id }) as Promise<EventShape>;
+export async function findEventById(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+  const where = {
+    [Op.and]: [
+      { id },
+      ...scopes,
+    ],
+  };
+  return findEventHelper(where) as Promise<EventShape>;
 }
 
 export async function findEventsByOwnerId(id: number): Promise<EventShape[] | null> {
@@ -251,13 +279,14 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false): Promise<EventShape[] | null> {
+export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false, scopes = undefined): Promise<EventShape[] | null> {
   return findEventHelperBlob({
     key: 'status',
     value: status,
     regions: readableRegions,
     fallbackValue,
     allowNull: status === TRS.NOT_STARTED || allowNull,
+    scopes,
   }) as Promise<EventShape[]>;
 }
 

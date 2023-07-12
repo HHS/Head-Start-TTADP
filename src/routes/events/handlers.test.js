@@ -1,3 +1,4 @@
+import db from '../../models';
 import {
   getHandler,
   createHandler,
@@ -5,33 +6,51 @@ import {
   deleteHandler,
   getByStatus,
 } from './handlers';
-import { EventReportPilot } from '../../models';
-import { createEvent } from '../../services/event';
+import {
+  createEvent,
+  findEventsByCollaboratorId,
+  findEventById,
+  findEventsByOwnerId,
+  findEventsByPocId,
+  findEventsByRegionId,
+  updateEvent,
+  findEventsByStatus,
+} from '../../services/event';
+import EventReport from '../../policies/event';
+
+jest.mock('../../policies/event');
+
+jest.mock('../../services/event', () => ({
+  createEvent: jest.fn(),
+  findEventsByCollaboratorId: jest.fn(),
+  findEventById: jest.fn(),
+  findEventsByOwnerId: jest.fn(),
+  findEventsByPocId: jest.fn(),
+  findEventsByRegionId: jest.fn(),
+  updateEvent: jest.fn(),
+  destroyEvent: jest.fn(),
+  findEventsByStatus: jest.fn(),
+}));
+
+const mockEvent = {
+  id: 99_999,
+  ownerId: 99_999,
+  pocId: [99_999],
+  regionId: 99_999,
+  collaboratorIds: [99_998, 99_999],
+  data: {
+    status: 'not-started',
+  },
+};
 
 describe('event handlers', () => {
-  beforeAll(async () => {
-    await EventReportPilot.create({
-      id: 99_999,
-      ownerId: 99_999,
-      pocId: 99_999,
-      regionId: 99_999,
-      collaboratorIds: [99_998, 99_999],
-      data: {
-        status: 'not-started',
-      },
-    });
-  });
-
-  afterAll(async () => {
-    await EventReportPilot.destroy({ where: { id: 99_999 } });
-  });
-
   const mockResponse = {
     send: jest.fn(),
     status: jest.fn(() => ({
       send: jest.fn(),
       end: jest.fn(),
     })),
+    sendStatus: jest.fn(),
   };
 
   beforeEach(() => {
@@ -39,10 +58,22 @@ describe('event handlers', () => {
     mockResponse.send.mockClear();
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll((async () => {
+    await db.sequelize.close();
+  }));
+
   describe('getHandler', () => {
     it('returns the event', async () => {
+      findEventById.mockResolvedValueOnce(mockEvent);
+      EventReport.mockImplementationOnce(() => ({
+        canRead: () => true,
+      }));
       await getHandler({ params: { eventId: 99_999 } }, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
     it('400 when no params', async () => {
@@ -51,28 +82,43 @@ describe('event handlers', () => {
     });
 
     it('404 when not found by eventId', async () => {
-      await getHandler({ params: { eventId: 0 } }, mockResponse);
+      findEventById.mockResolvedValueOnce(null);
+      await getHandler({ params: { eventId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by regionId', async () => {
-      await getHandler({ params: { regionId: 0 } }, mockResponse);
+      findEventsByRegionId.mockResolvedValueOnce(null);
+      await getHandler({ params: { regionId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by ownerId', async () => {
-      await getHandler({ params: { ownerId: 0 } }, mockResponse);
+      findEventsByOwnerId.mockResolvedValueOnce(null);
+      await getHandler({ params: { ownerId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by pocId', async () => {
-      await getHandler({ params: { pocId: 0 } }, mockResponse);
+      findEventsByPocId.mockResolvedValueOnce(null);
+      await getHandler({ params: { pocId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by collaboratorId', async () => {
-      await getHandler({ params: { collaboratorId: 0 } }, mockResponse);
+      findEventsByCollaboratorId.mockResolvedValueOnce(null);
+      await getHandler({ params: { collaboratorId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 403 when the user cannot read the event', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canRead: () => false,
+        isCollaborator: () => false,
+      }));
+      findEventById.mockResolvedValueOnce(mockEvent);
+      await getHandler({ params: { eventId: 1 } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
 
@@ -83,7 +129,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: 99_999,
+        pocId: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -91,6 +137,10 @@ describe('event handlers', () => {
     };
 
     it('returns the event', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canWriteInRegion: () => true,
+      }));
+      createEvent.mockResolvedValueOnce(mockEvent);
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -98,11 +148,6 @@ describe('event handlers', () => {
     it('returns 400 when no body', async () => {
       await createHandler({ body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-    });
-
-    it('returns 500 when fields are missing', async () => {
-      await createHandler({ body: {} }, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -116,7 +161,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: 99_999,
+        pocId: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -124,6 +169,10 @@ describe('event handlers', () => {
     };
 
     it('returns the event', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canWriteInRegion: () => true,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -132,30 +181,69 @@ describe('event handlers', () => {
       await updateHandler({ params: { eventId: 99_999 }, body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
-
-    it('returns 500 when fields are missing', async () => {
-      await updateHandler({ params: { eventId: 99_999 }, body: {} }, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-    });
   });
 
   describe('deleteHandler', () => {
     it('works', async () => {
-      const event = await createEvent({
-        ownerId: 99_999,
-        pocId: 99_999,
-        collaboratorIds: [99_998, 99_999],
-        regionId: 99_999,
-        data: {},
-      });
-
-      await deleteHandler({ session: { userId: 1 }, params: { eventId: event.id } }, mockResponse);
+      EventReport.mockImplementationOnce(() => ({
+        canDelete: () => true,
+      }));
+      findEventById.mockResolvedValueOnce(mockEvent);
+      await deleteHandler(
+        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        mockResponse,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+    it('returns 404 when no event', async () => {
+      findEventById.mockResolvedValueOnce(null);
+      await deleteHandler(
+        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 403 when user can\'t delete', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canDelete: () => false,
+      }));
+      findEventById.mockResolvedValueOnce(mockEvent);
+      await deleteHandler(
+        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        mockResponse,
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('handles errors', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canDelete: () => true,
+      }));
+      findEventById.mockRejectedValueOnce(new Error('error'));
+      await deleteHandler(
+        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 
   describe('getByStatus', () => {
     it('works', async () => {
+      findEventsByStatus.mockResolvedValueOnce([mockEvent]);
+      await getByStatus(
+        {
+          session: { userId: 1 },
+          params: { status: 'not-started' },
+          query: { regionId: 99_999 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+    it('handles errors', async () => {
+      findEventsByStatus.mockRejectedValueOnce(new Error('error'));
       await getByStatus(
         {
           session: { userId: 1 },
@@ -163,7 +251,7 @@ describe('event handlers', () => {
         },
         mockResponse,
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 });

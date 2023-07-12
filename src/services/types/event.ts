@@ -5,6 +5,8 @@ export type EventShape = {
   collaboratorIds: number[];
   regionId: number;
   data: unknown;
+  updatedAt: string;
+  sessionReports: unknown[];
 };
 
 export type CreateEventRequest = {

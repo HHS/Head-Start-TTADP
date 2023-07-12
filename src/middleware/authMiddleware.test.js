@@ -31,6 +31,7 @@ describe('authMiddleware', () => {
       regionId: 14,
       scopeId: SCOPES.SITE_ACCESS,
     }],
+    lastLogin: new Date(),
   };
 
   const unAuthdUser = {
@@ -39,6 +40,7 @@ describe('authMiddleware', () => {
     hsesUserId: '663491',
     hsesUsername: 'unauth.middleware',
     permissions: [],
+    lastLogin: new Date(),
   };
 
   const setupUser = async (user) => {

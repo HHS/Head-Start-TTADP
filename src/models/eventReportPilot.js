@@ -12,13 +12,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     ownerId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
     pocId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
       allowNull: true,
     },
     collaboratorIds: {
@@ -32,6 +33,10 @@ export default (sequelize, DataTypes) => {
     data: {
       type: DataTypes.JSONB,
       allowNull: false,
+    },
+    imported: {
+      type: DataTypes.JSONB,
+      allowNull: true,
     },
   }, {
     sequelize,

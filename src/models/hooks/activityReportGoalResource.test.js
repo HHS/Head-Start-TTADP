@@ -29,6 +29,7 @@ const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 jest.mock('bull');
@@ -52,6 +53,7 @@ describe('activityReportGoalResource hooks', () => {
       homeRegionId: 1,
       hsesUsername: faker.datatype.string(),
       hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
     });
 
     arToDestroy = await ActivityReport.create({ ...draftObject, userId: mockUser.id });
