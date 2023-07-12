@@ -13,17 +13,19 @@ import { auditLogger as logger } from '../logger';
  */
 async function handleSequelizeError(req, res, error, logContext) {
   try {
+    const responseBody = typeof error === 'object' && error !== null ? { ...error, errorStack: error?.stack } : error;
+    const requestBody = typeof req.body === 'object' ? { ...req.body } : {};
     const requestErrorId = await createRequestError({
       operation: 'SequelizeError',
       uri: req.originalUrl,
       method: req.method,
-      requestBody: { ...req.body },
-      responseBody: { ...error, errorStack: error.stack },
+      requestBody,
+      responseBody,
       responseCode: INTERNAL_SERVER_ERROR,
     });
-    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${error.stack}`);
-  } catch (err) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to save to db - ${error}`);
+    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${error}`);
+  } catch (e) {
+    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
   }
   res.status(INTERNAL_SERVER_ERROR).end();
 }
@@ -35,7 +37,7 @@ export const handleError = async (req, res, error, logContext) => {
   if (error instanceof Sequelize.Error) {
     await handleSequelizeError(req, res, error, logContext);
   } else {
-    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${error.stack}`);
+    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${error}`);
     res.status(INTERNAL_SERVER_ERROR).end();
   }
 };
