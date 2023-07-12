@@ -19,12 +19,20 @@ function EventCard({
   onRemoveSession,
 }) {
   const { user } = useContext(UserContext);
+
+  // Check region permissions.
   const hasEditPermissions = canEditOrCreateSessionReports(
     user,
     parseInt(event.regionId, DECIMAL_BASE),
   );
-  const isCollaborator = event.pocId && event.pocId.includes(user.id);
-  const canEditExisting = hasEditPermissions || (isCollaborator);
+
+  // Check if user has been assigned an event role.
+  const hasEditRole = (event.pocId && event.pocId.includes(user.id))
+    || (event.collaboratorIds && event.collaboratorIds.includes(user.id))
+    || (event.ownerId === user.id);
+
+  // Has region permissions and has been assigned an event role.
+  const canEditEvent = hasEditPermissions && hasEditRole;
 
   const history = useHistory();
 
@@ -37,7 +45,7 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE && canEditExisting) {
+  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE && canEditEvent) {
     // Create session.
     menuItems.push({
       label: 'Create session',
@@ -125,7 +133,7 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
-          hasWritePermissions={canEditExisting}
+          hasWritePermissions={canEditEvent}
           eventStatus={data.status}
           onRemoveSession={onRemoveSession}
         />
