@@ -46,7 +46,15 @@ describe('TrainingReportForm', () => {
 
   it('renders training report form', async () => {
     fetchMock.getOnce('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
@@ -58,7 +66,15 @@ describe('TrainingReportForm', () => {
 
   it('redirects to event summary', async () => {
     fetchMock.getOnce('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
@@ -76,7 +92,13 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/users/training-report-users?regionId=1', 500);
 
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -87,7 +109,13 @@ describe('TrainingReportForm', () => {
 
   it('fetches event report data', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     renderTrainingReportForm('123', 'event-summary');
 
@@ -107,7 +135,14 @@ describe('TrainingReportForm', () => {
 
   it('displays "no training report id provided" error', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, collaboratorIds: [], ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('', 'event-summary');
@@ -131,6 +166,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [1],
       ownerId: 1,
       pocId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
@@ -143,7 +181,13 @@ describe('TrainingReportForm', () => {
     const updatedAt = moment();
 
     fetchMock.put('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, updatedAt,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      updatedAt,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
     const onSaveAndContinueButton = screen.getByText(/save and continue/i);
@@ -157,7 +201,13 @@ describe('TrainingReportForm', () => {
 
   it('tests the on save draft event', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -178,7 +228,13 @@ describe('TrainingReportForm', () => {
 
   it('shows an error when failing to save', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -196,11 +252,25 @@ describe('TrainingReportForm', () => {
 
   it('updates the page via the side menu', async () => {
     fetchMock.get('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
@@ -220,11 +290,25 @@ describe('TrainingReportForm', () => {
 
   it('will update status on submit if the updated status is not complete', async () => {
     fetchMock.get('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.get(sessionsUrl, [
@@ -252,11 +336,25 @@ describe('TrainingReportForm', () => {
 
   it('will not complete the form if the form is not complete', async () => {
     fetchMock.get('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.get(sessionsUrl, [
@@ -291,6 +389,9 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
       pocId: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
@@ -350,6 +451,9 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
       pocId: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
