@@ -3,12 +3,12 @@ import EventReport from './event';
 
 const createEvent = ({
   ownerId = 1,
-  pocId = [1],
+  pocIds = [1],
   collaboratorIds = [],
   regionId = 1,
 }) => ({
   ownerId,
-  pocId,
+  pocIds,
   collaboratorIds,
   regionId,
   data: {},
@@ -97,7 +97,7 @@ describe('Event Report policies', () => {
 
     it('is true if the user is a collaborator', () => {
       // eslint-disable-next-line max-len
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1, pocId: [authorRegion1Collaborator.id] });
+      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1, pocIds: [authorRegion1Collaborator.id] });
       const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
       expect(policy.canUpdate()).toBe(true);
     });

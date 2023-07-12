@@ -29,7 +29,7 @@ const validateFields = (request, requiredFields) => {
  *
  * @param {CreateEventRequest} request - The request data for creating the event.
  * @param {string} request.ownerId - The ID of the owner.
- * @param {string} request.pocId - The ID of the point of contact.
+ * @param {string} request.pocIds - The ID of the point of contact.
  * @param {string[]} request.collaboratorIds - An array of IDs of collaborators.
  * @param {string} request.regionId - The ID of the region where the event will take place.
  * @param {unknown} request.data - The data associated with the event.
@@ -43,7 +43,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   const {
     ownerId,
-    pocId,
+    pocIds,
     collaboratorIds,
     regionId,
     data,
@@ -51,7 +51,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   return EventReportPilot.create({
     ownerId,
-    pocId,
+    pocIds,
     collaboratorIds,
     regionId,
     data: cast(JSON.stringify(data), 'jsonb'),
@@ -86,7 +86,7 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     attributes: [
       'id',
       'ownerId',
-      'pocId',
+      'pocIds',
       'collaboratorIds',
       'regionId',
       'data',
@@ -119,7 +119,7 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
   return {
     id: event?.id,
     ownerId: event?.ownerId,
-    pocId: event?.pocId,
+    pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
     data: event?.data ?? {},
@@ -173,7 +173,7 @@ async function findEventHelperBlob({
     attributes: [
       'id',
       'ownerId',
-      'pocId',
+      'pocIds',
       'collaboratorIds',
       'regionId',
       'data',
@@ -208,7 +208,7 @@ async function findEventHelperBlob({
 type WhereOptions = {
   id?: number;
   ownerId?: number;
-  pocId?: number;
+  pocIds?: number;
   collaboratorIds?: number[];
   regionId?: number;
 };
@@ -216,7 +216,7 @@ type WhereOptions = {
 /**
  * Updates an existing event in the database or creates a new one if it doesn't exist.
  * @param request An object containing all fields to be updated for the event.
- *                Required fields: id, ownerId, pocId, collaboratorIds, regionId, data.
+ *                Required fields: id, ownerId, pocIds, collaboratorIds, regionId, data.
  * @returns A Promise that resolves to the updated event.
  * @throws {Error} If the specified event does not exist and cannot be created.
  */
@@ -233,7 +233,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 
   const {
     ownerId,
-    pocId,
+    pocIds,
     collaboratorIds,
     regionId,
     data,
@@ -242,7 +242,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   await EventReportPilot.update(
     {
       ownerId,
-      pocId,
+      pocIds,
       collaboratorIds,
       regionId,
       data: cast(JSON.stringify(data), 'jsonb'),
@@ -268,7 +268,7 @@ export async function findEventsByOwnerId(id: number): Promise<EventShape[] | nu
 }
 
 export async function findEventsByPocId(id: number): Promise<EventShape[] | null> {
-  return findEventHelper({ pocId: id }, true) as Promise<EventShape[]>;
+  return findEventHelper({ pocIds: id }, true) as Promise<EventShape[]>;
 }
 
 export async function findEventsByCollaboratorId(id: number): Promise<EventShape[] | null> {
@@ -295,7 +295,7 @@ export async function findAllEvents(): Promise<EventShape[]> {
     attributes: [
       'id',
       'ownerId',
-      'pocId',
+      'pocIds',
       'collaboratorIds',
       'regionId',
       'data',

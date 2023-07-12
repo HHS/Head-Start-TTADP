@@ -42,7 +42,7 @@ export const dataPropTypes = PropTypes.shape({
 export const eventPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   ownerId: PropTypes.number.isRequired,
-  pocId: PropTypes.number,
+  pocIds: PropTypes.arrayOf(PropTypes.number),
   collaboratorIds: PropTypes.arrayOf(PropTypes.number),
   regionId: PropTypes.number.isRequired,
   data: PropTypes.shape(dataPropTypes),

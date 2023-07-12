@@ -8,7 +8,7 @@ import ViewTrainingReport from '..';
 const mockEvent = (data = {}) => ({
   id: 1,
   ownerId: 999,
-  pocId: [1],
+  pocIds: [1],
   collaboratorIds: [2],
   regionId: 1,
   data: {
