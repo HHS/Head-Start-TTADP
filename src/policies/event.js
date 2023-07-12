@@ -86,9 +86,9 @@ export default class EventReport {
   }
 
   canUpdate() {
-    if (this.canWriteInRegion()) { return true; }
     if (this.isAdmin()) { return true; }
     if (this.isCollaborator()) { return true; }
+    if (this.isPoc()) { return true; }
     if (this.isAuthor()) { return true; }
 
     return false;
@@ -104,7 +104,11 @@ export default class EventReport {
     return this.user.id === this.eventReport.ownerId;
   }
 
-  isCollaborator() {
+  isPoc() {
     return this.eventReport.pocId.includes(this.user.id);
+  }
+
+  isCollaborator() {
+    return this.eventReport.collaboratorIds.includes(this.user.id);
   }
 }
