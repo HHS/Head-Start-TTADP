@@ -374,7 +374,7 @@ components:
           type: integer
         ownerId:
           type: integer
-        pocId:
+        pocIds:
           type: integer
         collaboratorIds:
           type: array

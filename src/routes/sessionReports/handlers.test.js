@@ -26,7 +26,7 @@ describe('session report handlers', () => {
   const mockEvent = {
     id: 99_998,
     ownerId: 99_998,
-    pocId: 99_998,
+    pocIds: 99_998,
     regionId: 99_998,
     collaboratorIds: [99_998],
     data: {},

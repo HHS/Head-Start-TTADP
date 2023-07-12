@@ -40,7 +40,7 @@ export const getByStatus = async (req, res) => {
 
     // If user is a collaborator we want o return all region events and collaborator events.
     if (await userIsPocRegionalCollaborator(userId)) {
-      scopes.push({ pocId: { [Op.contains]: [userId] } });
+      scopes.push({ pocIds: { [Op.contains]: [userId] } });
     }
     const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
 
@@ -57,11 +57,11 @@ export const getHandler = async (req, res) => {
       eventId,
       regionId,
       ownerId,
-      pocId,
+      pocIds,
       collaboratorId,
     } = req.params;
 
-    const params = [eventId, regionId, ownerId, pocId, collaboratorId];
+    const params = [eventId, regionId, ownerId, pocIds, collaboratorId];
 
     if (params.every((param) => typeof param === 'undefined')) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
@@ -71,7 +71,7 @@ export const getHandler = async (req, res) => {
     const userId = await currentUserId(req, res);
     const scopes = [];
     if (await userIsPocRegionalCollaborator(userId)) {
-      scopes.push({ pocId: { [Op.contains]: [userId] } });
+      scopes.push({ pocIds: { [Op.contains]: [userId] } });
     }
 
     if (eventId) {
@@ -80,8 +80,8 @@ export const getHandler = async (req, res) => {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
       event = await findEventsByOwnerId(ownerId);
-    } else if (pocId) {
-      event = await findEventsByPocId(pocId);
+    } else if (pocIds) {
+      event = await findEventsByPocId(pocIds);
     } else if (collaboratorId) {
       event = await findEventsByCollaboratorId(collaboratorId);
     }

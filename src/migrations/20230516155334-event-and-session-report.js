@@ -19,7 +19,7 @@ module.exports = {
         CREATE TABLE IF NOT EXISTS "EventReportPilots" (
           id SERIAL PRIMARY KEY,
           "ownerId" INTEGER NOT NULL,
-          "pocId" INTEGER NULL,
+          "pocIds" INTEGER NULL,
           "collaboratorIds" INTEGER[] NOT NULL,
           "regionId" INTEGER NOT NULL,
           "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

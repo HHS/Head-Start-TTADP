@@ -1,7 +1,7 @@
 export type EventShape = {
   id: number;
   ownerId: number;
-  pocId: number;
+  pocIds: number;
   collaboratorIds: number[];
   regionId: number;
   data: unknown;
@@ -11,7 +11,7 @@ export type EventShape = {
 
 export type CreateEventRequest = {
   ownerId: number;
-  pocId: number;
+  pocIds: number;
   collaboratorIds: number[];
   regionId: number;
   data: unknown;

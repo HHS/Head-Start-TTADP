@@ -21,7 +21,7 @@ describe('event service', () => {
   const createAnEvent = async (num) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: [num],
+    pocIds: [num],
     collaboratorIds: [num],
     data: {
       status: 'active',
@@ -31,7 +31,7 @@ describe('event service', () => {
   const createAnEventWithStatus = async (num, status) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: [num],
+    pocIds: [num],
     collaboratorIds: [num],
     data: {
       status,
@@ -41,7 +41,7 @@ describe('event service', () => {
   const createAnEventWithData = async (num, data) => createEvent({
     ownerId: num,
     regionId: num,
-    pocId: [num],
+    pocIds: [num],
     collaboratorIds: [num],
     data,
   });
@@ -61,7 +61,7 @@ describe('event service', () => {
 
       const updated = await updateEvent(created.id, {
         ownerId: 123,
-        pocId: [123],
+        pocIds: [123],
         regionId: 123,
         collaboratorIds: [123],
         data: {},
@@ -78,7 +78,7 @@ describe('event service', () => {
 
       const updated = await updateEvent(99_999, {
         ownerId: 123,
-        pocId: [123],
+        pocIds: [123],
         regionId: 123,
         collaboratorIds: [123],
         data: {},
@@ -110,7 +110,7 @@ describe('event service', () => {
 
     it('findEventsByPocId', async () => {
       const created = await createAnEvent(98_989);
-      const found = await findEventsByPocId(created.pocId);
+      const found = await findEventsByPocId(created.pocIds);
       expect(found[0]).toHaveProperty('id');
       expect(found[0]).toHaveProperty('ownerId', 98_989);
       await destroyEvent(created.id);
