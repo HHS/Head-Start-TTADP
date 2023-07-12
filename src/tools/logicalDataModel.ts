@@ -75,16 +75,40 @@ function toCamelCase(str) {
     .join('');
 }
 
+function processEnum(name, table, schemaEnum, modelEnum) {
+  let uml = modelEnum
+    ? `enum ${name} {\n`
+    : `!issue='${name} enum missing for table ${table}'\nenum ${name} #pink;line:red;line.bold;text:red {\n`;
+
+  schemaEnum?.forEach((sEnum) => {
+    if (!modelEnum?.includes(sEnum)) {
+      uml += ` !issue='value missing from model enum: ${sEnum}'\n`;
+    }
+    uml += ` ${sEnum}\n`;
+  });
+  modelEnum?.forEach((mEnum) => {
+    if (!schemaEnum?.includes(mEnum)) {
+      uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
+    }
+  });
+  uml += '}\n\n';
+  uml += `${name} <|-- ${table}\n\n`;
+  return uml;
+}
+
 function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
     : `!issue='model missing for table'\nclass ${key} #pink;line:red;line.bold;text:red {\n`;
   const fields = schema.attributes.sort((a, b) => {
-    if (a.reference) return 1;
-    if (b.reference) return -1;
-    return a.ordinal < b.ordinal;
+    const ax = `${!a.allowNull ? '*' : ''}${a.reference ? '!' : ''}${a.name}`;
+    const bx = `${!b.allowNull ? '*' : ''}${b.reference ? '!' : ''}${b.name}`;
+    if (b.name === 'id') return 1;
+    if (a.name === 'id') return -1;
+    return ax.localeCompare(bx);
   });
   const processedFields = [];
+  const foundEnums = [];
   fields.forEach((field) => {
     let modelField;
     processedFields.push(field.name);
@@ -94,6 +118,9 @@ function processClassDefinition(schema, key) {
     let column = '';
     const issues:string[] = [];
     // mark fields that do not allow null
+    if (field.allowNull !== (modelField?.allowNull ?? true)) {
+      issues.push(`!issue='column should${field.allowNull ? '' : ' not'} allow null'`); //eslint-disable-line
+    }
     if (!field.allowNull) {
       column += ' *';
     }
@@ -114,9 +141,22 @@ function processClassDefinition(schema, key) {
       column += `${field.type}`;
     }
 
+    if (!(field.default === modelField.defaultValue
+        || field.default === modelField.defaultValue?.toString()
+        || field.default === modelField.defaultValue?.val)
+      && field.default !== '<generated>'
+      && !((field.default === 'null' || field.default === null) && modelField.defaultValue === undefined)
+      && !(['updatedAt', 'createdAt'].includes(field.name) && ['now()', 'CURRENT_TIMESTAMP'].includes(field.default))) {
+      issues.push(`!issue='column default does not match model'`); //eslint-disable-line
+    }
     if (field.default) {
       column += ` : ${field.default}`;
-    } else if (field.reference) {
+    }
+
+    if (field.enumName) {
+      foundEnums.push(processEnum(field.enumName, key, field.enums, modelField.type.type.values));
+    }
+    if (field.reference) {
       column += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
     }
 
@@ -127,6 +167,12 @@ function processClassDefinition(schema, key) {
   });
 
   uml += '}\n\n';
+
+  if (foundEnums.length) {
+    foundEnums.forEach((e) => {
+      uml += e;
+    });
+  }
   return uml;
 }
 
@@ -394,7 +440,20 @@ export default async function generateUMLFromDB() {
                   ELSE column_default
                 END,
             'allowNull', is_nullable = 'YES',
-            'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])')
+            'reference', SUBSTRING(pg_get_constraintdef(oid) FROM 'REFERENCES ([^)]+[)])'),
+            'subtype', SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?'),
+            'enumName', CASE
+                WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'enum'
+                THEN SUBSTRING(udt_name FROM '^[_](([^_]+[_]?)+)')
+                else null
+              END,
+            'enums', (
+              SELECT ARRAY_AGG(e.enumlabel ORDER BY e.enumlabel)
+              FROM pg_type t
+              LEFT JOIN pg_enum e
+              ON e.enumtypid = t.oid
+              WHERE '_' || t.typname = col.udt_name
+            )
           )
           ORDER BY ordinal_position ASC
         ) "fields"
@@ -411,18 +470,18 @@ export default async function generateUMLFromDB() {
     });
 
     const tables = db.sequelize.models;
-    const schemas = tableData.map((td) => ({
-      table: td.table,
-      model: (db.sequelize.models[td.table]
-        || db.sequelize.models[td.table.slice(0, -1)]
-        || db.sequelize.models[td.table.replace('ies', 'y')]),
-      attributes: td.fields,
-      associations: (db.sequelize.models[td.table]
-        || db.sequelize.models[td.table.slice(0, -1)]
-        || db.sequelize.models[td.table.replace('ies', 'y')])
-        ?.associations,
-    }));
-
+    const schemas = tableData.map((td) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model:any = Object.values(db.sequelize.models)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .find((m: any) => m?.getTableName() === td.table);
+      return ({
+        table: td.table,
+        model,
+        attributes: td.fields,
+        associations: model?.associations,
+      });
+    });
     await generateUML(schemas, tables, 'docs');
   } catch (err) {
     auditLogger.error(err);

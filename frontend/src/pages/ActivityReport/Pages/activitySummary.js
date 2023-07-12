@@ -653,6 +653,10 @@ export default {
     onContinue,
     onSaveDraft,
     onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
   ) => {
     const { recipients, collaborators } = additionalData;
     return (
@@ -661,6 +665,7 @@ export default {
           recipients={recipients}
           collaborators={collaborators}
         />
+        <Alert />
         <NavigatorButtons
           isAppLoading={isAppLoading}
           onContinue={onContinue}

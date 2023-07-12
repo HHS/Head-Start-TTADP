@@ -30,7 +30,19 @@ const RenderActivitySummary = () => {
   return (
     <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
       <FormProvider {...hookForm}>
-        {activitySummary.render(additionalData)}
+        {activitySummary.render(
+          additionalData,
+          {},
+          1,
+          null,
+          jest.fn(),
+          jest.fn(),
+          jest.fn(),
+          false,
+          '',
+          jest.fn(),
+          () => <></>,
+        )}
       </FormProvider>
     </NetworkContext.Provider>
   );
