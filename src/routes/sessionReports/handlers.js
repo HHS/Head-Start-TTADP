@@ -49,6 +49,9 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' });
     }
     // Get associated event to use for authorization for region write
+    // we use the event rather than the session since the session in this context
+    // can be an array or a single session and the event is a suitable proxy
+    // for checking access
     const event = await findEventById(eventId);
     const auth = await getEventAuthorization(req, res, event);
 
