@@ -97,7 +97,7 @@
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
     "importSmartSheetEvent": "node ./build/server/src/tools/importSmartSheetCLI.js",
-    "importSmartSheetEvent:local": "./node_modules/.bin/babel-node ./src/tools/importSmartSheetCLI.js",
+    "importSmartSheetEvent:local": "tsx ./src/tools/importSmartSheetCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish"
   },
   "repository": {
