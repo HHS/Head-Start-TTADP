@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -106,11 +106,6 @@ const CompleteEvent = ({
     <option key="event-status-dropdown-option-complete">Complete</option>,
   ];
 
-  // add not started to the beginning of the list if there are no sessions
-  if (sessions.length === 0) {
-    options.unshift(<option key="event-status-dropdown-option-not-started">Not started</option>);
-  }
-
   return (
     <div className="padding-x-1">
       <Helmet>
@@ -136,6 +131,12 @@ const CompleteEvent = ({
         {sessions.length}
       </ReadOnlyField>
 
+      { sessions.length === 0 && (
+        <ReadOnlyField label="Event status">
+          Not started
+        </ReadOnlyField>
+      )}
+
       {sessions.length > 0 && (
         <>
           <h3>Session status</h3>
@@ -160,26 +161,25 @@ const CompleteEvent = ({
               ))}
             </tbody>
           </Table>
+          <div className="margin-top-4">
+            <FormItem
+              label="Event status"
+              name="status"
+              required
+            >
+              <Dropdown
+                label="Event status"
+                name="status"
+                id="status"
+                value={updatedStatus}
+                onChange={(e) => setUpdatedStatus(e.target.value)}
+              >
+                {options}
+              </Dropdown>
+            </FormItem>
+          </div>
         </>
       )}
-
-      <div className="margin-top-4">
-        <FormItem
-          label="Event status"
-          name="status"
-          required
-        >
-          <Dropdown
-            label="Event status"
-            name="status"
-            id="status"
-            value={updatedStatus}
-            onChange={(e) => setUpdatedStatus(e.target.value)}
-          >
-            {options}
-          </Dropdown>
-        </FormItem>
-      </div>
 
       {showSubmissionError && (
         <div className="margin-top-4">
@@ -219,7 +219,7 @@ const CompleteEvent = ({
 
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>
-        <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveForm}>Save draft</Button>
+        <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveForm(updatedStatus)}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
 
@@ -247,24 +247,25 @@ CompleteEvent.defaultProps = {
 
 export default {
   position,
-  review: true,
+  review: false,
   label: 'Complete event',
   path,
-  isPageComplete: (formData) => formData.calculatedStatus === REPORT_STATUSES.SUBMITTED,
+  isPageComplete: ({ getValues }) => {
+    const { status } = getValues();
+    return status === TRAINING_REPORT_STATUSES.COMPLETE;
+  },
   render:
     (
-      formData,
-      onSubmit,
       _additionalData,
-      _onReview,
-      _isApprover,
-      _isPendingApprover,
-      _onResetToDraft,
+      formData,
+      _reportId,
+      _isAppLoading,
+      _onContinue,
       onSaveForm,
-      _navigatorPages,
-      _reportCreator,
-      _lastSaveTime,
       onUpdatePage,
+      _weAreAutoSaving,
+      _datePickerKey,
+      onSubmit,
     ) => (
       <Container skipTopPadding>
         <Form
