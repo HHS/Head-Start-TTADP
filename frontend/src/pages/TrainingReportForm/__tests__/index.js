@@ -87,6 +87,27 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
   });
 
+  it('renders training report form if pocId is null', async () => {
+    fetchMock.getOnce('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      pocId: null,
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+    });
+
+    act(() => {
+      renderTrainingReportForm('1', 'event-summary');
+    });
+
+    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+  });
+
   it('displays an error when failing to fetch users', async () => {
     fetchMock.reset();
     fetchMock.get('/api/users/training-report-users?regionId=1', 500);
