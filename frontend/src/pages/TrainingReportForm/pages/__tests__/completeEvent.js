@@ -42,18 +42,16 @@ describe('completeEvent', () => {
           <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               {completeEvent.render(
-                formData,
-                onSubmit,
                 {},
-                jest.fn(),
-                false,
+                formData,
+                1,
                 false,
                 jest.fn(),
                 onSaveForm,
-                [],
-                null,
-                null,
                 onUpdatePage,
+                false,
+                '',
+                onSubmit,
               )}
             </NetworkContext.Provider>
           </AppLoadingContext.Provider>
@@ -96,8 +94,14 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent />);
       });
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-      expect(statusSelect).toHaveValue('Not started');
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
+
+      // but there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
     });
 
     it('handles an error fetching sessions', async () => {
@@ -109,8 +113,14 @@ describe('completeEvent', () => {
 
       await waitFor(() => screen.findByText('Unable to load sessions'));
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-      expect(statusSelect).toHaveValue('Not started');
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
+
+      // but there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
     });
 
     it('calls onUpdatePage when the back button is clicked', async () => {
@@ -151,11 +161,14 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent />);
       });
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-      act(() => {
-        userEvent.selectOptions(statusSelect, 'Complete');
-      });
-      expect(statusSelect).toHaveValue('Complete');
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
+
+      // there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
 
       const submitButton = await screen.findByRole('button', { name: /submit/i });
       act(() => {
@@ -251,9 +264,14 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState }} />);
       });
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
 
-      expect(statusSelect).toHaveValue('Not started');
+      // there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
     });
   });
 });

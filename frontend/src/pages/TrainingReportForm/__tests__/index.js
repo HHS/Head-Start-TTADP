@@ -215,7 +215,13 @@ describe('TrainingReportForm', () => {
     expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
 
     fetchMock.put('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     const onSaveDraftButton = screen.getByText(/save draft/i);
     act(() => {
