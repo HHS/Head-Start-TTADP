@@ -6,12 +6,13 @@
  * It can be either a string or an object with properties `name`, `prefix`, and `suffix`.
  * @returns A boolean indicating whether the function name matches the value.
  */
-function isMatch(
-  functionName: string,
-  value: string | { name: string, prefix?: boolean, suffix?: boolean },
-): boolean {
+function isMatch(functionName, value) {
+  //   functionName: string,
+  //   value: string | { name: string, prefix?: boolean, suffix?: boolean },
+  // ): boolean {
   // If the value is a string, convert it to an object with default prefix and suffix
   // values set to false
+
   const matchValue = typeof value === 'string'
     ? { name: value, prefix: false, suffix: false }
     : {
@@ -43,16 +44,16 @@ function isMatch(
  * @param functionName - The function name to search for.
  * @returns True if the function name is found in the argument, false otherwise.
  */
-function containsName(
-  arg:
-  string
-  | { name: string, prefix?: boolean, suffix?: boolean }
-  | Array<
-  string
-  | { name: string, prefix?: boolean, suffix?: boolean }
-  >,
-  functionName?: string | null,
-): boolean {
+function containsName(arg, functionName) {
+  // arg:
+  // string
+  // | { name: string, prefix?: boolean, suffix?: boolean }
+  // | Array<
+  // string
+  // | { name: string, prefix?: boolean, suffix?: boolean }
+  // >,
+  // functionName?: string | null,
+// ): boolean {
   // Check if the function name is empty or null
   if (!functionName || functionName === '') {
     return false;
@@ -62,17 +63,22 @@ function containsName(
   if (typeof arg === 'string' || (typeof arg === 'object' && !Array.isArray(arg))) {
     return isMatch(
       functionName,
-      arg as string | { name: string, prefix: boolean, suffix: boolean },
+      arg,
+      // arg as string | { name: string, prefix: boolean, suffix: boolean },
     );
   }
 
   // Check if the argument is an array
   if (Array.isArray(arg)) {
-    return (arg as Array<string | { name: string, prefix: boolean, suffix: boolean }>)
-      .some((item: string | { name: string, prefix: boolean, suffix: boolean }) => isMatch(
-        functionName,
-        item,
-      ));
+    return arg.some((item) => isMatch(
+      functionName,
+      item,
+    ));
+    // return (arg as Array<string | { name: string, prefix: boolean, suffix: boolean }>)
+    //   .some((item: string | { name: string, prefix: boolean, suffix: boolean }) => isMatch(
+    //     functionName,
+    //     item,
+    //   ));
   }
 
   return false;
@@ -96,8 +102,9 @@ const hasIgnoreHooks = (options) => (options.ignoreHooks !== undefined
  */
 function skipIf(
   options, // The sequelize options object
-  callingFunctionName?: string | null, // The name of the calling function (optional)
-): boolean {
+  callingFunctionName,
+  // callingFunctionName?: string | null, // The name of the calling function (optional)
+) { // : boolean {
   // Check if the options object does not have ignoreHooks property, return false
   if (!hasIgnoreHooks(options)) return false;
 
