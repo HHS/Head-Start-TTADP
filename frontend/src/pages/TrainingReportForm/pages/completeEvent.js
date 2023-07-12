@@ -4,13 +4,11 @@ import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Form, Alert, Button, Table, Dropdown,
+  Alert, Button, Table, Dropdown,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
-import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NavigatorHeader from '../../../components/Navigator/components/NavigatorHeader';
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import { InProgress, Closed } from '../../../components/icons';
@@ -33,6 +31,7 @@ const CompleteEvent = ({
   formData,
   onSaveForm,
   onUpdatePage,
+  DraftAlert,
 }) => {
   const { setError } = useFormContext();
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
@@ -111,11 +110,6 @@ const CompleteEvent = ({
       <Helmet>
         <title>Complete event</title>
       </Helmet>
-
-      <NavigatorHeader
-        label="Complete event"
-        formData={formData}
-      />
 
       <IndicatesRequiredField />
       <p className="usa-prose">Review the information in each section before subitting. Once submitted, the report will no longer be editable.</p>
@@ -217,6 +211,7 @@ const CompleteEvent = ({
         </div>
       )}
 
+      <DraftAlert />
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>
         <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveForm(updatedStatus)}>Save draft</Button>
@@ -239,6 +234,7 @@ CompleteEvent.propTypes = {
   onSaveForm: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
+  DraftAlert: PropTypes.node.isRequired,
 };
 
 CompleteEvent.defaultProps = {
@@ -266,18 +262,14 @@ export default {
       _weAreAutoSaving,
       _datePickerKey,
       onSubmit,
+      DraftAlert,
     ) => (
-      <Container skipTopPadding>
-        <Form
-          className="smart-hub--form-large smart-hub--form__activity-report-form"
-        >
-          <CompleteEvent
-            onSubmit={onSubmit}
-            onSaveForm={onSaveForm}
-            formData={formData}
-            onUpdatePage={onUpdatePage}
-          />
-        </Form>
-      </Container>
+      <CompleteEvent
+        onSubmit={onSubmit}
+        onSaveForm={onSaveForm}
+        formData={formData}
+        onUpdatePage={onUpdatePage}
+        DraftAlert={DraftAlert}
+      />
     ),
 };
