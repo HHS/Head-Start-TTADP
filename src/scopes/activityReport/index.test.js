@@ -11,9 +11,11 @@ import { auditLogger } from '../../logger';
 import db, {
   ActivityReport,
   ActivityReportApprover,
+  ActivityReportResource,
   ActivityRecipient,
   User,
   Recipient,
+  Resource,
   Grant,
   ActivityReportCollaborator,
   OtherEntity,
@@ -35,6 +37,8 @@ import {
   createIndex,
   addIndexDocument,
 } from '../../lib/awsElasticSearch/index';
+import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
+import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -42,6 +46,7 @@ const mockUser = {
   name: 'user13706689',
   hsesUsername: 'user13706689',
   hsesUserId: 'user13706689',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -50,6 +55,7 @@ const mockUserTwo = {
   name: 'user137065478',
   hsesUsername: 'user137065478',
   hsesUserId: 'user137065478',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -58,12 +64,14 @@ const mockManager = {
   name: 'user50565590',
   hsesUsername: 'user50565590',
   hsesUserId: 'user50565590',
+  lastLogin: new Date(),
 };
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const submittedReport = {
@@ -92,6 +100,7 @@ const deletedReport = {
   submissionStatus: REPORT_STATUSES.DELETED,
   userId: mockUser.id,
   regionId: 1,
+  version: 2,
 };
 
 const approverApproved = {
@@ -110,6 +119,7 @@ describe('filtersToScopes', () => {
   let globallyExcludedReport;
   let includedUser1;
   let includedUser2;
+  let includedUser3;
   let excludedUser;
   let client;
 
@@ -118,10 +128,31 @@ describe('filtersToScopes', () => {
     await User.create(mockUserTwo);
     await User.create(mockManager);
     includedUser1 = await User.create({
-      name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
+      name: 'person',
+      hsesUserId: 'user111',
+      hsesUsername: 'user111',
+      lastLogin: new Date(),
     });
-    includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
-    excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' });
+    includedUser2 = await User.create({
+      name: 'another person',
+      hsesUserId: 'user222',
+      hsesUsername: 'user222',
+      lastLogin: new Date(),
+    });
+
+    includedUser3 = await User.create({
+      name: 'third person',
+      hsesUserId: 'user536',
+      hsesUsername: 'user536',
+    });
+
+    excludedUser = await User.create({
+      name: 'excluded',
+      hsesUserId: 'user333',
+      hsesUsername: 'user333',
+      lastLogin: new Date(),
+    });
+
     globallyExcludedReport = await ActivityReport.create({
       ...draftReport, deliveryMethod: 'method', updatedAt: '2000-01-01',
     }, {
@@ -150,6 +181,7 @@ describe('filtersToScopes', () => {
       mockManager.id,
       includedUser1.id,
       includedUser2.id,
+      includedUser3.id,
       excludedUser.id];
     const reports = await ActivityReport.unscoped().findAll({
       where: {
@@ -1387,6 +1419,99 @@ describe('filtersToScopes', () => {
     });
   });
 
+  describe('specialistName', () => {
+    let includeCollaboratorReport;
+    let includeCreatorReport;
+    let excludedReport;
+    let possibleIds;
+
+    let includedActivityReportCollaborator1;
+    let includedActivityReportCollaborator2;
+    let excludedActivityReportCollaborator;
+
+    beforeAll(async () => {
+      // Collaborator report.
+      includeCollaboratorReport = await ActivityReport.create({
+        ...draftReport, userId: includedUser3.id,
+      });
+
+      // Creator report.
+      includeCreatorReport = await ActivityReport.create({
+        ...draftReport, userId: includedUser2.id,
+      });
+
+      // Exclude report.
+      excludedReport = await ActivityReport.create(draftReport);
+
+      // Collaborators.
+      includedActivityReportCollaborator1 = await ActivityReportCollaborator.create({
+        activityReportId: includeCollaboratorReport.id, userId: includedUser1.id,
+      });
+
+      includedActivityReportCollaborator2 = await ActivityReportCollaborator.create({
+        activityReportId: includeCreatorReport.id, userId: includedUser3.id,
+      });
+
+      excludedActivityReportCollaborator = await ActivityReportCollaborator.create({
+        activityReportId: excludedReport.id, userId: excludedUser.id,
+      });
+      possibleIds = [
+        includeCollaboratorReport.id,
+        includeCreatorReport.id,
+        excludedReport.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: { id: [includeCollaboratorReport.id, includeCreatorReport.id, excludedReport.id] },
+      });
+      await ActivityReportCollaborator.destroy({
+        where: {
+          id: [
+            includedActivityReportCollaborator1.id,
+            includedActivityReportCollaborator2.id,
+            excludedActivityReportCollaborator.id,
+          ],
+        },
+      });
+    });
+
+    it('finds the report by collaborator', async () => {
+      const filters = { 'specialistName.collaborator': [includedUser1.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
+    });
+
+    it('finds the report by creator', async () => {
+      const filters = { 'specialistName.creator': [includedUser2.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCreatorReport.id]));
+    });
+
+    it('finds the report by both', async () => {
+      const filters = { 'specialistName.both': [includedUser3.name] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
+    });
+  });
+
   describe('calculatedStatus', () => {
     let includedReportMultApprover;
     let excludedReportMultApprover;
@@ -1448,7 +1573,11 @@ describe('filtersToScopes', () => {
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
 
       await User.create({
-        id: possibleIds[0], name: 'u777', hsesUsername: 'u777', hsesUserId: '777',
+        id: possibleIds[0],
+        name: 'u777',
+        hsesUsername: 'u777',
+        hsesUserId: '777',
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1462,7 +1591,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[1], name: 'u778', hsesUsername: 'u778', hsesUserId: '778', role: ['Grantee Specialist'],
+        id: possibleIds[1],
+        name: 'u778',
+        hsesUsername: 'u778',
+        hsesUserId: '778',
+        role: ['Grantee Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -1471,7 +1605,12 @@ describe('filtersToScopes', () => {
       });
 
       await User.create({
-        id: possibleIds[2], name: 'u779', hsesUsername: 'u779', hsesUserId: '779', role: ['Grants Specialist'],
+        id: possibleIds[2],
+        name: 'u779',
+        hsesUsername: 'u779',
+        hsesUserId: '779',
+        role: ['Grants Specialist'],
+        lastLogin: new Date(),
       });
 
       await UserRole.create({
@@ -2279,13 +2418,6 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      // Create ES client.
-      client = await getClient();
-
-      // Create new index
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-      await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
       // Create reports.
       const context1 = 'Nothings gonna change my world';
       const context2 = 'I get by with a little help from my friends';
@@ -2317,35 +2449,6 @@ describe('filtersToScopes', () => {
         excludedReport.id,
         globallyExcludedReport.id,
       ];
-
-      // Index reports.
-      await addIndexDocument({
-        data: {
-          indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-          id: includedReport1.id,
-          document: { id: includedReport1.id, context: context1 },
-        },
-      });
-
-      await addIndexDocument(
-        {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: includedReport2.id,
-            document: { id: includedReport2.id, context: context2 },
-          },
-        },
-      );
-
-      await addIndexDocument(
-        {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: excludedReport.id,
-            document: { id: excludedReport.id, context: context3 },
-          },
-        },
-      );
     });
 
     afterAll(async () => {
@@ -2392,6 +2495,329 @@ describe('filtersToScopes', () => {
           excludedReport.id,
           globallyExcludedReport.id,
         ]));
+    });
+  });
+
+  describe('resourceUrl', () => {
+    let reportOne;
+    let reportTwo;
+    let reportOneWasCreated;
+    let reportTwoWasCreated;
+    let arOneResources;
+    let arTwoResources;
+
+    const reportOneUrls = [
+      'http://google.com',
+      'http://github.com',
+      'http://cloud.gov',
+      'https://adhocteam.us/',
+    ];
+
+    const reportTwoUrls = [
+      'http://www.crayola.com',
+    ];
+
+    beforeAll(async () => {
+      [reportOne, reportOneWasCreated] = await ActivityReport.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          context: '',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          numberOfParticipants: 1,
+          deliveryMethod: 'method',
+          duration: 0,
+          endDate: '2020-01-01T12:00:00Z',
+          startDate: '2020-01-01T12:00:00Z',
+          requester: 'requester',
+          regionId: 1,
+          targetPopulations: [],
+          version: 2,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+      await findOrCreateResources(reportOneUrls);
+      arOneResources = await processActivityReportForResourcesById(
+        reportOne.id,
+        reportOneUrls,
+      );
+
+      [reportTwo, reportTwoWasCreated] = await ActivityReport.findOrCreate({
+        where: {
+          id: 99_999,
+        },
+        defaults: {
+          context: '',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          numberOfParticipants: 1,
+          deliveryMethod: 'method',
+          duration: 0,
+          endDate: '2020-01-01T12:00:00Z',
+          startDate: '2020-01-01T12:00:00Z',
+          requester: 'requester',
+          regionId: 1,
+          targetPopulations: [],
+          version: 2,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+      await findOrCreateResources(reportTwoUrls);
+      arTwoResources = await processActivityReportForResourcesById(
+        reportTwo.id,
+        reportTwoUrls,
+      );
+    });
+
+    afterAll(async () => {
+      await ActivityReportResource.destroy({
+        where: { activityReportId: reportOne.id },
+        individualHooks: true,
+      });
+      await ActivityReportResource.destroy({
+        where: { activityReportId: reportTwo.id },
+        individualHooks: true,
+      });
+      await Resource.destroy({
+        where: { url: { [Op.in]: [...reportOneUrls, ...reportTwoUrls] } },
+        individualHooks: true,
+      });
+      if (reportOneWasCreated) {
+        await ActivityReport.destroy({
+          where: { id: reportOne.id },
+          individualHooks: true,
+        });
+      }
+      if (reportTwoWasCreated) {
+        await ActivityReport.destroy({
+          where: { id: reportTwo.id },
+          individualHooks: true,
+        });
+      }
+    });
+
+    it('returns correct resource url filter search results', async () => {
+      const filters = { 'resourceUrl.ctn': ['google'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [reportOne.id, reportTwo.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id]));
+    });
+
+    it('excludes correct resource url filter search results', async () => {
+      const filters = { 'resourceUrl.nctn': ['http'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [reportOne.id, reportTwo.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(0);
+    });
+  });
+
+  describe('resourceAttachment', () => {
+    let recipient;
+    let recipientCreated;
+
+    let grant;
+    let grantCreated;
+
+    let goal;
+    let goalCreated;
+
+    let objective;
+    let objectiveCreated;
+
+    let report;
+    let reportCreated;
+
+    let aro;
+    let aroCreated;
+
+    beforeAll(async () => {
+      [recipient, recipientCreated] = await Recipient.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          id: 99_998,
+          name: faker.random.alphaNumeric(10),
+          uei: faker.datatype.string(12),
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [grant, grantCreated] = await Grant.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          number: recipient.id,
+          recipientId: recipient.id,
+          programSpecialistName: faker.name.firstName(),
+          regionId: 1,
+          id: 99_998,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [goal, goalCreated] = await Goal.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          id: 99_998,
+          grantId: grant.id,
+          status: 'In Progress',
+          name: faker.random.alphaNumeric(10),
+          isFromSmartsheetTtaPlan: false,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [objective, objectiveCreated] = await Objective.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [report, reportCreated] = await ActivityReport.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          context: '',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          numberOfParticipants: 1,
+          deliveryMethod: 'method',
+          duration: 0,
+          endDate: '2020-01-01T12:00:00Z',
+          startDate: '2020-01-01T12:00:00Z',
+          requester: 'requester',
+          regionId: 1,
+          targetPopulations: [],
+          version: 2,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      [aro, aroCreated] = await ActivityReportObjective.findOrCreate({
+        where: {
+          id: 99_998,
+        },
+        defaults: {
+          id: 99_998,
+          activityReportId: 99_998,
+          objectiveId: objective.id,
+        },
+        individualHooks: true,
+        raw: true,
+      });
+
+      await createActivityReportObjectiveFileMetaData(
+        'test.pdf',
+        'very-unique-file-key',
+        99_998,
+        99_998,
+        12_345,
+      );
+    });
+
+    afterAll(async () => {
+      if (aroCreated) {
+        await ActivityReportObjective.destroy({
+          where: { id: aro.id },
+          individualHooks: true,
+        });
+      }
+
+      if (reportCreated) {
+        await ActivityReport.destroy({
+          where: { id: report.id },
+          individualHooks: true,
+        });
+      }
+
+      if (objectiveCreated) {
+        await Objective.destroy({
+          where: { id: objective.id },
+          individualHooks: true,
+        });
+      }
+
+      if (goalCreated) {
+        await Goal.destroy({
+          where: { id: goal.id },
+          individualHooks: true,
+        });
+      }
+
+      if (grantCreated) {
+        await Grant.destroy({
+          where: { id: grant.id },
+          individualHooks: true,
+        });
+      }
+
+      if (recipientCreated) {
+        await Recipient.destroy({
+          where: { id: recipient.id },
+          individualHooks: true,
+        });
+      }
+    });
+
+    it('returns correct resource attachment filter search results', async () => {
+      const filters = { 'resourceAttachment.ctn': ['test'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [report.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([report.id]));
+    });
+
+    it('excludes correct resource attachment filter search results', async () => {
+      const filters = { 'resourceAttachment.nctn': ['test'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: [report.id] },
+          ],
+        },
+      });
+      expect(found.length).toBe(0);
     });
   });
 

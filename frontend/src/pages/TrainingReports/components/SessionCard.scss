@@ -1,0 +1,15 @@
+@use '../../../colors' as *;
+
+.ttahub-session-card__session-list a:visited {
+    color: $text-link;
+}
+
+@container ttahub-event-card (min-width: 800px) {
+    .ttahub-session-card__card-data {
+        display: flex;
+    }
+
+    .ttahub-session-card__card-data-label {
+        font-weight: normal;
+    }
+}

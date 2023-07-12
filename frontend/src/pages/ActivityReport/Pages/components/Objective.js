@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
-} from 'react-hook-form/dist/index.ie11';
+} from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
@@ -187,7 +187,11 @@ export default function Objective({
     // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
-    const objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
+    let objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
+
+    if (!objectiveToAttach) {
+      objectiveToAttach = selectedObjective;
+    }
 
     // handle file upload
     try {

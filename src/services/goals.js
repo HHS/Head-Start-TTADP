@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from './resource';
@@ -57,6 +58,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'goalNumber',
     'createdVia',
     'goalTemplateId',
+    'source',
     [
       'onAR',
       'onAnyReport',
@@ -266,7 +268,9 @@ export async function saveObjectiveAssociations(
         otopic = await ObjectiveTopic.create({
           objectiveId: objective.id,
           topicId: topic.id,
-        }, { hooks: !!o.objectiveTemplateId });
+        }, {
+          ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+        });
       }
       return otopic;
     })),
@@ -314,7 +318,9 @@ export async function saveObjectiveAssociations(
           ofile = await ObjectiveFile.create({
             fileId: file.id,
             objectiveId: objective.id,
-          }, { hooks: !!o.objectiveTemplateId });
+          }, {
+            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+          });
         }
         return ofile;
       },
@@ -618,6 +624,16 @@ function reduceGoals(goals, forReport = false) {
         return previousValues;
       }
 
+      const endDate = (() => {
+        const date = moment(currentValue.dataValues.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
+
+        if (date === 'Invalid date') {
+          return '';
+        }
+
+        return date;
+      })();
+
       const goal = {
         ...currentValue.dataValues,
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
@@ -641,7 +657,8 @@ function reduceGoals(goals, forReport = false) {
           [],
         ),
         isNew: false,
-        endDate: currentValue.endDate,
+        endDate,
+        source: currentValue.dataValues.source,
       };
 
       return [...previousValues, goal];
@@ -1098,6 +1115,7 @@ export async function createOrUpdateGoals(goals) {
       status,
       prompts,
       isCurated,
+      source,
       ...options
     } = goalData;
 
@@ -1142,26 +1160,30 @@ export async function createOrUpdateGoals(goals) {
 
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
-      await newGoal.update(
-        {
-          ...options,
-          ...(options && options.name && { name: options.name.trim() }),
-          status,
-          // if the createdVia column is populated, keep what's there
-          // otherwise, if the goal is imported, we say so
-          // otherwise, we've got ourselves an rtr goal, baby
-          createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
-          endDate: endDate || null,
-        },
-        { individualHooks: true },
-      );
-    // except for the end date, which is always editable
-    } else if (newGoal) {
-      await newGoal.update(
-        { endDate: endDate || null },
-        { individualHooks: true },
-      );
+      newGoal.set({
+        ...(options && options.name && { name: options.name.trim() }),
+      });
+
+      if (newGoal.status !== status) {
+        newGoal.set({ status });
+      }
+
+      if (!newGoal.createdVia || newGoal.createdVia !== createdVia) {
+        newGoal.set({ createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr') });
+      }
     }
+
+    // end date and source can be updated if the goal is not closed
+    // which it won't be at this point (refer to above where we check for closed goals)
+    if (endDate && newGoal.endDate !== endDate) {
+      newGoal.set({ endDate });
+    }
+
+    if (source && newGoal.source !== source) {
+      newGoal.set({ source });
+    }
+
+    await newGoal.save({ individualHooks: true });
 
     const newObjectives = await Promise.all(
       objectives.map(async (o, index) => {
@@ -1230,7 +1252,9 @@ export async function createOrUpdateGoals(goals) {
         }
 
         await objective.update({
-          title,
+          ...(!objective.dataValues.onApprovedAR
+            && title.trim() !== objective.dataValues.title.trim()
+            && { title }),
           status: objectiveStatus,
           rtrOrder: index + 1,
         }, { individualHooks: true });
@@ -1329,9 +1353,10 @@ export async function goalsForGrants(grantIds) {
       'status',
       'onApprovedAR',
       'endDate',
+      'source',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"'],
     where: {
       '$grant.id$': ids,
       status: {
@@ -1846,6 +1871,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR,
         createdVia,
         prompts,
+        source,
         grant,
         grantId: discardedGrantId,
         id, // we can't be trying to set this
@@ -1881,17 +1907,21 @@ export async function saveGoalsForReport(goals, report) {
       }
 
       if (!newOrUpdatedGoal.onApprovedAR) {
+        if (source && newOrUpdatedGoal.source !== source) {
+          newOrUpdatedGoal.set({ source });
+        }
+
         if (fields.name !== newOrUpdatedGoal.name) {
-          newOrUpdatedGoal.set({ name: fields.name.trim() }, { individualHooks: true });
+          newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
 
         if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
-          newOrUpdatedGoal.set({ endDate }, { individualHooks: true });
+          newOrUpdatedGoal.set({ endDate });
         }
       }
 
       if (status && status !== newOrUpdatedGoal.status) {
-        newOrUpdatedGoal.set({ status }, { individualHooks: true });
+        newOrUpdatedGoal.set({ status });
       }
 
       if (prompts) {
@@ -1900,7 +1930,7 @@ export async function saveGoalsForReport(goals, report) {
 
       // here we save the goal where the status (and collorary fields) have been set
       // as well as possibly the name and end date
-      await newOrUpdatedGoal.save();
+      await newOrUpdatedGoal.save({ individualHooks: true });
 
       // then we save the goal metadata (to the activity report goal table)
       await cacheGoalMetadata(

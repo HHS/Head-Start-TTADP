@@ -38,13 +38,16 @@ export default (sequelize, DataTypes) => {
     },
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     objectiveId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     arOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 1,
     },
     title: DataTypes.TEXT,
     status: DataTypes.STRING,

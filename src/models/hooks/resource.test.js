@@ -1,9 +1,7 @@
-import { Op } from 'sequelize';
 import {
   sequelize,
   Resource,
 } from '..';
-import { afterCreate, afterUpdate } from './resource';
 import { addGetResourceMetadataToQueue } from '../../services/resourceQueue';
 
 jest.mock('bull');

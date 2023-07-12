@@ -4,7 +4,7 @@ import React, {
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useController, useFormContext } from 'react-hook-form';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
@@ -16,9 +16,12 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-
+import isAdmin from '../../../../permissions';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
+import FeatureFlag from '../../../../components/FeatureFlag';
+import GoalSource from '../../../../components/GoalForm/GoalSource';
+import UserContext from '../../../../UserContext';
 
 export default function GoalForm({
   goal,
@@ -44,6 +47,7 @@ export default function GoalForm({
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
+  const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -84,6 +88,36 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
+  // goal source rules = required if activityRecipientType === 'recipient'
+  // and if user has the goal_source flag
+
+  const { user } = useContext(UserContext);
+
+  const goalSourceRules = useMemo(() => {
+    if (activityRecipientType === 'recipient' && ((user && user.flags.includes('goal_source')) || isAdmin(user))) {
+      return {
+        required: {
+          value: true,
+          message: 'Select a goal source',
+        },
+      };
+    }
+    return {};
+  }, [activityRecipientType, user]);
+
+  const {
+    field: {
+      onChange: onUpdateGoalSource,
+      onBlur: onBlurGoalSource,
+      value: goalSource,
+      name: goalSourceInputName,
+    },
+  } = useController({
+    name: 'goalSource',
+    rules: goalSourceRules,
+    defaultValue: '',
+  });
+
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -97,6 +131,10 @@ export default function GoalForm({
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
+
+  useEffect(() => {
+    onUpdateGoalSource(goal.source ? goal.source : defaultSource);
+  }, [goal.source, onUpdateGoalSource, defaultSource]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -125,7 +163,6 @@ export default function GoalForm({
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   const prompts = combinePrompts(templatePrompts, goal.prompts);
-
   const isCurated = goal.isCurated || false;
 
   return (
@@ -147,6 +184,21 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         isMultiRecipientReport={isMultiRecipientReport}
       />
+
+      <FeatureFlag flag="goal_source">
+        <GoalSource
+          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
+          source={goalSource}
+          validateGoalSource={onBlurGoalSource}
+          onChangeGoalSource={onUpdateGoalSource}
+          inputName={goalSourceInputName}
+          goalStatus={status}
+          isLoading={isAppLoading}
+          userCanEdit={!isCurated}
+          isOnReport={false}
+          isMultiRecipientGoal={isMultiRecipientReport}
+        />
+      </FeatureFlag>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
@@ -187,6 +239,7 @@ GoalForm.propTypes = {
     isCurated: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
+    source: PropTypes.string,
     prompts: PropTypes.arrayOf(PropTypes.shape({
       type: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
