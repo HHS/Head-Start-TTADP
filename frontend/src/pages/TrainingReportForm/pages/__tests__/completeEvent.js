@@ -9,6 +9,7 @@ import fetchMock from 'fetch-mock';
 import completeEvent from '../completeEvent';
 import NetworkContext from '../../../../NetworkContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
 
 describe('completeEvent', () => {
   describe('render', () => {
@@ -21,6 +22,7 @@ describe('completeEvent', () => {
       id: 1,
       status: 'Not started',
       pageState: defaultPageState,
+      ownerId: 1,
     };
 
     const sessionsUrl = '/api/session-reports/eventId/1';
@@ -39,23 +41,25 @@ describe('completeEvent', () => {
 
       return (
         <FormProvider {...hookForm}>
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {completeEvent.render(
-                {},
-                formData,
-                1,
-                false,
-                jest.fn(),
-                onSaveForm,
-                onUpdatePage,
-                false,
-                '',
-                onSubmit,
-                () => <></>,
-              )}
-            </NetworkContext.Provider>
-          </AppLoadingContext.Provider>
+          <UserContext.Provider value={{ user: { id: 1 } }}>
+            <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {completeEvent.render(
+                  {},
+                  formData,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveForm,
+                  onUpdatePage,
+                  false,
+                  '',
+                  onSubmit,
+                  () => <></>,
+                )}
+              </NetworkContext.Provider>
+            </AppLoadingContext.Provider>
+          </UserContext.Provider>
         </FormProvider>
       );
     };
@@ -255,6 +259,39 @@ describe('completeEvent', () => {
       });
 
       expect(onSubmit).toHaveBeenCalledWith('Complete');
+    });
+
+    it('will not submit if all sessions and pages are complete and user is not owner', async () => {
+      fetchMock.getOnce(sessionsUrl, [
+        { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+      ]);
+
+      act(() => {
+        render(<RenderCompleteEvent defaultValues={{
+          ...defaultFormValues,
+          ownerId: 2,
+          pageState: {
+            1: 'Complete',
+            2: 'Complete',
+          },
+        }}
+        />);
+      });
+
+      // combobox isn't even present
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
+
+      // the status will be displayed as read only
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('In progress');
+      expect(status).toBeInTheDocument();
+
+      // and the submit button is disabled
+      const submitButton = await screen.findByRole('button', { name: /submit/i });
+      expect(submitButton).toBeDisabled();
     });
 
     it('sets a default status of not started if there is no form status and there are no sessions', async () => {

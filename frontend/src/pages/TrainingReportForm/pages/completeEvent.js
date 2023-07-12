@@ -8,6 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
@@ -34,6 +35,7 @@ const CompleteEvent = ({
   DraftAlert,
 }) => {
   const { setError } = useFormContext();
+  const { user } = useContext(UserContext);
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const [error, updateError] = useState();
   const [sessions, setSessions] = useState();
@@ -99,6 +101,8 @@ const CompleteEvent = ({
     return null;
   }
 
+  const isOwner = user && user.id === formData.ownerId;
+
   const options = [
     <option key="event-status-dropdown-option-in-progress">In progress</option>,
     <option key="event-status-dropdown-option-suspended">Suspended</option>,
@@ -125,9 +129,9 @@ const CompleteEvent = ({
         {sessions.length}
       </ReadOnlyField>
 
-      { sessions.length === 0 && (
+      { (sessions.length === 0 || !isOwner) && (
         <ReadOnlyField label="Event status">
-          Not started
+          { updatedStatus }
         </ReadOnlyField>
       )}
 
@@ -155,6 +159,7 @@ const CompleteEvent = ({
               ))}
             </tbody>
           </Table>
+          { isOwner && (
           <div className="margin-top-4">
             <FormItem
               label="Event status"
@@ -172,6 +177,7 @@ const CompleteEvent = ({
               </Dropdown>
             </FormItem>
           </div>
+          )}
         </>
       )}
 
@@ -213,7 +219,7 @@ const CompleteEvent = ({
 
       <DraftAlert />
       <div className="display-flex">
-        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>
+        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading || !isOwner} onClick={onFormSubmit}>Submit event</Button>
         <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveForm(updatedStatus)}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
@@ -230,6 +236,7 @@ CompleteEvent.propTypes = {
       1: PropTypes.string,
       2: PropTypes.string,
     }),
+    ownerId: PropTypes.number,
   }),
   onSaveForm: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
