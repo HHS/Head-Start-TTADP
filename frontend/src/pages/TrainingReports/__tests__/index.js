@@ -7,7 +7,7 @@ import join from 'url-join';
 import { Router, MemoryRouter } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import TrainingReports from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -96,6 +96,23 @@ const completeEvents = [{
 },
 ];
 
+const suspendedEvents = [{
+  id: 5,
+  ownerId: 1,
+  collaboratorIds: [],
+  pocId: [],
+  data: {
+    eventName: 'suspended event 1',
+    eventId: 'suspended event ID 1',
+    eventOrganizer: 'suspended event organizer 1',
+    reasons: ['New Staff/Turnover'],
+    startDate: '05/02/2021',
+    endDate: '05/03/2021',
+  },
+  sessionReports: [],
+},
+];
+
 const history = createMemoryHistory();
 const eventUrl = join('api', 'events');
 
@@ -143,6 +160,10 @@ describe('TrainingReports', () => {
     // Complete.
     const completeUrl = join(eventUrl, `/${EVENT_STATUS.COMPLETE}?region.in[]=2`);
     fetchMock.get(completeUrl, completeEvents);
+
+    // Suspended.
+    const suspendedUrl = join(eventUrl, `/${TRAINING_REPORT_STATUSES.SUSPENDED}?region.in[]=2`);
+    fetchMock.get(suspendedUrl, suspendedEvents);
   });
 
   afterEach(async () => {
@@ -299,6 +320,19 @@ describe('TrainingReports', () => {
     expect(await screen.findByText(/complete event organizer 1/i)).toBeInTheDocument();
     expect(await screen.findByText('04/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('04/03/2021')).toBeInTheDocument();
+  });
+
+  it('renders the suspended events tab', async () => {
+    act(() => {
+      renderTrainingReports(nonCentralOfficeUser, TRAINING_REPORT_STATUSES.SUSPENDED);
+    });
+
+    expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
+    expect(await screen.findByText(/suspended event 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/suspended event ID 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/suspended event organizer 1/i)).toBeInTheDocument();
+    expect(await screen.findByText('05/02/2021')).toBeInTheDocument();
+    expect(await screen.findByText('05/03/2021')).toBeInTheDocument();
   });
 
   it('renders the header with one region', async () => {
