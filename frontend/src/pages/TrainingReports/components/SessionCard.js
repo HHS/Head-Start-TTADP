@@ -73,22 +73,24 @@ function SessionCard({
 
   return (
     <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
-      <Modal
-        modalRef={modalRef}
-        heading="Are you sure you want to delete this session?"
-      >
-        <p>Any information you entered will be lost.</p>
-        <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
-        <Button
-          type="button"
-          unstyled
-          onClick={() => {
-            onRemoveSession(session);
-          }}
+      { expanded ? (
+        <Modal
+          modalRef={modalRef}
+          heading="Are you sure you want to delete this session?"
         >
-          Delete
-        </Button>
-      </Modal>
+          <p>Any information you entered will be lost.</p>
+          <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
+          <Button
+            type="button"
+            unstyled
+            onClick={() => {
+              onRemoveSession(session);
+            }}
+          >
+            Delete
+          </Button>
+        </Modal>
+      ) : null }
       <CardData label="Session name">
         <div className="desktop:display-flex">
           <p className="usa-prose desktop:margin-y-0 margin-top-0 margin-bottom-1 margin-right-2">
