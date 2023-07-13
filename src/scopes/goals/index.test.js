@@ -1300,7 +1300,6 @@ describe('goal filtersToScopes', () => {
         const filters = { 'reportText.nctn': arAdditionalNotes };
         const { goal: scope } = await filtersToScopes(filters, 'goal');
         const found = await Goal.findAll({
-          logging: console.log,
           where: { [Op.and]: [scope, { id: goalIds }] },
         });
         expect(found.map((g) => g.id)).not.toContain(arAdditionalNotesGoal.id);
