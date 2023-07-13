@@ -166,7 +166,7 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 
-  it('shows the create session option for poc', () => {
+  it('shows the create session option for poc without write permission', () => {
     renderEventCard({
       ...defaultEvent,
       pocId: [2],
