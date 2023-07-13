@@ -48,7 +48,10 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE && canEditEvent) {
+  if (![
+    TRAINING_REPORT_STATUSES.COMPLETE,
+    TRAINING_REPORT_STATUSES.SUSPENDED,
+  ].includes(data.status) && canEditEvent) {
     // Create session.
     menuItems.push({
       label: 'Create session',

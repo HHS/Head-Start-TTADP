@@ -1,16 +1,15 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Form, Alert, Button, Table, Dropdown,
+  Alert, Button, Table, Dropdown,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
-import Container from '../../../components/Container';
+import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NavigatorHeader from '../../../components/Navigator/components/NavigatorHeader';
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import { InProgress, Closed } from '../../../components/icons';
@@ -33,8 +32,10 @@ const CompleteEvent = ({
   formData,
   onSaveForm,
   onUpdatePage,
+  DraftAlert,
 }) => {
   const { setError } = useFormContext();
+  const { user } = useContext(UserContext);
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const [error, updateError] = useState();
   const [sessions, setSessions] = useState();
@@ -100,27 +101,19 @@ const CompleteEvent = ({
     return null;
   }
 
+  const isOwner = user && user.id === formData.ownerId;
+
   const options = [
     <option key="event-status-dropdown-option-in-progress">In progress</option>,
     <option key="event-status-dropdown-option-suspended">Suspended</option>,
     <option key="event-status-dropdown-option-complete">Complete</option>,
   ];
 
-  // add not started to the beginning of the list if there are no sessions
-  if (sessions.length === 0) {
-    options.unshift(<option key="event-status-dropdown-option-not-started">Not started</option>);
-  }
-
   return (
     <div className="padding-x-1">
       <Helmet>
         <title>Complete event</title>
       </Helmet>
-
-      <NavigatorHeader
-        label="Complete event"
-        formData={formData}
-      />
 
       <IndicatesRequiredField />
       <p className="usa-prose">Review the information in each section before subitting. Once submitted, the report will no longer be editable.</p>
@@ -135,6 +128,12 @@ const CompleteEvent = ({
       <ReadOnlyField label="Number of sessions">
         {sessions.length}
       </ReadOnlyField>
+
+      { (sessions.length === 0 || !isOwner) && (
+        <ReadOnlyField label="Event status">
+          { updatedStatus }
+        </ReadOnlyField>
+      )}
 
       {sessions.length > 0 && (
         <>
@@ -160,26 +159,27 @@ const CompleteEvent = ({
               ))}
             </tbody>
           </Table>
+          { isOwner && (
+          <div className="margin-top-4">
+            <FormItem
+              label="Event status"
+              name="status"
+              required
+            >
+              <Dropdown
+                label="Event status"
+                name="status"
+                id="status"
+                value={updatedStatus}
+                onChange={(e) => setUpdatedStatus(e.target.value)}
+              >
+                {options}
+              </Dropdown>
+            </FormItem>
+          </div>
+          )}
         </>
       )}
-
-      <div className="margin-top-4">
-        <FormItem
-          label="Event status"
-          name="status"
-          required
-        >
-          <Dropdown
-            label="Event status"
-            name="status"
-            id="status"
-            value={updatedStatus}
-            onChange={(e) => setUpdatedStatus(e.target.value)}
-          >
-            {options}
-          </Dropdown>
-        </FormItem>
-      </div>
 
       {showSubmissionError && (
         <div className="margin-top-4">
@@ -217,9 +217,10 @@ const CompleteEvent = ({
         </div>
       )}
 
+      <DraftAlert />
       <div className="display-flex">
-        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>
-        <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveForm}>Save draft</Button>
+        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading || !isOwner} onClick={onFormSubmit}>Submit event</Button>
+        <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveForm(updatedStatus)}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
 
@@ -235,10 +236,12 @@ CompleteEvent.propTypes = {
       1: PropTypes.string,
       2: PropTypes.string,
     }),
+    ownerId: PropTypes.number,
   }),
   onSaveForm: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
+  DraftAlert: PropTypes.node.isRequired,
 };
 
 CompleteEvent.defaultProps = {
@@ -247,36 +250,33 @@ CompleteEvent.defaultProps = {
 
 export default {
   position,
-  review: true,
+  review: false,
   label: 'Complete event',
   path,
-  isPageComplete: (formData) => formData.calculatedStatus === REPORT_STATUSES.SUBMITTED,
+  isPageComplete: ({ getValues }) => {
+    const { status } = getValues();
+    return status === TRAINING_REPORT_STATUSES.COMPLETE;
+  },
   render:
     (
-      formData,
-      onSubmit,
       _additionalData,
-      _onReview,
-      _isApprover,
-      _isPendingApprover,
-      _onResetToDraft,
+      formData,
+      _reportId,
+      _isAppLoading,
+      _onContinue,
       onSaveForm,
-      _navigatorPages,
-      _reportCreator,
-      _lastSaveTime,
       onUpdatePage,
+      _weAreAutoSaving,
+      _datePickerKey,
+      onSubmit,
+      DraftAlert,
     ) => (
-      <Container skipTopPadding>
-        <Form
-          className="smart-hub--form-large smart-hub--form__activity-report-form"
-        >
-          <CompleteEvent
-            onSubmit={onSubmit}
-            onSaveForm={onSaveForm}
-            formData={formData}
-            onUpdatePage={onUpdatePage}
-          />
-        </Form>
-      </Container>
+      <CompleteEvent
+        onSubmit={onSubmit}
+        onSaveForm={onSaveForm}
+        formData={formData}
+        onUpdatePage={onUpdatePage}
+        DraftAlert={DraftAlert}
+      />
     ),
 };

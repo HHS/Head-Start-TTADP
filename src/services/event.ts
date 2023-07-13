@@ -11,9 +11,9 @@ import {
 } from './types/event';
 
 const {
-  sequelize,
   EventReportPilot,
   SessionReportPilot,
+  User,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -116,9 +116,16 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     return event;
   }
 
+  let owner: undefined | { id: string; name: string; email: string };
+
+  if (event.ownerId) {
+    owner = await User.findByPk(event.ownerId, { attributes: ['id', 'name', 'email'], raw: true });
+  }
+
   return {
     id: event?.id,
     ownerId: event?.ownerId,
+    owner,
     pocId: event?.pocId,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
