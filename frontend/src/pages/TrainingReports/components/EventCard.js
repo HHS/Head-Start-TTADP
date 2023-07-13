@@ -3,7 +3,7 @@ import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -37,10 +37,12 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${event.id}`;
   const menuItems = [];
 
-  if (![
+  const canEdit = ![
     TRAINING_REPORT_STATUSES.COMPLETE,
     TRAINING_REPORT_STATUSES.SUSPENDED,
-  ].includes(data.status) && canEditExisting) {
+  ].includes(data.status) && canEditExisting;
+
+  if (canEdit) {
     // Create session.
     menuItems.push({
       label: 'Create session',
@@ -72,6 +74,8 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
+  const link = canEdit ? `/training-report/${event.id}/event-summary` : `/training-report/view/${event.id}`;
+
   return (
     <article
       className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2"
@@ -84,7 +88,11 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event ID</p>
-          <p className="usa-prose margin-y-0">{data.eventId}</p>
+          <p className="usa-prose margin-y-0">
+            <Link to={link}>
+              {data.eventId}
+            </Link>
+          </p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event organizer</p>
