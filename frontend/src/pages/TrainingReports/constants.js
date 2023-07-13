@@ -40,12 +40,12 @@ export const dataPropTypes = PropTypes.shape({
 });
 
 export const eventPropTypes = PropTypes.shape({
-  id: PropTypes.number.isRequired,
-  ownerId: PropTypes.number.isRequired,
+  id: PropTypes.number,
+  ownerId: PropTypes.number,
   pocIds: PropTypes.arrayOf(PropTypes.number),
   collaboratorIds: PropTypes.arrayOf(PropTypes.number),
-  regionId: PropTypes.number.isRequired,
-  data: PropTypes.shape(dataPropTypes),
+  regionId: PropTypes.number,
+  data: dataPropTypes,
 });
 
 export const EVENT_STATUS = {
