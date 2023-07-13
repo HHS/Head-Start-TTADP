@@ -22,6 +22,11 @@ import { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
 import SCOPES from '../../middleware/scopeConstants';
+import EventReport from '../../policies/event';
+import { findEventById } from '../../services/event';
+
+jest.mock('../../services/event');
+jest.mock('../../policies/event');
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -64,6 +69,15 @@ const mockRequest = {
   session: {
     userId: 1,
   },
+};
+
+const mockEvent = {
+  id: 99_998,
+  ownerId: 99_998,
+  pocId: 99_998,
+  regionId: 99_998,
+  collaboratorIds: [99_998],
+  data: {},
 };
 
 describe('User handlers', () => {
@@ -418,10 +432,14 @@ describe('User handlers', () => {
         ...req,
         query: {
           regionId: '4',
+          eventId: '1',
         },
       };
-      userById.mockResolvedValueOnce(mockUser);
-      currentUserId.mockResolvedValueOnce(1);
+
+      EventReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
+      findEventById.mockResolvedValueOnce(mockEvent);
       getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
 
       await getTrainingReportUsers(unauthorizedReq, res);
@@ -435,8 +453,10 @@ describe('User handlers', () => {
     });
 
     it('should return a list of users with training reports by region', async () => {
-      userById.mockResolvedValueOnce(mockUser);
-      currentUserId.mockResolvedValueOnce(1);
+      EventReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      findEventById.mockResolvedValueOnce(mockEvent);
       getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
 
       await getTrainingReportUsers(req, res);

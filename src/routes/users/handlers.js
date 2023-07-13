@@ -1,3 +1,4 @@
+import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import UserPolicy from '../../policies/user';
 import EventPolicy from '../../policies/event';
@@ -18,6 +19,8 @@ import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
 import getCachedResponse from '../../lib/cache';
+import { findEventById } from '../../services/event';
+import { getEventAuthorization } from '../events/handlers';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -158,14 +161,15 @@ export async function setFeatureFlag(req, res) {
 
 export async function getTrainingReportUsers(req, res) {
   try {
-    const user = await userById(await currentUserId(req, res));
+    const { regionId, eventId } = req.query;
 
-    const authorization = new EventPolicy(user, {});
-    const { regionId } = req.query;
+    const eventLookupId = parseInt(eventId, DECIMAL_BASE);
+    const event = await findEventById(eventLookupId);
+    const eventAuth = await getEventAuthorization(req, res, event);
 
     const region = parseInt(regionId, DECIMAL_BASE);
 
-    if (!authorization.canWriteInRegion(region)) {
+    if (!eventAuth.canUpdate()) {
       res.sendStatus(403);
       return;
     }
