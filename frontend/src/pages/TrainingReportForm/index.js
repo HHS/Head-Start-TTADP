@@ -247,7 +247,9 @@ export default function TrainingReportForm({ match }) {
         regionId: regionId || null,
       };
 
-      if (updatedStatus) {
+      // autosave sends us a "true" boolean so we don't want to update the status
+      // if that is the case
+      if (updatedStatus && typeof updatedStatus === 'string') {
         dataToPut.data.status = updatedStatus;
       }
 

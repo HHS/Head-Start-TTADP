@@ -52,4 +52,5 @@ export const EVENT_STATUS = {
   NOT_STARTED: 'not-started',
   IN_PROGRESS: 'in-progress',
   COMPLETE: 'complete',
+  SUSPENDED: 'suspended',
 };
