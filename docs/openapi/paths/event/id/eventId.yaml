@@ -37,7 +37,9 @@ put:
             ownerId:
               type: integer
             pocIds:
-              type: integer
+              type: array
+              items:
+                type: integer
             collaboratorIds:
               type: array
               items:

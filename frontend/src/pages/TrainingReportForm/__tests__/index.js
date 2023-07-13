@@ -130,7 +130,7 @@ describe('TrainingReportForm', () => {
       },
       collaboratorIds: [1],
       ownerId: 1,
-      pocIds: 1,
+      pocIds: [1],
     });
 
     act(() => {
