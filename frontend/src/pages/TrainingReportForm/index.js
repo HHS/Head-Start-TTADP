@@ -7,7 +7,6 @@ import React, {
 import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -216,11 +215,18 @@ export default function TrainingReportForm({ match }) {
     );
   }
 
-  const onSave = async () => {
+  const onSave = async (updatedStatus = null) => {
+    // if the event is complete, don't allow saving it
+    if (updatedStatus === 'Complete') {
+      hookForm.setError('status', { message: 'To complete event, submit it' });
+      return;
+    }
+
     try {
       // reset the error message
       setError('');
       setIsAppLoading(true);
+      hookForm.clearErrors();
 
       // grab the newest data from the form
       const {
@@ -231,17 +237,22 @@ export default function TrainingReportForm({ match }) {
         ...data
       } = hookForm.getValues();
 
-      // PUT it to the backend
-      const updatedEvent = await updateEvent(trainingReportId, {
+      const dataToPut = {
         data: {
           ...data,
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },
         ownerId: ownerId || null,
         pocId: pocId || null,
         collaboratorIds,
         regionId: regionId || null,
-      });
+      };
+
+      if (updatedStatus) {
+        dataToPut.data.status = updatedStatus;
+      }
+
+      // PUT it to the backend
+      const updatedEvent = await updateEvent(trainingReportId, dataToPut);
       resetFormData(hookForm.reset, updatedEvent);
       updateLastSaveTime(moment(updatedEvent.updatedAt));
       updateShowSavedDraft(true);

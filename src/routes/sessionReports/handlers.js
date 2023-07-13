@@ -131,6 +131,7 @@ export const updateHandler = async (req, res) => {
     const event = await findEventById(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
+    console.log("\n\n\n------testing: ", event);
     if (!sessionAuth.canUpdate(event) && !eventAuth.canUpdate()) { return res.sendStatus(403); }
 
     const updatedSession = await updateSession(id, req.body);
