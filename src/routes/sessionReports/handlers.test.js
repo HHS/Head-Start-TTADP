@@ -62,7 +62,7 @@ describe('session report handlers', () => {
 
   describe('getHandler', () => {
     it('returns the session', async () => {
-      SessionReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementationOnce(() => ({
         canRead: () => true,
       }));
       findSessionById.mockResolvedValueOnce(mockSession);
@@ -71,7 +71,7 @@ describe('session report handlers', () => {
     });
 
     it('returns the session by eventId', async () => {
-      SessionReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementationOnce(() => ({
         canRead: () => true,
       }));
       findSessionsByEventId.mockResolvedValueOnce(mockSession);
@@ -156,9 +156,11 @@ describe('session report handlers', () => {
       SessionReport.mockImplementationOnce(() => ({
         canDelete: () => true,
       }));
+
       findSessionById.mockResolvedValueOnce(mockSession);
       updateSession.mockResolvedValueOnce(mockSession);
       await updateHandler(mockRequest, mockResponse);
+
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 

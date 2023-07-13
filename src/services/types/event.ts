@@ -7,6 +7,7 @@ export type EventShape = {
   data: unknown;
   updatedAt: string;
   sessionReports: unknown[];
+  owner: undefined | { id: string; name: string; email: string };
 };
 
 export type CreateEventRequest = {

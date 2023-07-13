@@ -188,6 +188,7 @@ export default function SessionForm({ match }) {
       // reset the error message
       setError('');
       setIsAppLoading(true);
+      hookForm.clearErrors();
 
       // grab the newest data from the form
       const data = hookForm.getValues();

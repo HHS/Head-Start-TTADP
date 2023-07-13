@@ -73,9 +73,13 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const {
     eventId,
     eventName,
+    owner,
   } = data;
 
   const { users: { collaborators, pointOfContact } } = additionalData;
+
+  const ownerEmail = owner && owner.email ? owner.email : '';
+  const ownerName = owner && owner.name ? owner.name : '';
 
   return (
     <div className="padding-x-1">
@@ -90,6 +94,12 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
       <ReadOnlyField label="Event name">
         {eventName}
+      </ReadOnlyField>
+
+      <ReadOnlyField label="Event owner">
+        <a href={`mailto:${ownerEmail}`}>
+          {ownerName}
+        </a>
       </ReadOnlyField>
 
       <div className="margin-top-2">

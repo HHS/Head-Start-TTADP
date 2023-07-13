@@ -261,7 +261,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-reports/:status(not-started|in-progress|complete)"
+          path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
