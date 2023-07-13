@@ -29,6 +29,7 @@ describe('SessionCard', () => {
           session={session}
           hasWritePermissions={hasWritePermissions}
           eventStatus={eventStatus}
+          onRemoveSession={jest.fn()}
           expanded
         />
       </Router>));
