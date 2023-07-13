@@ -88,7 +88,7 @@ describe('EventCard', () => {
   });
 
   it('hides the edit and create options', () => {
-    renderEventCard(defaultEvent, { ...DEFAULT_USER, permissions: [] });
+    renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
@@ -118,6 +118,7 @@ describe('EventCard', () => {
     renderEventCard(defaultEvent,
       {
         ...DEFAULT_USER,
+        id: 2,
         permissions: [{ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId: 1 }],
       });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -184,7 +185,7 @@ describe('EventCard', () => {
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
-    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
