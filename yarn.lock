@@ -2131,10 +2131,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@ttahub/common@1.1.7":
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-1.1.7.tgz#4f196413570f52a7c04d2c5b496cac95d048fd71"
-  integrity sha512-4i66O9Dti7Xs+qnvA9QK3qb6JnwxW53aWTEmUCsLEYg7o+hJVXwrLtvOkySXkKWePiEAGvNG70rh6JqHivuJDA==
+"@ttahub/common@1.1.8":
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-1.1.8.tgz#27eb04ce2ce83e1c28cdd8e3f6d070feb2376df6"
+  integrity sha512-bI6CyppaV6c/d/1uHbUsvs+07bQTuH6wDnqySQMFgTF8ueUhtQjQ9ZlieBnZwrfWfCl0QbXUWWUYNboA0wXg0Q==
 
 "@types/babel__core@^7.0.0":
   version "7.1.19"
