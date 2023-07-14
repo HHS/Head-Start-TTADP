@@ -136,6 +136,7 @@ describe('EventCards', () => {
     const collaboratorEvents = [{
       id: 1,
       ownerId: 2,
+      regionId: 1,
       collaboratorIds: [],
       pocId: [2],
       data: {
@@ -150,7 +151,8 @@ describe('EventCards', () => {
     },
     {
       id: 2,
-      ownerId: 2,
+      regionId: 1,
+      ownerId: 12,
       collaboratorIds: [],
       pocId: [3],
       data: {
@@ -168,7 +170,12 @@ describe('EventCards', () => {
       id: 2,
       name: 'test@test.com',
       homeRegionId: 1,
-      permissions: [],
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
     };
 
     renderEventCards(collaboratorEvents, EVENT_STATUS.NOT_STARTED, COLLABORATOR_USER);
