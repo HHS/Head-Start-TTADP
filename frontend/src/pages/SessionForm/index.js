@@ -146,7 +146,7 @@ export default function SessionForm({ match }) {
   useEffect(() => {
     // fetch event report data
     async function fetchSession() {
-      if (!trainingReportId || !currentPage || reportFetched || sessionId === 'new') {
+      if (!currentPage || reportFetched || sessionId === 'new') {
         return;
       }
       try {
@@ -161,7 +161,10 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, sessionId, trainingReportId]);
+    // isAppLoading is a little out of place but by including it, we
+    // ensure that the correct form data is loading
+    // TODO: Dig into why it's needed and remove it if possible
+  }, [currentPage, isAppLoading, hookForm.reset, reportFetched, sessionId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);

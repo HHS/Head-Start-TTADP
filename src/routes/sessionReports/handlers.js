@@ -42,22 +42,17 @@ export const getHandler = async (req, res) => {
 
     if (id) {
       session = await findSessionById(id);
-      // Event auth.
-      const event = await findEventById(session.eventId);
-      if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-      const eventAuth = await getEventAuthorization(req, res, event);
-      if (!eventAuth.canUpdate()) {
-        return res.sendStatus(403);
-      }
     } else if (eventId) {
+      sessionEventId = eventId;
       session = await findSessionsByEventId(eventId);
-      // Event auth.
-      const event = await findEventById(sessionEventId);
-      if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-      const eventAuth = await getEventAuthorization(req, res, event);
-      if (!eventAuth.canUpdate()) {
-        return res.sendStatus(403);
-      }
+    }
+
+    // Event auth.
+    const event = await findEventById(sessionEventId);
+    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    const eventAuth = await getEventAuthorization(req, res, event);
+    if (!eventAuth.canUpdate()) {
+      return res.sendStatus(403);
     }
 
     if (!session) {
