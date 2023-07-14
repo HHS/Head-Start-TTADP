@@ -12,10 +12,13 @@ const {
   Objective,
   ObjectiveFile,
   ObjectiveTopic,
+  ObjectiveResource,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
+  ActivityReportObjectiveResource,
   Topic,
+  Resource,
 } = db;
 
 describe('createOrUpdate', () => {
@@ -26,7 +29,10 @@ describe('createOrUpdate', () => {
   let goals;
   let objectives;
   let arecips;
+  let resource;
+
   const ttaProvided = faker.lorem.paragraphs(5);
+  const url = faker.internet.url();
 
   beforeAll(async () => {
     report = await createReport({
@@ -159,9 +165,50 @@ describe('createOrUpdate', () => {
         topicId: topic.id,
       })
     ))));
+
+    resource = await Resource.create({
+      url,
+    });
+
+    await Promise.all((aros.map((aro) => (
+      ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: aro.id,
+        resourceId: resource.id,
+      })
+    ))));
+
+    await Promise.all((objectives.map((o) => (
+      ObjectiveResource.create({
+        objectiveId: o.id,
+        resourceId: resource.id,
+        onAR: true,
+        onApprovedAR: false,
+      })
+    ))));
   });
 
   afterAll(async () => {
+    await ActivityReportObjectiveResource.destroy({
+      where: {
+        resourceId: resource.id,
+      },
+      individualHooks: true,
+    });
+
+    await ObjectiveResource.destroy({
+      where: {
+        resourceId: resource.id,
+      },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: {
+        id: resource.id,
+      },
+      individualHooks: true,
+    });
+
     await ActivityReportObjectiveTopic.destroy({
       where: {
         topicId: topic.id,
@@ -292,7 +339,10 @@ describe('createOrUpdate', () => {
           lastCompleteAt: null,
           rtrOrder: 1,
           topics: [topic],
-          resources: [],
+          resources: [{
+            id: resource.id,
+            value: url,
+          }],
           files: [file],
           value: 149873,
           ids: objectives.map((o) => o.dataValues.id),
