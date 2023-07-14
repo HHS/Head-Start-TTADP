@@ -247,7 +247,7 @@ export default function TrainingReportForm({ match }) {
         regionId: regionId || null,
       };
 
-      if (updatedStatus) {
+      if (updatedStatus && typeof updatedStatus === 'string') {
         dataToPut.data.status = updatedStatus;
       }
 
