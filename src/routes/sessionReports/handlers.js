@@ -42,8 +42,19 @@ export const getHandler = async (req, res) => {
 
     if (id) {
       session = await findSessionById(id);
+      const auth = await getSessionAuthorization(req, res, session);
+      if (!auth.canRead()) {
+        return res.sendStatus(403);
+      }
     } else if (eventId) {
       session = await findSessionsByEventId(eventId);
+      // Event auth.
+      const event = await findEventById(sessionEventId);
+      if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+      const eventAuth = await getEventAuthorization(req, res, event);
+      if (!eventAuth.canUpdate()) {
+        return res.sendStatus(403);
+      }
     }
 
     if (!session) {
@@ -56,15 +67,6 @@ export const getHandler = async (req, res) => {
 
     if (sessionEventId === undefined) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
-    }
-    const auth = await getSessionAuthorization(req, res, session);
-
-    // Event auth.
-    const event = await findEventById(sessionEventId);
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event);
-    if (!auth.canRead() && !eventAuth.canRead()) {
-      return res.sendStatus(403);
     }
 
     return res.status(httpCodes.OK).send(session);
