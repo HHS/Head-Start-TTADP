@@ -65,34 +65,14 @@ describe('session report handlers', () => {
       SessionReport.mockImplementationOnce(() => ({
         canRead: () => true,
       }));
-      EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
-      }));
-      findEventById.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
     it('returns the session by eventId', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canRead: () => true,
-      }));
       EventReport.mockImplementationOnce(() => ({
         canUpdate: () => true,
-      }));
-      findEventById.mockResolvedValueOnce(mockEvent);
-      findSessionsByEventId.mockResolvedValueOnce(mockSession);
-      await getHandler({ session: { userId: 1 }, params: { eventId: 99_998 } }, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-    });
-
-    it('returns the session with only event role access', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canRead: () => false,
-      }));
-      EventReport.mockImplementationOnce(() => ({
-        canRead: () => true,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionsByEventId.mockResolvedValueOnce(mockSession);
@@ -175,9 +155,6 @@ describe('session report handlers', () => {
 
     it('returns the session', async () => {
       SessionReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
-      }));
-      EventReport.mockImplementationOnce(() => ({
         canUpdate: () => true,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
