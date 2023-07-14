@@ -327,7 +327,7 @@ export default function TrainingReportForm({ match }) {
     <div className="smart-hub-training-report">
       { error
       && (
-      <Alert type="warning">
+      <Alert className="margin-bottom-3" type="warning">
         {error}
       </Alert>
       )}
