@@ -87,13 +87,14 @@ describe('EventCard', () => {
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
   });
 
-  it('hides the edit and create options', () => {
+  it('hides the edit and create options', async () => {
     renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
@@ -112,7 +113,7 @@ describe('EventCard', () => {
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
   });
 
   it('only shows the view options with view permission', async () => {
@@ -130,7 +131,7 @@ describe('EventCard', () => {
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
   });
 
-  it('shows the edit and create options for a poc with write permission', () => {
+  it('shows the edit and create options for a poc with write permission', async () => {
     renderEventCard({
       ...defaultEvent,
       pocId: [2],
@@ -141,9 +142,10 @@ describe('EventCard', () => {
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
   });
 
-  it('shows the edit and create options for a collaborator with write permission', () => {
+  it('shows the edit and create options for a collaborator with write permission', async () => {
     renderEventCard({
       ...defaultEvent,
       collaboratorIds: [2],
@@ -154,9 +156,10 @@ describe('EventCard', () => {
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
   });
 
-  it('shows the edit and create options for a owner with write permission', () => {
+  it('shows the edit and create options for a owner with write permission', async () => {
     renderEventCard({
       ...defaultEvent,
       ownerId: 2,
@@ -167,6 +170,7 @@ describe('EventCard', () => {
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
   });
 
   it('shows the create session option for poc without write permission', () => {
