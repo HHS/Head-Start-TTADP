@@ -1686,13 +1686,35 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   }
 
   if (Array.isArray(objectivesToDelete) && objectivesToDelete.length > 0) {
-    await Objective.destroy({
+    const objectivesToDefinitelyDestroy = await Objective.findAll({
+      attributes: [
+        'id',
+        'onApprovedAR',
+      ],
       where: {
         id: objectivesToDelete,
         onApprovedAR: false,
       },
-      individualHooks: true,
     });
+
+    if (Array.isArray(objectivesToDefinitelyDestroy) && objectivesToDefinitelyDestroy.length > 0) {
+      const objectiveIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
+
+      await ObjectiveFile.destroy({
+        where: {
+          objectiveId: objectiveIdsToDestroy,
+        },
+        individualHooks: true,
+      });
+
+      await Objective.destroy({
+        where: {
+          id: objectiveIdsToDestroy,
+          onApprovedAR: false,
+        },
+        individualHooks: true,
+      });
+    }
   }
 
   return Goal.destroy({
