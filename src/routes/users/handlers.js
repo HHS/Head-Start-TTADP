@@ -165,11 +165,10 @@ export async function getTrainingReportUsers(req, res) {
 
     const region = parseInt(regionId, DECIMAL_BASE);
 
-    if (!authorization.canWriteInRegion(region)) {
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
       res.sendStatus(403);
       return;
     }
-
     res.json(await getTrainingReportUsersByRegion(region));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
