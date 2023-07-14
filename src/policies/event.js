@@ -85,6 +85,15 @@ export default class EventReport {
     return this.isAdmin() || this.isAuthor();
   }
 
+  // This should work without a event object.
+  canGetTrainingReportUsersInRegion(regionId) {
+    if (this.isAdmin()) { return true; }
+
+    return !!this.permissions.find((p) => [
+      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.COLLABORATOR_TRAINING_REPORTS,
+    ].includes(p.scopeId) && p.regionId === regionId);
+  }
+
   canUpdate() {
     if (this.isAdmin()) { return true; }
     if (this.isCollaborator()) { return true; }

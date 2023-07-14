@@ -1,4 +1,3 @@
-import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import UserPolicy from '../../policies/user';
 import EventPolicy from '../../policies/event';
@@ -19,8 +18,6 @@ import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
 import getCachedResponse from '../../lib/cache';
-import { findEventById } from '../../services/event';
-import { getEventAuthorization } from '../events/handlers';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -161,19 +158,17 @@ export async function setFeatureFlag(req, res) {
 
 export async function getTrainingReportUsers(req, res) {
   try {
-    const { regionId, eventId } = req.query;
+    const user = await userById(await currentUserId(req, res));
 
-    const eventLookupId = parseInt(eventId, DECIMAL_BASE);
-    const event = await findEventById(eventLookupId);
-    const eventAuth = await getEventAuthorization(req, res, event);
+    const authorization = new EventPolicy(user, {});
+    const { regionId } = req.query;
 
     const region = parseInt(regionId, DECIMAL_BASE);
 
-    if (!eventAuth.canUpdate()) {
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
       res.sendStatus(403);
       return;
     }
-
     res.json(await getTrainingReportUsersByRegion(region));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
