@@ -150,7 +150,7 @@ export default function NationalCenters({ match }) {
 
             <div className="display-flex">
               <Button type="submit">Save</Button>
-              <ModalToggleButton modalRef={modalRef} disabled={selectedCenter.id === 'new'} secondary>Delete</ModalToggleButton>
+              { selectedCenter.id !== 'new' ? <ModalToggleButton modalRef={modalRef} secondary>Delete</ModalToggleButton> : null }
             </div>
 
           </Form>
