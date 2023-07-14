@@ -55,12 +55,8 @@ export default class SessionReport {
   }
 
   canUpdate() {
-    if (!this.canWriteInRegion()) { return false; }
-
     if (this.isAdmin()) { return true; }
-    // if (this.isCollaborator()) { return true; }
     if (this.isAuthor()) { return true; }
-
     return false;
   }
 
@@ -69,11 +65,6 @@ export default class SessionReport {
       (p) => p.scopeId === SCOPES.ADMIN,
     );
   }
-
-  // TODO: Get Event by this.trainingReport.eventId and check the
-  // collaboratorIds array on it.
-  // isCollaborator() {
-  // }
 
   isAuthor() {
     return this.user.id === this.sessionReport.ownerId;
