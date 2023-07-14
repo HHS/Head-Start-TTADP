@@ -48,11 +48,15 @@ export const getHandler = async (req, res) => {
     if (!session) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' });
     }
-
-    const auth = await getSessionAuthorization(req, res, session);
+    // Get associated event to use for authorization for region write
+    // we use the event rather than the session since the session in this context
+    // can be an array or a single session and the event is a suitable proxy
+    // for checking access
+    const event = await findEventById(eventId);
+    const auth = await getEventAuthorization(req, res, event);
 
     if (!auth.canRead()) {
-      return res.sendStatus(403);
+      return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
     return res.status(httpCodes.OK).send(session);
@@ -108,6 +112,7 @@ export const updateHandler = async (req, res) => {
     }
 
     const session = await findSessionById(id);
+
     const auth = await getSessionAuthorization(req, res, session);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 

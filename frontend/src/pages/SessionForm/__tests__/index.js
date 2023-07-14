@@ -76,7 +76,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1 },
+      url, { eventId: 1, data: { eventName: 'Tis an event' } },
     );
 
     act(() => {
