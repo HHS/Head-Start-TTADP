@@ -156,7 +156,7 @@ export default function TrainingReportForm({ match }) {
       }
 
       try {
-        const users = await getTrainingReportUsers(eventRegion, trainingReportId);
+        const users = await getTrainingReportUsers(eventRegion);
         updateAdditionalData({ users });
       } catch (e) {
         updateErrorMessage('Error fetching collaborators and points of contact');
@@ -166,7 +166,7 @@ export default function TrainingReportForm({ match }) {
     }
 
     fetchUsers();
-  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData, trainingReportId]);
+  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData]);
 
   useEffect(() => {
     // fetch event report data
