@@ -62,10 +62,11 @@ describe('session report handlers', () => {
 
   describe('getHandler', () => {
     it('returns the session', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canRead: () => true,
+      EventReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
       }));
       findSessionById.mockResolvedValueOnce(mockSession);
+      findEventById.mockResolvedValueOnce(mockEvent);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });

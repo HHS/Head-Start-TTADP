@@ -42,8 +42,11 @@ export const getHandler = async (req, res) => {
 
     if (id) {
       session = await findSessionById(id);
-      const auth = await getSessionAuthorization(req, res, session);
-      if (!auth.canRead()) {
+      // Event auth.
+      const event = await findEventById(session.eventId);
+      if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+      const eventAuth = await getEventAuthorization(req, res, event);
+      if (!eventAuth.canUpdate()) {
         return res.sendStatus(403);
       }
     } else if (eventId) {
