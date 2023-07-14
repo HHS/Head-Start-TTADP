@@ -60,7 +60,7 @@ const CompleteEvent = ({
       try {
         setIsAppLoading(true);
         const res = await sessionsByEventId(formData.id);
-        setSessions(res.filter((s) => s.data.sessionName));
+        setSessions(res);
       } catch (e) {
         updateError('Unable to load sessions');
         setSessions([]);
