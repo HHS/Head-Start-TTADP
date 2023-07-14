@@ -97,7 +97,7 @@
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
     "importSmartSheetEvent": "node ./build/server/src/tools/importSmartSheetCLI.js",
-    "importSmartSheetEvent:local": "./node_modules/.bin/babel-node ./src/tools/importSmartSheetCLI.js",
+    "importSmartSheetEvent:local": "tsx ./src/tools/importSmartSheetCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish"
   },
   "repository": {
@@ -116,7 +116,7 @@
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
-    "protobufjs": "^6.11.3",
+    "protobufjs": "^7.2.4",
     "got": "^11.8.5",
     "undici": "^5.10.0",
     "selenium-webdriver": "4.3.0",
@@ -126,7 +126,8 @@
     "cookiejar": "^2.1.4",
     "http-cache-semantics": "^4.1.1",
     "xml2js": "^0.5.0",
-    "semver": "^7.5.3"
+    "semver": "^7.5.3",
+    "tough-cookie": "^4.1.3"
   },
   "eslintConfig": {
     "extends": [
@@ -287,7 +288,7 @@
     "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "1.1.5",
+    "@ttahub/common": "1.1.7",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",

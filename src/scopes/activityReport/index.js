@@ -29,6 +29,7 @@ import { withGroup, withoutGroup } from './group';
 import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
+import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
 
 export const topicToQuery = {
   reportId: {
@@ -148,6 +149,11 @@ export const topicToQuery = {
   resourceUrl: {
     ctn: (query) => withResourceUrl(query),
     nctn: (query) => withoutResourceUrl(query),
+  },
+  specialistName: {
+    collaborator: (query) => onlyCollaborators(query),
+    creator: (query) => onlyCreators(query),
+    both: (query) => bothCollaboratorsAndCreators(query),
   },
 };
 
