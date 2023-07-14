@@ -88,7 +88,7 @@ describe('EventCard', () => {
   });
 
   it('hides the edit and create options', () => {
-    renderEventCard(defaultEvent, { ...DEFAULT_USER, permissions: [] });
+    renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
@@ -105,12 +105,12 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 
-  it('shows the edit and create options with write permission', async () => {
-    renderEventCard(defaultEvent);
+  it('hides the edit and create options for users with only write permission and no event roles', async () => {
+    renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 12 });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
-    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
   });
@@ -119,6 +119,7 @@ describe('EventCard', () => {
     renderEventCard(defaultEvent,
       {
         ...DEFAULT_USER,
+        id: 2,
         permissions: [{ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId: 1 }],
       });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -129,16 +130,65 @@ describe('EventCard', () => {
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
   });
 
-  it('shows the edit and create options for a collaborator without write permission', () => {
+  it('shows the edit and create options for a poc with write permission', () => {
     renderEventCard({
       ...defaultEvent,
       pocId: [2],
     },
-    { ...DEFAULT_USER, id: 2, permissions: [] });
+    { ...DEFAULT_USER, id: 2 });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('shows the edit and create options for a collaborator with write permission', () => {
+    renderEventCard({
+      ...defaultEvent,
+      collaboratorIds: [2],
+    },
+    { ...DEFAULT_USER, id: 2 });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('shows the edit and create options for a owner with write permission', () => {
+    renderEventCard({
+      ...defaultEvent,
+      ownerId: 2,
+    },
+    { ...DEFAULT_USER, id: 2 });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('shows the create session option for poc without write permission', () => {
+    renderEventCard({
+      ...defaultEvent,
+      pocId: [2],
+    },
+    {
+      ...DEFAULT_USER,
+      id: 2,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 });
