@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import EventCards from '../EventCards';
 import UserContext from '../../../../UserContext';
@@ -71,13 +72,15 @@ describe('EventCards', () => {
     user = DEFAULT_USER,
   ) => {
     render((
-      <UserContext.Provider value={{ user }}>
-        <EventCards
-          events={events}
-          eventType={eventType}
-          onRemoveSession={jest.fn()}
-        />
-      </UserContext.Provider>));
+      <MemoryRouter>
+        <UserContext.Provider value={{ user }}>
+          <EventCards
+            events={events}
+            eventType={eventType}
+            onRemoveSession={jest.fn()}
+          />
+        </UserContext.Provider>
+      </MemoryRouter>));
   };
 
   it('renders correctly', () => {
@@ -112,6 +115,11 @@ describe('EventCards', () => {
   it('renders correctly if there are no complete events', () => {
     renderEventCards([], EVENT_STATUS.COMPLETE);
     expect(screen.getByText('You have no completed events.')).toBeInTheDocument();
+  });
+
+  it('renders correctly if there are no suspended events', () => {
+    renderEventCards([], EVENT_STATUS.SUSPENDED);
+    expect(screen.getByText('You have no suspended events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no in progress events', () => {

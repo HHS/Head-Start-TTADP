@@ -24,7 +24,9 @@ export const objectivesWithValidResourcesOnly = (objectives) => {
 
   return objectives.map((objective) => ({
     ...objective,
-    resources: objective.resources.filter((resource) => isValidResourceUrl(resource.value)),
+    resources: objective.resources
+      .map((r) => ({ ...r, value: r.value.trim() }))
+      .filter((resource) => isValidResourceUrl(resource.value)),
   }));
 };
 
