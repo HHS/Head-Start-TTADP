@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { eventPropTypes, EVENT_STATUS } from '../constants';
@@ -12,6 +11,8 @@ const translateEventStatus = (status) => {
       return 'You have no events in progress.';
     case EVENT_STATUS.COMPLETE:
       return 'You have no completed events.';
+    case EVENT_STATUS.SUSPENDED:
+      return 'You have no suspended events.';
     default:
       return 'You have no events.';
   }
