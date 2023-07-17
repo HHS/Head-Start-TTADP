@@ -108,9 +108,11 @@ export const endDateFilter = {
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+    const smushed = fixQueryWhetherStringOrArray(query);
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
