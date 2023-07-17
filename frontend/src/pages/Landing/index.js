@@ -22,7 +22,7 @@ import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
+import { hasReadWrite, allRegionsUserHasPermissionTo, hasApproveActivityReport } from '../../permissions';
 import {
   ALERTS_PER_PAGE,
 } from '../../Constants';
@@ -37,6 +37,7 @@ import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import colors from '../../colors';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -242,8 +243,17 @@ function Landing() {
     }
   };
 
-  const filterConfig = hasMultipleRegions
-    ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
+  const filtersToUse = useMemo(() => {
+    const filterConfig = hasMultipleRegions
+      ? [...LANDING_FILTER_CONFIG_WITH_REGIONS] : [...LANDING_BASE_FILTER_CONFIG];
+
+    // If user has approve activity report permission add 'Specialist name' filter.
+    if (hasApproveActivityReport(user)) {
+      filterConfig.push(specialistNameFilter);
+      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+    }
+    return filterConfig;
+  }, [hasMultipleRegions, user]);
 
   return (
     <>
@@ -296,7 +306,8 @@ function Landing() {
               filters={filters}
               onApplyFilters={onApply}
               onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
+              // filterConfig={getFilters()}
+              filterConfig={filtersToUse}
               allUserRegions={regions}
             />
           </Grid>

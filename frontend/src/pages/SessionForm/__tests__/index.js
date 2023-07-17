@@ -39,6 +39,12 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/topic', [{ id: 1, name: 'Behavioral Health' }]);
     fetchMock.get('/api/users/statistics', {});
+    fetchMock.get('/api/national-center', [
+      'DTL',
+      'HBHS',
+      'PFCE',
+      'PFMO',
+    ].map((name, id) => ({ id, name })));
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -70,7 +76,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1 },
+      url, { eventId: 1, data: { eventName: 'Tis an event' } },
     );
 
     act(() => {
