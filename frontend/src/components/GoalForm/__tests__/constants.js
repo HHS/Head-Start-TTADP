@@ -1,8 +1,40 @@
-import { validateListOfResources, FORM_FIELD_DEFAULT_ERRORS, FORM_FIELD_INDEXES } from '../constants';
+import {
+  validateListOfResources,
+  FORM_FIELD_DEFAULT_ERRORS,
+  FORM_FIELD_INDEXES,
+  objectivesWithValidResourcesOnly,
+} from '../constants';
 
 describe('form constants', () => {
   it('the amount of form fields and the amount of default errors should match', () => {
     expect(Object.keys(FORM_FIELD_INDEXES).length).toBe(FORM_FIELD_DEFAULT_ERRORS.length);
+  });
+});
+
+describe('objectivesWithValidResourcesOnly', () => {
+  it('strips invalid resources', () => {
+    const objectives = [
+      {
+        resources: [
+          { value: 'https://www.google.com' },
+          { value: 'not a valid url' },
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com ' },
+          { value: ' https://www.google.com' },
+        ],
+      },
+    ];
+
+    expect(objectivesWithValidResourcesOnly(objectives)).toEqual([
+      {
+        resources: [
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com' },
+        ],
+      },
+    ]);
   });
 });
 
