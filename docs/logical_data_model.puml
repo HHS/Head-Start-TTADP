@@ -340,6 +340,7 @@ class Grants{
  cdi : boolean : false
  deleted : boolean : false
  endDate : timestamp with time zone
+!issue='column missing from model' <color:#d54309>granteeName</color>: varchar(255)
  grantSpecialistEmail : varchar(255)
  grantSpecialistName : varchar(255)
  inactivationDate : timestamp with time zone
