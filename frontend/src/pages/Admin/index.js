@@ -8,6 +8,7 @@ import Diag from './diag';
 import Flags from './Flags';
 import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
+import NationalCenters from './NationalCenters';
 
 function Admin() {
   return (
@@ -31,6 +32,9 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
           Redis info
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/national-centers">
+          National centers
         </NavLink>
       </div>
       <Switch>
@@ -57,6 +61,10 @@ function Admin() {
         <Route
           path="/admin/redis/"
           render={({ match }) => <Redis match={match} />}
+        />
+        <Route
+          path="/admin/national-centers/:nationalCenterId?"
+          render={({ match }) => <NationalCenters match={match} />}
         />
       </Switch>
     </>
