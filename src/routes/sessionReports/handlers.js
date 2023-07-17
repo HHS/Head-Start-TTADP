@@ -33,6 +33,7 @@ export const getHandler = async (req, res) => {
       eventId,
     } = req.params;
 
+    let sessionEventId = eventId;
     const params = [id, eventId];
 
     if (params.every((param) => typeof param === 'undefined')) {
@@ -42,17 +43,28 @@ export const getHandler = async (req, res) => {
     if (id) {
       session = await findSessionById(id);
     } else if (eventId) {
+      sessionEventId = eventId;
       session = await findSessionsByEventId(eventId);
+    }
+
+    // Event auth.
+    const event = await findEventById(sessionEventId);
+    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    const eventAuth = await getEventAuthorization(req, res, event);
+    if (!eventAuth.canUpdate()) {
+      return res.sendStatus(403);
     }
 
     if (!session) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Session Report not found' });
     }
 
-    const auth = await getSessionAuthorization(req, res, session);
+    if (!sessionEventId) {
+      sessionEventId = session.eventId;
+    }
 
-    if (!auth.canRead()) {
-      return res.sendStatus(403);
+    if (sessionEventId === undefined) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
     }
 
     return res.status(httpCodes.OK).send(session);
@@ -77,7 +89,7 @@ export const createHandler = async (req, res) => {
     const event = await findEventById(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
+    if (!auth.canUpdate()) { return res.sendStatus(403); }
 
     const session = await createSession({
       eventId,
@@ -107,9 +119,19 @@ export const updateHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
     }
 
+    const { eventId } = req.body;
+    if (eventId === undefined) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
+    }
+
+    // Session auth.
     const session = await findSessionById(id);
-    const auth = await getSessionAuthorization(req, res, session);
-    if (!auth.canDelete()) { return res.sendStatus(403); }
+    const sessionAuth = await getSessionAuthorization(req, res, session);
+    // Event auth.
+    const event = await findEventById(eventId);
+    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    const eventAuth = await getEventAuthorization(req, res, event);
+    if (!sessionAuth.canUpdate(event) && !eventAuth.canUpdate()) { return res.sendStatus(403); }
 
     const updatedSession = await updateSession(id, req.body);
     return res.status(httpCodes.CREATED).send(updatedSession);
@@ -128,7 +150,13 @@ export const deleteHandler = async (req, res) => {
 
     const session = await findSessionById(id);
     const auth = await getSessionAuthorization(req, res, session);
-    if (!auth.canDelete()) { return res.sendStatus(403); }
+
+    // Event auth.
+    const event = await findEventById(session.eventId);
+    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    const eventAuth = await getEventAuthorization(req, res, event);
+
+    if (!auth.canDelete() && !eventAuth.canUpdate()) { return res.sendStatus(403); }
 
     await destroySession(id);
     return res.status(httpCodes.OK).send({ message: 'Session report deleted' });

@@ -38,6 +38,7 @@ async function parseCsv(fileKey) {
 
 export default async function importSmartSheetEvent(fileKey) {
   const smartSheetEvents = await parseCsv(fileKey);
+  const created = [];
 
   try {
     logger.info(`>>> Starting processing of ${smartSheetEvents.length} SmartSheet Events`);
@@ -98,18 +99,20 @@ export default async function importSmartSheetEvent(fileKey) {
           }
         });
 
-        await EventReportPilot.create({
+        created.push(await EventReportPilot.create({
           collaboratorIds: [],
           ownerId,
           regionId,
           data: sequelize.cast(JSON.stringify(eventReportPilotData), 'jsonb'),
           imported: sequelize.cast(JSON.stringify(smartSheetEvent), 'jsonb'),
-        });
+        }));
       }
     }
     logger.info(`<<< Success! Finished processing of ${smartSheetEvents.length} SmartSheet Events`);
+    return created;
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(err);
+    return created.length;
   }
 }

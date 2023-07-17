@@ -467,6 +467,10 @@ export async function getTrainingReportUsersByRegion(regionId) {
         },
       },
     ],
+    order: [
+      ['name', 'ASC'],
+      ['email', 'ASC'],
+    ],
   });
 
   const results = {

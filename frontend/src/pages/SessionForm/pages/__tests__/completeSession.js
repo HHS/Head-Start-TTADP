@@ -51,6 +51,7 @@ describe('completeSession', () => {
                 false,
                 '',
                 onSubmit,
+                () => <></>,
               )}
             </NetworkContext.Provider>
           </AppLoadingContext.Provider>
