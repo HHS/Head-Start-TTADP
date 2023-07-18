@@ -14,6 +14,7 @@ module.exports = {
       );
 
       await queryInterface.renameColumn('EventReportPilots', 'pocId', 'pocIds', { transaction });
+      await queryInterface.changeColumn('EventReportPilots', 'pocIds', { type: Sequelize.ARRAY(Sequelize.INTEGER) }, { transaction });
     },
   ),
 
@@ -32,6 +33,7 @@ module.exports = {
       );
 
       await queryInterface.renameColumn('EventReportPilots', 'pocIds', 'pocId', { transaction });
+      await queryInterface.changeColumn('EventReportPilots', 'pocId', { type: Sequelize.INTEGER }, { transaction });
     },
   ),
 };
