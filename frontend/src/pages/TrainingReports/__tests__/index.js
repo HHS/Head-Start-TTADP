@@ -100,7 +100,7 @@ const suspendedEvents = [{
   id: 5,
   ownerId: 1,
   collaboratorIds: [],
-  pocId: [],
+  pocIds: [],
   data: {
     eventName: 'suspended event 1',
     eventId: 'suspended event ID 1',
