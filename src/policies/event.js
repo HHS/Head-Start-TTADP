@@ -18,6 +18,8 @@ export default class EventReport {
   canReadInRegion() {
     if (this.isAdmin()) { return true; }
 
+    if (this.isPoc()) { return true; }
+
     return !!this.permissions.find((p) => [
       SCOPES.READ_TRAINING_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
