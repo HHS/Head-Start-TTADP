@@ -340,6 +340,7 @@ class Grants{
  cdi : boolean : false
  deleted : boolean : false
  endDate : timestamp with time zone
+ granteeName : varchar(255)
  grantSpecialistEmail : varchar(255)
  grantSpecialistName : varchar(255)
  inactivationDate : timestamp with time zone
