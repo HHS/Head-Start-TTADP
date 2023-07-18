@@ -202,7 +202,7 @@ class EventReportPilots{
  * regionId : integer
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  imported : jsonb
- pocIds : integer[]
+!issue='column type does not match model' pocIds : <color:#d54309>integer</color>
 }
 
 class Files{
