@@ -57,6 +57,7 @@ describe('RTTAPA', () => {
           reasons: ['diffidence'],
           status: 'In Progress',
           grantNumbers: ['123sdfsdf'],
+          topics: ['goo'],
         }],
       },
       {
@@ -79,6 +80,7 @@ describe('RTTAPA', () => {
           reasons: ['there is no reason'],
           status: 'In Progress',
           grantNumbers: ['asdfsdf'],
+          topics: ['skullduggery', 'goo'],
         }],
       },
     ],

@@ -1,19 +1,33 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   Recipient,
   Grant,
   Program,
   Region,
   User,
+  Objective,
+  ObjectiveTopic,
+  ActivityReportObjective,
+  ActivityReportObjectiveTopic,
+  Goal,
+  Topic,
+  ActivityReportGoal,
   Permission,
   sequelize,
 } from '../models';
 import {
-  allRecipients, recipientById, recipientsByName, recipientsByUserId,
+  allRecipients,
+  recipientById,
+  recipientsByName,
+  recipientsByUserId,
+  getGoalsByActivityRecipient,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { createReport, destroyReport } from '../testUtils';
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -666,6 +680,191 @@ describe('Recipient DB service', () => {
     it('returns an empty array if the user is not found', async () => {
       const foundRecipients = await recipientsByUserId(999999999);
       expect(foundRecipients.length).toBe(0);
+    });
+  });
+
+  describe('reduceObjectivesForRecipientRecord', () => {
+    let recipient;
+    let goals;
+    let objectives;
+    let topics;
+    let report;
+
+    beforeAll(async () => {
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        uei: faker.datatype.string(),
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      });
+
+      const goal = {
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      };
+
+      const grant = await Grant.create({
+        status: 'Active',
+        regionId: 5,
+        id: faker.datatype.number({ min: 1000 }),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        startDate: '2019-01-01',
+        endDate: '2024-01-01',
+      });
+
+      const goal1 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal2 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      goals = [goal1, goal2];
+
+      const matchingObjectiveTitle = 'This is a test objective for reduction';
+
+      const objective1 = await Objective.create({
+        goalId: goal1.id,
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        title: matchingObjectiveTitle,
+      });
+
+      const objective2 = await Objective.create({
+        goalId: goal1.id,
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        title: matchingObjectiveTitle,
+      });
+
+      const objective3 = await Objective.create({
+        goalId: goal2.id,
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        title: matchingObjectiveTitle,
+      });
+
+      objectives = [objective1, objective2, objective3];
+
+      topics = await Topic.bulkCreate([
+        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
+        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
+        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
+        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
+      ]);
+
+      await ObjectiveTopic.bulkCreate(
+        objectives.map((o, i) => ({ objectiveId: o.id, topicId: topics[i + 1].id })),
+      );
+
+      const reason = faker.animal.cetacean();
+
+      report = await createReport({
+        activityRecipients: [
+          {
+            grantId: grant.id,
+          },
+        ],
+        reason: [reason],
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        topics: [topics[0].name],
+        regionId: 5,
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: goal1.id,
+      });
+
+      const aro = await ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: objective1.id,
+      });
+
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aro.id,
+        topicId: topics[1].id,
+      });
+    });
+
+    afterAll(async () => {
+      await ActivityReportObjectiveTopic.destroy({
+        where: {
+          topicId: topics.map((t) => t.id),
+        },
+        individualHooks: true,
+      });
+      await ActivityReportObjective.destroy({
+        where: {
+          objectiveId: objectives.map((o) => o.id),
+        },
+      });
+      await ActivityReportGoal.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+      await destroyReport(report);
+      await ObjectiveTopic.destroy({
+        where: {
+          objectiveId: objectives.map((o) => o.id),
+        },
+        individualHooks: true,
+      });
+
+      await Topic.destroy({
+        where: {
+          id: topics.map((t) => t.id),
+        },
+        individualHooks: true,
+      });
+      await Objective.destroy({
+        where: {
+          id: objectives.map((o) => o.id),
+        },
+        individualHooks: true,
+      });
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+      await Grant.destroy({
+        where: {
+          id: goals.map((g) => g.grantId),
+        },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('successfully reduces data without losing topics', async () => {
+      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
+
+      expect(goalsForRecord.count).toBe(1);
+      expect(goalsForRecord.goalRows.length).toBe(1);
+      expect(goalsForRecord.allGoalIds.length).toBe(2);
+
+      const goal = goalsForRecord.goalRows[0];
+      expect(goal.goalTopics.length).toBe(4); // all topics, including the floating AR topic
+      expect(goal.reasons.length).toBe(1); // the random one we created
+
+      expect(goal.objectives.length).toBe(1);
+      const objective = goal.objectives[0];
+      expect(objective.topics.length).toBe(3); // the ones derived from the ObjectiveTopics link
+      expect(objective.activityReports.length).toBe(1);
     });
   });
 });

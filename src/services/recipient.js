@@ -255,7 +255,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
  * passed into here to avoid having to refigure anything else, they come from the goal
  * @returns {Object[]} sorted objectives
  */
-function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
+export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
@@ -292,6 +292,8 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
         existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
         existing.reasons = uniq([...existing.reasons, ...r]);
         existing.reasons.sort();
+        existing.topics = uniq([...existing.topics, ...t, ...objectiveTopics]).filter((tp) => tp);
+        existing.topics.sort();
         existing.grantNumbers = grantNumbers;
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
@@ -312,6 +314,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
           grantNumbers: [grantNumberToUse],
           reasons: uniq(r),
           activityReports: objective.activityReports || [],
+          topics: uniq([...t, ...objectiveTopics]).filter((tp) => tp),
         }],
         reasons: [...acc.reasons, ...r].sort(),
         topics: [...acc.topics, ...t, ...objectiveTopics],
@@ -323,7 +326,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
     });
 
   const current = goal;
-  current.goalTopics = uniq([...goal.goalTopics, ...topics]);
+  current.goalTopics = uniq([...goal.goalTopics, ...topics]).filter((tp) => tp);
   current.goalTopics.sort();
 
   current.reasons = uniq([...goal.reasons, ...reasons]);
