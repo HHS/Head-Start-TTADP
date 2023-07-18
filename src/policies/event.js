@@ -12,6 +12,8 @@ export default class EventReport {
   }
 
   canRead() {
+    if (this.isPoc()) { return true; }
+
     return this.canReadInRegion();
   }
 
