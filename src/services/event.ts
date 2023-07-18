@@ -193,7 +193,7 @@ async function findEventHelperBlob({
       },
     ],
     where,
-    order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+    order: [['data.eventId', 'ASC'], ['data.startDate', 'ASC']],
   });
 
   // if a fallbackValue was provided for this key search

@@ -60,7 +60,7 @@ const CompleteEvent = ({
       try {
         setIsAppLoading(true);
         const res = await sessionsByEventId(formData.id);
-        setSessions(res.filter((s) => s.data.sessionName));
+        setSessions(res);
       } catch (e) {
         updateError('Unable to load sessions');
         setSessions([]);
@@ -219,7 +219,7 @@ const CompleteEvent = ({
 
       <DraftAlert />
       <div className="display-flex">
-        <Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading || !isOwner} onClick={onFormSubmit}>Submit event</Button>
+        { isOwner && (<Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>)}
         <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveForm(updatedStatus)}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>

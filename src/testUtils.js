@@ -142,7 +142,7 @@ export async function createReport(report) {
   });
 
   try {
-    Promise.all(recipients.map((grantId) => ActivityRecipient.create({
+    await Promise.all(recipients.map((grantId) => ActivityRecipient.create({
       activityReportId: createdReport.id,
       grantId,
     })));

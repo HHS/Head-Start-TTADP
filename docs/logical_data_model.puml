@@ -392,6 +392,14 @@ class MaintenanceLogs{
  isSuccessful : boolean
 }
 
+class NationalCenters{
+ * id : bigint : <generated>
+ mapsTo : integer : REFERENCES "NationalCenters".id
+ * createdAt : timestamp with time zone
+ * name : text
+ * updatedAt : timestamp with time zone
+}
+
 class NextStepResources{
  * id : integer : <generated>
  * nextStepId : integer : REFERENCES "NextSteps".id
@@ -1164,6 +1172,20 @@ class ZALMaintenanceLogs{
  session_sig : text
 }
 
+class ZALNationalCenters{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALNextStepResources{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1654,6 +1676,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPerso
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles
