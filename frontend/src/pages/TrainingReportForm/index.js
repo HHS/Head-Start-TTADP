@@ -247,7 +247,9 @@ export default function TrainingReportForm({ match }) {
         regionId: regionId || null,
       };
 
-      if (updatedStatus) {
+      // autosave sends us a "true" boolean so we don't want to update the status
+      // if that is the case
+      if (updatedStatus && typeof updatedStatus === 'string') {
         dataToPut.data.status = updatedStatus;
       }
 
@@ -327,7 +329,7 @@ export default function TrainingReportForm({ match }) {
     <div className="smart-hub-training-report">
       { error
       && (
-      <Alert type="warning">
+      <Alert className="margin-bottom-3" type="warning">
         {error}
       </Alert>
       )}

@@ -78,7 +78,6 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
   const { users: { collaborators, pointOfContact } } = additionalData;
 
-  const ownerEmail = owner && owner.email ? owner.email : '';
   const ownerName = owner && owner.name ? owner.name : '';
 
   return (
@@ -97,9 +96,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
       </ReadOnlyField>
 
       <ReadOnlyField label="Event owner">
-        <a href={`mailto:${ownerEmail}`}>
-          {ownerName}
-        </a>
+        {ownerName}
       </ReadOnlyField>
 
       <div className="margin-top-2">

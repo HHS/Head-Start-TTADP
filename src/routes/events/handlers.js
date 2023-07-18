@@ -92,7 +92,7 @@ export const getHandler = async (req, res) => {
 
     const auth = await getEventAuthorization(req, res, event);
 
-    if (!auth.canRead() && !auth.isCollaborator()) {
+    if (!auth.canRead() && !auth.isPoc()) {
       return res.sendStatus(403);
     }
 
@@ -127,9 +127,10 @@ export const updateHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Request body is empty' });
     }
 
-    const { regionId } = req.body;
-    const auth = await getEventAuthorization(req, res, { regionId });
-    if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
+    // Get event to update.
+    const eventToUpdate = await findEventById(eventId);
+    const auth = await getEventAuthorization(req, res, eventToUpdate);
+    if (!auth.canUpdate()) { return res.sendStatus(403); }
 
     const event = await updateEvent(eventId, req.body);
     return res.status(httpCodes.CREATED).send(event);

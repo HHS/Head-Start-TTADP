@@ -10,6 +10,9 @@ import {
   getFeatures,
   getRedisInfo,
   flushRedis,
+  deleteNationalCenter,
+  createNationalCenter,
+  updateNationalCenter,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -104,6 +107,35 @@ describe('Admin', () => {
       fetchMock.post(join('/', 'api', 'admin', 'redis', 'flush'), res);
       const flushed = await flushRedis();
       expect(flushed).toEqual(res);
+    });
+  });
+
+  describe('nationalCenters', () => {
+    describe('createNationalCenter', () => {
+      it('creates a national center', async () => {
+        const res = { created: true };
+        fetchMock.post(join('/', 'api', 'admin', 'national-center'), res);
+        const created = await createNationalCenter({});
+        expect(created).toEqual(res);
+      });
+    });
+
+    describe('updateNationalCenter', () => {
+      it('updates a national center', async () => {
+        const res = { updated: true };
+        fetchMock.put(join('/', 'api', 'admin', 'national-center', '1'), res);
+        const updated = await updateNationalCenter(1, {});
+        expect(updated).toEqual(res);
+      });
+    });
+
+    describe('deleteNationalCenter', () => {
+      it('deletes a national center', async () => {
+        const res = { deleted: true };
+        fetchMock.delete(join('/', 'api', 'admin', 'national-center', '1'), res);
+        const deleted = await deleteNationalCenter(1);
+        expect(deleted).toEqual(res);
+      });
     });
   });
 });

@@ -290,8 +290,8 @@ describe('completeEvent', () => {
       expect(status).toBeInTheDocument();
 
       // and the submit button is disabled
-      const submitButton = await screen.findByRole('button', { name: /submit/i });
-      expect(submitButton).toBeDisabled();
+      const submitButton = screen.queryByRole('button', { name: /submit/i });
+      expect(submitButton).toBeNull();
     });
 
     it('sets a default status of not started if there is no form status and there are no sessions', async () => {

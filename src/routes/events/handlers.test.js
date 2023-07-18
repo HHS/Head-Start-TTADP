@@ -114,7 +114,7 @@ describe('event handlers', () => {
     it('returns 403 when the user cannot read the event', async () => {
       EventReport.mockImplementationOnce(() => ({
         canRead: () => false,
-        isCollaborator: () => false,
+        isPoc: () => false,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
@@ -170,7 +170,7 @@ describe('event handlers', () => {
 
     it('returns the event', async () => {
       EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
+        canUpdate: () => true,
       }));
       updateEvent.mockResolvedValueOnce(mockEvent);
       await updateHandler(mockRequest, mockResponse);
