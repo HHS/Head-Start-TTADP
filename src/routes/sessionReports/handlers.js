@@ -42,6 +42,7 @@ export const getHandler = async (req, res) => {
 
     if (id) {
       session = await findSessionById(id);
+      sessionEventId = session.eventId;
     } else if (eventId) {
       sessionEventId = eventId;
       session = await findSessionsByEventId(eventId);

@@ -172,11 +172,11 @@ describe('event service', () => {
 
     it('findEventsByStatus sort order', async () => {
       // eventId is used for sorting, then startDate
-      await createAnEventWithData(11_111, { eventId: 'C', startDate: '2020-01-02' });
-      await createAnEventWithData(11_112, { eventId: 'B', startDate: '2020-01-03' });
-      await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01' });
+      const e1 = await createAnEventWithData(11_111, { eventId: 'C', startDate: '2020-01-02' });
+      const e2 = await createAnEventWithData(11_112, { eventId: 'B', startDate: '2020-01-03' });
+      const e3 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01' });
 
-      const found = await findEventsByStatus(null, [], null, true);
+      const found = await findEventsByStatus(null, [], null, true, [{ id: [e1.id, e2.id, e3.id] }]);
 
       // expect date to be priority sorted, followed by title:
       expect(found[0].data).toHaveProperty('eventId', 'A');
@@ -188,11 +188,17 @@ describe('event service', () => {
       await destroyEvent(found[2].id);
 
       // when eventId is missing, sort by startDate:
-      await createAnEventWithData(11_111, { startDate: '2020-01-02' });
-      await createAnEventWithData(11_112, { startDate: '2020-01-03' });
-      await createAnEventWithData(11_113, { startDate: '2020-01-01' });
+      const e4 = await createAnEventWithData(11_111, { startDate: '2020-01-02' });
+      const e5 = await createAnEventWithData(11_112, { startDate: '2020-01-03' });
+      const e6 = await createAnEventWithData(11_113, { startDate: '2020-01-01' });
 
-      const found2 = await findEventsByStatus(null, [], null, true);
+      const found2 = await findEventsByStatus(
+        null,
+        [],
+        null,
+        true,
+        [{ id: [e4.id, e5.id, e6.id] }],
+      );
 
       expect(found2[0].data).toHaveProperty('startDate', '2020-01-01');
       expect(found2[1].data).toHaveProperty('startDate', '2020-01-02');
@@ -203,11 +209,17 @@ describe('event service', () => {
       await destroyEvent(found2[2].id);
 
       // when eventId is the same, sort by startDate:
-      await createAnEventWithData(11_111, { eventId: 'A', startDate: '2020-01-02' });
-      await createAnEventWithData(11_112, { eventId: 'A', startDate: '2020-01-03' });
-      await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01' });
+      const e7 = await createAnEventWithData(11_111, { eventId: 'A', startDate: '2020-01-02' });
+      const e8 = await createAnEventWithData(11_112, { eventId: 'A', startDate: '2020-01-03' });
+      const e9 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01' });
 
-      const found3 = await findEventsByStatus(null, [], null, true);
+      const found3 = await findEventsByStatus(
+        null,
+        [],
+        null,
+        true,
+        [{ id: [e7.id, e8.id, e9.id] }],
+      );
 
       expect(found3[0].data).toHaveProperty('startDate', '2020-01-01');
       expect(found3[1].data).toHaveProperty('startDate', '2020-01-02');
