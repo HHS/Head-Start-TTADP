@@ -74,6 +74,7 @@ test.describe('get /recipient', () => {
       cdi: Joi.boolean(),
       status: Joi.string(),
       grantSpecialistName: Joi.any().allow(null),
+      granteeName: Joi.any().allow(null),
       grantSpecialistEmail: Joi.any().allow(null),
       programSpecialistName: Joi.any().allow(null),
       programSpecialistEmail: Joi.any().allow(null),
