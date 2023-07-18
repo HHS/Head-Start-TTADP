@@ -114,7 +114,7 @@ export default class EventReport {
   }
 
   isPoc() {
-    return this.eventReport.pocIds.includes(this.user.id);
+    return this.eventReport.pocIds && this.eventReport.pocIds.includes(this.user.id);
   }
 
   isCollaborator() {
