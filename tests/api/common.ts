@@ -14,6 +14,5 @@ export const validateSchema = async (response: APIResponse, schema: Joi.ObjectSc
   const body = await response.body();
   const json = JSON.parse(String(body));
   const { error } = schema.validate(json);
-  console.log("\n\n\n------ ERROR:  ", error)
   expect(error).toBe(undefined);
 };

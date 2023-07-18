@@ -74,7 +74,6 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     isNew: Joi.boolean(),
     prompts: Joi.array().items(promptsSchema),
   }));
-  console.log("\n\n\n-----Response: ", response);
   await validateSchema(response, schema, expect);
 
 });
