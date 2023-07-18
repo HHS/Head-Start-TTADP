@@ -1,10 +1,11 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
+import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Alert, Button, Table, Dropdown,
+  Alert, Button, Table, Dropdown, ErrorMessage,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -34,18 +35,23 @@ const CompleteEvent = ({
   onUpdatePage,
   DraftAlert,
 }) => {
-  const { setError } = useFormContext();
+  const { setError, clearErrors, formState } = useFormContext();
   const { user } = useContext(UserContext);
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const [error, updateError] = useState();
   const [sessions, setSessions] = useState();
   const [showSubmissionError, setShowSubmissionError] = useState(false);
 
+  const [showError, setShowError] = useState(false);
+
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
   // form is explicitly submitted
   const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'Not started');
+
+  const { errors } = formState;
+  const isOwner = user && user.id === formData.ownerId;
 
   useEffect(() => {
     // we want to set the status to in progress if the user adds a session
@@ -74,6 +80,25 @@ const CompleteEvent = ({
     }
   }, [formData.id, sessions, setIsAppLoading]);
 
+  useEffect(() => {
+    if (errors.status && !showError && ((sessions && sessions.length === 0) || !isOwner)) {
+      /**
+       * adding this to clear the error message after 10 seconds
+       * this only shows & clears in the case where the "read only" status field is shown
+       *
+       */
+      setShowError(true);
+      setTimeout(() => {
+        clearErrors('status');
+        setShowError(false);
+      }, 10000);
+    }
+
+    return () => {
+      clearTimeout();
+    };
+  }, [clearErrors, errors.status, isOwner, sessions, showError]);
+
   const areAllSessionsComplete = sessions && sessions.length && sessions.every((session) => session.data.status === 'Complete');
   const incompleteSessions = !sessions || areAllSessionsComplete ? [] : sessions.filter((session) => session.data.status !== 'Complete');
 
@@ -100,8 +125,6 @@ const CompleteEvent = ({
   if (!sessions) {
     return null;
   }
-
-  const isOwner = user && user.id === formData.ownerId;
 
   const options = [
     <option key="event-status-dropdown-option-in-progress">In progress</option>,
@@ -130,9 +153,16 @@ const CompleteEvent = ({
       </ReadOnlyField>
 
       { (sessions.length === 0 || !isOwner) && (
-        <ReadOnlyField label="Event status">
-          { updatedStatus }
-        </ReadOnlyField>
+        <>
+          <ReadOnlyField label="Event status" name="status">
+            {updatedStatus}
+          </ReadOnlyField>
+          <ReactHookFormError
+            errors={errors}
+            name="status"
+            render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
+          />
+        </>
       )}
 
       {sessions.length > 0 && (
