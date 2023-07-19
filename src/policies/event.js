@@ -17,8 +17,15 @@ export default class EventReport {
     return this.canReadInRegion();
   }
 
-  canReadInRegion() {
+  canReadInRegion(regionId = null) {
     if (this.isAdmin()) { return true; }
+
+    if (regionId) {
+      return this.permissions.some((p) => [
+        SCOPES.READ_TRAINING_REPORTS,
+        SCOPES.READ_WRITE_TRAINING_REPORTS,
+      ].includes(p.scopeId) && p.regionId === regionId);
+    }
 
     return !!this.permissions.find((p) => [
       SCOPES.READ_TRAINING_REPORTS,
