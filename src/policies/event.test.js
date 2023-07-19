@@ -127,5 +127,12 @@ describe('Event Report policies', () => {
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canReadInRegion()).toBe(false);
     });
+
+    it('can provide a region id to check against', () => {
+      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canReadInRegion(1)).toBe(false);
+      expect(policy.canReadInRegion(2)).toBe(true);
+    });
   });
 });
