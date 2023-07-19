@@ -1,9 +1,11 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
+import { SCOPE_IDS } from '@ttahub/common';
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
+import DisplayWithPermission from './DisplayWithPermission';
 
 const navLinkClasses = [
   'display-block',
@@ -89,7 +91,12 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="training_reports">
+                  <DisplayWithPermission scopes={[
+                    SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+                    SCOPE_IDS.READ_TRAINING_REPORTS,
+                    SCOPE_IDS.POC_TRAINING_REPORTS,
+                  ]}
+                  >
                     <li>
                       <NavLink
                         to="/training-reports/not-started"
@@ -97,7 +104,7 @@ const SiteNav = ({
                         Training Reports
                       </NavLink>
                     </li>
-                  </FeatureFlag>
+                  </DisplayWithPermission>
                   <li>
                     <NavLink
                       to="/regional-dashboard"
