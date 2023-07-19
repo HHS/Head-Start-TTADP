@@ -27,7 +27,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 
 // websocket publish location interval
-const INTERVAL_DELAY = 30000; // THIRTY SECONDS
+const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 /**
  * this is just a simple handler to "flatten"
@@ -134,10 +134,10 @@ export default function TrainingReportForm({ match }) {
   } = useSocket(user);
 
   useEffect(() => {
-    if (!trainingReportId || !currentPage) {
+    if (!trainingReportId) {
       return;
     }
-    const newPath = `/training-reports/${trainingReportId}/${currentPage}`;
+    const newPath = `/training-reports/${trainingReportId}}`;
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 
