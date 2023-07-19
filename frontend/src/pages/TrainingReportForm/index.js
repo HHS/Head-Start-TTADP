@@ -50,8 +50,8 @@ const resetFormData = (reset, event) => {
     ...fields,
   };
 
-  if (!form.pocId && form.pocId !== undefined) {
-    form.pocId = [];
+  if (!form.pocIds && form.pocIds !== undefined) {
+    form.pocIds = [];
   }
 
   reset({
@@ -231,7 +231,7 @@ export default function TrainingReportForm({ match }) {
       // grab the newest data from the form
       const {
         ownerId,
-        pocId,
+        pocIds,
         collaboratorIds,
         regionId,
         ...data
@@ -242,7 +242,7 @@ export default function TrainingReportForm({ match }) {
           ...data,
         },
         ownerId: ownerId || null,
-        pocId: pocId || null,
+        pocIds: pocIds || null,
         collaboratorIds,
         regionId: regionId || null,
       };
@@ -284,7 +284,7 @@ export default function TrainingReportForm({ match }) {
       // grab the newest data from the form
       const {
         ownerId,
-        pocId,
+        pocIds,
         collaboratorIds,
         regionId,
         ...data
@@ -297,7 +297,7 @@ export default function TrainingReportForm({ match }) {
           status: updatedStatus,
         },
         ownerId: ownerId || null,
-        pocId: pocId || null,
+        pocIds: pocIds || null,
         collaboratorIds,
         regionId: regionId || null,
       });
