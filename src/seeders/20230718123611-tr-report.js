@@ -2,7 +2,7 @@ const { SCOPE_IDS } = require('@ttahub/common');
 
 const {
   READ_WRITE_TRAINING_REPORTS,
-  COLLABORATOR_TRAINING_REPORTS,
+  POC_TRAINING_REPORTS,
 } = SCOPE_IDS;
 
 /** @type {import('sequelize-cli').Migration} */
@@ -25,7 +25,7 @@ module.exports = {
       {
         userId: 3,
         regionId: 1,
-        scopeId: COLLABORATOR_TRAINING_REPORTS,
+        scopeId: POC_TRAINING_REPORTS,
       },
     ];
 
@@ -60,7 +60,7 @@ module.exports = {
   async down(queryInterface) {
     await queryInterface.bulkDelete('EventReportPilots', { ownerId: 1 }, {});
     await queryInterface.bulkDelete('Permissions', { userId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
-    await queryInterface.bulkDelete('Permissions', { userId: 3, scopeId: COLLABORATOR_TRAINING_REPORTS }, {});
+    await queryInterface.bulkDelete('Permissions', { userId: 3, scopeId: POC_TRAINING_REPORTS }, {});
     await queryInterface.bulkDelete('Permissions', { userId: 5, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
   },
 };
