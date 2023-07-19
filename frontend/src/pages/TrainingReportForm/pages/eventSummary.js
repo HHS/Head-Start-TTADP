@@ -95,7 +95,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
         {eventName}
       </ReadOnlyField>
 
-      <ReadOnlyField label="Event owner">
+      <ReadOnlyField label="Event creator">
         {ownerName}
       </ReadOnlyField>
 
