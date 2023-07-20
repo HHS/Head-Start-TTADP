@@ -30,11 +30,11 @@ const onCompletedScanQueue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
   }
 };
-const processScanQueue = () => {
+const processScanQueue = async () => {
   // File Scanning
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
-  scanQueue.process((job) => processFile(job.data.key));
+  return scanQueue.process(async (job) => processFile(job.data.key));
 };
 
 export {

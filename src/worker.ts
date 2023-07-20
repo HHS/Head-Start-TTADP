@@ -28,23 +28,25 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 
 // Pull jobs off the redis queue and process them.
 async function start() {
-  // File Scanning Queue
-  processScanQueue();
+  await Promise.all([
+    // File Scanning Queue
+    processScanQueue(),
 
-  // AWS Elasticsearch Queue
-  processAWSElasticsearchQueue();
+    // AWS Elasticsearch Queue
+    processAWSElasticsearchQueue(),
 
-  // S3 Queue.
-  processS3Queue();
+    // S3 Queue.
+    processS3Queue(),
 
-  // Resource Queue.
-  processResourceQueue();
+    // Resource Queue.
+    processResourceQueue(),
 
-  // Notifications Queue
-  processNotificationQueue();
+    // Notifications Queue
+    processNotificationQueue(),
 
-  // Maintenance Queue
-  processMaintenanceQueue();
+    // Maintenance Queue
+    processMaintenanceQueue(),
+  ]);
 }
 
 // spawn workers and start them

@@ -655,22 +655,28 @@ export const notifyDigest = (job, transport = defaultTransport) => {
   return null;
 };
 
-export const processNotificationQueue = () => {
+export const processNotificationQueue = async () => {
   // Notifications
   notificationQueue.on('failed', onFailedNotification);
   notificationQueue.on('completed', onCompletedNotification);
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
-
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+  return Promise.all([
+    // notify
+    notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested),
+    notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned),
+    notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved),
+    notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned),
+    notificationQueue.process(
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+      notifyRecipientReportApproved,
+    ),
+    // notifyDigest
+    notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest),
+  ]);
 };
 
 /**

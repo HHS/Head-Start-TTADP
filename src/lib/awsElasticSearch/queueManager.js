@@ -70,26 +70,28 @@ const onCompletedAWSElasticsearchQueue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
-const processAWSElasticsearchQueue = () => {
+const processAWSElasticsearchQueue = async () => {
   // AWS Elasticsearch
   awsElasticsearchQueue.on('failed', onFailedAWSElasticsearchQueue);
   awsElasticsearchQueue.on('completed', onCompletedAWSElasticsearchQueue);
   // Process AWS Elasticsearch Queue Items:
-  // Create Index Document
-  awsElasticsearchQueue.process(
-    AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
-    addIndexDocument,
-  );
-  // Update Index Document
-  awsElasticsearchQueue.process(
-    AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
-    updateIndexDocument,
-  );
-  // Delete Index Document
-  awsElasticsearchQueue.process(
-    AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
-    deleteIndexDocument,
-  );
+  return Promise.all([
+    // Create Index Document
+    awsElasticsearchQueue.process(
+      AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
+      addIndexDocument,
+    ),
+    // Update Index Document
+    awsElasticsearchQueue.process(
+      AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
+      updateIndexDocument,
+    ),
+    // Delete Index Document
+    awsElasticsearchQueue.process(
+      AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
+      deleteIndexDocument,
+    ),
+  ]);
 };
 
 export {

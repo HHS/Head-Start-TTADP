@@ -73,15 +73,17 @@ const removeQueueProcessor = (category) => {
  * This function processes the maintenance queue by attaching event listeners for failed
  * and completed tasks, and then processing each category using its corresponding processor.
  */
-const processMaintenanceQueue = () => {
+const processMaintenanceQueue = async () => {
   // Attach event listener for failed tasks
   maintenanceQueue.on('failed', onFailedMaintenance);
   // Attach event listener for completed tasks
   maintenanceQueue.on('completed', onCompletedMaintenance);
 
-  // Process each category in the queue using its corresponding processor
-  Object.entries(maintenanceQueueProcessors)
-    .map(([category, processor]) => maintenanceQueue.process(category, processor));
+  return Promise.all(
+    // Process each category in the queue using its corresponding processor
+    Object.entries(maintenanceQueueProcessors)
+      .map(async ([category, processor]) => maintenanceQueue.process(category, processor)),
+  );
 };
 
 /**

@@ -24,13 +24,13 @@ const onCompletedS3Queue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
-const processS3Queue = () => {
+const processS3Queue = async () => {
   // S3 Queue.
   s3Queue.on('failed', onFailedS3Queue);
   s3Queue.on('completed', onCompletedS3Queue);
 
   // Delete S3 file.
-  s3Queue.process(
+  return s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
     deleteFileFromS3Job,
   );

@@ -38,13 +38,13 @@ const onCompletedResourceQueue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
-const processResourceQueue = () => {
+const processResourceQueue = async () => {
   // Resource Queue.
   resourceQueue.on('failed', onFailedResourceQueue);
   resourceQueue.on('completed', onCompletedResourceQueue);
 
   // Get resource metadata.
-  resourceQueue.process(
+  return resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
     getResourceMetaDataJob,
   );
