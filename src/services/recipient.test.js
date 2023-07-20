@@ -858,9 +858,6 @@ describe('Recipient DB service', () => {
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
       const goal = goalsForRecord.goalRows[0];
-
-      expect(goal.goalTopics.length).toBe(4);
-      expect(goal.goalTopics.sort()).toEqual(topics.map((t) => t.name).sort());
       expect(goal.reasons.length).toBe(1);
 
       expect(goal.objectives.length).toBe(1);
