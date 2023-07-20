@@ -42,7 +42,14 @@ export const getByStatus = async (req, res) => {
     if (await userIsPocRegionalCollaborator(userId)) {
       scopes.push({ pocIds: { [Op.contains]: [userId] } });
     }
-    const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
+    const events = await findEventsByStatus(
+      status,
+      auth.readableRegions,
+      userId,
+      null,
+      false,
+      scopes,
+    );
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
