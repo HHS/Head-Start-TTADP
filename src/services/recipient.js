@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { uniq, uniqBy, isEqual } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 import {
   Grant,
   Recipient,
@@ -245,6 +245,24 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
   };
 }
 
+function reduceTopicsOfDifferingType(topics) {
+  const newTopics = uniq(topics.map((topic) => {
+    if (typeof topic === 'string') {
+      return topic;
+    }
+
+    if (topic.name) {
+      return topic.name;
+    }
+
+    return topic;
+  }));
+
+  newTopics.sort();
+
+  return newTopics;
+}
+
 /**
  *
  * @param {Object} currentModel
@@ -259,7 +277,6 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
-
   const {
     objectives,
     topics,
@@ -268,33 +285,38 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
     ...(currentModel.objectives || []),
     ...(goal.objectives || [])]
     .reduce((acc, objective) => {
-    // this secondary reduction is to extract what we need from the activity reports
-    // ( topic, reason, latest endDate)
-      const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
-        t: [...a.t, ...report.topics],
-        r: [...a.r, ...report.reason],
-        endDate: new Date(report.endDate) < new Date(a.endDate) ? a.endDate : report.endDate,
-      }), { t: [], r: [], endDate: '' });
+      // this secondary reduction is to extract what we need from the activity reports
+      // ( topic, reason, latest endDate)
+      const {
+        reportTopics,
+        reportReasons,
+        endDate,
+      } = (objective.activityReports || []).reduce((accumulated, currentReport) => ({
+        reportTopics: [...accumulated.reportTopics, ...currentReport.topics],
+        reportReasons: [...accumulated.reportReasons, ...currentReport.reason],
+        // eslint-disable-next-line max-len
+        endDate: new Date(currentReport.endDate) < new Date(accumulated.endDate) ? accumulated.endDate : currentReport.endDate,
+      }), { reportTopics: [], reportReasons: [], endDate: '' });
 
-      // previous added objectives have a regularly accessible attribute, the others
-      // for some reason need to be accessed by the getDataValue method
-      const objectiveTitle = objective.getDataValue ? objective.getDataValue('title') : objective.title;
-      const objectiveStatus = objective.getDataValue ? objective.getDataValue('status') : objective.status;
-
-      const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle.trim() && o.status === objectiveStatus
-      ));
+      const objectiveTitle = objective.title.trim();
+      const objectiveStatus = objective.status;
 
       // get our objective topics
-      const objectiveTopics = (objective.topics || []).map((ot) => ot.name);
+
+      const objectiveTopics = (objective.topics || []);
+
+      const existing = acc.objectives.find((o) => (
+        o.title === objectiveTitle && o.status === objectiveStatus
+      ));
 
       if (existing) {
         existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
-        existing.reasons = uniq([...existing.reasons, ...r]);
+        existing.reasons = uniq([...existing.reasons, ...reportReasons]);
         existing.reasons.sort();
-        existing.topics = uniq([...existing.topics, ...t, ...objectiveTopics]).filter((tp) => tp);
+        existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
         existing.topics.sort();
         existing.grantNumbers = grantNumbers;
+
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
 
@@ -305,19 +327,23 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
         grantNumberToUse = goal.grantNumbers[indexOfGoal];
       }
 
+      const formattedObjective = {
+        title: objective.title.trim(),
+        endDate,
+        status: objectiveStatus,
+        grantNumbers: [grantNumberToUse],
+        reasons: uniq(reportReasons),
+        activityReports: objective.activityReports || [],
+        topics: [...reportTopics, ...objectiveTopics],
+      };
+
+      formattedObjective.topics.sort();
+      formattedObjective.reasons.sort();
+
       return {
-        objectives: [...acc.objectives, {
-          ...objective.dataValues,
-          title: objective.title.trim(),
-          endDate,
-          status: objectiveStatus,
-          grantNumbers: [grantNumberToUse],
-          reasons: uniq(r),
-          activityReports: objective.activityReports || [],
-          topics: uniq([...t, ...objectiveTopics]).filter((tp) => tp),
-        }],
-        reasons: [...acc.reasons, ...r].sort(),
-        topics: [...acc.topics, ...t, ...objectiveTopics],
+        objectives: [...acc.objectives, formattedObjective],
+        reasons: [...acc.reasons, ...reportReasons],
+        topics: reduceTopicsOfDifferingType([...acc.topics, ...reportTopics, ...objectiveTopics]),
       };
     }, {
       objectives: [],
@@ -326,13 +352,43 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
     });
 
   const current = goal;
-  current.goalTopics = uniq([...goal.goalTopics, ...topics]).filter((tp) => tp);
+  current.goalTopics = reduceTopicsOfDifferingType([...goal.goalTopics, ...topics]);
   current.goalTopics.sort();
 
   current.reasons = uniq([...goal.reasons, ...reasons]);
   current.reasons.sort();
 
-  return objectives.sort((a, b) => ((
+  return objectives.map((obj) => {
+    /**
+     * Some of the topics on an objective
+     * are strings (those from old activity reports)
+     * and some are objects (retrieved from the ObjectiveTopics linkage)
+     *
+     * In addition to this complication, because we have to deduplicate objectives within a goal,
+     * we can iterate over an objective multiple times. This makes deduplicating and formatting
+     * the topics a little tricky to do on demand (i.e. when the topics are added to the objective)
+     *
+     * So instead, we depuplicating once after the objectives have been reduced, and accounting for
+     * the differing formats then
+     */
+
+    // eslint-disable-next-line no-param-reassign
+    obj.topics = uniq(obj.topics.map((t) => {
+      if (typeof t === 'string') {
+        return t;
+      }
+
+      if (t.name) {
+        return t.name;
+      }
+
+      return t;
+    }));
+
+    obj.topics.sort();
+
+    return obj;
+  }).sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
       : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
