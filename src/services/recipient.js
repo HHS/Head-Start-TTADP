@@ -245,6 +245,18 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
   };
 }
 
+/**
+ * Some of the topics on an objective
+ * are strings (those from old activity reports)
+ * and some are objects (retrieved from the ObjectiveTopics linkage)
+ *
+ * In addition to this complication, because we have to deduplicate objectives within a goal,
+ * we can iterate over an objective multiple times. This makes deduplicating and formatting
+ * the topics a little tricky to do on demand (i.e. when the topics are added to the objective)
+ *
+ * So instead, we depuplicating once after the objectives have been reduced, and accounting for
+ * the differing formats then
+ */
 function reduceTopicsOfDifferingType(topics) {
   const newTopics = uniq(topics.map((topic) => {
     if (typeof topic === 'string') {
@@ -359,34 +371,8 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
   current.reasons.sort();
 
   return objectives.map((obj) => {
-    /**
-     * Some of the topics on an objective
-     * are strings (those from old activity reports)
-     * and some are objects (retrieved from the ObjectiveTopics linkage)
-     *
-     * In addition to this complication, because we have to deduplicate objectives within a goal,
-     * we can iterate over an objective multiple times. This makes deduplicating and formatting
-     * the topics a little tricky to do on demand (i.e. when the topics are added to the objective)
-     *
-     * So instead, we depuplicating once after the objectives have been reduced, and accounting for
-     * the differing formats then
-     */
-
     // eslint-disable-next-line no-param-reassign
-    obj.topics = uniq(obj.topics.map((t) => {
-      if (typeof t === 'string') {
-        return t;
-      }
-
-      if (t.name) {
-        return t.name;
-      }
-
-      return t;
-    }));
-
-    obj.topics.sort();
-
+    obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
   }).sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
