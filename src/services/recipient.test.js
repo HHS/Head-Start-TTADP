@@ -858,12 +858,15 @@ describe('Recipient DB service', () => {
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.goalTopics.length).toBe(4); // all topics, including the floating AR topic
-      expect(goal.reasons.length).toBe(1); // the random one we created
+
+      expect(goal.goalTopics.length).toBe(4);
+      expect(goal.goalTopics.sort()).toEqual(topics.map((t) => t.name).sort());
+      expect(goal.reasons.length).toBe(1);
 
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
-      expect(objective.topics.length).toBe(3); // the ones derived from the ObjectiveTopics link
+      expect(objective.topics.length).toBe(4);
+      expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
       expect(objective.activityReports.length).toBe(1);
     });
   });
