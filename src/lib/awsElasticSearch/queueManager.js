@@ -75,7 +75,7 @@ const processAWSElasticsearchQueue = async () => {
   awsElasticsearchQueue.on('failed', onFailedAWSElasticsearchQueue);
   awsElasticsearchQueue.on('completed', onCompletedAWSElasticsearchQueue);
   // Process AWS Elasticsearch Queue Items:
-  return Promise.all([
+  return Promise.allSettled([
     // Create Index Document
     awsElasticsearchQueue.process(
       AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,

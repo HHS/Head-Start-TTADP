@@ -660,7 +660,7 @@ export const processNotificationQueue = async () => {
   notificationQueue.on('failed', onFailedNotification);
   notificationQueue.on('completed', onCompletedNotification);
 
-  return Promise.all([
+  return Promise.allSettled([
     // notify
     notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested),
     notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned),

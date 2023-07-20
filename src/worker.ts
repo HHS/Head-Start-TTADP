@@ -28,7 +28,7 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 
 // Pull jobs off the redis queue and process them.
 async function start() {
-  await Promise.all([
+  await Promise.allSettled([
     // File Scanning Queue
     processScanQueue(),
 

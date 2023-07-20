@@ -79,7 +79,7 @@ const processMaintenanceQueue = async () => {
   // Attach event listener for completed tasks
   maintenanceQueue.on('completed', onCompletedMaintenance);
 
-  return Promise.all(
+  return Promise.allSettled(
     // Process each category in the queue using its corresponding processor
     Object.entries(maintenanceQueueProcessors)
       .map(async ([category, processor]) => maintenanceQueue.process(category, processor)),
