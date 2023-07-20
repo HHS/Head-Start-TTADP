@@ -134,12 +134,13 @@ describe('event service', () => {
 
     it('findEventsByStatus', async () => {
       const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
-      const found = await findEventsByStatus(TRS.IN_PROGRESS, [], null, false);
+      const found = await findEventsByStatus(TRS.IN_PROGRESS, [], 98_989, null, false);
+      expect(found.length).toBe(1);
       expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
       await destroyEvent(created.id);
 
       const created2 = await createAnEventWithStatus(98_989, TRS.NOT_STARTED);
-      const found2 = await findEventsByStatus(TRS.NOT_STARTED);
+      const found2 = await findEventsByStatus(TRS.NOT_STARTED, [], 98_989);
 
       // ---------
       // ensure no found events have a status of TRS.IN_PROGRESS
@@ -155,28 +156,37 @@ describe('event service', () => {
       const created3 = await createAnEventWithStatus(50_500, null);
       const created4 = await createAnEventWithStatus(50_501, TRS.IN_PROGRESS);
 
-      const found3 = await findEventsByStatus(null, [], null, true);
+      const found3 = await findEventsByStatus(null, [], 50_500, null, true);
       const found4 = await findEventsByStatus(
         TRS.IN_PROGRESS,
         [],
+        50_501,
         null,
         false,
       );
 
       expect(found3.map((f) => f.id)).toContain(created3.id);
       expect(found4.length).toBe(1);
+      expect(found4[0].id).toBe(created4.id);
 
-      await destroyEvent(created3.id);
+      // await destroyEvent(created3.id);
       await destroyEvent(created4.id);
     });
 
     it('findEventsByStatus sort order', async () => {
       // eventId is used for sorting, then startDate
       const e1 = await createAnEventWithData(11_111, { eventId: 'C', startDate: '2020-01-02' });
-      const e2 = await createAnEventWithData(11_112, { eventId: 'B', startDate: '2020-01-03' });
-      const e3 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01' });
+      const e2 = await createAnEventWithData(11_111, { eventId: 'B', startDate: '2020-01-03' });
+      const e3 = await createAnEventWithData(11_111, { eventId: 'A', startDate: '2020-01-01' });
 
-      const found = await findEventsByStatus(null, [], null, true, [{ id: [e1.id, e2.id, e3.id] }]);
+      const found = await findEventsByStatus(
+        null,
+        [],
+        11_111,
+        null,
+        true,
+        [{ id: [e1.id, e2.id, e3.id] }],
+      );
 
       // expect date to be priority sorted, followed by title:
       expect(found[0].data).toHaveProperty('eventId', 'A');
@@ -188,13 +198,14 @@ describe('event service', () => {
       await destroyEvent(found[2].id);
 
       // when eventId is missing, sort by startDate:
-      const e4 = await createAnEventWithData(11_111, { startDate: '2020-01-02' });
+      const e4 = await createAnEventWithData(11_112, { startDate: '2020-01-02' });
       const e5 = await createAnEventWithData(11_112, { startDate: '2020-01-03' });
-      const e6 = await createAnEventWithData(11_113, { startDate: '2020-01-01' });
+      const e6 = await createAnEventWithData(11_112, { startDate: '2020-01-01' });
 
       const found2 = await findEventsByStatus(
         null,
         [],
+        11_112,
         null,
         true,
         [{ id: [e4.id, e5.id, e6.id] }],
@@ -209,13 +220,14 @@ describe('event service', () => {
       await destroyEvent(found2[2].id);
 
       // when eventId is the same, sort by startDate:
-      const e7 = await createAnEventWithData(11_111, { eventId: 'A', startDate: '2020-01-02' });
-      const e8 = await createAnEventWithData(11_112, { eventId: 'A', startDate: '2020-01-03' });
+      const e7 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-02' });
+      const e8 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-03' });
       const e9 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01' });
 
       const found3 = await findEventsByStatus(
         null,
         [],
+        11_113,
         null,
         true,
         [{ id: [e7.id, e8.id, e9.id] }],
@@ -233,8 +245,8 @@ describe('event service', () => {
     it('findEventsByStatus use scopes', async () => {
       // create events.
       const event1 = await createAnEventWithData(11_111, { startDate: '2023-01-01', title: 'C' });
-      const event2 = await createAnEventWithData(11_112, { startDate: '2023-02-01', title: 'B' });
-      const event3 = await createAnEventWithData(11_113, { startDate: '2020-03-01', title: 'A' });
+      const event2 = await createAnEventWithData(11_111, { startDate: '2023-02-01', title: 'B' });
+      const event3 = await createAnEventWithData(11_111, { startDate: '2020-03-01', title: 'A' });
 
       // create scopes.
       const scopesWhere = [
@@ -248,7 +260,7 @@ describe('event service', () => {
       ];
 
       // get events that start between 2023-01-15 and 2023-02-10:
-      const found = await findEventsByStatus(null, [], null, true, scopesWhere);
+      const found = await findEventsByStatus(null, [], 11_111, null, true, scopesWhere);
 
       // expect date to be priority sorted, followed by title:
       expect(found.length).toBe(1);
