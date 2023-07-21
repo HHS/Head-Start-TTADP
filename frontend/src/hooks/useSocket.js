@@ -8,6 +8,8 @@ import {
 } from 'react';
 import useInterval from '@use-it/interval';
 
+const THIRTY_SECONDS = 30000;
+
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL || '';
 
 export function publishLocation(socket, socketPath, user, lastSaveTime) {
@@ -23,7 +25,7 @@ export function publishLocation(socket, socketPath, user, lastSaveTime) {
 }
 
 export function usePublishWebsocketLocationOnInterval(
-  socket, socketPath, user, lastSaveTime, interval,
+  socket, socketPath, user, lastSaveTime, interval = THIRTY_SECONDS,
 ) {
   useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), interval);
 }
