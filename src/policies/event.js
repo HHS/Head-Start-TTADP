@@ -112,18 +112,18 @@ export default class EventReport {
     return this.eventReport.collaboratorIds.includes(this.user.id);
   }
 
-  // some handy aliases
+  // some handy & fun aliases
 
   canEditEvent() {
     return this.isAdmin() || this.isAuthor() || this.isPoc();
   }
 
   canCreateSession() {
-    return this.isAuthor() || this.isCollaborator();
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator();
   }
 
   canEditSession() {
-    return this.isAuthor() || this.isCollaborator() || this.isPoc();
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
   }
 
   canDeleteSession() {
@@ -131,6 +131,6 @@ export default class EventReport {
   }
 
   canSuspendOrCompleteEvent() {
-    return this.isAuthor();
+    return this.isAdmin() || this.isAuthor();
   }
 }
