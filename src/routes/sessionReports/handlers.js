@@ -52,7 +52,7 @@ export const getHandler = async (req, res) => {
     const event = await findEventById(sessionEventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
-    if (!eventAuth.canUpdate()) {
+    if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
     }
 
@@ -90,7 +90,7 @@ export const createHandler = async (req, res) => {
     const event = await findEventById(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canUpdate()) { return res.sendStatus(403); }
+    if (!auth.canCreateSession()) { return res.sendStatus(403); }
 
     const session = await createSession({
       eventId,
@@ -125,14 +125,11 @@ export const updateHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
     }
 
-    // Session auth.
-    const session = await findSessionById(id);
-    const sessionAuth = await getSessionAuthorization(req, res, session);
-    // Event auth.
+    // Authorization is through the associated event
     const event = await findEventById(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
-    if (!sessionAuth.canUpdate(event) && !eventAuth.canUpdate()) { return res.sendStatus(403); }
+    if (!eventAuth.canEditSession()) { return res.sendStatus(403); }
 
     const updatedSession = await updateSession(id, req.body);
     return res.status(httpCodes.CREATED).send(updatedSession);
@@ -150,15 +147,15 @@ export const deleteHandler = async (req, res) => {
     }
 
     const session = await findSessionById(id);
-    const auth = await getSessionAuthorization(req, res, session);
+    if (!session) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' }); }
 
-    // Event auth.
+    // Authorization is through the associated event
+    // so we need to get the event first
     const event = await findEventById(session.eventId);
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
+    if (!eventAuth.canDeleteSession()) { return res.sendStatus(403); }
 
-    if (!auth.canDelete() && !eventAuth.canUpdate()) { return res.sendStatus(403); }
-
+    // Delete the session
     await destroySession(id);
     return res.status(httpCodes.OK).send({ message: 'Session report deleted' });
   } catch (error) {
