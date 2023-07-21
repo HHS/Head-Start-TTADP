@@ -103,10 +103,6 @@ function ObjectiveCard({
     return <NoStatus />;
   })();
 
-  // we shouldn't have to check to see if topics exists but for now we do
-  // todo - adjust RTTAPA backend service to return data structure appropriately
-  const topicsForDisplay = (topics || []).map((t) => t.name).sort();
-
   return (
     <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
       <li className="display-flex padding-bottom-05 flex-align-start">
@@ -142,7 +138,7 @@ function ObjectiveCard({
 
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Topics</span>
-        {topicsForDisplay.join(', ')}
+        {topics.join(', ')}
       </li>
 
       <li className="display-flex padding-bottom-05 flex-align-start">
