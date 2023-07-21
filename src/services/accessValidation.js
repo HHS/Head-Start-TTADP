@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { uniq } from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Permission } from '../models';
 import { auditLogger as logger } from '../logger';
@@ -161,5 +162,12 @@ export async function setReadRegions(query, userId) {
 export async function setTrainingReportReadRegions(query, userId) {
   const readRegions = await getUserTrainingReportReadRegions(userId);
 
+  return setRegionsInQuery(query, readRegions);
+}
+
+export async function setTrainingAndActivityReportReadRegions(query, userId) {
+  const trainingReportReadRegions = await getUserTrainingReportReadRegions(userId);
+  const activityReportReadRegions = await getUserReadRegions(userId);
+  const readRegions = uniq([...trainingReportReadRegions, ...activityReportReadRegions]);
   return setRegionsInQuery(query, readRegions);
 }
