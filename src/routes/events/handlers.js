@@ -137,7 +137,7 @@ export const updateHandler = async (req, res) => {
     // Get event to update.
     const eventToUpdate = await findEventById(eventId);
     const auth = await getEventAuthorization(req, res, eventToUpdate);
-    if (!auth.canEditEvent()) { return res.sendStatus(403).send({ message: 'User is not authorized to update event' }); }
+    if (!auth.canEditEvent()) { return res.status(403).send({ message: 'User is not authorized to update event' }); }
 
     // check to see if req.body.data contains status and if
     // the status is TRAINING_REPORT_STATUSES.COMPLETED or
@@ -146,11 +146,11 @@ export const updateHandler = async (req, res) => {
 
     if (req.body.data && req.body.data.status) {
       const { status } = req.body.data;
-      if (status === TRAINING_REPORT_STATUSES.COMPLETED
+      if (status === TRAINING_REPORT_STATUSES.COMPLETE
         || status === TRAINING_REPORT_STATUSES.SUSPENDED
       ) {
         if (!auth.canSuspendOrCompleteEvent()) {
-          return res.sendStatus(403).send({ message: 'User is not authorized to complete or suspend event' });
+          return res.status(403).send({ message: 'User is not authorized to complete or suspend event' });
         }
       }
     }

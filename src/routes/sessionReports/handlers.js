@@ -1,7 +1,5 @@
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
-import SessionReport from '../../policies/sessionReport';
-import { currentUserId } from '../../services/currentUser';
 import { findEventById } from '../../services/event';
 import {
   createSession,
@@ -11,18 +9,11 @@ import {
   destroySession,
   getPossibleSessionParticipants,
 } from '../../services/sessionReports';
-import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
 const logContext = { namespace };
-
-export const getSessionAuthorization = async (req, res, report) => {
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-  return new SessionReport(user, report);
-};
 
 export const getHandler = async (req, res) => {
   try {
