@@ -23,7 +23,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { isValidResourceUrl } from '../../components/GoalForm/constants';
 
 // websocket publish location interval
-const INTERVAL_DELAY = 30000; // THIRTY SECONDS
+const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 /**
    * this is just a simple handler to "flatten"
@@ -106,12 +106,12 @@ export default function SessionForm({ match }) {
   } = useSocket(user);
 
   useEffect(() => {
-    if (!trainingReportId || !currentPage || !sessionId) {
+    if (!trainingReportId || !sessionId) {
       return;
     }
-    const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
+    const newPath = `/training-report/${trainingReportId}/session/${sessionId}`;
     setSocketPath(newPath);
-  }, [currentPage, sessionId, setSocketPath, trainingReportId]);
+  }, [sessionId, setSocketPath, trainingReportId]);
 
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 

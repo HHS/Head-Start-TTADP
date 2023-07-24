@@ -11,8 +11,10 @@ post:
           properties:
             ownerId:
               type: integer
-            pocId:
-              type: integer
+            pocIds:
+              type: array
+              items:
+                type: integer
             collaboratorIds:
               type: array
               items:
