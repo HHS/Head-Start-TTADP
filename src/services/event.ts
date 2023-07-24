@@ -328,6 +328,7 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
        * but you may not see all sessions
        *
        */
+
       return events.map((event) => {
         // if you are owner, collaborator or poc, you see all sessions
         if (event.ownerId === userId) {
