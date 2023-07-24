@@ -70,7 +70,7 @@ const CompleteSession = ({
       <IndicatesRequiredField />
       <p className="usa-prose">
         Review the information in each section before submitting the session.
-        Once submitted, the report is editable until the event reviewer submits their review.
+        Once submitted, the session is editable until the event is completed.
       </p>
 
       <div className="margin-top-4">
