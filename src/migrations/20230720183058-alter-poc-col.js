@@ -15,7 +15,7 @@ module.exports = {
 
       await queryInterface.removeColumn('EventReportPilots', 'pocId', { transaction });
 
-      await queryInterface.addColumn('EventReportPilots', 'pocId', {
+      await queryInterface.addColumn('EventReportPilots', 'pocIds', {
         type: Sequelize.ARRAY(Sequelize.INTEGER),
         allowNull: true,
       }, { transaction });
@@ -36,7 +36,7 @@ module.exports = {
         { transaction },
       );
 
-      await queryInterface.removeColumn('EventReportPilots', 'pocId', { transaction });
+      await queryInterface.removeColumn('EventReportPilots', 'pocIds', { transaction });
 
       await queryInterface.addColumn('EventReportPilots', 'pocId', {
         type: Sequelize.INTEGER,

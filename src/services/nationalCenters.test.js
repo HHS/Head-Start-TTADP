@@ -120,7 +120,7 @@ describe('nationalCenters service', () => {
 
       eventReport1 = await db.EventReportPilot.create({
         ownerId: 1,
-        pocId: [2],
+        pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
         data: {
@@ -131,7 +131,7 @@ describe('nationalCenters service', () => {
 
       eventReport2 = await db.EventReportPilot.create({
         ownerId: 1,
-        pocId: [2],
+        pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
         data: {
