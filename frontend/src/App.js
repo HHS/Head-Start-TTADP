@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
@@ -56,7 +55,6 @@ import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
-import DisplayWithPermission from './components/DisplayWithPermission';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -188,12 +186,6 @@ function App() {
 
   const admin = isAdmin(user);
 
-  const trainingReportPermissions = [
-    SCOPE_IDS.READ_TRAINING_REPORTS,
-    SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-    SCOPE_IDS.POC_TRAINING_REPORTS,
-  ];
-
   const renderAuthenticatedRoutes = () => (
     <>
       <Switch>
@@ -272,9 +264,9 @@ function App() {
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
+              <FeatureFlag flag="training_reports" renderNotFound>
                 <TrainingReports user={user} match={match} />
-              </DisplayWithPermission>
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -283,9 +275,9 @@ function App() {
           path="/training-report/view/:trainingReportId([0-9]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
+              <FeatureFlag flag="training_reports" renderNotFound>
                 <ViewTrainingReport match={match} />
-              </DisplayWithPermission>
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -294,9 +286,9 @@ function App() {
           path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
+              <FeatureFlag flag="training_reports" renderNotFound>
                 <TrainingReportForm match={match} />
-              </DisplayWithPermission>
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -305,9 +297,9 @@ function App() {
           path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
+              <FeatureFlag flag="training_reports" renderNotFound>
                 <SessionForm match={match} />
-              </DisplayWithPermission>
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
