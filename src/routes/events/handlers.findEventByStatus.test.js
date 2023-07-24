@@ -43,7 +43,6 @@ const newSession = ({
 };
 
 let currentUserId = 49_999;
-const userIds = [];
 
 const createUser = async ({
   write = false,
@@ -54,7 +53,6 @@ const createUser = async ({
   const permissions = [];
 
   currentUserId += 1;
-  userIds.push(currentUserId);
 
   if (write) {
     permissions.push({ scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS, regionId });
@@ -151,6 +149,18 @@ describe('findEventByStatus', () => {
   });
 
   afterAll((async () => {
+    await Permission.destroy({
+      where: {
+        userId: [
+          owner.id,
+          collaborator.id,
+          poc.id,
+          otherPerson.id,
+          seesNone.id,
+        ],
+      },
+    });
+
     await User.destroy({
       where: {
         id: [
