@@ -38,10 +38,6 @@ export const getByStatus = async (req, res) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    // If user is a collaborator we want o return all region events and collaborator events.
-    if (await userIsPocRegionalCollaborator(userId)) {
-      scopes.push({ pocIds: { [Op.contains]: [userId] } });
-    }
     const events = await findEventsByStatus(
       status,
       auth.readableRegions,

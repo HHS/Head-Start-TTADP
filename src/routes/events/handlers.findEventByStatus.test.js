@@ -1,3 +1,4 @@
+import faker from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import db from '../../models';
 import {
@@ -5,11 +6,11 @@ import {
 } from './handlers';
 import {
   createEvent,
-//   destroyEvent,
+  destroyEvent,
 } from '../../services/event';
 import { createSession } from '../../services/sessionReports';
 
-const { User } = db;
+const { User, Permission } = db;
 
 const newEvent = ({
   ownerId = 1,
@@ -67,12 +68,13 @@ const createUser = async ({
     permissions.push({ scopeId: SCOPE_IDS.POC_TRAINING_REPORTS, regionId });
   }
 
-  await User.create({ id: currentUserId });
-};
+  await User.create({ id: currentUserId, hsesUsername: faker.datatype.string() });
 
-const owner = await createUser({ write: true });
-// const collaborator = await createUser({ write: true });
-// const poc = await createUser({ poc: true });
+  return Promise.all(permissions.map((p) => Permission.create({
+    userId: currentUserId,
+    ...p,
+  })));
+};
 
 // /**
 //  *
@@ -101,7 +103,7 @@ const owner = await createUser({ write: true });
 
 //         // otherwise, you only see sessions that are "complete"
 //         const e = event;
-//         e.sessionReports = e.sessionReports.filter((session) => 
+//         e.sessionReports = e.sessionReports.filter((session) =>
 // session.data.status === TRS.COMPLETE);
 
 //         return e;
@@ -115,6 +117,12 @@ const owner = await createUser({ write: true });
 //   }
 //  */
 
+let owner;
+let collaborator;
+let poc;
+let otherPerson;
+let seesNone;
+
 const mockResponse = {
   send: jest.fn(),
   status: jest.fn(() => ({
@@ -124,37 +132,64 @@ const mockResponse = {
   sendStatus: jest.fn(),
 };
 
-// describe('findEventByStatus', () => {
-//   beforeEach(() => {
-//     mockResponse.status.mockClear();
-//     mockResponse.send.mockClear();
-//   });
+describe('findEventByStatus', () => {
+  beforeEach(() => {
+    mockResponse.status.mockClear();
+    mockResponse.send.mockClear();
+  });
 
-//   afterEach(() => {
-//     jest.clearAllMocks();
-//   });
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-//   afterAll((async () => {
-//     await User.destroy({
-//       where: {
-//         id: userIds,
-//       },
-//     });
-//     await db.sequelize.close();
-//   }));
-//   describe('when status is null', () => {
-//     it('owner', async () => {
-//       const e = await createEvent(newEvent({ ownerId: owner.id }));
-//       const s = await createSession(newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } }));
-//       const s2 = await createSession(newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS } }));
+  beforeAll(async () => {
+    owner = await createUser({ write: true });
+    collaborator = await createUser({ write: true });
+    poc = await createUser({ poc: true });
+    otherPerson = await createUser({ write: true });
+    seesNone = await createUser({});
+  });
 
-//       await getByStatus({
-//         params: {
-//           status: null,
-//         },
-//         user: owner,
-//       }, mockResponse);
-//     });
+  afterAll((async () => {
+    await User.destroy({
+      where: {
+        id: [
+          owner.id,
+          collaborator.id,
+          poc.id,
+          otherPerson.id,
+          seesNone.id,
+        ],
+      },
+    });
+    await db.sequelize.close();
+  }));
+  describe('when status is null', () => {
+    it('owner', async () => {
+      const e = await createEvent(newEvent({ ownerId: owner.id }));
+      await createSession(newSession(
+        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
+      ));
+      await createSession(newSession(
+        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS } },
+      ));
+
+      const e2 = await createEvent(newEvent({ ownerId: otherPerson.id }));
+
+      await getByStatus({
+        params: {
+          status: null,
+        },
+        user: owner,
+      }, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.status.end).toHaveBeenCalledWith([e, e2]);
+
+      // this should destroy events and sessions
+      await destroyEvent(e.id);
+      await destroyEvent(e2.id);
+    });
     //  *   switch (status) {
     //     case TRS.NOT_STARTED:
     //     case null:
@@ -180,4 +215,4 @@ const mockResponse = {
     //         return false;
     //       });
   });
-// });
+});
