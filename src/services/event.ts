@@ -299,7 +299,6 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
 export async function filterEventsByStatus(events: EventShape[], status: string, userId: number) : Promise<EventShape[]> {
   switch (status) {
     case TRS.NOT_STARTED:
-    case null:
       /**
        * Not started events
        * You see them if
