@@ -191,7 +191,7 @@ function App() {
   const trainingReportPermissions = [
     SCOPE_IDS.READ_TRAINING_REPORTS,
     SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-    SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+    SCOPE_IDS.POC_TRAINING_REPORTS,
   ];
 
   const renderAuthenticatedRoutes = () => (
@@ -272,7 +272,7 @@ function App() {
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={[trainingReportPermissions]} renderNotFound>
+              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
                 <TrainingReports user={user} match={match} />
               </DisplayWithPermission>
             </AppWrapper>
@@ -283,7 +283,7 @@ function App() {
           path="/training-report/view/:trainingReportId([0-9]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={[trainingReportPermissions]} renderNotFound>
+              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
                 <ViewTrainingReport match={match} />
               </DisplayWithPermission>
             </AppWrapper>
@@ -294,7 +294,7 @@ function App() {
           path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={[trainingReportPermissions]} renderNotFound>
+              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
                 <TrainingReportForm match={match} />
               </DisplayWithPermission>
             </AppWrapper>
@@ -305,7 +305,7 @@ function App() {
           path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <DisplayWithPermission scopes={[trainingReportPermissions]} renderNotFound>
+              <DisplayWithPermission scopes={trainingReportPermissions} renderNotFound>
                 <SessionForm match={match} />
               </DisplayWithPermission>
             </AppWrapper>
