@@ -83,11 +83,13 @@ export default function ViewTrainingReport({ match }) {
   }, [event]);
 
   const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
+  const ownerName = event && event.data && event.data.owner && event.data.owner.name ? event.data.owner.name : '';
 
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
     data: {
       'Event name': event.data.eventName,
+      'Event creator': ownerName,
       Region: String(event.regionId),
       'Event organizer': event.data.eventOrganizer,
       'Event collaborators': eventCollaborators,

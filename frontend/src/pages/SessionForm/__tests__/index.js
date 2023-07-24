@@ -11,6 +11,7 @@ import SessionForm from '..';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
+import { mockRSSData } from '../../../testHelpers';
 
 describe('SessionReportForm', () => {
   const sessionsUrl = join('/', 'api', 'session-reports');
@@ -45,6 +46,7 @@ describe('SessionReportForm', () => {
       'PFCE',
       'PFMO',
     ].map((name, id) => ({ id, name })));
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
   });
 
   it('creates a new session if id is "new"', async () => {
