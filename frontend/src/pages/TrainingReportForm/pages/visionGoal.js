@@ -23,13 +23,14 @@ const VisionGoal = () => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Event vision"
+          label="Event vision "
           name="vision"
           required
         >
           <Textarea
             id="vision"
             name="vision"
+            required
             inputRef={register({
               required: 'Descibe the event vision',
             })}
@@ -39,13 +40,14 @@ const VisionGoal = () => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Event goal"
+          label="Event goal "
           name="goal"
           required
         >
           <Textarea
             id="goal"
             name="goal"
+            required
             inputRef={register({
               required: 'Describe the event goal',
             })}
