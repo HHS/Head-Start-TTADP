@@ -9,6 +9,7 @@ import fetchMock from 'fetch-mock';
 import completeEvent from '../completeEvent';
 import NetworkContext from '../../../../NetworkContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
 
 describe('completeEvent', () => {
   describe('render', () => {
@@ -21,6 +22,7 @@ describe('completeEvent', () => {
       id: 1,
       status: 'Not started',
       pageState: defaultPageState,
+      ownerId: 1,
     };
 
     const sessionsUrl = '/api/session-reports/eventId/1';
@@ -39,24 +41,25 @@ describe('completeEvent', () => {
 
       return (
         <FormProvider {...hookForm}>
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {completeEvent.render(
-                formData,
-                onSubmit,
-                {},
-                jest.fn(),
-                false,
-                false,
-                jest.fn(),
-                onSaveForm,
-                [],
-                null,
-                null,
-                onUpdatePage,
-              )}
-            </NetworkContext.Provider>
-          </AppLoadingContext.Provider>
+          <UserContext.Provider value={{ user: { id: 1 } }}>
+            <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {completeEvent.render(
+                  {},
+                  formData,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveForm,
+                  onUpdatePage,
+                  false,
+                  '',
+                  onSubmit,
+                  () => <></>,
+                )}
+              </NetworkContext.Provider>
+            </AppLoadingContext.Provider>
+          </UserContext.Provider>
         </FormProvider>
       );
     };
@@ -76,7 +79,6 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent />);
       });
 
-      expect(await screen.findByRole('heading', { name: /complete event/i })).toBeInTheDocument();
       expect(await screen.findByRole('cell', { name: /toothbrushing vol 2/i })).toBeInTheDocument();
       expect(await screen.findByRole('cell', { name: /toothbrushing vol 3/i })).toBeInTheDocument();
       expect(await screen.findAllByRole('cell', { name: /complete/i })).toHaveLength(2); // sessions without names are filtered out
@@ -96,8 +98,14 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent />);
       });
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-      expect(statusSelect).toHaveValue('Not started');
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
+
+      // but there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
     });
 
     it('handles an error fetching sessions', async () => {
@@ -109,8 +117,14 @@ describe('completeEvent', () => {
 
       await waitFor(() => screen.findByText('Unable to load sessions'));
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-      expect(statusSelect).toHaveValue('Not started');
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
+
+      // but there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
     });
 
     it('calls onUpdatePage when the back button is clicked', async () => {
@@ -151,11 +165,14 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent />);
       });
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-      act(() => {
-        userEvent.selectOptions(statusSelect, 'Complete');
-      });
-      expect(statusSelect).toHaveValue('Complete');
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
+
+      // there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
 
       const submitButton = await screen.findByRole('button', { name: /submit/i });
       act(() => {
@@ -244,6 +261,39 @@ describe('completeEvent', () => {
       expect(onSubmit).toHaveBeenCalledWith('Complete');
     });
 
+    it('will not submit if all sessions and pages are complete and user is not owner', async () => {
+      fetchMock.getOnce(sessionsUrl, [
+        { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+        { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+      ]);
+
+      act(() => {
+        render(<RenderCompleteEvent defaultValues={{
+          ...defaultFormValues,
+          ownerId: 2,
+          pageState: {
+            1: 'Complete',
+            2: 'Complete',
+          },
+        }}
+        />);
+      });
+
+      // combobox isn't even present
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
+
+      // the status will be displayed as read only
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('In progress');
+      expect(status).toBeInTheDocument();
+
+      // and the submit button is disabled
+      const submitButton = screen.queryByRole('button', { name: /submit/i });
+      expect(submitButton).toBeNull();
+    });
+
     it('sets a default status of not started if there is no form status and there are no sessions', async () => {
       fetchMock.getOnce(sessionsUrl, []);
 
@@ -251,9 +301,14 @@ describe('completeEvent', () => {
         render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState }} />);
       });
 
-      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+      const statusLabel = await screen.findByText('Event status');
+      expect(statusLabel).toBeInTheDocument();
+      const status = await screen.findByText('Not started');
+      expect(status).toBeInTheDocument();
 
-      expect(statusSelect).toHaveValue('Not started');
+      // there should be no select
+      const statusSelect = screen.queryByRole('combobox', { name: /status/i });
+      expect(statusSelect).toBeNull();
     });
   });
 });

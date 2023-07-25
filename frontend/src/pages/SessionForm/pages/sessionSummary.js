@@ -19,6 +19,7 @@ import {
 import Select from 'react-select';
 import { Link } from 'react-router-dom';
 import { getTopics } from '../../../fetchers/topics';
+import { getNationalCenters } from '../../../fetchers/nationalCenters';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
@@ -40,14 +41,6 @@ import SessionObjectiveResource from '../components/SessionObjectiveResource';
 const DEFAULT_RESOURCE = {
   value: '',
 };
-
-// options for the trainers (the 4 national centers)
-const TRAINER_OPTIONS = [
-  'DTL',
-  'HBHS',
-  'PFCE',
-  'PFMO',
-].map((label, value) => ({ label, value }));
 
 const SessionSummary = ({ datePickerKey }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -97,12 +90,30 @@ const SessionSummary = ({ datePickerKey }) => {
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
+        setTopicOptions([]);
       }
     }
     if (!topicOptions) {
       fetchTopics();
     }
   }, [setError, topicOptions]);
+
+  const [trainerOptions, setTrainerOptions] = useState(null);
+  useEffect(() => {
+    async function fetchNationalCenters() {
+      try {
+        const nationalCenters = await getNationalCenters();
+        setTrainerOptions(nationalCenters);
+      } catch (err) {
+        setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
+        setTrainerOptions([]);
+      }
+    }
+
+    if (!trainerOptions) {
+      fetchNationalCenters();
+    }
+  }, [setError, trainerOptions]);
 
   // for the resource repeater we are using the built in hook-form
   // field array
@@ -375,9 +386,11 @@ const SessionSummary = ({ datePickerKey }) => {
           required
         >
           <Controller
-            render={({ onChange: controllerOnChange, value: selectedValue, onBlur }) => (
+            render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={TRAINER_OPTIONS.filter((option) => selectedValue.includes(option.label))}
+                value={(trainerOptions || []).filter((option) => (
+                  value.includes(option.name)
+                ))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
                 className="usa-select"
@@ -387,10 +400,12 @@ const SessionSummary = ({ datePickerKey }) => {
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.label));
+                  controllerOnChange(s.map((o) => o.name));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
-                options={TRAINER_OPTIONS}
+                options={trainerOptions || []}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.id}
                 isMulti
               />
             )}

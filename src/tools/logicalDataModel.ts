@@ -141,13 +141,15 @@ function processClassDefinition(schema, key) {
       column += `${field.type}`;
     }
 
-    if (!(field.default === modelField.defaultValue
+    if (modelField) {
+      if (!(field.default === modelField.defaultValue
         || field.default === modelField.defaultValue?.toString()
         || field.default === modelField.defaultValue?.val)
       && field.default !== '<generated>'
       && !((field.default === 'null' || field.default === null) && modelField.defaultValue === undefined)
       && !(['updatedAt', 'createdAt'].includes(field.name) && ['now()', 'CURRENT_TIMESTAMP'].includes(field.default))) {
       issues.push(`!issue='column default does not match model'`); //eslint-disable-line
+      }
     }
     if (field.default) {
       column += ` : ${field.default}`;

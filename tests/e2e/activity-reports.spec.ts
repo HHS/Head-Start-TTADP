@@ -11,7 +11,12 @@ const openFilters = async (page: Page, condition: string, value: string) => {
 test.describe('activity reports landing page', () => {
   test('properly displays start date in filter', async ({ page }) => {
     await page.goto('http://localhost:3000/activity-reports?region.in[]=1&startDate.in[]=2023%2F04%2F04-2023%2F05%2F04');
-  
+    await page.waitForTimeout(5000);
+    expect(page.getByText('04/04/2023-05/04/2023')).toBeTruthy();
+  });
+
+  test('properly displays end date in filter', async ({ page }) => {
+    await page.goto('http://localhost:3000/activity-reports?region.in[]=1&endDate.in[]=2023%2F04%2F04-2023%2F05%2F04');
     await page.waitForTimeout(5000);
     expect(page.getByText('04/04/2023-05/04/2023')).toBeTruthy();
   });

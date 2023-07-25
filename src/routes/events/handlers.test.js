@@ -35,7 +35,7 @@ jest.mock('../../services/event', () => ({
 const mockEvent = {
   id: 99_999,
   ownerId: 99_999,
-  pocId: [99_999],
+  pocIds: [99_999],
   regionId: 99_999,
   collaboratorIds: [99_998, 99_999],
   data: {
@@ -99,9 +99,9 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
-    it('returns 404 when not found by pocId', async () => {
+    it('returns 404 when not found by pocIds', async () => {
       findEventsByPocId.mockResolvedValueOnce(null);
-      await getHandler({ params: { pocId: 1 } }, mockResponse);
+      await getHandler({ params: { pocIds: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
@@ -114,7 +114,7 @@ describe('event handlers', () => {
     it('returns 403 when the user cannot read the event', async () => {
       EventReport.mockImplementationOnce(() => ({
         canRead: () => false,
-        isCollaborator: () => false,
+        isPoc: () => false,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
@@ -129,7 +129,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: [99_999],
+        pocIds: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -161,7 +161,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: [99_999],
+        pocIds: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -170,7 +170,7 @@ describe('event handlers', () => {
 
     it('returns the event', async () => {
       EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
+        canUpdate: () => true,
       }));
       updateEvent.mockResolvedValueOnce(mockEvent);
       await updateHandler(mockRequest, mockResponse);
