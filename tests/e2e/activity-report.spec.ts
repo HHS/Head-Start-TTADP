@@ -104,7 +104,7 @@ async function activitySummary(
 ) {
   const { recipients, ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
 
-  await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+  await page.getByRole('group', { name: /Was this activity for a recipient or other entity\?/i }).locator('label').filter({ hasText: 'Recipient' }).click();
   await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
 
   if (recipients) {

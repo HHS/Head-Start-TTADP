@@ -8,7 +8,7 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByRole('link', { name: 'R01-PD-23-1037' }).click();
 
   // event summary
-  await page.getByText(/Event collaborators \*/i).click();
+  await page.getByText(/Event collaborators/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter'); 
 
