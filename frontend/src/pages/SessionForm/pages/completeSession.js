@@ -26,7 +26,7 @@ const CompleteSession = ({
   onUpdatePage,
   DraftAlert,
 }) => {
-  const { setError } = useFormContext();
+  const { setError, setValue } = useFormContext();
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
@@ -54,6 +54,14 @@ const CompleteSession = ({
     }
 
     await onSubmit(updatedStatus);
+  };
+
+  const onSaveDraft = async () => {
+    if (updatedStatus !== EVENT_REPORT_STATUSES.COMPLETE) {
+      setValue('status', updatedStatus);
+    }
+
+    await onSaveForm();
   };
 
   const options = [
@@ -94,7 +102,7 @@ const CompleteSession = ({
       <DraftAlert />
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
-        <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
+        <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
         <Button id="back-button" outline type="button" onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
 
