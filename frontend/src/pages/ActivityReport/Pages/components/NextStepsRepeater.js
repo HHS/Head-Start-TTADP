@@ -157,10 +157,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
                 {dateLabel(index)}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                <Req announce />
               </Label>
               {(errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
