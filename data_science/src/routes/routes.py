@@ -41,50 +41,52 @@ def setup_main_routes(app: FastAPI) -> None:
     @unauthenticated_router.get("/", tags=["unauthenticated"])
     def index(request: Request):
         return templates.TemplateResponse("index.html", {"request": request})
+    
+    ## Data Generation Routes, not needed for production but can be helpful for testing locally
 
-    @authenticated_router.post("/dev/start_datagen", tags=["datagen"])
-    def start_generating_data() -> Dict[str, str]:
-        global is_generating_data
-        global data_gen_thread
-        global stop_event
-        if not is_generating_data:
-            stop_event.clear()  # Reset the stop_event
-            is_generating_data = True
-            data_gen_thread = threading.Thread(target=data_generator)
-            data_gen_thread.start()
-        return {"status": "Data generation started"}
+    # @authenticated_router.post("/dev/start_datagen", tags=["datagen"])
+    # def start_generating_data() -> Dict[str, str]:
+    #     global is_generating_data
+    #     global data_gen_thread
+    #     global stop_event
+    #     if not is_generating_data:
+    #         stop_event.clear()  # Reset the stop_event
+    #         is_generating_data = True
+    #         data_gen_thread = threading.Thread(target=data_generator)
+    #         data_gen_thread.start()
+    #     return {"status": "Data generation started"}
 
-    @authenticated_router.post("/dev/stop_datagen", tags=["datagen"])
-    def stop_generating_data() -> Dict[str, str]:
-        print("Stop button pressed")
-        global is_generating_data
-        global stop_event
-        if is_generating_data:
-            is_generating_data = False
-            stop_event.set()
-            if data_gen_thread is not None:
-                data_gen_thread.join()  # It will now successfully join because of the 'stop_event'
-        return {"status": "Data generation stopped"}
+    # @authenticated_router.post("/dev/stop_datagen", tags=["datagen"])
+    # def stop_generating_data() -> Dict[str, str]:
+    #     print("Stop button pressed")
+    #     global is_generating_data
+    #     global stop_event
+    #     if is_generating_data:
+    #         is_generating_data = False
+    #         stop_event.set()
+    #         if data_gen_thread is not None:
+    #             data_gen_thread.join()  # It will now successfully join because of the 'stop_event'
+    #     return {"status": "Data generation stopped"}
 
-    @authenticated_router.post("/dev/clear_datagen_db", tags=["datagen"])
-    def clear_database() -> Dict[str, str]:
-        global is_generating_data
-        global stop_event
-        if is_generating_data:
-            is_generating_data = False
-            stop_event.set()
-            if data_gen_thread is not None:
-                data_gen_thread.join()  # It will now successfully join because of the 'stop_event'
-        conn = connect_to_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        try:
-            cur.execute('DELETE FROM "Goals";')
-            conn.commit()
-            print("Database cleared successfully.")
-        except Exception as error:
-            print(f"Error occurred while clearing the database: {error}")
-            conn.rollback()
-        return {"status": "Database cleared"}
+    # @authenticated_router.post("/dev/clear_datagen_db", tags=["datagen"])
+    # def clear_database() -> Dict[str, str]:
+    #     global is_generating_data
+    #     global stop_event
+    #     if is_generating_data:
+    #         is_generating_data = False
+    #         stop_event.set()
+    #         if data_gen_thread is not None:
+    #             data_gen_thread.join()  # It will now successfully join because of the 'stop_event'
+    #     conn = connect_to_db()
+    #     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    #     try:
+    #         cur.execute('DELETE FROM "Goals";')
+    #         conn.commit()
+    #         print("Database cleared successfully.")
+    #     except Exception as error:
+    #         print(f"Error occurred while clearing the database: {error}")
+    #         conn.rollback()
+    #     return {"status": "Database cleared"}
 
     @authenticated_router.get("/last_five_entries_auth", tags=["db_query"])
     async def last_five_entries_auth() -> Dict[str, List[Dict]]:
@@ -153,16 +155,6 @@ def setup_main_routes(app: FastAPI) -> None:
             return {"matched_goals": matched_goals}
         else:
             return {"error": "No rows returned from the database"}
-
-    @authenticated_router.get("/protected_endpoint")
-    def protected_endpoint() -> Dict[str, str]:
-        # Only authenticated users can access this endpoint
-        return {"message": "Hello, authenticated user!"}
-
-    @unauthenticated_router.get("/unprotected_endpoint")
-    def unprotected_endpoint() -> Dict[str, str]:
-        # This endpoint is accessible to all users
-        return {"message": "Hello, everyone!"}
 
     app.include_router(authenticated_router)
     app.include_router(unauthenticated_router)

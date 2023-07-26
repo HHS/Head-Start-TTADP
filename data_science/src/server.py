@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends
 from fastapi.routing import APIRoute
 from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.utils import get_openapi
 from itsdangerous import URLSafeSerializer
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from routes.auth_routes import setup_auth_routes
@@ -11,6 +12,7 @@ from routes.routes import setup_main_routes
 from utilities.api_key_auth import get_api_key
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
+
 import uvicorn
 from middleware.process_time import add_process_time_header
 
@@ -42,6 +44,21 @@ def create_app():
     # Pass app to setup_routes
     setup_main_routes(app)
     setup_auth_routes(app)
+    
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+        openapi_schema = get_openapi(
+            title="TTA Data Science API Schema",
+            version="0.1.0",
+            description="Generated API Schema for TTA Data Science API",
+            routes=app.routes,
+        )
+        app.openapi_schema = openapi_schema
+        return app.openapi_schema
+
+    app.openapi = custom_openapi
+
     return app, port
 
 # These are at the module-level scope

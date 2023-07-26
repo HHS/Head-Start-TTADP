@@ -29,6 +29,8 @@ services:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
     volumes:
       - ".:/app:rw"
+    networks:
+    - smarthub
   frontend:
     build:
       context: .
@@ -45,6 +47,8 @@ services:
       - BACKEND_PROXY=http://backend:8080
       - FONTAWESOME_NPM_AUTH_TOKEN
       - REACT_APP_WEBSOCKET_URL
+    networks:
+    - smarthub
   worker:
     build:
       context: .
@@ -59,6 +63,8 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+    networks:
+    - smarthub
   data_science:
     build:
       context: ./data_science
@@ -74,4 +80,31 @@ services:
       - POSTGRES_HOST=postgres_docker
     volumes:
       - "./data_science/src:/app:rw"
-
+    networks:
+    - smarthub
+  owasp_zap_backend:
+    image: owasp/zap2docker-stable:latest
+    platform: linux/arm64
+    user: zap
+    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report.html
+    volumes:
+      - ./zap.conf:/zap/wrk/zap.conf:ro
+      - ./reports:/zap/wrk:rw
+    networks:
+    - smarthub
+    depends_on:
+      - backend
+  owasp_zap_data_science:
+    image: owasp/zap2docker-stable:latest
+    platform: linux/arm64
+    user: zap
+    command: zap-api-scan.py -t http://data_science:9300/openapi.json -f openapi -I -i -r owasp_api_report.html
+    volumes:
+      - ./zap.conf:/zap/wrk/zap.conf:ro
+      - ./reports:/zap/wrk:rw
+    networks:
+    - smarthub
+    depends_on:
+      - data_science
+networks:
+  smarthub:

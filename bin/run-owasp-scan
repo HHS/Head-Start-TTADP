@@ -27,3 +27,14 @@ docker run \
   -t owasp/zap2docker-stable:2.11.1 zap-baseline.py \
   -t http://server:8080 \
   -c zap.conf -I -i -r owasp_report.html
+
+docker run \
+  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
+  -v $(pwd)/reports:/zap/wrk:rw \
+  --rm \
+  --user zap:$(id -g) \
+  --network=$network \
+  -t owasp/zap2docker-stable:2.11.1 zap-api-scan.py \
+  -t http://data_science:9300/openapi.json \
+  -c zap.conf -I -i -r owasp_data_sciencereport.html
+
