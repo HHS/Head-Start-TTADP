@@ -262,7 +262,7 @@ describe('sessionSummary', () => {
         userEvent.selectOptions(supportType, 'Planning');
       });
 
-      const saveDraftButton = await screen.findByRole('button', { name: /save session/i });
+      const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
     });
