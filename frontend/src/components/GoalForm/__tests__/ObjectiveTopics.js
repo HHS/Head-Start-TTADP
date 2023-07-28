@@ -53,7 +53,11 @@ describe('ObjectiveTopics', () => {
   it('displays the correct label', async () => {
     renderObjectiveTopics();
     const label = screen.queryAllByText(/topics/i);
-    expect(label).toHaveLength(2);
+    // we expect a result of 3 elements
+    // 1) existing topics, which have a <p> header reading "Topics"
+    // 2) the <label> for the topics <Select>
+    // 3) The button to open the drawer that reads "Get help choosing topics"
+    expect(label).toHaveLength(3);
     const fastDancing = await screen.findByRole('listitem');
     expect(fastDancing).toHaveTextContent('Dancing but too fast');
     expect(screen.getByText(/dancing but too slow/i)).toBeVisible();
