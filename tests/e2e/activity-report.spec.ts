@@ -569,7 +569,7 @@ test.describe('Activity Report', () => {
     await nextSteps(page);
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -644,7 +644,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Activity summary Complete' }).click();
 
     // select participants
-    await page.locator('#participants input').focus();
+    await page.getByLabel('Other entity participants  *- Select -').focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -660,9 +660,10 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.locator('.css-125guah-control').click();
+    await page.getByText('Topics *Tell me more').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+    await blur(page);
 
     // clear out the invalid resource
     await page.getByTestId('textInput').fill('');
@@ -728,13 +729,19 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.getByText(/Select TTA objective/i).click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await page.getByLabel('TTA objective *').click();
-    await page.getByLabel('TTA objective *').fill('g1 o1 title');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-21-option-0').click();
     await blur(page);
+
+    await page.getByRole('textbox', { name: 'TTA objective' }).fill('g1 o1 title');
+
+    // select a topic
+    await page.getByText('Topics *Tell me more').click()
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('g1 o1 tta');
     await blur(page);
