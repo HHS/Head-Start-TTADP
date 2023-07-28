@@ -123,7 +123,7 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Save Session/i);
+    const saveSession = screen.getByText(/Save draft/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
@@ -144,7 +144,7 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
 
     fetchMock.put(url, 500);
-    const saveSession = screen.getByText(/Save Session/i);
+    const saveSession = screen.getByText(/Save draft/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
     expect(screen.getByText(/There was an error saving the session/i)).toBeInTheDocument();
