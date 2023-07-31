@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import Container from '../../components/Container';
-import './diag.css';
 import {
   Alert,
   Button, Form, Label, TextInput,
 } from '@trussworks/react-uswds';
+import Container from '../../components/Container';
 import {
   sendEmail,
 } from '../../fetchers/Admin';
