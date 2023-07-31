@@ -1,4 +1,4 @@
-import newQueue from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { RESOURCE_ACTIONS } from '../constants';
 import { logger, auditLogger } from '../logger';
 import { getResourceMetaDataJob } from '../lib/resource';
@@ -38,10 +38,11 @@ const onCompletedResourceQueue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
-const processResourceQueue = async () => {
+const processResourceQueue = () => {
   // Resource Queue.
   resourceQueue.on('failed', onFailedResourceQueue);
   resourceQueue.on('completed', onCompletedResourceQueue);
+  increaseListeners(resourceQueue);
 
   // Get resource metadata.
   return resourceQueue.process(

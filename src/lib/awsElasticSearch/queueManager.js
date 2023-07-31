@@ -1,4 +1,4 @@
-import newQueue from '../queue';
+import newQueue, { increaseListeners } from '../queue';
 // import { getClient } from './index';
 import { logger, auditLogger } from '../../logger';
 import { AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
@@ -70,12 +70,13 @@ const onCompletedAWSElasticsearchQueue = (job, result) => {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
-const processAWSElasticsearchQueue = async () => {
+const processAWSElasticsearchQueue = () => {
   // AWS Elasticsearch
   awsElasticsearchQueue.on('failed', onFailedAWSElasticsearchQueue);
   awsElasticsearchQueue.on('completed', onCompletedAWSElasticsearchQueue);
+  increaseListeners(awsElasticsearchQueue, 3);
   // Process AWS Elasticsearch Queue Items:
-  return Promise.allSettled([
+  return Promise.race([
     // Create Index Document
     awsElasticsearchQueue.process(
       AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,

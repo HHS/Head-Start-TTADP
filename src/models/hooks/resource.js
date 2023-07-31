@@ -34,7 +34,7 @@ const afterCreate = async (sequelize, instance, options) => {
     // Hook: /models/hooks/resource Imports: /services/resourceQueue
     // eslint-disable-next-line global-require
     const { addGetResourceMetadataToQueue } = require('../../services/resourceQueue');
-    addGetResourceMetadataToQueue(instance.id, instance.url);
+    await addGetResourceMetadataToQueue(instance.id, instance.url);
   }
 };
 

@@ -75,6 +75,14 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.TEXT,
     },
+    mimeType: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
+    lastStatusCode: {
+      allowNull: true,
+      type: DataTypes.INTEGER,
+    },
     metadata: {
       type: DataTypes.JSONB,
       allowNull: true,

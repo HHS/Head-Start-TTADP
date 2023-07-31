@@ -1,8 +1,16 @@
 // New Relic's automatic transaction naming doesn't always produce
 // desired results. These middleware functions were created for cases
 // where we want to separate routes that were automatically grouped.
-
-const nr = require('newrelic');
+/* eslint-disable global-require */
+let nr;
+if (process.env.NODE_ENV === 'production') {
+  /* eslint-disable import/first */
+  nr = require('newrelic');
+} else {
+  nr = {
+    setTransactionName: () => {},
+  };
+}
 
 /**
  * Set transaction name by request method, baseUrl, and asterisk
