@@ -1314,6 +1314,9 @@ describe('goal filtersToScopes', () => {
     const arResourceFilename = faker.system.fileName();
     const aroResourceFilename = faker.system.fileName();
 
+    const arResourceFilenameExcluded = faker.system.fileName();
+    const aroResourceFilenameExcluded = faker.system.fileName();
+
     let reports = [];
     let goals = [];
     let goalIds = [];
@@ -1396,14 +1399,14 @@ describe('goal filtersToScopes', () => {
       });
 
       const arResourceExcluded = await File.create({
-        originalFileName: arResourceFilename,
+        originalFileName: arResourceFilenameExcluded,
         key: faker.word.preposition() + faker.word.adjective(),
         status: 'APPROVED',
         fileSize: 1000,
       });
 
       const aroResourceExcluded = await File.create({
-        originalFileName: aroResourceFilename,
+        originalFileName: aroResourceFilenameExcluded,
         key: faker.word.preposition() + faker.word.adjective(),
         status: 'APPROVED',
         fileSize: 1000,

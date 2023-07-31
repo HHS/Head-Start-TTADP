@@ -26,8 +26,8 @@ export function withResourceAttachment(query) {
 
   return {
     [Op.or]: [
-      filterAssociation(activityReportFilesIncludeExclude(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportObjectiveFilesIncludeExclude(true), search, false, 'ILIKE'),
+      filterAssociation(activityReportFilesIncludeExclude(true), search, false, 'LIKE'),
+      filterAssociation(activityReportObjectiveFilesIncludeExclude(true), search, false, 'LIKE'),
     ],
   };
 }
