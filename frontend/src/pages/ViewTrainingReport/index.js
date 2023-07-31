@@ -70,9 +70,9 @@ export default function ViewTrainingReport({ match }) {
 
   useEffect(() => {
     async function fetchPoc() {
-      if (event && event.pocId && event.pocId.length) {
+      if (event && event.pocIds && event.pocIds.length) {
         try {
-          const pocs = await getNamesByIds(event.pocId);
+          const pocs = await getNamesByIds(event.pocIds);
           setEventPoc(pocs);
         } catch (err) {
           setEventPoc([]);

@@ -17,7 +17,7 @@ describe('session reports service', () => {
     const eventData = {
       ownerId: 99_888,
       regionId: 99_888,
-      pocId: [99_888],
+      pocIds: [99_888],
       collaboratorIds: [99_888],
       data: {},
     };

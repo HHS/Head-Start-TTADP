@@ -8,7 +8,7 @@ export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `tr-can-edit-${id}-${LOCAL_STO
 export const eventSummaryFields = {
   eventOrganizer: null,
   collaboratorIds: [],
-  pocId: [],
+  pocIds: [],
   eventIntendedAudience: '',
   startDate: '',
   endDate: '',

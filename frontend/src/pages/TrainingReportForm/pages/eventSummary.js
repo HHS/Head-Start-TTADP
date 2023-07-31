@@ -73,9 +73,12 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const {
     eventId,
     eventName,
+    owner,
   } = data;
 
   const { users: { collaborators, pointOfContact } } = additionalData;
+
+  const ownerName = owner && owner.name ? owner.name : '';
 
   return (
     <div className="padding-x-1">
@@ -90,6 +93,10 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
       <ReadOnlyField label="Event name">
         {eventName}
+      </ReadOnlyField>
+
+      <ReadOnlyField label="Event creator">
+        {ownerName}
       </ReadOnlyField>
 
       <div className="margin-top-2">
@@ -175,7 +182,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
       </div>
 
       <div className="margin-top-2">
-        <Label htmlFor="pocId">
+        <Label htmlFor="pocIds">
           Event region point of contact
           <Req />
         </Label>
@@ -185,8 +192,8 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               value={pointOfContact.filter((option) => (
                 value.includes(option.id)
               ))}
-              inputId="pocId"
-              name="pocId"
+              inputId="pocIds"
+              name="pocIds"
               className="usa-select"
               styles={selectOptionsReset}
               components={{
@@ -211,7 +218,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               return true;
             },
           }}
-          name="pocId"
+          name="pocIds"
           defaultValue={[]}
         />
       </div>
@@ -359,12 +366,12 @@ export const isPageComplete = (hookForm) => {
 
   const {
     collaboratorIds,
-    pocId,
+    pocIds,
     reasons,
     targetPopulations: populations,
   } = values;
 
-  if (!pocId || !pocId.length
+  if (!pocIds || !pocIds.length
     || !collaboratorIds || !collaboratorIds.length
     || !reasons || !reasons.length
     || !populations || !populations.length) {

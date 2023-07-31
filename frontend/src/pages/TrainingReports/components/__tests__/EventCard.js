@@ -12,7 +12,7 @@ describe('EventCard', () => {
     id: 1,
     ownerId: 1,
     collaboratorIds: [],
-    pocId: [],
+    pocIds: [],
     regionId: 1,
     data: {
       eventName: 'This is my event title',
@@ -87,13 +87,14 @@ describe('EventCard', () => {
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
   });
 
-  it('hides the edit and create options', () => {
-    renderEventCard(defaultEvent, { ...DEFAULT_USER, permissions: [] });
+  it('hides the edit and create options', async () => {
+    renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
@@ -105,19 +106,21 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 
-  it('shows the edit and create options with write permission', () => {
-    renderEventCard(defaultEvent);
+  it('hides the edit and create options for users with only write permission and no event roles', async () => {
+    renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 12 });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
-    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
   });
 
-  it('only shows the view options with view permission', () => {
+  it('only shows the view options with view permission', async () => {
     renderEventCard(defaultEvent,
       {
         ...DEFAULT_USER,
+        id: 2,
         permissions: [{ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId: 1 }],
       });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -127,16 +130,27 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 
-  it('shows the edit and create options for a collaborator without write permission', () => {
+  it('shows the create session option for poc without write permission', async () => {
     renderEventCard({
       ...defaultEvent,
-      pocId: [2],
+      pocIds: [2],
     },
-    { ...DEFAULT_USER, id: 2, permissions: [] });
+    {
+      ...DEFAULT_USER,
+      id: 2,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
+    });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
   });
 });

@@ -7,7 +7,6 @@ import React, {
 import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -28,7 +27,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 
 // websocket publish location interval
-const INTERVAL_DELAY = 30000; // THIRTY SECONDS
+const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 /**
  * this is just a simple handler to "flatten"
@@ -51,8 +50,8 @@ const resetFormData = (reset, event) => {
     ...fields,
   };
 
-  if (!form.pocId && form.pocId !== undefined) {
-    form.pocId = [];
+  if (!form.pocIds && form.pocIds !== undefined) {
+    form.pocIds = [];
   }
 
   reset({
@@ -135,10 +134,10 @@ export default function TrainingReportForm({ match }) {
   } = useSocket(user);
 
   useEffect(() => {
-    if (!trainingReportId || !currentPage) {
+    if (!trainingReportId) {
       return;
     }
-    const newPath = `/training-reports/${trainingReportId}/${currentPage}`;
+    const newPath = `/training-reports/${trainingReportId}}`;
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 
@@ -216,32 +215,46 @@ export default function TrainingReportForm({ match }) {
     );
   }
 
-  const onSave = async () => {
+  const onSave = async (updatedStatus = null) => {
+    // if the event is complete, don't allow saving it
+    if (updatedStatus === 'Complete') {
+      hookForm.setError('status', { message: 'To complete event, submit it' });
+      return;
+    }
+
     try {
       // reset the error message
       setError('');
       setIsAppLoading(true);
+      hookForm.clearErrors();
 
       // grab the newest data from the form
       const {
         ownerId,
-        pocId,
+        pocIds,
         collaboratorIds,
         regionId,
         ...data
       } = hookForm.getValues();
 
-      // PUT it to the backend
-      const updatedEvent = await updateEvent(trainingReportId, {
+      const dataToPut = {
         data: {
           ...data,
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },
         ownerId: ownerId || null,
-        pocId: pocId || null,
+        pocIds: pocIds || null,
         collaboratorIds,
         regionId: regionId || null,
-      });
+      };
+
+      // autosave sends us a "true" boolean so we don't want to update the status
+      // if that is the case
+      if (updatedStatus && typeof updatedStatus === 'string') {
+        dataToPut.data.status = updatedStatus;
+      }
+
+      // PUT it to the backend
+      const updatedEvent = await updateEvent(trainingReportId, dataToPut);
       resetFormData(hookForm.reset, updatedEvent);
       updateLastSaveTime(moment(updatedEvent.updatedAt));
       updateShowSavedDraft(true);
@@ -271,7 +284,7 @@ export default function TrainingReportForm({ match }) {
       // grab the newest data from the form
       const {
         ownerId,
-        pocId,
+        pocIds,
         collaboratorIds,
         regionId,
         ...data
@@ -284,7 +297,7 @@ export default function TrainingReportForm({ match }) {
           status: updatedStatus,
         },
         ownerId: ownerId || null,
-        pocId: pocId || null,
+        pocIds: pocIds || null,
         collaboratorIds,
         regionId: regionId || null,
       });
@@ -316,7 +329,7 @@ export default function TrainingReportForm({ match }) {
     <div className="smart-hub-training-report">
       { error
       && (
-      <Alert type="warning">
+      <Alert className="margin-bottom-3" type="warning">
         {error}
       </Alert>
       )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import EventCards from '../EventCards';
 import UserContext from '../../../../UserContext';
@@ -10,7 +11,7 @@ describe('EventCards', () => {
     id: 1,
     ownerId: 1,
     collaboratorIds: [],
-    pocId: [],
+    pocIds: [],
     data: {
       eventName: 'Sample event 1',
       eventId: 'Sample event ID 1',
@@ -25,7 +26,7 @@ describe('EventCards', () => {
     id: 2,
     ownerId: 1,
     collaboratorIds: [],
-    pocId: [],
+    pocIds: [],
     data: {
       eventName: 'Sample event 2',
       eventId: 'Sample event ID 2',
@@ -40,7 +41,7 @@ describe('EventCards', () => {
     id: 3,
     ownerId: 1,
     collaboratorIds: [],
-    pocId: [],
+    pocIds: [],
     data: {
       eventName: 'Sample event 3',
       eventId: 'Sample event ID 3',
@@ -71,13 +72,15 @@ describe('EventCards', () => {
     user = DEFAULT_USER,
   ) => {
     render((
-      <UserContext.Provider value={{ user }}>
-        <EventCards
-          events={events}
-          eventType={eventType}
-          onRemoveSession={jest.fn()}
-        />
-      </UserContext.Provider>));
+      <MemoryRouter>
+        <UserContext.Provider value={{ user }}>
+          <EventCards
+            events={events}
+            eventType={eventType}
+            onRemoveSession={jest.fn()}
+          />
+        </UserContext.Provider>
+      </MemoryRouter>));
   };
 
   it('renders correctly', () => {
@@ -114,6 +117,11 @@ describe('EventCards', () => {
     expect(screen.getByText('You have no completed events.')).toBeInTheDocument();
   });
 
+  it('renders correctly if there are no suspended events', () => {
+    renderEventCards([], EVENT_STATUS.SUSPENDED);
+    expect(screen.getByText('You have no suspended events.')).toBeInTheDocument();
+  });
+
   it('renders correctly if there are no in progress events', () => {
     renderEventCards([], EVENT_STATUS.IN_PROGRESS);
     expect(screen.getByText('You have no events in progress.')).toBeInTheDocument();
@@ -128,8 +136,9 @@ describe('EventCards', () => {
     const collaboratorEvents = [{
       id: 1,
       ownerId: 2,
+      regionId: 1,
       collaboratorIds: [],
-      pocId: [2],
+      pocIds: [2],
       data: {
         eventName: 'Collab Event 1',
         eventId: 'Collab Event ID 1',
@@ -142,9 +151,10 @@ describe('EventCards', () => {
     },
     {
       id: 2,
-      ownerId: 2,
+      regionId: 1,
+      ownerId: 12,
       collaboratorIds: [],
-      pocId: [3],
+      pocIds: [3],
       data: {
         eventName: 'Region event 2',
         eventId: 'Region event ID 2',
@@ -160,7 +170,12 @@ describe('EventCards', () => {
       id: 2,
       name: 'test@test.com',
       homeRegionId: 1,
-      permissions: [],
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
     };
 
     renderEventCards(collaboratorEvents, EVENT_STATUS.NOT_STARTED, COLLABORATOR_USER);
