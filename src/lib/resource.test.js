@@ -172,6 +172,51 @@ describe('resource worker tests', () => {
     expect(mockAxios).toBeCalledTimes(1);
   });
 
+  it('does not throw an error if eclkc resources returns invalid json', async () => {
+    // Mock JSON get.
+    mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: 'blah' }));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    // Mock HTML get.
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    expect(got.status).toBe(200);
+    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+
+    expect(mockUpdate).toBeCalledTimes(1);
+
+    // Check title scrape update..
+    expect(mockUpdate).toBeCalledWith(
+      {
+        title: 'Head Start | ECLKC',
+      },
+      {
+        individualHooks: false,
+        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
+      },
+    );
+  });
+
+  it('does not throw an error if non-eclkc resources returns invalid html', async () => {
+    // Mock TITLE get.
+    mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: 'blah' }));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'https://test.gov/mental-health' } });
+
+    // check for bad request response.
+    expect(got.status).toBe(200);
+
+    // Check the data.
+    expect(got).toStrictEqual({ status: 200, data: { url: 'https://test.gov/mental-health' } });
+
+    // expect mock axios to have been called once.
+    expect(mockAxios).toBeCalledTimes(1);
+  });
+
   it('tests a clean resource metadata get', async () => {
     // Metadata.
     mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: metadata }));

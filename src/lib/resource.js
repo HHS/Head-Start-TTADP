@@ -8,6 +8,11 @@ const getPageScrapeValues = async (resourceUrl) => {
   // Use axios to get url info.
   const res = await axios.get(resourceUrl, { maxRedirects: 3 });
 
+  // Determine if response data is a valid web page.
+  if (!res.data.includes('<html') && !res.data.includes('Not Found')) {
+    return -2;
+  }
+
   // Scrape Title.
   const foundTitle = res.data.match(/<title[^>]*>([^<]+)<\/title>/);
 
@@ -36,6 +41,12 @@ const getMetadataValues = async (resourceUrl) => {
   const metadataUrl = `${resourceUrl}?_format=json`;
   const res = await axios.get(metadataUrl, { maxRedirects: 3 });
   const metadata = res.data;
+
+  // if meta data is a string its not a json object.
+  if (typeof metadata === 'string') {
+    return false;
+  }
+
   const { title } = metadata;
 
   // get field_taxonomy_national_centers.
@@ -93,6 +104,12 @@ const getResourceMetaDataJob = async (job) => {
     if (!titleRetrieved) {
       // Scrape page title for non-eclkc resource.
       updatedCount = await getPageScrapeValues(resourceUrl);
+
+      // If the resource returned invalid html we cannot get the title.
+      if (updatedCount === -2) {
+        logger.info(`Resource Queue: Successfully retrieved data for resource '${resourceUrl}', but found no title.`);
+        return ({ status: httpCodes.OK, data: { url: resourceUrl } });
+      }
 
       if (updatedCount === -1) {
         return ({ status: httpCodes.NOT_FOUND, data: { url: resourceUrl } });
