@@ -82,3 +82,18 @@ export const flushRedis = async () => {
   const result = await post((join('/', 'api', 'admin', 'redis', 'flush')));
   return result.json();
 };
+
+export const deleteNationalCenter = async (id) => {
+  const result = await destroy((join('/', 'api', 'admin', 'national-center', String(id))));
+  return result.json();
+};
+
+export const createNationalCenter = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'national-center')), data);
+  return result.json();
+};
+
+export const updateNationalCenter = async (id, data) => {
+  const result = await put((join('/', 'api', 'admin', 'national-center', String(id))), data);
+  return result.json();
+};

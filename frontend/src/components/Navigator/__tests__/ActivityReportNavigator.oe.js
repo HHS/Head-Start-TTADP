@@ -101,7 +101,7 @@ const initialData = {
     topics: [{}],
     title: 'test',
     ttaProvided: 'test',
-    resources: ['http://www.test.com'],
+    resources: [{ value: 'http://www.test.com' }],
   }],
   goalPrompts: ['test-prompt', 'test-prompt-error'],
   'test-prompt': ['test'],
