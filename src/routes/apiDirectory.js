@@ -29,6 +29,7 @@ import goalTemplatesRouter from './goalTemplates';
 import eventRouter from './events';
 import sessionReportsRouter from './sessionReports';
 import nationalCenterRouter from './nationalCenter';
+import emailRouter from './admin/email';
 import feedRouter from './feeds';
 import { currentUserId } from '../services/currentUser';
 
@@ -76,6 +77,7 @@ router.use('/goal-templates', goalTemplatesRouter);
 router.use('/events', eventRouter);
 router.use('/session-reports', sessionReportsRouter);
 router.use('/national-center', nationalCenterRouter);
+router.use('/email', emailRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
