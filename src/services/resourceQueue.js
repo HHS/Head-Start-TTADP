@@ -6,7 +6,7 @@ import { getResourceMetaDataJob } from '../lib/resource';
 const resourceQueue = newQueue('resource');
 
 const addGetResourceMetadataToQueue = async (id, url) => {
-  const retries = process.env.RESOURCE_METADATA_RETRIES || 3;
+  const retries = process.env.RESOURCE_METADATA_RETRIES || 1;
   const delay = process.env.RESOURCE_METADATA_BACKOFF_DELAY || 10000;
   const backOffOpts = {
     type: 'exponential',
