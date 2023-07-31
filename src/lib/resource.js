@@ -108,7 +108,11 @@ const getResourceMetaDataJob = async (job) => {
     return ({ status: httpCodes.OK, data: { url: resourceUrl } });
   } catch (error) {
     auditLogger.error(`Resource Queue: Unable to retrieve title for Resource (ID: ${resourceId} URL: ${resourceUrl}), please make sure this is a valid address:`, error);
-    throw Error(error); // We must rethrow the error here to ensure the job is retried.
+    // Determine if max number of redirects has been exceeded if not retry.
+    if (error.code !== 'ERR_FR_TOO_MANY_REDIRECTS') {
+      throw Error(error); // We must rethrow the error here to ensure the job is retried.
+    }
+    return ({ status: httpCodes.BAD_REQUEST, data: { url: resourceUrl } });
   }
 };
 

@@ -132,6 +132,46 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toBeCalledTimes(1);
   });
 
+  it('does not trigger a retry an if eclkc resource throws max retries', async () => {
+    // Mock TITLE get.
+    const maxRequestError = new Error();
+    maxRequestError.response = { status: 500, data: 'Error', code: 'ERR_FR_TOO_MANY_REDIRECTS' };
+    maxRequestError.code = 'ERR_FR_TOO_MANY_REDIRECTS';
+    mockAxios.mockImplementationOnce(() => Promise.reject(maxRequestError));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+
+    // check for bad request response.
+    expect(got.status).toBe(400);
+
+    // Check the data.
+    expect(got).toStrictEqual({ status: 400, data: { url: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+
+    // expect mock axios to have been called once.
+    expect(mockAxios).toBeCalledTimes(1);
+  });
+
+  it('does not trigger a retry an if non-eclkc resource throws max retries', async () => {
+    // Mock TITLE get.
+    const maxRequestError = new Error();
+    maxRequestError.response = { status: 500, data: 'Error', code: 'ERR_FR_TOO_MANY_REDIRECTS' };
+    maxRequestError.code = 'ERR_FR_TOO_MANY_REDIRECTS';
+    mockAxios.mockImplementationOnce(() => Promise.reject(maxRequestError));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'https://test.gov/mental-health' } });
+
+    // check for bad request response.
+    expect(got.status).toBe(400);
+
+    // Check the data.
+    expect(got).toStrictEqual({ status: 400, data: { url: 'https://test.gov/mental-health' } });
+
+    // expect mock axios to have been called once.
+    expect(mockAxios).toBeCalledTimes(1);
+  });
+
   it('tests a clean resource metadata get', async () => {
     // Metadata.
     mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: metadata }));
