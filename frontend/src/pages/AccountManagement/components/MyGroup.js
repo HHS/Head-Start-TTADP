@@ -19,9 +19,13 @@ export default function MyGroup({
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   const onDelete = async (groupId) => {
-    await deleteGroup(groupId);
-    const updatedGroups = await fetchGroups();
-    setMyGroups(updatedGroups);
+    try {
+      await deleteGroup(groupId);
+    } finally {
+      // Regardless, get the updated list of groups.
+      const updatedGroups = await fetchGroups();
+      setMyGroups(updatedGroups);
+    }
   };
 
   return (
@@ -54,6 +58,7 @@ export default function MyGroup({
                   setError('There was an error deleting your group');
                 } finally {
                   setIsAppLoading(false);
+                  modalRef.current.toggleModal(false);
                 }
               }}
             >
