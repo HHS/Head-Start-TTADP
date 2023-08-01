@@ -52,8 +52,8 @@ const overrideStatusCodeOnAuthRequired = (statusCode, list, data, filtered = fal
   }
 
   // Otherwise, return the original status code
-  return statusCode;
-}
+  return statusCode || httpCodes.SERVICE_UNAVAILABLE;
+};
 
 /**
  * Retrieves the MIME type and status code of a resource from a given URL.
@@ -66,11 +66,13 @@ const getMimeType = async (url) => {
   let statusCode; // Variable to store the status code of the resource.
 
   try {
-    const res = await axios.head(url, requestOptions); // Send a HEAD request to the URL and get the response.
+    // Send a HEAD request to the URL and get the response.
+    const res = await axios.head(url, requestOptions);
     mimeType = res.headers['content-type']; // Extract the MIME type from the response headers.
-    const redirectedUrl = res.request.res.responseUrl !== url && res.request.res.responseUrl; // Check if the URL was redirected and get the redirected URL if applicable.
-    statusCode = overrideStatusCodeOnAuthRequired(res.status, commonAuthNames, redirectedUrl); // Override the status code if authentication is required.
-
+    // Check if the URL was redirected and get the redirected URL if applicable.
+    const redirectedUrl = res?.request?.res?.responseUrl !== url && res?.request?.res?.responseUrl;
+    // Override the status code if authentication is required.
+    statusCode = overrideStatusCodeOnAuthRequired(res.status, commonAuthNames, redirectedUrl);
   } catch (error) {
     if (error.response && error.response.status) {
       statusCode = error.response.status; // Get the status code from the error response.
@@ -78,7 +80,6 @@ const getMimeType = async (url) => {
       auditLogger.error(
         `Resource Queue: Unable to retrieve header for Resource (URL: ${url}), received status code of ${statusCode}. Please make sure this is a valid address:`,
         error,
-        process.pid
       ); // Log an error message with the URL and status code.
     } else {
       auditLogger.error('Error checking status:', error); // Log a generic error message.
@@ -88,7 +89,8 @@ const getMimeType = async (url) => {
   // Update URL in DB.
   await Resource.update({
     ...(mimeType && { mimeType }), // Update the MIME type in the database if it exists.
-    ...(statusCode && { lastStatusCode: statusCode}), // Update the status code in the database if it exists.
+    // Update the status code in the database if it exists.
+    ...(statusCode && { lastStatusCode: statusCode }),
   }, {
     where: { url },
     individualHooks: true,
@@ -101,7 +103,8 @@ const getMimeType = async (url) => {
  * Retrieves metadata values from a JSON resource.
  *
  * @param {string} url - The URL of the resource.
- * @returns {Promise<Object>} - A promise that resolves to an object containing the metadata, status code, and MIME type of the resource.
+ * @returns {Promise<Object>} - A promise that resolves to an object containing the metadata,
+ * status code, and MIME type of the resource.
  */
 const getMetadataValuesFormJson = async (url) => {
   let result;
@@ -114,27 +117,22 @@ const getMetadataValuesFormJson = async (url) => {
     // Check if the URL already contains query parameters
     if (url.includes('?')) {
       metadataUrl = `${url}&_format=json`;
-    }
-    // Check if the URL contains a fragment identifier
-    else if (url.includes('#')) {
+    } else if (url.includes('#')) { // Check if the URL contains a fragment identifier
       metadataUrl = `${url.split('#')[0]}?_format=json`;
-    }
-    // Append query parameter to the URL
-    else {
+    } else { // Append query parameter to the URL
       metadataUrl = `${url}?_format=json`;
     }
-
     const res = await axios.get(metadataUrl, requestOptions);
 
     result = {
       // Check if the response data is a non-empty object and the content-type is JSON
-      metadata: (typeof res.data === 'object' && Object.keys(res.data).length !== 0 && res.headers['content-type'] === 'application/json')
+      metadata: (typeof res.data === 'object' && Object.keys(res.data)?.length !== 0 && res?.headers['content-type'] === 'application/json')
         ? res.data
         : null,
       statusCode: overrideStatusCodeOnAuthRequired(
         res.status,
         commonAuthNames,
-        res.request.res.responseUrl !== metadataUrl && res.request.res.responseUrl,
+        res?.request?.res?.responseUrl !== metadataUrl && res?.request?.res?.responseUrl,
         true,
       ),
       mimeType: res.headers['content-type'],
@@ -143,26 +141,27 @@ const getMetadataValuesFormJson = async (url) => {
     if (error.response) {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
-        error, process.pid
+        error,
       );
       result = {
         metadata: null,
         statusCode: error.response.status,
         mimeType: error?.response?.headers['content-type'],
-      }
+      };
     } else {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}). Please make sure this is a valid address:`,
-        error, process.pid
+        error,
       );
       throw error;
     }
   }
   return result;
-}
+};
 
 const metadataPatterns = [
   /<(title)[^>]*>([^<]+)<\/title>/gi,
+  // eslint-disable-next-line no-useless-escape
   /<meta[ \t]+(?:name|property)="([^"]*)"[ \t]+content="([^"]*)"[ \t]?(?:[\/])?>/gi,
 ];
 /**
@@ -178,10 +177,10 @@ const getMetadataValuesFormHtml = async (url) => {
     const res = await axios.get(url, requestOptions);
 
     // Extract metadata values from the HTML response
-    let metadata = metadataPatterns
-      .flatMap((pattern) => (res && res.data && typeof res.data === 'string')
-        ? [...(res.data.matchAll(pattern))]
-        : [])
+    const metadata = metadataPatterns
+      .flatMap((pattern) => ((res && res.data && typeof res.data === 'string')
+        ? [...(res?.data?.matchAll(pattern) || null)]
+        : []))
       .reduce((acc, meta) => {
         if (Array.isArray(meta)) {
           const key = meta[1].toLowerCase();
@@ -207,40 +206,42 @@ const getMetadataValuesFormHtml = async (url) => {
         ? metadata
         : null,
       statusCode: overrideStatusCodeOnAuthRequired(
-        res.status,
+        res?.status,
         commonAuthNames,
-        res.request.res.responseUrl !== url && res.request.res.responseUrl,
+        res?.request?.res?.responseUrl !== url && res?.request?.res?.responseUrl,
         true,
       ),
-      mimeType: res.headers['content-type'],
+      mimeType: res?.headers['content-type'],
     };
   } catch (error) {
     if (error.response) {
       // Log an error message when unable to collect metadata due to a response error
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from page scrape for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
-        error,process.pid
+        error,
       );
       result = {
         statusCode: error.response.status,
         mimeType: error?.response?.headers['content-type'],
-      }
+      };
     } else {
       // Log an error message when unable to collect metadata due to an unexpected error
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from page scrape for Resource (URL: ${url}). Please make sure this is a valid address:`,
-        error,process.pid
+        error,
       );
       throw error;
     }
   }
 
   return result;
-}
+};
+
 /**
  * Retrieves metadata values for a given URL.
  * @param {string} url - The URL to retrieve metadata from.
- * @returns {Promise<{ title: string | null, statusCode: number }>} - The title and status code of the resource.
+ * @returns {Promise<{ title: string | null, statusCode: number }>} - The title and status
+ * code of the resource.
  */
 const getMetadataValues = async (url) => {
   let statusCode; // Variable to store the status code of the resource.
@@ -257,43 +258,57 @@ const getMetadataValues = async (url) => {
       await getMetadataValuesFormHtml(url), // Retrieve metadata values from HTML format.
     ]);
 
-    const { metadata: metadataFromJson, statusCode: statuscodeFromJson } = fromJson.value; // Destructure metadata and status code from JSON result.
-    const { metadata: metadataFromHtml, statusCode: statuscodeFromHtml, mimeType: mimeTypeFromHtml } = fromHtml.value; // Destructure metadata, status code, and MIME type from HTML result.
+    // Destructure metadata and status code from JSON result.
+    const { metadata: metadataFromJson, statusCode: statuscodeFromJson } = fromJson.value;
+    // Destructure metadata, status code, and MIME type from HTML result.
+    const {
+      metadata: metadataFromHtml,
+      statusCode: statuscodeFromHtml,
+      mimeType: mimeTypeFromHtml,
+    } = fromHtml.value;
 
     metadata = filterToSupportedCharacters({
       ...metadataFromJson,
       ...metadataFromHtml,
     }); // Combine metadata from JSON and HTML formats and filter out unsupported characters.
-    metadata = Object.keys(metadata).length !== 0 && metadata || null; // If metadata is not empty, assign it to the variable, otherwise assign null.
-    statusCode = Math.min(statuscodeFromJson, statuscodeFromHtml); // Assign the minimum status code between JSON and HTML results.
+
+    // If metadata is not empty, assign it to the variable, otherwise assign null.
+    metadata = (Object.keys(metadata).length !== 0 && metadata) || null;
+    // Assign the minimum status code between JSON and HTML results.
+    statusCode = Math.min(statuscodeFromJson, statuscodeFromHtml);
     mimeType = mimeTypeFromHtml; // Assign the MIME type from HTML result.
 
     if (metadata) {
       if (metadata.title) {
         if (Array.isArray(metadata.title)) {
-          title = metadata.title[0].value; // If title is an array, assign the first value to the variable.
+          // If title is an array, assign the first value to the variable.
+          title = metadata.title[0].value;
         } else {
           title = metadata.title; // If title is not an array, assign it directly to the variable.
         }
       } else if (metadata['og:title']) {
         title = metadata['og:title']; // If title is not available but 'og:title' exists in metadata, assign it to the variable.
       }
-      title = he.decode(decodeURIComponent(title)) || null; // Decode and decode URI component of the title, assign it to the variable, or assign null if undefined.
+      // Decode URI component of the title, assign it to the variable, or assign null if undefined.
+      title = he.decode(decodeURIComponent(title)) || null;
       title = title !== 'undefined' ? title : null; // Assign null to the variable if the title is 'undefined'.
     }
   } catch (error) {
     auditLogger.error(
       `Resource Queue: Unable to retrieving metadata for Resource (URL: ${url}). Please make sure this is a valid address:`,
-      error,error.stack, error.toString()
+      error,
     ); // Log an error message if there is an exception while retrieving metadata.
   }
 
   await Resource.update({
     ...(title && { title }), // Update the title field in the database if it exists.
-    ...(metadata && { metadata, metadataUpdatedAt: new Date() }), // Update the metadata and metadataUpdatedAt fields in the database if they exist.
+    // Update the metadata and metadataUpdatedAt fields in the database if they exist.
+    ...(metadata && { metadata, metadataUpdatedAt: new Date() }),
     ...(mimeType && { mimeType }), // Update the mimeType field in the database if it exists.
-    ...(statusCode && { lastStatusCode: statusCode }), // Update the lastStatusCode field in the database if it exists.
-    metadataUpdatedAt: new Date(), // Update the metadataUpdatedAt field in the database with the current date.
+    // Update the lastStatusCode field in the database if it exists.
+    ...(statusCode && { lastStatusCode: statusCode }),
+    // Update the metadataUpdatedAt field in the database with the current date.
+    metadataUpdatedAt: new Date(),
   }, {
     where: { url }, // Specify the resource to update based on the URL.
     individualHooks: true, // Enable individual hooks for the update operation.
@@ -322,19 +337,20 @@ const getPageScrapeValues = async (url) => {
     ({ metadata, statusCode, mimeType } = await getMetadataValuesFormHtml(url));
 
     if (metadata) {
-      if (metadata.title) {
+      if (metadata?.title) {
         title = metadata.title; // Extract the title from the metadata if it exists
       }
       if (!title && metadata['og:title']) {
         title = metadata['og:title']; // Extract the Open Graph title from the metadata if title is not found
       }
-      title = title && he.decode(decodeURIComponent(title)) || null; // Decode and sanitize the title
-      title = title !== 'undefined' ? title : null; // Set title to null if it is undefined
+      // Decode and sanitize the title
+      title = (title && he.decode(decodeURIComponent(title))) || null;
+      title = title !== 'undefined' && title !== 'null' ? title : null; // Set title to null if it is undefined
     }
   } catch (error) {
     auditLogger.error(
       `Resource Queue: Unable to page scrape for Resource (URL: ${url}). Please make sure this is a valid address:`,
-      error, process.pid
+      error,
     );
     throw error; // Rethrow the error to be handled by the caller
   }
@@ -342,7 +358,8 @@ const getPageScrapeValues = async (url) => {
   // Update the resource with the scraped data
   await Resource.update({
     ...(title && { title }), // Update the title if it exists
-    ...(metadata && { metadata, metadataUpdatedAt: new Date() }), // Update the metadata and metadataUpdatedAt if they exist
+    // Update the metadata and metadataUpdatedAt if they exist
+    ...(metadata && { metadata, metadataUpdatedAt: new Date() }),
     ...(mimeType && { mimeType }), // Update the MIME type if it exists
     ...(statusCode && { lastStatusCode: statusCode }), // Update the last status code if it exists
   }, {
@@ -383,8 +400,10 @@ const getResourceMetaDataJob = async (job) => {
 
     let statusCode;
     let mimeType;
+    let title = null;
 
     // Get the MIME type and status code of the resource.
+    // eslint-disable-next-line prefer-const
     ({ mimeType, statusCode } = await getMimeType(resourceUrl));
 
     // Check if the MIME type is unparsable.
