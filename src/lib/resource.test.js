@@ -3,7 +3,6 @@ import axios from 'axios';
 import { expect } from '@playwright/test';
 import { getResourceMetaDataJob } from './resource';
 import db, { Resource } from '../models';
-import { Health } from 'aws-sdk';
 
 jest.mock('../logger');
 jest.mock('bull');
@@ -174,7 +173,6 @@ describe('resource worker tests', () => {
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
-    console.log(got);
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
 

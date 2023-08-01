@@ -67,5 +67,4 @@ export async function increaseListeners(queue, num = 1) {
   if (totalCount + num > maxListeners) {
     redisClient.setMaxListeners(Math.max(totalCount + num, maxListeners));
   }
-  console.log(queue.name, currentCounts, totalCount, num, maxListeners, redisClient.getMaxListeners());
 }
