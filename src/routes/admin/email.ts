@@ -26,7 +26,6 @@ const defaultTransport = createTransport({
   host: SMTP_HOST_TEST,
   port: SMTP_PORT_TEST,
   secure,
-  ignoreTLS: true,
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASSWORD,

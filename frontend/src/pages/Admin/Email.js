@@ -25,7 +25,7 @@ function Email() {
 
   return (
     <>
-      <Container paddingX={0} paddingY={0} className="smart-hub--overflow-auto">
+      <Container paddingX={1} paddingY={1} className="smart-hub--overflow-auto">
         <div>
           <h2>Email Test</h2>
           {error && (
