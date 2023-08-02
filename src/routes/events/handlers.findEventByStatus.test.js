@@ -61,7 +61,7 @@ const createUser = async ({
   }
 
   if (poc) {
-    permissions.push({ scopeId: SCOPE_IDS.COLLABORATOR_TRAINING_REPORTS, regionId });
+    permissions.push({ scopeId: SCOPE_IDS.POC_TRAINING_REPORTS, regionId });
   }
 
   const u = await User.create({ id: currentUserId, hsesUsername: faker.datatype.string() });
