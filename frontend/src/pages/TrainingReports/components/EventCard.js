@@ -20,7 +20,7 @@ function EventCard({
   const { user } = useContext(UserContext);
 
   // Check if user has been assigned an event role.
-  const isOwnerOrCollaborator = (event.pocId && event.pocId.includes(user.id))
+  const isOwnerOrCollaborator = (event.pocIds && event.pocIds.includes(user.id))
     || (event.collaboratorIds && event.collaboratorIds.includes(user.id))
     || (event.ownerId === user.id);
   const history = useHistory();

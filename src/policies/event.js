@@ -90,7 +90,7 @@ export default class EventReport {
     if (this.isAdmin()) { return true; }
 
     return !!this.permissions.find((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS,
     ].includes(p.scopeId) && p.regionId === regionId);
   }
 
@@ -114,7 +114,7 @@ export default class EventReport {
   }
 
   isPoc() {
-    return this.eventReport.pocId.includes(this.user.id);
+    return this.eventReport.pocIds && this.eventReport.pocIds.includes(this.user.id);
   }
 
   isCollaborator() {

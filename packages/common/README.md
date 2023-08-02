@@ -18,6 +18,10 @@ Whenever changes to this package are made, you will need to:
 If your PR depends on the latest version of this package, please don't forget to run `yarn upgrade @ttahub/common` and commit the changes to `package.json` and `yarn.lock`.
 
 ## Versions
+
+### 1.1.9/1.2.0
+(Sorry for the multiple versions) Update the name of the const COLLABORATOR_TRAINING_REPORTS to POC_TRAINING_REPORTS
+
 ### 1.1.8
 Reorder training report url param statuses so suspended is third tab and not second on TR landing
 

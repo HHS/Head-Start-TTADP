@@ -163,6 +163,10 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
+
+    const containsGranteeName = grants.some((g) => g.granteeName === 'Agency 1, Inc.');
+    expect(containsGranteeName).toBeTruthy();
+
     const totalGrants = await Grant.unscoped().findAll({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
@@ -320,11 +324,12 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(newPersonnel.effectiveDate).not.toBeNull();
   });
 
-  it('includes the grant specialists name and email', async () => {
+  it('includes the grant specialists name, email, and grantee name', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { number: '02CH01111' } });
     expect(grant.grantSpecialistName).toBe('grant');
     expect(grant.grantSpecialistEmail).toBe('grant@test.org');
+    expect(grant.granteeName).toBe('Agency 1, Inc.');
   });
 
   it('includes the program specialists name and email', async () => {
@@ -341,6 +346,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(grant.programSpecialistEmail).toBe(null);
     expect(grant.grantSpecialistName).toBe(null);
     expect(grant.grantSpecialistEmail).toBe(null);
+    expect(grant.granteeName).toBe(null);
   });
 
   it('should not exclude recipients with only inactive grants', async () => {
