@@ -380,7 +380,7 @@ export const specialistRoleFilter = {
 
 export const stateCodeFilter = {
   id: 'stateCode',
-  display: 'State',
+  display: 'State or Territory',
   conditions: ['contains'],
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
