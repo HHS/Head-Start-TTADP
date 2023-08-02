@@ -5,7 +5,8 @@ const {
 module.exports = {
   up: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      await prepMigration(queryInterface, transaction, __filename);
+      const sessionSig = __filename;
+      await prepMigration(queryInterface, transaction, sessionSig);
       try {
         // Delete duplicate goals based on trimmed_hashes, keeping the one with the lowest id
         await queryInterface.sequelize.query(`
@@ -75,7 +76,7 @@ module.exports = {
                         '\\bSR\\b', 'school readiness', 'gi'),
                         '\\bDLL(s?)\\b', 'recipient\\1', 'gi'),
                         '[^a-z0-9]', '', 'gi'),
-                        '[ \\t]', '', 'gi') "smashedName",
+                        '[ \\t\\r\\n]', '', 'gi') "smashedName",
                 TRIM(g.name) "cleanName"
             FROM "Goals" g
         );
@@ -269,7 +270,7 @@ module.exports = {
                         '\\bSR\\b', 'school readiness', 'gi'),
                         '\\bDLLs?\\b', 'recipient\\1', 'gi'),
                         '[^a-z0-9]', '', 'gi'),
-                        '[ \\t]', '', 'gi') "smashedTitle",
+                        '[ \\t\\r\\n]', '', 'gi') "smashedTitle",
                 TRIM(o.title) "cleanTitle"
             FROM "Objectives" o
         );
@@ -2387,6 +2388,45 @@ module.exports = {
         ORDER BY id;
         DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
           `, { transaction });
+
+        const cascade = await queryInterface.sequelize.query(`
+          WITH
+          "xZALGoals" AS ( SELECT 'Goals' AS "table", * FROM "ZALGoals" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
+          "xZALActivityReportGoals" AS ( SELECT 'ActivityReportGoals' AS "table", * FROM "ZALActivityReportGoals" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportGoalResources" AS ( SELECT 'ActivityReportGoalResources' AS "table", * FROM "ZALActivityReportGoalResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectives" AS ( SELECT 'Objectives' AS "table", * FROM "ZALObjectives" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectiveFiles" AS ( SELECT 'ObjectiveFiles' AS "table", * FROM "ZALObjectiveFiles" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectiveResources" AS ( SELECT 'ObjectiveResources' AS "table", * FROM "ZALObjectiveResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectiveTopics" AS ( SELECT 'ObjectiveTopics' AS "table", * FROM "ZALObjectiveTopics" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectives" AS ( SELECT 'ActivityReportObjectives' AS "table", * FROM "ZALActivityReportObjectives" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectiveFiles" AS ( SELECT 'ActivityReportObjectiveFiles' AS "table", * FROM "ZALActivityReportObjectiveFiles" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectiveResources" AS ( SELECT 'ActivityReportObjectiveResources' AS "table", * FROM "ZALActivityReportObjectiveResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectiveTopics" AS ( SELECT 'ActivityReportObjectiveTopics' AS "table", * FROM "ZALActivityReportObjectiveTopics" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          logs AS (
+            SELECT * FROM "xZALGoals" UNION
+            SELECT * FROM "xZALActivityReportGoals" UNION
+            SELECT * FROM "xZALActivityReportGoalResources" UNION
+            SELECT * FROM "xZALObjectives" UNION
+            SELECT * FROM "xZALObjectiveFiles" UNION
+            SELECT * FROM "xZALObjectiveResources" UNION
+            SELECT * FROM "xZALObjectiveTopics" UNION
+            SELECT * FROM "xZALActivityReportObjectives" UNION
+            SELECT * FROM "xZALActivityReportObjectiveFiles" UNION
+            SELECT * FROM "xZALActivityReportObjectiveResources" UNION
+            SELECT * FROM "xZALActivityReportObjectiveTopics"
+          )
+          SELECT "descriptor", ARRAY_AGG(DISTINCT "table") "tables"
+          FROM "logs" z
+          JOIN "ZADescriptor" zd
+          ON z.descriptor_id = zd.id
+          GROUP BY 1
+          HAVING COUNT(DISTINCT "table") > 1
+          ORDER BY 1,2;
+          `, { raw: true, type: queryInterface.sequelize.QueryTypes.SELECT, transaction });
+
+        if (Array.isArray(cascade) && cascade.length > 0) {
+          throw new Error('Cascade error, unexpected entires found:', cascade);
+        }
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
