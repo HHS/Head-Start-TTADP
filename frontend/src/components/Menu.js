@@ -94,7 +94,26 @@ function Menu({
     }, 0);
   };
 
-  const menuClass = `${defaultClass} shadow-1 z-top position-fixed`;
+  // while these classes no longer trigger the application of any CSS rules,
+  // I like the semantics of the class names, and they are useful in debugging and
+  // automatied testing
+  const placementClass = (() => {
+    if (left && up) {
+      return 'smart-hub--menu__left_and_up';
+    }
+
+    if (left) {
+      return 'smart-hub--menu__left';
+    }
+
+    if (up) {
+      return 'smart-hub--menu__up';
+    }
+
+    return '';
+  })();
+
+  const menuClass = `${defaultClass} shadow-1 z-top position-fixed ${placementClass}`;
 
   const onClick = () => {
     recordButtonPositionAndUpdateMenu();
