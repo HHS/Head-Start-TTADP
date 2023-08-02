@@ -88,8 +88,6 @@ export function ReportsRow({ reports, removeAlert, message }) {
       });
     }
 
-    console.log({ up: !!(index + 1 === length && length > 1) });
-
     return (
       <tr key={idKey}>
         <td>
