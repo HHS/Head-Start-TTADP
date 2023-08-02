@@ -85,12 +85,14 @@ function Menu({
     // no-overflow div, we position it using "fixed"
     // this means that it wouldn't scroll with the page, so we need to update the position
     // when the user scrolls
-    window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+    if (fixed) {
+      window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+    }
 
     return () => {
       window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
     };
-  }, [recordButtonPositionAndUpdateMenu]);
+  }, [fixed, recordButtonPositionAndUpdateMenu]);
 
   const onBlur = (e) => {
     const { currentTarget } = e;
@@ -122,7 +124,10 @@ function Menu({
   const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
 
   const onClick = () => {
+    // we don't need to check anything before calling this - if fixed is false, it won't do anything
     recordButtonPositionAndUpdateMenu();
+
+    // toggle the menu visibility
     updateShown((previous) => !previous);
   };
 
