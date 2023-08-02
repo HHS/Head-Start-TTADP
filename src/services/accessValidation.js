@@ -55,7 +55,7 @@ export async function userIsPocRegionalCollaborator(userId) {
     (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
   );
   const hasCollaborator = userPermissions.some(
-    (p) => p.scopeId === SCOPES.COLLABORATOR_TRAINING_REPORTS,
+    (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
   );
 
   // if they have the other scopes, their access is not limited
@@ -102,7 +102,7 @@ export async function getUserTrainingReportReadRegions(userId) {
     const readTrainingReportScopes = [
       SCOPES.READ_WRITE_TRAINING_REPORTS,
       SCOPES.READ_TRAINING_REPORTS,
-      SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      SCOPES.POC_TRAINING_REPORTS,
     ];
 
     return await getUserRegionsByPermissions(userId, readTrainingReportScopes);
