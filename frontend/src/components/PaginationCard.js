@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Pagination } from '@trussworks/react-uswds';
-import './PaginationCard.scss';
 
 function PaginationCard({
   currentPage,

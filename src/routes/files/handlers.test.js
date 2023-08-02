@@ -46,6 +46,7 @@ const mockUser = {
   hsesUserId: '2046',
   hsesUsername: '2046',
   homeRegionId: 1,
+  lastLogin: new Date(),
 };
 
 const mockSession = jest.fn();
@@ -61,6 +62,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
   regionId: 1,
+  version: 2,
 };
 
 const mockGrant = {
@@ -387,7 +389,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
+        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, or sessionId is required' });
       await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {

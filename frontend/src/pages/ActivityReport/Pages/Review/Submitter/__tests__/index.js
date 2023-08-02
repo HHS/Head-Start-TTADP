@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
+import { useForm, FormProvider } from 'react-hook-form';
 import Submitter from '../index';
 import NetworkContext from '../../../../../../NetworkContext';
 
@@ -66,7 +66,7 @@ const renderReview = (
   const formData = {
     approvers,
     calculatedStatus,
-    displayId: '1',
+    displayId: 'R01-AR-23424',
     id: 1,
     creatorRole,
   };

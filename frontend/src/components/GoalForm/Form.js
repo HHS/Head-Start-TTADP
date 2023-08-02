@@ -9,6 +9,7 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
+import FeatureFlag from '../FeatureFlag';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -17,6 +18,7 @@ import {
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
 import ConditionalFields from '../ConditionalFields';
+import GoalSource from './GoalSource';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -49,6 +51,9 @@ export default function Form({
   clearEmptyObjectiveError,
   onUploadFiles,
   userCanEdit,
+  source,
+  setSource,
+  validateGoalSource,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -149,6 +154,18 @@ export default function Form({
         validatePrompts={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
       />
+
+      <FeatureFlag flag="goal_source">
+        <GoalSource
+          source={source}
+          onChangeGoalSource={setSource}
+          error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
+          isOnReport={isOnApprovedReport}
+          goalStatus={status}
+          userCanEdit={userCanEdit}
+          validateGoalSource={validateGoalSource}
+        />
+      </FeatureFlag>
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
@@ -262,6 +279,9 @@ Form.propTypes = {
   })).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
+  source: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setSource: PropTypes.func.isRequired,
+  validateGoalSource: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {

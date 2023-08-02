@@ -2,14 +2,17 @@ import '@testing-library/jest-dom';
 import {
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
 import React from 'react';
 import {
   FormProvider, useForm,
-} from 'react-hook-form/dist/index.ie11';
+} from 'react-hook-form';
 import ConditionalMultiselectForHookForm from '../ConditionalMultiselectForHookForm';
 
 describe('ConditionalMultiselectForHookForm', () => {
+  let setError;
+
   // eslint-disable-next-line react/prop-types
   const Rt = ({ isOnReport = false, isComplete = false }) => {
     const hookForm = useForm({
@@ -18,6 +21,8 @@ describe('ConditionalMultiselectForHookForm', () => {
         testField: ['run', 'test'],
       },
     });
+
+    setError = hookForm.setError;
 
     const fieldData = {
       prompt: 'answer my riddle',
@@ -62,6 +67,14 @@ describe('ConditionalMultiselectForHookForm', () => {
   it('renders the prompt if editable', () => {
     render(<Rt />);
     expect(screen.getByText('answer my riddle')).toBeInTheDocument();
+  });
+
+  it('renders a prompt with errors', async () => {
+    render(<Rt />);
+    expect(screen.getByText('answer my riddle')).toBeInTheDocument();
+
+    setError('testField', { message: 'too many' });
+    await waitFor(() => expect(screen.getByText('too many')).toBeInTheDocument());
   });
 
   it('renders the prompt if read only', () => {

@@ -15,8 +15,8 @@
     "@fortawesome/pro-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
-    "@ttahub/common": "file:./../packages/common",
     "@trussworks/react-uswds": "4.1.1",
+    "@ttahub/common": "1.2.0",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
@@ -62,7 +62,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "16.19.1"
+    "node": "18.16.0"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -96,7 +96,8 @@
     "tough-cookie": "4.0.0",
     "ua-parser-js": "^0.7.33",
     "webpack": "^5.76.1",
-    "yaml": "^2.2.2"
+    "yaml": "^2.2.2",
+    "semver": "^7.5.3"
   },
   "eslintConfig": {
     "root": true,

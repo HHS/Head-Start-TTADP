@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -41,18 +42,30 @@ export default (sequelize, DataTypes) => {
   }
   NationalCenter.init({
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     name: {
       type: DataTypes.TEXT,
       allowNull: false,
+      validate: {
+        notNull: true,
+        notEmpty: true,
+      },
       unique: true,
     },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'NationalCenters',
+        },
+        key: 'id',
+      },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
@@ -73,6 +86,10 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'NationalCenter',
+    hooks: {
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
     paranoid: true,
   });
   return NationalCenter;

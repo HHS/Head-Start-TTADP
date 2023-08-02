@@ -89,6 +89,15 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="training_reports">
+                    <li>
+                      <NavLink
+                        to="/training-reports/not-started"
+                      >
+                        Training Reports
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/regional-dashboard"
@@ -105,7 +114,7 @@ const SiteNav = ({
                       </NavLink>
                     </li>
                   </FeatureFlag>
-                  <FeatureFlag flag="resources_dashboard" renderNotFound={false}>
+                  <FeatureFlag flag="resources_dashboard">
                     <li>
                       <NavLink
                         to="/resources-dashboard"

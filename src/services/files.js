@@ -9,6 +9,7 @@ import {
   ObjectiveTemplate,
   ObjectiveTemplateFile,
   ActivityReportObjective,
+  SessionReportPilotFile,
   sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
@@ -31,6 +32,11 @@ const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
   individualHooks: true,
 });
+const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
+
 const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy({
   where: { id },
   individualHooks: true,
@@ -77,6 +83,12 @@ const getFileById = async (id) => File.findOne({
       as: 'objectiveTemplateFiles',
       required: false,
       attributes: ['id', 'objectiveTemplateId'],
+    },
+    {
+      model: SessionReportPilotFile,
+      as: 'sessionFiles',
+      required: false,
+      attributes: ['id', 'sessionReportPilotId'],
     },
   ],
 });
@@ -203,7 +215,11 @@ const createActivityReportObjectiveFileMetaData = async (
     defaults: newFile,
   });
   await ActivityReportObjectiveFile
-    .create({ activityReportId: reportId, objectiveId, fileId: file.id });
+    .create({
+      activityReportId: reportId,
+      activityReportObjectiveId: objectiveId,
+      fileId: file.id,
+    });
   return file.dataValues;
 };
 
@@ -281,6 +297,31 @@ const createObjectiveTemplateFileMetaData = async (
   return file.dataValues;
 };
 
+const createSessionObjectiveFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  sessionReportPilotId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await SessionReportPilotFile.create({ sessionReportPilotId, fileId: file.id });
+  return file.dataValues;
+};
+
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
   // Get ARO files to delete (destroy does NOT support join's).
   const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
@@ -323,6 +364,7 @@ export {
   deleteActivityReportFile,
   deleteActivityReportObjectiveFile,
   deleteObjectiveFile,
+  deleteSessionFile,
   deleteObjectiveTemplateFile,
   getFileById,
   getActivityReportFilesById,
@@ -336,5 +378,6 @@ export {
   createObjectiveFileMetaData, // for one objective
   createObjectivesFileMetaData, // for more than one objective
   createObjectiveTemplateFileMetaData,
+  createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
 };

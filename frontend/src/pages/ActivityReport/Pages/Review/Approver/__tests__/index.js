@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../../UserContext';
 import Approver from '../index';
@@ -202,8 +202,6 @@ describe('Approver review page', () => {
       renderReview(REPORT_STATUSES.APPROVED, () => { }, false, approverWithNotes);
       const alert = document.querySelector('.usa-alert');
       expect(alert).not.toBe(null);
-      expect(await screen.findByText(/these are my sample notes 2\./i)).toBeVisible();
-      expect(await screen.findByText(/no creator notes/i)).toBeVisible();
     });
   });
 

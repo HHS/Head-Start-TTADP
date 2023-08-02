@@ -19,6 +19,7 @@ export default (sequelize, DataTypes) => {
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
       Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants' });
+      Grant.hasMany(models.ProgramPersonnel, { foreignKey: 'grantId', as: 'programPersonnel' });
       Grant.belongsToMany(models.Group, {
         through: models.GroupGrant,
         foreignKey: 'grantId',
@@ -61,8 +62,12 @@ export default (sequelize, DataTypes) => {
       */
     },
     annualFundingMonth: DataTypes.STRING,
-    cdi: DataTypes.BOOLEAN,
+    cdi: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     status: DataTypes.STRING,
+    granteeName: DataTypes.STRING,
     grantSpecialistName: DataTypes.STRING,
     grantSpecialistEmail: DataTypes.STRING,
     programSpecialistName: DataTypes.STRING,
@@ -79,6 +84,7 @@ export default (sequelize, DataTypes) => {
     oldGrantId: DataTypes.INTEGER,
     deleted: {
       type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     programTypes: {
       type: DataTypes.VIRTUAL,

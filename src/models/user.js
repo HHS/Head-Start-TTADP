@@ -2,7 +2,14 @@ const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
 
-const featureFlags = ['resources_dashboard', 'rttapa_form', 'anv_statistics', 'regional_goal_dashboard'];
+const featureFlags = [
+  'resources_dashboard',
+  'rttapa_form',
+  'anv_statistics',
+  'regional_goal_dashboard',
+  'goal_source',
+  'training_reports',
+];
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -45,7 +52,7 @@ export default (sequelize, DataTypes) => {
     hsesUserId: {
       type: DataTypes.STRING,
       unique: true,
-      allowNull: false,
+      allowNull: true,
     },
     hsesUsername: {
       type: DataTypes.STRING,
@@ -70,14 +77,21 @@ export default (sequelize, DataTypes) => {
         },
       },
     },
-    flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+    flags: {
+      type: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+      defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
+    },
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
         return generateFullName(this.name, this.roles);
       },
     },
-    lastLogin: DataTypes.DATE,
+    lastLogin: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: sequelize.literal('now()'),
+    },
   }, {
     sequelize,
     modelName: 'User',

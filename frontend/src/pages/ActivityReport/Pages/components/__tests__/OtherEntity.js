@@ -4,8 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import fetchMock from 'fetch-mock';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import OtherEntity from '../OtherEntity';
+
+let setError;
 
 // eslint-disable-next-line react/prop-types
 const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
@@ -15,6 +17,8 @@ const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
       objectivesWithoutGoals,
     },
   });
+
+  setError = hookForm.setError;
 
   return (
     <FormProvider {...hookForm}>
@@ -44,7 +48,7 @@ describe('OtherEntity', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', []);
-    fetchMock.get('/api/feeds/item?tag=topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
@@ -70,5 +74,17 @@ describe('OtherEntity', () => {
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);
     userEvent.click(button);
     await waitFor(() => expect(screen.queryAllByText(/objective status/i).length).toBe(2));
+  });
+
+  it('displays errors', async () => {
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
+    const button = await screen.findByRole('button', { name: /Add new objective/i });
+    userEvent.click(button);
+    expect(screen.queryAllByText(/objective status/i).length).toBe(1);
+    userEvent.click(button);
+    await waitFor(() => expect(screen.queryAllByText(/objective status/i).length).toBe(2));
+
+    setError('objectivesWithoutGoals[0].title', { type: 'required', message: 'ENTER A TITLE' });
+    await waitFor(() => expect(screen.queryByText(/ENTER A TITLE/i)).toBeVisible());
   });
 });

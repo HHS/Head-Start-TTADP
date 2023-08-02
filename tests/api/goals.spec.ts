@@ -42,6 +42,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     startDate: Joi.allow(null),
     endDate: Joi.allow(null),
     recipientId: Joi.number(),
+    granteeName: Joi.string().allow(null),
     oldGrantId: Joi.allow(null),
     createdAt: Joi.date(),
     updatedAt: Joi.date(),
@@ -51,14 +52,14 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     inactivationReason: Joi.any().allow(null),
     deleted: Joi.any().allow(null)
   });
-  
+
   const promptsSchema = Joi.object({
     title: Joi.string(),
     response: Joi.array().items(Joi.string()),
   });
 
   const schema = Joi.array().items(Joi.object({
-    endDate: Joi.date().allow(null),
+    endDate: Joi.string().allow(null).allow(''),
     status: Joi.string(),
     value: Joi.number(),
     label: Joi.string(),
@@ -73,7 +74,6 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     isNew: Joi.boolean(),
     prompts: Joi.array().items(promptsSchema),
   }));
-
   await validateSchema(response, schema, expect);
 
 });
@@ -106,7 +106,7 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
   
   const schema = Joi.object({
     goalTemplateId: Joi.number().allow(null),
-    endDate: Joi.date().allow(null),
+    endDate: Joi.string().allow(null),
     goalNumber: Joi.string(),
     id: Joi.number(),
     name: Joi.string(),
@@ -121,6 +121,7 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     isCurated: Joi.boolean(),
     objectives: Joi.array(),
     grant: grantSchema,
+    source: Joi.string().allow(null),
     prompts: Joi.array().items(
       Joi.object({
         id: Joi.number(),

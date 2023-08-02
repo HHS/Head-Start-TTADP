@@ -43,6 +43,7 @@ function defaultReport() {
     participants: ['participants', 'genies'],
     topics: ['Program Planning and Services'],
     ttaType: ['technical-assistance'],
+    version: 2,
   };
 }
 
@@ -55,6 +56,7 @@ function defaultUser() {
     phoneNumber: faker.phone.phoneNumber(),
     name: faker.name.findName(),
     role: ['Grants Specialist'],
+    lastLogin: new Date(),
   };
 }
 
@@ -140,7 +142,7 @@ export async function createReport(report) {
   });
 
   try {
-    Promise.all(recipients.map((grantId) => ActivityRecipient.create({
+    await Promise.all(recipients.map((grantId) => ActivityRecipient.create({
       activityReportId: createdReport.id,
       grantId,
     })));

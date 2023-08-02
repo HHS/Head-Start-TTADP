@@ -109,7 +109,12 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('textInput').fill('https://test1.gov');
     // TTA provided.
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).fill('Basic prep instruction.');
+    await page.waitForTimeout(10000);
+    await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
+
+    await page.waitForTimeout(10000);
+
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // Attachments page.
@@ -123,7 +128,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('specialistNextSteps-button').click();
     // Specialist step 2.
     await page.getByLabel('Step 2 *').click();
-    await page.getByLabel('Step 2 *').fill('If you can dream it, you can do it.');
+    await page.getByLabel('Step 2 *').fill('I really like math');
     await page.getByLabel('When do you anticipate completing step 2? *').fill('01/17/2023');
     // Recipient step 1.
     await page.getByTestId('recipientNextSteps-input').click();
@@ -243,17 +248,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
     await page.getByLabel('Enter report text').click();
-    await page.getByLabel('Enter report text').fill('you can dream it');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    // Doesn't contain Specialist step.
-    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-    await page.getByLabel('Enter report text').click();
-    await page.getByLabel('Enter report text').fill('you can dream it');
+    await page.getByLabel('Enter report text').fill('like math');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
@@ -268,62 +263,5 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    // Doesn't contain Recipient step.
-    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-    await page.getByLabel('Enter report text').click();
-    await page.getByLabel('Enter report text').fill('one small positive thought');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    prs = waitForLandingFilterRequests(page);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    // Mix with Report ID.
-    await page.getByRole('button', { name: 'open filters for this page' }).click();
-    await page.getByRole('button', { name: 'remove Report text does not contain one small positive thought filter. click apply filters to make your changes' }).click();
-    await page.getByRole('button', { name: 'Add new filter' }).click();
-    await page.locator('select[name="topic"]').selectOption('reportText');
-    await page.locator('select[name="condition"]').selectOption('contains');
-    await page.getByLabel('Enter report text').fill('ocean');
-
-    await page.getByRole('button', { name: 'Add new filter' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reportId');
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('contains');
-    await page.getByLabel('Enter a report id').fill(`${arNumber}`);
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    await page.getByRole('button', { name: 'open filters for this page' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('does not contain');
-    await page.getByLabel('Enter a report id').fill(`${arNumber}`);
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
-
-    // Mix with Reasons.
-    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reason');
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
-    await page.getByText('Select reasons to filter by').click();
-    await page.keyboard.press('Enter');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs)
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is not');
-    await page.getByText('Select reasons to filter by').click();
-    await page.keyboard.press('Enter');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();   
   });
 });

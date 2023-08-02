@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import { DECIMAL_BASE } from '@ttahub/common';
+import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
 import db from '../../models';
 import { auditLogger } from '../../logger';
@@ -16,10 +18,22 @@ import GroupPolicy from '../../policies/group';
 const NAMESPACE = 'GROUPS';
 const { Group, Grant } = db;
 
+interface GQuery {
+  id: number;
+  name: string;
+}
+
+const GROUP_ERRORS = {
+  ALREADY_EXISTS: 'This group name already exists, please use a different name',
+  ERROR_SAVING: 'There was an error saving your group',
+};
+
 export async function getGroups(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
-    const usersGroups = await groups(userId);
+    const user = await userById(userId);
+    const userRegions = user.permissions.map((p) => p.regionId);
+    const usersGroups = await groups(userId, userRegions);
     res.json(usersGroups);
   } catch (e) {
     auditLogger.error(`${NAMESPACE}, 'getGroups', ${e}`);
@@ -33,7 +47,7 @@ export async function getGroup(req: Request, res: Response) {
     const userId = await currentUserId(req, res);
     const groupResponse = await group(parseInt(groupId, 10));
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupResponse);
-    if (!policy.ownsGroup()) {
+    if (!policy.ownsGroup() && !policy.isPublic()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
@@ -61,11 +75,30 @@ export async function createGroup(req: Request, res: Response) {
       return;
     }
 
+    // check for name uniqueness
+    const existingGroup = await Group.findOne({
+      where: {
+        name: {
+          [Op.iLike]: req.body.name.trim(),
+        },
+      },
+    });
+
+    if (existingGroup) {
+      res.status(httpCodes.ACCEPTED).json({
+        error: 'new-group-name',
+        message: GROUP_ERRORS.ALREADY_EXISTS,
+      });
+      return;
+    }
+
     const groupResponse = await createNewGroup({ ...req.body, userId });
     res.json(groupResponse);
   } catch (e) {
     auditLogger.error(`${NAMESPACE} createGroup ${e}`);
-    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
+    res.status(httpCodes.INTERNAL_SERVER_ERROR).json({
+      message: GROUP_ERRORS.ERROR_SAVING,
+    });
   }
 }
 
@@ -74,14 +107,42 @@ export async function updateGroup(req: Request, res: Response) {
     const { groupId } = req.params;
     const userId = await currentUserId(req, res);
 
-    const existingGroup = await Group.findOne({
+    const existingGroups = await Group.findAll({
       where: {
-        id: groupId,
+        [Op.or]: [
+          {
+            id: groupId,
+          },
+          {
+            name: {
+              [Op.iLike]: req.body.name.trim(),
+            },
+            id: {
+              [Op.not]: groupId,
+            },
+          },
+        ],
       },
       attribtes: ['userId', 'id'],
     });
 
-    const policy = new GroupPolicy({ id: userId, permissions: [] }, [], existingGroup);
+    // there can only be one
+    const existingGroupById = existingGroups.find(
+      (g: GQuery) => g.id === parseInt(groupId, DECIMAL_BASE),
+    );
+    const existingGroupByName = existingGroups.find(
+      (g: GQuery) => g.name === req.body.name && g.id !== parseInt(groupId, DECIMAL_BASE),
+    );
+
+    if (existingGroupByName) {
+      res.status(httpCodes.ACCEPTED).json({
+        error: 'new-group-name',
+        message: GROUP_ERRORS.ALREADY_EXISTS,
+      });
+      return;
+    }
+
+    const policy = new GroupPolicy({ id: userId, permissions: [] }, [], existingGroupById);
     if (!policy.ownsGroup()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
@@ -94,7 +155,9 @@ export async function updateGroup(req: Request, res: Response) {
     res.json(groupResponse);
   } catch (e) {
     auditLogger.error(`${NAMESPACE} updateGroup ${e}`);
-    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
+    res.status(httpCodes.INTERNAL_SERVER_ERROR).json({
+      message: GROUP_ERRORS.ERROR_SAVING,
+    });
   }
 }
 
@@ -109,6 +172,12 @@ export async function deleteGroup(req: Request, res: Response) {
       },
       attribtes: ['userId', 'id'],
     });
+
+    // We should check that the group exists before we attempt to delete it.
+    if (!existingGroup) {
+      res.status(httpCodes.OK).json({});
+      return;
+    }
 
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], existingGroup);
     if (!policy.ownsGroup()) {

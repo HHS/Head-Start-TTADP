@@ -1,170 +1,72 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
-const nextStepsPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "NextSteps".note';
-
-  return `
+const selectDistinctActivityReports = (join, having) => `
   SELECT DISTINCT
     "ActivityReports"."id"
   FROM "ActivityReports"
-  LEFT JOIN "NextSteps"
-  ON "NextSteps"."activityReportId" = "ActivityReports"."id"
-  WHERE "NextSteps".note${a}`;
+  ${join}
+  GROUP BY "ActivityReports"."id"
+  HAVING ${having}`;
+
+const nextStepsIncludeExclude = (include = true) => {
+  const a = include ? '' : 'bool_or("NextSteps".note IS NULL) OR';
+
+  return selectDistinctActivityReports(
+    'LEFT JOIN "NextSteps" ON "NextSteps"."activityReportId" = "ActivityReports"."id"',
+    `${a} LOWER(STRING_AGG("NextSteps".note, CHR(10)))`,
+  );
 };
 
-const argsPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReportGoals".name';
+const argsIncludeExclude = (include = true) => {
+  const a = include ? '' : 'bool_or("ActivityReportGoals".name IS NULL) OR';
 
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportGoals"
-  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
-  WHERE "ActivityReportGoals".name${a}`;
+  return selectDistinctActivityReports(
+    'LEFT JOIN "ActivityReportGoals" ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"',
+    `${a} LOWER(STRING_AGG("ActivityReportGoals".name, CHR(10)))`,
+  );
 };
 
-const objectiveTitlePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReportObjectives".title';
+const objectiveTitleAndTtaProvidedIncludeExclude = (include = true) => {
+  const a = include ? '' : 'bool_or("ActivityReportObjectives".title IS NULL OR "ActivityReportObjectives"."ttaProvided" IS NULL) OR';
 
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives"
-  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  WHERE "ActivityReportObjectives".title${a}`;
+  return selectDistinctActivityReports(
+    'LEFT JOIN "ActivityReportObjectives" ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"',
+    `${a} LOWER(STRING_AGG(concat_ws(CHR(10), "ActivityReportObjectives".title, "ActivityReportObjectives"."ttaProvided"), CHR(10)))`,
+  );
 };
 
-const objectiveTtaProvidedPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReportObjectives"."ttaProvided"';
+const activityReportContextandAdditionalNotesIncludeExclude = (include = true) => {
+  const a = include ? '' : 'bool_or("ActivityReports"."context" IS NULL) OR';
 
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives"
-  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  WHERE "ActivityReportObjectives"."ttaProvided"${a}`;
-};
-
-const activityReportResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportResources"
-  ON "ActivityReportResources"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "Resources"
-  ON "Resources"."id" = "ActivityReportResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
-};
-
-const activityReportGoalResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportGoals"
-  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "ActivityReportGoalResources"
-  ON "ActivityReportGoalResources"."activityReportGoalId" = "ActivityReportGoals"."id"
-  LEFT JOIN "Resources"
-  ON "Resources"."id" = "ActivityReportGoalResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
-};
-
-const activityReportObjectiveResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "ActivityReportObjectives"
-  ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "ActivityReportObjectiveResources"
-  ON "ActivityReportObjectiveResources"."activityReportObjectiveId" = "ActivityReportObjectives"."id"
-  LEFT JOIN "Resources"
-  ON "Resources"."id" = "ActivityReportObjectiveResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
-};
-
-const nextStepsResourcePosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "Resources"."url"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  LEFT JOIN "NextSteps"
-  ON "NextSteps"."activityReportId" = "ActivityReports"."id"
-  LEFT JOIN "NextStepResources"
-  ON "NextSteps"."id" = "NextStepResources"."nextStepId"
-  LEFT JOIN "Resources"
-  ON "Resources"."id" = "NextStepResources"."resourceId"
-  WHERE "Resources"."url"${a}`;
-};
-
-const activityReportContextPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReports"."context"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  WHERE "ActivityReports"."context"${a}`;
-};
-
-const additionalNotesPosNeg = (pos = true) => {
-  const a = pos ? '' : ' IS NULL OR "ActivityReports"."additionalNotes"';
-
-  return `
-  SELECT DISTINCT
-    "ActivityReports"."id"
-  FROM "ActivityReports"
-  WHERE "ActivityReports"."additionalNotes"${a}`;
+  return selectDistinctActivityReports(
+    '',
+    `${a} LOWER(STRING_AGG(concat_ws(CHR(10), "ActivityReports"."context", "ActivityReports"."additionalNotes"), CHR(10)))`,
+  );
 };
 
 export function withReportText(searchText) {
-  const search = [`%${searchText}%`];
+  const search = [`%${searchText.map((st) => st.toLowerCase())}%`];
 
   return {
     [Op.or]: [
-      filterAssociation(nextStepsPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(argsPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(objectiveTitlePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(objectiveTtaProvidedPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportGoalResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportObjectiveResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(nextStepsResourcePosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(activityReportContextPosNeg(true), search, false, 'ILIKE'),
-      filterAssociation(additionalNotesPosNeg(true), search, false, 'ILIKE'),
+      filterAssociation(nextStepsIncludeExclude(true), search, false, 'LIKE'),
+      filterAssociation(argsIncludeExclude(true), search, false, 'LIKE'),
+      filterAssociation(objectiveTitleAndTtaProvidedIncludeExclude(true), search, false, 'LIKE'),
+      filterAssociation(activityReportContextandAdditionalNotesIncludeExclude(true), search, false, 'LIKE'),
     ],
   };
 }
 
 export function withoutReportText(searchText) {
-  const search = [`%${searchText}%`];
+  const search = [`%${searchText.map((st) => st.toLowerCase())}%`];
 
   return {
     [Op.and]: [
-      filterAssociation(nextStepsPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(argsPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTitlePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(objectiveTtaProvidedPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportGoalResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(nextStepsResourcePosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportContextPosNeg(false), search, false, 'NOT ILIKE'),
-      filterAssociation(additionalNotesPosNeg(false), search, false, 'NOT ILIKE'),
+      filterAssociation(nextStepsIncludeExclude(false), search, false, 'NOT LIKE'),
+      filterAssociation(argsIncludeExclude(false), search, false, 'NOT LIKE'),
+      filterAssociation(objectiveTitleAndTtaProvidedIncludeExclude(false), search, false, 'NOT LIKE'),
+      filterAssociation(activityReportContextandAdditionalNotesIncludeExclude(false), search, false, 'NOT LIKE'),
     ],
   };
 }

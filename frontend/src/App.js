@@ -15,6 +15,7 @@ import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
@@ -46,9 +47,14 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import MyGroupsProvider from './components/MyGroupsProvider';
+import ScrollToTop from './components/ScrollToTop';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
+import TrainingReportForm from './pages/TrainingReportForm';
+import Group from './pages/AccountManagement/Group';
+import SessionForm from './pages/SessionForm';
+import ViewTrainingReport from './pages/ViewTrainingReport';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -255,6 +261,50 @@ function App() {
         />
         <Route
           exact
+          path="/training-reports/:status(not-started|in-progress|complete|suspended)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReports user={user} match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/view/:trainingReportId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <ViewTrainingReport match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReportForm match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <SessionForm match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
@@ -281,6 +331,15 @@ function App() {
         />
         <Route
           exact
+          path="/account/group/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <Group match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-goal-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
@@ -290,6 +349,7 @@ function App() {
             </AppWrapper>
           )}
         />
+
         <Route
           exact
           path="/account"
@@ -358,6 +418,7 @@ function App() {
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
+          <ScrollToTop />
           {authenticated && (
             <>
               <a className="usa-skipnav" href="#main-content">

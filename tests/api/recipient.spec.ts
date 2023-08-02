@@ -74,6 +74,7 @@ test.describe('get /recipient', () => {
       cdi: Joi.boolean(),
       status: Joi.string(),
       grantSpecialistName: Joi.any().allow(null),
+      granteeName: Joi.any().allow(null),
       grantSpecialistEmail: Joi.any().allow(null),
       programSpecialistName: Joi.any().allow(null),
       programSpecialistEmail: Joi.any().allow(null),
@@ -194,6 +195,7 @@ test.describe('get /recipient', () => {
            }),
           ),                  
         name: Joi.string(),
+        source: Joi.string().allow(null),
         goalTemplateId: Joi.number().allow(null),
         status: Joi.string(),
         regionId: Joi.number(),
@@ -241,7 +243,8 @@ test.describe('get /recipient', () => {
           })
         ),
         grantIds: Joi.array().items(Joi.number()),
-        isNew: Joi.boolean()
+        isNew: Joi.boolean(),
+        endDate: Joi.string().allow(null).allow(''),
       })
     ).min(1);
 
