@@ -58,7 +58,6 @@ export default function MyGroup({
                   setError('There was an error deleting your group');
                 } finally {
                   setIsAppLoading(false);
-                  modalRef.current.toggleModal(false);
                 }
               }}
             >
