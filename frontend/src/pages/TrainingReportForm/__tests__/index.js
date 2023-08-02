@@ -94,7 +94,7 @@ describe('TrainingReportForm', () => {
       regionId: '1',
       reportId: 1,
       collaboratorIds: [],
-      pocId: null,
+      pocIds: null,
       ownerId: 1,
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
@@ -186,7 +186,7 @@ describe('TrainingReportForm', () => {
       },
       collaboratorIds: [1],
       ownerId: 1,
-      pocId: 1,
+      pocIds: [1],
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
@@ -419,7 +419,7 @@ describe('TrainingReportForm', () => {
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
-      pocId: [1],
+      pocIds: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
@@ -481,7 +481,7 @@ describe('TrainingReportForm', () => {
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
-      pocId: [1],
+      pocIds: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
@@ -543,7 +543,7 @@ describe('TrainingReportForm', () => {
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
-      pocId: [1],
+      pocIds: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
@@ -606,7 +606,7 @@ describe('TrainingReportForm', () => {
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
-      pocId: [1],
+      pocIds: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',

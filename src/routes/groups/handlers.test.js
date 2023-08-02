@@ -351,6 +351,26 @@ describe('Groups Handlers', () => {
       expect(res.json).toHaveBeenCalledWith(groupResponse);
     });
 
+    it('should return 200 if the group no longer exists', async () => {
+      const req = {
+        params: {
+          groupId: 1,
+        },
+      };
+      const res = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: jest.fn() })),
+      };
+      Group.findOne.mockReturnValue(null);
+      const userId = 1;
+      const groupResponse = 1;
+      currentUserId.mockReturnValueOnce(userId);
+      destroyGroup.mockReturnValue(groupResponse);
+      await deleteGroup(req, res);
+      expect(res.status).toHaveBeenCalledWith(httpCodes.OK);
+    });
+
     it('should return 403 if the user does not own the group', async () => {
       const req = {
         params: {

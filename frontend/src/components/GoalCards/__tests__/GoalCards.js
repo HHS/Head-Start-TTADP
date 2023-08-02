@@ -126,6 +126,7 @@ const goalWithObjectives = [{
     id: 345345345,
     ttaProvided: '',
     grantNumbers: ['1'],
+    topics: ['Human Resources'],
     activityReports: [{
       id: 1,
       displayId: 'ar-number-1',
@@ -140,6 +141,7 @@ const goalWithObjectives = [{
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
+    topics: ['Human Resources'],
     grantNumbers: ['1'],
     activityReports: [{
       id: 2,
@@ -156,6 +158,7 @@ const goalWithObjectives = [{
     id: 2938234,
     ttaProvided: '',
     grantNumbers: ['1'],
+    topics: ['Human Resources'],
     activityReports: [{
       id: 3,
       displayId: 'ar-number-3',
@@ -171,6 +174,7 @@ const goalWithObjectives = [{
     id: 255384234,
     ttaProvided: '',
     grantNumbers: ['200342cat'],
+    topics: ['Human Resources'],
     activityReports: [{
       id: 4,
       displayId: 'ar-number-4',
@@ -184,6 +188,7 @@ const goalWithObjectives = [{
     reasons: ['Complaint'],
     status: 'Unknown Status',
     id: 298398934834,
+    topics: ['Human Resources'],
     ttaProvided: '',
     grantNumbers: ['1'],
     activityReports: [{

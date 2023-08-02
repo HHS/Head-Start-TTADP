@@ -17,7 +17,7 @@ describe('eventSummary', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({
         getValues: jest.fn(() => ({
-          pocId: [1],
+          pocIds: [1],
           collaboratorIds: [1],
           reasons: [1],
           targetPopulations: [1],

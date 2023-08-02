@@ -64,7 +64,7 @@ describe('accessValidation', () => {
           {
             userId: 47,
             regionId: 14,
-            scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+            scopeId: SCOPES.POC_TRAINING_REPORTS,
           },
         ],
       };
@@ -81,7 +81,7 @@ describe('accessValidation', () => {
           {
             userId: 47,
             regionId: 14,
-            scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+            scopeId: SCOPES.POC_TRAINING_REPORTS,
           },
           {
             userId: 47,
