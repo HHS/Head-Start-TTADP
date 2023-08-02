@@ -25,6 +25,7 @@ function Menu({
   up,
   menuWidthOffset,
   menuHeightOffset,
+  fixed,
 }) {
   const [shown, updateShown] = useState(false);
   const [menuPosition, updateMenuPosition] = useState({});
@@ -47,40 +48,36 @@ function Menu({
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
-    if (buttonRef.current) {
-      if (buttonRef.current.getBoundingClientRect) {
+    if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
       // get the button's position
-        const {
-          top,
-          height,
-          left: l,
-          width,
-        } = buttonRef.current.getBoundingClientRect();
+      const {
+        top,
+        height,
+        left: l,
+        width,
+      } = buttonRef.current.getBoundingClientRect();
 
-        // we could be progratically calculating the height and width offset numbers
-        // but a little manual work up front will save on performance in the browser
+      // we could be progratically calculating the height and width offset numbers
+      // but a little manual work up front will save on performance in the browser
 
-        let leftPos = l + width;
+      let leftPos = l + width;
 
-        // left = the menu opens to the left of the button instead of the right
-
-        if (left) {
-          leftPos = l + width - menuWidthOffset;
-        }
-
-        // top = the menu opens above the button instead of below
-
-        let topPos = top + height;
-
-        if (up) {
-          topPos = top - height - menuHeightOffset;
-        }
-
-        // update the CSS
-        updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` });
+      // left = the menu opens to the left of the button instead of the right
+      if (left) {
+        leftPos = l + width - menuWidthOffset;
       }
+
+      // top = the menu opens above the button instead of below
+      let topPos = top + height;
+
+      if (up) {
+        topPos = top - height - menuHeightOffset;
+      }
+
+      // update the CSS
+      updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` });
     }
-  }, [left, menuHeightOffset, menuWidthOffset, up]);
+  }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
 
   // watch for window scroll
   useEffect(() => {
@@ -105,9 +102,6 @@ function Menu({
     }, 0);
   };
 
-  // while these classes no longer trigger the application of any CSS rules,
-  // I like the semantics of the class names, and they are useful in debugging and
-  // automated testing
   const placementClass = (() => {
     if (left && up) {
       return 'smart-hub--menu__left_and_up';
@@ -124,7 +118,8 @@ function Menu({
     return '';
   })();
 
-  const menuClass = `${defaultClass} shadow-1 z-top position-fixed ${placementClass}`;
+  const positionClass = fixed ? 'position-fixed' : 'position-absolute';
+  const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
 
   const onClick = () => {
     recordButtonPositionAndUpdateMenu();
@@ -180,6 +175,7 @@ Menu.propTypes = {
   menuHeightOffset: PropTypes.number,
   buttonText: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   className: PropTypes.string,
+  fixed: PropTypes.bool,
 };
 
 Menu.defaultProps = {
@@ -190,6 +186,7 @@ Menu.defaultProps = {
   up: false,
   menuWidthOffset: 120,
   menuHeightOffset: 140,
+  fixed: false,
 };
 
 export default Menu;

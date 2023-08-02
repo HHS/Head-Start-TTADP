@@ -13,7 +13,14 @@ import colors from '../colors';
 import Menu from './Menu';
 
 function ContextMenu({
-  label, menuItems, backgroundColor, left, up, menuWidthOffset, menuHeightOffset,
+  label,
+  menuItems,
+  backgroundColor,
+  left,
+  up,
+  menuWidthOffset,
+  menuHeightOffset,
+  fixed,
 }) {
   return (
     <Menu
@@ -26,6 +33,7 @@ function ContextMenu({
       menuHeightOffset={menuHeightOffset}
       buttonText={<FontAwesomeIcon color={colors.textInk} icon={faEllipsisH} />}
       buttonTestId="ellipsis-button"
+      fixed={fixed}
     />
   );
 }
@@ -41,6 +49,7 @@ ContextMenu.propTypes = {
   up: PropTypes.bool,
   menuHeightOffset: PropTypes.number,
   menuWidthOffset: PropTypes.number,
+  fixed: PropTypes.bool,
 };
 
 ContextMenu.defaultProps = {
@@ -48,7 +57,8 @@ ContextMenu.defaultProps = {
   left: true,
   up: false,
   menuHeightOffset: 120,
-  menuWidthOffset: 140,
+  menuWidthOffset: 135,
+  fixed: false,
 };
 
 export default ContextMenu;
