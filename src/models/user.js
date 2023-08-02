@@ -1,5 +1,3 @@
-import { Sequelize } from '.';
-
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');

@@ -114,7 +114,7 @@ const SiteNav = ({
                       </NavLink>
                     </li>
                   </FeatureFlag>
-                  <FeatureFlag flag="resources_dashboard" renderNotFound={false}>
+                  <FeatureFlag flag="resources_dashboard">
                     <li>
                       <NavLink
                         to="/resources-dashboard"
