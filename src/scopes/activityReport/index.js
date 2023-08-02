@@ -125,6 +125,7 @@ export const topicToQuery = {
     bef: (query) => beforeEndDate(query),
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDate(query),
+    in: (query) => withinEndDate(query),
   },
   otherEntities: {
     in: (query) => withOtherEntities(query),
