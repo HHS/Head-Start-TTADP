@@ -57,11 +57,18 @@ function Menu({
           width,
         } = buttonRef.current.getBoundingClientRect();
 
+        // we could be progratically calculating the height and width offset numbers
+        // but a little manual work up front will save on performance in the browser
+
         let leftPos = l + width;
+
+        // left = the menu opens to the left of the button instead of the right
 
         if (left) {
           leftPos = l + width - menuWidthOffset;
         }
+
+        // top = the menu opens above the button instead of below
 
         let topPos = top + height;
 
@@ -77,6 +84,10 @@ function Menu({
 
   // watch for window scroll
   useEffect(() => {
+    // the menu position is based on the button position, but because it is encased in a
+    // no-overflow div, we position it using "fixed"
+    // this means that it wouldn't scroll with the page, so we need to update the position
+    // when the user scrolls
     window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
 
     return () => {
@@ -96,7 +107,7 @@ function Menu({
 
   // while these classes no longer trigger the application of any CSS rules,
   // I like the semantics of the class names, and they are useful in debugging and
-  // automatied testing
+  // automated testing
   const placementClass = (() => {
     if (left && up) {
       return 'smart-hub--menu__left_and_up';
