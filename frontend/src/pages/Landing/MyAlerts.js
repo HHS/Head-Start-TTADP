@@ -142,6 +142,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
             menuWidthOffset={110}
             menuHeightOffset={80}
             up={index + 1 === length}
+            fixed
           />
         </td>
       </tr>
