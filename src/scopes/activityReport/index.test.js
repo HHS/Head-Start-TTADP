@@ -3028,6 +3028,17 @@ describe('filtersToScopes', () => {
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([firstReport.id, secondReport.id, thirdReport.id]));
     });
+
+    it('in returns reports with end dates between the two dates', async () => {
+      const filters = { 'endDate.in': '2020/09/01-2020/09/03' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([firstReport.id, secondReport.id, thirdReport.id]));
+    });
   });
 
   describe('region id', () => {
