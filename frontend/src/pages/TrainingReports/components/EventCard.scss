@@ -69,10 +69,6 @@ $min-width-menu-column: 20px;
 }
 
 @container ttahub-event-card (min-width: 980px) {
-  .ttahub-event-card__row {
-    flex-wrap: no-wrap;
-  }
-
   .ttahub-event-card__event-column:not(:last-child) {
     margin-bottom: 0px;
   }
