@@ -10,6 +10,7 @@ import {
 
 function Email() {
   const [error, setError] = useState();
+  const [success, setSuccess] = useState();
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -18,6 +19,7 @@ function Email() {
       const plainFormData = Object.fromEntries(formData.entries());
 
       await sendEmail(plainFormData);
+      setSuccess('Email successfully sent');
     } catch (err) {
       setError('Error attempting to send email');
     }
@@ -28,6 +30,11 @@ function Email() {
       <Container paddingX={1} paddingY={1} className="smart-hub--overflow-auto">
         <div>
           <h2>Email Test</h2>
+          {(success && !error) && (
+            <Alert type="success" className="margin-bottom-4 maxw-mobile-lg" noIcon>
+              {success}
+            </Alert>
+          )}
           {error && (
             <Alert type="error" className="margin-bottom-4 maxw-mobile-lg" noIcon>
               {error}
