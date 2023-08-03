@@ -49,8 +49,8 @@ describe('Topic & Frequency Graph Widget', () => {
   it('shows the correct data', async () => {
     renderArGraphOverview({ data: TEST_DATA });
     const graphTitle = screen.getByRole('heading', { name: /number of activity reports by topic/i });
-    await expect(graphTitle).toBeInTheDocument();
-    await expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(graphTitle).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
   });
 
   it('correctly sorts data by count', () => {
@@ -114,7 +114,7 @@ describe('Topic & Frequency Graph Widget', () => {
         topic: 'Human Resources',
         count: 0,
       },
-    ]);
+    ].reverse());
   });
 
   it('handles undefined data', async () => {
@@ -150,7 +150,7 @@ describe('Topic & Frequency Graph Widget', () => {
 
     const point2 = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point2.__data__.text).toBe('CLASS: Instructional Support');
+    expect(point2.__data__.text).toBe('Human Resources');
   });
 
   it('handles switching display contexts', async () => {

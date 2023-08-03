@@ -1,5 +1,3 @@
-/* eslint-disable react/no-unknown-property */
-/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Plotly from 'plotly.js-basic-dist';
@@ -20,8 +18,10 @@ export function sortData(data, order) {
   if (order === SORT_ORDER.ALPHA) {
     data.sort((a, b) => a.topic.localeCompare(b.topic));
   } else {
-    data.sort((a, b) => a.count - b.count);
+    data.sort((a, b) => b.count - a.count);
   }
+
+  data.reverse();
 }
 
 /**
@@ -228,21 +228,10 @@ export function TopicFrequencyGraphWidget({
 
       </Grid>
 
-      {/*
-        While it is indeed bad practice to add a tabindex to a div, it is the solution suggested by
-        Deque, a company that knows far more about accessibility than I, so I'm going with it.
-        - https://dequeuniversity.com/rules/axe/4.3/scrollable-region-focusable
-
-        In addition, I had to add a "no unknown property" eslint rule to ignore the tabindex
-        attribute, which is kind of mysterious but it's eslint's world and I'm just living in it.
-
-        I added them both at the file level since the ternary makes it hard to add them inline.
-      */}
-
       { showAccessibleData
         ? <AccessibleWidgetData caption="Number of Activity Reports by Topic Table" columnHeadings={columnHeadings} rows={tableRows} />
         : (
-          <div tabindex="0" className="tta-dashboard--bar-graph-container" ref={bars} data-testid="bars" />
+          <div className="tta-dashboard--bar-graph-container" ref={bars} data-testid="bars" />
         ) }
 
     </Container>
