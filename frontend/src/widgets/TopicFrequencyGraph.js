@@ -14,14 +14,16 @@ export const SORT_ORDER = {
   ALPHA: 2,
 };
 
-export function sortData(data, order) {
+export function sortData(data, order, tabular = false) {
   if (order === SORT_ORDER.ALPHA) {
     data.sort((a, b) => a.topic.localeCompare(b.topic));
   } else {
     data.sort((a, b) => b.count - a.count);
   }
 
-  data.reverse();
+  if (!tabular) {
+    data.reverse();
+  }
 }
 
 /**
@@ -75,7 +77,7 @@ export function TopicFrequencyGraphWidget({
     }
 
     // sort the api response based on the dropdown choices
-    sortData(data, order);
+    sortData(data, order, showAccessibleData);
 
     const topics = [];
     const counts = [];
@@ -107,6 +109,7 @@ export function TopicFrequencyGraphWidget({
         color: colors.ttahubMediumBlue,
       },
       width: 0.75,
+      hovertemplate: '%{y}: %{x}<extra></extra>',
     };
 
     const layout = {
