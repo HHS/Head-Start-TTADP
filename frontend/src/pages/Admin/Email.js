@@ -20,6 +20,7 @@ function Email() {
 
       await sendEmail(plainFormData);
       setSuccess('Email successfully sent');
+      setError('');
     } catch (err) {
       setError('Error attempting to send email');
     }
