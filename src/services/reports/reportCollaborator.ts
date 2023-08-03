@@ -9,13 +9,16 @@ const syncCollaboratorsForType = (
   collaboratorTypeId: number,
   userIds: number[],
 ) => {
-  // get current collaborators for this report having this type
+  // in parallel:
+  //    validate that the type is valid for the report type
+  //    get current collaborators for this report having this type
   // filter to the positive, nuteral, and negative lists
-  // in parallel perform in insert/update/delete based on the sub lists
-  // if a sublist is empty, do not call the db at all for that sublist
+  // in parallel:
+  //    perform in insert/update/delete based on the sub lists
+  //        if a sublist is empty, do not call the db at all for that sublist
 };
 
-const getCollaboratorsForType = (
+const getCollaboratorsForTypeId = (
   reportId: number,
   collaboratorTypeId: number,
 ) => ReportCollaborator.findAll({
@@ -29,6 +32,34 @@ const getCollaboratorsForType = (
       required: true,
       where: {
         id: collaboratorTypeId,
+      },
+      attributes: [],
+      through: {
+        attributes: [],
+      },
+    },
+    {
+      model: User,
+      as: 'user',
+      required: true,
+    },
+  ],
+});
+
+const getCollaboratorsForTypeName = (
+  reportId: number,
+  collaboratorTypeName: string,
+) => ReportCollaborator.findAll({
+  where: {
+    reportId,
+  },
+  include: [
+    {
+      model: CollaboratorType,
+      as: 'collaboratorTypes',
+      required: true,
+      where: {
+        name: collaboratorTypeName,
       },
       attributes: [],
       through: {
