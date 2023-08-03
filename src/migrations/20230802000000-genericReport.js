@@ -44,7 +44,6 @@ module.exports = {
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
        * - Statuses-
-       * - NationalCenters-
        * - Reasons-
        * - TargetPopulations-
        * - CollaboratorTypes-
@@ -242,44 +241,12 @@ module.exports = {
       }, { transaction });
 
       //---------------------------------------------------------------------------------
-      await queryInterface.createTable('NationalCenters', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        name: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-        },
-        createdAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        updatedAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.fn('NOW'),
-        },
+
+      await queryInterface.addColumn('NationalCenters', {
         deletedAt: {
           type: Sequelize.DATE,
           allowNull: true,
           default: null,
-        },
-        mapsTo: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          default: null,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'NationalCenters',
-            },
-            key: 'id',
-          },
         },
       }, { transaction });
 
