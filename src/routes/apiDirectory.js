@@ -76,7 +76,6 @@ router.use('/goal-templates', goalTemplatesRouter);
 router.use('/events', eventRouter);
 router.use('/session-reports', sessionReportsRouter);
 router.use('/national-center', nationalCenterRouter);
-// router.use('/email', emailRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
