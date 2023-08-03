@@ -1,6 +1,7 @@
 export {};
 const {
   Grant,
+  OtherEntity,
   Recipient,
   ReportRecipient,
 } = require('../../models');
@@ -24,4 +25,44 @@ const syncRecipients = async (
   }
 };
 
-const getRecipients = () => {};
+const getRecipients = async (
+  reportId: number,
+):Promise<object[]> => ReportRecipient.findAll({
+  attributes: [
+    // filter this down to whats needed.
+  ],
+  where: {
+    reportId,
+  },
+  include: [
+    {
+      model: Grant,
+      as: 'grant',
+      required: false,
+      attributes: [
+        // filter this down to whats needed.
+      ],
+      include: [{
+        model: Recipient,
+        as: 'recipient',
+        required: true,
+        attributes: [
+          // filter this down to whats needed.
+        ],
+      }],
+    },
+    {
+      model: OtherEntity,
+      as: 'otherEntity',
+      required: false,
+      attributes: [
+        // filter this down to whats needed.
+      ],
+    },
+  ],
+});
+
+module.exports = {
+  syncRecipients,
+  getRecipients,
+};
