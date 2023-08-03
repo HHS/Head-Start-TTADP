@@ -7,7 +7,6 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
-import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
 import colors from '../colors';
 import MediaCaptureButton from '../components/MediaCaptureButton';
@@ -173,7 +172,7 @@ export function TopicFrequencyGraphWidget({
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph" loading={loading} loadingLabel="Topic frequency loading">
+    <Container className="ttahub--topic-frequency-graph width-full" loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
