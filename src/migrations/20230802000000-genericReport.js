@@ -1,17 +1,19 @@
+const {
+  prepMigration,
+} = require('../lib/migration');
+
+const {
+  ENTITY_TYPE,
+  GOAL_STATUS,
+  OBJECTIVE_STATUS,
+  APPROVAL_STATUSES,
+} = require('../constants');
+
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      const loggedUser = '0';
       const sessionSig = __filename;
-      const auditDescriptor = 'RUN MIGRATIONS';
-      await queryInterface.sequelize.query(
-        `SELECT
-                set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
-                set_config('audit.transactionId', NULL, TRUE) as "transactionId",
-                set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
-                set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+      await prepMigration(queryInterface, transaction, sessionSig);
 
       /**
        *  create new tables for new structure:
@@ -48,36 +50,6 @@ module.exports = {
        * - TargetPopulations-
        * - CollaboratorTypes-
        *  */
-
-      const ENTITY_TYPE = {
-        REPORT_EVENT: 'report.event',
-        REPORT_SESSION: 'report.session',
-        GOAL: 'goal',
-        OBJECTIVE: 'objective',
-        COLLABORATOR: 'collaborator',
-      };
-
-      const GOAL_STATUS = {
-        DRAFT: 'Draft',
-        NOT_STARTED: 'Not Started',
-        IN_PROGRESS: 'In Progress',
-        SUSPENDED: 'Suspended',
-        CLOSED: 'Closed',
-      };
-
-      const OBJECTIVE_STATUS = {
-        DRAFT: 'Draft',
-        NOT_STARTED: 'Not Started',
-        IN_PROGRESS: 'In Progress',
-        SUSPENDED: 'Suspended',
-        COMPLETE: 'Complete',
-      };
-
-      const APPROVAL_STATUSES = {
-        APPROVAL_REQUESTED: 'approval_requested',
-        NEEDS_ACTION: 'needs_action',
-        APPROVED: 'approved',
-      };
 
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Statuses', {
@@ -2165,17 +2137,9 @@ module.exports = {
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      const loggedUser = '0';
       const sessionSig = __filename;
-      const auditDescriptor = 'REVERT MIGRATIONS';
-      await queryInterface.sequelize.query(
-        `SELECT
-                set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
-                set_config('audit.transactionId', NULL, TRUE) as "transactionId",
-                set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
-                set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
-      );
+      await prepMigration(queryInterface, transaction, sessionSig);
+
       await queryInterface.sequelize.query(
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
