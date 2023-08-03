@@ -10,6 +10,7 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
 import colors from '../colors';
+import MediaCaptureButton from '../components/MediaCaptureButton';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -20,7 +21,7 @@ export function sortData(data, order) {
   if (order === SORT_ORDER.ALPHA) {
     data.sort((a, b) => a.topic.localeCompare(b.topic));
   } else {
-    data.sort((a, b) => b.count - a.count);
+    data.sort((a, b) => a.count - b.count);
   }
 }
 
@@ -66,7 +67,7 @@ export function TopicFrequencyGraphWidget({
   // the order the data is displayed in the chart
   const [order, setOrder] = useState(SORT_ORDER.DESC);
 
-  // the dom el for drawing the chart
+  // the dom element for drawing the chart
   const bars = useRef();
 
   useEffect(() => {
@@ -100,19 +101,18 @@ export function TopicFrequencyGraphWidget({
 
     const trace = {
       type: 'bar',
-      x: topics.map((topic) => topicsWithLineBreaks(topic)),
-      y: counts,
-      hoverinfo: 'y',
+      orientation: 'h',
+      x: counts,
+      y: topics,
       marker: {
         color: colors.ttahubMediumBlue,
       },
+      width: 0.75,
     };
-
-    const width = topics.length * 180;
 
     const layout = {
       bargap: 0.5,
-      height: 300,
+      height: 1000,
       hoverlabel: {
         bgcolor: '#000',
         bordercolor: '#000',
@@ -124,14 +124,15 @@ export function TopicFrequencyGraphWidget({
       font: {
         color: colors.textInk,
       },
-      width,
       margin: {
-        l: 80,
-        pad: 20,
-        t: 24,
+        l: 320,
+        r: 0,
+        t: 0,
+        b: 0,
       },
       xaxis: {
         automargin: true,
+        autorange: true,
         tickangle: 0,
         title: {
           font: {
@@ -140,20 +141,18 @@ export function TopicFrequencyGraphWidget({
         },
       },
       yaxis: {
-        tickformat: ',.0d',
-        title: {
-          standoff: 80,
-          text: 'Number of Activity Reports',
-          font: {
-            color: colors.textInk,
-          },
-        },
+        zeroline: false,
+        autotick: false,
+        ticks: 'outside',
+        tick0: 0,
+        ticklen: 4,
+        tickwidth: 1,
+        tickcolor: 'transparent',
       },
-      hovermode: 'none',
     };
 
     // draw the plot
-    Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, hovermode: 'none' });
+    Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
   }, [data, order, setOrder, showAccessibleData]);
 
   /**
@@ -206,6 +205,16 @@ export function TopicFrequencyGraphWidget({
           />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+          {!showAccessibleData
+            ? (
+              <MediaCaptureButton
+                reference={bars}
+                buttonText="Save screenshot"
+                id="rd-save-screenshot-topic-frequency"
+                className="margin-x-2"
+              />
+            )
+            : null}
           <button
             type="button"
             className="usa-button--unstyled margin-top-2"
@@ -233,7 +242,9 @@ export function TopicFrequencyGraphWidget({
 
       { showAccessibleData
         ? <AccessibleWidgetData caption="Number of Activity Reports by Topic Table" columnHeadings={columnHeadings} rows={tableRows} />
-        : <div tabindex="0" data-testid="bars" className="tta-dashboard--bar-graph-container overflow-x-scroll overflow-y-hidden padding-y-1" ref={bars} /> }
+        : (
+          <div tabindex="0" className="tta-dashboard--bar-graph-container" ref={bars} data-testid="bars" />
+        ) }
 
     </Container>
   );
