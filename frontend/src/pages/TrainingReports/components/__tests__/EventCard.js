@@ -130,7 +130,7 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
 
-  it('shows the create session option for poc without write permission', async () => {
+  it('does not show the create session option for poc without write permission', async () => {
     renderEventCard({
       ...defaultEvent,
       pocIds: [2],
@@ -149,7 +149,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
-    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).toBeNull();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
   });
