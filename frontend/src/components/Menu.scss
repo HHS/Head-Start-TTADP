@@ -13,19 +13,14 @@
   color: $text-ink;
 }
 
-.smart-hub--menu {
-  position: absolute;
-  z-index: 1;
-}
-
-.smart-hub--menu__left_and_up {
+.position-absolute.smart-hub--menu__left_and_up {
   transform: translateY(-120%) translateX(-90%); 
 }
 
-.smart-hub--menu__left {
+.position-absolute.smart-hub--menu__left {
   transform: translateX(-90%); 
 }
 
-.smart-hub--menu__up {
+.position-absolute.smart-hub--menu__up {
   transform: translateY(-120%); 
 }

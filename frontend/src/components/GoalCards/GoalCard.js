@@ -127,6 +127,7 @@ function GoalCard({
         <ContextMenu
           label={contextMenuLabel}
           menuItems={menuItems}
+          menuWidthOffset={100}
         />
         )}
       </div>
