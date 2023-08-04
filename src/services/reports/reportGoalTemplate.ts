@@ -7,8 +7,64 @@ const {
 } = require('../../models');
 const { auditLoger } = require('../../logger');
 
+/**
+ * Retrieves the current report goal templates based on the provided reportId.
+ * @param reportId - The ID of the report to filter by.
+ * @returns A promise that resolves to an array of objects representing the current
+ * report goal templates.
+ */
+const getCurrentReportGoalTemplates = async (
+  reportId: number,
+): Promise<object[]> => ReportGoalTemplate.findAll({ // Find all report goal templates
+  attributes: [
+    // filter this down to whats needed.
+  ],
+  where: {
+    reportId, // Filter by reportId
+  },
+  include: [
+    {
+      model: GoalTemplate,
+      as: 'goalTemplate',
+    },
+  ],
+});
+
+/**
+ * Retrieves matching goal templates based on the provided regionId and goalTemplates array.
+ * @param regionId - The ID of the region to filter by.
+ * @param goalTemplates - An array of goal templates to filter by.
+ * @returns A promise that resolves to an array of matching goal templates.
+ */
+const getMatchingGoalTemplates = async (
+  regionId: number,
+  goalTemplates: ({ goalTemplateId?: number, name: string })[],
+): Promise<object[]> => GoalTemplate.findAll({
+  attributes: [
+    ['id', 'goalTemplateId'], // Rename id column to goalTemplateId
+    ['templateName', 'name'], // Rename templateName column to name
+    ['regionId'], // Include regionId column
+  ],
+  where: {
+    regionId, // Filter by regionId
+    [Op.or]: {
+      // Filter goalTemplates array for objects with goalTemplateId property and map to an
+      // array of goalTemplateIds
+      id: goalTemplates
+        .filter((goalTemplate) => Object.keys(goalTemplate).includes('goalTemplateId'))
+        .map((goalTemplate) => goalTemplate?.goalTemplateId),
+      // Filter goalTemplates array for objects with name property and map to an
+      // array of names
+      name: goalTemplates
+        .filter((goalTemplate) => Object.keys(goalTemplate).includes('name'))
+        .map(({ name }) => name),
+    },
+  },
+  raw: true, // Return raw data instead of Sequelize models
+});
+
 // TODO: this needs alot of work
-const syncGoalTemplates = async (
+const syncReportGoalTemplates = async (
   report: { id: number, type: string, regionId: number },
   goalTemplates: ({ goalTemplateId?: number, name: string })[],
 ) => {
@@ -23,46 +79,19 @@ const syncGoalTemplates = async (
       // Array of goal templates that match the criteria
       matchingGoalTemplates,
     ] = await Promise.all([
-      ReportGoalTemplate.findAll({
-        attributes: [
-          // filter this down to whats needed.
-        ],
-        where: {
-          reportId: report.id, // Filter by report id
-          regionId: report.regionId, // Filter by region id
-        },
-        include: [
-          {
-            model: GoalTemplate,
-            as: 'goalTemplate',
-          },
-        ],
-      }),
-      GoalTemplate.findAll({
-        attributes: [
-          ['id', 'goalTemplateId'], // Rename id column to goalTemplateId
-          ['templateName', 'name'], // Rename templateName column to name
-          ['regionId'], // Include regionId column
-        ],
-        where: {
-          regionId: report.regionId, // Filter by region id
-          [Op.or]: {
-            // Filter goalTemplates array for objects with goalTemplateId property and map to an
-            // array of goalTemplateIds
-            id: goalTemplates
-              .filter((goalTemplate) => Object.keys(goalTemplate).includes('goalTemplateId'))
-              .map((goalTemplate) => goalTemplate?.goalTemplateId),
-            // Filter goalTemplates array for objects with name property and map to an
-            // array of names
-            name: goalTemplates
-              .filter((goalTemplate) => Object.keys(goalTemplate).includes('name'))
-              .map(({ name }) => name),
-          },
-        },
-        raw: true, // Return raw data instead of Sequelize models
-      }),
+      getCurrentReportGoalTemplates(report.id), // Filter by report id
+      getMatchingGoalTemplates(
+        report.regionId, // Filter by regionId
+        goalTemplates,
+      ),
     ]);
     // make any needed new goalTemplates
+    // TODO: issue the usecases needed to be solved here are:
+    //    # a new goalTemplate was created
+    //    # a existing goalTemplate is referanced wither by number or by text
+    //    # a goalTemplate edit is requested... what should be done
+    //        # if it is only used on this report, and no children of the report have
+    //          reached a foia-able state, then allow the update
     const newGoalTemplates = await Promise.all(goalTemplates // Array of goal templates
       .filter((goalTemplate) => ( // Filter out existing goal templates
         !(
@@ -122,15 +151,32 @@ const syncGoalTemplates = async (
     //        if a sublist is empty, do not call the db at all for that sublist
     return await Promise.all([
       ...(
-        deltaLists.creationList.map(async (createItem) => ReportGoalTemplate.create({
-          reportId: report.id,
-          goalTemplateId: createItem.goalTemplateId,
-        }))
+        deltaLists.creationList
+        && deltaLists.creationList.length
+          ? ReportGoalTemplate.bulkCreate(
+            deltaLists.creationList.map((createItem) => ({
+              reportId: report.id,
+              goalTemplateId: createItem.goalTemplateId,
+            })),
+          )
+          : Promise.resolve()
       ),
       ...(
         deltaLists.updateList
         && deltaLists.updateList.length
-        && ReportGoalTemplate.update() // TODO: is update required
+          ? ReportGoalTemplate.update() // TODO: is update required
+          : Promise.resolve()
+      ),
+      ...(
+        deltaLists.removeList
+        && deltaLists.removeList.length
+          ? ReportGoalTemplate.destroy({
+            where: {
+              reportId: report.id,
+              goalTemplateId: deltaLists.removeList.map((removeItem) => removeItem.goalTemplateId),
+            },
+          }) // TODO: is destroy required
+          : Promise.resolve()
       ),
     ]);
   } catch (err) {
