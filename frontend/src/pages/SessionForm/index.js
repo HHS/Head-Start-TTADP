@@ -278,7 +278,7 @@ export default function SessionForm({ match }) {
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
-              Regional/National Training Report
+              Training report - Session
             </h1>
           </div>
         </Grid>

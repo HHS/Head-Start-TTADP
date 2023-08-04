@@ -58,7 +58,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
   });
 
   it('handles an error creating a new report', async () => {
@@ -70,7 +70,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
     expect(screen.getByText(/Error creating session/i)).toBeInTheDocument();
   });
 
@@ -89,7 +89,7 @@ describe('SessionReportForm', () => {
 
     jest.advanceTimersByTime(30000);
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
   });
 
   it('handles an error fetching a session', async () => {
@@ -105,7 +105,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
     expect(screen.getByText(/Error fetching session/i)).toBeInTheDocument();
   });
 
@@ -122,10 +122,10 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Save Session/i);
+    const saveSession = screen.getByText(/Save draft/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
@@ -143,10 +143,10 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, 500);
-    const saveSession = screen.getByText(/Save Session/i);
+    const saveSession = screen.getByText(/Save draft/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
     expect(screen.getByText(/There was an error saving the session/i)).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
     const saveSession = screen.getByText(/Save and continue/i);

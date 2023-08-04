@@ -61,7 +61,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'event-summary');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
   it('redirects to event summary', async () => {
@@ -84,7 +84,7 @@ describe('TrainingReportForm', () => {
     // this test might not seem too effective, but it fails if the component is not
     // wrapped in a Router
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
   it('renders training report form if pocId is null', async () => {
@@ -105,7 +105,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'event-summary');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
   it('displays an error when failing to fetch users', async () => {
@@ -304,7 +304,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'event-summary');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
     const visionGoal = await screen.findByRole('button', { name: /vision and goal/i });
 
@@ -347,7 +347,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'complete-event');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
     const statusSelect = await screen.findByRole('combobox', { name: /status/i });
     expect(statusSelect).toHaveValue('In progress');
@@ -393,7 +393,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'complete-event');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
     const statusSelect = await screen.findByRole('combobox', { name: /status/i });
     act(() => {
