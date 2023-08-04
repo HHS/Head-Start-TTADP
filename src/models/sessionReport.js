@@ -60,6 +60,24 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    deliveryMethod: {
+      type: new DataTypes.VIRTUAL(DataTypes.STRING, ['inpersonParticipants', 'virtualParticipants']),
+      get() {
+        const inperson = this.get('inpersonParticipants');
+        const virtual = this.get('virtualParticipants');
+
+        switch (true) {
+          case inperson && virtual:
+            return 'hybrid';
+          case inperson:
+            return 'in-person';
+          case virtual:
+            return 'virtual';
+          default:
+            return null;
+        }
+      },
+    },
   }, {
     sequelize,
     modelName: 'SessionReport',
