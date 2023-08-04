@@ -120,6 +120,19 @@ const syncGoalTemplates = async (
     // in parallel:
     //    perform in insert/update/delete based on the sub lists
     //        if a sublist is empty, do not call the db at all for that sublist
+    return await Promise.all([
+      ...(
+        deltaLists.creationList.map(async (createItem) => ReportGoalTemplate.create({
+          reportId: report.id,
+          goalTemplateId: createItem.goalTemplateId,
+        }))
+      ),
+      ...(
+        deltaLists.updateList
+        && deltaLists.updateList.length
+        && ReportGoalTemplate.update() // TODO: is update required
+      ),
+    ]);
   } catch (err) {
     auditLoger.error(err);
     throw err;
