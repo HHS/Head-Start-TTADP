@@ -193,6 +193,14 @@ class CollaboratorRoles{
  * updatedAt : timestamp with time zone
 }
 
+class Courses{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * name : varchar(255)
+ * updatedAt : timestamp with time zone
+ inactiveDate : timestamp with time zone
+}
+
 class EventReportPilots{
  * id : integer : <generated>
  * collaboratorIds : integer[]
@@ -951,6 +959,20 @@ class ZALActivityReports{
 }
 
 class ZALCollaboratorRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCourses{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
