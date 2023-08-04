@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
 import {
   getHandler,
@@ -170,7 +171,7 @@ describe('event handlers', () => {
 
     it('returns the event', async () => {
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+        canEditEvent: () => true,
       }));
       updateEvent.mockResolvedValueOnce(mockEvent);
       await updateHandler(mockRequest, mockResponse);
@@ -180,6 +181,90 @@ describe('event handlers', () => {
     it('returns 400 when no body', async () => {
       await updateHandler({ params: { eventId: 99_999 }, body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('owners can update status to complete', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => true,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_999,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('others cannot update status to complete', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => false,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_998,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+    });
+
+    it('owner can update status to suspended', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => true,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_999,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('owner cannot update status to suspended', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => false,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_998,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
     });
   });
 

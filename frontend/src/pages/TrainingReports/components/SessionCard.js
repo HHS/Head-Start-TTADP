@@ -32,8 +32,7 @@ function SessionCard({
   eventId,
   session,
   expanded,
-  hasWritePermissions,
-  eventStatus,
+  isWriteable,
   onRemoveSession,
 }) {
   const modalRef = useRef();
@@ -69,8 +68,6 @@ function SessionCard({
     return <NoStatus />;
   })();
 
-  const showControls = hasWritePermissions && eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
-
   return (
     <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
       { expanded ? (
@@ -97,7 +94,7 @@ function SessionCard({
             {sessionName}
           </p>
           {
-            showControls
+            isWriteable
               ? (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
                   <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`} className="margin-right-4">
@@ -165,8 +162,7 @@ SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,
   session: sessionPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
-  hasWritePermissions: PropTypes.bool.isRequired,
-  eventStatus: PropTypes.string.isRequired,
+  isWriteable: PropTypes.bool.isRequired,
   onRemoveSession: PropTypes.func.isRequired,
 };
 export default SessionCard;

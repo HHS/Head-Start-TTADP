@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
 import UserContext from '../../UserContext';
 import { getStateCodes } from '../../fetchers/users';
-import { allRegionsUserHasPermissionTo } from '../../permissions';
+import { allRegionsUserHasActivityReportPermissionTo } from '../../permissions';
 
 // List of states, by region
 // see: https://www.acf.hhs.gov/oro/regional-offices
@@ -111,7 +111,7 @@ export default function FilterStateSelect({
 
   useEffect(() => {
     async function fetchStateCodes() {
-      const allowedRegions = allRegionsUserHasPermissionTo(user);
+      const allowedRegions = allRegionsUserHasActivityReportPermissionTo(user);
 
       let codes = [];
 
