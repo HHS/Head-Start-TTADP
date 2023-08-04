@@ -136,7 +136,14 @@ export function ReportsRow({ reports, removeAlert, message }) {
           </Tag>
         </td>
         <td>
-          <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={index + 1 === length} />
+          <ContextMenu
+            label={contextMenuLabel}
+            menuItems={menuItems}
+            menuWidthOffset={110}
+            menuHeightOffset={80}
+            up={index + 1 === length}
+            fixed
+          />
         </td>
       </tr>
     );

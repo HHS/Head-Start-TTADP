@@ -243,12 +243,12 @@ describe('Users DB service', () => {
       {
         id: userIds[0],
         regionId: 5,
-        scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+        scopeId: SCOPES.POC_TRAINING_REPORTS,
       },
       {
         id: userIds[1],
         regionId: 5,
-        scopeId: SCOPES.COLLABORATOR_TRAINING_REPORTS,
+        scopeId: SCOPES.POC_TRAINING_REPORTS,
       },
       {
         id: userIds[2],
