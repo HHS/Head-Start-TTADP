@@ -286,15 +286,90 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false, scopes = undefined): Promise<EventShape[] | null> {
-  return findEventHelperBlob({
+/**
+ *
+ * remember, regional filtering is done in the previous step
+ * so all we need to do here is a last cleanup of the data by status
+ *
+ * @param events
+ * @param status
+ * @param userId
+ * @returns
+ */
+export async function filterEventsByStatus(events: EventShape[], status: string, userId: number) : Promise<EventShape[]> {
+  switch (status) {
+    case TRS.NOT_STARTED:
+    case null:
+      /**
+       * Not started events
+       * You see them if
+       * - You are the POC, owner, or collaborator
+       */
+      return events.filter((event) => {
+        // pocIds is nullable
+        if (event.pocIds && event.pocIds.includes(userId)) {
+          return true;
+        }
+
+        if (event.collaboratorIds.includes(userId)) {
+          return true;
+        }
+
+        if (event.ownerId === userId) {
+          return true;
+        }
+
+        return false;
+      });
+    case TRS.IN_PROGRESS:
+      /**
+       * In progress events
+       * You see all of them with regional permissions
+       * but you may not see all sessions
+       *
+       */
+
+      return events.map((event) => {
+        // if you are owner, collaborator or poc, you see all sessions
+        if (event.ownerId === userId) {
+          return event;
+        }
+
+        if (event.collaboratorIds.includes(userId)) {
+          return event;
+        }
+
+        if (event.pocIds && event.pocIds.includes(userId)) {
+          return event;
+        }
+
+        // otherwise, you only see sessions that are "complete"
+        const e = event;
+        e.sessionReports = e.sessionReports.filter((session) => session.data.status === TRS.COMPLETE);
+
+        return e;
+      });
+    case TRS.COMPLETE:
+    case TRS.SUSPENDED:
+      // everyone with regional permissions can see all sessions
+      return events;
+    default:
+      return [];
+  }
+}
+
+export async function findEventsByStatus(status: string, readableRegions: number[], userId: number, fallbackValue = undefined, allowNull = false, scopes = undefined): Promise<EventShape[] | null> {
+  const events = await findEventHelperBlob({
     key: 'status',
     value: status,
     regions: readableRegions,
     fallbackValue,
     allowNull: status === TRS.NOT_STARTED || allowNull,
     scopes,
-  }) as Promise<EventShape[]>;
+  }) as EventShape[];
+
+  const es = await filterEventsByStatus(events, status, userId);
+  return es;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
