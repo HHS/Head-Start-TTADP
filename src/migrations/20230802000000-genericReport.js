@@ -49,6 +49,23 @@ module.exports = {
        * - Reasons-
        * - TargetPopulations-
        * - CollaboratorTypes-
+       *
+       *  additional changes to tables that need additional columns to maintain quality
+       *  data over time and maintain FOIA:
+       * - GoalTemplates - isFoiaable
+       * - GoalTemplateResources - isFoiaable
+       * - GoalTemplateFieldPrompts - isFoiaable
+       * - Goals - isFoiaable
+       * - GoalResources - isFoiaable
+       * - GoalFieldResponses - isFoiaable
+       * - ObjectiveTemplates - isFoiaable
+       * - ObjectiveTemplateFiles - isFoiaable
+       * - ObjectiveTemplateResources - isFoiaable
+       * - ObjectiveTemplateTopics - isFoiaable
+       * - Objectives - isFoiaable
+       * - ObjectiveFiles - isFoiaable
+       * - ObjectiveResources - isFoiaable
+       * - ObjectiveTopics - isFoiaable
        *  */
 
       //---------------------------------------------------------------------------------
@@ -1245,6 +1262,7 @@ module.exports = {
             key: 'id',
           },
         },
+        // TODO: do we need to cache the name to the template...yes
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -2133,6 +2151,106 @@ module.exports = {
         type: 'unique',
         transaction,
       });
+
+      //---------------------------------------------------------------------------------
+
+      await queryInterface.addColumn('GoalTemplates', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('GoalTemplateResources', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('GoalTemplateFieldPrompts', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('Goals', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('GoalResources', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('GoalFieldResponses', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveTemplates', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveTemplateFiles', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveTemplateResources', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveTemplateTopics', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('Objectives', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveFiles', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveResources', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
+
+      await queryInterface.addColumn('ObjectiveTopics', {
+        isFoiaable: {
+          type: Sequelize.BOOLEAN,
+          default: false,
+        },
+      }, { transaction });
     },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
