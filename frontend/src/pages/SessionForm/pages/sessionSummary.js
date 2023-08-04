@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
   useContext,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -37,6 +38,8 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import Drawer from '../../../components/Drawer';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -67,6 +70,9 @@ const SessionSummary = ({ datePickerKey }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const sessionName = watch('sessionName');
+
+  // ref for topics guidance drawer
+  const drawerTriggerRef = useRef(null);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -335,10 +341,32 @@ const SessionSummary = ({ datePickerKey }) => {
       </FormItem>
 
       <div className="margin-top-2">
+        <Drawer
+          triggerRef={drawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Topic guidance"
+        >
+          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
+        </Drawer>
         <FormItem
-          label="Topics"
+          required={false}
+          htmlFor="objectiveTopics"
+          label={(
+            <>
+              Topics
+              {' '}
+              <Req />
+              <button
+                type="button"
+                className="usa-button usa-button--unstyled margin-left-1"
+                ref={drawerTriggerRef}
+              >
+                Get help choosing topics
+              </button>
+            </>
+          )}
           name="objectiveTopics"
-          required
         >
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
@@ -579,7 +607,7 @@ export default {
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>
+        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
       </div>
     </div>
   ),

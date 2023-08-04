@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.16.0-browsers
+      - image: cimg/node:18.16.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.16.0-browsers
+      - image: cimg/node:18.16.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:18.16.0-browsers
+      - image: cimg/node:18.16.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -136,11 +136,23 @@ commands:
       smtp_port:
         description: "SMTP port"
         type: env_var_name
+      smtp_host_test:
+        description: "SMTP server test"
+        type: env_var_name
+      smtp_port_test:
+        description: "SMTP port test"
+        type: env_var_name
       smtp_secure:
         description: "SMTP secure transport"
         type: env_var_name
       from_email_address:
         description: "From email address"
+        type: env_var_name
+      smtp_user:
+        description: "SMTP user"
+        type: env_var_name
+      smtp_password:
+        description: "SMTP password"
         type: env_var_name
     steps:
       - run:
@@ -166,6 +178,10 @@ commands:
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
               --var SMTP_HOST=${<< parameters.smtp_host >>} \
               --var SMTP_PORT=${<< parameters.smtp_port >>} \
+              --var SMTP_HOST_TEST=${<< parameters.smtp_host_test >>} \
+              --var SMTP_PORT_TEST=${<< parameters.smtp_port_test >>} \
+              --var SMTP_USER=${<< parameters.smtp_user >>} \
+              --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
       - run:
@@ -207,7 +223,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "fix-deploys"
+    default: "kw-ses-email"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "al-ttahub-519-grant-personnel"
@@ -495,8 +511,12 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -538,8 +558,12 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -581,8 +605,12 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -622,8 +650,12 @@ jobs:
                 hses_data_password: PROD_HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Run database migrations
                 command: |

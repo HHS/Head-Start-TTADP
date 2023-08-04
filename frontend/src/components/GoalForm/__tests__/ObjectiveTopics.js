@@ -53,7 +53,7 @@ describe('ObjectiveTopics', () => {
   it('displays the correct label', async () => {
     renderObjectiveTopics();
     const label = screen.queryAllByText(/topics/i);
-    expect(label).toHaveLength(2);
+    expect(label).toHaveLength(3);
     const fastDancing = await screen.findByRole('listitem');
     expect(fastDancing).toHaveTextContent('Dancing but too fast');
     expect(screen.getByText(/dancing but too slow/i)).toBeVisible();

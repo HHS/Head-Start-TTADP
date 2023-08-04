@@ -90,17 +90,8 @@ export default class EventReport {
     if (this.isAdmin()) { return true; }
 
     return !!this.permissions.find((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS,
     ].includes(p.scopeId) && p.regionId === regionId);
-  }
-
-  canUpdate() {
-    if (this.isAdmin()) { return true; }
-    if (this.isCollaborator()) { return true; }
-    if (this.isPoc()) { return true; }
-    if (this.isAuthor()) { return true; }
-
-    return false;
   }
 
   isAdmin() {
@@ -119,5 +110,27 @@ export default class EventReport {
 
   isCollaborator() {
     return this.eventReport.collaboratorIds.includes(this.user.id);
+  }
+
+  // some handy & fun aliases
+
+  canEditEvent() {
+    return this.isAdmin() || this.isAuthor() || this.isPoc();
+  }
+
+  canCreateSession() {
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator();
+  }
+
+  canEditSession() {
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
+  }
+
+  canDeleteSession() {
+    return this.canEditSession();
+  }
+
+  canSuspendOrCompleteEvent() {
+    return this.isAdmin() || this.isAuthor();
   }
 }

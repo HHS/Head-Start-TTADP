@@ -22,7 +22,7 @@ import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasPermissionTo, hasApproveActivityReport } from '../../permissions';
+import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
 import {
   ALERTS_PER_PAGE,
 } from '../../Constants';
@@ -65,7 +65,7 @@ function Landing() {
   const { user } = useContext(UserContext);
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user);
+  const regions = allRegionsUserHasActivityReportPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
