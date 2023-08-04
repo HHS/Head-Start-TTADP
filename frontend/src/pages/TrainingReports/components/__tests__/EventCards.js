@@ -109,27 +109,27 @@ describe('EventCards', () => {
 
   it('renders correctly if there are no not started events', () => {
     renderEventCards([], EVENT_STATUS.NOT_STARTED);
-    expect(screen.getByText('You have no events with a “not started” status.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no complete events', () => {
     renderEventCards([], EVENT_STATUS.COMPLETE);
-    expect(screen.getByText('You have no completed events.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no suspended events', () => {
     renderEventCards([], EVENT_STATUS.SUSPENDED);
-    expect(screen.getByText('You have no suspended events.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no in progress events', () => {
     renderEventCards([], EVENT_STATUS.IN_PROGRESS);
-    expect(screen.getByText('You have no events in progress.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no in unknown events', () => {
     renderEventCards([], 'blah');
-    expect(screen.getByText('You have no events.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('collaborator can edit reports they collaborate on and view reports in their region', () => {
