@@ -343,3 +343,89 @@ export async function setFieldPromptsForCuratedTemplate(
       }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
   );
 }
+
+const syncGoalTemplateForRegion = async (
+  regionId: number,
+  goalTemplates: { goalTemplateId?: number, name: string }[],
+):Promise<void> => {
+  // get current templates where:
+  //    goalTemplateId matches
+  //    goalTemplateId is null or not present and name matches
+  const currentReliventGoalTemplates = await GoalTemplateModel.findAll({
+    attributes: [
+      ['id', 'goalTemplateId'],
+      ['templateName', 'name'],
+      ['isFoiaable'],
+    ],
+    where: {
+      regionId,
+      [Op.or]: [
+        {
+          id: goalTemplates
+            .filter((goalTemplate) => goalTemplate?.goalTemplateId)
+            .map((goalTemplate) => goalTemplate.goalTemplateId),
+        },
+        {
+          templateName: goalTemplates
+            .filter((goalTemplate) => !goalTemplate?.goalTemplateId)
+            .map((goalTemplate) => goalTemplate.name),
+        },
+      ],
+    },
+    raw: true,
+  });
+
+  const actions = goalTemplates.reduce((acc, goalTemplate) => {
+    const existingTemplate = currentReliventGoalTemplates.find((template) => (
+      goalTemplate.goalTemplateId === template.goalTemplateId
+      || goalTemplate.name === template.name
+    ));
+    if (existingTemplate) {
+      if (existingTemplate.name !== goalTemplate.name) {
+        if (existingTemplate.isFoiaable) {
+          // need to make a new template, and keep reference to old template for remapping
+        } else {
+          // need to just update the text, and propagate
+        }
+      } else if (!goalTemplate?.goalTemplateId) {
+        // found existing matching template
+      } else {
+        // all good
+      }
+    } else {
+      // need to make a new template
+    }
+    return acc;
+  }, {
+    createList: [],
+    updateList: [],
+    noChangeList: [],
+  });
+
+  const resultingTemplates = await Promise.all([
+    ...(
+      actions.createList
+      && actions.createList.length
+        ? GoalTemplateModel.bulkCreate(
+          actions.createList.map((item) => ({
+            regionId,
+            templateName: item.name,
+          })),
+          { returning: true },
+        )
+        : Promise.resolve()
+    ),
+    ...(
+      actions.updateList
+      && actions.updateList.length
+        ? GoalTemplateModel.bulkCreate(
+          actions.createList.map((item) => ({
+            regionId,
+            templateName: item.name,
+          })),
+          { returning: true },
+        )
+        : Promise.resolve()
+    ),
+  ]);
+};
