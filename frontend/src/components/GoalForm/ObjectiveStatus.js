@@ -36,10 +36,12 @@ export default function ObjectiveStatus({
     }
 
     if (initialStatus.current === 'Suspended' && previousStatus) {
+      // todo - remove complete if previous status is complete
       return (
         <>
           <option>{previousStatus}</option>
           <option>Suspended</option>
+          <option>Complete</option>
         </>
       );
     }
