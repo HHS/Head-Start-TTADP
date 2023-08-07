@@ -83,7 +83,7 @@ describe('Import Smart Sheet Events', () => {
         eventName: 'Reaching More Children and Families',
         eventOrganizer: 'Regional PD Event (with National Centers)',
         audience: 'Recipients',
-        'Event Duration/# NC Days of Support': 'Series',
+        trainingType: 'Series',
         reasons: ['Full Enrollment', 'Change in Scope'],
         targetPopulations: [
           'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
@@ -103,7 +103,7 @@ describe('Import Smart Sheet Events', () => {
         eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
         eventOrganizer: 'Regional PD Event (with National Centers)',
         audience: 'Recipients',
-        'Event Duration/# NC Days of Support': 'Series',
+        trainingType: 'Series',
         reasons: ['Ongoing Quality Improvement'],
         targetPopulations: ['None'],
         vision: 'Oral Health',

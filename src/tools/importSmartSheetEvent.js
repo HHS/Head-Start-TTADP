@@ -23,7 +23,7 @@ const mappings = {
   Audience: 'audience',
   Creator: 'creator',
   'Edit Title': 'eventName',
-  'Event Duration/#NC Days of Support': 'eventDuration',
+  'Event Duration/# NC Days of Support': 'trainingType',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
