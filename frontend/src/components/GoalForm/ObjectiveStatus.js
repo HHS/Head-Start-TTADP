@@ -60,8 +60,7 @@ export default function ObjectiveStatus({
     return null;
   }
 
-  // if the objective is "in progress" and the goal is not closed we need a control to change status
-
+  // if the goal is started and not closed we need a control to change status
   const onChange = (e) => onChangeStatus(e.target.value);
 
   if (!hideDropdown) {
