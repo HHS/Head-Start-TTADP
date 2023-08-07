@@ -79,6 +79,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'status',
         'onApprovedAR',
         'rtrOrder',
+        'previousStatus',
         [
           'onAR',
           'onAnyReport',

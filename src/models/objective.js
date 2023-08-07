@@ -125,6 +125,10 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
+    previousStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Objective',

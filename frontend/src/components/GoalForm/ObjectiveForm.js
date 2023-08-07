@@ -160,6 +160,7 @@ export default function ObjectiveForm({
         inputName={`objective-status-${index}`}
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
+        previousStatus={objective.previousStatus}
       />
 
     </div>
@@ -174,6 +175,7 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
+    previousStatus: PropTypes.string,
     isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
       PropTypes.string,
