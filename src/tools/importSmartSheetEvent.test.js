@@ -82,7 +82,7 @@ describe('Import Smart Sheet Events', () => {
         'Full Event Title': 'R01 Reaching More Children and Families',
         eventName: 'Reaching More Children and Families',
         eventOrganizer: 'Regional PD Event (with National Centers)',
-        audience: 'Recipients',
+        eventIntendedAudience: 'Recipients',
         trainingType: 'Series',
         reasons: ['Full Enrollment', 'Change in Scope'],
         targetPopulations: [
@@ -102,7 +102,7 @@ describe('Import Smart Sheet Events', () => {
         'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
         eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
         eventOrganizer: 'Regional PD Event (with National Centers)',
-        audience: 'Recipients',
+        eventIntendedAudience: 'Recipients',
         trainingType: 'Series',
         reasons: ['Ongoing Quality Improvement'],
         targetPopulations: ['None'],

@@ -20,7 +20,7 @@ const transformers = {
 };
 
 const mappings = {
-  Audience: 'audience',
+  Audience: 'eventIntendedAudience',
   Creator: 'creator',
   'Edit Title': 'eventName',
   'Event Duration/# NC Days of Support': 'trainingType',
