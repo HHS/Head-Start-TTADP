@@ -13,10 +13,12 @@ import { logger } from '../logger';
 
 // eslint-disable-next-line max-len
 const splitArrayTransformer = (value, splitter = '|') => value.split(splitter).map((item) => item.trim());
+const lowerCaseTransformer = (value) => value.toLowerCase();
 
 const transformers = {
   reasons: splitArrayTransformer,
   targetPopulations: splitArrayTransformer,
+  eventIntendedAudience: lowerCaseTransformer,
 };
 
 const mappings = {
