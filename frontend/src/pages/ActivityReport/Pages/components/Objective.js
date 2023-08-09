@@ -324,7 +324,6 @@ export default function Objective({
         supportType={supportType}
         onChangeSupportType={onChangeSupportType}
         inputName={supportTypeInputName}
-        isOnApprovedReport={isOnApprovedReport || false}
         error={errors.supportType
           ? ERROR_FORMAT(errors.supportType.message)
           : NO_ERROR}

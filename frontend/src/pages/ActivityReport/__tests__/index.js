@@ -757,6 +757,7 @@ describe('ActivityReport', () => {
             ttaProvided: '<p>sdgfsdfg</p>\n',
             status: 'Not Started',
             label: 'Create a new objective',
+            supportType: 'Planning',
           },
         ],
         name: 'Create new goal',
@@ -904,6 +905,7 @@ describe('ActivityReport', () => {
             ttaProvided: '<p>ASDF</p>\n',
             createdAt: '2023-06-21T17:54:17.172Z',
             updatedAt: '2023-06-21T17:54:17.207Z',
+            supportType: 'Planning',
             activityReportObjectiveTopics: [{
               id: 13747,
               activityReportObjectiveId: 104904,

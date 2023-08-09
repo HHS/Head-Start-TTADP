@@ -9,18 +9,8 @@ export default function ObjectiveSupportType({
   onChangeSupportType,
   onBlurSupportType,
   inputName,
-  isOnApprovedReport,
   error,
 }) {
-  if (isOnApprovedReport) {
-    return (
-      <>
-        <p className="usa-prose margin-bottom-0 text-bold">Support type</p>
-        {supportType}
-      </>
-    );
-  }
-
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName}>
@@ -47,6 +37,5 @@ ObjectiveSupportType.propTypes = {
   onChangeSupportType: PropTypes.func.isRequired,
   onBlurSupportType: PropTypes.func.isRequired,
   inputName: PropTypes.string.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
   error: PropTypes.node.isRequired,
 };
