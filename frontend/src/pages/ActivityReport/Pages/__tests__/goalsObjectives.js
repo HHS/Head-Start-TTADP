@@ -328,6 +328,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: 'Maintaining',
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -354,6 +355,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: 'Maintaining',
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -390,6 +392,7 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: 'Planning',
         },
         {
           id: 2,
@@ -399,6 +402,7 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: 'Planning',
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
@@ -433,6 +437,7 @@ describe('goals objectives', () => {
             resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+            supportType: 'Planning',
           },
           {
             id: 2,
@@ -443,6 +448,7 @@ describe('goals objectives', () => {
             resources: [],
             roles: ['Chief Inspector'],
             files: [],
+            supportType: 'Planning',
           },
         ]}
       />);
