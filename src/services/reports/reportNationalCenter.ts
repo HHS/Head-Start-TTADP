@@ -4,7 +4,6 @@ import {
   getGenericEnums,
   getGenericEnum,
 } from './reportGenericEnum';
-import { auditLoger } from '../../logger';
 
 const {
   NationalCenter,
