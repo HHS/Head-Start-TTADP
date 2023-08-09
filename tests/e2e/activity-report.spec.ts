@@ -200,6 +200,11 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
+    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    await supportType.selectOption('Implementing');
+
+    // http://localhost:3000/activity-reports/10001/goals-objectives
+
     await page.getByRole('button', { name: 'Save draft' }).click();
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();
@@ -209,6 +214,7 @@ test.describe('Activity Report', () => {
 
     // confirm tta provided is still there (form is still open)
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).click();
+
 
     // save goal and go on to create second goal
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -234,6 +240,8 @@ test.describe('Activity Report', () => {
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
+    await blur(page);
+    await page.getByRole('combobox', { name: 'Support type*' }).selectOption('Implementing');;
     await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.waitForTimeout(10000);
@@ -550,7 +558,7 @@ test.describe('Activity Report', () => {
     const supportType = page.getByRole('combobox', { name: 'Support type*' });
     await supportType.selectOption('Implementing');
 
-    await page.getByRole('combobox', { name: 'Support type*' }).selectOption('In Progress');
+    await page.getByRole('combobox', { name: 'Status for objective' }).selectOption('In Progress');
 
     await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -735,6 +743,10 @@ test.describe('Activity Report', () => {
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-21-option-0').click();
     await blur(page);
+
+    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    await supportType.selectOption('Implementing');
+
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('g1 o1 tta');
     await blur(page);
@@ -748,7 +760,10 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(4).click();
-    await page.keyboard.type('g1 o2 tta');
+    await page.keyboard.type('g1 o2 tta');   
+    await page.waitForTimeout(10000);
+    await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
+    await page.waitForTimeout(10000);
     await blur(page);
 
     // First save goal

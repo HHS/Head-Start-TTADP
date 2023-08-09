@@ -153,7 +153,7 @@ export default function Objective({
     rules: {
       required: 'Please select a support type',
     },
-    defaultValue: '',
+    defaultValue: objective.supportType || '',
   });
 
   const {
@@ -318,6 +318,8 @@ export default function Objective({
           : NO_ERROR}
         validateTta={onBlurTta}
       />
+
+      { supportType }
 
       <ObjectiveSupportType
         onBlurSupportType={onBlurSupportType}
