@@ -221,8 +221,15 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
-    files, resources, topics, ttaProvided, status, order,
+    files,
+    resources,
+    topics,
+    ttaProvided,
+    status,
+    order,
+    supportType,
   } = metadata;
+
   const objectiveId = objective.dataValues
     ? objective.dataValues.id
     : objective.id;
@@ -242,11 +249,12 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const { id: activityReportObjectiveId } = aro;
   // Updates take longer then selects to settle in the db, as a result this update needs to be
   // complete prior to calling cacheResources to prevent stale data from being returned. This
-  // results in the following update cannot be in the Promise.all in the return.
+  // means the following update cannot be in the Promise.all in the return.
   await ActivityReportObjective.update({
     title: objective.title,
     status: status || objective.status,
     ttaProvided,
+    supportType,
     arOrder: order + 1,
   }, {
     where: { id: activityReportObjectiveId },

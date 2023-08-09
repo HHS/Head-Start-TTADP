@@ -460,6 +460,10 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0]
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
+    const supportType = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].supportType
+      ? objective.activityReportObjectives[0].supportType : null;
     const arOrder = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
@@ -472,6 +476,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
+      supportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
@@ -1777,6 +1782,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      supportType,
       ...updatedFields
     } = objective;
 
@@ -1850,8 +1856,9 @@ async function createObjectivesForGoal(goal, objectives, report) {
       {
         ...metadata,
         status,
-        ttaProvided: objective.ttaProvided,
+        ttaProvided,
         order: index,
+        supportType,
       },
     );
     return savedObjective;

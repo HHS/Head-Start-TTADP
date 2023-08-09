@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { SUPPORT_TYPES } = require('@ttahub/common');
 const { beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
@@ -52,6 +53,10 @@ export default (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',
