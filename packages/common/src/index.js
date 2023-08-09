@@ -257,3 +257,11 @@ const ALERT_SIZES = {
     LARGE: 'large'
 };
 exports.ALERT_SIZES = ALERT_SIZES;
+
+const SUPPORT_TYPES = [
+  'Introducing',
+  'Planning',
+  'Implementing',
+  'Maintaining',
+];
+exports.SUPPORT_TYPES = SUPPORT_TYPES;

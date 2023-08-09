@@ -36,6 +36,11 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
         incomplete = true;
       }
 
+      if (!objective.supportType) {
+        setError(`${fieldArrayName}[${index}].supportType`, { message: 'Select a support type' });
+        incomplete = true;
+      }
+
       return incomplete;
     },
   );

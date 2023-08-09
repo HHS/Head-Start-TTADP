@@ -4,6 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext, Controller, useFieldArray } from 'react-hook-form';
@@ -549,12 +550,7 @@ const SessionSummary = ({ datePickerKey }) => {
           defaultValue=""
         >
           <option disabled hidden value="">Select one</option>
-          {[
-            'Introducing',
-            'Planning',
-            'Implementing',
-            'Maintaining',
-          ].map((option) => (<option key={option}>{option}</option>))}
+          {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
         </Dropdown>
       </div>
 
