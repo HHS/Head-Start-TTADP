@@ -1,9 +1,8 @@
-export {};
-const genericEnum = require('generic');
-const { Status } = require('../../models');
-const {
-  ENTITY_TYPE,
-} = require('../../constants');
+import * as genericEnum from './generic';
+import db from '../../models';
+import { ENTITY_TYPE } from '../../constants';
+
+const { Status } = db;
 
 const findAll = async (
   data: { validFor: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
@@ -36,7 +35,7 @@ const deleteById = async (
   id: number,
 ) => genericEnum.deleteById(Status, id);
 
-module.exports = {
+export {
   findAll,
   findById,
   create,

@@ -1,6 +1,7 @@
-export {};
-const genericEnum = require('generic');
-const { Topic } = require('../../models');
+import * as genericEnum from './generic';
+import db from '../../models';
+
+const { Topic } = db;
 
 const findAll = async () => genericEnum.findAll(Topic);
 
@@ -21,7 +22,7 @@ const deleteById = async (
   id: number,
 ) => genericEnum.deleteById(Topic, id);
 
-module.exports = {
+export {
   findAll,
   findById,
   create,

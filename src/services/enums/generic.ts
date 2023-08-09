@@ -1,6 +1,44 @@
-export {};
-const { Model } = require('sequelize');
-const { auditLogger } = require('../../logger');
+import { Model } from 'sequelize';
+import { auditLogger } from '../../logger';
+
+// @ts-ignore ts(2430)
+interface EnumModel extends Model {
+  findAll: (args: {
+    attributes?: (object | string)[],
+    where?: object,
+    include?: object[],
+    order?: object[],
+  }) => Promise<GenericEnumType[]>,
+  findByPk: () => Promise<GenericEnumType>,
+  bulkCreate: (
+    args: { name: string, mapsTo?: number }[],
+    options: { individualHooks: boolean },
+  ) => Promise<GenericEnumType[]>,
+  create: (
+    args: { name: string, mapsTo?: number },
+    options: { individualHooks: boolean },
+  ) => Promise<GenericEnumType>,
+  update: (
+    args: { updatedAt: Date },
+    options: {
+      where?: object,
+      individualHooks?: boolean,
+    },
+  ) => Promise<this>,
+  destroy: (
+    args: {
+      where?: object,
+      individualHooks?: boolean,
+    },
+  ) => Promise<GenericEnumType[]>,
+}
+
+interface EnumInfo {
+  model: EnumModel,
+  as: string,
+  entityTypeFiltered?: boolean,
+  keyName: string,
+}
 
 interface GenericEnumType {
   name: string;
@@ -9,14 +47,15 @@ interface GenericEnumType {
 }
 
 interface GenericEnumModel extends GenericEnumType {
+  findByPk: (args: { id: number }) => Promise<GenericEnumType>,
   destroy: (args: { individualHooks: boolean }) => Promise<void>;
   save: () => Promise<void>;
   update: (args: { mapsTo: number }, options: { individualHooks: boolean }) => Promise<void>;
 }
 
 const findAll = async (
-  model: typeof Model,
-  data: object | null,
+  model: EnumModel,
+  data: object | null = null,
 ): Promise<GenericEnumType[]> => model.findAll({
   where: {
     mapsTo: null,
@@ -27,18 +66,28 @@ const findAll = async (
 });
 
 const findById = async (
-  model: typeof Model,
+  model: EnumModel,
   id: number,
 ): Promise<GenericEnumModel> => model.findByPk(id);
 
+const findOrCreateByName = async (
+  model: EnumModel,
+  data: { name: string, mapsTo?: number },
+):Promise<GenericEnumModel> => {
+  // TODO: find if exists, if not then create
+};
+
 // TODO: add support of just setting the mapsTo and other values passed in data
 const create = async (
-  model: typeof Model,
+  model: EnumModel,
   data: { name: string, mapsTo?: number },
-): Promise<GenericEnumType> => model.create(data);
+): Promise<GenericEnumType> => model.create(
+  data,
+  { individualHooks: true },
+);
 
 const updateById = async (
-  model: typeof Model,
+  model: EnumModel,
   id: number,
   data: { name?: string, mapsTo?: number },
 ): Promise<GenericEnumType> => {
@@ -61,14 +110,16 @@ const updateById = async (
 };
 
 const deleteById = async (
-  model: typeof Model,
+  model: EnumModel,
   id: number,
 ) => model.destroy({
   where: { id },
   individualHooks: true,
 });
 
-module.exports = {
+export {
+  type EnumInfo,
+  type GenericEnumType,
   findAll,
   findById,
   create,
