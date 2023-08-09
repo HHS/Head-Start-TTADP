@@ -477,6 +477,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topics: [],
       resources: [],
       files: [],
+      supportType: 'Planning',
     };
 
     const newGoals = [
@@ -519,8 +520,8 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(afterObjectives.length).toBe(1);
 
     const [afterObjective] = afterObjectives;
-
     expect(afterObjective.ttaProvided).toBe(newObjective.ttaProvided);
+    expect(afterObjective.supportType).toBe(newObjective.supportType);
 
     const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
     expect(savedObjective.title).toBe(newObjective.title);

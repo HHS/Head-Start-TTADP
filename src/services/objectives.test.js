@@ -146,18 +146,21 @@ describe('Objectives DB service', () => {
       activityReportId: report.id,
       ttaProvided: 'tta provided',
       status: objective.status,
+      supportType: 'Implementing',
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: report.id,
       status: secondObjective.status,
+      supportType: 'Implementing',
     });
 
     thirdAro = await ActivityReportObjective.create({
       objectiveId: thirdObjective.id,
       activityReportId: report.id,
       status: secondObjective.status,
+      supportType: 'Implementing',
     });
 
     // Create objective files.
@@ -245,7 +248,7 @@ describe('Objectives DB service', () => {
       where: { objectiveId: objective.id },
     });
 
-    let checkAROR = await ActivityReportObjectiveResource.findOne({
+    await ActivityReportObjectiveResource.findOne({
       where: { activityReportObjectiveId: checkARO.id },
     });
 
@@ -265,13 +268,15 @@ describe('Objectives DB service', () => {
         ids: [objective.id],
         files: [{ id: keepFile.id }],
         resources: [{ value: 'https://keep-obj-resource.gov' }],
+        supportType: 'Maintaining',
       }], report);
     });
+
     checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
     });
 
-    checkAROR = await ActivityReportObjectiveResource.findOne({
+    await ActivityReportObjectiveResource.findOne({
       where: { activityReportObjectiveId: checkARO.id },
     });
 
