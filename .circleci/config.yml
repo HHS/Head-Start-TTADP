@@ -16,6 +16,9 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  docker-python-executor:
+    docker:
+      - image: cimg/python:3.9.17
   docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:18.16.1-browsers
@@ -52,6 +55,16 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
+  create_combined_pipfreeze:
+    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
+    parameters:
+      filename:
+        type: string
+        default: "combined-requirements.txt"
+    steps:
+      - run:
+          name: Combine requirements.txt files to single file
+          command: cat similarity_api/src/requirements.lock similarity_api/src/models/requirements.lock > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -269,11 +282,46 @@ jobs:
           path: reports
       - store_artifacts:  # store frontend lint reports
           path: frontend/reports
+      - run:
+          name: Remove similarity api data
+          command: rm -rf similarity_api
       - persist_to_workspace:
           root: .
           paths:
             - .
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
+  build_and_lint_similarity_api:
+    executor: docker-python-executor
+    steps:
+      - checkout
+      - create_combined_pipfreeze
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version e.g. v7-pip...
+            - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
+            # If checksum is new, restore partial cache
+            - v2-pip-deps-
+      - run:
+          name: Install python dependencies
+          command: |
+            cd similarity_api/src
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -U pip setuptools virtualenv wheel
+            pip install -U -r requirements.txt
+      - save_cache:
+          paths:
+            - similarity_api
+          key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: similarity_api/reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - similarity_api
     resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
@@ -310,6 +358,40 @@ jobs:
       - store_artifacts:
           path: backend-coverage-artifacts.tar
       - store_test_results:
+          path: reports/
+    resource_class: large
+  test_similarity_api:
+    executor: docker-python-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Syft SBOM
+          environment:
+            SYFT_VERSION: v0.82.0
+            IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
+            OUTPUT_FORMAT: json
+            OUTPUT_FILE:  reports/syft_sbom.json
+          command: |
+            mkdir -p reports/
+            curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
+            ./syft data_science/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
+            echo "scan results saved in $OUTPUT_FILE"
+          # echo $GITHUB_PAT | ./syft login ghcr.io -u $GITHUB_USERNAME --password-stdin  -vv
+          # echo $GITHUB_PAT | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
+      - run:
+          name: Grype Docker image
+          environment:
+            GRYPE_VERSION: v0.62.2
+            OUTPUT_FORMAT: sarif
+            OUTPUT_FILE: reports/grype.json
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
+            ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
+            echo "scan results saved in $OUTPUT_FILE"
+      - store_artifacts:
           path: reports/
     resource_class: large
   test_frontend:
@@ -681,6 +763,10 @@ workflows:
       - test_api:
           requires:
             - build_and_lint
+
+      - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
       - cucumber_test:
           requires:
             - build_and_lint
@@ -693,6 +779,7 @@ workflows:
             - test_frontend
             - test_e2e
             - test_api
+            - test_similarity_api
             - cucumber_test
             - dynamic_security_scan
           filters:
@@ -726,6 +813,9 @@ workflows:
       - test_api:
           requires:
             - build_and_lint
+      - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
       - dynamic_security_scan:
           requires:
             - build_and_lint
