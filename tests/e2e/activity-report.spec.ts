@@ -548,7 +548,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('This is a TTA provided for objective');
 
     const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    await supportType.selectOption('Training');
+    await supportType.selectOption('Implementing');
 
     await page.getByRole('combobox', { name: 'Support type*' }).selectOption('In Progress');
 
@@ -668,7 +668,7 @@ test.describe('Activity Report', () => {
     await blur(page);
 
     const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    await supportType.selectOption('Training');
+    await supportType.selectOption('Implementing');
 
     await blur(page);
 

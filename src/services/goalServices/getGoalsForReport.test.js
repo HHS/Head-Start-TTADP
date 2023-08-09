@@ -93,6 +93,8 @@ describe('getGoalsForReport', () => {
       activityReportId: report.id,
       status: 'Complete',
       objectiveId: objective2.id,
+      ttaProvided: 'Hogwash',
+      supportType: 'Maintaining',
     });
 
     // create activity report goal
@@ -140,5 +142,7 @@ describe('getGoalsForReport', () => {
     expect(goalsForReport).toHaveLength(1);
     expect(goalsForReport[0].objectives).toHaveLength(1);
     expect(goalsForReport[0].objectives[0].id).toBe(objective2.id);
+    expect(goalsForReport[0].objectives[0].ttaProvided).toBe('Hogwash');
+    expect(goalsForReport[0].objectives[0].supportType).toBe('Maintaining');
   });
 });
