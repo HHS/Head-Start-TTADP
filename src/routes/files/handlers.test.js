@@ -21,11 +21,12 @@ import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
-// import { s3Queue } from '../../services/s3Queue';
 import * as s3Queue from '../../services/s3Queue';
+import EventReport from '../../policies/event';
 
 jest.mock('bull');
 jest.mock('../../policies/activityReport');
+jest.mock('../../policies/event');
 jest.mock('../../policies/user');
 jest.mock('../../policies/objective');
 jest.mock('../../services/accessValidation', () => ({
@@ -425,6 +426,36 @@ describe('File Upload', () => {
         .field('objectiveId', objective.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(403)
+        .then(() => {
+          expect(uploadFile).not.toHaveBeenCalled();
+        });
+    });
+
+    it('tests an unauthorized event report file upload', async () => {
+      validateUserAuthForAdmin.mockResolvedValue(false);
+      EventReport.mockImplementation(() => ({
+        canUploadFile: () => false,
+      }));
+      await request(app)
+        .post('/api/files')
+        .field('eventSessionId', objective.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(403)
+        .then(() => {
+          expect(uploadFile).not.toHaveBeenCalled();
+        });
+    });
+
+    it('allows an authorized event report file upload', async () => {
+      validateUserAuthForAdmin.mockResolvedValue(false);
+      EventReport.mockImplementation(() => ({
+        canUploadFile: () => true,
+      }));
+      await request(app)
+        .post('/api/files')
+        .field('eventSessionId', objective.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(200)
         .then(() => {
           expect(uploadFile).not.toHaveBeenCalled();
         });
