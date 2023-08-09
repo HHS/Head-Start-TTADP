@@ -61,23 +61,6 @@ services:
       - ".:/app:rw"
     networks:
     - smarthub
-  data_science:
-    build:
-      context: ./data_science
-      dockerfile: ./data_science.dockerfile
-    ports:
-      - "9300:9300"
-    command: [ "-m", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${DATA_SCIENCE_PORT}", "server:app", "--reload", "--log-level", "debug"]
-    # command: ["help('modules')"]
-    env_file: .env
-    depends_on:
-      - db
-    environment:
-      - POSTGRES_HOST=postgres_docker
-    volumes:
-      - "./data_science/src:/app:rw"
-    networks:
-    - smarthub
   similarity_api:
     build:
       context: ./similarity_api
@@ -102,17 +85,17 @@ services:
     - smarthub
     depends_on:
       - backend
-  owasp_zap_data_science:
+  owasp_zap_similarity:
     image: owasp/zap2docker-stable:latest
     platform: linux/arm64
     user: zap
-    command: zap-api-scan.py -t http://data_science:9300/openapi.json -f openapi -I -i -r owasp_api_report.html
+    command: zap-api-scan.py -t http://similarity:9100/openapi.json -f openapi -I -i -r owasp_api_report.html
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
     networks:
     - smarthub
     depends_on:
-      - data_science
+      - similarity_api
 networks:
   smarthub:
