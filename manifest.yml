@@ -45,3 +45,17 @@ applications:
         instances: ((worker_instances))
         command: yarn start:worker
         memory: ((worker_memory))
+  - name: tta-similarity-api-((env))
+    buildpacks:
+      - python_buildpack
+    strategy: rolling
+    path: similarity_api/src
+    env:
+      NEW_RELIC_APP_NAME: tta-similarity-api-((env))
+      NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
+    processes:
+      - type: web
+        instances: ((similarity_api_instances))
+        command: flask run --host=0.0.0.0
+        memory: ((similarity_api_memory))
+        disk_quota: ((similarity_api_disk_quota))
