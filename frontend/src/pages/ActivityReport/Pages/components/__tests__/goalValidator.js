@@ -33,6 +33,12 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
+  supportType: 'Planning',
+};
+
+const missingSupportType = {
+  ...validObjective,
+  supportType: '',
 };
 
 const goalUnfinishedObjective = {
@@ -99,6 +105,18 @@ describe('validateGoals', () => {
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
+      });
+
+      it('if one objective has no "supportType"', () => {
+        const objectives = [
+          { ...validObjective },
+          missingSupportType,
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, { message: 'Select a support type' });
       });
 
       it('if one objective has invalid "resources"', () => {
