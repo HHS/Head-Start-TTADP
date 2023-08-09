@@ -546,7 +546,11 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
-    await page.getByTestId('dropdown').selectOption('In Progress');
+
+    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    await supportType.selectOption('Training');
+
+    await page.getByRole('combobox', { name: 'Support type*' }).selectOption('In Progress');
 
     await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -662,6 +666,12 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('hello');
 
     await blur(page);
+
+    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    await supportType.selectOption('Training');
+
+    await blur(page);
+
     await page.getByRole('button', { name: 'Save objectives' }).click();
 
     await page.waitForTimeout(5000);
