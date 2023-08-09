@@ -126,6 +126,10 @@ export default class EventReport {
     return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
   }
 
+  canUploadFile() {
+    return this.canEditSession();
+  }
+
   canDeleteSession() {
     return this.canEditSession();
   }

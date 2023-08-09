@@ -143,7 +143,7 @@ const deleteHandler = async (req, res) => {
 
       const eventPolicy = new EventPolicy(user, event);
 
-      if (!eventPolicy.canUpdate()) {
+      if (!eventPolicy.canUploadFile()) {
         res.sendStatus(403);
         return;
       }
@@ -362,7 +362,7 @@ const uploadHandler = async (req, res) => {
 
       const eventPolicy = new EventPolicy(user, event);
 
-      if (!eventPolicy.canUpdate()) {
+      if (!eventPolicy.canUploadFile()) {
         return res.sendStatus(403);
       }
 
