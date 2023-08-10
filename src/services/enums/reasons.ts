@@ -6,7 +6,7 @@ const { Reasons } = db;
 
 const findAll = async (
   data: { validFor: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
-) => genericEnum.findAll(Reasons);
+) => genericEnum.findAll(Reasons, data);
 
 const findById = async (
   id: number,
