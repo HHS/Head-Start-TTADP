@@ -203,8 +203,6 @@ test.describe('Activity Report', () => {
     const supportType = page.getByRole('combobox', { name: 'Support type*' });
     await supportType.selectOption('Implementing');
 
-    // http://localhost:3000/activity-reports/10001/goals-objectives
-
     await page.getByRole('button', { name: 'Save draft' }).click();
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();

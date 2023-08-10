@@ -319,8 +319,6 @@ export default function Objective({
         validateTta={onBlurTta}
       />
 
-      { supportType }
-
       <ObjectiveSupportType
         onBlurSupportType={onBlurSupportType}
         supportType={supportType}
