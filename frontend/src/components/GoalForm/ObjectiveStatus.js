@@ -4,7 +4,6 @@ import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
 
 export default function ObjectiveStatus({
   status,
-  previousStatus,
   goalStatus,
   onChangeStatus,
   inputName,
@@ -29,17 +28,15 @@ export default function ObjectiveStatus({
       return (
         <>
           <option>In Progress</option>
-          <option>Suspended</option>
           <option>Complete</option>
         </>
       );
     }
 
-    if (initialStatus.current === 'Suspended' && previousStatus) {
-      // todo - remove complete if previous status is complete
+    if (initialStatus.current === 'Suspended') {
       return (
         <>
-          <option>{previousStatus}</option>
+          <option>In Progress</option>
           <option>Suspended</option>
           <option>Complete</option>
         </>
@@ -55,7 +52,7 @@ export default function ObjectiveStatus({
         <option>Complete</option>
       </>
     );
-  }, [previousStatus]);
+  }, []);
 
   // if the goal is a draft, objective status sits in "in progress"
   if (goalStatus === 'Draft') {
@@ -101,10 +98,8 @@ ObjectiveStatus.propTypes = {
   onChangeStatus: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   userCanEdit: PropTypes.bool.isRequired,
-  previousStatus: PropTypes.string,
 };
 
 ObjectiveStatus.defaultProps = {
   isLoading: false,
-  previousStatus: null,
 };

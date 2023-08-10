@@ -30,7 +30,7 @@ describe('ObjectiveStatus', () => {
     expect(onChangeStatus).toHaveBeenCalledWith('Complete');
   });
 
-  it('shows the correct options for completed', async () => {
+  it('shows the correct options for complete', async () => {
     const onChangeStatus = jest.fn();
 
     render(<ObjectiveStatus
@@ -46,7 +46,10 @@ describe('ObjectiveStatus', () => {
     expect(dropdown).toBeVisible();
 
     const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(3);
+    expect(options).toHaveLength(2);
+
+    const texts = options.map((option) => option.textContent);
+    expect(texts).toEqual(['In Progress', 'Complete']);
   });
 
   it('shows the read only view when the goal is not started', async () => {
@@ -107,26 +110,7 @@ describe('ObjectiveStatus', () => {
     expect(document.querySelector('select')).toBe(null);
   });
 
-  it('shows all options if the objective is suspended and there is no previous status', async () => {
-    const onChangeStatus = jest.fn();
-
-    render(<ObjectiveStatus
-      status="Suspended"
-      goalStatus="In Progress"
-      onChangeStatus={onChangeStatus}
-      inputName="objective-status"
-      isOnReport={false}
-      userCanEdit
-    />);
-
-    const dropdown = await screen.findByLabelText('Objective status');
-    expect(dropdown).toBeVisible();
-
-    const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(4);
-  });
-
-  it('shows the correct options if the objective is suspended and there is a previous status', async () => {
+  it('shows the correct options if the objective is suspended', async () => {
     const onChangeStatus = jest.fn();
 
     render(<ObjectiveStatus
@@ -143,9 +127,9 @@ describe('ObjectiveStatus', () => {
     expect(dropdown).toBeVisible();
 
     const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(2);
+    expect(options).toHaveLength(3);
 
     const texts = options.map((option) => option.textContent);
-    expect(texts).toEqual(['Not Started', 'Suspended']);
+    expect(texts).toEqual(['In Progress', 'Suspended', 'Complete']);
   });
 });
