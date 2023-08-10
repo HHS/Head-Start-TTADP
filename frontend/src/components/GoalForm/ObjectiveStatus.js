@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
 
@@ -14,15 +14,15 @@ export default function ObjectiveStatus({
   const initialStatus = useRef(status);
 
   // if the goal is closed, the objective status should be read-only
-  const hideDropdown = useMemo(() => {
+  const hideDropdown = (() => {
     if (['Closed', 'Not Started'].includes(goalStatus) || !userCanEdit) {
       return true;
     }
 
     return false;
-  }, [goalStatus, userCanEdit]);
+  })();
 
-  const options = useMemo(() => {
+  const options = (() => {
     // if the objective is complete, it can only go back to in progress
     if (initialStatus.current === 'Complete') {
       return (
@@ -52,7 +52,7 @@ export default function ObjectiveStatus({
         <option>Complete</option>
       </>
     );
-  }, []);
+  })();
 
   // if the goal is a draft, objective status sits in "in progress"
   if (goalStatus === 'Draft') {

@@ -1,13 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
-
-const statuses = [
-  'Not Started',
-  'In Progress',
-  'Suspended',
-  'Complete',
-];
 
 export default function ObjectiveStatus({
   status,
@@ -15,6 +8,29 @@ export default function ObjectiveStatus({
   onBlur,
   inputName,
 }) {
+  const initialStatus = useRef(status);
+  const options = (() => {
+    // if the objective is complete, it can only go back to in progress
+    if (initialStatus.current === 'Complete') {
+      return (
+        <>
+          <option>In Progress</option>
+          <option>Complete</option>
+        </>
+      );
+    }
+
+    // otherwise all the options should be available
+    return (
+      <>
+        <option>Not Started</option>
+        <option>In Progress</option>
+        <option>Suspended</option>
+        <option>Complete</option>
+      </>
+    );
+  })();
+
   return (
     <Label>
       Objective status
@@ -22,17 +38,9 @@ export default function ObjectiveStatus({
         name={inputName}
         onChange={onChangeStatus}
         value={status}
-        aria-label="Status for objective "
         onBlur={onBlur}
       >
-        {statuses.map((possibleStatus) => (
-          <option
-            key={possibleStatus}
-            value={possibleStatus}
-          >
-            {possibleStatus}
-          </option>
-        ))}
+        {options}
       </Dropdown>
     </Label>
   );
