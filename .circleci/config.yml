@@ -145,6 +145,9 @@ commands:
       smtp_secure:
         description: "SMTP secure transport"
         type: env_var_name
+      smtp_ignore_tls:
+        description: "SMTP specifies whether to negotiate TLS"
+        type: env_var_name
       from_email_address:
         description: "From email address"
         type: env_var_name
@@ -183,6 +186,7 @@ commands:
               --var SMTP_USER=${<< parameters.smtp_user >>} \
               --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
+              --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
       - run:
           name: Push maintenance application
@@ -514,6 +518,7 @@ jobs:
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -561,6 +566,7 @@ jobs:
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS                
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -608,6 +614,7 @@ jobs:
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS                
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -653,6 +660,7 @@ jobs:
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS                
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
