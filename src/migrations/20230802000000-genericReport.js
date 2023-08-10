@@ -181,6 +181,51 @@ module.exports = {
           },
         },
       }, { transaction });
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('Participants', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        validFor: {
+          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Participants',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
 
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Reports', {
