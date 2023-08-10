@@ -17,7 +17,6 @@ describe('objective model hooks', () => {
   let objective1;
   let objective2;
   let objective3;
-  let objective4;
 
   beforeAll(async () => {
     recipient = await Recipient.create({
@@ -46,7 +45,7 @@ describe('objective model hooks', () => {
   afterAll(async () => {
     await Objective.destroy({
       where: {
-        id: [objective1.id, objective2.id, objective3.id, objective4.id],
+        id: [objective1.id, objective2.id, objective3.id],
       },
     });
 
@@ -68,34 +67,6 @@ describe('objective model hooks', () => {
       },
     });
     await db.sequelize.close();
-  });
-
-  it('updates the previous status column', async () => {
-    objective4 = await Objective.create({
-      title: 'Objective 1',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.IN_PROGRESS,
-    }, { individualHooks: true });
-
-    await Objective.update({ status: OBJECTIVE_STATUS.IN_PROGRESS }, {
-      where: {
-        id: objective4.id,
-      },
-      individualHooks: true,
-    });
-
-    let testObjective = await Objective.findByPk(objective4.id);
-    expect(testObjective.previousStatus).toEqual(null); // nothing if it's the same
-
-    await Objective.update({ status: OBJECTIVE_STATUS.SUSPENDED }, {
-      where: {
-        id: objective4.id,
-      },
-      individualHooks: true,
-    });
-
-    testObjective = await Objective.findByPk(objective4.id);
-    expect(testObjective.previousStatus).toEqual(OBJECTIVE_STATUS.IN_PROGRESS);
   });
 
   it('does not update when the goal does not match the qualifications', async () => {

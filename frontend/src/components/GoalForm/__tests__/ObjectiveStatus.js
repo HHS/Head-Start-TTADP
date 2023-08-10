@@ -17,7 +17,6 @@ describe('ObjectiveStatus', () => {
       inputName="objective-status"
       isOnReport={false}
       userCanEdit
-      previousStatus="Not Started"
     />);
 
     const dropdown = await screen.findByLabelText('Objective status');
@@ -120,7 +119,6 @@ describe('ObjectiveStatus', () => {
       inputName="objective-status"
       isOnReport={false}
       userCanEdit
-      previousStatus="Not Started"
     />);
 
     const dropdown = await screen.findByLabelText('Objective status');

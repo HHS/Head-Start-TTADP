@@ -57,16 +57,6 @@ const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
   }
 };
 
-const capturePreviousStatus = (sequelize, instance, options) => {
-  // first, capture previous status
-  if (instance.previous('status') && instance.previous('status') !== instance.status) {
-    instance.set('previousStatus', instance.previous('status'));
-    if (!options.fields.includes('previousStatus')) {
-      options.fields.push('previousStatus');
-    }
-  }
-};
-
 const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
   const changed = instance.changed();
 
@@ -293,7 +283,6 @@ const beforeValidate = async (sequelize, instance, options) => {
 const beforeUpdate = async (sequelize, instance, options) => {
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
-  capturePreviousStatus(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
