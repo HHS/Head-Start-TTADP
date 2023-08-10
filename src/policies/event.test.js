@@ -166,6 +166,49 @@ describe('Event Report policies', () => {
     });
   });
 
+  describe('canUploadFile', () => {
+    it('is true if the user is an admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is true if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is true if the user is a POC', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canUploadFile()).toBe(false);
+    });
+  });
+
   describe('canEditSession', () => {
     it('is true if the user is an admin', () => {
       const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });

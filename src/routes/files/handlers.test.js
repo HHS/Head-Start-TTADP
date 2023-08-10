@@ -21,7 +21,6 @@ import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
-// import { s3Queue } from '../../services/s3Queue';
 import * as s3Queue from '../../services/s3Queue';
 
 jest.mock('bull');
