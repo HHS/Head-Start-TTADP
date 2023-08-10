@@ -86,6 +86,7 @@ const create = async (
   { individualHooks: true },
 );
 
+// TODO: needs to support updating other fields, only updating name replaces record
 const updateById = async (
   model: EnumModel,
   id: number,
