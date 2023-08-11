@@ -13,6 +13,12 @@ interface ReportDataType {
   endDate?: Date,
 }
 
+interface ReportDescriptor {
+  id: number,
+  type: string,
+  regionId?: number,
+}
+
 const reportRemapping: Record<string, string> = {
   reportId: 'id',
 };
@@ -40,7 +46,7 @@ const filterData = async (
 
 const syncReport = async (
   data: ReportDataType,
-) => {
+):Promise<ReportDataType> => {
   let report;
   const remappedData = dataRemap(data);
   const { matched: filteredData, unmatched } = await filterData(remappedData);
@@ -56,11 +62,12 @@ const syncReport = async (
     report = await Report.create(data); // TODO: have create return the object
   }
 
-  return report;
+  return report; // TODO: make sure the return type is sending reportId and not id
 };
 
 export {
   type ReportDataType,
+  type ReportDescriptor,
   dataRemap,
   filterData,
   syncReport,
