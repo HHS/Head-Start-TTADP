@@ -137,7 +137,7 @@ module.exports = {
           virtualParticipants
         ) -> reportParticipationParticipants ( // Note this table needs to be added to the other migration file
           participentid
-        ) -> Participants() // Note this table needs to be added to the other migration file
+        ) -> Participants()
       */
     },
   ),
