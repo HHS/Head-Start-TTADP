@@ -16,7 +16,8 @@ const create = async (
   data: {
     name: string,
     validFor: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE],
-    mapsTo?: number },
+    mapsTo?: number,
+  },
 ) => genericEnum.create(Reasons, data);
 
 const updateById = async (
