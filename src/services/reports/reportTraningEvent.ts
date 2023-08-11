@@ -1,7 +1,16 @@
-import { ReportDataType, syncReport } from './report';
 import { filterDataToModel, switchAttributeNames, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
-import { ENTITY_TYPE, AUDIENCE, TRAINING_TYPE } from '../../constants';
+import {
+  ENTITY_TYPE,
+  COLLABORATOR_TYPES,
+  AUDIENCE,
+  TRAINING_TYPE,
+} from '../../constants';
+import { ReportDataType, ReportDescriptor, syncReport } from './report';
+import { syncReportGoalTemplates } from './reportGoalTemplate';
+import { syncCollaboratorsForType } from './reportCollaborator';
+import { syncReportNationalCenters } from './reportNationalCenter';
+import { syncReportTargetPopulations } from './reportTargetPopulation';
 
 const {
   Report,
@@ -51,24 +60,13 @@ const filterData = async (
   unmatched: Record<string, any>,
 }> => filterDataToModel(data, ReportTrainingEvent);
 
-const syncReportTrainingEvent = async (
-  data: FullReportTrainingEventDataType,
+const createOrUpdateReportTrainingEvent = async (
+  data: ReportTrainingEventDataType,
 ) => {
   let reportTrainingEvent;
-
-  const report = await syncReport({
-    ...data,
-    ...(!Object.keys(data).includes('reportType') && { reportType: ENTITY_TYPE.REPORT_EVENT }),
-  });
-  const remappedData = dataRemap(data);
-  const { matched: filteredData, unmatched } = await filterData({
-    ...remappedData,
-    reportId: report.id,
-  });
-  // TODO: handle the unmatched data
-  if (filteredData.id) { // sync/update report path
-    reportTrainingEvent = ReportTrainingEvent.findById(filteredData.id);
-    const changedData = collectChangedValues(filteredData, reportTrainingEvent);
+  if (data.id) { // sync/update report path
+    reportTrainingEvent = await ReportTrainingEvent.findById(data.id);
+    const changedData = collectChangedValues(data, reportTrainingEvent);
     if (changedData.length) {
       await ReportTrainingEvent.update(
         changedData,
@@ -77,8 +75,76 @@ const syncReportTrainingEvent = async (
     }
   } else { // new report Path
     reportTrainingEvent = await ReportTrainingEvent
-      .create(filteredData); // TODO: have create return the object
+      .create(data); // TODO: have create return the object
   }
+  return reportTrainingEvent;
+};
+
+const syncReportTrainingEvent = async (
+  data: FullReportTrainingEventDataType,
+) => {
+  const report = await syncReport({
+    ...data,
+    ...(!Object.keys(data).includes('reportType') && { reportType: ENTITY_TYPE.REPORT_EVENT }),
+  });
+  const remappedData = dataRemap(data);
+  const { matched: filteredData, unmatched } = await filterData({
+    ...remappedData,
+    reportId: report.reportId,
+  });
+
+  const reportDescriptor: ReportDescriptor = {
+    reportId: report.reportId,
+    reportType: ENTITY_TYPE.REPORT_EVENT,
+    regionId: data.regionId,
+  };
+  // TODO: handle the unmatched data
+  await Promise.all([
+    createOrUpdateReportTrainingEvent(filteredData),
+    (unmatched.goal)
+      ? syncReportGoalTemplates(
+        reportDescriptor,
+        [{
+          ...(unmatched.goalTemplateId && { goalTemplateId: unmatched.goalTemplateId }),
+          name: unmatched.goal,
+        }],
+      )
+      : Promise.resolve(),
+    (unmatched.owner) // Owner
+      ? syncCollaboratorsForType(
+        reportDescriptor,
+        COLLABORATOR_TYPES.OWNER,
+        [unmatched.owner],
+      )
+      : Promise.resolve(),
+    (unmatched.creator) // instatiator
+      ? syncCollaboratorsForType(
+        reportDescriptor,
+        COLLABORATOR_TYPES.INSTANTIATOR,
+        [unmatched.creator],
+      )
+      : Promise.resolve(),
+    (unmatched.colaboratorIds) // editor/collaborator
+      ? syncCollaboratorsForType(
+        reportDescriptor,
+        COLLABORATOR_TYPES.EDITOR,
+        colaboratorIds,
+      )
+      : Promise.resolve(),
+    null, // Reason
+    (unmatched["National Center(s) Requested"]) // TODO: can we get this to a good value, not a string with spaces as a key
+      ? syncReportNationalCenters(
+        reportDescriptor,
+        unmatched["National Center(s) Requested"],
+      )
+      : Promise.resolve(), // National Center
+    (unmatched.targetPopulations) // TODO: can we get this to a good value, not a string with spaces as a key
+      ? syncReportTargetPopulations(
+        reportDescriptor,
+        unmatched.targetPopulations,
+      )
+      : Promise.resolve(),, // target populations
+  ]);
 };
 
 const getReportTrainingEvents = async (
