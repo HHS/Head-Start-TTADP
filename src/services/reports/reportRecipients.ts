@@ -106,7 +106,7 @@ const getReportRecipients = async (
   reportId: number,
 ):Promise<object[]> => ReportRecipient.findAll({
   attributes: [
-    // filter this down to whats needed.
+    // TODO: filter this down to whats needed.
   ],
   where: {
     reportId,
@@ -117,14 +117,14 @@ const getReportRecipients = async (
       as: 'grant',
       required: false,
       attributes: [
-        // filter this down to whats needed.
+        // TODO: filter this down to whats needed.
       ],
       include: [{
         model: Recipient,
         as: 'recipient',
         required: true,
         attributes: [
-          // filter this down to whats needed.
+          // TODO: filter this down to whats needed.
         ],
       }],
     },
@@ -133,7 +133,7 @@ const getReportRecipients = async (
       as: 'otherEntity',
       required: false,
       attributes: [
-        // filter this down to whats needed.
+        // TODO: filter this down to whats needed.
       ],
     },
   ],
