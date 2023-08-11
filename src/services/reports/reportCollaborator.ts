@@ -1,6 +1,10 @@
 import db from '../../models';
 import { auditLogger } from '../../logger';
 
+/* TODO: need to incorporate the validation that the users referenced have the required
+    permissions. To do this we need some discrete method to corelate the permissions with
+    the collaborator type. */
+
 const {
   CollaboratorType,
   ReportCollaborator,
