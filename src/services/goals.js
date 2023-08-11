@@ -707,7 +707,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             {
               status: {
                 [Op.notIn]: [
-                  OBJECTIVE_STATUS.SUSPENDED,
                   OBJECTIVE_STATUS.COMPLETE,
                 ],
               },

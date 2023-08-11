@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
 
@@ -8,28 +8,11 @@ export default function ObjectiveStatus({
   onBlur,
   inputName,
 }) {
-  const initialStatus = useRef(status);
-  const options = (() => {
-    // if the objective is complete, it can only go back to in progress
-    if (initialStatus.current === 'Complete') {
-      return (
-        <>
-          <option>In Progress</option>
-          <option>Complete</option>
-        </>
-      );
+  useEffect(() => {
+    if (!['In Progress', 'Suspended'].includes(status)) {
+      onChangeStatus('In Progress');
     }
-
-    // otherwise all the options should be available
-    return (
-      <>
-        <option>Not Started</option>
-        <option>In Progress</option>
-        <option>Suspended</option>
-        <option>Complete</option>
-      </>
-    );
-  })();
+  }, [onChangeStatus, status]);
 
   return (
     <Label>
@@ -40,7 +23,8 @@ export default function ObjectiveStatus({
         value={status}
         onBlur={onBlur}
       >
-        {options}
+        <option>In Progress</option>
+        <option>Complete</option>
       </Dropdown>
     </Label>
   );
