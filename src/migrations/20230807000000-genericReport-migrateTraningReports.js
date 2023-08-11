@@ -17,11 +17,14 @@ module.exports = {
 
       /* TODO: How to migrate from "EventReportPilots"
       data.owner -> ReportCollaborator( type = owner)
+
       {
           data.creator,
           data."IST Name",
       } -> ReportCollaborator( type = instatiator )
+
       colaboratorIds -> ReportCollaborator(type = editor)
+
       data.goal -> ReportGoalTemplate
       {
           data.status
@@ -37,6 +40,7 @@ module.exports = {
           createdAt,
           updatedAt,
           )
+
       {
           data.eventId, (not a number)
           data.region,
@@ -58,10 +62,13 @@ module.exports = {
           createdAt,
           updatedAt,
       )
+
       data.reasons -> ReportReasons
+
       data."National Center(s) Requested" -> ReportNationalCenter(
           nationalCenterId = (look up each of the ids, 1 per record),
       )
+
       data.targetPopulations -> ReporttargetPopulation(
           targetPopulationId = (look up each of the ids, 1 per record),
       )
