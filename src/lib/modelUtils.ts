@@ -59,8 +59,88 @@ const switchAttributeNames = (
   return switchedObj;
 };
 
+/**
+ * Checks if a value is an object.
+ *
+ * @param value - The value to be checked.
+ * @returns A boolean indicating whether the value is an object or not.
+ */
+const isObject = (value: any): boolean => (
+  typeof value === 'object' // Check if the value is of type 'object'
+  && value !== null // Check if the value is not null
+  && !Array.isArray(value) // Check if the value is not an array
+);
+
+/**
+ * Checks if two values are deeply equal.
+ * @param value1 - The first value to compare.
+ * @param value2 - The second value to compare.
+ * @returns True if the values are deeply equal, false otherwise.
+ */
+const isDeepEqual = (value1: any, value2: any): boolean => {
+  // Check if both values are objects
+  if (isObject(value1) && isObject(value2)) {
+    // Get the keys of each object
+    const keys1 = Object.keys(value1);
+    const keys2 = Object.keys(value2);
+
+    // If the number of keys is different, the objects are not deeply equal
+    if (keys1.length !== keys2.length) return false;
+
+    // Recursively check if each key-value pair is deeply equal
+    return keys1.every((key) => isDeepEqual(value1[key], value2[key]));
+  }
+
+  // Check if both values are arrays
+  if (Array.isArray(value1) && Array.isArray(value2)) {
+    // If the lengths of the arrays are different, they are not deeply equal
+    if (value1.length !== value2.length) return false;
+
+    // Recursively check if each element in the arrays is deeply equal
+    return value1.every((element, index) => isDeepEqual(element, value2[index]));
+  }
+
+  // If the values are not objects, perform a strict equality check
+  return value1 === value2;
+};
+
+/**
+ * Collects the values from incomingValues that have changed compared to currentValues.
+ * @param incomingValues - The new values to compare.
+ * @param currentValues - The current values to compare against.
+ * @returns An object containing the changed values.
+ * @throws Error if either incomingValues or currentValues is not an object.
+ */
+const collectChangedValues = (
+  incomingValues: Record<string, any>,
+  currentValues: Record<string, any>,
+): Record<string, any> => {
+  // Check if both incomingValues and currentValues are objects
+  if (!isObject(incomingValues) || !isObject(currentValues)) {
+    throw new Error('Both incomingValues and currentValues must be objects');
+  }
+
+  // Create an empty object to store the changed values
+  const changedValues: Record<string, any> = {};
+
+  // Iterate over each key-value pair in incomingValues
+  Object.entries(incomingValues)
+    .forEach(([key, value]) => {
+      // Check if the value has changed compared to the corresponding value in currentValues
+      if (!isDeepEqual(value, currentValues[key])) {
+        // Add the changed value to the changedValues object
+        changedValues[key] = value;
+      }
+    });
+
+  // Return the object containing the changed values
+  return changedValues;
+};
+
 export {
   getColumnInformation,
   filterDataToModel,
   switchAttributeNames,
+  isDeepEqual,
+  collectChangedValues,
 };
