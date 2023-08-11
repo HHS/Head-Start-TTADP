@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import {
   getGoalsForReport,
 } from '../goals';
@@ -94,7 +94,7 @@ describe('getGoalsForReport', () => {
       status: 'Complete',
       objectiveId: objective2.id,
       ttaProvided: 'Hogwash',
-      supportType: 'Maintaining',
+      supportType: SUPPORT_TYPES[3],
     });
 
     // create activity report goal
@@ -143,6 +143,6 @@ describe('getGoalsForReport', () => {
     expect(goalsForReport[0].objectives).toHaveLength(1);
     expect(goalsForReport[0].objectives[0].id).toBe(objective2.id);
     expect(goalsForReport[0].objectives[0].ttaProvided).toBe('Hogwash');
-    expect(goalsForReport[0].objectives[0].supportType).toBe('Maintaining');
+    expect(goalsForReport[0].objectives[0].supportType).toBe(SUPPORT_TYPES[3]);
   });
 });

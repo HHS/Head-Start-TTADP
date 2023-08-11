@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { GOAL_SOURCES, REPORT_STATUSES } from '@ttahub/common';
+import { GOAL_SOURCES, REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -477,7 +477,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topics: [],
       resources: [],
       files: [],
-      supportType: 'Planning',
+      supportType: SUPPORT_TYPES[1],
     };
 
     const newGoals = [
