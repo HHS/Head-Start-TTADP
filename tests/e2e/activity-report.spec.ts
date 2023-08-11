@@ -796,11 +796,13 @@ test.describe('Activity Report', () => {
 
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.keyboard.press('Enter'); 
+
+    const p = page.waitForURL('**/goals-objectives');
  
     // visit the goals & objectives page
     await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
 
-    await page.waitForNavigation({ waitUntil: 'networkidle' })
+    await p;    
 
     // create the goal
     await page.getByTestId('label').click();
@@ -820,9 +822,11 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('An unlikely statement');
     
     // save draft
-    await blur(page)  
+    await blur(page);
+    const p2 = page.waitForResponse('/api/activity-reports/goals');
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.waitForNavigation({ waitUntil: 'networkidle' })
+
+    await p2;
 
     await page.getByTestId('form').locator('div').filter({ hasText: 'Create new goal' }).nth(3).click();
     await page.locator('#react-select-13-option-1').getByText('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the ').click();
