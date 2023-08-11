@@ -1,7 +1,7 @@
 import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import EventCard from '../EventCard';
 import UserContext from '../../../../UserContext';
@@ -30,7 +30,7 @@ describe('EventCard', () => {
           startDate: '01/02/2021',
           endDate: '01/03/2021',
           objective: 'This is my session objective',
-          objectiveSupportType: 'Implementing',
+          objectiveSupportType: SUPPORT_TYPES[2],
           objectiveTopics: ['Topic 1', 'Topic 2'],
           objectiveTrainers: ['Trainer 1', 'Trainer 2'],
           status: 'In Progress',

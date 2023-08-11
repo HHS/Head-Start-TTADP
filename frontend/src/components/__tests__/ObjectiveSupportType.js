@@ -1,4 +1,5 @@
 import React from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, fireEvent } from '@testing-library/react';
 import ObjectiveSupportType from '../ObjectiveSupportType';
 
@@ -21,8 +22,8 @@ describe('ObjectiveSupportType', () => {
     );
 
     const dropdown = getByLabelText(/Support type/i);
-    fireEvent.change(dropdown, { target: { value: 'Maintaining' } });
-    expect(onChangeSupportType).toHaveBeenCalledWith('Maintaining');
+    fireEvent.change(dropdown, { target: { value: SUPPORT_TYPES[3] } });
+    expect(onChangeSupportType).toHaveBeenCalledWith(SUPPORT_TYPES[3]);
   });
 
   it('calls onBlurSupportType when support type dropdown loses focus', () => {

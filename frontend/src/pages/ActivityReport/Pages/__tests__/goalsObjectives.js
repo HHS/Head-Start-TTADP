@@ -5,6 +5,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -328,7 +329,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
-            supportType: 'Maintaining',
+            supportType: SUPPORT_TYPES[3],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -355,7 +356,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
-            supportType: 'Maintaining',
+            supportType: SUPPORT_TYPES[3],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -392,7 +393,7 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
-          supportType: 'Planning',
+          supportType: SUPPORT_TYPES[1],
         },
         {
           id: 2,
@@ -402,7 +403,7 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
-          supportType: 'Planning',
+          supportType: SUPPORT_TYPES[1],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
@@ -437,7 +438,7 @@ describe('goals objectives', () => {
             resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
-            supportType: 'Planning',
+            supportType: SUPPORT_TYPES[1],
           },
           {
             id: 2,
@@ -448,7 +449,7 @@ describe('goals objectives', () => {
             resources: [],
             roles: ['Chief Inspector'],
             files: [],
-            supportType: 'Planning',
+            supportType: SUPPORT_TYPES[1],
           },
         ]}
       />);

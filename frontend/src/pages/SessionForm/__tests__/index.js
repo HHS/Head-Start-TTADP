@@ -4,6 +4,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -194,7 +195,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [],
       deliveryMethod: 'In person',
@@ -248,7 +249,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [],
       deliveryMethod: 'In person',
@@ -299,7 +300,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [1],
       recipients: [1],

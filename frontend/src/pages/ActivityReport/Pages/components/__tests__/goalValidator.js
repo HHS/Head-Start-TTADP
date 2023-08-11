@@ -1,3 +1,4 @@
+import { SUPPORT_TYPES } from '@ttahub/common';
 import {
   unfinishedObjectives,
   unfinishedGoals,
@@ -33,7 +34,7 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
-  supportType: 'Planning',
+  supportType: SUPPORT_TYPES[1],
 };
 
 const missingSupportType = {
