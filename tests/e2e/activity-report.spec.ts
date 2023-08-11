@@ -784,4 +784,51 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1 o1 tta', { exact: true })).not.toBeVisible();
     await expect(page.getByText('g1 o1 tta', { exact: true })).not.toBeVisible();
   });
+
+  test('allows preservation of objectives', async ({ page }) => {
+    await page.goto('http://localhost:3000/');
+
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+
+    // add a recipient
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.keyboard.press('Enter'); 
+ 
+    // visit the goals & objectives page
+    await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
+
+    await page.waitForNavigation({ waitUntil: 'networkidle' })
+
+    // create the goal
+    await page.getByTestId('label').click();
+    await page.keyboard.press('Enter');
+    await page.getByTestId('textarea').fill('Test goal for preserving objectives');
+
+    // create the objective
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Enter');
+    await page.getByLabel('TTA objective *').click();
+    await page.getByLabel('TTA objective *').fill('Test objective for preserving objectives');
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Enter');
+    
+    await blur(page);
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.keyboard.type('An unlikely statement');
+    
+    // save draft
+    await blur(page)  
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await page.waitForNavigation({ waitUntil: 'networkidle' })
+
+    await page.getByTestId('form').locator('div').filter({ hasText: 'Create new goal' }).nth(3).click();
+    await page.locator('#react-select-13-option-1').getByText('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the ').click();
+    await page.getByRole('button', { name: 'Keep objective' }).click();
+    await blur(page);
+  
+    expect(page.getByRole('textbox', { name: 'TTA provided for objective' }).getByText('An unlikely statement')).toBeVisible();
+  });
 });
