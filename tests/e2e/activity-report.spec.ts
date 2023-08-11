@@ -391,7 +391,7 @@ test.describe('Activity Report', () => {
     // verify the end date is visible in the objective section
     await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
     // verify the correct status for the objective is visible
-    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Not started')).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('In Progress')).toBeVisible();
 
     // expand objectives for g2
     await page.getByRole('button', { name: `View objectives for goal ${g2GoalsForObjectives}` }).click();
@@ -409,7 +409,7 @@ test.describe('Activity Report', () => {
     // verify the end date is visible in the objective section
     await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
     // verify the correct status for the objective is visible
-    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Not started')).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('In Progress')).toBeVisible();
 
     // check g1
     await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..')
@@ -430,16 +430,16 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
     // verify the correct value is selected in the Objective status dropdown
-    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
+    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('In Progress');
     // Change g1o1's status
     await page.getByTestId('dropdown').click();
-    await page.getByTestId('dropdown').selectOption({ label: 'In Progress' });
+    await page.getByTestId('dropdown').selectOption({ label: 'Complete' });
     await page.getByRole('button', { name: 'Save' }).click();
 
     // expand the objective for g1
     await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
     // verify the 'In Progress' status is now visible
-    await expect(page.getByRole('listitem').filter({ hasText: 'Objective status In progress' })).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: 'Objective status Complete' })).toBeVisible();
 
     // Check g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
