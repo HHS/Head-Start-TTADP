@@ -1,37 +1,162 @@
-export {};
+import db from '../../models';
+import { auditLogger } from '../../logger';
+
 const {
   CollaboratorType,
   ReportCollaborator,
+  ReportCollaboratorType,
   Role,
   User,
-} = require('../../models');
-const { auditLoger } = require('../../logger');
+} = db;
 
 const syncCollaboratorsForType = async (
-  reportId: number,
-  collaboratorTypeId: number,
+  report: { id: number, type: string, regionId: number },
+  collaboratorType: number | string,
   userIds: number[],
 ) => {
   try {
-  // in parallel:
-  //    validate that the type is valid for the report type
-  //    get current collaborators for this report having this type
-  // filter to the positive, nuteral, and negative lists
-  // in parallel:
-  //    perform in insert/update/delete based on the sub lists
-  //        if a sublist is empty, do not call the db at all for that sublist
+    // in parallel:
+    //    validate that the type is valid for the report type
+    //    get current collaborators for this report having this type
+    const [
+      validateType,
+      currentReportCollaborators,
+    ] = await Promise.all([
+      CollaboratorType.findOne({
+        where: {
+          ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
+          ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
+          validFor: report.type,
+        },
+      }),
+      ReportCollaborator.findAll({
+        where: {
+          reportId: report.id,
+          userId: userIds,
+        },
+        include: [
+          {
+            model: CollaboratorType,
+            as: 'collaboratorTypes',
+            required: false,
+            where: {
+              validFor: report.type,
+              ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
+              ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
+              mapsTo: null,
+            },
+            attributes: [
+              'id',
+              'name',
+            ],
+            through: {
+              attributes: [],
+            },
+          },
+        ],
+        raw: true,
+      }),
+    ]);
+    // filter to the create, update, and destroy lists
+    if (!validateType) {
+      throw new Error(`Invalid collaboratorType of "${collaboratorType}" passed for a report of type "${report.type}"`);
+    }
+    const collaboratorTypeId = validateType.id;
+    const currentReportCollaboratorUserIds = currentReportCollaborators.map(({ userId }) => userId);
+    const [
+      createCollaboratorList,
+      createCollaboratorTypeList,
+      updateCollaboratorTypeList,
+      destroyCollaboratorTypeList,
+    ] = [
+      userIds
+        .filter((userId) => !(currentReportCollaboratorUserIds.includes(userId))),
+      currentReportCollaborators
+        .filter((crc) => (
+          userIds.includes(crc.userId)
+          && crc.collaboratorTypes.id === null))
+        .map((crc) => crc.id),
+      currentReportCollaborators
+        .filter((crc) => (
+          userIds.includes(crc.userId)
+          && crc.collaboratorTypes.id === collaboratorTypeId))
+        .map((crc) => crc.id),
+      currentReportCollaborators
+        .filter((crc) => (
+          !userIds.includes(crc.userId)
+          && crc.collaboratorTypes.id === collaboratorTypeId))
+        .map((crc) => crc.id),
+    ];
+
+    let fullCreateCollaboratorTypeList;
+    if (createCollaboratorList && createCollaboratorList.length) {
+      const newReportCollaborators = await ReportCollaborator.bulkCreate(
+        createCollaboratorList.map((userId) => ({ userId, reportId: report.id })),
+        {
+          individualHooks: true,
+          returning: true,
+        },
+      );
+      fullCreateCollaboratorTypeList = [
+        ...newReportCollaborators, //TODO: this will likely need some cleanup to only get the required values.
+        ...createCollaboratorTypeList,
+      ];
+    } else {
+      fullCreateCollaboratorTypeList = createCollaboratorTypeList;
+    }
+    // in parallel:
+    //    perform in insert/update/delete based on the sub lists
+    //        if a sublist is empty, do not call the db at all for that sublist
+    return await Promise.all([
+      (fullCreateCollaboratorTypeList && fullCreateCollaboratorTypeList.length)
+        ? ReportCollaboratorType.bulkCreate(
+          fullCreateCollaboratorTypeList.map((reportCollaboratorId) => ({
+            reportCollaboratorId,
+            collaboratorTypeId,
+          })),
+          { individualHooks: true },
+        )
+        : Promise.resolve(),
+      (updateCollaboratorTypeList && updateCollaboratorTypeList.length)
+        ? ReportCollaboratorType.update(
+          {
+            updatedAt: new Date(),
+          },
+          {
+            where: {
+              reportCollaboratorId: updateCollaboratorTypeList,
+              collaboratorTypeId,
+            },
+            individualHooks: true,
+          },
+        )
+        : Promise.resolve(),
+      (destroyCollaboratorTypeList && destroyCollaboratorTypeList.length)
+        ? ReportCollaboratorType.destroy({
+          where: {
+            reportCollaboratorId: destroyCollaboratorTypeList,
+            collaboratorTypeId,
+          },
+          individualHooks: true,
+        })
+        : Promise.resolve(),
+    ]);
   } catch (err) {
-    auditLoger.error(err);
+    auditLogger.error(err);
     throw err;
   }
 };
 
 const getCollaboratorsForType = async (
-  reportId: number,
+  report: { id: number, type: string, regionId: number },
   collaboratorType: number | string,
 ):Promise<object[]> => ReportCollaborator.findAll({
+  attributes: [
+    'reportId',
+    'userId',
+  ],
   where: {
-    reportId,
+    reportId: report.id,
   },
   include: [
     {
@@ -39,6 +164,7 @@ const getCollaboratorsForType = async (
       as: 'collaboratorTypes',
       required: true,
       where: {
+        validFor: report.type,
         ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
         ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
       },
@@ -64,13 +190,15 @@ const getCollaboratorsForType = async (
       as: 'user',
       required: true,
       attributes: [
-        // filter this down to whats needed.
+        'name',
+        'email',
+        'homeRegionId',
       ],
     },
   ],
 });
 
-module.exports = {
+export {
   syncCollaboratorsForType,
   getCollaboratorsForType,
 };
