@@ -79,7 +79,7 @@ const syncReportGoalTemplates = async (
       // Array of goal templates that match the criteria
       matchingGoalTemplates,
     ] = await Promise.all([
-      getCurrentReportGoalTemplates(report.id), // Filter by report id
+      getCurrentReportGoalTemplates(report.regionId), // Filter by report id
       getMatchingGoalTemplates(
         report.regionId, // Filter by regionId
         goalTemplates,
