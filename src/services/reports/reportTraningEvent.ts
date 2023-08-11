@@ -1,14 +1,15 @@
 import { ReportDataType, syncReport } from './report';
-import { filterDataToModel, switchAttributeNames } from '../../lib/modelUtils';
+import { filterDataToModel, switchAttributeNames, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
-import { AUDIENCE, TRAINING_TYPE } from '../../constants';
+import { ENTITY_TYPE, AUDIENCE, TRAINING_TYPE } from '../../constants';
 
 const {
+  Report,
   ReportTrainingEvent,
 } = db;
 
 interface ReportTrainingEventDataType {
-  reportTrainingEventId?: number,
+  id?: number,
   regionId?: number,
   name?: string,
   organizerId?: number,
@@ -20,40 +21,93 @@ interface ReportTrainingEventDataType {
 interface FullReportTrainingEventDataType
   extends ReportTrainingEventDataType, ReportDataType {}
 
-const dataRemap = (data) => switchAttributeNames(data, reportRemapping);
+const reportTrainingEventRemapping: Record<string, string> = {
+  reportTrainingEventId: 'id',
+};
+
+/**
+ * Remaps attribute names in the given data object using a provided remapping function.
+ * @param data - The data object to be remapped.
+ * @returns The remapped data object.
+ */
+const dataRemap = (
+  data: Record<string, any>,
+) => switchAttributeNames(data, reportTrainingEventRemapping);
+
+/**
+ * This function filters the given data object and separates it into two parts:
+ * - matched: an object that contains only the properties that match the structure of
+ *            ReportTrainingEventDataType
+ * - unmatched: an object that contains the remaining properties that do not match the
+ *              structure of ReportTrainingEventDataType
+ *
+ * @param data - The data object to be filtered
+ * @returns A promise that resolves to an object with two properties: matched and unmatched
+ */
 const filterData = async (
-  data,
-):Promise<{
+  data: Record<string, any>,
+): Promise<{
   matched: ReportTrainingEventDataType,
   unmatched: Record<string, any>,
 }> => filterDataToModel(data, ReportTrainingEvent);
 
-const syncReportTraningEvent = async (
+const syncReportTrainingEvent = async (
   data: FullReportTrainingEventDataType,
 ) => {
   let reportTrainingEvent;
-  const report = await syncReport(data);
-  const { matched: filteredData, unmatched } = await filterData({
+
+  const report = await syncReport({
     ...data,
+    ...(!Object.keys(data).includes('reportType') && { reportType: ENTITY_TYPE.REPORT_EVENT }),
+  });
+  const remappedData = dataRemap(data);
+  const { matched: filteredData, unmatched } = await filterData({
+    ...remappedData,
     reportId: report.id,
   });
-
+  // TODO: handle the unmatched data
   if (filteredData.id) { // sync/update report path
     reportTrainingEvent = ReportTrainingEvent.findById(filteredData.id);
-    Object.entries(filteredData)
-      .forEach(([key, value]) => {
-        if (data[key] !== report[key]) {
-          report[key] = data[key];
-        }
-      });
-    report.save();
+    const changedData = collectChangedValues(filteredData, reportTrainingEvent);
+    if (changedData.length) {
+      await ReportTrainingEvent.update(
+        changedData,
+        { individualHooks: true },
+      );
+    }
   } else { // new report Path
-    report = await Report.create(data); // TODO: have create return the object
+    reportTrainingEvent = await ReportTrainingEvent
+      .create(filteredData); // TODO: have create return the object
   }
 };
 
+const getReportTrainingEvents = async (
+  reportIds?: number[],
+) => Report.findAll({
+  attributes: [],
+  where: {
+    id: reportIds,
+    reportType: ENTITY_TYPE.REPORT_EVENT,
+  },
+  includes: [
+    {
+      model: ReportTrainingEvent,
+      as: 'reportTrainingEvent',
+      required: true,
+      attributes: [],
+    },
+    // TODO: add the other table includes here
+  ],
+});
+
 const getReportTrainingEvent = async (
+  reportId: number,
+) => getReportTrainingEvents([reportId]);
 
-  ) => {
-
-  };
+export {
+  dataRemap,
+  filterData,
+  syncReportTrainingEvent,
+  getReportTrainingEvents,
+  getReportTrainingEvent,
+};
