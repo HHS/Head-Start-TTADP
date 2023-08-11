@@ -527,7 +527,6 @@ class Objectives{
  lastInProgressAt : timestamp with time zone
  lastNotStartedAt : timestamp with time zone
  lastSuspendedAt : timestamp with time zone
- previousStatus : varchar(255)
  rtrOrder : integer : 1
  status : varchar(255)
  title : text
