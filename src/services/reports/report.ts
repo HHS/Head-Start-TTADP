@@ -50,6 +50,7 @@ const syncReport = async (
   let report;
   const remappedData = dataRemap(data);
   const { matched: filteredData, unmatched } = await filterData(remappedData);
+  // TODO: check status, map status name to id if needed
   // TODO: we should do something with unmatched
   if (filteredData.id) { // sync/update report path
     report = Report.findById(filteredData.id);
