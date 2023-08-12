@@ -88,6 +88,7 @@ module.exports = {
           data.ownerId,
           data.eventOwner,
         } -> ReportCollaborator( type = owner)
+
         {
           data.status,
           data.context,
@@ -104,6 +105,7 @@ module.exports = {
           createdAt,
           updatedAt,
         )
+
         {
           data.regionId,
           data.sessionName,
@@ -111,8 +113,8 @@ module.exports = {
           eventReportId // ID of linked event,
           regionId,
           name,
-
         )
+
         {
           data.objective,
           data.ttaProvided,
@@ -122,11 +124,17 @@ module.exports = {
         ) -> ObjectiveTemplate(
           objectiveTitle
         )
+
         data.files -> ReportObjectiveTemplateFiles -> ObjectiveTemplateFiles
+
         data.objectiveResources -> ReportObjectiveTemplateResources -> ObjectiveTemplateResources
+
         data.objectiveTopics -> ReportObjectiveTemplateResources -> ObjectiveTemplateResources
+
         data.recipients -> ReportRecipients
+
         data.recipientNextSteps -> reportNextSteps( type = recipient)
+
         data.specialistNextSteps -> reportNextSteps( type = specialist)
 
         same as above, I dont have a method/plan/structure for saving the page state. This needs
