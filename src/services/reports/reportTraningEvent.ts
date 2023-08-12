@@ -10,6 +10,7 @@ import { ReportDataType, ReportDescriptor, syncReport } from './report';
 import { syncReportGoalTemplates } from './reportGoalTemplate';
 import { syncCollaboratorsForType } from './reportCollaborator';
 import { syncReportNationalCenters } from './reportNationalCenter';
+import { syncReportReasons } from './reportReason';
 import { syncReportTargetPopulations } from './reportTargetPopulation';
 
 const {
@@ -131,7 +132,12 @@ const syncReportTrainingEvent = async (
         colaboratorIds,
       )
       : Promise.resolve(),
-    null, // Reason
+    (unmatched.reasons) // Reason
+      ? syncReportReasons(
+        reportDescriptor,
+        unmatched.reasons,
+      )
+      : Promise.resolve(), // Reason
     (unmatched["National Center(s) Requested"]) // TODO: can we get this to a good value, not a string with spaces as a key
       ? syncReportNationalCenters(
         reportDescriptor,
@@ -143,7 +149,7 @@ const syncReportTrainingEvent = async (
         reportDescriptor,
         unmatched.targetPopulations,
       )
-      : Promise.resolve(),, // target populations
+      : Promise.resolve(), // target populations
   ]);
 };
 
