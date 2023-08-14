@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
@@ -18,11 +17,6 @@ function EventCard({
   onRemoveSession,
 }) {
   const { user } = useContext(UserContext);
-
-  // Check if user has been assigned an event role.
-  const isOwnerOrCollaborator = (event.pocIds && event.pocIds.includes(user.id))
-    || (event.collaboratorIds && event.collaboratorIds.includes(user.id))
-    || (event.ownerId === user.id);
   const history = useHistory();
 
   const {
@@ -31,15 +25,22 @@ function EventCard({
     sessionReports,
   } = event;
 
-  const contextMenuLabel = `Actions for event ${event.id}`;
-  const menuItems = [];
+  const isOwner = event.ownerId === user.id;
+  const isPoc = event.pocIds && event.pocIds.includes(user.id);
+  const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
+  const isOwnerOrPoc = isOwner || isPoc;
+  const isOwnerOrCollaborator = isOwner || isCollaborator;
 
-  const canEdit = ![
+  const isNotCompleteOrSuspended = ![
     TRAINING_REPORT_STATUSES.COMPLETE,
     TRAINING_REPORT_STATUSES.SUSPENDED,
-  ].includes(data.status) && isOwnerOrCollaborator;
+  ].includes(data.status);
 
-  if (canEdit) {
+  const canEditEvent = isNotCompleteOrSuspended && isOwnerOrPoc;
+  const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
+  const menuItems = [];
+
+  if (canCreateSession) {
     // Create session.
     menuItems.push({
       label: 'Create session',
@@ -47,7 +48,9 @@ function EventCard({
         history.push(`/training-report/${event.id}/session/new/`);
       },
     });
+  }
 
+  if (canEditEvent) {
     // Edit event.
     menuItems.push({
       label: 'Edit event',
@@ -71,7 +74,8 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
-  const link = canEdit ? `/training-report/${event.id}/event-summary` : `/training-report/view/${event.id}`;
+  const link = canEditEvent ? `/training-report/${event.id}/event-summary` : `/training-report/view/${event.id}`;
+  const contextMenuLabel = `Actions for event ${event.id}`;
 
   return (
     <article
@@ -133,8 +137,7 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
-          hasWritePermissions={isOwnerOrCollaborator}
-          eventStatus={data.status}
+          isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
           onRemoveSession={onRemoveSession}
         />
       ))}
