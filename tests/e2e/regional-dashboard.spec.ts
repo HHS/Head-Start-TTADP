@@ -35,10 +35,16 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByText('Both').click();
   await page.getByText('Technical Assistance').click();
 
-  // print a screenshot
+  // print a screenshot of the TTA hours graph
   await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId('gridContainer').getByTestId('button').click()
+    page.locator('#rd-save-screenshot').click()
+  ]);
+
+  // print a screenshot of the topics graph
+  await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#rd-save-screenshot-topic-frequency').click()
   ]);
 
   // view the topics as a table

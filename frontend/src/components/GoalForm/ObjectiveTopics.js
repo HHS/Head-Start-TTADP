@@ -96,7 +96,7 @@ export default function ObjectiveTopics({
               className="usa-button usa-button--unstyled margin-left-1"
               ref={drawerTriggerRef}
             >
-              Tell me more
+              Get help choosing topics
             </button>
           </>
         </Label>
