@@ -457,7 +457,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('CLASS: Classroom Organization')).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
-    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
+    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('In Progress');
 
     await page.getByTestId('dropdown').click();
     await page.getByTestId('dropdown').selectOption({ label: 'Complete' });
