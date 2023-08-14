@@ -146,6 +146,7 @@ const TARGET_POPULATIONS = [
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
+  'Program Staff',
 ];
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
