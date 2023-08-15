@@ -333,6 +333,7 @@ describe('event handlers', () => {
         {
           session: { userId: 1 },
           params: { status: 'not-started' },
+          query: { regionId: 99_999 },
         },
         mockResponse,
       );
