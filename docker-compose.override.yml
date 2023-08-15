@@ -60,7 +60,7 @@ services:
     volumes:
       - ".:/app:rw"
     networks:
-    - smarthub
+      - smarthub
   similarity_api:
     build:
       context: ./similarity_api
@@ -72,7 +72,7 @@ services:
     volumes:
       - "./similarity_api/src:/app:rw"
     networks:
-    - smarthub
+      - smarthub
   owasp_zap_backend:
     image: owasp/zap2docker-stable:latest
     platform: linux/arm64
@@ -82,7 +82,7 @@ services:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
     networks:
-    - smarthub
+      - smarthub
     depends_on:
       - backend
   owasp_zap_similarity:
@@ -94,7 +94,7 @@ services:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
     networks:
-    - smarthub
+      - smarthub
     depends_on:
       - similarity_api
 networks:
