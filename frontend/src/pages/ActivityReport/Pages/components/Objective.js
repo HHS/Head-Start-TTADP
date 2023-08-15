@@ -329,13 +329,15 @@ export default function Objective({
           : NO_ERROR}
       />
 
-      <ObjectiveStatus
-        onBlur={onBlurStatus}
-        inputName={objectiveStatusInputName}
-        status={objectiveStatus}
-        onChangeStatus={onChangeStatus}
-        userCanEdit
-      />
+      <div className="usa-form-group">
+        <ObjectiveStatus
+          onBlur={onBlurStatus}
+          inputName={objectiveStatusInputName}
+          status={objectiveStatus}
+          onChangeStatus={onChangeStatus}
+          userCanEdit
+        />
+      </div>
     </>
   );
 }

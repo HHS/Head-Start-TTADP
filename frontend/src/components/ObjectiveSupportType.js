@@ -16,18 +16,17 @@ export default function ObjectiveSupportType({
       <Label htmlFor={inputName}>
         Support type
         <Req />
+        <Dropdown
+          onChange={(e) => onChangeSupportType(e.target.value)}
+          id={inputName}
+          name={inputName}
+          onBlur={onBlurSupportType}
+          value={supportType}
+        >
+          <option disabled hidden value="">Select one</option>
+          {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
+        </Dropdown>
       </Label>
-
-      <Dropdown
-        onChange={(e) => onChangeSupportType(e.target.value)}
-        id={inputName}
-        name={inputName}
-        onBlur={onBlurSupportType}
-        value={supportType}
-      >
-        <option disabled hidden value="">Select one</option>
-        {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
-      </Dropdown>
     </FormGroup>
   );
 }
