@@ -302,12 +302,9 @@ describe('event handlers', () => {
     });
 
     it('handles errors', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canDelete: () => true,
-      }));
       findEventById.mockRejectedValueOnce(new Error('error'));
       await deleteHandler(
-        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        { session: { userId: 1 }, params: { eventId: mockEvent.id }, query: {} },
         mockResponse,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -316,6 +313,9 @@ describe('event handlers', () => {
 
   describe('getByStatus', () => {
     it('works', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => false,
+      }));
       findEventsByStatus.mockResolvedValueOnce([mockEvent]);
       await getByStatus(
         {
@@ -328,6 +328,9 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
     it('handles errors', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => false,
+      }));
       findEventsByStatus.mockRejectedValueOnce(new Error('error'));
       await getByStatus(
         {
