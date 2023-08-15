@@ -121,7 +121,8 @@ def find_similar_goals(recipient_id, goal_name, alpha):
             },
             "similarity": sim_scores[i]
         }
-        for i, score in enumerate(sim_scores) if score > alpha and recipients[i]['name'] != goal_name
+        # for i, score in enumerate(sim_scores) if score > alpha and recipients[i]['name'] != goal_name
+        for i, score in enumerate(sim_scores) if score > alpha
     ]
 
     return {"result": similar_goals}
