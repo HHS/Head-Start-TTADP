@@ -307,6 +307,7 @@ class Goals{
  closeSuspendContext : text
  closeSuspendReason : enum
  createdVia : enum
+ deletedAt : timestamp with time zone
  endDate : date
  firstCeasedSuspendedAt : timestamp with time zone
  firstClosedAt : timestamp with time zone
@@ -519,6 +520,7 @@ class Objectives{
  * onAR : boolean : false
  * updatedAt : timestamp with time zone : now()
  createdVia : enum
+ deletedAt : timestamp with time zone
  firstCompleteAt : timestamp with time zone
  firstInProgressAt : timestamp with time zone
  firstNotStartedAt : timestamp with time zone
