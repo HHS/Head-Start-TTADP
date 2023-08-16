@@ -247,7 +247,11 @@ describe('ActivityReport', () => {
         startDate: 'blah', creatorRole: '',
       };
       const result = findWhatsChanged(orig, changed);
-      expect(result).toEqual({ startDate: null, creatorRole: null });
+      expect(result).toEqual({ creatorRole: null });
+
+      // ensure NaN values are removed
+      const out = findWhatsChanged({ duration: Number('a') }, { duration: 1 });
+      expect(out).toEqual({});
     });
 
     it('access correct fields when diffing turns up activity recipients', () => {
