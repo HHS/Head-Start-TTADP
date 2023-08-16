@@ -1,5 +1,7 @@
 # Installation
 
+**_You should run this inside of docker._**
+
 For running this outside of docker, you'll want to set up a python environment in which you can install these dependencies. It is, however, more simple to just run this in docker.
 
 - Install `pyenv`.
