@@ -79,6 +79,7 @@ async function getCurrentBranch() {
 }
 
 async function checkFileDatePrefix() {
+  const results = [];
   const git = simpleGit();
   const paths = [
     'src/migrations/',
@@ -94,26 +95,35 @@ async function checkFileDatePrefix() {
   const mainFileDates = getLatestFileDates(mainFiles, paths);
   const prFileDates = getLatestFileDates(prFiles, paths);
 
-  const latestMainFileDate = Math.max(...mainFileDates);
-  const prFilesWithOlderDates = [];
-
-  prFileDates.forEach((date, index) => {
-    if (!mainFiles.includes(prFiles[index]) && date <= latestMainFileDate) {
-      prFilesWithOlderDates.push({ file: prFiles[index], date });
-    }
-  });
-
-  const results = [];
-  if (prFilesWithOlderDates.length === 0) {
-    results.push('All files on the branch have a newer date than the latest file on the main branch');
-  } else {
-    results.push('Some files on the branch have dates older than or equal to the latest file on the main branch:');
-    prFilesWithOlderDates.forEach(({ file, date }) => {
-      const renameCommand = getRenameCommand(file, date);
-      results.push(`- File ${file} needs to be renamed. Consider using the following command: ${renameCommand}`);
-    });
-    // eslint-disable-next-line no-console
+  const tooManyDigits = prFileDates.filter((value) => value > 99999999999999);
+  if (tooManyDigits && tooManyDigits.length) {
+    results.push(`Some files are named incorrectly, the number prefix should only have 14 digits.
+    The format should be YYYYMMDDHHmmss.`);
     console.error(results.join('\n'));
+  } else {
+    const cleanedMainFileDates = mainFileDates.map((mdf) => (mdf > 99999999999999
+      ? Math.floor(mdf / (10 ** Math.floor(Math.log10(mdf)) - 99999999999999 + 1))
+      : mdf));
+    const latestMainFileDate = Math.max(...mainFileDates);
+    const prFilesWithOlderDates = [];
+
+    prFileDates.forEach((date, index) => {
+      if (!mainFiles.includes(prFiles[index]) && date <= latestMainFileDate) {
+        prFilesWithOlderDates.push({ file: prFiles[index], date });
+      }
+    });
+
+    if (prFilesWithOlderDates.length === 0) {
+      results.push('All files on the branch have a newer date than the latest file on the main branch');
+    } else {
+      results.push('Some files on the branch have dates older than or equal to the latest file on the main branch:');
+      prFilesWithOlderDates.forEach(({ file, date }) => {
+        const renameCommand = getRenameCommand(file, date);
+        results.push(`- File ${file} needs to be renamed. Consider using the following command: ${renameCommand}`);
+      });
+      // eslint-disable-next-line no-console
+      console.error(results.join('\n'));
+    }
   }
   return results;
 }
