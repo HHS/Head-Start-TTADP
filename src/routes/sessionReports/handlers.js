@@ -1,9 +1,10 @@
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
-import { findEventById } from '../../services/event';
+import { findEventById, findEventByDbId } from '../../services/event';
 import {
   createSession,
   findSessionsByEventId,
+  findSessionByEventIdAndSessionIndex,
   findSessionById,
   updateSession,
   destroySession,
@@ -22,16 +23,20 @@ export const getHandler = async (req, res) => {
     const {
       id,
       eventId,
+      sessionIndex,
     } = req.params;
 
     let sessionEventId = eventId;
-    const params = [id, eventId];
+    const params = [id, eventId, sessionIndex];
 
     if (params.every((param) => typeof param === 'undefined')) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
-    if (id) {
+    if (sessionIndex && eventId) {
+      session = await findSessionByEventIdAndSessionIndex(eventId, sessionIndex);
+      sessionEventId = session.eventId;
+    } else if (id) {
       session = await findSessionById(id);
       sessionEventId = session.eventId;
     } else if (eventId) {
@@ -40,7 +45,7 @@ export const getHandler = async (req, res) => {
     }
 
     // Event auth.
-    const event = await findEventById(sessionEventId);
+    const event = await findEventByDbId(sessionEventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) {
@@ -117,7 +122,7 @@ export const updateHandler = async (req, res) => {
     }
 
     // Authorization is through the associated event
-    const event = await findEventById(eventId);
+    const event = await findEventByDbId(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) { return res.sendStatus(403); }

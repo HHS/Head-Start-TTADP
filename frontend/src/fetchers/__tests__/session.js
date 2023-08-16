@@ -2,7 +2,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   createSession,
-  getSessionBySessionId,
+  getSessionByEventIdAndSessionIndex,
   getSessionsByEventId,
   updateSession,
   deleteSession,
@@ -22,11 +22,12 @@ describe('session fetchers', () => {
     const result = await createSession(eventId, data);
     expect(result).toEqual(response);
   });
-  it('getSessionBySessionId', async () => {
-    const sessionId = '1';
+  it('getSessionByEventIdAndSessionIndex', async () => {
+    const eventId = '1';
+    const sessionIndex = '01';
     const response = { id: 1 };
-    fetchMock.get(join(sessionsUrl, 'id', sessionId), response);
-    const result = await getSessionBySessionId(sessionId);
+    fetchMock.get(join(sessionsUrl, 'eventId', eventId, 'sessionIndex', sessionIndex), response);
+    const result = await getSessionByEventIdAndSessionIndex();
     expect(result).toEqual(response);
   });
   it('getSessionsByEventId', async () => {

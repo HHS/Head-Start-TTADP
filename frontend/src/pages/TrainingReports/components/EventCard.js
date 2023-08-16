@@ -25,6 +25,8 @@ function EventCard({
     sessionReports,
   } = event;
 
+  const { eventId } = data;
+
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
@@ -45,7 +47,7 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${event.id}/session/new/`);
+        history.push(`/training-report/${eventId}/session/new/`);
       },
     });
   }
@@ -55,7 +57,7 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${event.id}/event-summary`);
+        history.push(`/training-report/${eventId}/event-summary`);
       },
     });
   }
@@ -64,7 +66,7 @@ function EventCard({
   menuItems.push({
     label: 'View event',
     onClick: () => {
-      history.push(`/training-report/view/${event.id}`);
+      history.push(`/training-report/view/${eventId}`);
     },
   });
 
@@ -74,8 +76,8 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
-  const link = canEditEvent ? `/training-report/${event.id}/event-summary` : `/training-report/view/${event.id}`;
-  const contextMenuLabel = `Actions for event ${event.id}`;
+  const link = canEditEvent ? `/training-report/${eventId}/event-summary` : `/training-report/view/${eventId}`;
+  const contextMenuLabel = `Actions for event ${eventId}`;
 
   return (
     <article
