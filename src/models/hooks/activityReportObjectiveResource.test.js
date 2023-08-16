@@ -93,6 +93,7 @@ describe('activityReportObjectiveResource hooks', () => {
     await Objective.destroy({
       where: { id: objectiveToDestroy.id },
       individualHooks: true,
+      force: true,
     });
 
     await Resource.destroy({

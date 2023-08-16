@@ -74,6 +74,7 @@ describe('objectiveResource hooks', () => {
     await Objective.destroy({
       where: { id: [objective.id, objectiveToDestroy.id] },
       individualHooks: true,
+      force: true,
     });
 
     await ObjectiveTemplate.destroy({
