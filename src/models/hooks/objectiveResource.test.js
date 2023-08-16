@@ -5,55 +5,80 @@ import {
   ObjectiveTemplate,
   ObjectiveResource,
   ObjectiveTemplateResource,
+  Resource,
 } from '..';
 import { OBJECTIVE_STATUS } from '../../constants';
 import { objectiveTemplateGenerator } from './testHelpers';
-import { beforeValidate } from './objectiveResource';
+import { beforeValidate, afterDestroy } from './objectiveResource';
+import { processObjectiveForResourcesById } from '../../services/resource';
 
 describe('objectiveResource hooks', () => {
-  const userProvidedUrl = faker.internet.url();
+  const url = faker.internet.url();
   let objectiveTemplate;
   let objective;
+
+  let objectiveToDestroy;
+  let objectiveResourceToDestroy;
+  let resourceToDestroy;
+  const destroyUrl = faker.internet.url();
 
   afterAll(async () => {
     await sequelize.close();
   });
 
   beforeEach(async () => {
-    const transaction = await sequelize.transaction();
-
     objectiveTemplate = await ObjectiveTemplate.create(
       objectiveTemplateGenerator(),
-      { transaction, individualHooks: true },
+      { individualHooks: true },
     );
 
     objective = await Objective.create({
       title: 'Random objective title',
       status: OBJECTIVE_STATUS.APPROVED,
       objectiveTemplateId: objectiveTemplate.id,
-    }, { transaction, individualHooks: true });
+    }, { individualHooks: true });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl,
-    }, { transaction, individualHooks: true });
+    await processObjectiveForResourcesById(objective.id, [url]);
 
-    await transaction.commit();
+    // Destroy objects.
+    objectiveToDestroy = await Objective.create({
+      title: 'objective to destroy title',
+      status: OBJECTIVE_STATUS.APPROVED,
+    }, { individualHooks: true });
+
+    resourceToDestroy = await Resource.create({ url: destroyUrl });
+
+    objectiveResourceToDestroy = await ObjectiveResource.create({
+      objectiveId: objectiveToDestroy.id,
+      resourceId: resourceToDestroy.id,
+      sourceFields: ['resource'],
+    });
   });
 
   afterEach(async () => {
     await ObjectiveTemplateResource.destroy({
       where: { objectiveTemplateId: objectiveTemplate.id },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
-      where: { objectiveId: objective.id },
+      where: { objectiveId: [objective.id, objectiveToDestroy.id] },
+      individualHooks: true,
     });
 
-    await Objective.destroy({ where: { id: objective.id } });
+    await Resource.destroy({
+      where: { url: [url, destroyUrl] },
+      individualHooks: true,
+    });
+
+    await Objective.destroy({
+      where: { id: [objective.id, objectiveToDestroy.id] },
+      individualHooks: true,
+    });
 
     await ObjectiveTemplate.destroy({
       where: { id: objectiveTemplate.id },
+      individualHooks: true,
     });
   });
   describe('beforeValidate', () => {
@@ -74,12 +99,46 @@ describe('objectiveResource hooks', () => {
       // confirm that the objectiveTemplateResource was created
       const otr = await ObjectiveTemplateResource.findOne({
         where: {
-          userProvidedUrl,
           objectiveTemplateId: objectiveTemplate.id,
         },
+        include: [{
+          model: Resource,
+          as: 'resource',
+          where: { url },
+        }],
       });
 
       expect(otr).not.toBeNull();
+    });
+  });
+
+  describe('afterDestroy', () => {
+    it('clean up orphan resources', async () => {
+      let objectiveResource = await ObjectiveResource.findOne({
+        where: { objectiveId: objectiveToDestroy.id },
+      });
+      expect(objectiveResource).not.toBeNull();
+
+      let resource = await Resource.findOne({
+        where: { id: resourceToDestroy.id },
+      });
+      expect(resource).not.toBeNull();
+
+      // Destroy.
+      await ObjectiveResource.destroy({
+        where: { objectiveId: objectiveToDestroy.id },
+        individualHooks: true,
+      });
+
+      objectiveResource = await ObjectiveResource.findOne({
+        where: { objectiveId: objectiveToDestroy.id },
+      });
+      expect(objectiveResource).toBeNull();
+
+      resource = await Resource.findOne({
+        where: { id: resourceToDestroy.id },
+      });
+      expect(resource).toBeNull();
     });
   });
 });

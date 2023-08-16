@@ -2,14 +2,14 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import httpCodes from 'http-codes';
-import { ALERT_STATUSES } from '../../constants';
+import { ALERT_STATUSES } from '@ttahub/common';
 import { SiteAlert } from '../../models';
 
 export async function getSiteAlerts(req, res) {
   try {
     const today = moment().format('YYYY-MM-DD');
     const alert = await SiteAlert.findOne({
-      attributes: ['id', 'title', 'message', 'startDate', 'endDate', 'status', 'variant'],
+      attributes: ['id', 'title', 'message', 'startDate', 'endDate', 'status', 'variant', 'size'],
       where: {
         startDate: {
           [Op.lte]: today,

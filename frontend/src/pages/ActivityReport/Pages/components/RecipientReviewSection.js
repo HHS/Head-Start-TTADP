@@ -1,11 +1,12 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState, reportIsEditable } from '../../../../utils';
 import Section from '../Review/ReviewSection';
 import './RecipientReviewSection.scss';
+import AttachmentReviewSection from './AttachmentReviewSection';
 
 const RecipientReviewSection = () => {
   const { watch } = useFormContext();
@@ -39,11 +40,6 @@ const RecipientReviewSection = () => {
                 {goal.goalNumber && ` (${goal.goalNumber})`}
               </div>
               <div className="margin-top-1">
-                <span className="text-bold">Goal type:</span>
-                {' '}
-                {goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
-              </div>
-              <div className="margin-top-1">
                 <>
                   {objectives.map((objective) => (
                     <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
@@ -70,28 +66,7 @@ const RecipientReviewSection = () => {
                           ))}
                         </ul>
                       </div>
-                      <div className="margin-top-1">
-                        <span className="text-bold">Resource attachments:</span>
-                        {' '}
-                        {
-                          objective.files.map((attachment) => (
-                            <li key={attachment.url.url}>
-                              <a
-                                href={attachment.url.url}
-                                target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                                rel="noreferrer"
-                              >
-                                {
-                                  `${attachment.originalFileName}
-                                   ${attachment.originalFileName.endsWith('.txt')
-                                    ? ' (opens in new tab)'
-                                    : ''}`
-                                }
-                              </a>
-                            </li>
-                          ))
-                        }
-                      </div>
+                      <AttachmentReviewSection attachments={objective.files} />
                       <div className="margin-top-1">
                         <span className="text-bold">Objective status:</span>
                         {' '}

@@ -8,6 +8,7 @@ import {
   DatePicker,
   Alert,
 } from '@trussworks/react-uswds';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import draftToHtml from 'draftjs-to-html';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../utils';
@@ -15,7 +16,6 @@ import SiteAlert from '../../../components/SiteAlert';
 import Req from '../../../components/Req';
 import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
 import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
-import { ALERT_STATUSES, ALERT_VARIANTS } from '../../../Constants';
 import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
@@ -31,6 +31,7 @@ export default function AlertReview({ alert, onDelete }) {
   const [startDate, setStartDate] = useState(alert.startDate);
   const [endDate, setEndDate] = useState(alert.endDate);
   const [status, setStatus] = useState(alert.status);
+  const [size, setSize] = useState(alert.size);
   const [isFetching, setIsFetching] = useState(false);
   const [offset, setOffset] = useState(71);
 
@@ -65,6 +66,7 @@ export default function AlertReview({ alert, onDelete }) {
       title,
       status,
       variant,
+      size,
     };
 
     if (isNew) {
@@ -107,11 +109,12 @@ export default function AlertReview({ alert, onDelete }) {
   };
 
   return (
-    <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md">
+    <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md has-alerts">
       {alert.message || alert.title ? (
         <SiteAlert
           heading={title}
           className="z-index-100"
+          size={size}
           style={{
             minHeight: '3rem',
             position: isEditable ? 'sticky' : 'relative',
@@ -167,7 +170,6 @@ export default function AlertReview({ alert, onDelete }) {
           <div className="margin-top-3">
             <label htmlFor={`alert-${alert.id}-title`}>
               Title
-              <Req />
             </label>
             <input
               id={`alert-${alert.id}-title`}
@@ -177,7 +179,6 @@ export default function AlertReview({ alert, onDelete }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isFetching}
-              required
             />
           </div>
           <div className="margin-top-3">
@@ -203,6 +204,28 @@ export default function AlertReview({ alert, onDelete }) {
           </div>
 
           <div className="margin-top-3">
+            <label htmlFor={`alert-${alert.id}-size`}>
+              Size
+              <Req />
+            </label>
+            <select
+              id={`alert-${alert.id}-size`}
+              className="usa-select"
+              name={`alert-${alert.id}-size`}
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              disabled={isFetching}
+              required
+            >
+              {Object.values(ALERT_SIZES).map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="margin-top-3">
             <label htmlFor={`alert-${alert.id}-message`}>
               Message
               <Req />
@@ -217,6 +240,12 @@ export default function AlertReview({ alert, onDelete }) {
               handlePastedText={() => false}
               tabIndex="0"
               editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
+              toolbar={{
+                options: ['inline', 'list', 'link'],
+                inline: {
+                  options: ['bold', 'italic'],
+                },
+              }}
             />
 
           </div>
@@ -305,5 +334,6 @@ AlertReview.propTypes = {
     status: PropTypes.string.isRequired,
     isNew: PropTypes.bool,
     variant: PropTypes.string,
+    size: PropTypes.string,
   }).isRequired,
 };

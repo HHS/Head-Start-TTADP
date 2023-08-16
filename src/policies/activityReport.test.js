@@ -1,6 +1,6 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import ActivityReport from './activityReport';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 function activityReport(
   author,
@@ -8,14 +8,24 @@ function activityReport(
   approvers,
   submissionStatus = REPORT_STATUSES.DRAFT,
   calculatedStatus = null,
+  raw = true,
 ) {
-  const report = {
+  const report = raw ? {
     userId: author,
     regionId: 1,
     activityReportCollaborators: [],
     approvers: [],
     submissionStatus,
     calculatedStatus,
+  } : {
+    dataValues: {
+      userId: author,
+      regionId: 1,
+      activityReportCollaborators: [],
+      approvers: [],
+      submissionStatus,
+      calculatedStatus,
+    },
   };
 
   if (activityReportCollaborator) {
@@ -24,7 +34,7 @@ function activityReport(
 
   if (approvers) {
     report.approvers = [...report.approvers, ...approvers.map((approver) => ({
-      id: 9, status: null, note: null, User: { id: approver },
+      id: 9, status: null, note: null, user: { id: approver },
     })),
     ];
   }
@@ -323,6 +333,12 @@ describe('Activity Report policies', () => {
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canGet()).toBeFalsy();
       });
+
+      it('is false for an admin with no other permissions to the report', () => {
+        const report = activityReport(author.id);
+        const policy = new ActivityReport(admin, report);
+        expect(policy.canGet()).toBeFalsy();
+      });
     });
 
     describe('for approved reports', () => {
@@ -347,6 +363,18 @@ describe('Activity Report policies', () => {
           REPORT_STATUSES.APPROVED,
         );
         const policy = new ActivityReport(approver, report);
+        expect(policy.canGet()).toBeTruthy();
+      });
+
+      it('is true for admins', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          null,
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.APPROVED,
+        );
+        const policy = new ActivityReport(admin, report);
         expect(policy.canGet()).toBeTruthy();
       });
     });
@@ -405,6 +433,20 @@ describe('Activity Report policies', () => {
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeFalsy();
+    });
+  });
+
+  describe('canReadInRegion', () => {
+    it('works with raw model instance (dataValues)', async () => {
+      const report = activityReport(author.id, null, null, null, null, true);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReadInRegion()).toBeTruthy();
+    });
+
+    it('works with non-raw model instance', async () => {
+      const report = activityReport(author.id, null, null, null, null, false);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReadInRegion()).toBeTruthy();
     });
   });
 });

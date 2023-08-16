@@ -21,6 +21,12 @@ export default (sequelize, DataTypes) => {
         otherKey: 'topicId',
         as: 'topics',
       });
+      ActivityReportObjective.belongsToMany(models.Resource, {
+        through: models.ActivityReportObjectiveResource,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   ActivityReportObjective.init({
@@ -32,13 +38,16 @@ export default (sequelize, DataTypes) => {
     },
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     objectiveId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     arOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 1,
     },
     title: DataTypes.TEXT,
     status: DataTypes.STRING,

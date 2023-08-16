@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -6,7 +7,6 @@ import db, {
 } from '../models';
 import filtersToScopes from '../scopes';
 import overview from './overview';
-import { REPORT_STATUSES } from '../constants';
 import { formatQuery } from '../routes/widgets/utils';
 import { createReport, destroyReport } from '../testUtils';
 
@@ -26,6 +26,7 @@ const mockUser = {
   name: 'user11818461',
   hsesUsername: 'user11818461',
   hsesUserId: 'user11818461',
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -51,6 +52,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 const regionOneReport = {

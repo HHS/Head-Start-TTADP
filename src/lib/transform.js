@@ -105,8 +105,8 @@ function transformApproversModel(prop) {
       const distinctValues = [
         ...new Set(
           values.filter(
-            (approver) => approver.User && approver.User[prop] !== null,
-          ).map((r) => r.User[prop]).flat(),
+            (approver) => approver.user && approver.user[prop] !== null,
+          ).map((r) => r.user[prop]).flat(),
         ),
       ];
       const approversList = distinctValues.sort().join('\n');
@@ -168,6 +168,38 @@ function sortObjectives(a, b) {
     return 1;
   }
   return -1;
+}
+
+/**
+ *
+ * @param {Object[]} goalRecords
+ * @returns {Object} { goals: [], objectives: []}
+ */
+function makeGoalsObjectFromActivityReportGoals(goalRecords) {
+  let goalCsvRecordNumber = 1;
+  const goals = {};
+  goalRecords.forEach((goal) => {
+    const {
+      id = null,
+      name = null,
+      status = null,
+      createdVia = null,
+    } = goal || {};
+    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
+    if (goalNameIndex === -1) {
+      goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
+      goals[`goal-${goalCsvRecordNumber}`] = name;
+      goals[`goal-${goalCsvRecordNumber}-status`] = status;
+      goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
+      goalCsvRecordNumber += 1;
+      return;
+    }
+    const goalNameKey = Object.keys(goals)[goalNameIndex];
+    const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
+    const field = `goal-${goalNumber}-id`;
+    goals[field] = `${goals[field]}\n${id}`;
+  });
+  return goals;
 }
 
 /*
@@ -263,7 +295,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     });
 
     // Activity Report Objective: Resources Links.
-    const objResources = resources.map((r) => r.userProvidedUrl);
+    const objResources = resources.map((r) => r.url);
     Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
       value: objResources.join('\n'),
       enumerable: true,
@@ -300,20 +332,26 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 */
 function transformGoalsAndObjectives(report) {
   let obj = {};
-  const { activityReportObjectives } = report;
-  if (activityReportObjectives) {
+  const { activityReportObjectives, activityReportGoals } = report;
+
+  if (activityReportObjectives && activityReportObjectives.length) {
     const objectiveRecords = activityReportObjectives.map((aro) => (
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
         topics: aro.topics,
         files: aro.files,
-        resources: aro.activityReportObjectiveResources,
+        resources: aro.resources,
       }
     ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
+  } else if (activityReportGoals && activityReportGoals.length) {
+    const goals = activityReportGoals.map((arg) => (
+      { ...(arg.goal.dataValues || arg.goal), status: arg.status }
+    ));
+    obj = makeGoalsObjectFromActivityReportGoals(goals);
   }
 
   return obj;

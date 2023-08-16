@@ -2,9 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import './SiteNav.scss';
+import FeatureFlag from './FeatureFlag';
 
 const navLinkClasses = [
   'display-block',
@@ -71,7 +70,7 @@ const SiteNav = ({
           Please leave feedback
         </a>
       </div>
-      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
+      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
@@ -87,29 +86,47 @@ const SiteNav = ({
                     <NavLink
                       to="/activity-reports"
                     >
-                      <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faChartColumn} />
-                      </span>
                       Activity Reports
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="training_reports">
+                    <li>
+                      <NavLink
+                        to="/training-reports/not-started"
+                      >
+                        Training Reports
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/regional-dashboard"
                     >
-                      <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faBorderAll} />
-                      </span>
                       Regional Dashboard
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="regional_goal_dashboard">
+                    <li>
+                      <NavLink
+                        to="/regional-goal-dashboard"
+                      >
+                        Regional Goal Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
+                  <FeatureFlag flag="resources_dashboard">
+                    <li>
+                      <NavLink
+                        to="/resources-dashboard"
+                      >
+                        Resources Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/recipient-tta-records"
                     >
-                      <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faUserFriends} />
-                      </span>
                       Recipient TTA Records
                     </NavLink>
                   </li>

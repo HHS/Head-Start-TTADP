@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
-
-import { REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -14,7 +13,7 @@ import {
 } from './models';
 import { auditLogger } from './logger';
 
-import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
+import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusByGoalName';
 
 const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
 
@@ -44,6 +43,7 @@ function defaultReport() {
     participants: ['participants', 'genies'],
     topics: ['Program Planning and Services'],
     ttaType: ['technical-assistance'],
+    version: 2,
   };
 }
 
@@ -56,6 +56,7 @@ function defaultUser() {
     phoneNumber: faker.phone.phoneNumber(),
     name: faker.name.findName(),
     role: ['Grants Specialist'],
+    lastLogin: new Date(),
   };
 }
 
@@ -82,6 +83,7 @@ function defaultGrant() {
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
+    endDate: new Date(),
   };
 }
 
@@ -140,7 +142,7 @@ export async function createReport(report) {
   });
 
   try {
-    Promise.all(recipients.map((grantId) => ActivityRecipient.create({
+    await Promise.all(recipients.map((grantId) => ActivityRecipient.create({
       activityReportId: createdReport.id,
       grantId,
     })));

@@ -1,0 +1,202 @@
+import React, {
+  useEffect,
+  useContext,
+  useState,
+} from 'react';
+import { capitalize } from 'lodash';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import { Helmet } from 'react-helmet';
+import { Alert } from '@trussworks/react-uswds';
+import { eventById } from '../../fetchers/event';
+import { getNamesByIds } from '../../fetchers/users';
+import AppLoadingContext from '../../AppLoadingContext';
+import BackLink from '../../components/BackLink';
+import Container from '../../components/Container';
+import ReadOnlyContent from '../../components/ReadOnlyContent';
+
+const formatNextSteps = (nextSteps, heading, striped) => {
+  const data = nextSteps.reduce((acc, step, index) => ({
+    ...acc,
+    [`Step ${index + 1}`]: step.note,
+    [`Step ${index + 1} anticipated completion`]: step.completeDate,
+  }), {});
+
+  return {
+    heading,
+    striped,
+    data,
+  };
+};
+
+export default function ViewTrainingReport({ match }) {
+  const [event, setEvent] = useState(null);
+  const [error, setError] = useState(null);
+  const [eventCollaborators, setEventCollaborators] = useState([]);
+  const [eventPoc, setEventPoc] = useState([]);
+
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  useEffect(() => {
+    async function fetchEvent() {
+      try {
+        setIsAppLoading(true);
+        const e = await eventById(match.params.trainingReportId);
+        setEvent(e);
+      } catch (err) {
+        setEvent({});
+        setError('Sorry, something went wrong');
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+    if (!event) {
+      fetchEvent();
+    }
+  }, [event, match.params.trainingReportId, setIsAppLoading]);
+
+  useEffect(() => {
+    async function fetchCollaborators() {
+      if (event && event.collaboratorIds && event.collaboratorIds.length) {
+        try {
+          const collaborators = await getNamesByIds(event.collaboratorIds);
+          setEventCollaborators(collaborators);
+        } catch (err) {
+          setEventCollaborators([]);
+        }
+      }
+    }
+    fetchCollaborators();
+  }, [event]);
+
+  useEffect(() => {
+    async function fetchPoc() {
+      if (event && event.pocIds && event.pocIds.length) {
+        try {
+          const pocs = await getNamesByIds(event.pocIds);
+          setEventPoc(pocs);
+        } catch (err) {
+          setEventPoc([]);
+        }
+      }
+    }
+    fetchPoc();
+  }, [event]);
+
+  const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
+  const ownerName = event && event.data && event.data.owner && event.data.owner.name ? event.data.owner.name : '';
+
+  const eventSummary = event && event.data ? [{
+    heading: 'Event Summary',
+    data: {
+      'Event name': event.data.eventName,
+      'Event creator': ownerName,
+      Region: String(event.regionId),
+      'Event organizer': event.data.eventOrganizer,
+      'Event collaborators': eventCollaborators,
+      'Regional point of contact': eventPoc,
+      'Intended audience': event.data.audience,
+      'Start date': event.data.startDate,
+      'End date': event.data.endDate,
+      'Training type': event.data['Event Duration/# NC Days of Support'],
+      Reasons: event.data.reasons,
+      'Target populations': event.data.targetPopulations,
+    },
+    striped: true,
+  }, {
+    heading: 'Vision and goal',
+    data: {
+      Vision: event.data.vision,
+      Goal: event.data.goal,
+    },
+  }] : [];
+
+  const sessions = event && event.sessionReports ? event.sessionReports.map((session, index) => (
+    <ReadOnlyContent
+      key={session.id}
+      title={`Session ${index + 1}`}
+      sections={[{
+        heading: 'Session Summary',
+        striped: true,
+        data: {
+          'Session name': session.data.sessionName,
+          'Session start date': session.data.startDate,
+          'Session end date': session.data.endDate,
+          'Session duration': `${session.data.duration || 0} hours`,
+          'Session context': session.data.context,
+        },
+      }, {
+        heading: 'Objective summary',
+        data: {
+          'Session objective': session.data.objective,
+          Topics: session.data.objectiveTopics,
+          Trainers: session.data.objectiveTrainers,
+          'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
+          'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
+          'Support type': session.data.objectiveSupportType,
+        },
+      }, {
+        heading: 'Participants',
+        striped: true,
+        data: {
+          Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
+          'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
+          'Delivery method': capitalize(session.data.deliveryMethod || ''),
+          'Number of participants': String((
+            session.data.numberOfParticipants || 0
+          ) + (
+            session.data.numberOfParticipantsVirtually || 0
+          ) + (
+            session.data.numberOfParticipantsInPerson || 0
+          )),
+          'TTA provided': session.data.ttaProvided,
+        },
+      },
+      formatNextSteps(session.data.specialistNextSteps || [], 'Specialist\'s next steps', false),
+      formatNextSteps(session.data.recipientNextSteps || [], 'Recipient\'s next steps', true),
+      ]}
+    />
+  )) : null;
+
+  const backLinkUrl = (() => {
+    if (!event || !event.data || !event.data.status) {
+      return '/training-reports/not-started';
+    }
+
+    return `/training-reports/${event.data.status.replace(' ', '-').toLowerCase()}`;
+  })();
+
+  return (
+    <>
+      <Helmet>
+        <title>
+          {pageTitle}
+          {' '}
+          | TTA Hub
+        </title>
+      </Helmet>
+      <BackLink to={backLinkUrl}>
+        Back to Training Reports
+      </BackLink>
+      <Container className="margin-top-2 maxw-tablet-lg">
+        { error && (
+        <Alert type="error">
+          {error}
+        </Alert>
+        )}
+        <h1 className="landing">{pageTitle}</h1>
+
+        <ReadOnlyContent
+          title="Event"
+          sections={eventSummary}
+        />
+
+        { sessions }
+
+      </Container>
+    </>
+  );
+}
+
+ViewTrainingReport.propTypes = {
+  match: ReactRouterPropTypes.match.isRequired,
+};

@@ -23,17 +23,20 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     userId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    isPublic: {
+      type: DataTypes.BOOLEAN,
+      default: false,
     },
   }, {
     sequelize,
     modelName: 'Group',
-    // timestamps: false,
   });
   return Group;
 };

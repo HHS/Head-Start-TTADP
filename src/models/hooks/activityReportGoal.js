@@ -1,3 +1,26 @@
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForActivityReportGoal, processActivityReportGoalForResourcesById } = require('../../services/resource');
+  const changed = instance.changed() || Object.keys(instance);
+  if (calculateIsAutoDetectedForActivityReportGoal(changed)) {
+    await processActivityReportGoalForResourcesById(instance.id);
+  }
+};
+
+const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
+  [
+    sequelize.models.ActivityReportGoalResource,
+    sequelize.models.ActivityReportGoalFieldResponse,
+  ].map(async (model) => model.destroy({
+    where: {
+      activityReportGoalId: instance.id,
+    },
+    individualHooks: true,
+    hookMetadata: { goalId: instance.goalId },
+    transaction: options.transaction,
+  })),
+);
+
 const recalculateOnAR = async (sequelize, instance, options) => {
   await sequelize.query(`
     WITH
@@ -19,11 +42,28 @@ const recalculateOnAR = async (sequelize, instance, options) => {
   `, { transaction: options.transaction });
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
+const beforeDestroy = async (sequelize, instance, options) => {
+  await propagateDestroyToMetadata(sequelize, instance, options);
+};
+
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
 };
 
+const afterUpdate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 export {
+  processForEmbeddedResources,
   recalculateOnAR,
+  propagateDestroyToMetadata,
+  afterCreate,
+  beforeDestroy,
   afterDestroy,
+  afterUpdate,
 };

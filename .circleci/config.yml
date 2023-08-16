@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:18.16.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:18.16.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:18.16.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -51,7 +51,7 @@ commands:
     steps:
       - run:
           name: Combine package-lock.json files to single file
-          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+          command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -136,11 +136,26 @@ commands:
       smtp_port:
         description: "SMTP port"
         type: env_var_name
+      smtp_host_test:
+        description: "SMTP server test"
+        type: env_var_name
+      smtp_port_test:
+        description: "SMTP port test"
+        type: env_var_name
       smtp_secure:
         description: "SMTP secure transport"
         type: env_var_name
+      smtp_ignore_tls:
+        description: "SMTP specifies whether to negotiate TLS"
+        type: env_var_name
       from_email_address:
         description: "From email address"
+        type: env_var_name
+      smtp_user:
+        description: "SMTP user"
+        type: env_var_name
+      smtp_password:
+        description: "SMTP password"
         type: env_var_name
     steps:
       - run:
@@ -166,7 +181,12 @@ commands:
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
               --var SMTP_HOST=${<< parameters.smtp_host >>} \
               --var SMTP_PORT=${<< parameters.smtp_port >>} \
+              --var SMTP_HOST_TEST=${<< parameters.smtp_host_test >>} \
+              --var SMTP_PORT_TEST=${<< parameters.smtp_port_test >>} \
+              --var SMTP_USER=${<< parameters.smtp_user >>} \
+              --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
+              --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
       - run:
           name: Push maintenance application
@@ -207,10 +227,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "none"
+    default: "kw-ses-switchover"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-379/add-site-alerts"
+    default: "al-ttahub-519-grant-personnel"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -233,15 +253,16 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v9-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v7-yarn-deps-
+            - v9-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - packages/common/node_modules
+          key: v9-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -353,7 +374,43 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright/
+          path: playwright/e2e
+    resource_class: large
+  test_api:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:api
+      - store_artifacts:
+          path: playwright/api
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
@@ -395,7 +452,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-stable:2.11.1
+          command: docker pull owasp/zap2docker-stable:latest
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
@@ -440,8 +497,8 @@ jobs:
                   REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW           
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov       
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -458,8 +515,13 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -501,8 +563,13 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS                
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -544,8 +611,13 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS                
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -585,8 +657,13 @@ jobs:
                 hses_data_password: PROD_HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS                
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -609,6 +686,9 @@ workflows:
       - test_e2e:
           requires:
             - build_and_lint
+      - test_api:
+          requires:
+            - build_and_lint
       - cucumber_test:
           requires:
             - build_and_lint
@@ -620,6 +700,7 @@ workflows:
             - test_backend
             - test_frontend
             - test_e2e
+            - test_api
             - cucumber_test
             - dynamic_security_scan
           filters:
@@ -648,6 +729,9 @@ workflows:
           requires:
             - build_and_lint
       - test_e2e:
+          requires:
+            - build_and_lint
+      - test_api:
           requires:
             - build_and_lint
       - dynamic_security_scan:

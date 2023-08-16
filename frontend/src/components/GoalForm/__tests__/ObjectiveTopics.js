@@ -3,9 +3,18 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import ObjectiveTopics from '../ObjectiveTopics';
 
 describe('ObjectiveTopics', () => {
+  beforeEach(() => fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Whats New</title>
+  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+  <subtitle>Confluence Syndication Feed</subtitle>
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`));
+
+  afterEach(() => fetchMock.restore());
+
   const defaultTopicSelection = [
     {
       id: 1,
@@ -44,7 +53,7 @@ describe('ObjectiveTopics', () => {
   it('displays the correct label', async () => {
     renderObjectiveTopics();
     const label = screen.queryAllByText(/topics/i);
-    expect(label).toHaveLength(2);
+    expect(label).toHaveLength(3);
     const fastDancing = await screen.findByRole('listitem');
     expect(fastDancing).toHaveTextContent('Dancing but too fast');
     expect(screen.getByText(/dancing but too slow/i)).toBeVisible();

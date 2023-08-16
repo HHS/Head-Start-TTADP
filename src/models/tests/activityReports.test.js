@@ -1,5 +1,5 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, { User, ActivityReport } from '..';
-import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 
 describe('Activity Reports model', () => {
@@ -54,6 +54,7 @@ describe('Activity Reports model', () => {
       role: 'Grants Specialist',
       homeRegionId: 1,
     },
+    version: 2,
   };
 
   describe('default scope', () => {

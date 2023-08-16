@@ -1,0 +1,44 @@
+/* eslint-disable import/prefer-default-export */
+import {
+  regionFilter,
+  endDateFilter,
+  startDateFilter,
+  grantNumberFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  reportIdFilter,
+  specialistRoleFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
+  topicsFilter,
+  otherEntitiesFilter,
+  participantsFilter,
+  reportTextFilter,
+  ttaTypeFilter,
+} from '../../components/filter/activityReportFilters';
+
+const RESOURCES_DASHBOARD_FILTER_CONFIG = [
+  startDateFilter,
+  endDateFilter,
+  grantNumberFilter,
+  otherEntitiesFilter,
+  participantsFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  regionFilter,
+  reportIdFilter,
+  reportTextFilter,
+  singleOrMultiRecipientsFilter,
+  specialistRoleFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  topicsFilter,
+  ttaTypeFilter,
+];
+
+RESOURCES_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { RESOURCES_DASHBOARD_FILTER_CONFIG };

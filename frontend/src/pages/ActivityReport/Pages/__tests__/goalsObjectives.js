@@ -7,11 +7,11 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import goalsObjectives from '../goalsObjectives';
+import goalsObjectives, { validatePrompts } from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
 import GoalFormContext from '../../../../GoalFormContext';
 
@@ -67,7 +67,21 @@ const RenderGoalsObjectives = ({
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
       <Router history={history}>
         <FormProvider {...hookForm}>
-          {goalsObjectives.render(null, null, 1, null, null)}
+          {goalsObjectives.render(
+            null,
+            {
+              activityRecipientType,
+            },
+            1,
+            null,
+            jest.fn(),
+            jest.fn(),
+            jest.fn(),
+            false,
+            '',
+            jest.fn(),
+            () => <></>,
+          )}
         </FormProvider>
       </Router>
     </NetworkContext.Provider>
@@ -183,6 +197,29 @@ describe('goals objectives', () => {
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
+    it('you need to have completely conditional fields before editing', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+      fetchMock.restore();
+      // this API call sets the goal as being edited
+      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
+      expect(screen.queryByText(/indicates required field/i)).toBeNull();
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
+      act(() => userEvent.click(actions));
+      const [button] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(button));
+      await waitFor(() => expect(fetchMock.called()).toBe(true));
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
+    });
+
     it('you can remove a goal', async () => {
       jest.restoreAllMocks();
       const sampleGoals = [{
@@ -203,7 +240,7 @@ describe('goals objectives', () => {
       expect(goalSummary).not.toBeVisible();
       const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
       expect(addNewGoal).toBeVisible();
-      const keys = ['goalForEditing', 'goalName', 'goalEndDate', 'goalIsRttapa'];
+      const keys = ['goalForEditing', 'goalName', 'goalEndDate'];
       keys.forEach((key) => {
         expect(spy).toHaveBeenCalledWith(key, '');
       });
@@ -393,7 +430,7 @@ describe('goals objectives', () => {
             ttaProvided: 'ttaProvided one',
             status: 'Not Started',
             topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
-            resources: [{ userProvidedUrl: 'http://test1.gov' }, { userProvidedUrl: 'http://test2.gov' }, { userProvidedUrl: 'http://test3.gov' }],
+            resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
           },
@@ -441,6 +478,36 @@ describe('goals objectives', () => {
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
+    });
+  });
+
+  describe('validatePrompts', () => {
+    it('returns true if no prompts', async () => {
+      const trigger = jest.fn(() => true);
+      const prompts = [];
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeTruthy();
+    });
+
+    it('returns true if prompts are undefined', async () => {
+      const trigger = jest.fn(() => true);
+      const prompts = undefined;
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeTruthy();
+    });
+
+    it('returns the result of trigger when true', async () => {
+      const trigger = jest.fn(() => true);
+      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeTruthy();
+    });
+
+    it('returns the result of trigger when false', async () => {
+      const trigger = jest.fn(() => false);
+      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeFalsy();
     });
   });
 });

@@ -4,7 +4,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient,
+  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
 
 jest.mock('axios');
@@ -27,7 +27,7 @@ describe('Update HSES data', () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
-  afterAll(() => {
+  afterAll(async () => {
     jest.clearAllMocks();
   });
   it('retrieves a zip file and extracts it to temp', async () => {
@@ -65,20 +65,26 @@ describe('Update HSES data', () => {
   });
 });
 
-describe('Update grants and recipients', () => {
+describe('Update grants, program personnel, and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await ProgramPersonnel.unscoped().destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
+    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await ProgramPersonnel.unscoped().destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
+    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
     await db.sequelize.close();
@@ -152,20 +158,178 @@ describe('Update grants and recipients', () => {
     expect(grantsBefore.length).toBe(0);
     await processFiles();
 
-    const grants = await Grant.findAll({ where: { recipientId: 1335 } });
+    const grants = await Grant.unscoped().findAll({ where: { recipientId: 1335 } });
     expect(grants).toBeDefined();
     expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
-    const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+
+    const containsGranteeName = grants.some((g) => g.granteeName === 'Agency 1, Inc.');
+    expect(containsGranteeName).toBeTruthy();
+
+    const totalGrants = await Grant.unscoped().findAll({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+    });
     expect(totalGrants.length).toBe(15);
   });
 
-  it('includes the grant specialists name and email', async () => {
+  it('should import or update program personnel', async () => {
+    // Create auth_official_contact personnel to update.
+    const personnelToUpdate = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'auth_official_contact',
+      firstName: 'F321_orig',
+      lastName: 'L321_orig',
+      title: 'Governing Board Chairperson_orig',
+      email: '456@example.org',
+      suffix: 'Jr.',
+      prefix: 'Dr.',
+      active: true,
+    });
+
+    // Create director personnel to update.
+    const directorToUpdate = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'director',
+      firstName: 'F3333_orig',
+      lastName: 'L3333_orig',
+      email: '3333_orig@example.org',
+      suffix: 'Jr.',
+      prefix: 'Dr.',
+      active: true,
+    });
+
+    // Check we have no program personnel.
+    const programPersonnelBefore = await ProgramPersonnel.findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(programPersonnelBefore.length).toBe(2);
+
+    // Process the files.
+    await processFiles();
+
+    const programPersonnelAdded = await ProgramPersonnel.unscoped().findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(programPersonnelAdded).toBeDefined();
+    expect(programPersonnelAdded.length).toBe(18);
+
+    // Get first program.
+    let personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 1);
+    expect(personnelToAssert.length).toBe(4);
+
+    // Auth Official Contact.
+    expect(personnelToAssert[0].role).toBe('auth_official_contact');
+    expect(personnelToAssert[0].title).toBe('Board President');
+    expect(personnelToAssert[0].firstName).toBe('F47125');
+    expect(personnelToAssert[0].lastName).toBe('L47125');
+    expect(personnelToAssert[0].prefix).toBe('Mr.');
+    expect(personnelToAssert[0].email).toBe('47125@hsesinfo.org');
+    expect(personnelToAssert[0].active).toBe(true);
+
+    // CEO.
+    expect(personnelToAssert[1].role).toBe('ceo');
+    expect(personnelToAssert[1].title).toBe('CEO');
+    expect(personnelToAssert[1].firstName).toBe('F47126');
+    expect(personnelToAssert[1].lastName).toBe('L47126');
+    expect(personnelToAssert[1].prefix).toBe('Ms.');
+    expect(personnelToAssert[1].email).toBe('47126@hsesinfo.org');
+    expect(personnelToAssert[1].active).toBe(true);
+
+    // Policy Council.
+    expect(personnelToAssert[2].role).toBe('policy_council');
+    expect(personnelToAssert[2].title).toBe(null);
+    expect(personnelToAssert[2].firstName).toBe('F47128');
+    expect(personnelToAssert[2].lastName).toBe('L47128');
+    expect(personnelToAssert[2].prefix).toBe('Ms.');
+    expect(personnelToAssert[2].email).toBe('47128@hsesinfo.org');
+    expect(personnelToAssert[2].active).toBe(true);
+
+    // Director.
+    expect(personnelToAssert[3].role).toBe('director');
+    expect(personnelToAssert[3].title).toBe(null);
+    expect(personnelToAssert[3].firstName).toBe('F47124');
+    expect(personnelToAssert[3].lastName).toBe('L47124');
+    expect(personnelToAssert[3].prefix).toBe('Ms.');
+    expect(personnelToAssert[3].email).toBe('47124@hsesinfo.org');
+    expect(personnelToAssert[3].active).toBe(true);
+
+    // Get second program.
+    personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 2);
+    expect(personnelToAssert.length).toBe(4);
+
+    // Get third program.
+    personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 3);
+    expect(personnelToAssert.length).toBe(4);
+
+    // Get fourth program.
+    personnelToAssert = programPersonnelAdded.filter((gp) => gp.programId === 4);
+    expect(personnelToAssert.length).toBe(6);
+
+    // Filter auth_official_contact.
+    const authOfficial = personnelToAssert.filter((gp) => gp.role === 'auth_official_contact');
+    expect(authOfficial.length).toBe(2);
+
+    // Assert that the old personnel was updated.
+    let oldPersonnel = authOfficial.find((gp) => gp.id === personnelToUpdate.id);
+    expect(oldPersonnel).toBeDefined();
+    expect(oldPersonnel.firstName).toBe('F321_orig');
+    expect(oldPersonnel.lastName).toBe('L321_orig');
+    expect(oldPersonnel.title).toBe('Governing Board Chairperson_orig');
+    expect(oldPersonnel.active).toBe(false);
+
+    // Assert the new personnel was added and references the old personnel.
+    let newPersonnel = authOfficial.find((gp) => gp.id !== personnelToUpdate.id);
+    expect(newPersonnel).toBeDefined();
+    expect(newPersonnel.firstName).toBe('F123');
+    expect(newPersonnel.lastName).toBe('L123');
+    expect(newPersonnel.title).toBe('Governing Board Chairperson');
+    expect(newPersonnel.email).toBe('123@example.org');
+    expect(newPersonnel.active).toBe(true);
+    expect(newPersonnel.originalPersonnelId).toBe(oldPersonnel.id);
+    expect(newPersonnel.effectiveDate).not.toBeNull();
+
+    // Filter director.
+    const directorPersonnel = personnelToAssert.filter((gp) => gp.role === 'director');
+    expect(directorPersonnel.length).toBe(2);
+
+    // Assert that the old personnel was updated.
+    oldPersonnel = directorPersonnel.find((gp) => gp.id === directorToUpdate.id);
+    expect(oldPersonnel).toBeDefined();
+    expect(oldPersonnel.firstName).toBe('F3333_orig');
+    expect(oldPersonnel.lastName).toBe('L3333_orig');
+    expect(oldPersonnel.email).toBe('3333_orig@example.org');
+    expect(oldPersonnel.title).toBe(null);
+    expect(oldPersonnel.active).toBe(false);
+
+    // Assert the new personnel was added and references the old personnel.
+    newPersonnel = directorPersonnel.find((gp) => gp.id !== directorToUpdate.id);
+    expect(newPersonnel).toBeDefined();
+    expect(newPersonnel.firstName).toBe('F3333');
+    expect(newPersonnel.lastName).toBe('L3333');
+    expect(oldPersonnel.title).toBe(null);
+    expect(newPersonnel.email).toBe('3333@example.org');
+    expect(newPersonnel.active).toBe(true);
+    expect(newPersonnel.originalPersonnelId).toBe(oldPersonnel.id);
+    expect(newPersonnel.effectiveDate).not.toBeNull();
+  });
+
+  it('includes the grant specialists name, email, and grantee name', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { number: '02CH01111' } });
     expect(grant.grantSpecialistName).toBe('grant');
     expect(grant.grantSpecialistEmail).toBe('grant@test.org');
+    expect(grant.granteeName).toBe('Agency 1, Inc.');
   });
 
   it('includes the program specialists name and email', async () => {
@@ -182,6 +346,7 @@ describe('Update grants and recipients', () => {
     expect(grant.programSpecialistEmail).toBe(null);
     expect(grant.grantSpecialistName).toBe(null);
     expect(grant.grantSpecialistEmail).toBe(null);
+    expect(grant.granteeName).toBe(null);
   });
 
   it('should not exclude recipients with only inactive grants', async () => {
@@ -230,15 +395,21 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update cdi grants', async () => {
-    await Recipient.findOrCreate({ where: { id: 500, name: 'Another Agency', uei: 'NNA5N2KHMGA2' } });
+    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KDFGN2' } });
     await Grant.create({
-      status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', recipientId: 500,
+      status: 'Inactive',
+      regionId: 5,
+      id: 11630,
+      number: '13CDI0001',
+      recipientId: 1119,
+      startDate: '2019-01-01',
+      endDate: '2021-01-01',
     });
     await processFiles();
-    const grant = await Grant.findOne({ where: { id: 11630 } });
+    const grant = await Grant.unscoped().findOne({ where: { id: 11630 } });
     expect(grant.status).toBe('Active');
     expect(grant.regionId).toBe(5);
-    expect(grant.recipientId).toBe(500);
+    expect(grant.recipientId).toBe(1119);
   });
 
   it('should import programs', async () => {
@@ -258,16 +429,40 @@ describe('Update grants and recipients', () => {
       ],
     });
     const {
-      // eslint-disable-next-line camelcase
-      descriptor_id, dml_by, dml_txid, session_sig,
+      descriptor_id, dml_by, dml_as, dml_txid, session_sig,
     } = grantAuditEntry;
 
-    expect(dml_by).toBe(0);
+    expect(dml_by).toBe('0'); // bigint comes back as a string
+    expect(dml_as).toBe('3'); // bigint comes back as a string
     expect(dml_txid).not.toMatch(/^00000000/);
     expect(session_sig).not.toBeNull();
 
     // eslint-disable-next-line camelcase
     const res = await sequelize.query(`SELECT descriptor FROM "ZADescriptor" WHERE id = ${descriptor_id}`, { type: QueryTypes.SELECT });
     expect(res[0].descriptor).toEqual('Grant data import from HSES');
+  });
+
+  it('includes the inactivated date', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 8317 } });
+    // simulate updating an existing grant with null inactivationDate
+    await grant.update({ inactivationDate: null }, { individualHooks: true });
+    const grantWithNullinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullinactivationDate.inactivationDate).toBeNull();
+    await processFiles();
+    const grantWithinactivationDate = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithinactivationDate.inactivationDate).toEqual(new Date('2022-07-31'));
+  });
+
+  it('includes the inactivated reason', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 8317 } });
+    // simulate updating an existing grant with null inactivationReason
+    await grant.update({ inactivationReason: null }, { individualHooks: true });
+    const grantWithNullinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithNullinactivationReason.inactivationReason).toBeNull();
+    await processFiles();
+    const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
+    expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
   });
 });

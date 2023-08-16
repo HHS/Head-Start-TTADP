@@ -9,15 +9,28 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
-import MyGroups from '../MyGroups';
+import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
+import AppLoadingContext from '../../../AppLoadingContext';
+
+const error = 'This group name already exists, please use a different name';
 
 describe('MyGroups', () => {
   const renderMyGroups = (groupId = null) => {
-    render(<MemoryRouter><MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <MyGroupsProvider>
+            <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+          </MyGroupsProvider>
+        </AppLoadingContext.Provider>
+      </MemoryRouter>,
+    );
   };
 
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
+    fetchMock.get('/api/groups', [{ id: 1, name: 'group1', isPublic: false }]);
     fetchMock.get('/api/recipient/user', [{
       id: 1,
       name: 'recipient1',
@@ -58,6 +71,7 @@ describe('MyGroups', () => {
           name: 'grant1',
         },
       ],
+      isPublic: false,
     });
 
     act(() => {
@@ -117,6 +131,50 @@ describe('MyGroups', () => {
     expect(fetchMock.called()).toBe(true);
   });
 
+  it('you cant create a new group that reuses an existing name', async () => {
+    act(() => {
+      renderMyGroups();
+    });
+    const input = screen.getByLabelText(/Group name/i);
+    await act(async () => {
+      userEvent.type(input, 'group3');
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+    });
+
+    fetchMock.post('/api/groups', {
+      error: GROUP_FIELD_NAMES.NAME,
+      message: error,
+    });
+
+    const save = screen.getByText(/Save group/i);
+    act(() => {
+      userEvent.click(save);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+  });
+
+  it('handles errors with the form submit', async () => {
+    act(() => {
+      renderMyGroups();
+    });
+    const input = screen.getByLabelText(/Group name/i);
+    await act(async () => {
+      userEvent.type(input, 'group3');
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+    });
+
+    fetchMock.post('/api/groups', 500);
+
+    const save = screen.getByText(/Save group/i);
+    act(() => {
+      userEvent.click(save);
+    });
+
+    const e = await screen.findByText(/There was an error saving your group/i);
+    expect(e).toBeInTheDocument();
+  });
+
   it('you can edit an existing group', async () => {
     fetchMock.get('/api/groups/1', {
       id: 1,
@@ -127,6 +185,7 @@ describe('MyGroups', () => {
           name: 'grant1',
         },
       ],
+      isPublic: false,
     });
 
     act(() => {
@@ -139,7 +198,12 @@ describe('MyGroups', () => {
       userEvent.type(input, 'group DING DONG');
     });
 
-    fetchMock.post('/api/groups/1', {
+    const checkbox = screen.getByRole('checkbox');
+    act(() => {
+      userEvent.click(checkbox);
+    });
+
+    fetchMock.put('/api/groups/1', {
       id: 1,
       name: 'group DING DONG',
       grants: [
@@ -147,15 +211,29 @@ describe('MyGroups', () => {
           id: 1,
           name: 'grant1',
         },
-
       ],
-
+      isPublic: true,
     });
     const save = screen.getByText(/Save group/i);
     act(() => {
       userEvent.click(save);
     });
 
-    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.called('/api/groups/1')).toBe(true);
+  });
+
+  it('handles an error fetching recipients', async () => {
+    fetchMock.restore();
+
+    fetchMock.get('/api/groups', [{ id: 1, name: 'group1', isPublic: false }]);
+    fetchMock.get('/api/recipient/user', 500);
+
+    act(() => {
+      renderMyGroups(1);
+    });
+
+    const recipientError = await screen.findByText('There was an error fetching your recipients');
+
+    expect(recipientError).toBeInTheDocument();
   });
 });

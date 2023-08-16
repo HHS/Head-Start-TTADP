@@ -8,13 +8,15 @@ import { Helmet } from 'react-helmet';
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
-
+import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import TrainingReports from './pages/TrainingReports';
+import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -32,9 +34,11 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
+import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
+import { getNotifications } from './fetchers/feed';
 import { storageAvailable } from './hooks/helpers';
 import {
   LOCAL_STORAGE_DATA_KEY,
@@ -42,8 +46,17 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
+import MyGroupsProvider from './components/MyGroupsProvider';
+import ScrollToTop from './components/ScrollToTop';
 import Loader from './components/Loader';
-import MyGroups from './pages/AccountManagement/MyGroups';
+import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
+import NotificationsPage from './pages/Notifications';
+import TrainingReportForm from './pages/TrainingReportForm';
+import Group from './pages/AccountManagement/Group';
+import SessionForm from './pages/SessionForm';
+import ViewTrainingReport from './pages/ViewTrainingReport';
+
+const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
 function App() {
   const [user, updateUser] = useState();
@@ -57,6 +70,26 @@ function App() {
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
   const [alert, setAlert] = useState(null);
+  const [notifications, setNotifications] = useState({ whatsNew: '' });
+
+  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    try {
+      const readNotifications = window.localStorage.getItem(WHATSNEW_NOTIFICATIONS_KEY) || '[]';
+
+      if (readNotifications) {
+        const parsedReadNotifications = JSON.parse(readNotifications);
+        const dom = notifications.whatsNew ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml') : '';
+        const ids = dom ? Array.from(dom.querySelectorAll('entry')).map((item) => item.querySelector('id').textContent) : [];
+        const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
+
+        setAreThereUnreadNotifications(unreadNotifications.length > 0);
+      }
+    } catch (err) {
+      setAreThereUnreadNotifications(false);
+    }
+  }, [notifications]);
 
   useEffect(() => {
     // fetch alerts
@@ -72,6 +105,23 @@ function App() {
 
     if (authenticated) {
       fetchAlerts();
+    }
+  }, [authenticated]);
+
+  useEffect(() => {
+    // fetch alerts
+    async function fetchNotifications() {
+      try {
+        const notificationsFromApi = await getNotifications();
+        setNotifications({ whatsNew: notificationsFromApi });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`There was an error fetching notifications: ${e}`);
+      }
+    }
+
+    if (authenticated) {
+      fetchNotifications();
     }
   }, [authenticated]);
 
@@ -142,7 +192,7 @@ function App() {
         <Route
           path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <LegacyReport
                 match={match}
               />
@@ -153,7 +203,7 @@ function App() {
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
@@ -163,12 +213,16 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => <AppWrapper authenticated logout={logout}><Home /></AppWrapper>}
+          render={() => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <Home />
+            </AppWrapper>
+          )}
         />
         <Route
           path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ApprovedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
@@ -176,7 +230,7 @@ function App() {
         <Route
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ActivityReport location={location} match={match} />
             </AppWrapper>
           )}
@@ -184,7 +238,7 @@ function App() {
         <Route
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} padded={false}>
+            <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
               <RecipientRecord
                 location={location}
                 match={match}
@@ -196,9 +250,66 @@ function App() {
         />
         <Route
           exact
+          path="/resources-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="resources_dashboard" renderNotFound>
+                <ResourcesDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-reports/:status(not-started|in-progress|complete|suspended)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReports user={user} match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/view/:trainingReportId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <ViewTrainingReport match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <TrainingReportForm match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="training_reports" renderNotFound>
+                <SessionForm match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-dashboard"
           render={() => (
-            <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <RegionalDashboard user={user} />
+            </AppWrapper>
           )}
         />
         <Route
@@ -220,10 +331,40 @@ function App() {
         />
         <Route
           exact
-          path="/account"
+          path="/account/group/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <Group match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/regional-goal-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
+                <RegionalGoalDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+
+        <Route
+          exact
+          path="/account"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/notifications"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <NotificationsPage notifications={notifications} />
             </AppWrapper>
           )}
         />
@@ -231,7 +372,7 @@ function App() {
           exact
           path="/account/verify-email/:token"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
@@ -245,7 +386,7 @@ function App() {
         <Route
           path="/admin"
           render={() => (
-            <AppWrapper authenticated logout={logout}><Admin /></AppWrapper>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}><Admin /></AppWrapper>
           )}
         />
         )}
@@ -253,13 +394,17 @@ function App() {
           exact
           path="/recipient-tta-records"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
             </AppWrapper>
           )}
         />
         <Route
-          render={() => <AppWrapper authenticated logout={logout}><NotFound /></AppWrapper>}
+          render={() => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <NotFound />
+            </AppWrapper>
+          )}
         />
       </Switch>
     </>
@@ -273,39 +418,46 @@ function App() {
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
+          <ScrollToTop />
           {authenticated && (
-          <>
-            <a className="usa-skipnav" href="#main-content">
-              Skip to main content
-            </a>
+            <>
+              <a className="usa-skipnav" href="#main-content">
+                Skip to main content
+              </a>
 
-            {/* Only show the sidebar when the user is authenticated */}
-            <UserContext.Provider value={{ user, authenticated, logout }}>
-              <SiteNav
-                admin={admin}
-                authenticated={authenticated}
-                logout={logout}
-                user={user}
-                hasAlerts={!!(alert)}
-              />
-            </UserContext.Provider>
-          </>
+              {/* Only show the sidebar when the user is authenticated */}
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <SiteNav
+                  admin={admin}
+                  authenticated={authenticated}
+                  logout={logout}
+                  user={user}
+                  hasAlerts={!!(alert)}
+                />
+              </UserContext.Provider>
+            </>
           )}
-          <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header authenticated alert={alert} />
-            <AriaLiveContext.Provider value={{ announce }}>
-              {!authenticated && (authError === 403
-                ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-                : (
-                  <AppWrapper padded={false} logout={logout}>
-                    <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                  </AppWrapper>
-                )
-              )}
-              {authenticated && renderAuthenticatedRoutes()}
-
-            </AriaLiveContext.Provider>
-          </UserContext.Provider>
+          <AriaLiveContext.Provider value={{ announce }}>
+            <MyGroupsProvider authenticated={authenticated}>
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <Header
+                  authenticated
+                  alert={alert}
+                  areThereUnreadNotifications={areThereUnreadNotifications}
+                  setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+                />
+                {!authenticated && (authError === 403
+                  ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                  : (
+                    <AppWrapper padded={false} logout={logout}>
+                      <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                    </AppWrapper>
+                  )
+                )}
+                {authenticated && renderAuthenticatedRoutes()}
+              </UserContext.Provider>
+            </MyGroupsProvider>
+          </AriaLiveContext.Provider>
         </BrowserRouter>
         <AriaLiveRegion messages={announcements} />
       </AppLoadingContext.Provider>

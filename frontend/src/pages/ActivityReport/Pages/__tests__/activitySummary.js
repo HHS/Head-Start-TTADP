@@ -3,7 +3,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, { isPageComplete } from '../activitySummary';
 
@@ -30,7 +30,19 @@ const RenderActivitySummary = () => {
   return (
     <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
       <FormProvider {...hookForm}>
-        {activitySummary.render(additionalData)}
+        {activitySummary.render(
+          additionalData,
+          {},
+          1,
+          null,
+          jest.fn(),
+          jest.fn(),
+          jest.fn(),
+          false,
+          '',
+          jest.fn(),
+          () => <></>,
+        )}
       </FormProvider>
     </NetworkContext.Provider>
   );
@@ -98,6 +110,6 @@ describe('isPageComplete', () => {
 
   it('validates delivery method', async () => {
     const result = isPageComplete({ ...FORM_DATA, deliveryMethod: 'virtual' }, { isValid: false });
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 });

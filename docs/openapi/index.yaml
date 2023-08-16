@@ -366,6 +366,51 @@ components:
           description: |
             Manager feedback relating to the approval
           type: string
+    event:
+      type: object
+      description: A training event
+      properties:
+        id:
+          type: integer
+        ownerId:
+          type: integer
+        pocIds:
+          type: array
+          items:
+            type: integer
+        collaboratorIds:
+          type: array
+          items:
+            type: integer
+        regionId:
+          type: integer
+        data:
+          type: object
+      required:
+        - eventId
+        - ownerId
+        - pocId
+        - collaboratorIds
+        - regionId
+        - data
+    sessionReport:
+      type: object
+      description: A session report
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        data:
+          type: object
+      required:
+        - eventId
+        - ownerId
+        - pocId
+        - collaboratorIds
+        - regionId
+        - data
+
   parameters:
     reportId.in:
       in: query

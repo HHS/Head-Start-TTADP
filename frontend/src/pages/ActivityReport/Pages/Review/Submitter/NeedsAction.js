@@ -1,10 +1,12 @@
 import React, { useContext, useState } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
 } from '@trussworks/react-uswds';
-import { Editor } from 'react-draft-wysiwyg';
-import { getEditorState } from '../../../../../utils';
+import { useHistory } from 'react-router';
+import RichEditor from '../../../../../components/RichEditor';
+import FormItem from '../../../../../components/FormItem';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import IncompletePages from '../IncompletePages';
@@ -17,12 +19,16 @@ const NeedsAction = ({
   incompletePages,
   approverStatusList,
   creatorRole,
+  displayId,
+  reportId,
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
   const userHasOneRole = user && user.roles && user.roles.length === 1;
   const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.roles[0] : creatorRole || '');
+  const [creatorNotes, setCreatorNotes] = useState(additionalNotes);
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
+  const history = useHistory();
 
   const submit = async () => {
     if (!submitCR) {
@@ -30,9 +36,23 @@ const NeedsAction = ({
     } else if (!hasIncompletePages) {
       await onSubmit({
         approvers: approverStatusList,
-        additionalNotes,
+        additionalNotes: creatorNotes,
         creatorRole: submitCR,
       });
+
+      // if successful, we should redirect to
+      // the landing page with the message saying
+      // we successfully resubmitted
+      const timezone = moment.tz.guess();
+      const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+      const message = {
+        time,
+        reportId,
+        displayId,
+        status: 'submitted',
+      };
+
+      history.push('/activity-reports', { message });
     }
   };
 
@@ -41,7 +61,6 @@ const NeedsAction = ({
     setShowCreatorRoleError(false);
   };
 
-  const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
   return (
     <>
       <h2>Review and re-submit report</h2>
@@ -75,12 +94,25 @@ const NeedsAction = ({
             : null
         }
       </div>
-      <div className="smart-hub--creator-notes">
-        <p>
-          <span className="text-bold">Creator notes</span>
-        </p>
-        <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
-      </div>
+
+      <Fieldset
+        className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top no-print"
+        legend="Additional Notes"
+      >
+        <FormItem
+          label="Creator notes"
+          name="additionalNotes"
+          required={false}
+        >
+          <div className="margin-top-1">
+            <RichEditor
+              value={creatorNotes}
+              onChange={setCreatorNotes}
+            />
+          </div>
+        </FormItem>
+      </Fieldset>
+
       <div className="smart-hub--creator-notes margin-top-2">
         <p>
           <span className="text-bold">Manager notes</span>
@@ -105,6 +137,8 @@ NeedsAction.propTypes = {
     status: PropTypes.string,
   })).isRequired,
   creatorRole: PropTypes.string,
+  displayId: PropTypes.string.isRequired,
+  reportId: PropTypes.string.isRequired,
 };
 
 NeedsAction.defaultProps = {

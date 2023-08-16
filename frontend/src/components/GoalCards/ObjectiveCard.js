@@ -11,7 +11,7 @@ import {
   NoStatus,
   NotStarted,
   Ceased,
-} from './icons';
+} from '../icons';
 import './ObjectiveCard.scss';
 
 function ObjectiveCard({
@@ -22,6 +22,7 @@ function ObjectiveCard({
     title,
     endDate,
     reasons,
+    topics,
     status,
     grantNumbers,
     activityReports,
@@ -134,10 +135,17 @@ function ObjectiveCard({
         <span className="margin-right-3 minw-15">End date </span>
         {endDate}
       </li>
+
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Topics</span>
+        {topics.join(', ')}
+      </li>
+
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Reasons</span>
         {reasons && displayReasonsList(reasons)}
       </li>
+
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Objective status </span>
         {getObjectiveStatusIcon}
@@ -159,6 +167,10 @@ export const objectivePropTypes = PropTypes.shape({
     number: PropTypes.string,
     id: PropTypes.number,
     endDate: PropTypes.string,
+  })),
+  topics: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
   })),
 });
 

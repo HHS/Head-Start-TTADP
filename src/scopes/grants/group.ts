@@ -1,5 +1,18 @@
 import { Op, WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
+import { idClause } from '../utils';
+
+const constructLiteral = (query: string[], userId: number): string => {
+  const where = idClause(query);
+  return sequelize.literal(`(
+      SELECT DISTINCT "grantId" 
+      FROM "GroupGrants" gg
+      JOIN "Groups" g
+      ON  gg."groupId" = g."id"
+      WHERE g."id" IN (${where})
+      AND (g."userId" = ${userId} OR g."isPublic" = true)
+    )`);
+};
 
 /**
  *
@@ -9,11 +22,9 @@ import { sequelize } from '../../models';
  * @see withoutGroup
  */
 export function withGroup(query: string[], userId: number): WhereOptions {
-  const nameClause = query
-    .map((name) => sequelize.escape(name)).join(',');
   return {
     id: {
-      [Op.in]: sequelize.literal(`(SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (SELECT "id" FROM "Groups" WHERE "name" IN (${nameClause}) AND "userId" = ${userId}))`),
+      [Op.in]: constructLiteral(query, userId),
     },
   };
 }
@@ -25,11 +36,9 @@ export function withGroup(query: string[], userId: number): WhereOptions {
  * @see withGroup
  */
 export function withoutGroup(query: string[], userId: number): WhereOptions {
-  const nameClause = query
-    .map((name) => sequelize.escape(name)).join(',');
   return {
     id: {
-      [Op.notIn]: sequelize.literal(`(SELECT "grantId" FROM "GroupGrants" WHERE "groupId" IN (SELECT "id" FROM "Groups" WHERE "name" in (${nameClause}) AND "userId" = ${userId}))`),
+      [Op.notIn]: constructLiteral(query, userId),
     },
   };
 }

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable no-underscore-dangle */
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -17,7 +18,8 @@ import createAwsElasticSearchIndexes from './createAwsElasticSearchIndexes';
 import {
   search,
 } from '../lib/awsElasticSearch/index';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
+import { processActivityReportObjectiveForResourcesById } from '../services/resource';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 import { auditLogger } from '../logger';
 
 const mockUser = {
@@ -26,6 +28,7 @@ const mockUser = {
   hsesUsername: 'tg234234',
   hsesUserId: 'tg234234',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {
@@ -45,6 +48,7 @@ const draft = {
   context: 'Lets give some context.',
   nonECLKCResourcesUsed: [],
   ECLKCResourcesUsed: [],
+  version: 2,
 };
 
 const approvedReport = {
@@ -87,6 +91,8 @@ describe('Create AWS Elastic Search Indexes', () => {
         number: 'ES234234',
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Draft Report (excluded).
@@ -210,22 +216,14 @@ describe('Create AWS Elastic Search Indexes', () => {
       });
 
       // Create ARO resources.
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective1.id,
-        userProvidedUrl: 'http://google.com',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective1.id,
-        userProvidedUrl: 'http://yahoo.com',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective2.id,
-        userProvidedUrl: 'http://bing.com',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective2.id,
-        userProvidedUrl: 'https://eclkc.ohs.acf.hhs.gov/',
-      });
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective1.id,
+        ['http://google.com', 'http://yahoo.com'],
+      );
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective2.id,
+        ['http://bing.com', 'https://eclkc.ohs.acf.hhs.gov/'],
+      );
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -239,6 +237,7 @@ describe('Create AWS Elastic Search Indexes', () => {
         where: {
           activityReportObjectiveId: [activityReportObjective1.id, activityReportObjective2.id],
         },
+        individualHooks: true,
       });
 
       // Delete Next Steps.
@@ -246,46 +245,61 @@ describe('Create AWS Elastic Search Indexes', () => {
         where: {
           activityReportId: [reportOne.id, reportTwo.id, reportThree.id],
         },
+        individualHooks: true,
       });
 
       // Delete ARO's.
       await ActivityReportObjective.destroy({
         where: { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+        individualHooks: true,
       });
 
       // Delete ARG's.
       await ActivityReportGoal.destroy({
         where: { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+        individualHooks: true,
       });
 
       // Delete activity recipient.
-      await ActivityRecipient.destroy({ where: { activityReportId: reportOne.id } });
-      await ActivityRecipient.destroy({ where: { activityReportId: reportTwo.id } });
-      await ActivityRecipient.destroy({ where: { activityReportId: reportThree.id } });
+      await ActivityRecipient.destroy({
+        where: { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+        individualHooks: true,
+      });
 
       // Delete Objective.
       await Objective.destroy({
         where: {
           id: objective.id,
         },
+        individualHooks: true,
       });
       // Delete Goal.
       await Goal.destroy({
         where: {
           grantId: grant.id,
         },
+        individualHooks: true,
       });
       // Delete Report's.
-      await ActivityReport.destroy({ where: { id: reportOne.id } });
-      await ActivityReport.destroy({ where: { id: reportTwo.id } });
-      await ActivityReport.destroy({ where: { id: reportThree.id } });
-      await ActivityReport.destroy({ where: { id: draftReport.id } });
+      await ActivityReport.destroy({
+        where: { id: [reportOne.id, reportTwo.id, reportThree.id, draftReport.id] },
+        individualHooks: true,
+      });
       // Delete Grant.
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({
+        where: { id: grant.id },
+        individualHooks: true,
+      });
       // Delete Recipient.
-      await Recipient.destroy({ where: { id: recipient.id } });
+      await Recipient.destroy({
+        where: { id: recipient.id },
+        individualHooks: true,
+      });
       // Delete User.
-      await User.destroy({ where: { id: user.id } });
+      await User.destroy({
+        where: { id: user.id },
+        individualHooks: true,
+      });
       await db.sequelize.close();
     } catch (e) {
       auditLogger.error(JSON.stringify(e));

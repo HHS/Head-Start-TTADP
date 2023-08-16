@@ -4,6 +4,7 @@
 import React, {
   useEffect, useState, useMemo, useRef,
 } from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { GridContainer, Grid } from '@trussworks/react-uswds';
 import {
@@ -23,7 +24,6 @@ import { getStatistics } from '../../fetchers/users';
 import './Llama.css';
 import celebratoryLlama from './celebratory-llama.png';
 import colors from '../../colors';
-import { SCOPE_IDS } from '../../Constants';
 import Loader from '../../components/Loader';
 
 export default function Llama({ user }) {
@@ -64,17 +64,16 @@ export default function Llama({ user }) {
   }, [user.id]);
 
   const addWiggler = () => {
-    if (!llamaImage.current) {
-      return;
-    }
     if (llamaImage.current.classList.contains('the-wiggler')) return;
     llamaImage.current.classList.add('the-wiggler');
   };
 
+  const bannerMessage = userCanWrite ? 'To celebrate, let\'s look back on all the work you\'ve done:' : 'To celebrate, let\'s look back on all the work we\'ve done:';
+
   return (
     <Container>
       <div className="position-relative bg-white margin-auto" onClick={addWiggler}>
-        <Loader loadingLabel="Crunching some numbers..." loading={loading} />
+        <Loader loadingLabel="Crunching some numbers and loading your statistics..." loading={loading} />
         <img
           className="display-none bottom-0"
           src={celebratoryLlama}
@@ -85,7 +84,7 @@ export default function Llama({ user }) {
 
         <div className="statistics-content position-relative">
           <h2 className="width-tablet-lg margin-x-auto">The TTA hub is two years old!</h2>
-          <p className="usa-prose width-tablet-lg margin-x-auto">To celebrate, let&apos;s look back on all the work you&apos;ve done:</p>
+          <p className="usa-prose width-tablet-lg margin-x-auto">{bannerMessage}</p>
 
           <GridContainer containerSize="tablet-lg" className="desktop:bg-base-lighter padding-2">
             {userCanWrite ? (

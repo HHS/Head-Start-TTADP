@@ -4,18 +4,20 @@ import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds';
 import './SiteAlert.scss';
 
 export default function SiteAlert({
-  heading, children, style, variant,
+  heading, children, style, variant, size,
 }) {
   return (
-    <BaseSiteAlert
-      variant={variant}
-      heading={heading}
-      showIcon
-      style={{ ...style }}
-      className="usa-site-alert--ttahub no-print"
-    >
-      {children}
-    </BaseSiteAlert>
+    <span aria-live="polite">
+      <BaseSiteAlert
+        variant={variant}
+        heading={heading}
+        showIcon
+        style={{ ...style }}
+        className={`usa-site-alert--ttahub usa-site-alert--ttahub__${size} no-print`}
+      >
+        {children}
+      </BaseSiteAlert>
+    </span>
   );
 }
 
@@ -24,6 +26,7 @@ SiteAlert.propTypes = {
   children: PropTypes.node.isRequired,
   style: PropTypes.shape({}),
   variant: PropTypes.string.isRequired,
+  size: PropTypes.string.isRequired,
 };
 
 SiteAlert.defaultProps = {

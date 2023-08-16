@@ -1,22 +1,18 @@
 /* eslint-disable max-len */
 import { v4 as uuidv4 } from 'uuid';
 import { Op, QueryTypes } from 'sequelize';
-
+import { DECIMAL_BASE } from '@ttahub/common';
+import SCOPES from '../middleware/scopeConstants';
+import { formatNumber } from '../widgets/helpers';
 import {
   User,
   Permission,
   Role,
   sequelize,
   UserValidationStatus,
-  ActivityReport as ActivityReportModel,
-  ActivityReportCollaborator,
-  ActivityReportApprover,
-  ActivityRecipient,
-  Grant,
-  ActivityReportGoal,
-  ActivityReportObjective,
 } from '../models';
-import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
+
+const { SITE_ACCESS } = SCOPES;
 
 export const userAttributes = [
   'id',
@@ -361,7 +357,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalTTA = totalCreatedTTA + totalCollaboratorTTA + totalApproverTTA;
   const totalTTADays = Math.floor(totalTTA / 24);
   const totalTTAHours = totalTTA - (totalTTADays * 24);
-  const totalTTASentence = `${totalTTADays >= 1 ? totalTTADays : 0} days ${totalTTAHours} hrs`;
+  const totalTTASentence = `${totalTTADays >= 1 ? formatNumber(totalTTADays) : 0} days ${totalTTAHours} hrs`;
 
   // Total participants.
   const totalParticipants = totalCreatedParticipants + totalCollaboratorParticipants + totalApproverParticipants;
@@ -379,14 +375,128 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalObjectivesIds = new Set([...createdObjectiveIds, ...collaboratorObjectiveIds, ...approverObjectiveIds]);
 
   return {
-    daysSinceJoined: totalDaysSinceJoined,
-    arsCreated: createdReports.length,
-    arsCollaboratedOn: collaboratorReports.length,
+    daysSinceJoined: formatNumber(totalDaysSinceJoined),
+    arsCreated: formatNumber(createdReports.length),
+    arsCollaboratedOn: formatNumber(collaboratorReports.length),
     ttaProvided: totalTTASentence,
-    recipientsReached: totalRecipientIds.size,
-    grantsServed: totalGrantIds.size,
-    participantsReached: totalParticipants,
-    goalsApproved: totalGoalIds.size,
-    objectivesApproved: totalObjectivesIds.size,
+    recipientsReached: formatNumber(totalRecipientIds.size),
+    grantsServed: formatNumber(totalGrantIds.size),
+    participantsReached: formatNumber(totalParticipants),
+    goalsApproved: formatNumber(totalGoalIds.size),
+    objectivesApproved: formatNumber(totalObjectivesIds.size),
   };
+}
+
+/**
+ * Sets a give feature flag on or off for a set of active users
+ *
+ * @param {flag:string} flag to set
+ * @param {on:boolean} on specifies whether to set the flag on or off
+ * @returns {Promise<Array>} result as a promise resolving to an array of empty array and the number of records affected
+ */
+export async function setFlag(flag, on = true) {
+  const query = `
+    UPDATE
+    "Users" u
+    SET
+      flags = CASE
+        WHEN ${!!on} THEN CASE
+            WHEN flags @> ARRAY ['${flag}'::"enum_Users_flags"] THEN flags
+            ELSE array_append(flags, '${flag}')
+        END
+        ELSE array_remove(flags, '${flag}')
+      END
+    FROM
+    "Permissions" p
+    WHERE
+      p."userId" = u.id AND
+      p."scopeId" = ${SITE_ACCESS}
+      AND CASE
+        WHEN ${!!on} THEN NOT flags @> ARRAY ['${flag}'::"enum_Users_flags"]
+        ELSE flags @> ARRAY ['${flag}'::"enum_Users_flags"]
+    END;
+  `;
+
+  const result = sequelize.query(query, { type: QueryTypes.UPDATE });
+  return result;
+}
+
+/**
+ * @param {number} regionId region to get users for
+ * @returns {Promise<Array>} result as a promise resolving to an array of users
+ */
+
+export async function getTrainingReportUsersByRegion(regionId) {
+  // this is weird (poc = collaborators, collaborators = read/write)? but it is the case
+  // as far as I understand it
+  const pointOfContactScope = SCOPES.POC_TRAINING_REPORTS; // regional poc collab
+  const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
+
+  const users = await User.findAll({
+    exclude: [
+      'email',
+      'phoneNumber',
+      'hsesUserId',
+      'lastLogin',
+      'hsesAuthorities',
+      'hsesUsername',
+    ],
+    where: {
+      [Op.or]: {
+        '$permissions.scopeId$': {
+          [Op.in]: [
+            pointOfContactScope,
+            collaboratorScope,
+          ],
+        },
+      },
+    },
+    include: [
+      {
+        attributes: [
+          'id',
+          'scopeId',
+          'regionId',
+          'userId',
+        ],
+        model: Permission,
+        as: 'permissions',
+        required: true,
+        where: {
+          regionId,
+        },
+      },
+    ],
+    order: [
+      ['name', 'ASC'],
+      ['email', 'ASC'],
+    ],
+  });
+
+  const results = {
+    pointOfContact: [],
+    collaborators: [],
+  };
+
+  users.forEach((user) => {
+    if (user.permissions.some((permission) => permission.scopeId === pointOfContactScope)) {
+      results.pointOfContact.push(user);
+    } else {
+      results.collaborators.push(user);
+    }
+  });
+
+  return results;
+}
+
+export async function getUserNamesByIds(ids) {
+  const users = await User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      id: ids,
+    },
+    raw: true,
+  });
+
+  return users.map((u) => u.name);
 }

@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '../../../Constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { convertGoalsToFormData } from '../formDataHelpers';
 
 describe('convertGoalsToFormData', () => {
@@ -7,15 +7,19 @@ describe('convertGoalsToFormData', () => {
       [
         {
           id: 1,
+          objectives: [],
           activityReportGoals: [
             {
               id: 1,
               isActivelyEdited: true,
             },
           ],
+          source: 'Source',
         },
         {
           id: 2,
+          objectives: [],
+          source: '',
           activityReportGoals: [
             {
               id: 2,
@@ -32,6 +36,8 @@ describe('convertGoalsToFormData', () => {
       {
         id: 2,
         grantIds: [1, 2, 3],
+        source: '',
+        objectives: [],
         activityReportGoals: [
           { id: 2, isActivelyEdited: false },
         ],
@@ -40,7 +46,9 @@ describe('convertGoalsToFormData', () => {
 
     expect(goalForEditing).toEqual({
       id: 1,
+      source: '',
       grantIds: [1, 2, 3],
+      objectives: [],
       activityReportGoals: [
         { id: 1, isActivelyEdited: true },
       ],
@@ -82,12 +90,14 @@ describe('convertGoalsToFormData', () => {
             isActivelyEdited: true,
           },
         ],
+        source: '',
       },
     ]);
 
     expect(goalForEditing).toEqual({
       id: 1,
       grantIds: [1, 2, 3],
+      source: '',
       activityReportGoals: [
         {
           id: 1,
@@ -126,6 +136,7 @@ describe('convertGoalsToFormData', () => {
       {
         id: 1,
         grantIds: [1, 2, 3],
+        source: '',
         activityReportGoals: [
           {
             id: 1,
@@ -135,6 +146,7 @@ describe('convertGoalsToFormData', () => {
       },
       {
         id: 2,
+        source: '',
         grantIds: [1, 2, 3],
         activityReportGoals: [
           {
@@ -165,10 +177,12 @@ describe('convertGoalsToFormData', () => {
       {
         id: 1,
         grantIds: [1, 2, 3],
+        source: '',
       },
       {
         id: 2,
         grantIds: [1, 2, 3],
+        source: '',
       },
     ]);
 
@@ -210,6 +224,7 @@ describe('convertGoalsToFormData', () => {
             isActivelyEdited: true,
           },
         ],
+        source: '',
       },
       {
         id: 2,
@@ -220,6 +235,7 @@ describe('convertGoalsToFormData', () => {
             isActivelyEdited: true,
           },
         ],
+        source: '',
       },
     ]);
 

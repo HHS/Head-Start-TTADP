@@ -2,10 +2,10 @@ import React, {
   useEffect,
   useState,
   useMemo,
-  useRef,
   useContext,
 } from 'react';
 import moment from 'moment';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
+import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -27,21 +28,20 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
-  GOAL_RTTAPA_ERROR,
   objectivesWithValidResourcesOnly,
 } from './constants';
-import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
+import { combinePrompts } from '../condtionalFieldConstants';
 
 const [
   objectiveTextError,
   objectiveTopicsError,
-  objectiveResourcesError,,
+  objectiveResourcesError,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -72,7 +72,10 @@ export default function GoalForm({
     objectives: [],
     id: 'new',
     onApprovedAR: false,
-    isRttapa: '',
+    prompts: [],
+    isCurated: false,
+    source: '',
+    goalTemplateId: null,
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -86,11 +89,13 @@ export default function GoalForm({
   const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
+  const [prompts, setPrompts] = useState(goalDefaults.prompts);
+  const [source, setSource] = useState('');
+  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
+  const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
+  const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
-  const [isRttapa, setIsRttapa] = useState(goalDefaults.isRttapa);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
-
-  const initialRttapa = useRef(isRttapa);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -140,11 +145,13 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setIsRttapa(goal.isRttapa);
-        initialRttapa.current = goal.isRttapa;
+        setPrompts(goal.prompts);
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
+        setIsCurated(goal.isCurated);
+        setGoalTemplateId(goal.goalTemplateId);
+        setSource(goal.source || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -216,6 +223,23 @@ export default function GoalForm({
     fetchTopics();
   }, []);
 
+  useEffect(() => {
+    async function fetchGoalTemplatePrompts() {
+      if (isCurated && goalTemplateId && ids) {
+        const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
+        if (gtPrompts) {
+          setGoalTemplatePrompts(
+            combinePrompts(gtPrompts, prompts),
+          );
+        } else {
+          setGoalTemplatePrompts(prompts);
+        }
+      }
+    }
+
+    fetchGoalTemplatePrompts();
+  }, [goalTemplateId, ids, isCurated, prompts]);
+
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
     const objectiveErrors = [...newErrors[FORM_FIELD_INDEXES.OBJECTIVES]];
@@ -275,6 +299,27 @@ export default function GoalForm({
   };
 
   /**
+   * @returns bool
+   */
+
+  const validateGoalSource = () => {
+    const error = <></>;
+
+    // const newErrors = [...errors];
+
+    // here's where we'd need to validate if we were doing so
+    // i.e. if we were requiring a source
+    // if (!sources.length) {
+    //   error = <span className="usa-error-message">{GOAL_SOURCE_ERROR}</span>;
+    // }
+
+    // newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
+    // setErrors(newErrors);
+
+    return !error.props.children;
+  };
+
+  /**
    *
    * @returns bool
    */
@@ -303,15 +348,24 @@ export default function GoalForm({
     return !error.props.children;
   };
 
-  const validateIsRttapa = () => {
+  const validatePrompts = (title, isErrored, errorMessage) => {
     let error = <></>;
-    if (isRttapa !== 'Yes' && isRttapa !== 'No') {
-      error = <span className="usa-error-message">{GOAL_RTTAPA_ERROR}</span>;
+    const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
+
+    if (isErrored) {
+      error = <span className="usa-error-message">{errorMessage}</span>;
     }
+
     const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.IS_RTTAPA, 1, error);
+    promptErrors[title] = error;
+    newErrors.splice(FORM_FIELD_INDEXES.GOAL_PROMPTS, 1, promptErrors);
     setErrors(newErrors);
     return !error.props.children;
+  };
+
+  const validateAllPrompts = () => {
+    const promptErrors = { ...errors[FORM_FIELD_INDEXES.GOAL_PROMPTS] };
+    return Object.keys(promptErrors).every((key) => !promptErrors[key].props.children);
   };
 
   /**
@@ -444,7 +498,7 @@ export default function GoalForm({
     && validateGoalName()
     && validateEndDate()
     && validateObjectives()
-    && validateIsRttapa()
+    && validateAllPrompts()
   );
   const isValidDraft = () => (
     validateGrantNumbers()
@@ -532,7 +586,6 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
-          isRttapa,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -612,7 +665,8 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
-          isRttapa,
+          source,
+          isCurated,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -676,9 +730,10 @@ export default function GoalForm({
     setGoalName(goalDefaults.name);
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
-    setIsRttapa(goalDefaults.isRttapa);
-    initialRttapa.current = goalDefaults.isRttapa;
     setSelectedGrants(goalDefaults.grants);
+    setIsCurated(goalDefaults.isCurated);
+    setPrompts(goalDefaults.prompts);
+    setSource(goalDefaults.source);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -693,6 +748,7 @@ export default function GoalForm({
       }
       return;
     }
+
     setAppLoadingText('Saving');
     setIsAppLoading(true);
     try {
@@ -700,11 +756,13 @@ export default function GoalForm({
         grantId: g.value,
         name: goalName,
         status,
+        prompts: goalTemplatePrompts,
+        isCurated,
         endDate,
-        isRttapa,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
+        source,
         ids,
       }));
 
@@ -713,7 +771,10 @@ export default function GoalForm({
           const g = goal.grants.map((grant) => ({
             grantId: grant.id,
             name: goal.name,
+            isCurated: goal.isCurated,
+            prompts: goal.prompts,
             status,
+            source,
             endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipientId: recipient.id,
@@ -769,8 +830,9 @@ export default function GoalForm({
     setStatus(goal.status);
     setGoalNumbers(goal.goalNumbers);
     setSelectedGrants(goal.grants);
-    setIsRttapa(goal.isRttapa);
-    initialRttapa.current = goal.isRttapa;
+    setIsCurated(goal.isCurated);
+    setPrompts(goal.prompts);
+    setSource(goal.source);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -869,15 +931,14 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
+              prompts={goalTemplatePrompts}
+              setPrompts={setGoalTemplatePrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}
               endDate={endDate}
               setEndDate={setEndDate}
               datePickerKey={datePickerKey}
-              isRttapa={isRttapa}
-              setIsRttapa={setIsRttapa}
-              initialRttapa={initialRttapa.current}
               errors={errors}
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}
@@ -894,6 +955,10 @@ export default function GoalForm({
               goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
+              validatePrompts={validatePrompts}
+              source={source}
+              setSource={setSource}
+              validateGoalSource={validateGoalSource}
             />
           )}
 

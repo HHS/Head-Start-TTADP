@@ -22,7 +22,7 @@ import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
+import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
 import {
   ALERTS_PER_PAGE,
 } from '../../Constants';
@@ -37,6 +37,7 @@ import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import colors from '../../colors';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -64,7 +65,7 @@ function Landing() {
   const { user } = useContext(UserContext);
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user);
+  const regions = allRegionsUserHasActivityReportPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
@@ -242,8 +243,17 @@ function Landing() {
     }
   };
 
-  const filterConfig = hasMultipleRegions
-    ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
+  const filtersToUse = useMemo(() => {
+    const filterConfig = hasMultipleRegions
+      ? [...LANDING_FILTER_CONFIG_WITH_REGIONS] : [...LANDING_BASE_FILTER_CONFIG];
+
+    // If user has approve activity report permission add 'Specialist name' filter.
+    if (hasApproveActivityReport(user)) {
+      filterConfig.push(specialistNameFilter);
+      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+    }
+    return filterConfig;
+  }, [hasMultipleRegions, user]);
 
   return (
     <>
@@ -281,7 +291,7 @@ function Landing() {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
+            <h1 className="landing margin-top-0 margin-bottom-3">{`Activity reports - ${regionLabel()}`}</h1>
           </Grid>
           <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
@@ -290,13 +300,14 @@ function Landing() {
               && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
-          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
             <FilterPanel
               applyButtonAria="apply filters for activity reports"
               filters={filters}
               onApplyFilters={onApply}
               onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
+              // filterConfig={getFilters()}
+              filterConfig={filtersToUse}
               allUserRegions={regions}
             />
           </Grid>

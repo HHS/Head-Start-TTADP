@@ -9,7 +9,7 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
-import GoalRttapa from './GoalRttapa';
+import FeatureFlag from '../FeatureFlag';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -17,20 +17,22 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
+import ConditionalFields from '../ConditionalFields';
+import GoalSource from './GoalSource';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
+  validatePrompts,
   selectedGrants,
   setSelectedGrants,
   goalName,
+  prompts,
+  setPrompts,
   setGoalName,
   endDate,
   setEndDate,
-  isRttapa,
-  initialRttapa,
-  setIsRttapa,
   errors,
   validateGoalName,
   validateEndDate,
@@ -49,6 +51,9 @@ export default function Form({
   clearEmptyObjectiveError,
   onUploadFiles,
   userCanEdit,
+  source,
+  setSource,
+  validateGoalSource,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -142,15 +147,25 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
-      <GoalRttapa
-        error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
-        isRttapa={isRttapa}
-        onChange={setIsRttapa}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        isOnApprovedReport={isOnApprovedReport || false}
-        initial={initialRttapa}
+      <ConditionalFields
+        isOnReport={isOnApprovedReport}
+        prompts={prompts}
+        setPrompts={setPrompts}
+        validatePrompts={validatePrompts}
+        errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
       />
+
+      <FeatureFlag flag="goal_source">
+        <GoalSource
+          source={source}
+          onChangeGoalSource={setSource}
+          error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
+          isOnReport={isOnApprovedReport}
+          goalStatus={status}
+          userCanEdit={userCanEdit}
+          validateGoalSource={validateGoalSource}
+        />
+      </FeatureFlag>
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
@@ -196,12 +211,15 @@ export default function Form({
 Form.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
+  errors: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.shape({}),
+      PropTypes.node,
+    ]),
+  ).isRequired,
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
-  isRttapa: PropTypes.string.isRequired,
-  setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
@@ -254,8 +272,16 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
-  initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
+  prompts: PropTypes.arrayOf(PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    response: PropTypes.arrayOf(PropTypes.string).isRequired,
+  })).isRequired,
+  setPrompts: PropTypes.func.isRequired,
+  validatePrompts: PropTypes.func.isRequired,
+  source: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setSource: PropTypes.func.isRequired,
+  validateGoalSource: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {

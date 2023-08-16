@@ -41,14 +41,14 @@ describe('Drawer', () => {
   it('should open the drawer when the trigger is clicked', async () => {
     render(renderDrawer());
 
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Content')).not.toBeVisible();
 
     act(() => {
       const button = screen.getByRole('button', { name: 'Open' });
       userEvent.click(button);
     });
 
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByText('Content')).toBeVisible();
   });
 
   it('should close when the escape key is pressed', async () => {
@@ -59,13 +59,13 @@ describe('Drawer', () => {
       userEvent.click(button);
     });
 
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByText('Content')).toBeVisible();
 
     act(() => {
       userEvent.keyboard('{esc}');
     });
 
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Content')).not.toBeVisible();
   });
 
   it('should automatically focus the close button', async () => {
@@ -76,7 +76,7 @@ describe('Drawer', () => {
       userEvent.click(button);
     });
 
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByText('Content')).toBeVisible();
 
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
   });
@@ -89,14 +89,14 @@ describe('Drawer', () => {
       userEvent.click(button);
     });
 
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByText('Content')).toBeVisible();
 
     act(() => {
       const clickTarget = clickTargetRef.current;
       userEvent.click(clickTarget);
     });
 
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Content')).not.toBeVisible();
   });
 
   it('has sticky classes when stickyHeader and stickyFooter are true', async () => {

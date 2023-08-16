@@ -2,7 +2,7 @@
 applications:
   - name: tta-smarthub-((env))
     buildpacks:
-      - nodejs_buildpack
+      - https://github.com/cloudfoundry/nodejs-buildpack
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
@@ -23,8 +23,13 @@ applications:
       CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
       SMTP_HOST: ((SMTP_HOST))
       SMTP_PORT: ((SMTP_PORT))
+      SMTP_HOST_TEST: ((SMTP_HOST_TEST))
+      SMTP_PORT_TEST: ((SMTP_PORT_TEST))
+      SMTP_USER: ((SMTP_USER))
+      SMTP_PASSWORD: ((SMTP_PASSWORD))
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
       SMTP_SECURE: ((SMTP_SECURE))
+      SMTP_IGNORE_TLS: ((SMTP_IGNORE_TLS))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
       NODE_MODULES_CACHE: false
     services:

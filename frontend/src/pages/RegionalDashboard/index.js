@@ -11,7 +11,7 @@ import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
-import { getUserRegions } from '../../permissions';
+import { getUserRegions, hasApproveActivityReport } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
@@ -23,6 +23,7 @@ import FilterContext from '../../FilterContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -118,6 +119,16 @@ export default function RegionalDashboard() {
 
   const filtersToApply = expandFilters(filters);
 
+  const filtersToUse = useMemo(() => {
+    const filterConfig = [...DASHBOARD_FILTER_CONFIG];
+    // If user has approve activity report permission add 'Specialist name' filter.
+    if (hasApproveActivityReport(user)) {
+      filterConfig.push(specialistNameFilter);
+      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+    }
+    return filterConfig;
+  }, [user]);
+
   return (
     <div className="ttahub-dashboard">
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
@@ -130,18 +141,18 @@ export default function RegionalDashboard() {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
-        <h1 className="landing">
+        <h1 className="landing margin-top-0 margin-bottom-3">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
           TTA activity dashboard
         </h1>
-        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
-            filterConfig={DASHBOARD_FILTER_CONFIG}
+            filterConfig={filtersToUse}
             allUserRegions={regions}
           />
         </Grid>

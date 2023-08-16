@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   setActivityReportGoalAsActivelyEdited,
   getGoalsForReport,
@@ -10,7 +11,6 @@ import {
   User,
   sequelize,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 
 describe('setActivityReportGoalAsActivelyEdited', () => {
   let goal;
@@ -29,6 +29,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       name: userName,
       hsesUsername: userName,
       hsesUserId: userName,
+      lastLogin: new Date(),
     });
 
     // Create Goal.
@@ -60,6 +61,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       lastUpdatedById: user.id,
       ECLKCResourcesUsed: ['test'],
       activityRecipients: [{ activityRecipientId: 30 }],
+      version: 2,
     });
 
     // create activity report goal

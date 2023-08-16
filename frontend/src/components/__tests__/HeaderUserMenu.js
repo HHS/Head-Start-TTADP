@@ -1,12 +1,14 @@
 import React from 'react';
 import '@testing-library/jest-dom';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   screen, render, fireEvent,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import App from '../../App';
-import { SCOPE_IDS } from '../../Constants';
+import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
 
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter', permissions: [] };
@@ -17,6 +19,8 @@ describe('HeaderUserMenu', () => {
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
   const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
+  const feedUrl = join('api', 'feeds', 'whats-new');
+  const groupsUrl = join('api', 'groups');
 
   const before = async (admin = false) => {
     if (admin) {
@@ -27,12 +31,18 @@ describe('HeaderUserMenu', () => {
 
     fetchMock.get(logoutUrl, 200);
     fetchMock.get(cleanupUrl, []);
+    fetchMock.get(feedUrl, mockRSSData());
+    fetchMock.get(groupsUrl, []);
 
     render(<App />);
 
     await screen.findByText('Office of Head Start TTA Hub');
     fireEvent.click(screen.getByTestId('header-avatar'));
   };
+
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
 
   describe('when authenticated', () => {
     describe('as non-admin user', () => {
@@ -52,6 +62,31 @@ describe('HeaderUserMenu', () => {
       it('displays the admin button', async () => {
         const adminLink = screen.getByRole('link', { name: 'Admin' });
         expect(adminLink).toBeVisible();
+      });
+
+      describe('as admin user doing an impersonation', () => {
+        const setItem = jest.fn();
+        const getItem = jest.fn(() => true);
+        const removeItem = jest.fn();
+
+        jest.mock('../../hooks/helpers', () => ({
+          storageAvailable: jest.fn(() => true),
+        }));
+
+        mockWindowProperty('sessionStorage', {
+          setItem,
+          getItem,
+          removeItem,
+        });
+
+        afterAll(() => jest.restoreAllMocks());
+
+        it('displays the admin button', async () => {
+          const btn = await screen.findByRole('button', { name: /stop impersonating/i });
+          expect(btn).toBeVisible();
+          userEvent.click(btn);
+          expect(removeItem).toHaveBeenCalled();
+        });
       });
     });
 

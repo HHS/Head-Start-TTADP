@@ -1,11 +1,12 @@
 const {
   Model,
 } = require('sequelize');
-const { ALERT_STATUSES, ALERT_VARIANTS } = require('../constants');
+const { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 
 const possibleStatuses = Object.values(ALERT_STATUSES);
 const possibleVariants = Object.values(ALERT_VARIANTS);
+const possibleSizes = Object.values(ALERT_SIZES);
 
 /**
    *
@@ -53,6 +54,12 @@ export default (sequelize, DataTypes) => {
     },
     variant: {
       type: DataTypes.ENUM(possibleVariants),
+    },
+    size: {
+      type: DataTypes.ENUM(possibleSizes),
+      allowNull: false,
+      // eslint-disable-next-line @typescript-eslint/quotes
+      defaultValue: sequelize.literal(`'standard'::"enum_SiteAlerts_size"`),
     },
   }, {
     sequelize,

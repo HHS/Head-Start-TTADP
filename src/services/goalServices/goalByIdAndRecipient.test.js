@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import faker from '@faker-js/faker';
 import db, {
   Recipient,
@@ -16,17 +17,19 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   File,
+  Resource,
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
-
-import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
-import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
+import { processObjectiveForResourcesById } from '../resource';
+import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from '../goals';
+import { FILE_STATUSES } from '../../constants';
 
 describe('goalById', () => {
   let grantRecipient;
   let grantForReport;
   let report;
   let goalOnActivityReport;
+  let otherGoal;
   let objective;
   let file;
   let file2;
@@ -46,6 +49,8 @@ describe('goalById', () => {
       programSpecialistName: faker.name.firstName(),
       regionId: 1,
       id: faker.datatype.number({ min: 64000 }),
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     goalOnActivityReport = await Goal.create({
@@ -55,6 +60,16 @@ describe('goalById', () => {
       grantId: grantForReport.id,
       isFromSmartsheetTtaPlan: false,
       id: faker.datatype.number({ min: 64000 }),
+      rtrOrder: 1,
+    });
+
+    otherGoal = await Goal.create({
+      name: 'other goal',
+      status: 'In Progress',
+      grantId: grantForReport.id,
+      isFromSmartsheetTtaPlan: false,
+      id: faker.datatype.number({ min: 64000 }),
+      rtrOrder: 2,
     });
 
     objective = await Objective.create({
@@ -82,15 +97,7 @@ describe('goalById', () => {
       objectiveId: objective.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google.com',
-    });
-
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google1.com',
-    });
+    await processObjectiveForResourcesById(objective.id, ['http://www.google.com', 'http://www.google1.com']);
 
     file = await File.create({
       originalFileName: 'gibbery-pibbery.txt',
@@ -163,62 +170,77 @@ describe('goalById', () => {
       where: {
         id: aroIds,
       },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await ObjectiveFile.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await File.destroy({
       where: {
         id: [file.id, file2.id],
       },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: ['http://www.google.com', 'http://www.google1.com'] },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goalOnActivityReport.id,
       },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
       where: {
         activityReportId: report.id,
       },
+      individualHooks: true,
     });
 
     await destroyReport(report);
 
     await Goal.destroy({
       where: {
-        id: goalOnActivityReport.id,
+        id: [goalOnActivityReport.id, otherGoal.id],
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grantForReport.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: grantRecipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
@@ -336,5 +358,15 @@ describe('goalById', () => {
     expect(obj.files.length).toBe(2);
     expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'true']);
     expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+  });
+
+  it('returns the goals in the correct order', async () => {
+    const goals = await goalsByIdAndRecipient(
+      [otherGoal.id, goalOnActivityReport.id],
+      grantRecipient.id,
+    );
+    expect(goals.length).toBe(2);
+    expect(goals[0].id).toBe(goalOnActivityReport.id);
+    expect(goals[1].id).toBe(otherGoal.id);
   });
 });

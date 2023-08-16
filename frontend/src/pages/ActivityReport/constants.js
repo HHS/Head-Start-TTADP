@@ -48,7 +48,7 @@ export const recipientParticipants = [
 
 export const otherEntityParticipants = [
   'HSCO',
-  'Local/State Agency(ies)',
+  'Local or State Agency',
   'OCC Regional Office',
   'OHS Regional Office',
   'Regional Head Start Association',
@@ -78,6 +78,7 @@ export const topics = [
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -85,7 +86,7 @@ export const topics = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
-  'Ongoing Monitoring Management System',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',

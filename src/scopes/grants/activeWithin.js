@@ -22,6 +22,13 @@ export function activeAfter(dates) {
       endDate: {
         [Op.gte]: new Date(date),
       },
+      [Op.or]: [{
+        inactivationDate: {
+          [Op.gte]: new Date(date),
+        },
+      }, {
+        inactivationDate: null,
+      }],
     },
   ], []);
 
@@ -50,6 +57,13 @@ export function activeWithinDates(dates) {
         endDate: {
           [Op.gte]: new Date(sd),
         },
+        [Op.or]: [{
+          inactivationDate: {
+            [Op.gte]: new Date(sd),
+          },
+        }, {
+          inactivationDate: null,
+        }],
       },
     ];
   }, []);

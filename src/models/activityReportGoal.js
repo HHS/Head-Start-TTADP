@@ -1,13 +1,26 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
-const { afterDestroy } = require('./hooks/activityReportGoal');
+const {
+  afterCreate,
+  beforeDestroy,
+  afterDestroy,
+  afterUpdate,
+} = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
     static associate(models) {
       ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
+      ActivityReportGoal.hasMany(models.ActivityReportGoalResource, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalResources' });
+      ActivityReportGoal.hasMany(models.ActivityReportGoalFieldResponse, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalFieldResponses' });
+      ActivityReportGoal.belongsToMany(models.Resource, {
+        through: models.ActivityReportGoalResource,
+        foreignKey: 'activityReportGoalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   ActivityReportGoal.init({
@@ -31,7 +44,7 @@ export default (sequelize, DataTypes) => {
     },
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     closeSuspendReason: {
       allowNull: true,
       type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
@@ -43,6 +56,9 @@ export default (sequelize, DataTypes) => {
     closeSuspendContext: {
       type: DataTypes.TEXT,
     },
+    source: {
+      type: DataTypes.ENUM(GOAL_SOURCES),
+    },
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -52,7 +68,10 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ActivityReportGoal',
     hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportGoal;

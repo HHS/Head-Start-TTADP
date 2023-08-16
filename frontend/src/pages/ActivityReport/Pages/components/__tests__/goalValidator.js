@@ -11,7 +11,7 @@ import {
   OBJECTIVE_RESOURCES,
 } from '../goalValidator';
 import {
-  GOAL_NAME_ERROR, GOAL_RTTAPA_ERROR,
+  GOAL_NAME_ERROR,
 } from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
@@ -56,16 +56,6 @@ const goalValid = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
-  objectives: [
-    { ...validObjective },
-    { ...validObjective },
-  ],
-};
-
-const goalNoIsRttapa = {
-  name: 'Test goal',
-  endDate: '2021-01-01',
-  isRttapa: '',
   objectives: [
     { ...validObjective },
     { ...validObjective },
@@ -122,6 +112,18 @@ describe('validateGoals', () => {
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
       });
+
+      it('doesn\'t die if there is no setError', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, resources: [{ value: '234runwf78n' }] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).not.toHaveBeenCalled();
+      });
     });
 
     describe('returns false', () => {
@@ -146,13 +148,6 @@ describe('validateGoals', () => {
         const setError = jest.fn();
         unfinishedGoals(goals, setError);
         expect(setError).toHaveBeenCalledWith('goalName', { message: GOAL_NAME_ERROR });
-      });
-
-      it('if goal has no isRttapa set', () => {
-        const goals = [goalNoIsRttapa];
-        const setError = jest.fn();
-        unfinishedGoals(goals, setError);
-        expect(setError).toHaveBeenCalledWith('goalIsRttapa', { message: GOAL_RTTAPA_ERROR });
       });
 
       it('if one goal has no objectives', () => {

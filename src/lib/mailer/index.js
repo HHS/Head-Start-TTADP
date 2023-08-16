@@ -15,14 +15,18 @@ import {
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 
 export const notificationQueue = newQueue('notifications');
-export const notificationDigestQueue = newQueue('digestNotifications');
+// export const notificationQueue = newQueue('digestNotifications');
 
 const {
   SMTP_HOST,
   SMTP_PORT,
+  SMTP_USER,
+  SMTP_PASSWORD,
   SMTP_SECURE,
+  SMTP_IGNORE_TLS,
   NODE_ENV,
   SEND_NON_PRODUCTION_NOTIFICATIONS,
 } = process.env;
@@ -34,7 +38,11 @@ const defaultTransport = createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure,
-  ignoreTLS: true,
+  ignoreTLS: SMTP_IGNORE_TLS,
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASSWORD,
+  },
 });
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
@@ -65,6 +73,21 @@ export const frequencyToInterval = (freq) => {
   return date;
 };
 
+export const onFailedNotification = (job, error) => {
+  auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
+  logEmailNotification(job, false, error);
+};
+
+export const onCompletedNotification = (job, result) => {
+  if (result != null) {
+    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
+    logEmailNotification(job, true, result);
+  } else {
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
+    logEmailNotification(job, false, { preferences: 'off' });
+  }
+};
+
 /**
  * Process function for changesRequested jobs added to notification queue
  * Sends group email to report author and collaborators about a single approver's requested changes
@@ -81,8 +104,8 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
       id,
       displayId,
     } = report;
-    const approverEmail = approver.User.email;
-    const approverName = approver.User.name;
+    const approverEmail = approver.user.email;
+    const approverName = approver.user.name;
     const approverNote = approver.note;
     logger.debug(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
 
@@ -218,7 +241,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       id,
       displayId,
     } = report;
-    const approverEmail = newApprover.User.email;
+    const approverEmail = newApprover.user.email;
     logger.debug(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
@@ -401,7 +424,7 @@ export async function collaboratorDigest(freq, subjectFreq) {
         freq,
         subjectFreq,
       };
-      notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -439,7 +462,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -477,7 +500,7 @@ export async function submittedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -516,7 +539,7 @@ export async function approvedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
       return data;
     });
     return Promise.all(records);
@@ -578,7 +601,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
       return data;
     });
 
@@ -637,6 +660,24 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     });
   }
   return null;
+};
+
+export const processNotificationQueue = () => {
+  // Notifications
+  notificationQueue.on('failed', onFailedNotification);
+  notificationQueue.on('completed', onCompletedNotification);
+
+  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
+  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
+  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
+
+  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
+  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
 };
 
 /**

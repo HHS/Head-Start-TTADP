@@ -1,7 +1,12 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goal');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -23,13 +28,27 @@ export default (sequelize, DataTypes) => {
       });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
+      Goal.belongsToMany(models.GoalTemplateFieldPrompt, {
+        through: models.GoalFieldResponse,
+        foreignKey: 'goalId',
+        otherKey: 'goalTemplateFieldPromptId',
+        as: 'prompts',
+      });
+      Goal.hasMany(models.GoalFieldResponse, { foreignKey: 'goalId', as: 'responses' });
+      Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
+      Goal.belongsToMany(models.Resource, {
+        through: models.GoalResource,
+        foreignKey: 'goalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   Goal.init({
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
-    timeframe: DataTypes.STRING,
+    timeframe: DataTypes.TEXT,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
     endDate: {
       type: DataTypes.DATEONLY,
@@ -72,15 +91,17 @@ export default (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
     },
     previousStatus: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+      allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+      allowNull: false,
     },
     isRttapa: {
       type: DataTypes.ENUM(RTTAPA_ENUM),
@@ -130,12 +151,21 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
       allowNull: true,
     },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 1,
+    },
+    source: {
+      type: DataTypes.ENUM(GOAL_SOURCES),
+    },
   }, {
     sequelize,
     modelName: 'Goal',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

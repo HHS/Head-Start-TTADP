@@ -1,4 +1,8 @@
 import {
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+} from '@ttahub/common';
+import {
   getReport,
   saveReport,
   createReport,
@@ -47,8 +51,8 @@ import db, {
   ActivityReportApprover, ActivityReport as ActivityReportModel, Permission, User as UserModel,
 } from '../../models';
 import * as mailer from '../../lib/mailer';
-import { APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
+import { USER_SETTINGS } from '../../constants';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportAndRecipientsById: jest.fn(),
@@ -116,6 +120,7 @@ const mockManager = {
   hsesUsername: 'user1843',
   homeRegionId: 1,
   email: 'mockManager1843@test.gov',
+  lastLogin: new Date(),
 };
 const secondMockManager = {
   id: 1222,
@@ -123,6 +128,7 @@ const secondMockManager = {
   hsesUsername: 'user1222',
   homeRegionId: 1,
   email: 'mockManager1222@test.gov',
+  lastLogin: new Date(),
 };
 const mockUser = {
   id: 1844,
@@ -130,6 +136,7 @@ const mockUser = {
   hsesUsername: 'user1844',
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
+  lastLogin: new Date(),
 };
 const objectivesWithoutGoals = undefined;
 const report = {
@@ -140,6 +147,7 @@ const report = {
   displayId: 'mockreport-1',
   regionId: 1,
   objectivesWithoutGoals,
+  version: 2,
 };
 
 const activityRecipients = undefined;

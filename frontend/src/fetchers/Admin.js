@@ -1,8 +1,8 @@
 import join from 'url-join';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   get, put, post, destroy,
 } from './index';
-import { DECIMAL_BASE } from '../Constants';
 
 export const getUsers = async () => {
   const users = await get((join('/', 'api', 'admin', 'users')));
@@ -60,14 +60,45 @@ export const saveSiteAlert = async (alert) => {
 
 export const deleteSiteAlert = async (alertId) => {
   const success = await destroy((join('/', 'api', 'admin', 'alerts', String(alertId))));
-  if (success.ok) {
-    return true;
-  }
-
-  return false;
+  return !!(success.ok);
 };
 
 export const createSiteAlert = async (alert) => {
   const createdAlert = await post((join('/', 'api', 'admin', 'alerts')), alert);
   return createdAlert.json();
+};
+
+export const setFeatureFlag = async (data) => {
+  const result = await post((join('/', 'api', 'users', 'feature-flags')), data);
+  return result;
+};
+
+export const getRedisInfo = async () => {
+  const info = await get((join('/', 'api', 'admin', 'redis', 'info')));
+  return info.json();
+};
+
+export const flushRedis = async () => {
+  const result = await post((join('/', 'api', 'admin', 'redis', 'flush')));
+  return result.json();
+};
+
+export const deleteNationalCenter = async (id) => {
+  const result = await destroy((join('/', 'api', 'admin', 'national-center', String(id))));
+  return result.json();
+};
+
+export const createNationalCenter = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'national-center')), data);
+  return result.json();
+};
+
+export const updateNationalCenter = async (id, data) => {
+  const result = await put((join('/', 'api', 'admin', 'national-center', String(id))), data);
+  return result.json();
+};
+
+export const sendEmail = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'email')), data);
+  return result.json();
 };

@@ -1,7 +1,9 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES, OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
+const { REPORT_STATUSES } = require('@ttahub/common');
+const { OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
+const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
   scheduleUpdateIndexDocumentJob,
@@ -10,6 +12,15 @@ const {
 const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForActivityReport, processActivityReportForResourcesById } = require('../../services/resource');
+  const changed = instance.changed() || Object.keys(instance);
+  if (calculateIsAutoDetectedForActivityReport(changed)) {
+    await processActivityReportForResourcesById(instance.id);
+  }
+};
 
 /**
  * Helper function called by model hooks.
@@ -85,6 +96,29 @@ const setSubmittedDate = (sequelize, instance, options) => {
     } else if (instance.calculatedStatus === REPORT_STATUSES.DRAFT) {
       // Submitted > Draft.
       instance.set('submittedDate', null);
+    }
+  } catch (e) {
+    auditLogger.error(JSON.stringify({ e }));
+  }
+};
+
+/**
+ * This hook is called when an activity report is approved.
+ * It clears the additional notes field, which is data we don't
+ * want to retain after approval.
+ *
+ * @param {*} _sequelize
+ * @param {*} instance
+ * @param {*} options
+ */
+const clearAdditionalNotes = (_sequelize, instance, options) => {
+  try {
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      if (!options.fields.includes('additionalNotes')) {
+        options.fields.push('additionalNotes');
+      }
+      instance.set('additionalNotes', '');
     }
   } catch (e) {
     auditLogger.error(JSON.stringify({ e }));
@@ -227,7 +261,6 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
         include: [{
           model: sequelize.models.Objective,
           as: 'objective',
-          attributes: ['id', 'status'],
           required: true,
         }],
       },
@@ -238,45 +271,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     report.calculatedStatus === REPORT_STATUSES.APPROVED
   ));
 
-  // Only change the status if we have an approved report using the objective.
-  if (approvedReports.length) {
-    Promise.all(objectiveIds.map((o) => {
-      // Get reports that use this objective.
-      const relevantARs = approvedReports.filter(
-        (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
-      );
-
-      if (!relevantARs && !relevantARs.length) {
-        return Promise.resolve();
-      }
-
-      // Get latest report by end date.
-      const latestAR = relevantARs.reduce((r, a) => {
-        if (r && r.endDate) {
-          return new Date(r.endDate) > new Date(a.endDate) ? r : a;
-        }
-        return a;
-      }, {
-        endDate: null,
-        activityReportObjectives: [],
-      });
-
-      // Get Objective to take status from.
-      const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
-
-      if (!aro) {
-        return Promise.resolve();
-      }
-
-      // Update Objective status.
-      return sequelize.models.Objective.update({
-        status: aro.status || 'Not Started',
-      }, {
-        where: { id: o },
-        individualHooks: true,
-      });
-    }));
-  } else if (isUnlocked) {
+  if (isUnlocked && !approvedReports.length) {
     const report = allReports.find((r) => r.id === activityReportId);
     const objectivesToReset = report && report.activityReportObjectives
       ? report.activityReportObjectives.map((a) => a.objectiveId)
@@ -284,15 +279,78 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
 
     // we don't need to run this query with an empty array I don't think
     if (objectivesToReset.length) {
-      await sequelize.models.Objective.update({
+      return sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
         where: { id: objectivesToReset },
         individualHooks: true,
       });
     }
+
+    return Promise.resolve();
   }
+
+  return Promise.all(objectiveIds.map((objectiveId) => {
+    // Get reports that use this objective.
+    const relevantARs = approvedReports.filter(
+      (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === objectiveId),
+    );
+
+    const objectivesToUpdate = relevantARs.map((a) => a.activityReportObjectives
+      .filter((aro) => aro.objectiveId === objectiveId).map((aro) => aro.objective)).flat();
+
+    if (!relevantARs && !relevantARs.length) {
+      return Promise.resolve();
+    }
+
+    // Get latest report by end date.
+    const latestAR = relevantARs.reduce((r, a) => {
+      if (r && r.endDate) {
+        return new Date(r.endDate) > new Date(a.endDate) ? r : a;
+      }
+      return a;
+    }, {
+      endDate: null,
+      activityReportObjectives: [],
+    });
+
+    // // Get Objective to take status from.
+    const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === objectiveId));
+    const latestEndDate = latestAR.endDate;
+
+    if (!aro) {
+      return Promise.resolve();
+    }
+
+    return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
+      const newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+      if (newStatus === objectiveToUpdate.status) {
+        return Promise.resolve();
+      }
+
+      if (objectiveToUpdate.status === OBJECTIVE_STATUS.NOT_STARTED
+          && newStatus === OBJECTIVE_STATUS.IN_PROGRESS
+      ) {
+        if (!objectiveToUpdate.firstInProgressAt) {
+          objectiveToUpdate.set('firstInProgressAt', latestEndDate);
+        }
+
+        objectiveToUpdate.set('lastInProgressAt', latestEndDate);
+        objectiveToUpdate.set('status', newStatus);
+        // in this case, we don't want to run hooks because we don't want to update the
+        // status metadata
+        return objectiveToUpdate.save({ hooks: false });
+      }
+
+      return objectiveToUpdate.update({
+        status: newStatus,
+      }, {
+        individualHooks: true,
+      });
+    })));
+  }));
 };
+
 const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
@@ -393,7 +451,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             "ResourcesOnReport" AS (
               SELECT DISTINCT
                 aro."objectiveId",
-                aror."userProvidedUrl"
+                aror."resourceId"
               FROM "ActivityReportObjectives" aro
               JOIN "ActivityReportObjectiveResources" aror
               ON aro.id = aror."activityReportObjectiveId"
@@ -405,7 +463,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
               LEFT JOIN "ActivityReportObjectiveResources" aror2
               ON aro2.id = aror2."activityReportObjectiveId"
-              AND aror."userProvidedUrl" = aror2."userProvidedUrl"
+              AND aror."resourceId" = aror2."resourceId"
               WHERE aror2."id" IS NULL
             )
             UPDATE "ObjectiveResources" r
@@ -413,7 +471,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             FROM "ResourcesOnReport" rr
             WHERE r."onApprovedAR" = true
             AND r."objectiveId" = rr."objectiveId"
-            AND r."userProvidedUrl" = rr."userProvidedUrl";
+            AND r."resourceId" = rr."resourceId";
           `, { transaction: options.transaction }),
           // update the onApprovedAR for topics that will no longer be referenced on an approved AR
           sequelize.query(`
@@ -499,17 +557,30 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       }
 
       if (goals && goals.length > 0) {
-        await sequelize.models.Goal.update(
-          { onApprovedAR: false },
-          {
-            where: {
-              id: { [Op.in]: goals.map((g) => g.id) },
-              onApprovedAR: true,
+        await Promise.all([
+          sequelize.models.Goal.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                id: { [Op.in]: goals.map((g) => g.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
             },
-            transaction: options.transaction,
-            individualHooks: true,
-          },
-        );
+          ),
+          sequelize.models.GoalFieldResponse.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                goalId: { [Op.in]: goals.map((g) => g.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+        ]);
       }
     } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
     && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
@@ -570,7 +641,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             "ResourcesOnReport" AS (
               SELECT DISTINCT
                 aro."objectiveId",
-                aror."userProvidedUrl"
+                aror."resourceId"
               FROM "ActivityReportObjectives" aro
               JOIN "ActivityReportObjectiveResources" aror
               ON aro.id = aror."activityReportObjectiveId"
@@ -582,7 +653,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             FROM "ResourcesOnReport" rr
             WHERE r."onApprovedAR" = false
             AND r."objectiveId" = rr."objectiveId"
-            AND r."userProvidedUrl" = rr."userProvidedUrl";
+            AND r."resourceId" = rr."resourceId";
           `, { transaction: options.transaction }),
           sequelize.query(`
           WITH
@@ -608,17 +679,30 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       /*  Determine Objective Statuses (Other > Approved) */
       await determineObjectiveStatus(instance.id, sequelize, false);
 
-      await sequelize.models.Goal.update(
-        { onApprovedAR: true },
-        {
-          where: {
-            id: objectivesAndGoals.map((o) => o.goalId),
-            onApprovedAR: false,
+      await Promise.all([
+        sequelize.models.Goal.update(
+          { onApprovedAR: true },
+          {
+            where: {
+              id: objectivesAndGoals.map((o) => o.goalId),
+              onApprovedAR: false,
+            },
+            transaction: options.transaction,
+            individualHooks: true,
           },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
+        ),
+        sequelize.models.GoalFieldResponse.update(
+          { onApprovedAR: true },
+          {
+            where: {
+              goalId: objectivesAndGoals.map((o) => o.goalId),
+              onApprovedAR: false,
+            },
+            transaction: options.transaction,
+            individualHooks: true,
+          },
+        ),
+      ]);
     }
   }
 };
@@ -637,13 +721,12 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
-          status: ['Draft', 'Not Started'],
+          status: [
+            GOAL_STATUS.DRAFT,
+            GOAL_STATUS.NOT_STARTED,
+          ],
         },
         include: [
-          {
-            model: sequelize.models.Objective,
-            as: 'objectives',
-          },
           {
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
@@ -655,50 +738,27 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       },
     );
 
-    await Promise.all((goals.map((goal) => {
-      const status = 'In Progress';
+    return Promise.all((goals.map((goal) => {
+      const status = GOAL_STATUS.IN_PROGRESS;
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
         goal.set('previousStatus', goal.status);
         goal.set('status', status);
+        if (instance.endDate) {
+          if (!goal.firstInProgressAt) {
+            goal.set('firstInProgressAt', instance.endDate);
+          }
+          goal.set('lastInProgressAt', instance.endDate);
+        }
       }
-      return goal.save({ transaction: options.transaction, individualHooks: true });
+      // removing hooks because we don't want to trigger the automatic status change
+      // (i.e. last in progress at will be overwritten)
+      return goal.save({ transaction: options.transaction, hooks: false });
     })));
   }
-};
 
-const automaticIsRttapaChangeOnApprovalForGoals = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('calculatedStatus')
-    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
-    const goals = await sequelize.models.Goal.findAll(
-      {
-        where: {
-          isRttapa: { [Op.or]: [null, 'No'] },
-        },
-        include: [
-          {
-            model: sequelize.models.ActivityReportGoal,
-            as: 'activityReportGoals',
-            required: true,
-            where: { activityReportId: instance.id },
-          },
-        ],
-        transaction: options.transaction,
-      },
-    );
-
-    await Promise.all((goals.map((goal) => {
-      if (['Yes', 'No'].includes(goal.activityReportGoals[0].isRttapa)) {
-        goal.set('isRttapa', goal.activityReportGoals[0].isRttapa);
-      }
-
-      return goal.save({ transaction: options.transaction, individualHooks: true });
-    })));
-  }
+  return Promise.resolve();
 };
 
 const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance, options) => {
@@ -807,6 +867,11 @@ const beforeValidate = async (sequelize, instance, options) => {
 const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
   setSubmittedDate(sequelize, instance, options);
+  clearAdditionalNotes(sequelize, instance, options);
+};
+
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -815,11 +880,12 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
-  await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);
 };
 
 export {
+  processForEmbeddedResources,
   copyStatus,
   propagateApprovedStatus,
   propagateSubmissionStatus,
@@ -827,6 +893,7 @@ export {
   beforeValidate,
   beforeCreate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,

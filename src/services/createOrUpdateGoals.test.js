@@ -1,5 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
+import { GOAL_SOURCES } from '@ttahub/common';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
@@ -9,7 +10,9 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
+  Resource,
 } from '../models';
+import { processObjectiveForResourcesById } from './resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
@@ -27,12 +30,16 @@ describe('createOrUpdateGoals', () => {
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
     {
       id: faker.datatype.number(),
       number: faker.random.alphaNumeric(5),
       cdi: false,
       regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
     },
   ];
 
@@ -46,6 +53,7 @@ describe('createOrUpdateGoals', () => {
       name: 'This is some serious goal text',
       status: 'Draft',
       grantId: grants[0].id,
+      source: GOAL_SOURCES[0],
     });
     topic = await Topic.findOne();
 
@@ -61,10 +69,7 @@ describe('createOrUpdateGoals', () => {
       status: 'Not Started',
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'https://www.test.gov',
-    });
+    await processObjectiveForResourcesById(objective.id, ['https://www.test.gov']);
   });
 
   afterAll(async () => {
@@ -72,12 +77,19 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: 'https://www.test.gov' },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     const goals = await Goal.findAll({
@@ -92,24 +104,28 @@ describe('createOrUpdateGoals', () => {
       where: {
         goalId: goalIds,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
         id: goalIds,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
@@ -189,6 +205,7 @@ describe('createOrUpdateGoals', () => {
     const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
+    expect(updatedGoal.source).toBe(GOAL_SOURCES[0]);
 
     const grantIds = newGoals.map((g) => g.grantIds).flat();
     expect(grantIds.length).toBe(2);
@@ -242,11 +259,15 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
-      raw: true,
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+      }],
     });
 
     expect(resource.length).toBe(1);
-    expect(resource[0].userProvidedUrl).toBe('https://www.test.gov');
+    expect(resource[0].resource.dataValues.url).toBe('https://www.test.gov');
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
@@ -325,5 +346,119 @@ describe('createOrUpdateGoals', () => {
     expect(updatedGoal2.objectives).toHaveLength(1);
     const [updatedObjective2] = updatedGoal2.objectives;
     expect(updatedObjective2.status).toBe('Complete');
+  });
+
+  it('you can change an objectives status For objective on approved AR', async () => {
+    const basicGoal = {
+      recipientId: recipient.id,
+      regionId: 1,
+      name: 'This is some serious goal text for an objective that will have its status updated, but different',
+      status: 'Draft',
+    };
+
+    const updatedGoals = await createOrUpdateGoals([
+      {
+        ...basicGoal,
+        isNew: true,
+        grantId: grants[1].id,
+        objectives: [
+          {
+            id: 'new-0',
+            status: 'Not Started',
+            title: 'This is a different objective ',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals).toHaveLength(1);
+    const [updatedGoal] = updatedGoals;
+    expect(updatedGoal.objectives).toHaveLength(1);
+    const [updatedObjective] = updatedGoal.objectives;
+    expect(updatedObjective.status).toBe('Not Started');
+
+    await Objective.update({
+      title: 'This is a different objective ',
+    }, { where: { id: updatedObjective.id } });
+
+    const updatedGoals2 = await createOrUpdateGoals([
+      {
+        ...updatedGoal.dataValues,
+        recipientId: recipient.id,
+        grantId: grants[1].id,
+        ids: [updatedGoal.id],
+        objectives: [
+          {
+            title: updatedObjective.title,
+            id: [updatedObjective.id],
+            status: 'In Progress',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals2).toHaveLength(1);
+    const [updatedGoal2] = updatedGoals2;
+    expect(updatedGoal2.objectives).toHaveLength(1);
+    const [updatedObjective2] = updatedGoal2.objectives;
+    expect(updatedObjective2.status).toBe('In Progress');
+
+    await Objective.update({
+      onAR: true,
+      onApprovedAR: true,
+      title: 'This is a different objective ',
+    }, { where: { id: updatedObjective.id } });
+
+    const updatedGoals3 = await createOrUpdateGoals([
+      {
+        ...updatedGoal.dataValues,
+        recipientId: recipient.id,
+        grantId: grants[1].id,
+        ids: [updatedGoal.id],
+        objectives: [
+          {
+            title: updatedObjective.title,
+            id: [updatedObjective.id],
+            status: 'Complete',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals3).toHaveLength(1);
+    const [updatedGoal3] = updatedGoals3;
+    expect(updatedGoal3.objectives).toHaveLength(1);
+    const [updatedObjective3] = updatedGoal3.objectives;
+    expect(updatedObjective3.status).toBe('Complete');
   });
 });

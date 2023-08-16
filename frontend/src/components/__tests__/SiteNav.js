@@ -7,8 +7,8 @@ import {
 import fetchMock from 'fetch-mock';
 import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-
 import SiteNav from '../SiteNav';
+import UserContext from '../../UserContext';
 
 const history = createMemoryHistory();
 
@@ -20,13 +20,21 @@ describe('SiteNav', () => {
     const userUrl = join('api', 'user');
 
     beforeEach(() => {
-      const user = { name: 'name' };
+      const user = {
+        name: 'name',
+        id: 1,
+        flags: [],
+        roles: [],
+        permissions: [],
+      };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
 
       render(
         <Router history={history}>
-          <SiteNav authenticated admin user={user} hasAlerts={false} />
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated admin user={user} hasAlerts={false} />
+          </UserContext.Provider>
         </Router>,
       );
     });
@@ -44,11 +52,13 @@ describe('SiteNav', () => {
 
     beforeEach(() => {
       const user = { name: 'name' };
-      fetchMock.get(userUrl, { ...user });
+      fetchMock.get(userUrl, { ...user, permissions: [] });
 
       render(
         <MemoryRouter>
-          <SiteNav authenticated user={user} hasAlerts={false} />
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });
@@ -60,7 +70,13 @@ describe('SiteNav', () => {
 
   describe('when unauthenticated', () => {
     beforeEach(() => {
-      render(<MemoryRouter><SiteNav authenticated={false} hasAlerts={false} /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <UserContext.Provider value={{ user: {}, authenticated: false, logout: () => {} }}>
+            <SiteNav authenticated={false} hasAlerts={false} />
+          </UserContext.Provider>
+        </MemoryRouter>,
+      );
     });
 
     test('nav items are not visible', () => {
@@ -75,11 +91,13 @@ describe('SiteNav', () => {
 
     beforeEach(() => {
       const user = { name: 'name' };
-      fetchMock.get(userUrl, { ...user });
+      fetchMock.get(userUrl, { ...user, permissions: [] });
 
       render(
         <MemoryRouter>
-          <SiteNav authenticated user={user} hasAlerts />
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts />
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });
@@ -95,14 +113,16 @@ describe('SiteNav', () => {
     const userUrl = join('api', 'user');
 
     beforeEach(() => {
-      const user = { name: 'name' };
+      const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
 
       render(
         <MemoryRouter>
-          <header className="smart-hub-header.has-alerts">
-            <SiteNav authenticated user={user} hasAlerts />
-          </header>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <header className="smart-hub-header.has-alerts">
+              <SiteNav authenticated user={user} hasAlerts />
+            </header>
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });

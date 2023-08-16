@@ -1,4 +1,13 @@
-import { GOAL_STATUS } from '../../constants';
+const { GOAL_STATUS } = require('../../constants');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForGoal, processGoalForResourcesById } = require('../../services/resource');
+  const changed = instance.changed() || Object.keys(instance);
+  if (calculateIsAutoDetectedForGoal(changed)) {
+    await processGoalForResourcesById(instance.id);
+  }
+};
 
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
   const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
@@ -37,7 +46,7 @@ const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   }
 };
 
-const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
+const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
     if (instance.id !== null
@@ -139,30 +148,35 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  // await autoPopulateGoalTemplateId(sequelize, instance, options);
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
-  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
-  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
+};
+
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 export {
+  processForEmbeddedResources,
   findOrCreateGoalTemplate,
-  // autoPopulateGoalTemplateId,
   autoPopulateOnApprovedAR,
-  preventNamChangeWhenOnApprovedAR,
+  preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
   propagateName,
   beforeValidate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
 };

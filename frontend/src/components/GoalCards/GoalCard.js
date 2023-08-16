@@ -1,7 +1,8 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
-import { Checkbox, Tag } from '@trussworks/react-uswds';
+import { Checkbox } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,10 +13,10 @@ import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
-import ObjectiveButton from './components/ObjectiveButton';
-import Topics from './components/Topics';
+import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import colors from '../../colors';
+import { goalPropTypes } from './constants';
 
 function GoalCard({
   goal,
@@ -25,6 +26,10 @@ function GoalCard({
   performGoalStatusUpdate,
   handleGoalCheckboxSelect,
   isChecked,
+  hideCheckbox,
+  showReadOnlyStatus,
+  hideGoalOptions,
+  erroneouslySelected,
 }) {
   const {
     id, // for keys and such, from the api
@@ -32,12 +37,10 @@ function GoalCard({
     goalStatus,
     createdOn,
     goalText,
-    goalTopics,
     objectiveCount,
     reasons,
     objectives,
     previousStatus,
-    isRttapa,
   } = goal;
 
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
@@ -88,13 +91,18 @@ function GoalCard({
     },
   ];
 
+  const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
+
+  const border = erroneouslySelected ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+
   return (
     <article
-      className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-3 radius-lg border smart-hub-border-base-lighter"
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
+          { !hideCheckbox && (
           <Checkbox
             id={`goal-select-${id}`}
             label=""
@@ -105,7 +113,9 @@ function GoalCard({
             className="margin-right-1"
             data-testid="selectGoalTestId"
           />
+          )}
           <StatusDropdown
+            showReadOnlyStatus={showReadOnlyStatus}
             goalId={id}
             status={goalStatus}
             onUpdateGoalStatus={onUpdateGoalStatus}
@@ -113,18 +123,20 @@ function GoalCard({
             regionId={regionId}
           />
         </div>
+        { !hideGoalOptions && (
         <ContextMenu
           label={contextMenuLabel}
           menuItems={menuItems}
+          menuWidthOffset={100}
         />
+        )}
       </div>
-      <div className="display-flex flex-wrap margin-y-2 margin-left-5">
+      <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
             Goal
             {' '}
             {goalNumbers}
-            { isRttapa === 'Yes' ? <Tag className="margin-left-1 text-ink" background={colors.baseLighter}>RTTAPA</Tag> : null }
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}
@@ -132,9 +144,9 @@ function GoalCard({
             {determineFlagStatus()}
           </p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Topics</p>
-          <Topics topics={goalTopics} />
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Goal source</p>
+          <p className="usa-prose margin-y-0">{goal.source}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
@@ -149,17 +161,18 @@ function GoalCard({
         </div>
       </div>
 
-      <div className="margin-left-5">
-        <ObjectiveButton
-          closeOrOpenObjectives={closeOrOpenObjectives}
-          objectiveCount={objectiveCount}
-          objectivesExpanded={objectivesExpanded}
-          goalNumber={goal.goalNumbers.join('')}
+      <div className={internalLeftMargin}>
+        <ExpanderButton
+          type="objective"
+          ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
+          closeOrOpen={closeOrOpenObjectives}
+          count={objectiveCount}
+          expanded={objectivesExpanded}
         />
       </div>
       {objectives.map((obj) => (
         <ObjectiveCard
-          key={`objective_${obj.id}`}
+          key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
         />
@@ -169,35 +182,6 @@ function GoalCard({
   );
 }
 
-export const objectivePropTypes = PropTypes.shape({
-  id: PropTypes.number,
-  title: PropTypes.string,
-  arNumber: PropTypes.string,
-  ttaProvided: PropTypes.string,
-  endDate: PropTypes.string,
-  reasons: PropTypes.arrayOf(PropTypes.string),
-  status: PropTypes.string,
-});
-
-export const goalPropTypes = PropTypes.shape({
-  id: PropTypes.number.isRequired,
-  ids: PropTypes.arrayOf(PropTypes.number),
-  goalStatus: PropTypes.string,
-  createdOn: PropTypes.string.isRequired,
-  goalText: PropTypes.string.isRequired,
-  goalTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
-  objectiveCount: PropTypes.number.isRequired,
-  goalNumbers: PropTypes.arrayOf(PropTypes.string.isRequired),
-  objectives: PropTypes.arrayOf(objectivePropTypes),
-  previousStatus: PropTypes.string,
-  isRttapa: PropTypes.string,
-});
-
-goalPropTypes.defaultProps = {
-  goalStatus: null,
-  objectives: [],
-};
 GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
@@ -206,5 +190,17 @@ GoalCard.propTypes = {
   performGoalStatusUpdate: PropTypes.func.isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
+  hideCheckbox: PropTypes.bool,
+  showReadOnlyStatus: PropTypes.bool,
+  hideGoalOptions: PropTypes.bool,
+  erroneouslySelected: PropTypes.bool,
 };
+
+GoalCard.defaultProps = {
+  hideCheckbox: false,
+  showReadOnlyStatus: false,
+  hideGoalOptions: false,
+  erroneouslySelected: false,
+};
+
 export default GoalCard;

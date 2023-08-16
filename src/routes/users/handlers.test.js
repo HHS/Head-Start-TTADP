@@ -5,17 +5,31 @@ import {
   verifyEmailToken,
   getUserStatistics,
   getActiveUsers,
+  setFeatureFlag,
+  getTrainingReportUsers,
+  getNamesByIds,
 } from './handlers';
-import { userById, usersWithPermissions, statisticsByUser } from '../../services/users';
+import {
+  userById,
+  usersWithPermissions,
+  statisticsByUser,
+  setFlag,
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
+} from '../../services/users';
 import User from '../../policies/user';
 import { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
+import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
   statisticsByUser: jest.fn(),
+  setFlag: jest.fn(),
+  getTrainingReportUsersByRegion: jest.fn(),
+  getUserNamesByIds: jest.fn(),
 }));
 
 jest.mock('../../services/currentUser', () => ({
@@ -314,6 +328,9 @@ describe('User handlers', () => {
         ...mockRequest,
       };
       User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue({
+        id: 1,
+      });
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).not.toHaveBeenCalled();
       expect(mockResponse.writeHead).not.toHaveBeenCalled();
@@ -328,6 +345,151 @@ describe('User handlers', () => {
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('setFeatureFlag', () => {
+    const request = {
+      ...mockRequest,
+      body: {
+        flag: 'anv_statistics',
+        on: false,
+      },
+    };
+    it('handles setting a flag for all users', async () => {
+      const response = [[], 15];
+      setFlag.mockResolvedValue(response);
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
+      await setFeatureFlag(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+      expect(mockResponse.error).not.toHaveBeenCalled();
+    });
+
+    it('does not allow unauthorized requests', async () => {
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await setFeatureFlag(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('calls the error handler on error', async () => {
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue(null);
+      await setFeatureFlag(request, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('getTrainingReportUsers', () => {
+    const mockUser = {
+      id: '1',
+      name: 'John Doe',
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+        },
+      ],
+      lastLogin: new Date(),
+    };
+
+    const req = {
+      query: {
+        regionId: '1',
+      },
+    };
+
+    const res = {
+      sendStatus: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return 403 if user does not have write permission in region', async () => {
+      const unauthorizedReq = {
+        ...req,
+        query: {
+          regionId: '4',
+        },
+      };
+      userById.mockResolvedValueOnce(mockUser);
+      currentUserId.mockResolvedValueOnce(1);
+      getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
+
+      await getTrainingReportUsers(unauthorizedReq, res);
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(currentUserId).toHaveBeenCalledTimes(1);
+      expect(res.sendStatus).toHaveBeenCalledTimes(1);
+      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(getTrainingReportUsersByRegion).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('should return a list of users with training reports by region', async () => {
+      userById.mockResolvedValueOnce(mockUser);
+      currentUserId.mockResolvedValueOnce(1);
+      getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
+
+      await getTrainingReportUsers(req, res);
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(currentUserId).toHaveBeenCalledTimes(1);
+      expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1);
+      expect(res.json).toHaveBeenCalledWith([]);
+    });
+    it('should handle errors', async () => {
+      const error = new Error('An error occurred');
+
+      currentUserId.mockResolvedValueOnce(1);
+      getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
+      userById.mockRejectedValueOnce(error);
+
+      await getTrainingReportUsers(req, res);
+
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(getTrainingReportUsersByRegion).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getNamesByIds', () => {
+    const res = {
+      sendStatus: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return 400 if the request has no ids', async () => {
+      await getNamesByIds({ query: {} }, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(400);
+    });
+
+    it('should return a list of users with training reports by region', async () => {
+      getUserNamesByIds.mockResolvedValueOnce(['TIM', 'TOM']);
+      await getNamesByIds({ query: { ids: [1, 2] } }, res);
+      expect(res.json).toHaveBeenCalledWith(['TIM', 'TOM']);
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('An error occurred');
+      const handleErrors = jest.fn();
+      getUserNamesByIds.mockRejectedValueOnce(error);
+      handleErrors.mockResolvedValueOnce();
+      await getNamesByIds({ query: { ids: [1, 2] } }, res);
+      expect(res.json).not.toHaveBeenCalled();
     });
   });
 });

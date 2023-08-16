@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
 
 export const draftObject = {
   activityRecipientType: 'recipient',
@@ -19,6 +20,7 @@ export const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 export const approverUserIds = () => [
@@ -31,6 +33,7 @@ export const mockApprovers = (ids) => ids.map((id) => ({
   id,
   hsesUserId: String(id),
   hsesUsername: `user${id}`,
+  lastLogin: new Date(),
 }));
 
 export const fileGenerator = (file = {}) => {

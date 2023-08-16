@@ -10,6 +10,7 @@ import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
+import resourcesRouter from './resources';
 import recipientRouter from './recipient';
 import { userById } from '../services/users';
 import { auditLogger } from '../logger';
@@ -22,7 +23,13 @@ import siteAlertsRouter from './siteAlerts';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
 import settingsRouter from './settings';
+import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
+import goalTemplatesRouter from './goalTemplates';
+import eventRouter from './events';
+import sessionReportsRouter from './sessionReports';
+import nationalCenterRouter from './nationalCenter';
+import feedRouter from './feeds';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -60,8 +67,15 @@ router.use('/topic', topicsRouter);
 router.use('/role', rolesRouter);
 router.use('/search', search);
 router.use('/settings', settingsRouter);
+router.use('/rttapa', rttapaRouter);
 router.use('/groups', groupsRouter);
 router.use('/alerts', siteAlertsRouter);
+router.use('/feeds', feedRouter);
+router.use('/resources', resourcesRouter);
+router.use('/goal-templates', goalTemplatesRouter);
+router.use('/events', eventRouter);
+router.use('/session-reports', sessionReportsRouter);
+router.use('/national-center', nationalCenterRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

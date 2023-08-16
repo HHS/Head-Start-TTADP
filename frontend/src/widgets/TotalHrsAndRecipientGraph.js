@@ -2,17 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import MediaCaptureButton from '../components/MediaCaptureButton';
 import Container from '../components/Container';
 import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
-import { DECIMAL_BASE } from '../Constants';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
-export function TotalHrsAndRecipientGraph({ data, loading }) {
+export function TotalHrsAndRecipientGraph({ data, loading, hideYAxis }) {
   // the state for which lines to show
   const [showTA, setShowTA] = useState(true);
   const [showTraining, setShowTraining] = useState(true);
@@ -186,6 +186,16 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       },
     };
 
+    if (hideYAxis) {
+      layout.yaxis = {
+        ...layout.yaxis,
+        showline: false,
+        autotick: true,
+        ticks: '',
+        showticklabels: false,
+      };
+    }
+
     //  showTA, showTraining, showBoth
     // if false, then its a null for me dude
     // and then away it goes
@@ -196,7 +206,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data, showAccessibleData, showBoth, showTA, showTraining]);
+  }, [data, hideYAxis, showAccessibleData, showBoth, showTA, showTraining]);
 
   useEffect(() => {
     if (!lines || !data || !Array.isArray(data) || !showAccessibleData) {
@@ -224,7 +234,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
   }
 
   return (
-    <Container ref={widget} className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
+    <Container ref={widget} className="ttahub-total-hours-container shadow-2" loading={loading} loadingLabel="Total hours loading">
       <div className="ttahub--total-hrs-recipient-graph">
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>
@@ -272,9 +282,11 @@ TotalHrsAndRecipientGraph.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
+  hideYAxis: PropTypes.bool,
 };
 
 TotalHrsAndRecipientGraph.defaultProps = {
+  hideYAxis: false,
   data: [
     {
       name: 'Hours of Training', x: [], y: [], month: '',

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { TARGET_POPULATIONS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
-import { TARGET_POPULATIONS } from '../../Constants';
 
 const POPULATION_OPTIONS = TARGET_POPULATIONS.filter((population) => population !== '--------------------').map((label, value) => ({ value, label }));
 
