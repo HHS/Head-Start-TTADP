@@ -13,11 +13,3 @@ def query_many(query_str, data):
     except Exception as e:
         return None
 
-def query_one(str, data):
-    str = text(str)
-    return db.session.execute(str, data).first()
-
-    # str = text(str)
-    # result = db.session.execute(str, data)
-    # out = [{column: value for column, value in result.all()}]
-    # return out
