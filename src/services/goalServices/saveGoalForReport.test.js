@@ -383,6 +383,7 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         id: objectiveIds,
       },
+      force: true,
     });
 
     await Topic.destroy({
@@ -413,12 +414,14 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         goalId: goalIdsToDestroy,
       },
+      force: true,
     });
 
     await Goal.destroy({
       where: {
         id: goalIdsToDestroy,
       },
+      force: true,
     });
 
     await ActivityRecipient.destroy({

@@ -178,6 +178,7 @@ describe('frequency graph widget', () => {
       where: {
         id: [goal.id, olderGoal.id],
       },
+      force: true,
     });
 
     await Topic.destroy({

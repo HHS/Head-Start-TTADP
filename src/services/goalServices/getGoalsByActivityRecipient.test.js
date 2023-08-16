@@ -621,6 +621,7 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: objectiveIds,
       },
+      force: true,
     });
 
     // Delete Goals.
@@ -628,6 +629,7 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: goalIds,
       },
+      force: true,
     });
 
     // Delete AR and AR Recipient.
