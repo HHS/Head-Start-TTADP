@@ -253,13 +253,10 @@ export default function TrainingReportForm({ match }) {
         dataToPut.data.status = updatedStatus;
       }
 
-      if (hookForm.formState.isDirty) {
-        // PUT it to the backend
-        const updatedEvent = await updateEvent(trainingReportId, dataToPut);
-        resetFormData(hookForm.reset, updatedEvent);
-        updateLastSaveTime(moment(updatedEvent.updatedAt));
-      }
-
+      // PUT it to the backend
+      const updatedEvent = await updateEvent(trainingReportId, dataToPut);
+      resetFormData(hookForm.reset, updatedEvent);
+      updateLastSaveTime(moment(updatedEvent.updatedAt));
       updateShowSavedDraft(true);
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
