@@ -21,7 +21,7 @@ export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
       if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
-        accumulator[current] = null;
+        delete accumulator[current];
         return accumulator;
       }
     }
@@ -79,6 +79,10 @@ export const findWhatsChanged = (object, base) => {
 
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
+    }
+
+    if (Number.isNaN(accumulator[current])) {
+      delete accumulator[current];
     }
 
     return accumulator;
