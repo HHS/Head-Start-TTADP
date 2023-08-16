@@ -39,7 +39,7 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'SessionReportPilot',
-
+    paranoid: true,
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),

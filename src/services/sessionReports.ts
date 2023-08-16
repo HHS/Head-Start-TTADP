@@ -2,7 +2,7 @@ import { cast } from 'sequelize';
 import db from '../models';
 import { SessionReportShape } from './types/sessionReport';
 
-const { SessionReportPilot } = db;
+const { SessionReportPilot, EventReportPilot } = db;
 
 const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
@@ -19,6 +19,9 @@ export async function destroySession(id: number): Promise<void> {
 type WhereOptions = {
   id?: number;
   eventId?: number;
+  data?: {
+    sessionIndex?: string;
+  }
 };
 
 // eslint-disable-next-line max-len
@@ -69,9 +72,32 @@ export async function createSession(request) {
 
   const { eventId, data } = request;
 
+  const event = await EventReportPilot.findOne({
+    where: { data: { eventId } },
+    include: [{
+      // we need to include deleted session reports
+      // so that we don't create a session with a duplicate sessionIndex
+      model: SessionReportPilot.unscoped(),
+      as: 'sessionReports',
+      attributes: ['id'],
+    }],
+  });
+
+  if (!event) {
+    throw new Error(`Event with id ${eventId} not found`);
+  }
+
+  let sessionIndex = 1 as number;
+
+  if (event.sessionReports && event.sessionReports.length) {
+    sessionIndex = event.sessionReports.length + 1;
+  }
+
+  const sessionIndexFormatted = sessionIndex < 10 ? `0${sessionIndex}` : `${sessionIndex}`;
+
   const created = await SessionReportPilot.create({
-    eventId,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    eventId: event.id,
+    data: cast(JSON.stringify({ ...data, sessionIndex: sessionIndexFormatted }), 'jsonb'),
   }, {
     individualHooks: true,
   });
@@ -108,6 +134,18 @@ export async function updateSession(id, request) {
 
 export async function findSessionById(id: number): Promise<SessionReportShape> {
   return findSessionHelper({ id }) as Promise<SessionReportShape>;
+}
+
+export async function findSessionByEventIdAndSessionIndex(
+  eventId: number,
+  sessionIndex: string,
+): Promise<SessionReportShape> {
+  return findSessionHelper({
+    eventId,
+    data: {
+      sessionIndex,
+    },
+  }) as Promise<SessionReportShape>;
 }
 
 export async function findSessionsByEventId(eventId): Promise<SessionReportShape[]> {

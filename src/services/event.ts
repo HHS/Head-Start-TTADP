@@ -260,10 +260,24 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventById(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
       { id },
+      ...scopes,
+    ],
+  };
+  return findEventHelper(where) as Promise<EventShape>;
+}
+
+export async function findEventById(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+  const where = {
+    [Op.and]: [
+      {
+        data: {
+          eventId,
+        },
+      },
       ...scopes,
     ],
   };
