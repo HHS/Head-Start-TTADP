@@ -220,11 +220,7 @@ const ActivityReportNavigator = ({
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
-
-      if (isDirty) {
-        await onSave(data);
-      }
-
+      await onSave(data);
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
