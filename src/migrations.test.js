@@ -104,7 +104,7 @@ async function checkFileDatePrefix() {
     const cleanedMainFileDates = mainFileDates.map((mdf) => (mdf > 99999999999999
       ? Math.floor(mdf / (10 ** Math.floor(Math.log10(mdf)) - 99999999999999 + 1))
       : mdf));
-    const latestMainFileDate = Math.max(...mainFileDates);
+    const latestMainFileDate = Math.max(...cleanedMainFileDates);
     const prFilesWithOlderDates = [];
 
     prFileDates.forEach((date, index) => {
