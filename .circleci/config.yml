@@ -336,7 +336,7 @@ jobs:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
       - store_test_results:
-          path: frontend/reports/
+          path: frontend/test-results/
       - store_artifacts:
           path: frontend/coverage/
     resource_class: large
