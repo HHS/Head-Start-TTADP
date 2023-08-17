@@ -64,7 +64,7 @@ commands:
     steps:
       - run:
           name: Combine requirements.txt files to single file
-          command: cat similarity_api/src/requirements.txt > << parameters.filename >>
+          command: cat similarity_api/requirements.txt > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
