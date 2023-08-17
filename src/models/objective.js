@@ -125,6 +125,10 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'Objective',
