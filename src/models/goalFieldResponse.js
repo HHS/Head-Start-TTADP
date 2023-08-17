@@ -44,6 +44,10 @@ export default (sequelize, DataTypes) => {
       default: false,
       allowNull: false,
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalFieldResponse',
