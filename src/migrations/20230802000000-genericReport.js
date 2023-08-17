@@ -2198,104 +2198,33 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+      const foiaableTables = [
+        // Primary tables
+        'Goals',
+        'GoalTemplates',
+        'Objectives',
+        'ObjectiveTemplates',
+        // Metadata tables
+        'GoalTemplateResources',
+        'GoalTemplateFieldPrompts',
+        'GoalResources',
+        'GoalFieldResponses',
+        'ObjectiveTemplateFiles',
+        'ObjectiveTemplateResources',
+        'ObjectiveTemplateTopics',
+        'ObjectiveFiles',
+        'ObjectiveResources',
+        'ObjectiveTopics',
+      ];
 
-      await queryInterface.addColumn('GoalTemplates', {
+      await Promise.all(foiaableTables.map(async (
+        table,
+      ) => queryInterface.addColumn('GoalTemplates', {
         isFoiaable: {
           type: Sequelize.BOOLEAN,
           default: false,
         },
-      }, { transaction });
-
-      await queryInterface.addColumn('GoalTemplateResources', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('GoalTemplateFieldPrompts', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('Goals', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('GoalResources', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('GoalFieldResponses', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveTemplates', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveTemplateFiles', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveTemplateResources', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveTemplateTopics', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('Objectives', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveFiles', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveResources', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
-
-      await queryInterface.addColumn('ObjectiveTopics', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction });
+      }, { transaction })));
     },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
