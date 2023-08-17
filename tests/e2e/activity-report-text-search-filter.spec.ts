@@ -103,6 +103,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('Prepare your first meal.');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Tab');
     await page.keyboard.press('Enter');
     await blur(page);
     // Links.
