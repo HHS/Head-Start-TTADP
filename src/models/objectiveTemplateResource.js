@@ -50,6 +50,10 @@ export default (sequelize, DataTypes) => {
           : '';
       },
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateResource',
