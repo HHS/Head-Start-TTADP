@@ -482,7 +482,7 @@ test.describe('Activity Report', () => {
     // navigate to the RTR, select a recipient, and click add new goal
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // select recipients
