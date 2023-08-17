@@ -69,6 +69,10 @@ export default (sequelize, DataTypes) => {
         return validations && validations.required;
       },
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplateFieldPrompt',
