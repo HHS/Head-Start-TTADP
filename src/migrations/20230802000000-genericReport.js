@@ -45,6 +45,7 @@ module.exports = {
        *    - ReportObjectiveTopics-
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
+       * - ValidFor-
        * - Statuses-
        * - Reasons-
        * - TargetPopulations-
@@ -69,6 +70,57 @@ module.exports = {
        *  */
 
       //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ValidFor', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      await queryInterface.sequelize.query(`
+        INSERT INTO "ValidFor"
+        ("name", "createdAt", "updatedAt")
+        VALUES
+        ${Object.values(ENTITY_TYPE).map((type) => `('${type}', current_timestamp, current_timestamp)`).join(',\n')},
+       ;
+      `, { transaction });
+
+      //---------------------------------------------------------------------------------
+
       await queryInterface.createTable('Statuses', {
         id: {
           type: Sequelize.INTEGER,
@@ -85,9 +137,17 @@ module.exports = {
           allowNull: false,
           default: false,
         },
-        validFor: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        validForId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -120,22 +180,56 @@ module.exports = {
       }, { transaction });
 
       // TODO: need to add statuses for reports
-      await queryInterface.sequelize.query(`
-        INSERT INTO "Statuses"
-        ("name", "validFor", "createdAt", "updatedAt", "isTerminal")
-        VALUES
-        ${Object.values(GOAL_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.GOAL}', current_timestamp, current_timestamp, false)`).join(',\n')},
-        ${Object.values(OBJECTIVE_STATUS).map((status) => `('${status}', '${ENTITY_TYPE.OBJECTIVE}', current_timestamp, current_timestamp, false)`).join(',\n')},
-        ${Object.values(APPROVAL_STATUSES).map((status) => `('${status}', '${ENTITY_TYPE.COLLABORATOR}', current_timestamp, current_timestamp, false)`).join(',\n')}
-       ;
-      `, { transaction });
-      await queryInterface.sequelize.query(`
-        UPDATE "Statuses"
-        SET "isTerminal" = true
-        WHERE ("name" = '${GOAL_STATUS.CLOSED}' AND "validFor" = '${ENTITY_TYPE.GOAL}')
-        OR ("name" = '${OBJECTIVE_STATUS.COMPLETE}' AND "validFor" = '${ENTITY_TYPE.OBJECTIVE}')
-        OR ("name" = '${APPROVAL_STATUSES.APPROVED}' AND "validFor" = '${ENTITY_TYPE.COLLABORATOR}');
-      `, { transaction });
+      await Promise.all([
+        queryInterface.sequelize.query(`
+          INSERT INTO "Statuses"
+          ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
+          SELECT
+            s.name,
+            vf.id,
+            current_timestamp,
+            current_timestamp,
+            s.name = '${GOAL_STATUS.CLOSED}'
+          FROM "ValidFor" vf
+          CROSS JOIN UNNEST(ARRAY[
+            ${Object.values(GOAL_STATUS).map((status) => `'${status}'`).join(',\n')}
+          ]) s(name)
+          WHERE vf.name = '${ENTITY_TYPE.GOAL}'
+          ;
+        `, { transaction }),
+        queryInterface.sequelize.query(`
+          INSERT INTO "Statuses"
+          ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
+          SELECT
+            s.name,
+            vf.id,
+            current_timestamp,
+            current_timestamp,
+            s.name = '${OBJECTIVE_STATUS.COMPLETE}'
+          FROM "ValidFor" vf
+          CROSS JOIN UNNEST(ARRAY[
+            ${Object.values(OBJECTIVE_STATUS).map((status) => `'${status}'`).join(',\n')}
+          ]) s(name)
+          WHERE vf.name = '${ENTITY_TYPE.OBJECTIVE}'
+          ;
+        `, { transaction }),
+        queryInterface.sequelize.query(`
+          INSERT INTO "Statuses"
+          ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
+          SELECT
+            s.name,
+            vf.id,
+            current_timestamp,
+            current_timestamp,
+            s.name = '${APPROVAL_STATUSES.APPROVED}'
+          FROM "ValidFor" vf
+          CROSS JOIN UNNEST(ARRAY[
+            ${Object.values(APPROVAL_STATUSES).map((status) => `'${status}'`).join(',\n')}
+          ]) s(name)
+          WHERE vf.name = '${ENTITY_TYPE.COLLABORATOR}'
+          ;
+        `, { transaction }),
+      ]);
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Organizers', {
         id: {
@@ -148,9 +242,17 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
-        validFor: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        validForId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -193,9 +295,17 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
-        validFor: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        validForId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -353,9 +463,17 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
-        validFor: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        validForId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -450,9 +568,17 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
-        validFor: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        validForId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -854,9 +980,17 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
-        validFor: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        validForId: {
+          type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -889,26 +1023,49 @@ module.exports = {
       }, { transaction });
 
       await queryInterface.addConstraint('CollaboratorTypes', {
-        fields: ['name', 'validFor'],
+        fields: ['name', 'validForId'],
         type: 'unique',
         transaction,
       });
 
-      await queryInterface.sequelize.query(`
-        INSERT INTO "CollaboratorTypes"
-        ("name", "validFor", "createdAt", "updatedAt")
-        VALUES
-        ('editor', 'report.event', current_timestamp, current_timestamp),
-        ('owner', 'report.event', current_timestamp, current_timestamp),
-        ('instantiator', 'report.event', current_timestamp, current_timestamp),
-        ('approver', 'report.event', current_timestamp, current_timestamp),
-        ('poc', 'report.event', current_timestamp, current_timestamp),
-        ('editor', 'report.session', current_timestamp, current_timestamp),
-        ('owner', 'report.session', current_timestamp, current_timestamp),
-        ('instantiator', 'report.session', current_timestamp, current_timestamp),
-        ('approver', 'report.session', current_timestamp, current_timestamp),
-        ('poc', 'report.session', current_timestamp, current_timestamp);
-      `, { transaction });
+      await Promise.all([
+        queryInterface.sequelize.query(`
+          INSERT INTO "CollaboratorTypes"
+          ("name", "validForId", "createdAt", "updatedAt")
+          SELECT
+            s.name,
+            vf.id,
+            current_timestamp,
+            current_timestamp,
+          FROM "ValidFor" vf
+          CROSS JOIN UNNEST(ARRAY[
+            'editor',
+            'owner',
+            'instantiator',
+            'poc',
+          ]) ct(name)
+          WHERE vf.name = '${ENTITY_TYPE.REPORT_EVENT}'
+          ;
+        `, { transaction }),
+        queryInterface.sequelize.query(`
+          INSERT INTO "CollaboratorTypes"
+          ("name", "validForId", "createdAt", "updatedAt")
+          SELECT
+            s.name,
+            vf.id,
+            current_timestamp,
+            current_timestamp,
+          FROM "ValidFor" vf
+          CROSS JOIN UNNEST(ARRAY[
+            'editor',
+            'owner',
+            'instantiator',
+            'poc',
+          ]) ct(name)
+          WHERE vf.name = '${ENTITY_TYPE.REPORT_SESSION}'
+          ;
+        `, { transaction }),
+      ]);
 
       //---------------------------------------------------------------------------------
 
@@ -2219,12 +2376,20 @@ module.exports = {
 
       await Promise.all(foiaableTables.map(async (
         table,
-      ) => queryInterface.addColumn('GoalTemplates', {
-        isFoiaable: {
-          type: Sequelize.BOOLEAN,
-          default: false,
-        },
-      }, { transaction })));
+      ) => Promise.all([
+        queryInterface.addColumn(table, {
+          isFoiaable: {
+            type: Sequelize.BOOLEAN,
+            default: false,
+          },
+        }, { transaction }),
+        queryInterface.addColumn(table, {
+          isReferenced: {
+            type: Sequelize.BOOLEAN,
+            default: false,
+          },
+        }, { transaction }),
+      ])));
     },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
