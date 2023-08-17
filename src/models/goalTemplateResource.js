@@ -42,6 +42,10 @@ export default (sequelize, DataTypes) => {
         return calculateIsAutoDetectedForGoalTemplate(this.get('sourceFields'));
       },
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplateResource',
