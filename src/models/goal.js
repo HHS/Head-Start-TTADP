@@ -159,6 +159,10 @@ export default (sequelize, DataTypes) => {
     source: {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
