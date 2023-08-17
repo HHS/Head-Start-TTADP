@@ -69,6 +69,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplate',
