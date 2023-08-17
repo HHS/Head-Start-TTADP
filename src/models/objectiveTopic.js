@@ -39,6 +39,10 @@ export default (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: false,
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'ObjectiveTopic',
