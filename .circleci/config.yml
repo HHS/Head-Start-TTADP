@@ -801,6 +801,7 @@ workflows:
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
       - build_and_lint
+      - build_and_lint_similarity_api
       - test_backend:
           requires:
             - build_and_lint
