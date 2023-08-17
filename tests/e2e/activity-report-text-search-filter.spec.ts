@@ -97,7 +97,8 @@ test.describe('Activity Report Text Search Filter', () => {
 
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-15-option-0').click();
+    await page.keyboard.press('Enter');
+    await blur(page);
     // Objective title.
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('Prepare your first meal.');
