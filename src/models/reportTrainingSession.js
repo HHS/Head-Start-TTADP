@@ -39,7 +39,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
-    eventReportId: {
+    reportTrainingEventId: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
