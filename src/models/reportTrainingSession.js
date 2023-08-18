@@ -7,29 +7,29 @@ const {
 } = require('../constants');
 
 export default (sequelize, DataTypes) => {
-  class SessionReport extends Model {
+  class ReportTrainingSession extends Model {
     static associate(models) {
-      SessionReport.belongsTo(models.Report, {
+      ReportTrainingSession.belongsTo(models.Report, {
         foreignKey: 'reportId',
         as: 'report',
       });
-      SessionReport.belongsTo(models.Region, {
+      ReportTrainingSession.belongsTo(models.Region, {
         foreignKey: 'regionId',
         as: 'region',
       });
 
       models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
-        .hasOne(models.SessionReport, {
+        .hasOne(models.ReportTrainingSession, {
           foreignKey: 'reportId',
           as: 'session',
         });
-      models.Region.hasMany(models.SessionReport, {
+      models.Region.hasMany(models.ReportTrainingSession, {
         foreignKey: 'regionId',
         as: 'session',
       });
     }
   }
-  SessionReport.init({
+  ReportTrainingSession.init({
     id: {
       type: DataTypes.BIGINT,
       primaryKey: true,
@@ -80,7 +80,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'SessionReport',
+    modelName: 'ReportTrainingSession',
   });
-  return SessionReport;
+  return ReportTrainingSession;
 };
