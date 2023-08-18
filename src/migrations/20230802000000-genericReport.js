@@ -1,5 +1,7 @@
 const {
   CLOSE_SUSPEND_REASONS,
+  GOAL_CLOSE_REASONS,
+  GOAL_SUSPEND_REASONS,
   GOAL_SOURCES,
 } = require('@ttahub/common');
 const {
@@ -1653,6 +1655,16 @@ module.exports = {
             key: 'id',
           },
         },
+        forClose: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
+        forSuspend: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
         createdAt: {
           type: Sequelize.DATE,
           allowNull: false,
@@ -1666,7 +1678,7 @@ module.exports = {
         deletedAt: {
           type: Sequelize.DATE,
           allowNull: true,
-          default: null,
+          defaultValue: null,
         },
         mapsTo: {
           type: Sequelize.INTEGER,
@@ -1685,12 +1697,14 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         INSERT INTO "CloseSuspendReasons"
-        ("name", "validForId", "createdAt", "updatedAt")
+        ("name", "validForId", "forClose", "forSuspend", "createdAt", "updatedAt")
         SELECT
           s.name,
           vf.id,
+          s.name IN (${GOAL_CLOSE_REASONS.map((gcr) => `'${gcr}'`).join(',\n')}),
+          s.name IN (${GOAL_SUSPEND_REASONS.map((gsr) => `'${gsr}'`).join(',\n')}),
           current_timestamp,
-          current_timestamp,
+          current_timestamp
         FROM "ValidFor" vf
         CROSS JOIN UNNEST(ARRAY[${CLOSE_SUSPEND_REASONS.map((csr) => `"${csr}"`).join(',\n')}]) s(name)
         WHERE vf.name = '${ENTITY_TYPE.GOAL}'
