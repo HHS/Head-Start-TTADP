@@ -23,7 +23,10 @@ export const notificationQueue = newQueue('notifications');
 const {
   SMTP_HOST,
   SMTP_PORT,
+  SMTP_USER,
+  SMTP_PASSWORD,
   SMTP_SECURE,
+  SMTP_IGNORE_TLS,
   NODE_ENV,
   SEND_NON_PRODUCTION_NOTIFICATIONS,
 } = process.env;
@@ -35,7 +38,11 @@ const defaultTransport = createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure,
-  ignoreTLS: true,
+  ignoreTLS: SMTP_IGNORE_TLS,
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASSWORD,
+  },
 });
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
