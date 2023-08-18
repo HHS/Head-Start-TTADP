@@ -180,7 +180,7 @@ const GRANT_INACTIVATION_REASONS = {
   UNKNOWN: 'Unknown',
 };
 
-export const ENTITY_TYPE = {
+const ENTITY_TYPE = {
   REPORT_EVENT: 'report.event',
   REPORT_SESSION: 'resport.session',
   GOAL: 'goal',
@@ -188,38 +188,38 @@ export const ENTITY_TYPE = {
   COLLABORATOR: 'collaborator',
 };
 
-export const NATIONAL_CENTER_ACTING_AS = {
+const NATIONAL_CENTER_ACTING_AS = {
   TRAINER: 'trainer',
 };
 
-export const RECIPIENT_TYPE = {
+const RECIPIENT_TYPE = {
   GRANT: 'grant',
   OTHER_ENTITY: 'otherEntity',
 };
 
-export const COLLABORATOR_APPROVAL_STATUSES = {
+const COLLABORATOR_APPROVAL_STATUSES = {
   APPROVAL_REQUESTED: 'approval_requested',
   NEEDS_ACTION: 'needs_action',
   APPROVED: 'approved',
 };
 
-export const TRAINING_TYPE = {
+const TRAINING_TYPE = {
   SERIES: 'series',
 };
 
-export const AUDIENCE = {
+const AUDIENCE = {
   RECIPIENTS: 'Recipients',
   TTA_SPECIALISTS: 'TTA specialists',
   FEDERAL_STAFF: 'Federal staff',
 };
 
-export const ORGANIZER = {
+const ORGANIZER = {
   REGIONAL_W_NC: 'Regional w/NC',
   REGIONAL_WO_NC: 'Regional w/o NC',
   IST: 'IST',
 };
 
-export const REPORT_STATUSES = {
+const REPORT_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',
   SUBMITTED: 'submitted',
@@ -227,7 +227,7 @@ export const REPORT_STATUSES = {
   NEEDS_ACTION: 'needs_action',
 };
 
-export const COLLABORATOR_TYPES = {
+const COLLABORATOR_TYPES = {
   EDITOR: 'editor',
   OWNER: 'owner',
   INSTANTIATOR: 'instantiator',
