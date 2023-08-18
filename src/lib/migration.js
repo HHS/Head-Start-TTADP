@@ -72,8 +72,53 @@ const removeTables = async (
   }
 };
 
+/**
+ * Adds a column to multiple tables using the provided query interface and transaction.
+ * @param {Object} queryInterface - The query interface object.
+ * @param {Object} transaction - The transaction object.
+ * @param {string} column - The name of the column to be added.
+ * @param {Array<string>} tables - An array of table names to add the column to.
+ * @returns {Promise<Array>} - A promise that resolves to an array of promises representing
+ * the addition of the column to each table.
+ */
+const addColumnToTables = async (
+  queryInterface,
+  transaction,
+  column,
+  columnConfig,
+  tables,
+) => Promise.all(tables.map(async (
+  table,
+  // Add the column to the current table using the provided query interface and transaction.
+) => queryInterface.addColumn(table, column, columnConfig, { transaction })));
+
+/**
+ * Removes a column from multiple tables in a database.
+ *
+ * @param {Object} queryInterface - The query interface object for executing database queries.
+ * @param {Object} transaction - The transaction object for performing the operation within a
+ * transaction.
+ * @param {string} column - The name of the column to be removed.
+ * @param {Array<string>} tables - An array of table names from which the column should be removed.
+ * @returns {Promise<Array>} - A promise that resolves to an array of promises representing the
+ * removal of the column from each table.
+ */
+const removeColumnFromTables = async (
+  queryInterface,
+  transaction,
+  column,
+  tables,
+) => Promise.all(tables.map(async (
+  table,
+  // Remove the specified column from the current table using the queryInterface's removeColumn
+  // method.
+  // Pass the transaction object to ensure the operation is performed within the same transaction.
+) => queryInterface.removeColumn(table, column, { transaction })));
+
 module.exports = {
   prepMigration,
   setAuditLoggingState,
   removeTables,
+  addColumnToTables,
+  removeColumnFromTables,
 };
