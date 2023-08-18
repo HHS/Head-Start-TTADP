@@ -10,13 +10,13 @@ const {
 } = require('../constants');
 
 export default (sequelize, DataTypes) => {
-  class EventReport extends Model {
+  class ReportTrainingEvent extends Model {
     static associate(models) {
-      EventReport.belongsTo(models.Report, {
+      ReportTrainingEvent.belongsTo(models.Report, {
         foreignKey: 'reportId',
         as: 'report',
       });
-      EventReport.belongsTo(models.Region, {
+      ReportTrainingEvent.belongsTo(models.Region, {
         foreignKey: 'regionId',
         as: 'region',
       });
@@ -37,17 +37,17 @@ export default (sequelize, DataTypes) => {
         }],
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT).hasOne(models.EventReport, {
+      models.Report.scope(ENTITY_TYPE.REPORT_EVENT).hasOne(models.ReportTrainingEvent, {
         foreignKey: 'reportId',
         as: 'event',
       });
-      models.Region.hasMany(models.EventReport, {
+      models.Region.hasMany(models.ReportTrainingEvent, {
         foreignKey: 'regionId',
         as: 'event',
       });
     }
   }
-  EventReport.init({
+  ReportTrainingEvent.init({
     id: {
       type: DataTypes.BIGINT,
       primaryKey: true,
@@ -85,7 +85,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'EventReport',
+    modelName: 'ReportTrainingEvent',
   });
-  return EventReport;
+  return ReportTrainingEvent;
 };
