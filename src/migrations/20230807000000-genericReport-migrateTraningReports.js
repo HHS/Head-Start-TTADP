@@ -51,7 +51,7 @@ module.exports = {
           vision,
           createdAt,
           updatedAt,
-      } -> EventReport(
+      } -> ReportTrainingEvent(
           eventId, (not a number, needs to be added to the table and model)
           regionId,
           name,
@@ -109,7 +109,7 @@ module.exports = {
         {
           data.regionId,
           data.sessionName,
-        } -> SessionReport(
+        } -> ReportTrainingSession(
           eventReportId // ID of linked event,
           regionId,
           name,
