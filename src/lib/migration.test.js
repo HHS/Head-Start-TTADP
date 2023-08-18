@@ -1,4 +1,8 @@
-const { prepMigration, setAuditLoggingState, removeTables } = require('./migration');
+const {
+  prepMigration,
+  setAuditLoggingState,
+  removeTables,
+} = require('./migration');
 
 describe('prepMigration', () => {
   const queryInterface = {
