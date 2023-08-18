@@ -6,13 +6,16 @@ const {
 } = require('@ttahub/common');
 const {
   prepMigration,
+  removeTables,
+  addColumnToTables,
+  removeColumnFromTables,
 } = require('../lib/migration');
 
 const {
   ENTITY_TYPE,
   GOAL_STATUS,
   OBJECTIVE_STATUS,
-  APPROVAL_STATUSES,
+  COLLABORATOR_APPROVAL_STATUSES,
 } = require('../constants');
 
 module.exports = {
@@ -27,8 +30,8 @@ module.exports = {
        *  - ReportNationalCenters-
        *  - ReportReasons-
        *  - ReportTargetPopulations-
-       *  - EventReports-
-       *  - SessionReports-
+       *  - ReportTrainingEvents-
+       *  - ReportTrainingSessions-
        *  - ReportApprovals-
        *  - ReportRecipients-
        *  - ReportCollaborators-
@@ -76,6 +79,7 @@ module.exports = {
        *  */
 
       //---------------------------------------------------------------------------------
+      let x;
       await queryInterface.createTable('ValidFor', {
         id: {
           type: Sequelize.INTEGER,
@@ -121,9 +125,8 @@ module.exports = {
         INSERT INTO "ValidFor"
         ("name", "createdAt", "updatedAt")
         VALUES
-        ${Object.values(ENTITY_TYPE).map((type) => `('${type}', current_timestamp, current_timestamp)`).join(',\n')},
-       ;
-      `, { transaction });
+        ${Object.values(ENTITY_TYPE).map((type) => `('${type}', current_timestamp, current_timestamp)`).join(',\n')}
+       ;`, { transaction });
 
       //---------------------------------------------------------------------------------
 
@@ -186,56 +189,44 @@ module.exports = {
       }, { transaction });
 
       // TODO: need to add statuses for reports
-      await Promise.all([
-        queryInterface.sequelize.query(`
-          INSERT INTO "Statuses"
-          ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
-          SELECT
-            s.name,
-            vf.id,
-            current_timestamp,
-            current_timestamp,
-            s.name = '${GOAL_STATUS.CLOSED}'
-          FROM "ValidFor" vf
-          CROSS JOIN UNNEST(ARRAY[
-            ${Object.values(GOAL_STATUS).map((status) => `'${status}'`).join(',\n')}
-          ]) s(name)
-          WHERE vf.name = '${ENTITY_TYPE.GOAL}'
-          ;
-        `, { transaction }),
-        queryInterface.sequelize.query(`
-          INSERT INTO "Statuses"
-          ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
-          SELECT
-            s.name,
-            vf.id,
-            current_timestamp,
-            current_timestamp,
-            s.name = '${OBJECTIVE_STATUS.COMPLETE}'
-          FROM "ValidFor" vf
-          CROSS JOIN UNNEST(ARRAY[
-            ${Object.values(OBJECTIVE_STATUS).map((status) => `'${status}'`).join(',\n')}
-          ]) s(name)
-          WHERE vf.name = '${ENTITY_TYPE.OBJECTIVE}'
-          ;
-        `, { transaction }),
-        queryInterface.sequelize.query(`
-          INSERT INTO "Statuses"
-          ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
-          SELECT
-            s.name,
-            vf.id,
-            current_timestamp,
-            current_timestamp,
-            s.name = '${APPROVAL_STATUSES.APPROVED}'
-          FROM "ValidFor" vf
-          CROSS JOIN UNNEST(ARRAY[
-            ${Object.values(APPROVAL_STATUSES).map((status) => `'${status}'`).join(',\n')}
-          ]) s(name)
-          WHERE vf.name = '${ENTITY_TYPE.COLLABORATOR}'
-          ;
-        `, { transaction }),
-      ]);
+      const seedStatuses = [
+        {
+          values: GOAL_STATUS,
+          validForName: ENTITY_TYPE.GOAL,
+          terminalStatus: GOAL_STATUS.CLOSED,
+        },
+        {
+          values: OBJECTIVE_STATUS,
+          validForName: ENTITY_TYPE.COMPLETE,
+          terminalStatus: OBJECTIVE_STATUS.CLOSED,
+        },
+        {
+          values: COLLABORATOR_APPROVAL_STATUSES,
+          validForName: ENTITY_TYPE.COLLABORATOR,
+          terminalStatus: COLLABORATOR_APPROVAL_STATUSES.APPROVED,
+        },
+      ];
+
+      await Promise.all(seedStatuses.map(async ({
+        values,
+        validForName,
+        terminalStatus,
+      }) => queryInterface.sequelize.query(`
+        INSERT INTO "Statuses"
+        ("name", "validForId", "createdAt", "updatedAt", "isTerminal")
+        SELECT
+          s.name,
+          vf.id,
+          current_timestamp,
+          current_timestamp,
+          s.name = '${terminalStatus}'
+        FROM "ValidFor" vf
+        CROSS JOIN UNNEST(ARRAY[
+          ${Object.values(values).map((status) => `'${status}'`).join(',\n')}
+        ]) s(name)
+        WHERE vf.name = '${validForName}'
+        ;`, { transaction })));
+
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Organizers', {
         id: {
@@ -391,13 +382,10 @@ module.exports = {
       }, { transaction });
 
       //---------------------------------------------------------------------------------
-
-      await queryInterface.addColumn('NationalCenters', {
-        deletedAt: {
-          type: Sequelize.DATE,
-          allowNull: true,
-          default: null,
-        },
+      await queryInterface.addColumn('NationalCenters', 'deletedAt', {
+        type: Sequelize.DATE,
+        allowNull: true,
+        default: null,
       }, { transaction });
 
       //---------------------------------------------------------------------------------
@@ -449,6 +437,7 @@ module.exports = {
           defaultValue: Sequelize.fn('NOW'),
         },
       }, { transaction });
+
       await queryInterface.addIndex('ReportNationalCenters', ['reportId', 'nationalCenterId', 'actingAs'], { transaction });
 
       await queryInterface.addConstraint('ReportNationalCenters', {
@@ -684,7 +673,7 @@ module.exports = {
         IST: 'IST',
       };
 
-      await queryInterface.createTable('EventReports', {
+      await queryInterface.createTable('ReportTrainingEvents', {
         id: {
           type: Sequelize.BIGINT,
           allowNull: false,
@@ -755,16 +744,16 @@ module.exports = {
           defaultValue: Sequelize.fn('NOW'),
         },
       }, { transaction });
-      await queryInterface.addIndex('EventReports', ['reportId', 'regionId'], { transaction });
+      await queryInterface.addIndex('ReportTrainingEvents', ['reportId', 'regionId'], { transaction });
 
-      await queryInterface.addConstraint('EventReports', {
+      await queryInterface.addConstraint('ReportTrainingEvents', {
         fields: ['reportId'],
         type: 'unique',
         transaction,
       });
 
       //---------------------------------------------------------------------------------
-      await queryInterface.createTable('SessionReports', {
+      await queryInterface.createTable('ReportTrainingSessions', {
         id: {
           type: Sequelize.BIGINT,
           allowNull: false,
@@ -783,7 +772,7 @@ module.exports = {
             key: 'id',
           },
         },
-        eventReportId: {
+        reportTrainingEventId: {
           type: Sequelize.BIGINT,
           allowNull: false,
           onUpdate: 'CASCADE',
@@ -830,9 +819,9 @@ module.exports = {
           defaultValue: Sequelize.fn('NOW'),
         },
       }, { transaction });
-      await queryInterface.addIndex('SessionReports', ['reportId', 'regionId'], { transaction });
+      await queryInterface.addIndex('ReportTrainingSessions', ['reportId', 'regionId'], { transaction });
 
-      await queryInterface.addConstraint('SessionReports', {
+      await queryInterface.addConstraint('ReportTrainingSessions', {
         fields: ['reportId'],
         type: 'unique',
         transaction,
@@ -1039,38 +1028,36 @@ module.exports = {
           INSERT INTO "CollaboratorTypes"
           ("name", "validForId", "createdAt", "updatedAt")
           SELECT
-            s.name,
+            ct.name,
             vf.id,
             current_timestamp,
-            current_timestamp,
+            current_timestamp
           FROM "ValidFor" vf
           CROSS JOIN UNNEST(ARRAY[
             'editor',
             'owner',
             'instantiator',
-            'poc',
+            'poc'
           ]) ct(name)
           WHERE vf.name = '${ENTITY_TYPE.REPORT_EVENT}'
-          ;
-        `, { transaction }),
+          ;`, { transaction }),
         queryInterface.sequelize.query(`
           INSERT INTO "CollaboratorTypes"
           ("name", "validForId", "createdAt", "updatedAt")
           SELECT
-            s.name,
+            ct.name,
             vf.id,
             current_timestamp,
-            current_timestamp,
+            current_timestamp
           FROM "ValidFor" vf
           CROSS JOIN UNNEST(ARRAY[
             'editor',
             'owner',
             'instantiator',
-            'poc',
+            'poc'
           ]) ct(name)
           WHERE vf.name = '${ENTITY_TYPE.REPORT_SESSION}'
-          ;
-        `, { transaction }),
+          ;`, { transaction }),
       ]);
 
       //---------------------------------------------------------------------------------
@@ -1699,18 +1686,17 @@ module.exports = {
         INSERT INTO "CloseSuspendReasons"
         ("name", "validForId", "forClose", "forSuspend", "createdAt", "updatedAt")
         SELECT
-          s.name,
+          csr.name,
           vf.id,
-          s.name IN (${GOAL_CLOSE_REASONS.map((gcr) => `'${gcr}'`).join(',\n')}),
-          s.name IN (${GOAL_SUSPEND_REASONS.map((gsr) => `'${gsr}'`).join(',\n')}),
+          csr.name IN (${GOAL_CLOSE_REASONS.map((gcr) => `'${gcr}'`).join(',\n')}),
+          csr.name IN (${GOAL_SUSPEND_REASONS.map((gsr) => `'${gsr}'`).join(',\n')}),
           current_timestamp,
           current_timestamp
         FROM "ValidFor" vf
-        CROSS JOIN UNNEST(ARRAY[${CLOSE_SUSPEND_REASONS.map((csr) => `"${csr}"`).join(',\n')}]) s(name)
+        CROSS JOIN UNNEST(ARRAY[${CLOSE_SUSPEND_REASONS.map((csr) => `'${csr}'`).join(',\n')}]) csr(name)
         WHERE vf.name = '${ENTITY_TYPE.GOAL}'
         OR vf.name = '${ENTITY_TYPE.OBJECTIVE}'
-        ;
-      `, { transaction });
+        ;`, { transaction });
 
       //---------------------------------------------------------------------------------
 
@@ -2463,22 +2449,27 @@ module.exports = {
         'ObjectiveTopics',
       ];
 
-      await Promise.all(foiaableTables.map(async (
-        table,
-      ) => Promise.all([
-        queryInterface.addColumn(table, {
-          isFoiaable: {
-            type: Sequelize.BOOLEAN,
-            default: false,
-          },
-        }, { transaction }),
-        queryInterface.addColumn(table, {
-          isReferenced: {
-            type: Sequelize.BOOLEAN,
-            default: false,
-          },
-        }, { transaction }),
-      ])));
+      await addColumnToTables(
+        queryInterface,
+        transaction,
+        'isFoiaable',
+        {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        foiaableTables,
+      );
+
+      await addColumnToTables(
+        queryInterface,
+        transaction,
+        'isReferenced',
+        {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        foiaableTables,
+      );
     },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
@@ -2486,76 +2477,65 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(
-        `
-        SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
-        `,
-        { transaction },
+      await removeTables(
+        queryInterface,
+        transaction,
+        [
+          'Reasons',
+          'TargetPopulations',
+          'ReportReasons',
+          'ReportTargetPopulations',
+          'ReportTrainingEvents',
+          'ReportTrainingSessions',
+          'ReportApprovals',
+          'ReportRecipients',
+          'ReportCollaborators',
+          'ReportCollaboratorRoles',
+          'ReportResources',
+          'ReportFiles',
+          'ReportGoalTemplateResources',
+          'ReportGoalTemplates',
+          'ReportGoalResources',
+          'ReportGoals',
+          'ReportObjectiveFiles',
+          'ReportObjectiveResources',
+          'ReportObjectiveTopics',
+          'ReportObjectives',
+          'Reports',
+        ],
       );
 
-      /**
-      *  Remove all new tables
-      * - Reports
-      *  - ReportReasons
-      *  - ReportTargetPopulations
-      *  - EventReports
-      *  - SessionReports
-      *  - ReportApprovals
-      *  - ReportRecipients
-      *  - ReportCollaborators
-      *    - ReportCollaboratorRoles
-      *  - ReportResources
-      *  - ReportFiles
-      *  - ReportGoalTemplates
-      *    - ReportGoalTemplateResources
-      *  - ReportGoals
-      *    - ReportGoalResources
-      *  - ReportObjectives
-      *    - ReportObjectiveFiles
-      *    - ReportObjectiveResources
-      *    - ReportObjectiveTopics
-      *
-      * - Reasons
-      * - TargetPopulations
-      *  */
-      await Promise.all([
-        'Reasons',
-        'TargetPopulations',
-        'ReportReasons',
-        'ReportTargetPopulations',
-        'EventReports',
-        'SessionReports',
-        'ReportApprovals',
-        'ReportRecipients',
-        'ReportCollaborators',
-        'ReportCollaboratorRoles',
-        'ReportResources',
-        'ReportFiles',
-        'ReportGoalTemplateResources',
-        'ReportGoalTemplates',
-        'ReportGoalResources',
-        'ReportGoals',
-        'ReportObjectiveFiles',
-        'ReportObjectiveResources',
-        'ReportObjectiveTopics',
-        'ReportObjectives',
-        'Reports',
-      ]
-        .map(async (table) => {
-          await queryInterface.sequelize.query(
-            ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
-            { raw: true, transaction },
-          );
-          // Drop old audit log table
-          await queryInterface.sequelize.query(`TRUNCATE TABLE "${table}";`, { transaction });
-          await queryInterface.dropTable(`ZAL${table}`, { transaction });
-          await queryInterface.dropTable(table, { transaction });
-        }));
-      await queryInterface.sequelize.query(
-        `
-        SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
-        `,
-        { transaction },
+      const foiaableTables = [
+        // Primary tables
+        'Goals',
+        'GoalTemplates',
+        'Objectives',
+        'ObjectiveTemplates',
+        // Metadata tables
+        'GoalTemplateResources',
+        'GoalTemplateFieldPrompts',
+        'GoalResources',
+        'GoalFieldResponses',
+        'ObjectiveTemplateFiles',
+        'ObjectiveTemplateResources',
+        'ObjectiveTemplateTopics',
+        'ObjectiveFiles',
+        'ObjectiveResources',
+        'ObjectiveTopics',
+      ];
+
+      await removeColumnFromTables(
+        queryInterface,
+        transaction,
+        'isFoiaable',
+        foiaableTables,
+      );
+
+      await removeColumnFromTables(
+        queryInterface,
+        transaction,
+        'isReferenced',
+        foiaableTables,
       );
     },
   ),
