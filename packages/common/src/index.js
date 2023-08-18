@@ -1,5 +1,3 @@
-Object.defineProperty(exports, '__esModule', { value: true });
-
 const RECIPIENT_PARTICIPANTS = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
@@ -16,7 +14,6 @@ const RECIPIENT_PARTICIPANTS = [
   'Teacher / Infant-Toddler Caregiver',
   'Volunteer',
 ];
-exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
 const OTHER_ENTITY_PARTICIPANTS = [
   'HSCO',
@@ -29,13 +26,11 @@ const OTHER_ENTITY_PARTICIPANTS = [
   'State Head Start Association',
   'Other',
 ];
-exports.OTHER_ENTITY_PARTICIPANTS = OTHER_ENTITY_PARTICIPANTS;
 
 const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
   ...OTHER_ENTITY_PARTICIPANTS,
 ];
-exports.ALL_PARTICIPANTS = ALL_PARTICIPANTS;
 
 const TOPICS = [
   'Behavioral / Mental Health / Trauma',
@@ -79,7 +74,6 @@ const TOPICS = [
   'Transition Practices',
   'Transportation',
 ];
-exports.TOPICS = TOPICS;
 
 const REASONS = [
   'Below Competitive Threshold (CLASS)',
@@ -100,7 +94,6 @@ const REASONS = [
   'Monitoring | Noncompliance',
   'Monitoring | Deficiency',
 ];
-exports.REASONS = REASONS;
 
 const REPORT_STATUSES = {
   DRAFT: 'draft',
@@ -109,7 +102,6 @@ const REPORT_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
 };
-exports.REPORT_STATUSES = REPORT_STATUSES;
 
 const TRAINING_REPORT_STATUSES = {
   NOT_STARTED: 'Not started',
@@ -117,7 +109,6 @@ const TRAINING_REPORT_STATUSES = {
   COMPLETE: 'Complete',
   SUSPENDED: 'Suspended',
 };
-exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
 
 const TRAINING_REPORT_STATUSES_URL_PARAMS = {
   'not-started': TRAINING_REPORT_STATUSES.NOT_STARTED,
@@ -126,14 +117,10 @@ const TRAINING_REPORT_STATUSES_URL_PARAMS = {
   complete: TRAINING_REPORT_STATUSES.COMPLETE,
 };
 
-exports.TRAINING_REPORT_STATUSES_URL_PARAMS = TRAINING_REPORT_STATUSES_URL_PARAMS;
-
 const EVENT_REPORT_STATUSES = {
   IN_PROGRESS: 'In progress',
   COMPLETE: 'Complete',
 }
-
-exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
@@ -148,15 +135,12 @@ const TARGET_POPULATIONS = [
   'Dual-Language Learners',
   'Program Staff',
 ];
-exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
 const EVENT_TARGET_POPULATIONS = [
   'Children/Families affected by systemic discrimination/bias/exclusion',
   'Children/Families affected by traumatic events',
   'Parents/Families impacted by health disparities'
 ];
-
-exports.EVENT_TARGET_POPULATIONS = EVENT_TARGET_POPULATIONS;
 
 const USER_ROLES = [
   'Central Office',
@@ -178,18 +162,16 @@ const USER_ROLES = [
   'Health Specialist',
   'System Specialist',
 ];
-exports.USER_ROLES = USER_ROLES;
 
-const CLOSE_SUSPEND_REASONS = [ 
-  'Duplicate goal', 
-  'Key staff turnover / vacancies', 
-  'Recipient is not responding', 
-  'Recipient request', 
+// TODO: This is the deduped combination of GOAL_CLOSE_REASONS and GOAL_SUSPEND_REASONS
+const CLOSE_SUSPEND_REASONS = [
+  'Duplicate goal',
+  'Key staff turnover / vacancies',
+  'Recipient is not responding',
+  'Recipient request',
   'Regional Office request',
   'TTA complete',
 ];
-
-exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
 const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
@@ -197,7 +179,6 @@ const GOAL_CLOSE_REASONS = [
   'Regional Office request',
   'TTA complete',
 ];
-exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
 
 const GOAL_SUSPEND_REASONS = [
   'Key staff turnover / vacancies',
@@ -205,7 +186,6 @@ const GOAL_SUSPEND_REASONS = [
   'Recipient is not responding',
   'Regional Office request',
 ];
-exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
 const GOAL_SOURCES = [
   'Federal monitoring issues, including CLASS and RANs',
@@ -215,13 +195,10 @@ const GOAL_SOURCES = [
   'Training event follow-up',
 ];
 
-exports.GOAL_SOURCES = GOAL_SOURCES;
-
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
 };
-exports.APPROVER_STATUSES = APPROVER_STATUSES;
 
 const SCOPE_IDS = {
   SITE_ACCESS: 1,
@@ -234,26 +211,46 @@ const SCOPE_IDS = {
   READ_TRAINING_REPORTS: 8,
   POC_TRAINING_REPORTS: 9,
 };
-exports.SCOPE_IDS = SCOPE_IDS;
 
 const DECIMAL_BASE = 10;
-exports.DECIMAL_BASE = DECIMAL_BASE;
 
 const ALERT_STATUSES = {
     UNPUBLISHED: 'Unpublished',
     PUBLISHED: 'Published'
 };
-exports.ALERT_STATUSES = ALERT_STATUSES;
 
 const ALERT_VARIANTS = {
     INFO: 'info',
     EMERGENCY: 'emergency'
 };
-exports.ALERT_VARIANTS = ALERT_VARIANTS;
 
 const ALERT_SIZES = {
     STANDARD: 'standard',
     SLIM: 'slim',
     LARGE: 'large'
 };
-exports.ALERT_SIZES = ALERT_SIZES;
+
+module.exports = {
+  RECIPIENT_PARTICIPANTS,
+  OTHER_ENTITY_PARTICIPANTS,
+  ALL_PARTICIPANTS,
+  TOPICS,
+  REASONS,
+  REPORT_STATUSES,
+  TRAINING_REPORT_STATUSES,
+  TRAINING_REPORT_STATUSES_URL_PARAMS,
+  EVENT_REPORT_STATUSES,
+  TARGET_POPULATIONS,
+  EVENT_TARGET_POPULATIONS,
+  USER_ROLES,
+  CLOSE_SUSPEND_REASONS,
+  GOAL_CLOSE_REASONS,
+  GOAL_SUSPEND_REASONS,
+  GOAL_SOURCES,
+  APPROVER_STATUSES,
+  SCOPE_IDS,
+  DECIMAL_BASE,
+  ALERT_STATUSES,
+  ALERT_VARIANTS,
+  ALERT_SIZES,
+};
