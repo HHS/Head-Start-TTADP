@@ -1,4 +1,8 @@
 const {
+  CLOSE_SUSPEND_REASONS,
+  GOAL_SOURCES,
+} = require('@ttahub/common');
+const {
   prepMigration,
 } = require('../lib/migration');
 
@@ -1626,6 +1630,76 @@ module.exports = {
 
       //---------------------------------------------------------------------------------
 
+      await queryInterface.createTable('CloseSuspendReasons', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        validForId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'CloseSuspendReasons',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      await queryInterface.sequelize.query(`
+        INSERT INTO "CloseSuspendReasons"
+        ("name", "validForId", "createdAt", "updatedAt")
+        SELECT
+          s.name,
+          vf.id,
+          current_timestamp,
+          current_timestamp,
+        FROM "ValidFor" vf
+        CROSS JOIN UNNEST(ARRAY[${CLOSE_SUSPEND_REASONS.map((csr) => `"${csr}"`).join(',\n')}]) s(name)
+        WHERE vf.name = '${ENTITY_TYPE.GOAL}'
+        OR vf.name = '${ENTITY_TYPE.OBJECTIVE}'
+        ;
+      `, { transaction });
+
+      //---------------------------------------------------------------------------------
+
       await queryInterface.createTable('ReportGoals', {
         id: {
           allowNull: false,
@@ -1677,16 +1751,17 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        closeSuspendReason: {
-          type: Sequelize.ENUM([
-            'Duplicate goal',
-            'Recipient request',
-            'TTA complete',
-            'Key staff turnover / vacancies',
-            'Recipient is not responding',
-            'Regional Office request',
-          ]),
+        closeSuspendReasonId: {
           allowNull: true,
+          type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'CloseSuspendReasons',
+            },
+            key: 'id',
+          },
         },
         closeSuspendContext: {
           type: Sequelize.TEXT,
