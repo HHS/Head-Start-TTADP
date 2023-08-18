@@ -14,23 +14,23 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsTo',
         as: 'mapsFromOrganizers',
       });
-      Organizer.hasMany(models.EventReport, {
+      Organizer.hasMany(models.ReportTrainingEvent, {
         foreignKey: 'organizerId',
-        as: 'eventReports',
+        as: 'reportTrainingEvents',
       });
       Organizer.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_EVENT), {
-        through: models.EventReport,
+        through: models.ReportTrainingEvent,
         foreignKey: 'organizerId',
         otherKey: 'reportId',
         as: 'reports',
       });
 
-      models.EventReport.belongsTo(models.Organizer, {
+      models.ReportTrainingEvent.belongsTo(models.Organizer, {
         foreignKey: 'organizerId',
         as: 'organizer',
       });
       models.Report.scope(ENTITY_TYPE.REPORT_EVENT).belongsToMany(models.Organizer, {
-        through: models.EventReport,
+        through: models.ReportTrainingEvent,
         foreignKey: 'reportId',
         otherKey: 'organizerId',
         as: 'organizer',
