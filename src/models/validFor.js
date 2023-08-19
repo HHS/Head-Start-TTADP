@@ -41,9 +41,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    validForId: {
-      type: DataTypes.INTEGER,
+    isReport: {
+      type: DataTypes.BOOLEAN,
       allowNull: false,
+      defaultValue: false,
     },
     mapsTo: {
       type: DataTypes.INTEGER,
