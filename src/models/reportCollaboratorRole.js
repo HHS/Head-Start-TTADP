@@ -47,6 +47,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     reportCollaboratorId: {
       type: DataTypes.BIGINT,
