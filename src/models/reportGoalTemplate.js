@@ -22,8 +22,8 @@ export default (sequelize, DataTypes) => {
         scope: {
           [sequelize.col('"Report".reportType')]: {
             [Op.in]: [
-              ENTITY_TYPE.REPORT_EVENT,
-              ENTITY_TYPE.REPORT_SESSION,
+              ENTITY_TYPE.REPORT_TRAINING_EVENT,
+              ENTITY_TYPE.REPORT_TRAINING_SESSION,
             ],
           },
         },
