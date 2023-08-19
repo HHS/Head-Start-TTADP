@@ -2,7 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const {
-  ENTITY_TYPE,
+  REPORT_TYPE,
 } = require('../constants');
 
 /**
@@ -23,12 +23,12 @@ export default (sequelize, DataTypes) => {
         as: 'reason',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
         .hasMany(models.ReportReason, {
           foreignKey: 'reportId',
           as: 'reportReasons',
         });
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
         .belongsToMany(models.Reason, {
           through: models.ReportReason,
           foreignKey: 'reportId',
