@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { ENTITY_TYPE } = require('../constants');
+const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -25,30 +25,46 @@ export default (sequelize, DataTypes) => {
         as: 'report',
       });
 
-      Status.addScope('validFor', (validFor) => ({
-        where: { validFor },
+      Status.belongsTo(models.ValidFor, {
+        foreignKey: 'validForId',
+        as: 'validFor',
+      });
+
+      models.ValidFor.hasMany(models.Status, {
+        foreignKey: 'validForId',
+        as: 'validForStatuses',
+      });
+
+      Status.addScope('validFor', (name) => ({
+        includes: [{
+          model: models.ValidFor,
+          as: 'validFor',
+          attributes: [],
+          required: true,
+          where: { name },
+        }],
       }));
 
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
-        .belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_EVENT] }), {
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
+        .belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_EVENT] }), {
           foreignKey: 'statusId',
           as: 'eventStatus',
         });
 
-      models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_EVENT] })
-        .hasMany(models.Report.scope(ENTITY_TYPE.REPORT_EVENT), {
+      models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_EVENT] })
+        .hasMany(models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }), {
           foreignKey: 'statusId',
           as: 'eventReports',
         });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
-        .belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_SESSION] }), {
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] })
+        .belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_SESSION] }), {
           foreignKey: 'statusId',
           as: 'sessionStatus',
         });
 
-      models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_SESSION] })
-        .hasMany(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
+      models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_SESSION] })
+        .hasMany(models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }), {
           foreignKey: 'statusId',
           as: 'sessionReports',
         });
@@ -97,8 +113,8 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       default: false,
     },
-    validFor: {
-      type: DataTypes.ENUM(Object.values(ENTITY_TYPE)),
+    validForId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     mapsTo: {
