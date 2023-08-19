@@ -54,7 +54,11 @@ export default (sequelize, DataTypes) => {
     },
     isFoiaable: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   }, {
     sequelize,
