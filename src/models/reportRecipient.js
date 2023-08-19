@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { ENTITY_TYPE, RECIPIENT_TYPE } = require('../constants');
+const { REPORT_TYPE, RECIPIENT_TYPE } = require('../constants');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -26,10 +26,11 @@ export default (sequelize, DataTypes) => {
         ],
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).hasMany(models.ReportRecipient, {
-        foreignKey: 'reportId',
-        as: 'reportRecipient',
-      });
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] })
+        .hasMany(models.ReportRecipient, {
+          foreignKey: 'reportId',
+          as: 'reportRecipient',
+        });
 
       models.Grant.hasMany(models.ReportRecipient, {
         foreignKey: 'grantId',
@@ -41,7 +42,7 @@ export default (sequelize, DataTypes) => {
         as: 'reportRecipient',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] })
         .belongsToMany(models.Grant, {
           through: models.ReportRecipient,
           foreignKey: 'reportId',
@@ -49,7 +50,7 @@ export default (sequelize, DataTypes) => {
           as: 'grants',
         });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] })
         .belongsToMany(models.OtherEntity, {
           through: models.ReportRecipient,
           foreignKey: 'reportId',
@@ -58,7 +59,7 @@ export default (sequelize, DataTypes) => {
         });
 
       models.Grant
-        .belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
+        .belongsToMany(models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }), {
           through: models.ReportRecipient,
           foreignKey: 'grantId',
           otherKey: 'reportId',
@@ -66,7 +67,7 @@ export default (sequelize, DataTypes) => {
         });
 
       models.OtherEntity
-        .belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
+        .belongsToMany(models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }), {
           through: models.ReportRecipient,
           foreignKey: 'otherEntityId',
           otherKey: 'reportId',
