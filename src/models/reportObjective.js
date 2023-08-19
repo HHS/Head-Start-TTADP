@@ -2,7 +2,7 @@ const {
   Model,
   Op,
 } = require('sequelize');
-const { ENTITY_TYPE } = require('../constants');
+const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class ReportObjective extends Model {
@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
         as: 'reportGoal',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
         .hasMany(models.ReportObjective, {
           foreignKey: 'reportId',
           as: 'reportObjectives',
