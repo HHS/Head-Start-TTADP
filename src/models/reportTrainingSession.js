@@ -3,7 +3,7 @@ const {
   Op,
 } = require('sequelize');
 const {
-  ENTITY_TYPE,
+  REPORT_TYPE,
 } = require('../constants');
 
 export default (sequelize, DataTypes) => {
@@ -18,7 +18,7 @@ export default (sequelize, DataTypes) => {
         as: 'region',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] })
         .hasOne(models.ReportTrainingSession, {
           foreignKey: 'reportId',
           as: 'session',
