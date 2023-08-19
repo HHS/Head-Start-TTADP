@@ -3,7 +3,7 @@ const {
   Op,
 } = require('sequelize');
 const {
-  ENTITY_TYPE,
+  REPORT_TYPE,
 } = require('../constants');
 
 /**
@@ -28,29 +28,30 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'targetPopulationId',
         as: 'reportTargetPopulations',
       });
-      models.TargetPopulation.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_EVENT), {
+      models.TargetPopulation.belongsToMany(models.Report
+        .scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }), {
         through: models.ReportTargetPopulation,
         foreignKey: 'targetPopulationId',
         otherKey: 'reportId',
         as: 'reports',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
         .hasMany(models.ReportTargetPopulation, {
           foreignKey: 'reportId',
           as: 'reportTargetPopulations',
           scope: {
-            validFor: ENTITY_TYPE.REPORT_EVENT,
+            validFor: REPORT_TYPE.REPORT_TRAINING_EVENT,
           },
         });
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
         .belongsToMany(models.TargetPopulation, {
           through: models.ReportTargetPopulation,
           foreignKey: 'reportId',
           otherKey: 'targetPopulationId',
           as: 'targetPopulations',
           scope: {
-            validFor: ENTITY_TYPE.REPORT_EVENT,
+            validFor: REPORT_TYPE.REPORT_TRAINING_EVENT,
           },
         });
     }
