@@ -3,7 +3,7 @@ const {
   Op,
 } = require('sequelize');
 const {
-  ENTITY_TYPE,
+  REPORT_TYPE,
   TRAINING_TYPE,
   AUDIENCE,
   ORGANIZER,
@@ -21,30 +21,42 @@ export default (sequelize, DataTypes) => {
         as: 'region',
       });
 
-      models.Report.addScope(ENTITY_TYPE.REPORT_EVENT, {
-        where: {
-          reportType: ENTITY_TYPE.REPORT_EVENT,
-        },
-        include: [{
-          model: models.Status,
-          as: 'status',
-          required: true,
-          where: {
-            name: {
-              [Op.ne]: 'deleted',
-            },
-          },
-        }],
-      });
-
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT).hasOne(models.ReportTrainingEvent, {
-        foreignKey: 'reportId',
-        as: 'event',
-      });
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
+        .hasOne(models.ReportTrainingEvent, {
+          foreignKey: 'reportId',
+          as: 'event',
+        });
       models.Region.hasMany(models.ReportTrainingEvent, {
         foreignKey: 'regionId',
         as: 'event',
       });
+
+      // Organizer
+      models.Organizer.hasMany(models.ReportTrainingEvent, {
+        foreignKey: 'organizerId',
+        as: 'reportTrainingEvents',
+      });
+
+      models.ReportTrainingEvent.belongsTo(models.Organizer, {
+        foreignKey: 'organizerId',
+        as: 'organizer',
+      });
+
+      models.Organizer.belongsToMany(models.Report
+        .scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }), {
+        through: models.ReportTrainingEvent,
+        foreignKey: 'organizerId',
+        otherKey: 'reportId',
+        as: 'reports',
+      });
+
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
+        .belongsToMany(models.Organizer, {
+          through: models.ReportTrainingEvent,
+          foreignKey: 'reportId',
+          otherKey: 'organizerId',
+          as: 'organizer',
+        });
     }
   }
   ReportTrainingEvent.init({
