@@ -36,17 +36,21 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      // defaultValue: false, // TODO: needs to be fixed in migration
       allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      // defaultValue: false, // TODO: needs to be fixed in migration
       allowNull: false,
     },
     isFoiaable: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   }, {
     sequelize,
