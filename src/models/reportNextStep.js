@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { ENTITY_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
+const { REPORT_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
 export default (sequelize, DataTypes) => {
@@ -23,12 +23,12 @@ export default (sequelize, DataTypes) => {
         },
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
         .hasMany(models.ReportNextStep.scope(NEXTSTEP_NOTETYPE.RECIPIENT), {
           foreignKey: 'reportId',
           as: 'reportNextStepRecipients',
         });
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION)
+      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
         .hasMany(models.ReportNextStep.scope(NEXTSTEP_NOTETYPE.SPECIALIST), {
           foreignKey: 'reportId',
           as: 'reportNextStepSpecialists',
