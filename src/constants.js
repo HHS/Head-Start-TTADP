@@ -180,9 +180,13 @@ const GRANT_INACTIVATION_REASONS = {
   UNKNOWN: 'Unknown',
 };
 
+const REPORT_TYPE = {
+  REPORT_TRAINING_EVENT: 'report.trainingEvent',
+  REPORT_TRAINING_SESSION: 'resport.trainingSession',
+};
+
 const ENTITY_TYPE = {
-  REPORT_EVENT: 'report.event',
-  REPORT_SESSION: 'resport.session',
+  ...REPORT_TYPE,
   GOAL: 'goal',
   OBJECTIVE: 'objective',
   COLLABORATOR: 'collaborator',
@@ -274,6 +278,7 @@ module.exports = {
   RESOURCE_DOMAIN,
   AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
+  REPORT_TYPE,
   ENTITY_TYPE,
   NATIONAL_CENTER_ACTING_AS,
   RECIPIENT_TYPE,
