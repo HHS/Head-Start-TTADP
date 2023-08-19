@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
     },
     sourceFields: {
       allowNull: true,
-      default: null,
+      defaultValue: null,
       type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE)))),
     },
     isAutoDetected: {
@@ -44,7 +44,11 @@ export default (sequelize, DataTypes) => {
     },
     isFoiaable: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   }, {
     sequelize,
