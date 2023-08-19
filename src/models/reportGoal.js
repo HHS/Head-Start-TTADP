@@ -3,41 +3,65 @@ const {
   Op,
 } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
-const { ENTITY_TYPE } = require('../constants');
+const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
 export default (sequelize, DataTypes) => {
   class ReportGoal extends Model {
     static associate(models) {
-      ReportGoal.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
       ReportGoal.belongsTo(models.Goal, {
         foreignKey: 'goalId',
         as: 'goal',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).hasMany(models.ReportGoal, {
-        foreignKey: 'reportId',
-        as: 'reportGoals',
-      });
       models.Goal.hasMany(models.ReportGoal, {
         foreignKey: 'goalId',
         as: 'reportGoals',
       });
 
-      models.Report.scope(ENTITY_TYPE.REPORT_SESSION).belongsToMany(models.Goal, {
-        through: models.ReportGoal,
-        foreignKey: 'reportId',
-        otherKey: 'goalId',
-        as: 'goals',
+      [
+        {
+          model: models.Report,
+          prefix: 'report',
+        },
+        {
+          model: models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }),
+          prefix: 'reportTrainingSession',
+        }
+      ].forEach(({
+        model,
+        prefix,
+      }) => {
+        models.ReportGoal.belogsTo(model, {
+          foreignKey: 'reportId',
+          as: prefix,
+        });
+        model.hasMany(models.ReportGoal, {
+          foreignKey: 'reportId',
+          as: 'reportGoals',
+        });
+
+        model.belongsToMany(models.Goal, {
+          through: models.ReportGoal,
+          foreignKey: 'reportId',
+          otherKey: 'goalId',
+          as: 'goals',
+        });
+
+        models.Goal.belongsToMany(model, {
+          through: models.ReportGoal,
+          foreignKey: 'goalId',
+          otherKey: 'reportId',
+          as: `${prefix}s`,
+        });
       });
-      models.Goal.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_SESSION), {
+
+      models.Goal.belongsToMany(models.Report
+        .scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }), {
         through: models.ReportGoal,
         foreignKey: 'goalId',
         otherKey: 'reportId',
-        as: 'reports',
+        as: `${prefix}s`,
       });
     }
   }
@@ -63,9 +87,9 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     timeframe: DataTypes.TEXT,
-    closeSuspendReason: {
+    closeSuspendReasonId: {
+      type: DataTypes.INTEGER,
       allowNull: true,
-      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
     },
     endDate: {
       type: DataTypes.DATEONLY,
