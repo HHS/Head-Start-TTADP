@@ -1,7 +1,7 @@
 import { filterDataToModel, switchAttributeNames, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
 import {
-  ENTITY_TYPE,
+  REPORT_TYPE,
   COLLABORATOR_TYPES,
   AUDIENCE,
   TRAINING_TYPE,
@@ -86,7 +86,7 @@ const syncReportTrainingEvent = async (
 ) => {
   const report = await syncReport({
     ...data,
-    ...(!Object.keys(data).includes('reportType') && { reportType: ENTITY_TYPE.REPORT_EVENT }),
+    ...(!Object.keys(data).includes('reportType') && { reportType: REPORT_TYPE.REPORT_TRAINING_EVENT }),
   });
   const remappedData = dataRemap(data);
   const { matched: filteredData, unmatched } = await filterData({
@@ -96,7 +96,7 @@ const syncReportTrainingEvent = async (
 
   const reportDescriptor: ReportDescriptor = {
     reportId: report.reportId,
-    reportType: ENTITY_TYPE.REPORT_EVENT,
+    reportType: REPORT_TYPE.REPORT_TRAINING_EVENT,
     regionId: data.regionId,
   };
   // TODO: handle the unmatched data
@@ -159,7 +159,7 @@ const getReportTrainingEvents = async (
   attributes: [],
   where: {
     id: reportIds,
-    reportType: ENTITY_TYPE.REPORT_EVENT,
+    reportType: REPORT_TYPE.REPORT_TRAINING_EVENT,
   },
   includes: [
     {
