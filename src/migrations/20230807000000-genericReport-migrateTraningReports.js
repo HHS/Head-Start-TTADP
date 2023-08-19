@@ -110,7 +110,7 @@ module.exports = {
           data.regionId,
           data.sessionName,
         } -> ReportTrainingSession(
-          eventReportId // ID of linked event,
+          reportTrainingEventId // ID of linked event,
           regionId,
           name,
         )
