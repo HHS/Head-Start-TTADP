@@ -14,26 +14,15 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsTo',
         as: 'mapsFromOrganizers',
       });
-      Organizer.hasMany(models.ReportTrainingEvent, {
-        foreignKey: 'organizerId',
-        as: 'reportTrainingEvents',
-      });
-      Organizer.belongsToMany(models.Report.scope(ENTITY_TYPE.REPORT_EVENT), {
-        through: models.ReportTrainingEvent,
-        foreignKey: 'organizerId',
-        otherKey: 'reportId',
-        as: 'reports',
+
+      Organizer.belongsTo(models.ValidFor, {
+        foreignKey: 'validForId',
+        as: 'validFor',
       });
 
-      models.ReportTrainingEvent.belongsTo(models.Organizer, {
-        foreignKey: 'organizerId',
-        as: 'organizer',
-      });
-      models.Report.scope(ENTITY_TYPE.REPORT_EVENT).belongsToMany(models.Organizer, {
-        through: models.ReportTrainingEvent,
-        foreignKey: 'reportId',
-        otherKey: 'organizerId',
-        as: 'organizer',
+      models.ValidFor.hasMany(models.Organizer, {
+        foreignKey: 'validForId',
+        as: 'validForOrganizers',
       });
 
       models.Organizer.addScope('defaultScope', {
@@ -50,13 +39,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     name: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    validFor: {
-      type: DataTypes.ENUM(Object.values(ENTITY_TYPE)),
+    validForId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     mapsTo: {
