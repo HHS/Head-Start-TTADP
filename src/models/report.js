@@ -3,7 +3,7 @@ const {
   Op,
 } = require('sequelize');
 const {
-  ENTITY_TYPE,
+  REPORT_TYPE,
   NATIONAL_CENTER_ACTING_AS,
   COLLABORATOR_TYPES,
 } = require('../constants');
@@ -17,6 +17,25 @@ export default (sequelize, DataTypes) => {
         as: 'status',
       });
 
+      // ValidFor aka reportType
+      models.ValidFor.addScope('reports', {
+        where: {
+          isReport: true,
+        },
+        include: [{
+          model: models.ValidFor,
+          as: 'mapsToValidFor',
+          attributes: [],
+          required: false,
+        }],
+      });
+
+      models.Report.belongsTo(models.ValidFor.scope('reports'), {
+        foreignKey: 'reportTypeId',
+        as: 'reportType',
+      });
+
+      // report scopes
       Report.addScope('defaultScope', {
         include: [{
           model: models.Status,
@@ -29,21 +48,17 @@ export default (sequelize, DataTypes) => {
           },
         }],
       });
-      Report.addScope(ENTITY_TYPE.REPORT_SESSION, {
-        where: {
-          reportType: ENTITY_TYPE.REPORT_SESSION,
-        },
+      Report.addScope('reportType', (reportType) => ({
         include: [{
-          model: models.Status,
-          as: 'status',
+          attributes: [],
+          model: models.ValidFor,
+          as: 'reportType',
           required: true,
           where: {
-            name: {
-              [Op.ne]: 'deleted',
-            },
+            name: reportType,
           },
         }],
-      });
+      }));
     }
   }
   Report.init({
@@ -52,11 +67,8 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    reportType: {
-      type: DataTypes.ENUM(
-        Object.values(ENTITY_TYPE)
-          .filter((et) => et.startsWith('report.')),
-      ),
+    reportTypeId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     statusId: {
