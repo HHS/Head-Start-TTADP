@@ -12,6 +12,7 @@ const {
 } = require('../lib/migration');
 
 const {
+  REPORT_TYPE,
   ENTITY_TYPE,
   GOAL_STATUS,
   OBJECTIVE_STATUS,
@@ -91,6 +92,11 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
+        isReport: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
         createdAt: {
           type: Sequelize.DATE,
           allowNull: false,
@@ -123,9 +129,15 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         INSERT INTO "ValidFor"
-        ("name", "createdAt", "updatedAt")
-        VALUES
-        ${Object.values(ENTITY_TYPE).map((type) => `('${type}', current_timestamp, current_timestamp)`).join(',\n')}
+        ("name", "isReport", "createdAt", "updatedAt")
+        SELECT
+          t.name,
+          t.name in (${Object.values(REPORT_TYPE).map((type) => `'${type}'`).join(',\n')}),
+          current_timestamp,
+          current_timestamp
+        FROM UNNEST(ARRAY[
+          ${Object.values(ENTITY_TYPE).map((type) => `'${type}'`).join(',\n')}
+        ]) t(name)
        ;`, { transaction });
 
       //---------------------------------------------------------------------------------
@@ -342,8 +354,17 @@ module.exports = {
           primaryKey: true,
           autoIncrement: true,
         },
-        reportType: {
-          type: Sequelize.ENUM(Object.values(ENTITY_TYPE)),
+        reportTypeId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
         },
         statusId: {
           type: Sequelize.INTEGER,
@@ -1039,7 +1060,7 @@ module.exports = {
             'instantiator',
             'poc'
           ]) ct(name)
-          WHERE vf.name = '${ENTITY_TYPE.REPORT_EVENT}'
+          WHERE vf.name = '${REPORT_TYPE.REPORT_TRAINING_EVENT}'
           ;`, { transaction }),
         queryInterface.sequelize.query(`
           INSERT INTO "CollaboratorTypes"
@@ -1056,7 +1077,7 @@ module.exports = {
             'instantiator',
             'poc'
           ]) ct(name)
-          WHERE vf.name = '${ENTITY_TYPE.REPORT_SESSION}'
+          WHERE vf.name = '${REPORT_TYPE.REPORT_TRAINING_SESSION}'
           ;`, { transaction }),
       ]);
 
