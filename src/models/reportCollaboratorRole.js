@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -11,35 +12,11 @@ const {
 export default (sequelize, DataTypes) => {
   class ReportCollaboratorRole extends Model {
     static associate(models) {
-      ReportCollaboratorRole.belongsTo(models.ReportCollaborator, {
-        foreignKey: 'reportCollaboratorId',
-        as: 'reportCollaborator',
-      });
-      ReportCollaboratorRole.belongsTo(models.Role, {
-        foreignKey: 'roleId',
-        as: 'role',
-      });
-
-      models.ReportCollaborator.hasMany(models.ReportCollaboratorRole, {
-        foreignKey: 'reportCollaboratorId',
-        as: 'reportCollaboratorRoles',
-      });
-      models.Role.hasMany(models.ReportCollaboratorRole, {
-        foreignKey: 'roleId',
-        as: 'reportCollaboratorRoles',
-      });
-      models.ReportCollaborator.belongsToMany(models.Role, {
-        through: models.ReportCollaboratorRole,
-        foreignKey: 'reportCollaboratorId',
-        otherKey: 'roleId',
-        as: 'roles',
-      });
-      models.Role.belongsToMany(models.ReportCollaborator, {
-        through: models.ReportCollaboratorRole,
-        foreignKey: 'roleId',
-        otherKey: 'reportCollaboratorId',
-        as: 'reportCollaborators',
-      });
+      generateJunctionTableAssociations(
+        models.ReportCollaboratorRole,
+        models.ReportCollaborator,
+        models.Role,
+      );
     }
   }
   ReportCollaboratorRole.init({
@@ -52,10 +29,22 @@ export default (sequelize, DataTypes) => {
     reportCollaboratorId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportCollaborators',
+        },
+        key: 'id',
+      },
     },
     roleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Roles',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,
