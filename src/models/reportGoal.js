@@ -54,14 +54,13 @@ export default (sequelize, DataTypes) => {
           otherKey: 'reportId',
           as: `${prefix}s`,
         });
-      });
 
-      models.Goal.belongsToMany(models.Report
-        .scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }), {
-        through: models.ReportGoal,
-        foreignKey: 'goalId',
-        otherKey: 'reportId',
-        as: `${prefix}s`,
+        models.Goal.belongsToMany(model, {
+          through: models.ReportGoal,
+          foreignKey: 'goalId',
+          otherKey: 'reportId',
+          as: `${prefix}s`,
+        });
       });
     }
   }
