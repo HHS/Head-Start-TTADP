@@ -129,7 +129,7 @@ module.exports = {
 
         data.objectiveResources -> ReportObjectiveTemplateResources -> ObjectiveTemplateResources
 
-        data.objectiveTopics -> ReportObjectiveTemplateResources -> ObjectiveTemplateResources
+        data.objectiveTopics -> ReportObjectiveTemplateTopics -> ObjectiveTemplateTopics
 
         data.recipients -> ReportRecipients
 
