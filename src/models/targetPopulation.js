@@ -35,13 +35,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    validFor: {
-      type: DataTypes.ENUM(Object.values(ENTITY_TYPE)),
+    validForId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     mapsTo: {
