@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -11,28 +12,11 @@ const {
 export default (sequelize, DataTypes) => {
   class ReportCollaboratorType extends Model {
     static associate(models) {
-      ReportCollaboratorType.belongsTo(models.ReportCollaborator, {
-        foreignKey: 'reportCollaboratorId',
-        as: 'reportCollaborator',
-      });
-      ReportCollaboratorType.belongsTo(models.CollaboratorType, {
-        foreignKey: 'collaboratorTypeId',
-        as: 'collaboratorType',
-      });
-      models.ReportCollaborator.hasMany(models.ReportCollaboratorType, {
-        foreignKey: 'reportCollaboratorId',
-        as: 'reportCollaborator',
-      });
-      models.CollaboratorType.hasMany(models.ReportCollaboratorType, {
-        foreignKey: 'collaboratorTypeId',
-        as: 'collaboratorType',
-      });
-      models.CollaboratorType.belongsToMany(models.ReportCollaborator, {
-        through: models.ReportCollaboratorType,
-        foreignKey: 'collaboratorTypeId',
-        otherKey: 'reportCollaboratorId',
-        as: 'reportCollaborators',
-      });
+      generateJunctionTableAssociations(
+        models.ReportCollaboratorType,
+        models.ReportCollaborator,
+        models.CollaboratorType,
+      );
     }
   }
   ReportCollaboratorType.init({
@@ -45,10 +29,22 @@ export default (sequelize, DataTypes) => {
     reportCollaboratorId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportCollaborators',
+        },
+        key: 'id',
+      },
     },
     collaboratorTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'CollaboratorTypes',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,
