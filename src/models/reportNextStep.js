@@ -3,35 +3,34 @@ const {
 } = require('sequelize');
 const { REPORT_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDataMatrix');
 
 export default (sequelize, DataTypes) => {
   class ReportNextStep extends Model {
     static associate(models) {
-      ReportNextStep.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
+      this.addScope('noteType', (noteType) => ({ where: { noteType } }));
 
-      ReportNextStep.addScope(NEXTSTEP_NOTETYPE.RECIPIENT, {
-        where: {
-          noteType: NEXTSTEP_NOTETYPE.RECIPIENT,
-        },
-      });
-      ReportNextStep.addScope(NEXTSTEP_NOTETYPE.SPECIALIST, {
-        where: {
-          noteType: NEXTSTEP_NOTETYPE.SPECIALIST,
-        },
-      });
+      // Reports
+      collectReportMatrixAssociationsForModel(models, this.modelName)
+        .forEach(({
+          model,
+          prefix,
+          associations,
+        }) => {
+          associations.forEach((config) => {
+            const localModel = config.method
+              ? this.scope({ method: config.method })
+              : this;
 
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
-        .hasMany(models.ReportNextStep.scope(NEXTSTEP_NOTETYPE.RECIPIENT), {
-          foreignKey: 'reportId',
-          as: 'reportNextStepRecipients',
-        });
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
-        .hasMany(models.ReportNextStep.scope(NEXTSTEP_NOTETYPE.SPECIALIST), {
-          foreignKey: 'reportId',
-          as: 'reportNextStepSpecialists',
+              model.hasMany(localModel, {
+                foreignKey: 'reportId',
+                as: `reportNextStep${config.as}`,
+              });
+              localModel.belongsTo(model, {
+                foreignKey: 'reportId',
+                as: `${prefix}`,
+              });
+          });
         });
     }
   }
