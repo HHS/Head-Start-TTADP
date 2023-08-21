@@ -53,6 +53,8 @@ module.exports = {
        *    - ReportObjectiveFiles-
        *    - ReportObjectiveResources-
        *    - ReportObjectiveTopics-
+       *  - ReportImports
+       *  - ReportPageStates
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
        * - ValidFor-
@@ -2449,6 +2451,80 @@ module.exports = {
         type: 'unique',
         transaction,
       });
+
+      //---------------------------------------------------------------------------------
+
+      await queryInterface.createTable('ReportImports', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
+        data: {
+          type: Sequelize.JSONB,
+          allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
+
+      //---------------------------------------------------------------------------------
+
+      await queryInterface.createTable('ReportPageStates', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
+        pageState: {
+          type: Sequelize.JSONB,
+          allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
 
       //---------------------------------------------------------------------------------
       const foiaableTables = [
