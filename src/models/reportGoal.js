@@ -5,20 +5,21 @@ const {
 const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportGoal extends Model {
     static associate(models) {
-      ReportGoal.belongsTo(models.Goal, {
-        foreignKey: 'goalId',
-        as: 'goal',
-      });
+      generateJunctionTableAssociations(
+        models.ReportGoal,
+        [
+          models.Report,
+          models.Goal,
+          models.Status,
+        ],
+      );
 
-      models.Goal.hasMany(models.ReportGoal, {
-        foreignKey: 'goalId',
-        as: 'reportGoals',
-      });
-
+      // TODO: fix
       [
         {
           model: models.Report,
@@ -54,13 +55,6 @@ export default (sequelize, DataTypes) => {
           otherKey: 'reportId',
           as: `${prefix}s`,
         });
-
-        models.Goal.belongsToMany(model, {
-          through: models.ReportGoal,
-          foreignKey: 'goalId',
-          otherKey: 'reportId',
-          as: `${prefix}s`,
-        });
       });
     }
   }
@@ -74,16 +68,34 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Goals',
+        },
+        key: 'id',
+      },
     },
     // TODO: add foreignKey linking GoalTemplate & ReportGoalTemplate
     name: DataTypes.TEXT,
     statusId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
     },
     timeframe: DataTypes.TEXT,
     closeSuspendReasonId: {
