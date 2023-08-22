@@ -3,38 +3,19 @@ const {
   Op,
 } = require('sequelize');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportObjective extends Model {
     static associate(models) {
-      ReportObjective.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
-      ReportObjective.belongsTo(models.Objective, {
-        foreignKey: 'objectiveId',
-        as: 'objective',
-      });
-      ReportObjective.belongsTo(models.ReportGoal, {
-        foreignKey: 'reportGoalId',
-        as: 'reportGoal',
-      });
-
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
-        .hasMany(models.ReportObjective, {
-          foreignKey: 'reportId',
-          as: 'reportObjectives',
-        });
-
-      models.Objective.hasMany(models.ReportObjective, {
-        foreignKey: 'objectiveId',
-        as: 'objective',
-      });
-
-      models.ReportGoal.hasMany(models.ReportObjective, {
-        foreignKey: 'reportGoalId',
-        as: 'reportObjectives',
-      });
+      generateJunctionTableAssociations(
+        models.ReportObjective,
+        [
+          models.Report,
+          models.Objective,
+          models.ReportGoal,
+        ],
+      );
     }
   }
   ReportObjective.init({
@@ -47,14 +28,32 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     objectiveId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
     },
     reportGoalId: {
       type: DataTypes.BIGINT,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'ReportGoals',
+        },
+        key: 'id',
+      },
     },
     ordinal: {
       type: DataTypes.INTEGER,
