@@ -4,6 +4,7 @@ const {
 const {
   REPORT_TYPE,
 } = require('../constants');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -14,19 +15,14 @@ const {
 export default (sequelize, DataTypes) => {
   class ReportImport extends Model {
     static associate(models) {
+      generateJunctionTableAssociations(
+        models.ReportImport,
+        [
+          models.Report,
+        ],
+      );
+
       // TODO: Use matrix
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
-        .hasMany(models.ReportReason, {
-          foreignKey: 'reportId',
-          as: 'reportReasons',
-        });
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
-        .belongsToMany(models.Reason, {
-          through: models.ReportReason,
-          foreignKey: 'reportId',
-          otherKey: 'reasonId',
-          as: 'reasons',
-        });
     }
   }
   ReportImport.init({
@@ -39,6 +35,12 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     data: {
       type: DataTypes.JSONB,
