@@ -1,38 +1,18 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalResource extends Model {
     static associate(models) {
-      ReportGoalResource.belongsTo(models.ReportGoal, {
-        foreignKey: 'reportGoalId',
-        onDelete: 'cascade',
-        as: 'reportGoal',
-      });
-      ReportGoalResource.belongsTo(models.Resource, {
-        foreignKey: 'resourceId',
-        as: 'resource',
-      });
-      models.ReportGoal.hasMany(models.ReportGoalResource, {
-        foreignKey: 'reportGoalId',
-        as: 'reportGoalResources',
-      });
-      models.Resource.hasMany(models.ReportGoalResource, {
-        foreignKey: 'resourceId',
-        as: 'reportGoalResource',
-      });
-      models.ReportGoal.belongsToMany(models.Resource, {
-        through: models.ReportGoalResource,
-        foreignKey: 'reportGoalId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
-      models.Resource.belongsToMany(models.ReportGoal, {
-        through: models.ReportGoalResource,
-        foreignKey: 'resourceId',
-        otherKey: 'reportGoalId',
-        as: 'reportGoals',
-      });
+      generateJunctionTableAssociations(
+        models.ReportGoalResource,
+        [
+          models.ReportGoal,
+          models.Resource,
+          models.GoalResource,
+        ],
+      );
     }
   }
   ReportGoalResource.init({
@@ -45,14 +25,32 @@ export default (sequelize, DataTypes) => {
     reportGoalId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportGoals',
+        },
+        key: 'id',
+      },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Resources',
+        },
+        key: 'id',
+      },
     },
     goalResourceId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'GoalResources',
+        },
+        key: 'id',
+      },
     },
     sourceFields: {
       allowNull: true,
