@@ -1,49 +1,16 @@
 const { Model } = require('sequelize');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveFile extends Model {
     static associate(models) {
-      ReportObjectiveFile.belongsTo(
-        models.ReportObjective,
-        {
-          foreignKey: 'reportObjectiveId',
-          as: 'reportObjective',
-          onDelete: 'cascade',
-        },
+      generateJunctionTableAssociations(
+        models.ReportObjectiveFile,
+        [
+          models.ReportObjective,
+          models.File,
+        ],
       );
-      ReportObjectiveFile.belongsTo(models.File, {
-        foreignKey: 'fileId',
-        as: 'file',
-      });
-      ReportObjectiveFile.belongsTo(models.ObjectiveFile, {
-        foreignKey: 'objectiveFileId',
-        as: 'objectiveFile',
-      });
-
-      models.ReportObjective.hasMany(models.ReportObjectiveFile, {
-        foreignKey: 'reportObjectiveId',
-        as: 'reportObjectiveFiles',
-      });
-      models.File.hasMany(models.ReportObjectiveFile, {
-        foreignKey: 'fileId',
-        as: 'reportObjectiveFiles',
-      });
-      models.ObjectiveFile.hasMany(models.ReportObjectiveFile, {
-        foreignKey: 'objectiveFileId',
-        as: 'reportObjectiveFiles',
-      });
-      models.ReportObjective.belongsToMany(models.File, {
-        through: models.ReportObjectiveFile,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'fileId',
-        as: 'files',
-      });
-      models.File.belongsToMany(models.ReportObjective, {
-        through: models.ReportObjectiveFile,
-        foreignKey: 'fileId',
-        otherKey: 'reportObjectiveId',
-        as: 'reportObjectives',
-      });
     }
   }
   ReportObjectiveFile.init({
@@ -56,10 +23,22 @@ export default (sequelize, DataTypes) => {
     reportObjectiveId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportObjectives',
+        },
+        key: 'id',
+      },
     },
     fileId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Files',
+        },
+        key: 'id',
+      },
     },
     objectiveFileId: {
       type: DataTypes.INTEGER,
