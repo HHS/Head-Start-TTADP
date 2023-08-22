@@ -45,48 +45,40 @@ export default (sequelize, DataTypes) => {
         }],
       }));
 
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
-        .belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_EVENT] }), {
+      [
+        {
+          model: models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }),
+          type: ENTITY_TYPE.REPORT_TRAINING_EVENT,
+          prefix: 'reportTrainingEvent',
+        },
+        {
+          model: models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }),
+          type: ENTITY_TYPE.REPORT_TRAINING_SESSION,
+          prefix: 'reportTrainingSession',
+        },
+        {
+          model: models.ReportGoal,
+          type: ENTITY_TYPE.GOAL,
+          prefix: 'reportGoal',
+        },
+        {
+          model: models.ReportObjective,
+          type: ENTITY_TYPE.OBJECTIVE,
+          prefix: 'reportObjective',
+        },
+      ].forEach(({
+        model,
+        type,
+        prefix,
+      }) => {
+        model.belongsTo(models.Status.scope({ method: ['validFor', type] }), {
           foreignKey: 'statusId',
-          as: 'eventStatus',
+          as: `${prefix}Status`,
         });
-
-      models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_EVENT] })
-        .hasMany(models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }), {
+        models.Status.scope({ method: ['validFor', type] }).hasMany(model, {
           foreignKey: 'statusId',
-          as: 'eventReports',
+          as: `${prefix}s`,
         });
-
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] })
-        .belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_SESSION] }), {
-          foreignKey: 'statusId',
-          as: 'sessionStatus',
-        });
-
-      models.Status.scope({ method: ['validFor', ENTITY_TYPE.REPORT_TRAINING_SESSION] })
-        .hasMany(models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }), {
-          foreignKey: 'statusId',
-          as: 'sessionReports',
-        });
-
-      models.ReportGoal.belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.GOAL] }), {
-        foreignKey: 'statusId',
-        as: 'status',
-      });
-
-      models.Status.scope({ method: ['validFor', ENTITY_TYPE.GOAL] }).hasMany(models.ReportGoal, {
-        foreignKey: 'statusId',
-        as: 'reportGoals',
-      });
-
-      models.ReportObjective.belongsTo(models.Status.scope({ method: ['validFor', ENTITY_TYPE.OBJECTIVE] }), {
-        foreignKey: 'statusId',
-        as: 'status',
-      });
-
-      models.Status.scope({ method: ['validFor', ENTITY_TYPE.OBJECTIVE] }).hasMany(models.ReportObjective, {
-        foreignKey: 'statusId',
-        as: 'reportObjectives',
       });
 
       models.Status.addScope('defaultScope', {
@@ -103,6 +95,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     name: {
       type: DataTypes.TEXT,
