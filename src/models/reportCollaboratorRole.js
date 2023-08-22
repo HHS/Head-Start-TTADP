@@ -14,8 +14,10 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       generateJunctionTableAssociations(
         models.ReportCollaboratorRole,
-        models.ReportCollaborator,
-        models.Role,
+        [
+          models.ReportCollaborator,
+          models.Role,
+        ],
       );
     }
   }
