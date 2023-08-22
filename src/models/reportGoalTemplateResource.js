@@ -1,37 +1,17 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplateResource extends Model {
     static associate(models) {
-      ReportGoalTemplateResource.belongsTo(models.ReportGoalTemplate, {
-        foreignKey: 'reportGoalTemplateId',
-        as: 'reportGoalTemplate',
-      });
-      ReportGoalTemplateResource.belongsTo(models.Resource, {
-        foreignKey: 'resourceId',
-        as: 'resource',
-      });
-      models.ReportGoalTemplate.hasMany(models.ReportGoalTemplateResource, {
-        foreignKey: 'reportGoalTemplateId',
-        as: 'reportGoalTemplateResources',
-      });
-      models.Resource.hasMany(models.ReportGoalTemplateResource, {
-        foreignKey: 'resourceId',
-        as: 'reportGoalTemplateResources',
-      });
-      models.ReportGoalTemplate.belongsToMany(models.Resource, {
-        through: models.ReportGoalTemplate,
-        foreignKey: 'reportGoalTemplateId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
-      models.Resource.belongsToMany(models.ReportGoalTemplate, {
-        through: models.ReportGoalTemplate,
-        foreignKey: 'resourceId',
-        otherKey: 'reportGoalTemplateId',
-        as: 'reportGoalTemplates',
-      });
+      generateJunctionTableAssociations(
+        models.ReportGoalTemplateResource,
+        [
+          models.ReportGoalTemplate,
+          models.Resource,
+        ],
+      );
     }
   }
   ReportGoalTemplateResource.init({
@@ -44,10 +24,22 @@ export default (sequelize, DataTypes) => {
     reportGoalTemplateId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportCollaborators',
+        },
+        key: 'id',
+      },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportCollaborators',
+        },
+        key: 'id',
+      },
     },
     sourceFields: {
       allowNull: true,
