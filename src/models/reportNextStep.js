@@ -22,14 +22,14 @@ export default (sequelize, DataTypes) => {
               ? this.scope({ method: config.method })
               : this;
 
-              model.hasMany(localModel, {
-                foreignKey: 'reportId',
-                as: `reportNextStep${config.as}`,
-              });
-              localModel.belongsTo(model, {
-                foreignKey: 'reportId',
-                as: `${prefix}`,
-              });
+            model.hasMany(localModel, {
+              foreignKey: 'reportId',
+              as: `reportNextStep${config.as}`,
+            });
+            localModel.belongsTo(model, {
+              foreignKey: 'reportId',
+              as: `${prefix}`,
+            });
           });
         });
     }
