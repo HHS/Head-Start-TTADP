@@ -7,6 +7,14 @@
 const pascalToCamelCase = (input) => input[0].toLowerCase() + input.slice(1);
 
 /**
+ * Converts a camelCase string to PascalCase.
+ *
+ * @param {string} input - The camelCase string to convert.
+ * @returns {string} - The converted PascalCase string.
+ */
+const camelToPascalCase = (input) => input[0].toUpperCase() + input.slice(1);
+
+/**
  * Generates an association between two objects in JavaScript.
  *
  * @param {import('sequelize').Model} from - The object to associate from.
@@ -112,68 +120,54 @@ const locateForeignKey = (sourceModel, targetModel) => {
   return null; // No foreign key found
 };
 
-
-/**
- * Generates junction table associations between three models.
- *
- * @param {import('sequelize').Model|string} centerModel - The center model object.
- * @param {import('sequelize').Model|string} leftModel - The left model object.
- * @param {import('sequelize').Model|string} rightModel - The right model object.
- */
 const generateJunctionTableAssociations = (
   centerModel,
-  leftModel,
-  rightModel,
+  models,
 ) => {
-  // Convert model names to camel case
   const centerAs = pascalToCamelCase(centerModel.name);
-  const leftAs = pascalToCamelCase(leftModel.name);
-  const rightAs = pascalToCamelCase(rightModel.name);
 
-  // Locate foreign keys for the left and right models in the center model
-  const leftForeignKey = locateForeignKey(centerModel, leftModel);
-  const rightForeignKey = locateForeignKey(centerModel, rightModel);
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    const modelAs = pascalToCamelCase(model.name);
+    const foreignKey = locateForeignKey(centerModel, model);
 
-  if (leftForeignKey !== null && rightForeignKey !== null) {
-    // Generate association pair for the left model
-    generateAssociationPair(
-      centerModel,
-      leftModel,
-      'belongsTo',
-      'hasMany',
-      leftForeignKey,
-      leftAs,
-      centerAs,
-    );
+    if (foreignKey !== null) {
+      generateAssociationPair(
+        centerModel,
+        model,
+        'belongsTo',
+        'hasMany',
+        foreignKey,
+        modelAs,
+        centerAs,
+      );
 
-    // Generate association pair for the right model
-    generateAssociationPair(
-      centerModel,
-      rightModel,
-      'belongsTo',
-      'hasMany',
-      rightForeignKey,
-      rightAs,
-      centerAs,
-    );
+      for (let j = i + 1; j < models.length; j++) {
+        const otherModel = models[j];
+        const otherModelAs = pascalToCamelCase(otherModel.name);
+        const otherForeignKey = locateForeignKey(model, otherModel);
 
-    // Generate association pair for the left model through the right model
-    generateAssociationPair(
-      leftModel,
-      rightModel,
-      'belongsToMany',
-      'belongsToMany',
-      leftForeignKey,
-      rightAs,
-      leftAs,
-      centerModel,
-      rightForeignKey,
-    );
+        if (otherForeignKey !== null) {
+          generateAssociationPair(
+            model,
+            otherModel,
+            'belongsToMany',
+            'belongsToMany',
+            foreignKey,
+            otherModelAs,
+            modelAs,
+            centerModel,
+            otherForeignKey,
+          );
+        }
+      }
+    }
   }
 };
 
 export {
   pascalToCamelCase,
+  camelToPascalCase,
   generateAssociation,
   generateAssociationPair,
   generateJunctionTableAssociations,
