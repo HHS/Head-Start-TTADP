@@ -13,13 +13,11 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
 } from '../../services/sessionReports';
-import SessionReport from '../../policies/sessionReport';
 import EventReport from '../../policies/event';
 import { findEventById } from '../../services/event';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
-jest.mock('../../policies/sessionReport');
 jest.mock('../../services/sessionReports');
 
 describe('session report handlers', () => {
@@ -63,7 +61,7 @@ describe('session report handlers', () => {
   describe('getHandler', () => {
     it('returns the session', async () => {
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+        canEditSession: () => true,
       }));
       findSessionById.mockResolvedValueOnce(mockSession);
       findEventById.mockResolvedValueOnce(mockEvent);
@@ -73,7 +71,7 @@ describe('session report handlers', () => {
 
     it('returns the session by eventId', async () => {
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+        canEditSession: () => true,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionsByEventId.mockResolvedValueOnce(mockSession);
@@ -87,7 +85,6 @@ describe('session report handlers', () => {
     });
 
     it('returns 404 when not found by id', async () => {
-      findSessionById.mockResolvedValueOnce(null);
       await getHandler({ params: { id: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
@@ -111,7 +108,7 @@ describe('session report handlers', () => {
     it('returns the session', async () => {
       findEventById.mockResolvedValueOnce(mockEvent);
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+        canCreateSession: () => true,
       }));
       createSession.mockResolvedValueOnce(mockSession);
       await createHandler(mockRequest, mockResponse);
@@ -137,7 +134,7 @@ describe('session report handlers', () => {
     it('returns 403 when permissions are inadequate', async () => {
       findEventById.mockResolvedValueOnce(mockEvent);
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => false,
+        canCreateSession: () => false,
       }));
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -155,8 +152,8 @@ describe('session report handlers', () => {
     };
 
     it('returns the session', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+      EventReport.mockImplementationOnce(() => ({
+        canEditSession: () => true,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
@@ -166,11 +163,8 @@ describe('session report handlers', () => {
     });
 
     it('allows update for event role only', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canUpdate: () => false,
-      }));
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+        canEditSession: () => true,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
@@ -180,12 +174,8 @@ describe('session report handlers', () => {
     });
 
     it('returns 403 if permissions are inadaquate', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canUpdate: () => false,
-      }));
-
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => false,
+        canEditSession: () => false,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
@@ -206,11 +196,8 @@ describe('session report handlers', () => {
 
   describe('deleteHandler', () => {
     it('returns 200', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canDelete: () => true,
-      }));
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
+        canDeleteSession: () => true,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
@@ -222,11 +209,8 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
     it('returns 403 if permissions are inadaquate', async () => {
-      SessionReport.mockImplementationOnce(() => ({
-        canDelete: () => false,
-      }));
       EventReport.mockImplementationOnce(() => ({
-        canUpdate: () => false,
+        canDeleteSession: () => false,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
