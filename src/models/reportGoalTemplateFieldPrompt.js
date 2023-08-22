@@ -1,32 +1,17 @@
 const { Model } = require('sequelize');
 const { PROMPT_FIELD_TYPE } = require('../constants');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplateFieldPrompt extends Model {
     static associate(models) {
-      ReportGoalTemplateFieldPrompt.belongsTo(models.ReportGoalTemplate, {
-        foreignKey: 'reportGoalTemplateId',
-        onDelete: 'cascade',
-        as: 'reportGoalTemplate',
-      });
-
-      ReportGoalTemplateFieldPrompt.belongsTo(models.GoalTemplateFieldPrompt, {
-        foreignKey: 'goalTemplateFieldPromptId',
-        onDelete: 'cascade',
-        as: 'goalTemplateFieldPrompt',
-      });
-
-      models.ReportGoalTemplate.hasMany(models.ReportGoalTemplateFieldPrompt, {
-        foreignKey: 'reportGoalTemplateId',
-        onDelete: 'cascade',
-        as: 'reportGoalTemplateFieldPrompts',
-      });
-
-      models.GoalTemplateFieldPrompt.hasMany(models.ReportGoalTemplateFieldPrompt, {
-        foreignKey: 'goalTemplateFieldPromptId',
-        onDelete: 'cascade',
-        as: 'reportGoalTemplateFieldPrompts',
-      });
+      generateJunctionTableAssociations(
+        models.ReportGoalTemplateFieldPrompt,
+        [
+          models.ReportGoalTemplate,
+          models.GoalTemplateFieldPrompt,
+        ],
+      );
 
       // TODO: think how to handle the related responses
       // ReportGoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, {
@@ -55,10 +40,22 @@ export default (sequelize, DataTypes) => {
     reportGoalTemplateId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportGoalTemplates',
+        },
+        key: 'id',
+      },
     },
     goalTemplateFieldPromptId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'GoalTemplateFieldPrompts',
+        },
+        key: 'id',
+      },
     },
     title: {
       type: DataTypes.TEXT,
