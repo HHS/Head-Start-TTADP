@@ -1,26 +1,16 @@
 const { Model } = require('sequelize');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalFieldResponse extends Model {
     static associate(models) {
-      ReportGoalFieldResponse.belongsTo(models.ReportGoal, {
-        foreignKey: 'reportGoalId',
-        onDelete: 'cascade',
-        as: 'reportGoal',
-      });
-      ReportGoalFieldResponse.belongsTo(models.GoalTemplateFieldPrompt, {
-        foreignKey: 'goalTemplateFieldPromptId',
-        as: 'prompt',
-      });
-      models.ReportGoal.hasMany(models.ReportGoalFieldResponse, {
-        foreignKey: 'reportGoalId',
-        onDelete: 'cascade',
-        as: 'reportGoalFieldResponses',
-      });
-      models.GoalTemplateFieldPrompt.hasMany(models.ReportGoalFieldResponse, {
-        foreignKey: 'goalTemplateFieldPromptId',
-        as: 'reportGoalFieldResponses',
-      });
+      generateJunctionTableAssociations(
+        models.ReportGoalFieldResponse,
+        [
+          models.ReportGoal,
+          models.GoalTemplateFieldPrompts,
+        ],
+      );
     }
   }
   ReportGoalFieldResponse.init({
@@ -33,10 +23,22 @@ export default (sequelize, DataTypes) => {
     reportGoalId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportGoals',
+        },
+        key: 'id',
+      },
     },
     goalTemplateFieldPromptId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'GoalTemplateFieldPrompts',
+        },
+        key: 'id',
+      },
     },
     // TODO: link with GoalFieldResponse
     response: {
