@@ -3,47 +3,18 @@ const {
   Op,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
+const { generateJunctionTableAssociations } = require('./helpers/associations');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplate extends Model {
     static associate(models) {
-      ReportGoalTemplate.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
-      ReportGoalTemplate.belongsTo(models.GoalTemplate, {
-        foreignKey: 'goalTemplateId',
-        as: 'goalTemplate',
-      });
-
-      models.Report.hasMany(models.ReportGoalTemplate, {
-        foreignKey: 'reportId',
-        as: 'reportGoalTemplates',
-        scope: {
-          [sequelize.col('"Report".reportType')]: {
-            [Op.in]: [
-              ENTITY_TYPE.REPORT_TRAINING_EVENT,
-              ENTITY_TYPE.REPORT_TRAINING_SESSION,
-            ],
-          },
-        },
-      });
-      models.GoalTemplate.hasMany(models.ReportGoalTemplate, {
-        foreignKey: 'goalTemplateId',
-        as: 'reportGoalTemplates',
-      });
-      models.GoalTemplate.belongsToMany(models.Report, {
-        through: models.ReportGoalTemplate,
-        foreignKey: 'goalTemplateId',
-        otherKey: 'reportId',
-        as: 'reports',
-      });
-      models.Report.belongsToMany(models.GoalTemplate, {
-        through: models.ReportGoalTemplate,
-        foreignKey: 'reportId',
-        otherKey: 'goalTemplateId',
-        as: 'goalTemplates',
-      });
+      generateJunctionTableAssociations(
+        models.ReportGoalTemplate,
+        [
+          models.Report,
+          models.GoalTemplate,
+        ],
+      );
     }
   }
   ReportGoalTemplate.init({
@@ -56,10 +27,22 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     goalTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'GoalTemplates',
+        },
+        key: 'id',
+      },
     },
     templateName: {
       type: DataTypes.TEXT,
