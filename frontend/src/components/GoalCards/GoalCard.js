@@ -43,7 +43,7 @@ function GoalCard({
     previousStatus,
   } = goal;
 
-  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
+  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
   const goalNumbers = goal.goalNumbers.join(', ');
@@ -127,6 +127,7 @@ function GoalCard({
         <ContextMenu
           label={contextMenuLabel}
           menuItems={menuItems}
+          menuWidthOffset={100}
         />
         )}
       </div>

@@ -18,6 +18,8 @@ import {
   participantsFilter,
   myReportsFilter,
   ttaTypeFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
 } from '../../components/filter/activityReportFilters';
 
 const DASHBOARD_FILTER_CONFIG = [
@@ -31,6 +33,8 @@ const DASHBOARD_FILTER_CONFIG = [
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
+  resourceLinkFilter,
+  resourceAttachmentFilter,
   regionFilter,
   reportIdFilter,
   reportTextFilter,

@@ -5,7 +5,9 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState, useEffect, useCallback, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import './Menu.scss';
@@ -16,14 +18,19 @@ function Menu({
   label,
   menuItems,
   backgroundColor,
-  left,
-  up,
   buttonTestId,
   buttonText,
   className,
+  left,
+  up,
+  menuWidthOffset,
+  menuHeightOffset,
+  fixed,
 }) {
   const [shown, updateShown] = useState(false);
+  const [menuPosition, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
+  const buttonRef = useRef(null);
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
@@ -39,6 +46,54 @@ function Menu({
     };
   }, [onEscape]);
 
+  const recordButtonPositionAndUpdateMenu = useCallback(() => {
+    // set initial postition
+    if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
+      // get the button's position
+      const {
+        top,
+        height,
+        left: l,
+        width,
+      } = buttonRef.current.getBoundingClientRect();
+
+      // we could be progratically calculating the height and width offset numbers
+      // but a little manual work up front will save on performance in the browser
+
+      let leftPos = l + width;
+
+      // left = the menu opens to the left of the button instead of the right
+      if (left) {
+        leftPos = l + width - menuWidthOffset;
+      }
+
+      // top = the menu opens above the button instead of below
+      let topPos = top + height;
+
+      if (up) {
+        topPos = top - height - menuHeightOffset;
+      }
+
+      // update the CSS
+      updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` });
+    }
+  }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
+
+  // watch for window scroll
+  useEffect(() => {
+    // the menu position is based on the button position, but because it is encased in a
+    // no-overflow div, we position it using "fixed"
+    // this means that it wouldn't scroll with the page, so we need to update the position
+    // when the user scrolls
+    if (fixed) {
+      window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+    }
+
+    return () => {
+      window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+    };
+  }, [fixed, recordButtonPositionAndUpdateMenu]);
+
   const onBlur = (e) => {
     const { currentTarget } = e;
 
@@ -49,7 +104,7 @@ function Menu({
     }, 0);
   };
 
-  const placementClass = () => {
+  const placementClass = (() => {
     if (left && up) {
       return 'smart-hub--menu__left_and_up';
     }
@@ -63,44 +118,50 @@ function Menu({
     }
 
     return '';
+  })();
+
+  const positionClass = fixed ? 'position-fixed' : 'position-absolute';
+  const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
+
+  const onClick = () => {
+    // we don't need to check anything before calling this - if fixed is false, it won't do anything
+    recordButtonPositionAndUpdateMenu();
+
+    // toggle the menu visibility
+    updateShown((previous) => !previous);
   };
-
-  const menuClass = `${defaultClass} shadow-1 ${placementClass()}`;
-
-  const onClick = () => updateShown((previous) => !previous);
 
   return (
     <div
       onBlur={onBlur}
       className="position-relative"
     >
-      <Button
-        className={`smart-hub--menu-button smart-hub--button__no-margin ${className}`}
-        unstyled
+      <button
+        className={`smart-hub--menu-button usa-button usa-button--unstyled smart-hub--button__no-margin ${className}`}
         aria-haspopup
         onClick={onClick}
         aria-label={label}
         type="button"
         data-testid={buttonTestId}
+        ref={buttonRef}
       >
         {buttonText}
-      </Button>
-      {shown
-    && (
-    <div data-testid="menu" className={menuClass} style={{ backgroundColor }}>
-      <ul className="usa-list usa-list--unstyled" role="menu">
-        {menuItems.map((item) => (
-          <li key={item.label} role="menuitem">
-            <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
-              <div className="padding-2 padding-right-3">
-                {item.label}
-              </div>
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
-    )}
+      </button>
+      {shown && (
+      <div data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
+        <ul className="usa-list usa-list--unstyled" role="menu">
+          {menuItems.map((item) => (
+            <li key={item.label} role="menuitem">
+              <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
+                <div className="padding-2 padding-right-3">
+                  {item.label}
+                </div>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      )}
     </div>
   );
 }
@@ -112,19 +173,25 @@ Menu.propTypes = {
     onClick: PropTypes.func,
   })).isRequired,
   backgroundColor: PropTypes.string,
+  buttonTestId: PropTypes.string,
   left: PropTypes.bool,
   up: PropTypes.bool,
-  buttonTestId: PropTypes.string,
+  menuWidthOffset: PropTypes.number,
+  menuHeightOffset: PropTypes.number,
   buttonText: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   className: PropTypes.string,
+  fixed: PropTypes.bool,
 };
 
 Menu.defaultProps = {
   backgroundColor: 'white',
-  left: true,
-  up: false,
   buttonTestId: 'ttahub-menu-button',
   className: '',
+  left: true,
+  up: false,
+  menuWidthOffset: 120,
+  menuHeightOffset: 140,
+  fixed: false,
 };
 
 export default Menu;

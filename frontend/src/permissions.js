@@ -23,16 +23,15 @@ const isAdmin = (user) => {
  * @param {includeAdmin} - flag to include/exclude admin permissions
  * @returns {array} - An array of integers, where each integer signifies a region.
  */
-export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
+export const allRegionsUserHasTrainingReportPermissionTo = (user, includeAdmin = false) => {
   const permissions = _.get(user, 'permissions');
 
   if (!permissions) return [];
 
   const minPermissions = [
-    SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
     SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
     SCOPE_IDS.READ_TRAINING_REPORTS,
+    SCOPE_IDS.POC_TRAINING_REPORTS,
   ];
 
   if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
@@ -46,6 +45,53 @@ export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
 
   return _.uniq(regions);
 };
+
+/**
+ * Return all regions that user has a minimum of read access to.
+ * All permissions that qualify this criteria are:
+ * Admin
+ * Read Activity Reports
+ * Read Write Activity Reports
+ * @param {*} - user object
+ * @param {includeAdmin} - flag to include/exclude admin permissions
+ * @returns {array} - An array of integers, where each integer signifies a region.
+ */
+export const allRegionsUserHasActivityReportPermissionTo = (user, includeAdmin = false) => {
+  const permissions = _.get(user, 'permissions');
+
+  if (!permissions) return [];
+
+  const minPermissions = [
+    SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+  ];
+
+  if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
+
+  const regions = [];
+  permissions.forEach((perm) => {
+    if (minPermissions.includes(perm.scopeId)) {
+      regions.push(perm.regionId);
+    }
+  });
+
+  return _.uniq(regions);
+};
+
+/**
+ * Return all regions that user has a minimum of read access to.
+ * All permissions that qualify this criteria are:
+ * Admin
+ * Read Activity Reports
+ * Read Write Activity Reports
+ * @param {*} - user object
+ * @param {includeAdmin} - flag to include/exclude admin permissions
+ * @returns {array} - An array of integers, where each integer signifies a region.
+ */
+export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => _.uniq([
+  ...allRegionsUserHasActivityReportPermissionTo(user, includeAdmin),
+  ...allRegionsUserHasTrainingReportPermissionTo(user, includeAdmin),
+]);
 
 /**
  * Search the user's permissions the ability to unlock approved reports.

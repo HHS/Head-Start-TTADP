@@ -109,27 +109,27 @@ describe('EventCards', () => {
 
   it('renders correctly if there are no not started events', () => {
     renderEventCards([], EVENT_STATUS.NOT_STARTED);
-    expect(screen.getByText('You have no events with a “not started” status.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no complete events', () => {
     renderEventCards([], EVENT_STATUS.COMPLETE);
-    expect(screen.getByText('You have no completed events.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no suspended events', () => {
     renderEventCards([], EVENT_STATUS.SUSPENDED);
-    expect(screen.getByText('You have no suspended events.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no in progress events', () => {
     renderEventCards([], EVENT_STATUS.IN_PROGRESS);
-    expect(screen.getByText('You have no events in progress.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('renders correctly if there are no in unknown events', () => {
     renderEventCards([], 'blah');
-    expect(screen.getByText('You have no events.')).toBeInTheDocument();
+    expect(screen.getByText('There are no events.')).toBeInTheDocument();
   });
 
   it('collaborator can edit reports they collaborate on and view reports in their region', () => {
@@ -210,5 +210,152 @@ describe('EventCards', () => {
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+  });
+
+  it('POC cannot create sessions', () => {
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 3,
+      regionId: 1,
+      collaboratorIds: [],
+      pocIds: [2],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'Collab Event ID 1',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        reasons: ['New Program/Option'],
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+      },
+      sessionReports: [],
+    }];
+
+    const COLLABORATOR_USER = {
+      id: 2,
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderEventCards(collaboratorEvents, EVENT_STATUS.NOT_STARTED, COLLABORATOR_USER);
+
+    // Collaborator Event.
+    expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
+    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
+
+    // Show correct actions for collaborator event.
+    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    button.click(button);
+    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    button.click(button);
+  });
+
+  it('collaborators cannot create training', () => {
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 3,
+      regionId: 1,
+      collaboratorIds: [2],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'Collab Event ID 1',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        reasons: ['New Program/Option'],
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+      },
+      sessionReports: [],
+    }];
+
+    const COLLABORATOR_USER = {
+      id: 2,
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderEventCards(collaboratorEvents, EVENT_STATUS.NOT_STARTED, COLLABORATOR_USER);
+
+    // Collaborator Event.
+    expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
+    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
+
+    // Show correct actions for collaborator event.
+    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    button.click(button);
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    button.click(button);
+  });
+
+  it('viewers unattached see no buttons', () => {
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      regionId: 1,
+      collaboratorIds: [3],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'Collab Event ID 1',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        reasons: ['New Program/Option'],
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+      },
+      sessionReports: [],
+    }];
+
+    const COLLABORATOR_USER = {
+      id: 1,
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderEventCards(collaboratorEvents, EVENT_STATUS.NOT_STARTED, COLLABORATOR_USER);
+
+    // Collaborator Event.
+    expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
+    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
+
+    // Show correct actions for collaborator event.
+    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    button.click(button);
+    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    button.click(button);
   });
 });
