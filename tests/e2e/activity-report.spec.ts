@@ -200,7 +200,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
-    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    const supportType = page.getByRole('combobox', { name: 'Support type *' });
     await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
@@ -239,7 +239,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await blur(page);
-    await page.getByRole('combobox', { name: 'Support type*' }).selectOption('Implementing');;
+    await page.getByRole('combobox', { name: 'Support type *' }).selectOption('Implementing');;
     await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.waitForTimeout(10000);
@@ -553,7 +553,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
 
-    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    const supportType = page.getByRole('combobox', { name: 'Support type *' });
     await supportType.selectOption('Implementing');
 
     await page.getByRole('combobox', { name: 'Status for objective' }).selectOption('In Progress');
@@ -673,7 +673,7 @@ test.describe('Activity Report', () => {
 
     await blur(page);
 
-    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    const supportType = page.getByRole('combobox', { name: 'Support type *' });
     await supportType.selectOption('Implementing');
 
     await blur(page);
@@ -742,7 +742,7 @@ test.describe('Activity Report', () => {
     await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
-    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    const supportType = page.getByRole('combobox', { name: 'Support type *' });
     await supportType.selectOption('Implementing');
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
