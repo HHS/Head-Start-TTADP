@@ -1,0 +1,22 @@
+
+
+.ttahub-drawer--objective-support-type-guidance div.rdw-center-aligned-block:nth-child(2),
+.ttahub-drawer--objective-support-type-guidance div.rdw-center-aligned-block:nth-child(1),
+.ttahub-drawer--objective-support-type-guidance .public-DraftStyleDefault-ul {
+    display: none;
+}
+
+.ttahub-drawer--objective-support-type-guidance .public-DraftStyleDefault-ul + div > div > span > span {
+   margin-left: 2em;
+}
+
+.ttahub-drawer--objective-support-type-guidance .public-DraftStyleDefault-ul + div > div > span > span:before  {
+    content: '•';
+    margin-right: 1em;
+}
+
+.rdw-editor-main > div > div > div > div > div:nth-child(12),
+.rdw-editor-main > div > div > div > div > div:nth-child(15),
+.rdw-editor-main > div > div > div > div > div:nth-child(22) {
+    margin-top: 1rem;
+}
