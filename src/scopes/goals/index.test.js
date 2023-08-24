@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import faker from '@faker-js/faker';
 import {
   createReport, destroyReport, createGoal, createGrant,
 } from '../../testUtils';
@@ -11,7 +12,19 @@ import db, {
   ObjectiveTopic,
   Topic,
   Grant,
+  Group,
+  GroupGrant,
+  User,
+  Resource,
   ActivityReportGoal,
+  ActivityReportGoalResource,
+  ActivityReportObjectiveResource,
+  ActivityReportResource,
+  NextStep,
+  NextStepResource,
+  ActivityReportFile,
+  ActivityReportObjectiveFile,
+  File,
 } from '../../models';
 
 const REGION_ID = 10;
@@ -281,6 +294,118 @@ describe('goal filtersToScopes', () => {
     });
 
     await db.sequelize.close();
+  });
+
+  describe('groups', () => {
+    let group;
+    let grantForGroups;
+    let goalForGroups;
+
+    const userName = faker.datatype.string(100);
+
+    const mockUser = {
+      id: faker.datatype.number(),
+      homeRegionId: REGION_ID,
+      name: userName,
+      hsesUsername: userName,
+      hsesUserId: userName,
+    };
+
+    beforeAll(async () => {
+      grantForGroups = await createGrant({
+        regionId: REGION_ID, number: faker.datatype.string(100),
+      });
+      await User.create(mockUser);
+
+      group = await Group.create({
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        userId: mockUser.id,
+        isPublic: false,
+      });
+
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: grantForGroups.id,
+      });
+
+      goalForGroups = await createGoal({
+        grantId: grantForGroups.id,
+        status: 'Not Started',
+      });
+    });
+
+    afterAll(async () => {
+      await Goal.destroy({
+        where: {
+          id: goalForGroups.id,
+        },
+        individualHooks: true,
+      });
+
+      await GroupGrant.destroy({
+        where: {
+          groupId: group.id,
+        },
+        individualHooks: true,
+      });
+
+      await Group.destroy({
+        where: {
+          id: group.id,
+        },
+        individualHooks: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: grantForGroups.id,
+        },
+        individualHooks: true,
+      });
+
+      await User.destroy({
+        where: {
+          id: mockUser.id,
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('within', async () => {
+      const filters = { 'group.in': group.id };
+      const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [...possibleGoalIds, goalForGroups.id],
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((g) => g.name)).toContain(goalForGroups.name);
+    });
+
+    it('without', async () => {
+      const filters = { 'group.nin': group.id };
+      const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [...possibleGoalIds, goalForGroups.id],
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(possibleGoalIds.length);
+      expect(found.map((g) => g.id)).not.toContain(goalForGroups.id);
+    });
   });
 
   describe('createDate', () => {
@@ -762,6 +887,1125 @@ describe('goal filtersToScopes', () => {
 
         expect(possibleGoalIds.length).toBe(7);
         expect(found.length).toBe(7);
+      });
+    });
+  });
+
+  describe('resourceUrl', () => {
+    let reportToInclude;
+    let reportToExclude;
+
+    let goalToInclude;
+    let goalToExclude;
+
+    const arResourceUrl = faker.internet.url();
+    const argResourceUrl = faker.internet.url();
+    const aroResourceUrl = faker.internet.url();
+    const nsResourceUrl = faker.internet.url();
+
+    let reports = [];
+    let goals = [];
+    let goalIds = [];
+    let resources = [];
+
+    beforeAll(async () => {
+      reportToInclude = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+
+      goalToInclude = await createGoal({
+        status: 'Closed',
+      });
+
+      const argToInclude = await ActivityReportGoal.create({
+        activityReportId: reportToInclude.id,
+        goalId: goalToInclude.id,
+        name: goalToInclude.name,
+        status: goalToInclude.status,
+        endDate: null,
+      });
+
+      const arResource = await Resource.create({
+        url: arResourceUrl,
+      });
+
+      const argResource = await Resource.create({
+        url: argResourceUrl,
+      });
+
+      const aroResource = await Resource.create({
+        url: aroResourceUrl,
+      });
+
+      const nsResource = await Resource.create({
+        url: nsResourceUrl,
+      });
+
+      await ActivityReportResource.create({
+        activityReportId: reportToInclude.id,
+        resourceId: arResource.id,
+      });
+
+      await ActivityReportGoalResource.create({
+        activityReportGoalId: argToInclude.id,
+        resourceId: argResource.id,
+      });
+
+      const objectiveToInclude = await Objective.create({
+        title: faker.lorem.paragraph(),
+        goalId: goalToInclude.id,
+        ttaProvided: '',
+      });
+
+      const aroToInclude = await ActivityReportObjective.create({
+        activityReportId: reportToInclude.id,
+        objectiveId: objectiveToInclude.id,
+      });
+
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: aroToInclude.id,
+        resourceId: aroResource.id,
+      });
+
+      const nsToInclude = await NextStep.create({
+        activityReportId: reportToInclude.id,
+        note: faker.lorem.sentence(),
+        noteType: 'RECIPIENT',
+      });
+
+      await NextStepResource.create({
+        nextStepId: nsToInclude.id,
+        resourceId: nsResource.id,
+      });
+
+      reportToExclude = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+
+      goalToExclude = await createGoal({
+        status: 'Closed',
+      });
+
+      const argToExclude = await ActivityReportGoal.create({
+        activityReportId: reportToExclude.id,
+        goalId: goalToExclude.id,
+        name: goalToExclude.name,
+        status: goalToExclude.status,
+        endDate: null,
+      });
+
+      const arResourceExcluded = await Resource.create({
+        url: faker.internet.url(),
+      });
+
+      const argResourceExcluded = await Resource.create({
+        url: faker.internet.url(),
+      });
+
+      const aroResourceExcluded = await Resource.create({
+        url: faker.internet.url(),
+      });
+
+      const nsResourceExcluded = await Resource.create({
+        url: faker.internet.url(),
+      });
+
+      await ActivityReportResource.create({
+        activityReportId: reportToExclude.id,
+        resourceId: arResourceExcluded.id,
+      });
+
+      await ActivityReportGoalResource.create({
+        activityReportGoalId: argToExclude.id,
+        resourceId: argResourceExcluded.id,
+      });
+
+      const objectiveToExclude = await Objective.create({
+        title: faker.lorem.paragraph(),
+        goalId: goalToExclude.id,
+        ttaProvided: '',
+      });
+
+      const aroToExclude = await ActivityReportObjective.create({
+        activityReportId: reportToExclude.id,
+        objectiveId: objectiveToExclude.id,
+      });
+
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: aroToExclude.id,
+        resourceId: aroResourceExcluded.id,
+      });
+
+      const nsToExclude = await NextStep.create({
+        activityReportId: reportToExclude.id,
+        note: faker.lorem.sentence(),
+        noteType: 'RECIPIENT',
+      });
+
+      await NextStepResource.create({
+        nextStepId: nsToExclude.id,
+        resourceId: nsResourceExcluded.id,
+      });
+
+      reports = [
+        reportToInclude,
+        reportToExclude,
+      ];
+
+      goals = [
+        goalToInclude,
+        goalToExclude,
+      ];
+
+      goalIds = goals.map((goal) => goal.id);
+
+      resources = [
+        arResource,
+        argResource,
+        aroResource,
+        nsResource,
+        arResourceExcluded,
+        argResourceExcluded,
+        aroResourceExcluded,
+        nsResourceExcluded,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReportResource.destroy({
+        where: {
+          resourceId: resources.map((r) => r.id),
+        },
+      });
+
+      await ActivityReportGoalResource.create({
+        where: {
+          resourceId: resources.map((r) => r.id),
+        },
+      });
+
+      await ActivityReportObjectiveResource.create({
+        where: {
+          resourceId: resources.map((r) => r.id),
+        },
+      });
+
+      await NextStepResource.destroy({
+        where: {
+          resourceId: resources.map((r) => r.id),
+        },
+      });
+
+      await Resource.destroy({
+        where: {
+          id: resources.map((r) => r.id),
+        },
+      });
+
+      const o = await Objective.findAll({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+      });
+
+      await ActivityReportObjective.destroy({
+        where: {
+          objectiveId: o.map((ob) => ob.id),
+        },
+        individualHooks: true,
+      });
+
+      await Objective.destroy({
+        where: {
+          id: o.map((ob) => ob.id),
+        },
+        individualHooks: true,
+      });
+
+      await ActivityReportGoal.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+
+      await NextStep.destroy({
+        where: {
+          activityReportId: reports.map((r) => r.id),
+        },
+        individualHooks: true,
+      });
+
+      await Promise.all(reports.map((r) => (
+        destroyReport(r)
+      )));
+    });
+
+    describe('ar resource', () => {
+      it('in', async () => {
+        const filters = { 'resourceUrl.ctn': arResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(goalToInclude.id);
+      });
+      it('not in', async () => {
+        const filters = { 'resourceUrl.nctn': arResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).not.toEqual(goalToInclude.id);
+      });
+    });
+
+    describe('arg resource', () => {
+      it('in', async () => {
+        const filters = { 'resourceUrl.ctn': argResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(goalToInclude.id);
+      });
+      it('not in', async () => {
+        const filters = { 'resourceUrl.nctn': argResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).not.toEqual(goalToInclude.id);
+      });
+    });
+
+    describe('aro resource', () => {
+      it('in', async () => {
+        const filters = { 'resourceUrl.ctn': aroResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(goalToInclude.id);
+      });
+      it('not in', async () => {
+        const filters = { 'resourceUrl.nctn': aroResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).not.toEqual(goalToInclude.id);
+      });
+    });
+    describe('ns resource', () => {
+      it('in', async () => {
+        const filters = { 'resourceUrl.ctn': nsResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(goalToInclude.id);
+      });
+      it('not in', async () => {
+        const filters = { 'resourceUrl.nctn': nsResourceUrl };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).not.toEqual(goalToInclude.id);
+      });
+    });
+  });
+
+  describe('resourceAttachment', () => {
+    let reportToInclude;
+    let reportToExclude;
+
+    let goalToInclude;
+    let goalToExclude;
+
+    const arResourceFilename = faker.system.fileName();
+    const aroResourceFilename = faker.system.fileName();
+
+    const arResourceFilenameExcluded = faker.system.fileName();
+    const aroResourceFilenameExcluded = faker.system.fileName();
+
+    let reports = [];
+    let goals = [];
+    let goalIds = [];
+    let resources = [];
+
+    beforeAll(async () => {
+      reportToInclude = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+
+      goalToInclude = await createGoal({
+        status: 'Closed',
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: reportToInclude.id,
+        goalId: goalToInclude.id,
+        name: goalToInclude.name,
+        status: goalToInclude.status,
+        endDate: null,
+      });
+
+      const arResource = await File.create({
+        originalFileName: arResourceFilename,
+        key: faker.word.preposition() + faker.word.adjective(),
+        status: 'APPROVED',
+        fileSize: 1000,
+      });
+
+      const aroResource = await File.create({
+        originalFileName: aroResourceFilename,
+        key: faker.word.preposition() + faker.word.adjective(),
+        status: 'APPROVED',
+        fileSize: 1000,
+      });
+
+      await ActivityReportFile.create({
+        activityReportId: reportToInclude.id,
+        fileId: arResource.id,
+      });
+
+      const objectiveToInclude = await Objective.create({
+        title: faker.lorem.paragraph(),
+        goalId: goalToInclude.id,
+        ttaProvided: '',
+      });
+
+      const aroToInclude = await ActivityReportObjective.create({
+        activityReportId: reportToInclude.id,
+        objectiveId: objectiveToInclude.id,
+      });
+
+      await ActivityReportObjectiveFile.create({
+        activityReportObjectiveId: aroToInclude.id,
+        fileId: aroResource.id,
+      });
+
+      reportToExclude = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+
+      goalToExclude = await createGoal({
+        status: 'Closed',
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: reportToExclude.id,
+        goalId: goalToExclude.id,
+        name: goalToExclude.name,
+        status: goalToExclude.status,
+        endDate: null,
+      });
+
+      const arResourceExcluded = await File.create({
+        originalFileName: arResourceFilenameExcluded,
+        key: faker.word.preposition() + faker.word.adjective(),
+        status: 'APPROVED',
+        fileSize: 1000,
+      });
+
+      const aroResourceExcluded = await File.create({
+        originalFileName: aroResourceFilenameExcluded,
+        key: faker.word.preposition() + faker.word.adjective(),
+        status: 'APPROVED',
+        fileSize: 1000,
+      });
+      await ActivityReportFile.create({
+        activityReportId: reportToExclude.id,
+        fileId: arResourceExcluded.id,
+      });
+
+      const objectiveToExclude = await Objective.create({
+        title: faker.lorem.paragraph(),
+        goalId: goalToExclude.id,
+        ttaProvided: '',
+      });
+
+      const aroToExclude = await ActivityReportObjective.create({
+        activityReportId: reportToExclude.id,
+        objectiveId: objectiveToExclude.id,
+      });
+
+      await ActivityReportObjectiveFile.create({
+        activityReportObjectiveId: aroToExclude.id,
+        fileId: aroResourceExcluded.id,
+      });
+
+      reports = [
+        reportToInclude,
+        reportToExclude,
+      ];
+
+      goals = [
+        goalToInclude,
+        goalToExclude,
+      ];
+
+      goalIds = goals.map((goal) => goal.id);
+
+      resources = [
+        arResource,
+        aroResource,
+        arResourceExcluded,
+        aroResourceExcluded,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReportFile.destroy({
+        where: {
+          fileId: resources.map((r) => r.id),
+        },
+      });
+
+      await ActivityReportObjectiveFile.create({
+        where: {
+          fileId: resources.map((r) => r.id),
+        },
+      });
+
+      await File.destroy({
+        where: {
+          id: resources.map((r) => r.id),
+        },
+      });
+
+      const o = await Objective.findAll({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+      });
+
+      await ActivityReportObjective.destroy({
+        where: {
+          objectiveId: o.map((ob) => ob.id),
+        },
+        individualHooks: true,
+      });
+
+      await Objective.destroy({
+        where: {
+          id: o.map((ob) => ob.id),
+        },
+        individualHooks: true,
+      });
+
+      await ActivityReportGoal.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+
+      await Promise.all(reports.map((r) => (
+        destroyReport(r)
+      )));
+    });
+
+    describe('ar resource', () => {
+      it('in', async () => {
+        const filters = { 'resourceAttachment.ctn': arResourceFilename };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(goalToInclude.id);
+      });
+      it('not in', async () => {
+        const filters = { 'resourceAttachment.nctn': arResourceFilename };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).not.toEqual(goalToInclude.id);
+      });
+    });
+
+    describe('aro resource', () => {
+      it('in', async () => {
+        const filters = { 'resourceAttachment.ctn': aroResourceFilename };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(goalToInclude.id);
+      });
+      it('not in', async () => {
+        const filters = { 'resourceAttachment.nctn': aroResourceFilename };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).not.toEqual(goalToInclude.id);
+      });
+    });
+  });
+
+  describe('reportText', () => {
+    const nextStepsNote = faker.lorem.sentence();
+    let nextStepsGoal;
+    let nextStepsReport;
+
+    const argName = faker.lorem.sentence();
+    let argNameGoal;
+    let argNameReport;
+
+    const objectiveTitle = faker.lorem.sentence();
+    let objectiveTitleGoal;
+    let objectiveTitleReport;
+
+    const objectiveTTAProvided = faker.lorem.sentence();
+    let objectiveTTAProvidedGoal;
+    let objectiveTTAProvidedReport;
+
+    const arContext = faker.lorem.sentence();
+    let arContextGoal;
+    let arContextReport;
+
+    const arAdditionalNotes = faker.lorem.sentence();
+    let arAdditionalNotesGoal;
+    let arAdditionalNotesReport;
+
+    let reports = [];
+    let goals = [];
+    let goalIds = [];
+
+    beforeAll(async () => {
+      nextStepsReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+      await NextStep.create({
+        activityReportId: nextStepsReport.id,
+        note: nextStepsNote,
+        noteType: 'RECIPIENT',
+      });
+
+      nextStepsGoal = await createGoal({
+        status: 'Closed',
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: nextStepsReport.id,
+        goalId: nextStepsGoal.id,
+        name: nextStepsGoal.name,
+        status: nextStepsGoal.status,
+        endDate: null,
+      });
+
+      argNameReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+      argNameGoal = await createGoal({
+        name: argName,
+        status: 'Closed',
+      });
+      await ActivityReportGoal.create({
+        activityReportId: argNameReport.id,
+        goalId: argNameGoal.id,
+        name: argNameGoal.name,
+        status: argNameGoal.status,
+        endDate: null,
+      });
+
+      objectiveTitleReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+      objectiveTitleGoal = await createGoal({
+        status: 'In Progress',
+      });
+      const objectiveTitleObjective = await Objective.create({
+        title: objectiveTitle,
+        goalId: objectiveTitleGoal.id,
+        ttaProvided: '',
+      });
+      await ActivityReportGoal.create({
+        activityReportId: objectiveTitleReport.id,
+        goalId: objectiveTitleGoal.id,
+        name: objectiveTitleGoal.name,
+        status: objectiveTitleGoal.status,
+        endDate: null,
+      });
+      await ActivityReportObjective.create({
+        activityReportId: objectiveTitleReport.id,
+        objectiveId: objectiveTitleObjective.id,
+        ttaProvided: '',
+        title: objectiveTitleObjective.title,
+      });
+
+      objectiveTTAProvidedReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+      objectiveTTAProvidedGoal = await createGoal({
+        status: 'In Progress',
+      });
+      const objectiveTTAObjective = await Objective.create({
+        title: faker.lorem.sentence(),
+        goalId: objectiveTTAProvidedGoal.id,
+        ttaProvided: objectiveTTAProvided,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: objectiveTTAProvidedReport.id,
+        goalId: objectiveTTAProvidedGoal.id,
+        name: objectiveTTAProvidedGoal.name,
+        status: objectiveTTAProvidedGoal.status,
+        endDate: null,
+      });
+      await ActivityReportObjective.create({
+        activityReportId: objectiveTTAProvidedReport.id,
+        objectiveId: objectiveTTAObjective.id,
+        ttaProvided: objectiveTTAProvided,
+        title: objectiveTTAObjective.title,
+      });
+      arContextReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+        context: arContext,
+      });
+
+      arContextGoal = await createGoal({
+        status: 'Not Started',
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: arContextReport.id,
+        goalId: arContextGoal.id,
+      });
+
+      arAdditionalNotesReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+        additionalNotes: arAdditionalNotes,
+      });
+
+      arAdditionalNotesGoal = await createGoal({
+        status: 'In Progress',
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: arAdditionalNotesReport.id,
+        goalId: arAdditionalNotesGoal.id,
+      });
+
+      reports = [
+        nextStepsReport,
+        argNameReport,
+        objectiveTitleReport,
+        objectiveTTAProvidedReport,
+        arContextReport,
+        arAdditionalNotesReport,
+      ];
+
+      goals = [
+        nextStepsGoal,
+        argNameGoal,
+        objectiveTitleGoal,
+        objectiveTTAProvidedGoal,
+        arContextGoal,
+        arAdditionalNotesGoal,
+      ];
+
+      goalIds = goals.map((goal) => goal.id);
+    });
+
+    afterAll(async () => {
+      const o = await Objective.findAll({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+      });
+
+      await ActivityReportObjective.destroy({
+        where: {
+          objectiveId: o.map((ob) => ob.id),
+        },
+        individualHooks: true,
+      });
+
+      await Objective.destroy({
+        where: {
+          id: o.map((ob) => ob.id),
+        },
+        individualHooks: true,
+      });
+
+      await ActivityReportGoal.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+      });
+
+      await NextStep.destroy({
+        where: {
+          activityReportId: reports.map((r) => r.id),
+        },
+        individualHooks: true,
+      });
+
+      await Promise.all(reports.map((r) => (
+        destroyReport(r)
+      )));
+    });
+
+    describe('next steps', () => {
+      it('in', async () => {
+        const filters = { 'reportText.ctn': nextStepsNote };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(nextStepsGoal.id);
+      });
+      it('not in', async () => {
+        const filters = { 'reportText.nctn': nextStepsNote };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(goalIds.length - 1);
+        expect(found.map((g) => g.id)).not.toContain(nextStepsGoal.id);
+      });
+    });
+
+    describe('goal name', () => {
+      it('in', async () => {
+        const filters = { 'reportText.ctn': argName };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(argNameGoal.id);
+      });
+      it('not in', async () => {
+        const filters = { 'reportText.nctn': argName };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(goalIds.length - 1);
+        expect(found.map((g) => g.id)).not.toContain(argNameGoal.id);
+      });
+    });
+
+    describe('objective title', () => {
+      it('in', async () => {
+        const filters = { 'reportText.ctn': objectiveTitle };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(objectiveTitleGoal.id);
+      });
+      it('not in', async () => {
+        const filters = { 'reportText.nctn': objectiveTitle };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(goalIds.length - 1);
+        expect(found.map((g) => g.id)).not.toContain(objectiveTitleGoal.id);
+      });
+    });
+
+    describe('objective TTA provided', () => {
+      it('in', async () => {
+        const filters = { 'reportText.ctn': objectiveTTAProvided };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(objectiveTTAProvidedGoal.id);
+      });
+      it('not in', async () => {
+        const filters = { 'reportText.nctn': objectiveTTAProvided };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: goalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toEqual(goalIds.length - 1);
+        expect(found.map((g) => g.id)).not.toContain(objectiveTTAProvidedGoal.id);
+      });
+    });
+    describe('ar context', () => {
+      it('in', async () => {
+        const filters = { 'reportText.ctn': arContext };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: { [Op.and]: [scope, { id: goalIds }] },
+        });
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(arContextGoal.id);
+      });
+      it('not in', async () => {
+        const filters = { 'reportText.nctn': arContext };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: { [Op.and]: [scope, { id: goalIds }] },
+        });
+        expect(found.map((g) => g.id)).not.toContain(arContextGoal.id);
+        expect(found.length).toEqual(goalIds.length - 1);
+      });
+    });
+
+    describe('ar additional notes', () => {
+      it('in', async () => {
+        const filters = { 'reportText.ctn': arAdditionalNotes };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: { [Op.and]: [scope, { id: goalIds }] },
+        });
+        expect(found.length).toEqual(1);
+        expect(found[0].id).toEqual(arAdditionalNotesGoal.id);
+      });
+      it('not in', async () => {
+        const filters = { 'reportText.nctn': arAdditionalNotes };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: { [Op.and]: [scope, { id: goalIds }] },
+        });
+        expect(found.map((g) => g.id)).not.toContain(arAdditionalNotesGoal.id);
+        expect(found.length).toEqual(goalIds.length - 1);
       });
     });
   });

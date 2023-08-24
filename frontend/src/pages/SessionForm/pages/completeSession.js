@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Form, Button, Dropdown, Alert,
+  Button, Dropdown, Alert,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
-import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import NavigatorHeader from '../../../components/Navigator/components/NavigatorHeader';
 
 const position = 4;
 const path = 'complete-session';
@@ -26,10 +24,9 @@ const CompleteSession = ({
   formData,
   onSaveForm,
   onUpdatePage,
-  draftAlert,
+  DraftAlert,
 }) => {
-  const { setError } = useFormContext();
-
+  const { setError, setValue } = useFormContext();
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
   // we need to validate before saving, and we only want the status to change when the
@@ -59,6 +56,14 @@ const CompleteSession = ({
     await onSubmit(updatedStatus);
   };
 
+  const onSaveDraft = async () => {
+    if (updatedStatus !== EVENT_REPORT_STATUSES.COMPLETE) {
+      setValue('status', updatedStatus);
+    }
+
+    await onSaveForm();
+  };
+
   const options = [
     <option key="session-status-dropdown-option-in-progress">In progress</option>,
     <option key="session-status-dropdown-option-complete">Complete</option>,
@@ -70,15 +75,10 @@ const CompleteSession = ({
         <title>Complete session</title>
       </Helmet>
 
-      <NavigatorHeader
-        label="Complete session"
-        formData={formData}
-      />
-
       <IndicatesRequiredField />
       <p className="usa-prose">
         Review the information in each section before submitting the session.
-        Once submitted, the report is editable until the event reviewer submits their review.
+        Once submitted, the session is editable until the event is completed.
       </p>
 
       <div className="margin-top-4">
@@ -99,10 +99,10 @@ const CompleteSession = ({
         </FormItem>
       </div>
 
-      {draftAlert}
+      <DraftAlert />
       <div className="display-flex">
         <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
-        <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveForm}>Save draft</Button>
+        <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
         <Button id="back-button" outline type="button" onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
 
@@ -133,7 +133,7 @@ const CompleteSession = ({
 };
 
 CompleteSession.propTypes = {
-  draftAlert: PropTypes.node.isRequired,
+  DraftAlert: PropTypes.node.isRequired,
   formData: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,
@@ -158,7 +158,10 @@ export default {
   review: false,
   label: 'Complete session',
   path,
-  isPageComplete: (formData) => formData.calculatedStatus === REPORT_STATUSES.SUBMITTED,
+  isPageComplete: ({ getValues }) => {
+    const { status } = getValues();
+    return status === EVENT_REPORT_STATUSES.COMPLETE;
+  },
   render:
     (
       _additionalData,
@@ -173,18 +176,12 @@ export default {
       onFormSubmit,
       DraftAlert,
     ) => (
-      <Container skipTopPadding>
-        <Form
-          className="smart-hub--form-large smart-hub--form__activity-report-form"
-        >
-          <CompleteSession
-            onSubmit={onFormSubmit}
-            onSaveForm={onSaveDraft}
-            formData={formData}
-            onUpdatePage={onUpdatePage}
-            draftAlert={DraftAlert}
-          />
-        </Form>
-      </Container>
+      <CompleteSession
+        onSubmit={onFormSubmit}
+        onSaveForm={onSaveDraft}
+        formData={formData}
+        onUpdatePage={onUpdatePage}
+        DraftAlert={DraftAlert}
+      />
     ),
 };

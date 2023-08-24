@@ -61,6 +61,8 @@ export default class EventReport {
     const viablePermissions = this.permissions.filter((p) => [
       SCOPES.READ_TRAINING_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
+      SCOPES.READ_WRITE_REPORTS,
     ].includes(p.scopeId));
 
     return viablePermissions.map((p) => Number(p.regionId));
@@ -85,13 +87,13 @@ export default class EventReport {
     return this.isAdmin() || this.isAuthor();
   }
 
-  canUpdate() {
-    if (this.canWriteInRegion()) { return true; }
+  // This should work without a event object.
+  canGetTrainingReportUsersInRegion(regionId) {
     if (this.isAdmin()) { return true; }
-    if (this.isCollaborator()) { return true; }
-    if (this.isAuthor()) { return true; }
 
-    return false;
+    return !!this.permissions.find((p) => [
+      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS,
+    ].includes(p.scopeId) && p.regionId === regionId);
   }
 
   isAdmin() {
@@ -104,7 +106,37 @@ export default class EventReport {
     return this.user.id === this.eventReport.ownerId;
   }
 
+  isPoc() {
+    return this.eventReport.pocIds && this.eventReport.pocIds.includes(this.user.id);
+  }
+
   isCollaborator() {
-    return this.eventReport.pocId.includes(this.user.id);
+    return this.eventReport.collaboratorIds.includes(this.user.id);
+  }
+
+  // some handy & fun aliases
+
+  canEditEvent() {
+    return this.isAdmin() || this.isAuthor() || this.isPoc();
+  }
+
+  canCreateSession() {
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator();
+  }
+
+  canEditSession() {
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
+  }
+
+  canUploadFile() {
+    return this.canEditSession();
+  }
+
+  canDeleteSession() {
+    return this.canEditSession();
+  }
+
+  canSuspendOrCompleteEvent() {
+    return this.isAdmin() || this.isAuthor();
   }
 }

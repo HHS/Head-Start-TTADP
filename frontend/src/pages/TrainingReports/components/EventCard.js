@@ -1,9 +1,8 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { TRAINING_REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -11,7 +10,6 @@ import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
-import { canEditOrCreateSessionReports } from '../../../permissions';
 import './EventCard.scss';
 
 function EventCard({
@@ -19,13 +17,6 @@ function EventCard({
   onRemoveSession,
 }) {
   const { user } = useContext(UserContext);
-  const hasEditPermissions = canEditOrCreateSessionReports(
-    user,
-    parseInt(event.regionId, DECIMAL_BASE),
-  );
-  const isCollaborator = event.pocId && event.pocId.includes(user.id);
-  const canEditExisting = hasEditPermissions || (isCollaborator);
-
   const history = useHistory();
 
   const {
@@ -34,10 +25,22 @@ function EventCard({
     sessionReports,
   } = event;
 
-  const contextMenuLabel = `Actions for event ${event.id}`;
+  const isOwner = event.ownerId === user.id;
+  const isPoc = event.pocIds && event.pocIds.includes(user.id);
+  const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
+  const isOwnerOrPoc = isOwner || isPoc;
+  const isOwnerOrCollaborator = isOwner || isCollaborator;
+
+  const isNotCompleteOrSuspended = ![
+    TRAINING_REPORT_STATUSES.COMPLETE,
+    TRAINING_REPORT_STATUSES.SUSPENDED,
+  ].includes(data.status);
+
+  const canEditEvent = isNotCompleteOrSuspended && isOwnerOrPoc;
+  const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
   const menuItems = [];
 
-  if (data.status !== TRAINING_REPORT_STATUSES.COMPLETE && canEditExisting) {
+  if (canCreateSession) {
     // Create session.
     menuItems.push({
       label: 'Create session',
@@ -45,7 +48,9 @@ function EventCard({
         history.push(`/training-report/${event.id}/session/new/`);
       },
     });
+  }
 
+  if (canEditEvent) {
     // Edit event.
     menuItems.push({
       label: 'Edit event',
@@ -69,6 +74,9 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
+  const link = canEditEvent ? `/training-report/${event.id}/event-summary` : `/training-report/view/${event.id}`;
+  const contextMenuLabel = `Actions for event ${event.id}`;
+
   return (
     <article
       className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2"
@@ -81,7 +89,11 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event ID</p>
-          <p className="usa-prose margin-y-0">{data.eventId}</p>
+          <p className="usa-prose margin-y-0">
+            <Link to={link}>
+              {data.eventId}
+            </Link>
+          </p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event organizer</p>
@@ -125,8 +137,7 @@ function EventCard({
           eventId={id}
           session={s}
           expanded={reportsExpanded}
-          hasWritePermissions={canEditExisting}
-          eventStatus={data.status}
+          isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
           onRemoveSession={onRemoveSession}
         />
       ))}

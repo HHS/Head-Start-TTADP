@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
   useContext,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -19,6 +20,7 @@ import {
 import Select from 'react-select';
 import { Link } from 'react-router-dom';
 import { getTopics } from '../../../fetchers/topics';
+import { getNationalCenters } from '../../../fetchers/nationalCenters';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
@@ -36,18 +38,12 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import Drawer from '../../../components/Drawer';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 
 const DEFAULT_RESOURCE = {
   value: '',
 };
-
-// options for the trainers (the 4 national centers)
-const TRAINER_OPTIONS = [
-  'DTL',
-  'HBHS',
-  'PFCE',
-  'PFMO',
-].map((label, value) => ({ label, value }));
 
 const SessionSummary = ({ datePickerKey }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -75,6 +71,9 @@ const SessionSummary = ({ datePickerKey }) => {
   const endDate = watch('endDate');
   const sessionName = watch('sessionName');
 
+  // ref for topics guidance drawer
+  const drawerTriggerRef = useRef(null);
+
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
 
@@ -97,12 +96,30 @@ const SessionSummary = ({ datePickerKey }) => {
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
+        setTopicOptions([]);
       }
     }
     if (!topicOptions) {
       fetchTopics();
     }
   }, [setError, topicOptions]);
+
+  const [trainerOptions, setTrainerOptions] = useState(null);
+  useEffect(() => {
+    async function fetchNationalCenters() {
+      try {
+        const nationalCenters = await getNationalCenters();
+        setTrainerOptions(nationalCenters);
+      } catch (err) {
+        setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
+        setTrainerOptions([]);
+      }
+    }
+
+    if (!trainerOptions) {
+      fetchNationalCenters();
+    }
+  }, [setError, trainerOptions]);
 
   // for the resource repeater we are using the built in hook-form
   // field array
@@ -324,10 +341,32 @@ const SessionSummary = ({ datePickerKey }) => {
       </FormItem>
 
       <div className="margin-top-2">
+        <Drawer
+          triggerRef={drawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Topic guidance"
+        >
+          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
+        </Drawer>
         <FormItem
-          label="Topics"
+          required={false}
+          htmlFor="objectiveTopics"
+          label={(
+            <>
+              Topics
+              {' '}
+              <Req />
+              <button
+                type="button"
+                className="usa-button usa-button--unstyled margin-left-1"
+                ref={drawerTriggerRef}
+              >
+                Get help choosing topics
+              </button>
+            </>
+          )}
           name="objectiveTopics"
-          required
         >
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
@@ -375,9 +414,11 @@ const SessionSummary = ({ datePickerKey }) => {
           required
         >
           <Controller
-            render={({ onChange: controllerOnChange, value: selectedValue, onBlur }) => (
+            render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={TRAINER_OPTIONS.filter((option) => selectedValue.includes(option.label))}
+                value={(trainerOptions || []).filter((option) => (
+                  value.includes(option.name)
+                ))}
                 inputId="objectiveTrainers"
                 name="objectiveTrainers"
                 className="usa-select"
@@ -387,10 +428,12 @@ const SessionSummary = ({ datePickerKey }) => {
                   DropdownIndicator: null,
                 }}
                 onChange={(s) => {
-                  controllerOnChange(s.map((o) => o.label));
+                  controllerOnChange(s.map((o) => o.name));
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
-                options={TRAINER_OPTIONS}
+                options={trainerOptions || []}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.id}
                 isMulti
               />
             )}
@@ -564,7 +607,7 @@ export default {
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save session</Button>
+        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
       </div>
     </div>
   ),

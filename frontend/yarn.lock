@@ -2229,10 +2229,10 @@
   resolved "https://registry.yarnpkg.com/@trysound/sax/-/sax-0.2.0.tgz#cccaab758af56761eb7bf37af6f03f326dd798ad"
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
 
-"@ttahub/common@1.1.5":
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-1.1.5.tgz#37d4d8f5b15cf3829555d38729dbe95e4e2e8c2e"
-  integrity sha512-VJVgNSZ3ahCxGipm/74YwwKY0ykOFCA0Wg7HaYjpUUCqJBV3oLHjXousPL/MVKwouZYhYiRiKM5WDBayNa4VTA==
+"@ttahub/common@1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-1.3.0.tgz#e8dad842fcf4b58ffb4a504c79b9d50f73102c3f"
+  integrity sha512-vRLo2J/6Qrx30dI7xZSRje6nLhDwhw48UDPWKUvY5j6RIwbuaMZdseMU2e5rrJw/opa8fGAQgYcUBiuSdhnVIg==
 
 "@turf/area@^6.4.0":
   version "6.5.0"
@@ -12295,9 +12295,9 @@ which@^2.0.1:
     isexe "^2.0.0"
 
 word-wrap@^1.2.3, word-wrap@~1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.3.tgz#610636f6b1f703891bd34771ccb17fb93b47079c"
-  integrity sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.4.tgz#cb4b50ec9aca570abd1f52f33cd45b6c61739a9f"
+  integrity sha512-2V81OA4ugVo5pRo46hAoD2ivUJx8jXmWXfUkY4KFNw0hEptvN0QfH3K4nHiwzGeKl5rFKedV48QVoqYavy4YpA==
 
 workbox-background-sync@6.5.4:
   version "6.5.4"

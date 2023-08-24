@@ -46,19 +46,35 @@ describe('TrainingReportForm', () => {
 
   it('renders training report form', async () => {
     fetchMock.getOnce('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
       renderTrainingReportForm('1', 'event-summary');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
   it('redirects to event summary', async () => {
     fetchMock.getOnce('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
@@ -68,7 +84,28 @@ describe('TrainingReportForm', () => {
     // this test might not seem too effective, but it fails if the component is not
     // wrapped in a Router
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
+  });
+
+  it('renders training report form if pocId is null', async () => {
+    fetchMock.getOnce('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      pocIds: null,
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+    });
+
+    act(() => {
+      renderTrainingReportForm('1', 'event-summary');
+    });
+
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
   it('displays an error when failing to fetch users', async () => {
@@ -76,7 +113,13 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/users/training-report-users?regionId=1', 500);
 
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -87,7 +130,13 @@ describe('TrainingReportForm', () => {
 
   it('fetches event report data', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     renderTrainingReportForm('123', 'event-summary');
 
@@ -107,7 +156,14 @@ describe('TrainingReportForm', () => {
 
   it('displays "no training report id provided" error', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, collaboratorIds: [], ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('', 'event-summary');
@@ -130,7 +186,10 @@ describe('TrainingReportForm', () => {
       },
       collaboratorIds: [1],
       ownerId: 1,
-      pocId: 1,
+      pocIds: [1],
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
@@ -143,7 +202,13 @@ describe('TrainingReportForm', () => {
     const updatedAt = moment();
 
     fetchMock.put('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, updatedAt,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      updatedAt,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
     const onSaveAndContinueButton = screen.getByText(/save and continue/i);
@@ -157,7 +222,13 @@ describe('TrainingReportForm', () => {
 
   it('tests the on save draft event', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -165,7 +236,13 @@ describe('TrainingReportForm', () => {
     expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
 
     fetchMock.put('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     const onSaveDraftButton = screen.getByText(/save draft/i);
     act(() => {
@@ -178,7 +255,13 @@ describe('TrainingReportForm', () => {
 
   it('shows an error when failing to save', async () => {
     fetchMock.getOnce('/api/events/id/123', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -196,18 +279,32 @@ describe('TrainingReportForm', () => {
 
   it('updates the page via the side menu', async () => {
     fetchMock.get('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     act(() => {
       renderTrainingReportForm('1', 'event-summary');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
     const visionGoal = await screen.findByRole('button', { name: /vision and goal/i });
 
@@ -220,11 +317,25 @@ describe('TrainingReportForm', () => {
 
   it('will update status on submit if the updated status is not complete', async () => {
     fetchMock.get('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.get(sessionsUrl, [
@@ -236,7 +347,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'complete-event');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
     const statusSelect = await screen.findByRole('combobox', { name: /status/i });
     expect(statusSelect).toHaveValue('In progress');
@@ -252,11 +363,25 @@ describe('TrainingReportForm', () => {
 
   it('will not complete the form if the form is not complete', async () => {
     fetchMock.get('/api/events/id/1', {
-      id: 1, name: 'test event', regionId: '1', reportId: 1, collaboratorIds: [], ownerId: 1,
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
-      regionId: '1', reportId: 1, data: {}, ownerId: 1,
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
     });
 
     fetchMock.get(sessionsUrl, [
@@ -268,7 +393,7 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'complete-event');
     });
 
-    expect(screen.getByText(/Regional\/National Training Report/i)).toBeInTheDocument();
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
     const statusSelect = await screen.findByRole('combobox', { name: /status/i });
     act(() => {
@@ -291,7 +416,10 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
-      pocId: [1],
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+      pocIds: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
@@ -343,6 +471,131 @@ describe('TrainingReportForm', () => {
     expect(lastBody.data.status).toEqual('Complete');
   });
 
+  it('shows an error if saving a draft as complete', async () => {
+    const completedForm = {
+      regionId: '1',
+      reportId: 1,
+      id: 1,
+      collaboratorIds: [1, 2, 3],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+      pocIds: [1],
+      data: {
+        eventOrganizer: 'IST TTA/Visit',
+        eventIntendedAudience: 'recipients',
+        startDate: '01/01/2021',
+        endDate: '01/01/2021',
+        trainingType: 'Series',
+        reasons: ['Reason'],
+        targetPopulations: ['Target'],
+        status: 'In progress',
+        vision: 'asdf',
+        goal: 'afdf',
+        eventId: 'E-1',
+        eventName: 'E-1 Event',
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+        },
+      },
+    };
+
+    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.put('/api/events/id/1', completedForm);
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1', 'complete-event');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'GET' })).toBe(true));
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    await waitFor(async () => expect(await screen.findByRole('button', { name: /Event summary complete/i })).toBeInTheDocument());
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+    expect(statusSelect).toHaveValue('Complete');
+
+    const submitButton = await screen.findByRole('button', { name: /save draft/i });
+
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => expect(screen.getByText('To complete event, submit it')).toBeInTheDocument());
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).not.toBe(true));
+  });
+
+  it('you can suspend a report', async () => {
+    const completedForm = {
+      regionId: '1',
+      reportId: 1,
+      id: 1,
+      collaboratorIds: [1, 2, 3],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+      pocIds: [1],
+      data: {
+        eventOrganizer: 'IST TTA/Visit',
+        eventIntendedAudience: 'recipients',
+        startDate: '01/01/2021',
+        endDate: '01/01/2021',
+        trainingType: 'Series',
+        reasons: ['Reason'],
+        targetPopulations: ['Target'],
+        status: 'In progress',
+        vision: 'asdf',
+        goal: 'afdf',
+        eventId: 'E-1',
+        eventName: 'E-1 Event',
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+        },
+      },
+    };
+
+    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.put('/api/events/id/1', completedForm);
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1', 'complete-event');
+    });
+
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'GET' })).toBe(true));
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    await waitFor(async () => expect(await screen.findByRole('button', { name: /Event summary complete/i })).toBeInTheDocument());
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Suspended');
+    });
+    expect(statusSelect).toHaveValue('Suspended');
+
+    const submitButton = await screen.findByRole('button', { name: /save draft/i });
+
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
+    const lastBody = JSON.parse(fetchMock.lastOptions().body);
+    expect(lastBody.data.status).toEqual('Suspended');
+  });
+
   it('handles an error submitting the form', async () => {
     const completedForm = {
       regionId: '1',
@@ -350,7 +603,10 @@ describe('TrainingReportForm', () => {
       id: 1,
       collaboratorIds: [1, 2, 3],
       ownerId: 1,
-      pocId: [1],
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+      pocIds: [1],
       data: {
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',

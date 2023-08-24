@@ -425,7 +425,6 @@ describe('User handlers', () => {
       getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
 
       await getTrainingReportUsers(unauthorizedReq, res);
-
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
       expect(res.sendStatus).toHaveBeenCalledTimes(1);
@@ -440,13 +439,11 @@ describe('User handlers', () => {
       getTrainingReportUsersByRegion.mockResolvedValueOnce([]);
 
       await getTrainingReportUsers(req, res);
-
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
       expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith([]);
     });
-
     it('should handle errors', async () => {
       const error = new Error('An error occurred');
 

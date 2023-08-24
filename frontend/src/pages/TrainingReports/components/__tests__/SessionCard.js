@@ -21,14 +21,14 @@ describe('SessionCard', () => {
     },
   };
 
-  const renderSessionCard = async (session = defaultSession, hasWritePermissions = true, eventStatus = 'In progress') => {
+  const renderSessionCard = async (session = defaultSession, hasWritePermissions = true) => {
     render((
       <Router history={history}>
         <SessionCard
           eventId={1}
           session={session}
-          hasWritePermissions={hasWritePermissions}
-          eventStatus={eventStatus}
+          isWriteable={hasWritePermissions}
+          onRemoveSession={jest.fn()}
           expanded
         />
       </Router>));
@@ -56,12 +56,6 @@ describe('SessionCard', () => {
     renderSessionCard(defaultSession);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/edit session/i)).toBeInTheDocument();
-  });
-
-  it('does not show the the edit link on a complete event', () => {
-    renderSessionCard(defaultSession, true, 'Complete');
-    expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.queryByText(/edit session/i)).toBeNull();
   });
 
   it('renders complete status', () => {
