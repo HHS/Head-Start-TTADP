@@ -261,7 +261,7 @@ describe('sessionSummary', () => {
         userEvent.click(noIsaidNoIsaidNoFilesSir);
       });
 
-      const supportType = await screen.findByLabelText(/support type/i);
+      const supportType = await screen.findByRole('combobox', { name: /support type \* get help choosing a support type/i });
       act(() => {
         userEvent.selectOptions(supportType, 'Planning');
       });
