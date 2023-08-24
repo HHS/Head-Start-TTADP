@@ -40,6 +40,7 @@ import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../.
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import '../../../components/GoalForm/ObjectiveSupportType.scss';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -73,6 +74,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   // ref for topics guidance drawer
   const drawerTriggerRef = useRef(null);
+  const supportTypeDrawerTriggerRef = useRef(null);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -537,9 +539,27 @@ const SessionSummary = ({ datePickerKey }) => {
       </Fieldset>
 
       <div className="margin-top-2">
+        <Drawer
+          triggerRef={supportTypeDrawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Support type guidance"
+        >
+          <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
+        </Drawer>
         <Label htmlFor="objectiveSupportType">
-          Support type
-          <Req />
+          <>
+            Support type
+            {' '}
+            <Req />
+            <button
+              type="button"
+              className="usa-button usa-button--unstyled margin-left-1"
+              ref={supportTypeDrawerTriggerRef}
+            >
+              Get help choosing a support type
+            </button>
+          </>
         </Label>
 
         <Dropdown
