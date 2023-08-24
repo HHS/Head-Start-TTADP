@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
 import {
   getHandler,
@@ -35,7 +36,7 @@ jest.mock('../../services/event', () => ({
 const mockEvent = {
   id: 99_999,
   ownerId: 99_999,
-  pocId: [99_999],
+  pocIds: [99_999],
   regionId: 99_999,
   collaboratorIds: [99_998, 99_999],
   data: {
@@ -99,9 +100,9 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
-    it('returns 404 when not found by pocId', async () => {
+    it('returns 404 when not found by pocIds', async () => {
       findEventsByPocId.mockResolvedValueOnce(null);
-      await getHandler({ params: { pocId: 1 } }, mockResponse);
+      await getHandler({ params: { pocIds: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
@@ -114,7 +115,7 @@ describe('event handlers', () => {
     it('returns 403 when the user cannot read the event', async () => {
       EventReport.mockImplementationOnce(() => ({
         canRead: () => false,
-        isCollaborator: () => false,
+        isPoc: () => false,
       }));
       findEventById.mockResolvedValueOnce(mockEvent);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
@@ -129,7 +130,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: [99_999],
+        pocIds: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -161,7 +162,7 @@ describe('event handlers', () => {
       },
       body: {
         ownerId: 99_999,
-        pocId: [99_999],
+        pocIds: [99_999],
         collaboratorIds: [99_998, 99_999],
         regionId: 99_999,
         data: {},
@@ -170,7 +171,7 @@ describe('event handlers', () => {
 
     it('returns the event', async () => {
       EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
+        canEditEvent: () => true,
       }));
       updateEvent.mockResolvedValueOnce(mockEvent);
       await updateHandler(mockRequest, mockResponse);
@@ -180,6 +181,90 @@ describe('event handlers', () => {
     it('returns 400 when no body', async () => {
       await updateHandler({ params: { eventId: 99_999 }, body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('owners can update status to complete', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => true,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_999,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('others cannot update status to complete', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => false,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_998,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+    });
+
+    it('owner can update status to suspended', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => true,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_999,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('owner cannot update status to suspended', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => false,
+      }));
+      updateEvent.mockResolvedValueOnce(mockEvent);
+      await updateHandler({
+        ...mockRequest,
+        body: {
+          ownerId: 99_998,
+          pocIds: [99_999],
+          collaboratorIds: [99_998, 99_999],
+          regionId: 99_999,
+          data: {
+            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          },
+        },
+      }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
     });
   });
 
@@ -217,12 +302,9 @@ describe('event handlers', () => {
     });
 
     it('handles errors', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canDelete: () => true,
-      }));
       findEventById.mockRejectedValueOnce(new Error('error'));
       await deleteHandler(
-        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        { session: { userId: 1 }, params: { eventId: mockEvent.id }, query: {} },
         mockResponse,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -231,6 +313,9 @@ describe('event handlers', () => {
 
   describe('getByStatus', () => {
     it('works', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => false,
+      }));
       findEventsByStatus.mockResolvedValueOnce([mockEvent]);
       await getByStatus(
         {
@@ -243,11 +328,15 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
     it('handles errors', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => false,
+      }));
       findEventsByStatus.mockRejectedValueOnce(new Error('error'));
       await getByStatus(
         {
           session: { userId: 1 },
           params: { status: 'not-started' },
+          query: { regionId: 99_999 },
         },
         mockResponse,
       );

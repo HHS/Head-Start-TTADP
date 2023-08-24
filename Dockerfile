@@ -1,3 +1,3 @@
-FROM node:18.16.0
+FROM node:18.17.1
 WORKDIR /app
 RUN apt-get update && apt-get install lcov -y

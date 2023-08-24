@@ -22,6 +22,9 @@ import withStateCode from './stateCode';
 import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withGoalType, withoutGoalType } from './goalType';
+import { withGroup, withoutGroup } from './group';
+import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
+import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 
 export const topicToQuery = {
   createDate: {
@@ -69,6 +72,10 @@ export const topicToQuery = {
     in: (query) => withRoles(query),
     nin: (query) => withoutRoles(query),
   },
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
+  },
   grantNumber: {
     in: (query) => withGrantNumber(query),
     nin: (query) => withoutGrantNumber(query),
@@ -102,6 +109,14 @@ export const topicToQuery = {
   reportText: {
     ctn: (query) => withReportText(query),
     nctn: (query) => withoutReportText(query),
+  },
+  resourceUrl: {
+    ctn: (query) => withResourceUrl(query),
+    nctn: (query) => withoutResourceUrl(query),
+  },
+  resourceAttachment: {
+    ctn: (query) => withResourceAttachment(query),
+    nctn: (query) => withoutResourceAttachment(query),
   },
   targetPopulations: {
     in: (query) => withTargetPopulations(query),

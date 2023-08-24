@@ -67,6 +67,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: false,
     },
     status: DataTypes.STRING,
+    granteeName: DataTypes.STRING,
     grantSpecialistName: DataTypes.STRING,
     grantSpecialistEmail: DataTypes.STRING,
     programSpecialistName: DataTypes.STRING,

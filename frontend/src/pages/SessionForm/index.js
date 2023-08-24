@@ -23,7 +23,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { isValidResourceUrl } from '../../components/GoalForm/constants';
 
 // websocket publish location interval
-const INTERVAL_DELAY = 30000; // THIRTY SECONDS
+const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 /**
    * this is just a simple handler to "flatten"
@@ -106,12 +106,12 @@ export default function SessionForm({ match }) {
   } = useSocket(user);
 
   useEffect(() => {
-    if (!trainingReportId || !currentPage || !sessionId) {
+    if (!trainingReportId || !sessionId) {
       return;
     }
-    const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
+    const newPath = `/training-report/${trainingReportId}/session/${sessionId}`;
     setSocketPath(newPath);
-  }, [currentPage, sessionId, setSocketPath, trainingReportId]);
+  }, [sessionId, setSocketPath, trainingReportId]);
 
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
@@ -146,7 +146,7 @@ export default function SessionForm({ match }) {
   useEffect(() => {
     // fetch event report data
     async function fetchSession() {
-      if (!trainingReportId || !currentPage || reportFetched || sessionId === 'new') {
+      if (!currentPage || reportFetched || sessionId === 'new') {
         return;
       }
       try {
@@ -161,7 +161,10 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, sessionId, trainingReportId]);
+    // isAppLoading is a little out of place but by including it, we
+    // ensure that the correct form data is loading
+    // TODO: Dig into why it's needed and remove it if possible
+  }, [currentPage, isAppLoading, hookForm.reset, reportFetched, sessionId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
@@ -188,6 +191,7 @@ export default function SessionForm({ match }) {
       // reset the error message
       setError('');
       setIsAppLoading(true);
+      hookForm.clearErrors();
 
       // grab the newest data from the form
       const data = hookForm.getValues();
@@ -274,7 +278,7 @@ export default function SessionForm({ match }) {
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
-              Regional/National Training Report
+              Training report - Session
             </h1>
           </div>
         </Grid>

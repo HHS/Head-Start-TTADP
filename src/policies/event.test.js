@@ -3,12 +3,12 @@ import EventReport from './event';
 
 const createEvent = ({
   ownerId = 1,
-  pocId = [1],
+  pocIds = [1],
   collaboratorIds = [],
   regionId = 1,
 }) => ({
   ownerId,
-  pocId,
+  pocIds,
   collaboratorIds,
   regionId,
   data: {},
@@ -45,18 +45,17 @@ const authorRegion1 = createUser({ write: true, regionId: 1 });
 const authorRegion2 = createUser({ write: true, regionId: 2 });
 const authorRegion1Collaborator = createUser({ write: true, regionId: 1 });
 const admin = createUser({ admin: true });
-const noPerms = createUser({});
 
 describe('Event Report policies', () => {
   describe('canCreate', () => {
     it('is true if the user has write permissions in the region', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion1, eventRegion1);
       expect(policy.canCreate()).toBe(true);
     });
 
     it('is false if the user does not have write permissions in the region', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canCreate()).toBe(false);
     });
@@ -64,66 +63,296 @@ describe('Event Report policies', () => {
 
   describe('canDelete', () => {
     it('is true if the user is an admin', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(admin, eventRegion1);
       expect(policy.canDelete()).toBe(true);
     });
 
     it('is true if the user is the author', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
       const policy = new EventReport(authorRegion1, eventRegion1);
       expect(policy.canDelete()).toBe(true);
     });
 
     it('is false if the user is not an admin or the author', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canDelete()).toBe(false);
     });
   });
 
-  describe('canUpdate', () => {
+  describe('canEditEvent', () => {
     it('is true if the user is an admin', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(admin, eventRegion1);
-      expect(policy.canUpdate()).toBe(true);
+      expect(policy.canEditEvent()).toBe(true);
     });
 
     it('is true if the user is the author', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion1, eventRegion1);
-      expect(policy.canUpdate()).toBe(true);
+      expect(policy.canEditEvent()).toBe(true);
+    });
+
+    it('is true if the user is a poc', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canEditEvent()).toBe(true);
+    });
+
+    it('is false if the user is only a collab', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion2],
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canEditEvent()).toBe(false);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canEditEvent()).toBe(false);
+    });
+  });
+
+  describe('canCreateSession', () => {
+    it('is true if the user is an admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canCreateSession()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canCreateSession()).toBe(true);
     });
 
     it('is true if the user is a collaborator', () => {
-      // eslint-disable-next-line max-len
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1, pocId: [authorRegion1Collaborator.id] });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
       const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
-      expect(policy.canUpdate()).toBe(true);
+      expect(policy.canCreateSession()).toBe(true);
     });
 
-    it('is false if the user is not an admin or the author', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+    it('is false if the user is a POC', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canCreateSession()).toBe(false);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
       const policy = new EventReport(authorRegion2, eventRegion1);
-      expect(policy.canUpdate()).toBe(false);
+      expect(policy.canCreateSession()).toBe(false);
+    });
+  });
+
+  describe('canUploadFile', () => {
+    it('is true if the user is an admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is true if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is true if the user is a POC', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canUploadFile()).toBe(true);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canUploadFile()).toBe(false);
+    });
+  });
+
+  describe('canEditSession', () => {
+    it('is true if the user is an admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canEditSession()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canEditSession()).toBe(true);
+    });
+
+    it('is true if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canEditSession()).toBe(true);
+    });
+
+    it('is true if the user is a POC', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canEditSession()).toBe(true);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canEditSession()).toBe(false);
+    });
+  });
+
+  describe('canDeleteSession', () => {
+    it('is true if the user is an admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canDeleteSession()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDeleteSession()).toBe(true);
+    });
+
+    it('is true if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canDeleteSession()).toBe(true);
+    });
+
+    it('is true if the user is a POC', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canDeleteSession()).toBe(true);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canDeleteSession()).toBe(false);
+    });
+  });
+
+  describe('canSuspendOrCompleteEvent', () => {
+    it('is true if the user is an admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canSuspendOrCompleteEvent()).toBe(true);
+    });
+
+    it('is true if the user is the author', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canSuspendOrCompleteEvent()).toBe(true);
+    });
+
+    it('is false if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canSuspendOrCompleteEvent()).toBe(false);
+    });
+
+    it('is false if the user is a POC', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        pocIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
+      expect(policy.canSuspendOrCompleteEvent()).toBe(false);
+    });
+
+    it('is false otherwise', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+      });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canDeleteSession()).toBe(false);
     });
   });
 
   describe('canReadInRegion', () => {
     it('is true if the user is an admin', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(admin, eventRegion1);
       expect(policy.canReadInRegion()).toBe(true);
     });
 
     it('is true if the user has read permissions in the region', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion1, eventRegion1);
       expect(policy.canReadInRegion()).toBe(true);
     });
 
     it('is false if the user does not have read permissions in the region', () => {
-      const eventRegion1 = createEvent({ author: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canReadInRegion()).toBe(false);
     });

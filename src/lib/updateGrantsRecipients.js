@@ -211,6 +211,7 @@ export async function processFiles(hashSumHex) {
           inactivationDate,
           regionId,
           cdi,
+          granteeName: g.grantee_name,
           programSpecialistName,
           programSpecialistEmail: valueFromXML(g.program_specialist_email),
           grantSpecialistName,

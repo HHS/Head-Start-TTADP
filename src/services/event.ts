@@ -11,9 +11,9 @@ import {
 } from './types/event';
 
 const {
-  sequelize,
   EventReportPilot,
   SessionReportPilot,
+  User,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -29,7 +29,7 @@ const validateFields = (request, requiredFields) => {
  *
  * @param {CreateEventRequest} request - The request data for creating the event.
  * @param {string} request.ownerId - The ID of the owner.
- * @param {string} request.pocId - The ID of the point of contact.
+ * @param {string} request.pocIds - The ID of the point of contact.
  * @param {string[]} request.collaboratorIds - An array of IDs of collaborators.
  * @param {string} request.regionId - The ID of the region where the event will take place.
  * @param {unknown} request.data - The data associated with the event.
@@ -43,7 +43,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   const {
     ownerId,
-    pocId,
+    pocIds,
     collaboratorIds,
     regionId,
     data,
@@ -51,7 +51,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   return EventReportPilot.create({
     ownerId,
-    pocId,
+    pocIds,
     collaboratorIds,
     regionId,
     data: cast(JSON.stringify(data), 'jsonb'),
@@ -86,7 +86,7 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     attributes: [
       'id',
       'ownerId',
-      'pocId',
+      'pocIds',
       'collaboratorIds',
       'regionId',
       'data',
@@ -116,10 +116,17 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     return event;
   }
 
+  let owner: undefined | { id: string; name: string; email: string };
+
+  if (event.ownerId) {
+    owner = await User.findByPk(event.ownerId, { attributes: ['id', 'name', 'email'], raw: true });
+  }
+
   return {
     id: event?.id,
     ownerId: event?.ownerId,
-    pocId: event?.pocId,
+    owner,
+    pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
     data: event?.data ?? {},
@@ -173,7 +180,7 @@ async function findEventHelperBlob({
     attributes: [
       'id',
       'ownerId',
-      'pocId',
+      'pocIds',
       'collaboratorIds',
       'regionId',
       'data',
@@ -186,7 +193,7 @@ async function findEventHelperBlob({
       },
     ],
     where,
-    order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+    order: [['data.eventId', 'ASC'], ['data.startDate', 'ASC']],
   });
 
   // if a fallbackValue was provided for this key search
@@ -208,7 +215,7 @@ async function findEventHelperBlob({
 type WhereOptions = {
   id?: number;
   ownerId?: number;
-  pocId?: number;
+  pocIds?: number;
   collaboratorIds?: number[];
   regionId?: number;
 };
@@ -216,7 +223,7 @@ type WhereOptions = {
 /**
  * Updates an existing event in the database or creates a new one if it doesn't exist.
  * @param request An object containing all fields to be updated for the event.
- *                Required fields: id, ownerId, pocId, collaboratorIds, regionId, data.
+ *                Required fields: id, ownerId, pocIds, collaboratorIds, regionId, data.
  * @returns A Promise that resolves to the updated event.
  * @throws {Error} If the specified event does not exist and cannot be created.
  */
@@ -233,7 +240,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 
   const {
     ownerId,
-    pocId,
+    pocIds,
     collaboratorIds,
     regionId,
     data,
@@ -242,7 +249,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   await EventReportPilot.update(
     {
       ownerId,
-      pocId,
+      pocIds,
       collaboratorIds,
       regionId,
       data: cast(JSON.stringify(data), 'jsonb'),
@@ -268,7 +275,7 @@ export async function findEventsByOwnerId(id: number): Promise<EventShape[] | nu
 }
 
 export async function findEventsByPocId(id: number): Promise<EventShape[] | null> {
-  return findEventHelper({ pocId: id }, true) as Promise<EventShape[]>;
+  return findEventHelper({ pocIds: id }, true) as Promise<EventShape[]>;
 }
 
 export async function findEventsByCollaboratorId(id: number): Promise<EventShape[] | null> {
@@ -279,15 +286,101 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[], fallbackValue = undefined, allowNull = false, scopes = undefined): Promise<EventShape[] | null> {
-  return findEventHelperBlob({
+/**
+ *
+ * remember, regional filtering is done in the previous step
+ * so all we need to do here is a last cleanup of the data by status
+ *
+ * @param events
+ * @param status
+ * @param userId
+ * @returns
+ */
+export async function filterEventsByStatus(events: EventShape[], status: string, userId: number, isAdmin = false) : Promise<EventShape[]> {
+  // do not filter if admin
+  if (isAdmin) return events;
+
+  switch (status) {
+    case TRS.NOT_STARTED:
+    case null:
+      /**
+       * Not started events
+       * You see them if
+       * - You are the POC, owner, or collaborator
+       */
+      return events.filter((event) => {
+        // pocIds is nullable
+        if (event.pocIds && event.pocIds.includes(userId)) {
+          return true;
+        }
+
+        if (event.collaboratorIds.includes(userId)) {
+          return true;
+        }
+
+        if (event.ownerId === userId) {
+          return true;
+        }
+
+        return false;
+      });
+    case TRS.IN_PROGRESS:
+      /**
+       * In progress events
+       * You see all of them with regional permissions
+       * but you may not see all sessions
+       *
+       */
+
+      return events.map((event) => {
+        // if you are owner, collaborator or poc, you see all sessions
+        if (event.ownerId === userId) {
+          return event;
+        }
+
+        if (event.collaboratorIds.includes(userId)) {
+          return event;
+        }
+
+        if (event.pocIds && event.pocIds.includes(userId)) {
+          return event;
+        }
+
+        // otherwise, you only see sessions that are "complete"
+        const e = event;
+        e.sessionReports = e.sessionReports.filter((session) => session.data.status === TRS.COMPLETE);
+
+        return e;
+      });
+    case TRS.COMPLETE:
+    case TRS.SUSPENDED:
+      // everyone with regional permissions can see all sessions
+      return events;
+    default:
+      return [];
+  }
+}
+
+export async function findEventsByStatus(
+  status: string,
+  readableRegions: number[],
+  userId: number,
+  fallbackValue = undefined,
+  allowNull = false,
+  scopes = undefined,
+  isAdmin = false,
+): Promise<EventShape[] | null> {
+  const events = await findEventHelperBlob({
     key: 'status',
     value: status,
     regions: readableRegions,
     fallbackValue,
     allowNull: status === TRS.NOT_STARTED || allowNull,
     scopes,
-  }) as Promise<EventShape[]>;
+  }) as EventShape[];
+
+  const es = await filterEventsByStatus(events, status, userId, isAdmin);
+  return es;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
@@ -295,7 +388,7 @@ export async function findAllEvents(): Promise<EventShape[]> {
     attributes: [
       'id',
       'ownerId',
-      'pocId',
+      'pocIds',
       'collaboratorIds',
       'regionId',
       'data',

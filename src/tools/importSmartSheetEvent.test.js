@@ -23,8 +23,8 @@ describe('Import Smart Sheet Events', () => {
   });
 
   describe('imports events correctly', () => {
-    let preExistingEventIds;
     let ownerId;
+    let createdEventIds;
     beforeAll(async () => {
       try {
         user = await User.create({
@@ -38,9 +38,8 @@ describe('Import Smart Sheet Events', () => {
         ownerId = user.id;
         const fileName = 'EventsTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
-        const allEvents = await EventReportPilot.findAll();
-        preExistingEventIds = allEvents.map((event) => event.id);
-        await importSmartSheetEvent(fileName);
+        const createdEvents = await importSmartSheetEvent(fileName);
+        createdEventIds = createdEvents.map((event) => event.id);
       } catch (error) {
         // eslint-disable-next-line no-console
         logger.info(`Unable to setup Import Plan Events test ${error}`);
@@ -51,9 +50,7 @@ describe('Import Smart Sheet Events', () => {
       // clean up events.
       await EventReportPilot.destroy({
         where: {
-          id: {
-            [Op.notIn]: preExistingEventIds,
-          },
+          id: createdEventIds,
         },
       });
 
@@ -68,9 +65,10 @@ describe('Import Smart Sheet Events', () => {
       const createdEvents = await EventReportPilot.findAll({
         where: {
           id: {
-            [Op.notIn]: preExistingEventIds || [],
+            [Op.in]: createdEventIds,
           },
         },
+        order: [['regionId', 'ASC']],
       });
       expect(createdEvents[0].ownerId).toEqual(ownerId);
       expect(createdEvents.length).toBe(2);
