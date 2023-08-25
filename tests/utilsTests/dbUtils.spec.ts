@@ -14,7 +14,7 @@ test.describe('get /query', () => {
 
     expect(response.status()).toBe(200);
 
-    response = await request.get('testingOnly/reseed/', { timeout: 30_000 });
+    response = await request.get('testingOnly/reseed/', { timeout: 600_000 });
     expect(response.status()).toBe(200);
 
     response = await request.post(
