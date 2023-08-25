@@ -15,8 +15,11 @@ module.exports = {
             SELECT
                 gr."regionId",
                 COUNT(DISTINCT g."id") "GoalsTotal",
+                COUNT(DISTINCT grr."id") "GoalResourcesTotal",
+                COUNT(DISTINCT gfr."id") "GoalFieldResponsesTotal",
                 COUNT(DISTINCT arg."id") "ActivityReportGoalsTotal",
                 COUNT(DISTINCT argr."id") "ActivityReportGoalResourcesTotal",
+                COUNT(DISTINCT argfr."id") "ActivityReportGoalFieldResponsesTotal",
                 COUNT(DISTINCT oj."id") "ObjectivesTotal",
                 COUNT(DISTINCT ojf."id") "ObjectiveFilesTotal",
                 COUNT(DISTINCT ojr."id") "ObjectiveResourcesTotal",
@@ -27,8 +30,11 @@ module.exports = {
                 COUNT(DISTINCT arot."id") "ActivityReportObjectiveTopicsTotal"
             FROM "Grants" gr
             FULL OUTER JOIN "Goals" g ON gr."id" = g."grantId"
+            FULL OUTER JOIN "GoalResources" grr ON g."id" = grr."goalId"
+            FULL OUTER JOIN "GoalFieldResponses" gfr ON g."id" = gfr."goalId"
             FULL OUTER JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
             FULL OUTER JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
+            FULL OUTER JOIN "ActivityReportGoalFieldResponses" argfr ON arg."id" = argfr."activityReportGoalId"
             FULL OUTER JOIN "Objectives" oj ON g."id" = oj."goalId"
             FULL OUTER JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
             FULL OUTER JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
@@ -43,8 +49,11 @@ module.exports = {
         SELECT
             -1 "regionId",
             SUM("GoalsTotal"),
+            SUM("GoalResourcesTotal"),
+            SUM("GoalFieldResponsesTotal"),
             SUM("ActivityReportGoalsTotal"),
             SUM("ActivityReportGoalResourcesTotal"),
+            SUM("ActivityReportGoalFieldResponsesTotal"),
             SUM("ObjectivesTotal"),
             SUM("ObjectiveFilesTotal"),
             SUM("ObjectiveResourcesTotal"),
@@ -249,6 +258,211 @@ module.exports = {
             GROUP BY 1,2,3,9,10
         );
         SELECT * FROM "GoalsToModify";
+
+        -- Handle GoalResources
+
+        DROP TABLE IF EXISTS "GoalResourcesToModify";
+        CREATE TEMP TABLE "GoalResourcesToModify" AS (
+            WITH gtmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "GoalsToModify"
+                )
+            SELECT
+            gtmm."toUpdate" "goalId",
+            "gr"."resourceId",
+            (
+                SELECT ARRAY_AGG(DISTINCT sfx."sourceField")
+                FROM "GoalResources" "grx"
+                CROSS JOIN UNNEST("grx"."sourceFields") sfx("sourceField")
+                WHERE "gr"."resourceId" = grx."resourceId"
+                AND (grx."goalId" = ANY(ARRAY_AGG("gr"."goalId"))
+                OR gtmm."toUpdate" = grx."goalId")
+            ) "sourceFields",
+            MIN(LEAST("gr"."createdAt", "gr2"."createdAt")) "createdAt",
+            MAX(GREATEST("gr"."updatedAt", "gr2"."updatedAt")) "updatedAt",
+            BOOL_OR("gr"."onAR" OR COALESCE("gr2"."onAR", FALSE)) "onAR",
+            BOOL_OR("gr"."onApprovedAR" OR COALESCE("gr2"."onApprovedAR", FALSE)) "onApprovedAR",
+            ARRAY_AGG(DISTINCT "gr".id ORDER by "gr".id) "toRemove",
+            (ARRAY_AGG(DISTINCT "gr2".id))[1] "toUpdate"
+            FROM "GoalResources" "gr"
+            JOIN gtmm_recast gtmm
+            ON "gr"."goalId" = to_remove
+            LEFT JOIN "GoalResources" "gr2"
+            ON "gr2"."goalId" = gtmm."toUpdate"
+            AND "gr"."resourceId" = "gr2"."resourceId"
+            GROUP BY 1,2
+        );
+        SELECT * FROM "GoalResourcesToModify";
+        -- SELECT "resourceId", "toRemove", "toUpdate", COUNT(*), array_to_json(array_agg(row_to_json(gfmm)))
+        -- FROM "GoalResourcesToModify" gfmm
+        -- GROUP BY "resourceId", "toRemove", "toUpdate"
+        -- HAVING COUNT(*) > 1;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Insert_GoalResources', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "InsertGoalResources";
+        CREATE TEMP TABLE "InsertGoalResources" AS
+            WITH  insert_goal_resources AS (
+                INSERT INTO "GoalResources"
+                (
+                "goalId",
+                "resourceId",
+                "sourceFields",
+                "createdAt",
+                "updatedAt",
+                "onAR",
+                "onApprovedAR"
+                )
+                SELECT
+                "goalId",
+                "resourceId",
+                "sourceFields",
+                "createdAt",
+                "updatedAt",
+                "onAR",
+                "onApprovedAR"
+                FROM "GoalResourcesToModify" grtm
+                WHERE grtm."toUpdate" IS NULL and grtm."goalId" IS NOT NULL
+                RETURNING
+                id "goalResourceId",
+                "goalId"
+            )
+        SELECT * FROM insert_goal_resources;
+        SELECT * FROM "InsertGoalResources";
+        END;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Update_GoalResources', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "UpdateGoalResources";
+        CREATE TEMP TABLE "UpdateGoalResources" AS
+            WITH update_goal_resources AS (
+                UPDATE "GoalResources" "gr"
+                SET
+                "sourceFields" = grtm."sourceFields",
+                "createdAt" = grtm."createdAt",
+                "updatedAt" = grtm."updatedAt",
+                "onAR" = grtm."onAR",
+                "onApprovedAR" = grtm."onApprovedAR"
+                FROM "GoalResourcesToModify" grtm
+                WHERE "gr".id = grtm."toUpdate"
+                AND (
+                    "gr"."sourceFields" != grtm."sourceFields"
+                    OR "gr"."createdAt" != grtm."createdAt"
+                    OR "gr"."updatedAt" != grtm."updatedAt"
+                    OR "gr"."onAR" != grtm."onAR"
+                    OR "gr"."onApprovedAR" != grtm."onApprovedAR"
+                )
+                RETURNING
+                "gr".id "goalResourceId",
+                "gr"."goalId"
+            )
+        SELECT * FROM update_goal_resources;
+        SELECT * FROM "UpdateGoalResources";
+        END;
+
+        -- Handle GoalFieldResponses
+
+        DROP TABLE IF EXISTS "GoalFieldResponsesToModify";
+        CREATE TEMP TABLE "GoalFieldResponsesToModify" AS (
+            WITH gtmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "GoalsToModify"
+                )
+            SELECT
+            gtmm."toUpdate" "goalId",
+            "gfr"."goalTemplateFieldPromptId",
+            (
+                SELECT ARRAY_AGG(DISTINCT sfx."response")
+                FROM "GoalFieldResponses" "gfrx"
+                CROSS JOIN UNNEST("gfrx"."response") sfx("response")
+                WHERE "gfr"."goalTemplateFieldPromptId" = gfrx."goalTemplateFieldPromptId"
+                AND (gfrx."goalId" = ANY(ARRAY_AGG("gfr"."goalId"))
+                OR gtmm."toUpdate" = gfrx."goalId")
+            ) "response",
+            MIN(LEAST("gfr"."createdAt", "gfr2"."createdAt")) "createdAt",
+            MAX(GREATEST("gfr"."updatedAt", "gfr2"."updatedAt")) "updatedAt",
+            BOOL_OR("gfr"."onAR" OR COALESCE("gfr2"."onAR", FALSE)) "onAR",
+            BOOL_OR("gfr"."onApprovedAR" OR COALESCE("gfr2"."onApprovedAR", FALSE)) "onApprovedAR",
+            ARRAY_AGG(DISTINCT "gfr".id ORDER by "gfr".id) "toRemove",
+            (ARRAY_AGG(DISTINCT "gfr2".id))[1] "toUpdate"
+            FROM "GoalFieldResponses" "gfr"
+            JOIN gtmm_recast gtmm
+            ON "gfr"."goalId" = to_remove
+            LEFT JOIN "GoalFieldResponses" "gfr2"
+            ON "gfr2"."goalId" = gtmm."toUpdate"
+            AND "gfr"."goalTemplateFieldPromptId" = "gfr2"."goalTemplateFieldPromptId"
+            GROUP BY 1,2
+        );
+        SELECT * FROM "GoalFieldResponsesToModify";
+        -- SELECT "goalTemplateFieldPromptId", "toRemove", "toUpdate", COUNT(*), array_to_json(array_agg(row_to_json(ofmm)))
+        -- FROM "GoalFieldResponsesToModify" ofmm
+        -- GROUP BY "goalTemplateFieldPromptId", "toRemove", "toUpdate"
+        -- HAVING COUNT(*) > 1;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Insert_GoalFieldResponses', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "InsertGoalFieldResponses";
+        CREATE TEMP TABLE "InsertGoalFieldResponses" AS
+            WITH  insert_goal_field_responses AS (
+                INSERT INTO "GoalFieldResponses"
+                (
+                "goalId",
+                "goalTemplateFieldPromptId",
+                "response",
+                "createdAt",
+                "updatedAt",
+                "onAR",
+                "onApprovedAR"
+                )
+                SELECT
+                "goalId",
+                "goalTemplateFieldPromptId",
+                "response",
+                "createdAt",
+                "updatedAt",
+                "onAR",
+                "onApprovedAR"
+                FROM "GoalFieldResponsesToModify" gfrtm
+                WHERE gfrtm."toUpdate" IS NULL and gfrtm."goalId" IS NOT NULL
+                RETURNING
+                id "goalFieldResponseId",
+                "goalId"
+            )
+        SELECT * FROM insert_goal_field_responses;
+        SELECT * FROM "InsertGoalFieldResponses";
+        END;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Update_GoalFieldResponses', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "UpdateGoalFieldResponses";
+        CREATE TEMP TABLE "UpdateGoalFieldResponses" AS
+            WITH update_goal_field_responses AS (
+                UPDATE "GoalFieldResponses" "gfr"
+                SET
+                "response" = gfrtm."response",
+                "createdAt" = gfrtm."createdAt",
+                "updatedAt" = gfrtm."updatedAt",
+                "onAR" = gfrtm."onAR",
+                "onApprovedAR" = gfrtm."onApprovedAR"
+                FROM "GoalFieldResponsesToModify" gfrtm
+                WHERE "gfr".id = gfrtm."toUpdate"
+                AND (
+                    "gfr"."response" != gfrtm."response"
+                    OR "gfr"."createdAt" != gfrtm."createdAt"
+                    OR "gfr"."updatedAt" != gfrtm."updatedAt"
+                    OR "gfr"."onAR" != gfrtm."onAR"
+                    OR "gfr"."onApprovedAR" != gfrtm."onApprovedAR"
+                )
+                RETURNING
+                "gfr".id "goalFieldResponseId",
+                "gfr"."goalId"
+            )
+        SELECT * FROM update_goal_field_responses;
+        SELECT * FROM "UpdateGoalFieldResponses";
+        END;
+
 
         DROP TABLE IF EXISTS "AllSmashedObjectives";
         CREATE TEMP TABLE "AllSmashedObjectives" AS (
@@ -1844,6 +2058,130 @@ module.exports = {
         -- GROUP BY "goalId", "activityReportId", "toRemove", "toUpdate"
         -- HAVING COUNT(*) > 1;
 
+        -- Handle ActivityReportGoalFieldResponses
+        DROP TABLE IF EXISTS "ActivityReportGoalFieldResponsesToModify";
+        CREATE TEMP TABLE "ActivityReportGoalFieldResponsesToModify" AS (
+          WITH otm_recast AS (
+          SELECT *,
+            UNNEST("toRemove") to_remove
+            FROM "ActivityReportGoalsToModifyMetadata"
+            )
+            SELECT
+            argtmm."toUpdate" "activityReportGoalId",
+            argfr."goalTemplateFieldPromptId",
+            (
+                SELECT ARRAY_AGG(DISTINCT sfx."response")
+                FROM "ActivityReportGoalFieldResponses" "argfrx"
+                CROSS JOIN UNNEST("argfrx"."response") sfx("response")
+                WHERE "argfr"."goalTemplateFieldPromptId" = argfrx."goalTemplateFieldPromptId"
+                AND (argfrx."activityReportGoalId" = ANY(ARRAY_AGG("argfr"."activityReportGoalId"))
+                OR argtmm."toUpdate" = argfrx."activityReportGoalId")
+            ) "response",
+            MIN(LEAST("argfr"."createdAt", "argfr2"."createdAt")) "createdAt",
+            MAX(GREATEST("argfr"."updatedAt", "argfr2"."updatedAt")) "updatedAt",
+            ARRAY_AGG(DISTINCT "argfr".id ORDER by "argfr".id) "toRemove",
+            (ARRAY_AGG(DISTINCT "argfr2".id))[1] "toUpdate"
+            FROM "ActivityReportGoalFieldResponses" argfr
+            JOIN otm_recast argtmm
+            ON argfr."activityReportGoalId" = to_remove
+            LEFT JOIN "ActivityReportGoalFieldResponses" argfr2
+            ON argfr2."activityReportGoalId" = argtmm."toUpdate"
+            AND argfr."goalTemplateFieldPromptId" = argfr2."goalTemplateFieldPromptId"
+            GROUP BY 1,2
+        );
+
+        -- Validate Handle ActivityReportGoalFieldResponsesToModify
+        SELECT * FROM "ActivityReportGoalFieldResponsesToModify";
+        -- SELECT "goalTemplateFieldPromptId", "toRemove", "toUpdate", COUNT(*), array_to_json(array_agg(row_to_json(ofmm)))
+        -- FROM "ActivityReportGoalFieldResponsesToModify" ofmm
+        -- GROUP BY "goalTemplateFieldPromptId", "toRemove", "toUpdate"
+        -- HAVING COUNT(*) > 1;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Insert_ActivityReportGoalFieldResponses', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "InsertActivityReportGoalFieldResponses";
+        CREATE TEMP TABLE "InsertActivityReportGoalFieldResponses" AS
+        WITH insert_activity_report_goals_field_responses AS (
+            INSERT INTO "ActivityReportGoalFieldResponses"
+            (
+            "activityReportGoalId",
+            "goalTemplateFieldPromptId",
+            "response",
+            "createdAt",
+            "updatedAt"
+            )
+            SELECT
+            "activityReportGoalId",
+            "goalTemplateFieldPromptId",
+            "response",
+            "createdAt",
+            "updatedAt"
+            FROM "ActivityReportGoalFieldResponsesToModify" argrtm
+            WHERE argrtm."toUpdate" IS NULL AND argrtm."activityReportGoalId" IS NOT NULL
+            RETURNING
+            id "activityReportGoalResourceId",
+            "activityReportGoalId"
+        )
+        SELECT * FROM insert_activity_report_goals_field_responses;
+        SELECT * FROM "InsertActivityReportGoalFieldResponses";
+        END;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Update_ActivityReportGoalFieldResponses', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "UpdateActivityReportGoalFieldResponses";
+        CREATE TEMP TABLE "UpdateActivityReportGoalFieldResponses" AS
+        WITH update_activity_report_goals_field_responses AS  (
+            UPDATE "ActivityReportGoalFieldResponses" "argfr"
+            SET
+            "response" = argfrtm."response",
+            "createdAt" = argfrtm."createdAt",
+            "updatedAt" = argfrtm."updatedAt"
+            FROM "ActivityReportGoalFieldResponsesToModify" argfrtm
+            WHERE "argfr".id = argfrtm."toUpdate"
+            AND (
+                "argfr"."response" != argfrtm."response"
+                OR "argfr"."createdAt" != argfrtm."createdAt"
+                OR "argfr"."updatedAt" != argfrtm."updatedAt"
+            )
+            RETURNING
+            "argfr".id "activityReportGoalFieldResponseId",
+            "argfr"."activityReportGoalId"
+        )
+        SELECT * FROM update_activity_report_goals_field_responses;
+        SELECT * FROM "UpdateActivityReportGoalFieldResponses";
+        END;
+
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Delete_ActivityReportGoalFieldResponses', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "DeleteActivityReportGoalFieldResponses";
+        CREATE TEMP TABLE "DeleteActivityReportGoalFieldResponses" AS
+        WITH delete_activity_report_goals_field_responses AS (
+            WITH otmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "ActivityReportGoalFieldResponsesToModify"
+                )
+            DELETE FROM "ActivityReportGoalFieldResponses" "argfr"
+            USING otmm_recast argrtm
+            WHERE "argfr".id = to_remove
+            RETURNING
+            "argfr".id "activityReportGoalFieldResponseId",
+            "argfr"."activityReportGoalId"
+        )
+        SELECT * FROM delete_activity_report_goals_field_responses;
+        SELECT * FROM "DeleteActivityReportGoalFieldResponses";
+        END;
+
+        DROP TABLE IF EXISTS "ActivityReportGoalFieldResponsesStats";
+        CREATE TEMP TABLE "ActivityReportGoalFieldResponsesStats" AS (
+            SELECT
+            'ActivityReportGoalFieldResponses' "table",
+            (SELECT COUNT(*) FROM "InsertActivityReportGoalFieldResponses") "Inserts",
+            (SELECT COUNT(*) FROM "UpdateActivityReportGoalFieldResponses") "Updates",
+            (SELECT COUNT(*) FROM "DeleteActivityReportGoalFieldResponses") "Deletes",
+            (SELECT COUNT(*) FROM "ActivityReportGoalFieldResponses" argfr) "post_count"
+        );
+
         -- Handle ActivityReportGoalResources
         DROP TABLE IF EXISTS "ActivityReportGoalResourcesToModify";
         CREATE TEMP TABLE "ActivityReportGoalResourcesToModify" AS (
@@ -2030,6 +2368,78 @@ module.exports = {
             (SELECT COUNT(*) FROM "ActivityReportGoals" ar) "post_count"
 
         );
+
+
+
+        -- Continue Handle GoalResources
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Delete_GoalResources', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "DeleteGoalResources";
+        CREATE TEMP TABLE "DeleteGoalResources" AS
+            WITH otmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "GoalResourcesToModify"
+                ),
+            delete_goal_resources AS
+            (
+                DELETE FROM "GoalResources" "gr"
+                USING otmm_recast ortm
+                WHERE "gr".id = to_remove
+                RETURNING
+                "gr".id "goalResourceId",
+                "gr"."goalId"
+            )
+        SELECT * FROM delete_goal_resources;
+        SELECT * FROM "DeleteGoalResources";
+        END;
+
+        DROP TABLE IF EXISTS "GoalResourceStats";
+        CREATE TEMP TABLE "GoalResourceStats" AS
+            (
+                SELECT
+                'GoalResources' "table",
+                (SELECT COUNT(*) FROM "InsertGoalResources") "Inserts",
+                (SELECT COUNT(*) FROM "UpdateGoalResources") "Updates",
+                (SELECT COUNT(*) FROM "DeleteGoalResources") "Deletes",
+                (SELECT COUNT(*) FROM "GoalResources" "gr") "post_count"
+            );
+
+
+        -- Continue Handle GoalFieldResponses
+        BEGIN;
+        SELECT set_config('audit.auditDescriptor', 'dup_goals_Delete_GoalFieldResponses', TRUE) as "auditDescriptor";
+        DROP TABLE IF EXISTS "DeleteGoalFieldResponses";
+        CREATE TEMP TABLE "DeleteGoalFieldResponses" AS
+            WITH gtmm_recast AS (
+                SELECT *,
+                    UNNEST("toRemove") to_remove
+                FROM "GoalFieldResponsesToModify"
+                ),
+            delete_goal_field_responses AS
+            (
+                DELETE FROM "GoalFieldResponses" "gfr"
+                USING gtmm_recast grtm
+                WHERE "gfr".id = to_remove
+                RETURNING
+                "gfr".id "goalResourceId",
+                "gfr"."goalId"
+            )
+        SELECT * FROM delete_goal_field_responses;
+        SELECT * FROM "DeleteGoalFieldResponses";
+        END;
+
+        DROP TABLE IF EXISTS "GoalFieldResponseStats";
+        CREATE TEMP TABLE "GoalFieldResponseStats" AS
+            (
+                SELECT
+                'GoalFieldResponses' "table",
+                (SELECT COUNT(*) FROM "InsertGoalFieldResponses") "Inserts",
+                (SELECT COUNT(*) FROM "UpdateGoalFieldResponses") "Updates",
+                (SELECT COUNT(*) FROM "DeleteGoalFieldResponses") "Deletes",
+                (SELECT COUNT(*) FROM "GoalFieldResponses" "gfr") "post_count"
+            );
+
         -- Continue Handle Goals
 
         BEGIN;
@@ -2274,8 +2684,11 @@ module.exports = {
             SELECT
                 gr."regionId",
                 COUNT(DISTINCT g."id") "GoalsTotal",
+                COUNT(DISTINCT grr."id") "GoalResourcesTotal",
+                COUNT(DISTINCT gfr."id") "GoalFieldResponsesTotal",
                 COUNT(DISTINCT arg."id") "ActivityReportGoalsTotal",
                 COUNT(DISTINCT argr."id") "ActivityReportGoalResourcesTotal",
+                COUNT(DISTINCT argfr."id") "ActivityReportGoalFieldResponsesTotal",
                 COUNT(DISTINCT oj."id") "ObjectivesTotal",
                 COUNT(DISTINCT ojf."id") "ObjectiveFilesTotal",
                 COUNT(DISTINCT ojr."id") "ObjectiveResourcesTotal",
@@ -2286,8 +2699,11 @@ module.exports = {
                 COUNT(DISTINCT arot."id") "ActivityReportObjectiveTopicsTotal"
             FROM "Grants" gr
             FULL OUTER JOIN "Goals" g ON gr."id" = g."grantId"
+            FULL OUTER JOIN "GoalResources" grr ON g."id" = grr."goalId"
+            FULL OUTER JOIN "GoalFieldResponses" gfr ON g."id" = gfr."goalId"
             FULL OUTER JOIN "ActivityReportGoals" arg ON g."id" = arg."goalId"
             FULL OUTER JOIN "ActivityReportGoalResources" argr ON arg."id" = argr."activityReportGoalId"
+            FULL OUTER JOIN "ActivityReportGoalResources" argfr ON arg."id" = argfr."activityReportGoalId"
             FULL OUTER JOIN "Objectives" oj ON g."id" = oj."goalId"
             FULL OUTER JOIN "ObjectiveFiles" ojf ON oj."id" = ojf."objectiveId"
             FULL OUTER JOIN "ObjectiveResources" ojr ON oj."id" = ojr."objectiveId"
@@ -2302,8 +2718,11 @@ module.exports = {
         SELECT
             -1 "regionId",
             SUM("GoalsTotal"),
+            SUM("GoalResourcesTotal"),
+            SUM("GoalFieldResponsesTotal"),
             SUM("ActivityReportGoalsTotal"),
             SUM("ActivityReportGoalResourcesTotal"),
+            SUM("ActivityReportGoalFieldResponsesTotal"),
             SUM("ObjectivesTotal"),
             SUM("ObjectiveFilesTotal"),
             SUM("ObjectiveResourcesTotal"),
@@ -2319,8 +2738,11 @@ module.exports = {
             SELECT
                 pre."regionId",
                 pre."GoalsTotal" - post."GoalsTotal" AS "GoalsTotalDiff",
+                pre."GoalResourcesTotal" - post."GoalResourcesTotal" AS "GoalResourcesTotalDiff",
+                pre."GoalFieldResponsesTotal" - post."GoalFieldResponsesTotal" AS "GoalFieldResponsesTotalDiff",
                 pre."ActivityReportGoalsTotal" - post."ActivityReportGoalsTotal" AS "ActivityReportGoalsTotalDiff",
                 pre."ActivityReportGoalResourcesTotal" - post."ActivityReportGoalResourcesTotal" AS "ActivityReportGoalResourcesTotalDiff",
+                pre."ActivityReportGoalFieldResponsesTotal" - post."ActivityReportGoalFieldResponsesTotal" AS "ActivityReportGoalFieldResponsesTotalDiff",
                 pre."ObjectivesTotal" - post."ObjectivesTotal" AS "ObjectivesTotalDiff",
                 pre."ObjectiveFilesTotal" - post."ObjectiveFilesTotal" AS "ObjectiveFilesTotalDiff",
                 pre."ObjectiveResourcesTotal" - post."ObjectiveResourcesTotal" AS "ObjectiveResourcesTotalDiff",
@@ -2341,42 +2763,54 @@ module.exports = {
             FROM "GoalStats"
             UNION
             SELECT 2 id, *,
+                (SELECT SUM("GoalResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
+            FROM "GoalResourceStats"
+            UNION
+            SELECT 3 id, *,
+                (SELECT SUM("GoalFieldResponsesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
+            FROM "GoalFieldResponseStats"
+            UNION
+            SELECT 4 id, *,
                 (SELECT SUM("ActivityReportGoalsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportGoalStats"
             UNION
-            SELECT 3 id, *,
+            SELECT 5 id, *,
                 (SELECT SUM("ActivityReportGoalResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportGoalResourceStats"
             UNION
-            SELECT 4 id, *,
+            SELECT 6 id, *,
+                (SELECT SUM("ActivityReportGoalFieldResponsesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
+            FROM "ActivityReportGoalFieldResponsesStats"
+            UNION
+            SELECT 7 id, *,
                 (SELECT SUM("ObjectivesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveStats"
             UNION
-            SELECT 5 id, *,
+            SELECT 8 id, *,
                 (SELECT SUM("ObjectiveFilesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveFileStats"
             UNION
-            SELECT 6 id, *,
+            SELECT 9 id, *,
                 (SELECT SUM("ObjectiveResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveResourceStats"
             UNION
-            SELECT 7 id, *,
+            SELECT 10 id, *,
                 (SELECT SUM("ObjectiveTopicsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ObjectiveTopicStats"
             UNION
-            SELECT 8 id, *,
+            SELECT 11 id, *,
                 (SELECT SUM("ActivityReportObjectivesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveStats"
             UNION
-            SELECT 9 id, *,
+            SELECT 12 id, *,
                 (SELECT SUM("ActivityReportObjectiveFilesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveFileStats"
             UNION
-            SELECT 10 id, *,
+            SELECT 13 id, *,
                 (SELECT SUM("ActivityReportObjectiveResourcesTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveResourceStats"
             UNION
-            SELECT 11 id, *,
+            SELECT 14 id, *,
                 (SELECT SUM("ActivityReportObjectiveTopicsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveTopicStats"
         )
@@ -2389,23 +2823,43 @@ module.exports = {
         DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
           `, { transaction });
 
+        const auditColumns = [
+          'id',
+          'data_id',
+          'dml_type',
+          'old_row_data',
+          'new_row_data',
+          'dml_timestamp',
+          'dml_by',
+          'dml_as',
+          'dml_txid',
+          'session_sig',
+          'descriptor_id',
+        ];
+
         const cascade = await queryInterface.sequelize.query(`
           WITH
-          "xZALGoals" AS ( SELECT 'Goals' AS "table", * FROM "ZALGoals" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
-          "xZALActivityReportGoals" AS ( SELECT 'ActivityReportGoals' AS "table", * FROM "ZALActivityReportGoals" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALActivityReportGoalResources" AS ( SELECT 'ActivityReportGoalResources' AS "table", * FROM "ZALActivityReportGoalResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALObjectives" AS ( SELECT 'Objectives' AS "table", * FROM "ZALObjectives" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALObjectiveFiles" AS ( SELECT 'ObjectiveFiles' AS "table", * FROM "ZALObjectiveFiles" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALObjectiveResources" AS ( SELECT 'ObjectiveResources' AS "table", * FROM "ZALObjectiveResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALObjectiveTopics" AS ( SELECT 'ObjectiveTopics' AS "table", * FROM "ZALObjectiveTopics" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALActivityReportObjectives" AS ( SELECT 'ActivityReportObjectives' AS "table", * FROM "ZALActivityReportObjectives" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALActivityReportObjectiveFiles" AS ( SELECT 'ActivityReportObjectiveFiles' AS "table", * FROM "ZALActivityReportObjectiveFiles" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALActivityReportObjectiveResources" AS ( SELECT 'ActivityReportObjectiveResources' AS "table", * FROM "ZALActivityReportObjectiveResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
-          "xZALActivityReportObjectiveTopics" AS ( SELECT 'ActivityReportObjectiveTopics' AS "table", * FROM "ZALActivityReportObjectiveTopics" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALGoals" AS ( SELECT 'Goals' AS "table", ${auditColumns.join(', ')} FROM "ZALGoals" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
+          "xZALGoalResources" AS ( SELECT 'GoalResources' AS "table", ${auditColumns.join(', ')} FROM "ZALGoalResources" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
+          "xZALGoalFieldResponses" AS ( SELECT 'GoalFieldResponses' AS "table", ${auditColumns.join(', ')} FROM "ZALGoalFieldResponses" z WHERE session_sig = '${sessionSig}' AND dml_by = -1),
+          "xZALActivityReportGoals" AS ( SELECT 'ActivityReportGoals' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportGoals" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportGoalResources" AS ( SELECT 'ActivityReportGoalResources' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportGoalResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportGoalFieldResponses" AS ( SELECT 'ActivityReportGoalFieldResponses' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportGoalFieldResponses" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectives" AS ( SELECT 'Objectives' AS "table", ${auditColumns.join(', ')} FROM "ZALObjectives" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectiveFiles" AS ( SELECT 'ObjectiveFiles' AS "table", ${auditColumns.join(', ')} FROM "ZALObjectiveFiles" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectiveResources" AS ( SELECT 'ObjectiveResources' AS "table", ${auditColumns.join(', ')} FROM "ZALObjectiveResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALObjectiveTopics" AS ( SELECT 'ObjectiveTopics' AS "table", ${auditColumns.join(', ')} FROM "ZALObjectiveTopics" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectives" AS ( SELECT 'ActivityReportObjectives' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportObjectives" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectiveFiles" AS ( SELECT 'ActivityReportObjectiveFiles' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportObjectiveFiles" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectiveResources" AS ( SELECT 'ActivityReportObjectiveResources' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportObjectiveResources" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
+          "xZALActivityReportObjectiveTopics" AS ( SELECT 'ActivityReportObjectiveTopics' AS "table", ${auditColumns.join(', ')} FROM "ZALActivityReportObjectiveTopics" z WHERE session_sig = '${sessionSig}'  AND dml_by = -1),
           logs AS (
             SELECT * FROM "xZALGoals" UNION
+            SELECT * FROM "xZALGoalResources" UNION
+            SELECT * FROM "xZALGoalFieldResponses" UNION
             SELECT * FROM "xZALActivityReportGoals" UNION
             SELECT * FROM "xZALActivityReportGoalResources" UNION
+            SELECT * FROM "xZALActivityReportGoalFieldResponses" UNION
             SELECT * FROM "xZALObjectives" UNION
             SELECT * FROM "xZALObjectiveFiles" UNION
             SELECT * FROM "xZALObjectiveResources" UNION
@@ -2427,6 +2881,19 @@ module.exports = {
         if (Array.isArray(cascade) && cascade.length > 0) {
           throw new Error('Cascade error, unexpected entires found:', cascade);
         }
+
+        // Remove "Root Cause" from non-FEI goal
+        await queryInterface.sequelize.query(`
+          DELETE
+          FROM "GoalFieldResponses"
+          WHERE "goalId" = 54671;
+
+          DELETE
+          FROM "ActivityReportGoalFieldResponses" argfr
+          USING "ActivityReportGoals" arg
+          WHERE argfr."activityReportGoalId" = arg.id
+          AND arg."goalId" = 54671;
+        `, { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
