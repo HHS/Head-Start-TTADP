@@ -1,5 +1,5 @@
 
-export const calledFromTestFileOrDirectory = ():boolean => (new Error().stack?.split('\n') || [])
+export const calledFromTestFileOrDirectory = (): boolean => (new Error().stack?.split('\n') || [])
   .some(line => {
     const trimmedLine = line.trim();
 

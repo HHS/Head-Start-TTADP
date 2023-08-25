@@ -253,9 +253,9 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v11-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v11-yarn-deps-
+            - v14-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
