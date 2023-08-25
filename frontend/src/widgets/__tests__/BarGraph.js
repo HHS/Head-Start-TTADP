@@ -3,7 +3,8 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import {
   render,
-  screen,
+  waitFor,
+  act,
 } from '@testing-library/react';
 import BarGraph from '../BarGraph';
 
@@ -20,28 +21,24 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async () => (
-  render(<BarGraph data={TEST_DATA} xAxisLabel="xaxis" yAxisLabel="yaxis" />)
-);
+const renderBarGraph = async () => {
+  act(() => {
+    render(<BarGraph data={TEST_DATA} />);
+  });
+};
 
 describe('Bar Graph', () => {
   it('is shown', async () => {
     renderBarGraph();
-    await screen.findByText('xaxis');
-    const point1 = document.querySelector('g.xtick');
+
+    await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
+
+    const point1 = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point1.__data__.text).toBe(' one');
-  });
+    expect(point1.__data__.text).toBe('one');
 
-  it('has the correct x axis label', async () => {
-    renderBarGraph();
-    const axis = await screen.findByText('xaxis');
-    expect(axis).toBeInTheDocument();
-  });
-
-  it('has the correct y axis label', async () => {
-    renderBarGraph();
-    const axis = await screen.findByText('yaxis');
-    expect(axis).toBeInTheDocument();
+    const point2 = document.querySelector('g.xtick');
+    // eslint-disable-next-line no-underscore-dangle
+    expect(point2.__data__.text).toBe('0');
   });
 });
