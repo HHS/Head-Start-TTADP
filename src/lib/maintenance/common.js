@@ -16,9 +16,10 @@ const maintenanceCronJobs = {};
  * @param {Object} job - The maintenance job that failed.
  * @param {Error} error - The error that caused the job to fail.
  */
-const onFailedMaintenance = (job, error) => {
+const onFailedMaintenance = async (job, error) => {
   // Log an error message with details about the failed job and error.
   auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
+  await job.retry();
 };
 
 /**
@@ -26,7 +27,7 @@ const onFailedMaintenance = (job, error) => {
  * @param {Object} job - The maintenance job object.
  * @param {any} result - The result of the maintenance job.
  */
-const onCompletedMaintenance = (job, result) => {
+const onCompletedMaintenance = async (job, result) => {
   // Check if the result is not null
   if (result != null) {
     // Log successful maintenance with job name, category and type
@@ -34,6 +35,7 @@ const onCompletedMaintenance = (job, result) => {
   } else {
     // Log failed maintenance with job name, category and type
     logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.type}`);
+    await job.retry();
   }
 };
 

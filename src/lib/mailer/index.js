@@ -73,18 +73,20 @@ export const frequencyToInterval = (freq) => {
   return date;
 };
 
-export const onFailedNotification = (job, error) => {
+export const onFailedNotification = async (job, error) => {
   auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
   logEmailNotification(job, false, error);
+  await job.retry();
 };
 
-export const onCompletedNotification = (job, result) => {
+export const onCompletedNotification = async (job, result) => {
   if (result != null) {
     logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
     logEmailNotification(job, true, result);
   } else {
     logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
     logEmailNotification(job, false, { preferences: 'off' });
+    await job.retry();
   }
 };
 

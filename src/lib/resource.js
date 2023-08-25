@@ -387,7 +387,7 @@ export const unparsableMimeTypes = [
  * Retrieves metadata for a given resource.
  *
  * @param {object} job - The job object containing the resourceId and resourceUrl.
- * @returns {object} - The status and data of the retrieved resource metadata.
+ * @returns {Promise<object>} - The status and data of the retrieved resource metadata.
  */
 const getResourceMetaDataJob = async (job) => {
   const {
@@ -409,7 +409,10 @@ const getResourceMetaDataJob = async (job) => {
     // Check if the MIME type is unparsable.
     if (mimeType && unparsableMimeTypes.includes(mimeType.toLowerCase().replace(/\s+/g, ''))) {
       auditLogger.error(`Resource Queue: Warning, unable to process resource '${resourceUrl}', received status code '${statusCode}'.`);
-      return { status: httpCodes.NO_CONTENT, data: { url: resourceUrl } };
+      return {
+        status: httpCodes.NO_CONTENT,
+        data: { url: resourceUrl },
+      };
     }
 
     // Check if the status code indicates an error.

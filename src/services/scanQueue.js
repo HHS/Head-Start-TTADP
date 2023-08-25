@@ -22,12 +22,16 @@ const addToScanQueue = (fileKey) => {
   );
 };
 
-const onFailedScanQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
-const onCompletedScanQueue = (job, result) => {
+const onFailedScanQueue = async (job, error) => {
+  auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+  await job.retry();
+};
+const onCompletedScanQueue = async (job, result) => {
   if (result.status === 200) {
     logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
   } else {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    await job.retry();
   }
 };
 const processScanQueue = () => {
