@@ -54,44 +54,62 @@ async function getProgramPersonnel(grantId, programId, program) {
           grantId,
           programId,
           role: currentRole,
-          firstName: { [Op.ne]: firstName },
-          lastName: { [Op.ne]: lastName },
+          firstName: { [Op.eq]: firstName },
+          lastName: { [Op.eq]: lastName },
+          active: true,
         },
       });
 
-      // Create personnel object.
-      const personnelToAdd = {
-        programId,
-        grantId,
-        role: currentRole,
-        prefix: getPersonnelField(currentRole, 'prefix', program),
-        firstName,
-        lastName,
-        suffix: getPersonnelField(currentRole, 'suffix', program),
-        title: getPersonnelField(currentRole, 'title', program),
-        email: getPersonnelField(currentRole, 'email', program),
-        effectiveDate: null,
-        active: true,
-        originalPersonnelId: null,
-      };
-
+      // We don't need to do anything if this person already exists with this role.
       if (!existingPersonnel) {
-      // Personnel does not exist, create a new one.
-        programPersonnelArray.push(personnelToAdd);
-      } else {
-        // Add the new Grant Personnel record.
-        programPersonnelArray.push(
-          {
-            ...personnelToAdd,
-            originalPersonnelId: existingPersonnel.id,
-            effectiveDate: new Date(),
+        // eslint-disable-next-line no-await-in-loop
+        const existingRole = await ProgramPersonnel.findOne({
+          where: {
+            grantId, // For this Grant
+            programId, // For this Program
+            role: currentRole, // For this Role
+            active: true, // Is this person still active?
+            firstName: { [Op.ne]: firstName }, // Does this exist with a different person?
+            lastName: { [Op.ne]: lastName }, // Does this exist with a different person?
           },
-        );
-        // Also update the old Grant Personnel record with the active flag set to false.
-        programPersonnelArray.push({
-          ...existingPersonnel.dataValues,
-          active: false,
         });
+
+        // Create personnel object.
+        const personnelToAdd = {
+          programId,
+          grantId,
+          role: currentRole,
+          prefix: getPersonnelField(currentRole, 'prefix', program),
+          firstName,
+          lastName,
+          suffix: getPersonnelField(currentRole, 'suffix', program),
+          title: getPersonnelField(currentRole, 'title', program),
+          email: getPersonnelField(currentRole, 'email', program),
+          effectiveDate: null,
+          active: true,
+          originalPersonnelId: null,
+        };
+
+        // What if the person we are looping in the file already exists with this role???
+
+        if (!existingRole) {
+        // Personnel does not exist, create a new one.
+          programPersonnelArray.push(personnelToAdd);
+        } else {
+        // Add the new Grant Personnel record.
+          programPersonnelArray.push(
+            {
+              ...personnelToAdd,
+              originalPersonnelId: existingRole.id, // You have been replaced.
+              effectiveDate: new Date(),
+            },
+          );
+          // Also update the old Grant Personnel record with the active flag set to false.
+          programPersonnelArray.push({
+            ...existingRole.dataValues,
+            active: false, // Deactivate this person.
+          });
+        }
       }
     }
   }
