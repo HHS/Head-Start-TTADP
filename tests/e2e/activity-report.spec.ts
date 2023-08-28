@@ -226,8 +226,8 @@ test.describe('Activity Report', () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
-      .click();
+
+    await page.getByTestId('label').click();
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -819,15 +819,16 @@ test.describe('Activity Report', () => {
     await p;    
 
     // create the goal
+    await page.waitForTimeout(5000);
     await page.getByTestId('label').click();
     await page.keyboard.press('Enter');
+    await page.waitForTimeout(5000);
     await page.getByTestId('textarea').fill('Test goal for preserving objectives');
 
     // create the objective
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
-    await page.getByLabel('TTA objective *').click();
-    await page.getByLabel('TTA objective *').fill('Test objective for preserving objectives');
+    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
     
