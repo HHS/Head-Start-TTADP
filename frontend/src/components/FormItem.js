@@ -96,7 +96,7 @@ function FormItem({
 }
 
 FormItem.propTypes = {
-  label: PropTypes.string.isRequired,
+  label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,
