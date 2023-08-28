@@ -42,7 +42,7 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByLabel('Session context *').fill('Context');
   await page.getByLabel('Session objective *').fill('Objective');
 
-  await page.getByText(/Topics/i).click();
+  await page.getByText('Topics *Get help choosing topics').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
