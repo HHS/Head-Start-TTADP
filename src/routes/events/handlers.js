@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
-import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
 import { currentUserId } from '../../services/currentUser';
@@ -16,7 +16,7 @@ import {
   findEventsByStatus,
 } from '../../services/event';
 import { userById } from '../../services/users';
-import { setReadRegions, setTrainingReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
+import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
 import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:EVENTS';
@@ -35,14 +35,18 @@ export const getByStatus = async (req, res) => {
     const auth = await getEventAuthorization(req, res, {});
     const userId = await currentUserId(req, res);
     const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
-    const updatedFilters = await setTrainingReportReadRegions(req.query, userId);
+    const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    // If user is a collaborator we want o return all region events and collaborator events.
-    if (await userIsPocRegionalCollaborator(userId)) {
-      scopes.push({ pocIds: { [Op.contains]: [userId] } });
-    }
-    const events = await findEventsByStatus(status, auth.readableRegions, null, false, scopes);
+    const events = await findEventsByStatus(
+      status,
+      auth.readableRegions,
+      userId,
+      null,
+      false,
+      scopes,
+      auth.isAdmin(),
+    );
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
@@ -130,9 +134,26 @@ export const updateHandler = async (req, res) => {
     // Get event to update.
     const eventToUpdate = await findEventById(eventId);
     const auth = await getEventAuthorization(req, res, eventToUpdate);
-    if (!auth.canUpdate()) { return res.sendStatus(403); }
+    if (!auth.canEditEvent()) { return res.status(403).send({ message: 'User is not authorized to update event' }); }
+
+    // check to see if req.body.data contains status and if
+    // the status is TRAINING_REPORT_STATUSES.COMPLETED or
+    // TRAINING_REPORT_STATUSES.SUSPENDED,
+    // we need to confirm the owner of the event is the user
+
+    if (req.body.data && req.body.data.status) {
+      const { status } = req.body.data;
+      if (status === TRAINING_REPORT_STATUSES.COMPLETE
+        || status === TRAINING_REPORT_STATUSES.SUSPENDED
+      ) {
+        if (!auth.canSuspendOrCompleteEvent()) {
+          return res.status(403).send({ message: 'User is not authorized to complete or suspend event' });
+        }
+      }
+    }
 
     const event = await updateEvent(eventId, req.body);
+
     return res.status(httpCodes.CREATED).send(event);
   } catch (error) {
     return handleErrors(req, res, error, logContext);

@@ -71,9 +71,9 @@ export const REGIONAL_SCOPES = {
     name: 'READ_TRAINING_REPORTS',
     description: 'Can view training reports in the region',
   },
-  [SCOPE_IDS.COLLABORATOR_TRAINING_REPORTS]: {
-    name: 'COLLABORATOR_TRAINING_REPORTS',
-    description: 'Can view training reports in the region',
+  [SCOPE_IDS.POC_TRAINING_REPORTS]: {
+    name: 'POC_TRAINING_REPORTS',
+    description: 'Can serve as a regional point of contact in the region (A regional POC can create sessions, view and edit reports)',
   },
 };
 
