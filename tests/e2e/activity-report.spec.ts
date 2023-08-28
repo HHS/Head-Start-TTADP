@@ -183,9 +183,9 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await blur(page);
 
-    await page.getByRole('textbox', { name: 'TTA objective' }).fill('g1o1');
+    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1o1');
     // Topics.
-    await page.getByText('Topics *Tell me more').click()
+    await page.getByText('Topics *Get help choosing topics').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -203,7 +203,7 @@ test.describe('Activity Report', () => {
     // save draft does work with valid resources
     await page.getByRole('button', { name: 'Save draft' }).click();
 
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
@@ -215,7 +215,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Goals and objectives' }).click()
 
     // confirm tta provided is still there (form is still open)
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).click();
 
     // save goal and go on to create second goal
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -235,13 +235,13 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-    await page.getByRole('textbox', { name: 'TTA objective' }).fill('g2o1');  
-    await page.getByText('Topics *Tell me more').click()
+    await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');  
+    await page.getByText('Topics *Get help choosing topics').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await blur(page);
 
@@ -554,7 +554,7 @@ test.describe('Activity Report', () => {
     await blur(page);
     await page.waitForTimeout(5000);
 
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).focus();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
     await page.getByTestId('dropdown').selectOption('In Progress');
 
@@ -660,7 +660,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.getByText('Topics *Tell me more').click()
+    await page.getByText('Topics *Get help choosing topics').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -669,7 +669,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textInput').fill('');
 
     // add tta provided
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
     await blur(page);
@@ -734,15 +734,15 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await blur(page);
 
-    await page.getByRole('textbox', { name: 'TTA objective' }).fill('g1 o1 title');
+    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1 o1 title');
 
     // select a topic
-    await page.getByText('Topics *Tell me more').click()
+    await page.getByText('Topics *Get help choosing topics').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('g1 o1 tta');
     await blur(page);
 
@@ -754,7 +754,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(4).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
     await page.keyboard.type('g1 o2 tta');
     await blur(page);
 
@@ -809,10 +809,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
 
     // add a recipient
-    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
-
-    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.keyboard.press('Enter'); 
+    await activitySummary(page);
 
     const p = page.waitForURL('**/goals-objectives');
  
@@ -835,7 +832,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     
     await blur(page);
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('An unlikely statement');
     
     // save draft
@@ -850,6 +847,6 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Keep objective' }).click();
     await blur(page);
   
-    expect(page.getByRole('textbox', { name: 'TTA provided for objective' }).getByText('An unlikely statement')).toBeVisible();
+    expect(page.getByRole('textbox', { name: /TTA provided for objective/i }).getByText('An unlikely statement')).toBeVisible();
   });
 });
