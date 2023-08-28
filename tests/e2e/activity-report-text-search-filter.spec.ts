@@ -108,13 +108,12 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.waitForTimeout(10000);
 
     // Objective title.
-    await page.getByRole('textbox', { name: 'TTA objective' }).click();
-    await page.keyboard.type('Prepare your first meal.');
+    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Prepare your first meal.');
 
     await blur(page);
 
     // Topics.
-    await page.getByText('Topics *Tell me more').click()
+    await page.getByText('Topics *Get help choosing topics').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);

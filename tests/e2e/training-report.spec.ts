@@ -53,6 +53,8 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByTestId('dropdown').selectOption('Introducing');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
+  await page.waitForTimeout(5000);
+
   // session participants
   await page.getByText(/Recipients/i).click();
   await page.keyboard.press('ArrowDown');
