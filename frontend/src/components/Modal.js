@@ -55,6 +55,7 @@ const Modal = ({
                   type="button"
                   aria-label={okButtonAriaLabel}
                   onClick={onOk}
+                  style={{ marginRight: '0.25rem' }}
                 >
                   {okButtonText}
                 </Button>
@@ -63,7 +64,7 @@ const Modal = ({
           }
           {
             SecondaryActionButton
-              ? <SecondaryActionButton />
+              ? <span style={{ marginRight: '0.25rem' }}><SecondaryActionButton /></span>
               : null
             }
           {
