@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { uniq } from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Permission } from '../models';
 import { auditLogger as logger } from '../logger';
@@ -54,7 +55,7 @@ export async function userIsPocRegionalCollaborator(userId) {
     (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
   );
   const hasCollaborator = userPermissions.some(
-    (p) => p.scopeId === SCOPES.COLLABORATOR_TRAINING_REPORTS,
+    (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
   );
 
   // if they have the other scopes, their access is not limited
@@ -101,7 +102,7 @@ export async function getUserTrainingReportReadRegions(userId) {
     const readTrainingReportScopes = [
       SCOPES.READ_WRITE_TRAINING_REPORTS,
       SCOPES.READ_TRAINING_REPORTS,
-      SCOPES.COLLABORATOR_TRAINING_REPORTS,
+      SCOPES.POC_TRAINING_REPORTS,
     ];
 
     return await getUserRegionsByPermissions(userId, readTrainingReportScopes);
@@ -161,5 +162,12 @@ export async function setReadRegions(query, userId) {
 export async function setTrainingReportReadRegions(query, userId) {
   const readRegions = await getUserTrainingReportReadRegions(userId);
 
+  return setRegionsInQuery(query, readRegions);
+}
+
+export async function setTrainingAndActivityReportReadRegions(query, userId) {
+  const trainingReportReadRegions = await getUserTrainingReportReadRegions(userId);
+  const activityReportReadRegions = await getUserReadRegions(userId);
+  const readRegions = uniq([...trainingReportReadRegions, ...activityReportReadRegions]);
   return setRegionsInQuery(query, readRegions);
 }

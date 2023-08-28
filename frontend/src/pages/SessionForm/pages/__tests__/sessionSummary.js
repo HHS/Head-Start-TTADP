@@ -17,6 +17,7 @@ import sessionSummary, { isPageComplete } from '../sessionSummary';
 import NetworkContext from '../../../../NetworkContext';
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import { mockRSSData } from '../../../../testHelpers';
 
 const mockData = (files) => ({
   dataTransfer: {
@@ -138,6 +139,8 @@ describe('sessionSummary', () => {
         { id: 3, name: 'PFCE' },
         { id: 4, name: 'PFMO' },
       ]);
+
+      fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     });
 
     afterEach(async () => {
@@ -179,7 +182,8 @@ describe('sessionSummary', () => {
         userEvent.type(sessionObjective, 'Session objective');
       });
 
-      await selectEvent.select(screen.getByLabelText(/topics/i), ['Complaint']);
+      await selectEvent.select(document.getElementById('objectiveTopics'), ['Complaint']);
+
       const trainers = await screen.findByLabelText(/Who were the trainers for this session?/i);
       await selectEvent.select(trainers, ['PFCE']);
 
@@ -262,7 +266,7 @@ describe('sessionSummary', () => {
         userEvent.selectOptions(supportType, 'Planning');
       });
 
-      const saveDraftButton = await screen.findByRole('button', { name: /save session/i });
+      const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
     });
@@ -311,6 +315,7 @@ describe('sessionSummary', () => {
 
     it('shows an error if there was one fetching topics', async () => {
       fetchMock.restore();
+      fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
       fetchMock.get('/api/topic', 500);
       act(() => {
         render(<RenderSessionSummary />);
@@ -340,6 +345,7 @@ describe('sessionSummary', () => {
 
     it('shows an error if there was one fetching trainers', async () => {
       fetchMock.restore();
+      fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
       fetchMock.get('/api/topic', [
         { id: 1, name: 'Behavioral Health' },
         { id: 2, name: 'Complaint' },

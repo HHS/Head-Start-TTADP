@@ -23,6 +23,8 @@ import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withGoalType, withoutGoalType } from './goalType';
 import { withGroup, withoutGroup } from './group';
+import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
+import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 
 export const topicToQuery = {
   createDate: {
@@ -107,6 +109,14 @@ export const topicToQuery = {
   reportText: {
     ctn: (query) => withReportText(query),
     nctn: (query) => withoutReportText(query),
+  },
+  resourceUrl: {
+    ctn: (query) => withResourceUrl(query),
+    nctn: (query) => withoutResourceUrl(query),
+  },
+  resourceAttachment: {
+    ctn: (query) => withResourceAttachment(query),
+    nctn: (query) => withoutResourceAttachment(query),
   },
   targetPopulations: {
     in: (query) => withTargetPopulations(query),

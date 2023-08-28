@@ -15,27 +15,34 @@ import {
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
+import logEmailNotification from './logNotifications';
 
 export const notificationQueue = newQueue('notifications');
-// export const notificationQueue = newQueue('digestNotifications');
 
 const {
   SMTP_HOST,
   SMTP_PORT,
+  SMTP_USER,
+  SMTP_PASSWORD,
   SMTP_SECURE,
+  SMTP_IGNORE_TLS,
   NODE_ENV,
   SEND_NON_PRODUCTION_NOTIFICATIONS,
 } = process.env;
 
-// nodemailer expects this value as a boolean.
+// nodemailer expects these values as a boolean.
 const secure = SMTP_SECURE !== 'false';
+const ignoreTLS = SMTP_IGNORE_TLS !== 'false';
 
 const defaultTransport = createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure,
-  ignoreTLS: true,
+  ignoreTLS,
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASSWORD,
+  },
 });
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
