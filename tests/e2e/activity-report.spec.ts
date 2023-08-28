@@ -826,13 +826,17 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textarea').fill('Test goal for preserving objectives');
 
     // create the objective
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.keyboard.press('Enter');
-    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.keyboard.press('Enter');
+    await page.getByText('Select TTA objective *- Select -').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');  
     
+    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await blur(page);
+
+    await page.getByText('Topics *Get help choosing topics').click()
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');    
+
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('An unlikely statement');
     
