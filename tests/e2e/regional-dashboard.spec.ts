@@ -24,7 +24,7 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'apply filters for regional dashboard' }).click();
 
   // remove the remaining filter
-  await page.getByRole('button', { name: 'This button removes the filter: State contains RI' }).click();
+  await page.getByRole('button', { name: 'This button removes the filter: State or territory contains RI' }).click();
 
   // switch the total training graph's display type back and forth
   await page.getByRole('button', { name: 'display total training and technical assistance hours as table' }).click();
@@ -35,10 +35,16 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByText('Both').click();
   await page.getByText('Technical Assistance').click();
 
-  // print a screenshot
+  // print a screenshot of the TTA hours graph
   await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId('gridContainer').getByTestId('button').click()
+    page.locator('#rd-save-screenshot').click()
+  ]);
+
+  // print a screenshot of the topics graph
+  await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#rd-save-screenshot-topic-frequency').click()
   ]);
 
   // view the topics as a table

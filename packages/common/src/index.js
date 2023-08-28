@@ -146,6 +146,7 @@ const TARGET_POPULATIONS = [
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
+  'Program Staff',
 ];
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
@@ -231,7 +232,7 @@ const SCOPE_IDS = {
   UNLOCK_APPROVED_REPORTS: 6,
   READ_WRITE_TRAINING_REPORTS: 7,
   READ_TRAINING_REPORTS: 8,
-  COLLABORATOR_TRAINING_REPORTS: 9,
+  POC_TRAINING_REPORTS: 9,
 };
 exports.SCOPE_IDS = SCOPE_IDS;
 

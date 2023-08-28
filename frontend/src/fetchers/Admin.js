@@ -97,3 +97,8 @@ export const updateNationalCenter = async (id, data) => {
   const result = await put((join('/', 'api', 'admin', 'national-center', String(id))), data);
   return result.json();
 };
+
+export const sendEmail = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'email')), data);
+  return result.json();
+};

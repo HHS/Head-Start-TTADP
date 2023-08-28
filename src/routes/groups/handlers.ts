@@ -173,6 +173,12 @@ export async function deleteGroup(req: Request, res: Response) {
       attribtes: ['userId', 'id'],
     });
 
+    // We should check that the group exists before we attempt to delete it.
+    if (!existingGroup) {
+      res.status(httpCodes.OK).json({});
+      return;
+    }
+
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], existingGroup);
     if (!policy.ownsGroup()) {
       res.sendStatus(httpCodes.FORBIDDEN);
