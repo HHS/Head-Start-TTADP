@@ -24,13 +24,27 @@ module.exports = {
          GROUP BY 1,2,3,4,5,6
          )
          DELETE FROM "ProgramPersonnel"
-         WHERE id NOT IN (SELECT first_insert FROM initial_entries);
+         USING "ProgramPersonnel" pp
+         LEFT JOIN initial_entries
+           ON first_insert = pp.id
+         WHERE "ProgramPersonnel".id = pp.id
+           AND first_insert IS NULL;
          
          /* 2. Make a copy of the audit log before cleaning it up */
-         SET session_replication_role = replica;
-         CREATE TABLE "ZZarchiveZALProgramPersonnel20230828103020" AS SELECT * FROM "ZALProgramPersonnel";
-         SET session_replication_role = DEFAULT ;
+         CREATE TABLE "ZZarchiveZALProgramPersonnel20230828103020" AS SELECT * FROM "ZALProgramPersonnel";`,
+        { transaction },
+      );
 
+      // Disable audit log
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+        `,
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        `
          /* 3. Clean out the huge number of records related to deleted dupes */
          DELETE FROM "ZALProgramPersonnel" WHERE data_id NOT IN (SELECT id FROM "ProgramPersonnel");
           `, { transaction });
