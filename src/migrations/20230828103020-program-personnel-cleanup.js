@@ -1,5 +1,6 @@
 const {
   prepMigration,
+  setAuditLoggingState,
 } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
@@ -10,46 +11,136 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.sequelize.query(`
-         /* 1. Backup all current program personnel records in a table. */
-         DROP TABLE IF EXISTS "ProgramPersonnel_backup_20230828";
-         SELECT * INTO "ProgramPersonnel_backup_20230828" FROM "ProgramPersonnel";
 
-         /* 2. Create a table of everything we want to keep. */
+        /* 1. Create a temp table of dedupe. */
          DROP TABLE IF EXISTS "ProgramPersonnelToKeep";
-         CREATE TEMP TABLE "ProgramPersonnelToKeep" AS (
+         CREATE TABLE "ProgramPersonnelToKeep" AS (
             SELECT
-                 "firstName",
-                 "lastName",
-                 "role",
-                 "grantId",
-                 "programId",
-                 count(id),
-                 min("id") AS "idToKeep"
+                min(id) id,
+                "programId",
+                "grantId",
+                role,
+                (ARRAY_AGG(prefix order by id desc))[1] prefix,
+                (ARRAY_AGG("firstName" order by id desc))[1] "firstName",
+                (ARRAY_AGG("lastName" order by id desc))[1] "lastName",
+                (ARRAY_AGG("suffix" order by id desc))[1] "suffix",
+                (ARRAY_AGG("title" order by id desc))[1] "title",
+                LOWER(email) AS email,
+                MAX("originalPersonnelId") "originalPersonnelId",
+                MIN("createdAt") "createdAt",
+                MAX("updatedAt") "updatedAt"
                  FROM "ProgramPersonnel"
                  GROUP BY
                  "firstName",
                  "lastName",
+                 10, -- email
                  "role",
                  "grantId",
                  "programId"
-         );
+         );`, { transaction });
 
-         /* 3. Disable triggers for speed and cut down on noise in audit logs. */
-         ALTER TABLE "ProgramPersonnel" DISABLE TRIGGER ALL;
+      /* 2. Disable audit trail. */
+      await setAuditLoggingState(queryInterface, transaction, false);
 
-         /* 4. Delete everything we don't want to keep. */
-         DELETE FROM "ProgramPersonnel" WHERE id NOT IN (SELECT "idToKeep" FROM "ProgramPersonnelToKeep");
+      await queryInterface.sequelize.query(`
+         /* 3. Truncate botht the ZALProgramPersonnel and ProgramPersonnel tables. */
+         TRUNCATE TABLE "ZALProgramPersonnel";
+         TRUNCATE TABLE "ProgramPersonnel";
+       `, { transaction });
 
-         /* 5. Fix active column by createdAt. */
-         UPDATE "ProgramPersonnel" p1
-            SET
-                "active" = CASE WHEN p2."id" IS NULL THEN true ELSE false END -- True if We are on the most recent record or there is only one record.
-            FROM "ProgramPersonnel" p2
-            WHERE p1."grantId" = p2."grantId" AND p1."programId" = p2."programId" AND p1."createdAt" < p2."createdAt";
+      /* 4. Enable audit trail. */
+      await setAuditLoggingState(queryInterface, transaction, true);
 
-        /* 6. Enable triggers for speed and cut down on noise in audit logs. */
-         ALTER TABLE "ProgramPersonnel" ENABLE TRIGGER ALL;
-          `, { transaction });
+      await queryInterface.sequelize.query(`
+      /* 5. Rename originalProgramPersonnelId to mapsTo in the ProgramPersonnel table. */
+      ALTER TABLE "ProgramPersonnel" RENAME COLUMN "originalPersonnelId" TO "mapsTo";
+
+      /* 6. Insert the deduped records in order of id. */
+      INSERT INTO "ProgramPersonnel" (
+         "firstName",
+         "lastName",
+         "email",
+         "role",
+         "grantId",
+         "programId",
+         "prefix",
+         "suffix",
+         "title",
+         "createdAt",
+         "updatedAt",
+         "active",
+      )
+      SELECT
+        "firstName",
+        "lastName",
+        "email",
+        "role",
+        "grantId",
+        "programId",
+        "prefix",
+        "suffix",
+        "title",
+        "createdAt",
+        "updatedAt",
+        false
+        FROM "ProgramPersonnelToKeep"
+        ORDER BY id ASC;
+
+      /* 7. Set active and mapsTo values. */
+      WITH
+        distinct_pp AS (
+            SELECT
+                min("id") AS "id",
+                "firstName",
+                "lastName",
+                "email",
+                "role",
+                "grantId",
+                "programId"
+            FROM "ProgramPersonnel"
+            GROUP BY 2,3,4,5,6,7
+        ),
+        active_pp AS (
+            SELECT
+                "role",
+                "grantId",
+                "programId",
+                max(id) "activeId"
+            FROM distinct_pp
+            GROUP BY 1,2,3
+        ),
+        set_active_pp AS (
+        UPDATE "ProgramPersonnel" pp
+        SET "active" = true,
+            "mapsTo" = null
+        FROM active_pp app
+        WHERE app."activeId" = pp.id
+        RETURNING
+            pp.id,
+            'latest' "type"
+        ),
+        set_inactive_pp AS (
+        UPDATE "ProgramPersonnel" pp
+        SET "active" = false,
+            "mapsTo" = app."activeId"
+        FROM active_pp app
+        WHERE app."activeId" != pp.id
+        AND app."role" = pp."role"
+        AND app."grantId" = pp."grantId"
+        AND app."programId" = pp."programId"
+        RETURNING
+            pp.id,
+            'not latest' "type"
+        ),
+        results AS (
+            SELECT *
+            FROM set_active_pp
+            UNION
+            SELECT *
+            FROM set_inactive_pp
+        )
+        SELECT *
+        FROM results;`, { transaction });
     });
   },
 
