@@ -10,11 +10,11 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.sequelize.query(`
-         /* 1. Backup all current program personnel records in a table */
-         SELECT * INTO "ProgramPersonnel_backup_20230828" FROM "ProgramPersonnel"
+         /* 1. Backup all current program personnel records in a table. */
+         DROP TABLE IF EXISTS "ProgramPersonnel_backup_20230828";
+         SELECT * INTO "ProgramPersonnel_backup_20230828" FROM "ProgramPersonnel";
 
-
-         /* 2. Create a table of everything we want to keep */
+         /* 2. Create a table of everything we want to keep. */
          DROP TABLE IF EXISTS "ProgramPersonnelToKeep";
          CREATE TEMP TABLE "ProgramPersonnelToKeep" AS (
             SELECT
@@ -35,10 +35,15 @@ module.exports = {
                  "programId",
                  "active"
                  order by "active" asc
-         )
+         );
 
-         /* 3. Delete everything we don't want to keep */
+         /* 3. Delete everything we don't want to keep. */
+         /* Disable triggers for speed and cut down on noise in audit logs. */
+         ALTER TABLE "ProgramPersonnel" DISABLE TRIGGER ALL;
+
          DELETE FROM "ProgramPersonnel" WHERE id NOT IN (SELECT "idToKeep" FROM "ProgramPersonnelToKeep");
+
+         ALTER TABLE "ProgramPersonnel" ENABLE TRIGGER ALL;
           `, { transaction });
     });
   },
