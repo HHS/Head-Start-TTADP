@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { query } from '../utils/common';
 
 test.describe('Account Management', () => {
+
+  test.beforeAll(async ({ request }) => {
+    await query(request, 'DELETE FROM "UserValidationStatus";')
+  });
+
   /**
    * There are apparently known problems with trying to send emails from containers in CircleCI.
    * See: https://support.circleci.com/hc/en-us/articles/360007444314-Troubleshooting-sending-email-s-from-a-container
