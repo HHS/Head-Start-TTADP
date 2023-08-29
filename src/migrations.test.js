@@ -99,7 +99,6 @@ async function checkFileDatePrefix() {
   if (tooManyDigits && tooManyDigits.length) {
     results.push(`Some files are named incorrectly, the number prefix should only have 14 digits.
     The format should be YYYYMMDDHHmmss.`);
-    console.error(results.join('\n'));
   } else {
     const cleanedMainFileDates = mainFileDates.map((mdf) => (mdf > 99999999999999
       ? Math.floor(mdf / (10 ** Math.floor(Math.log10(mdf)) - 99999999999999 + 1))
@@ -121,8 +120,6 @@ async function checkFileDatePrefix() {
         const renameCommand = getRenameCommand(file, date);
         results.push(`- File ${file} needs to be renamed. Consider using the following command: ${renameCommand}`);
       });
-      // eslint-disable-next-line no-console
-      console.error(results.join('\n'));
     }
   }
   return results;
