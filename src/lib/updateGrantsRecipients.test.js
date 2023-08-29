@@ -547,7 +547,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(ids).toContain(personnelToUpdate.id);
 
     // Filter auth_official_contact.
-    const authOfficial = personnelToAssert.filter((gp) => gp.role === 'auth_official_contact' && gp.active === true);
+    const authOfficial = personnelToAssert.filter((gp) => gp.role === 'autPh_official_contact' && gp.active === true);
     expect(authOfficial.length).toBe(1);
 
     // Assert that the old personnel was left alone.
@@ -560,6 +560,71 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(newPersonnel.active).toBe(true);
     expect(newPersonnel.originalPersonnelId).toBe(personnelToUpdate.id);
     expect(newPersonnel.effectiveDate).not.toBeNull();
+  });
+
+  it('add if user exists but is deactivated', async () => {
+    // This person exists but is deactivated.
+    const deactivatedPersonnel = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'auth_official_contact',
+      firstName: 'F123',
+      lastName: 'L123',
+      title: 'Governing Board Chairperson',
+      email: '123@example.org',
+      suffix: 'Mr.',
+      prefix: 'Ms.',
+      effectiveDate: new Date('2023-01-01'),
+      active: false,
+    });
+
+    // Check we have one deactivated program personnel.
+    const programPersonnelBefore = await ProgramPersonnel.findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(programPersonnelBefore.length).toBe(1);
+    expect(programPersonnelBefore[0].active).toBe(false);
+
+    // Process the files.
+    await processFiles();
+
+    // Get all records for our test case.
+    const programPersonnelToAssert = await ProgramPersonnel.unscoped().findAll(
+      {
+        where: {
+          grantId: 14495,
+          programId: 4,
+          role: 'auth_official_contact',
+        },
+      },
+    );
+
+    // Assert number of records for this grant, program, and role.
+    expect(programPersonnelToAssert.length).toBe(2);
+
+    // Assert records for fist name.
+    const firstNames = programPersonnelToAssert.filter(
+      (gp) => gp.firstName === deactivatedPersonnel.firstName,
+    );
+
+    // Assert records for last name.
+    expect(firstNames.length).toBe(2);
+    const lastNames = programPersonnelToAssert.filter(
+      (gp) => gp.lastName === deactivatedPersonnel.lastName,
+    );
+    expect(lastNames.length).toBe(2);
+
+    // Assert one value has active false.
+    const deactivated = programPersonnelToAssert.find((gp) => gp.active === false);
+    expect(deactivated).toBeDefined();
+
+    // Assert one value has active true.
+    const active = programPersonnelToAssert.find((gp) => gp.active === true);
+    expect(active).toBeDefined();
   });
 
   it('includes the grant specialists name, email, and grantee name', async () => {
