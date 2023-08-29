@@ -23,7 +23,6 @@ module.exports = {
                  "role",
                  "grantId",
                  "programId",
-                 "active",
                  count(id),
                  min("id") AS "idToKeep"
                  FROM "ProgramPersonnel"
@@ -32,17 +31,23 @@ module.exports = {
                  "lastName",
                  "role",
                  "grantId",
-                 "programId",
-                 "active"
-                 order by "active" asc
+                 "programId"
          );
 
-         /* 3. Delete everything we don't want to keep. */
-         /* Disable triggers for speed and cut down on noise in audit logs. */
+         /* 3. Disable triggers for speed and cut down on noise in audit logs. */
          ALTER TABLE "ProgramPersonnel" DISABLE TRIGGER ALL;
 
+         /* 4. Delete everything we don't want to keep. */
          DELETE FROM "ProgramPersonnel" WHERE id NOT IN (SELECT "idToKeep" FROM "ProgramPersonnelToKeep");
 
+         /* 5. Fix active column by createdAt. */
+         UPDATE "ProgramPersonnel" p1
+            SET
+                "active" = CASE WHEN p2."id" IS NULL THEN true ELSE false END -- True if We are on the most recent record or there is only one record.
+            FROM "ProgramPersonnel" p2
+            WHERE p1."grantId" = p2."grantId" AND p1."programId" = p2."programId" AND p1."createdAt" < p2."createdAt";
+
+        /* 6. Enable triggers for speed and cut down on noise in audit logs. */
          ALTER TABLE "ProgramPersonnel" ENABLE TRIGGER ALL;
           `, { transaction });
     });

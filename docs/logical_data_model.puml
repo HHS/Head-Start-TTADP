@@ -566,6 +566,25 @@ class ProgramPersonnel{
  title : varchar(255)
 }
 
+!issue='model missing for table'
+class ProgramPersonnel_backup_20230828 #pink;line:red;line.bold;text:red {
+ id : integer
+ active : boolean
+ createdAt : timestamp with time zone
+ effectiveDate : timestamp with time zone
+ email : varchar(255)
+ firstName : varchar(255)
+ grantId : integer
+ lastName : varchar(255)
+ originalPersonnelId : integer
+ prefix : varchar(255)
+ programId : integer
+ role : varchar(255)
+ suffix : varchar(255)
+ title : varchar(255)
+ updatedAt : timestamp with time zone
+}
+
 class Programs{
  * id : integer
  * grantId : integer : REFERENCES "Grants".id
