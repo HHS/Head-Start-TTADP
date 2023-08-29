@@ -6,6 +6,7 @@ yarn-error.log
 docs/circleci/test_report.md
 lcov.info
 playwright
+tests/**/report/*.html
 tests/api/report
 tests/e2e/report
 
