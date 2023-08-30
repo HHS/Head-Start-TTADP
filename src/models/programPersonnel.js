@@ -7,6 +7,10 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ProgramPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
       ProgramPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      ProgramPersonnel.belongsTo(models.ProgramPersonnel, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToProgramPersonnel',
+      });
     }
   }
   ProgramPersonnel.init({
@@ -60,9 +64,16 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.BOOLEAN,
     },
-    originalPersonnelId: {
-      allowNull: true,
+    mapsTo: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'ProgramPersonnel',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,

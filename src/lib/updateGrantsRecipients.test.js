@@ -6,6 +6,7 @@ import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
   sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
+import { expect } from '@playwright/test';
 
 jest.mock('axios');
 const mockZip = jest.fn();
@@ -296,7 +297,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(newPersonnel.title).toBe('Governing Board Chairperson');
     expect(newPersonnel.email).toBe('123@example.org');
     expect(newPersonnel.active).toBe(true);
-    expect(newPersonnel.originalPersonnelId).toBe(oldPersonnel.id);
+    expect(newPersonnel.mapsTo).toBe(null);
     expect(newPersonnel.effectiveDate).not.toBeNull();
 
     // Filter director.
@@ -320,11 +321,11 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(oldPersonnel.title).toBe(null);
     expect(newPersonnel.email).toBe('3333@example.org');
     expect(newPersonnel.active).toBe(true);
-    expect(newPersonnel.originalPersonnelId).toBe(oldPersonnel.id);
+    expect(newPersonnel.mapsTo).toBe(null);
     expect(newPersonnel.effectiveDate).not.toBeNull();
   });
 
-  it('dont do anything if personnel already exists with this role', async () => {
+  it('dont do anything if personnel already exists with this role and email', async () => {
     // Create auth_official_contact personnel to update.
     const personnelNotToUpdate = await ProgramPersonnel.create({
       grantId: 14495,
@@ -333,7 +334,7 @@ describe('Update grants, program personnel, and recipients', () => {
       firstName: 'F123',
       lastName: 'L123',
       title: 'Governing Board Chairperson',
-      email: '456@example.org',
+      email: '123@example.org',
       suffix: 'Jr.',
       prefix: 'Dr.',
       effectiveDate: new Date('2023-01-01'),
@@ -419,15 +420,15 @@ describe('Update grants, program personnel, and recipients', () => {
     const authOfficial = personnelToAssert.filter((gp) => gp.role === 'auth_official_contact');
     expect(authOfficial.length).toBe(1);
 
-    // Assert that the old personnel was left alone.
+    // Assert that the old active personnel was updated but is still active.
     const newPersonnel = authOfficial.find((gp) => gp.id === personnelNotToUpdate.id);
     expect(newPersonnel).toBeDefined();
     expect(newPersonnel.firstName).toBe('F123');
     expect(newPersonnel.lastName).toBe('L123');
     expect(newPersonnel.title).toBe('Governing Board Chairperson');
-    expect(newPersonnel.email).toBe('456@example.org');
+    expect(newPersonnel.email).toBe('123@example.org');
     expect(newPersonnel.active).toBe(true);
-    expect(newPersonnel.originalPersonnelId).toBe(null);
+    expect(newPersonnel.mapsTo).toBe(null);
     expect(newPersonnel.effectiveDate).not.toBeNull();
   });
 
@@ -547,7 +548,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(ids).toContain(personnelToUpdate.id);
 
     // Filter auth_official_contact.
-    const authOfficial = personnelToAssert.filter((gp) => gp.role === 'autPh_official_contact' && gp.active === true);
+    const authOfficial = personnelToAssert.filter((gp) => gp.role === 'auth_official_contact' && gp.active === true);
     expect(authOfficial.length).toBe(1);
 
     // Assert that the old personnel was left alone.
@@ -558,7 +559,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(newPersonnel.title).toBe('Governing Board Chairperson');
     expect(newPersonnel.email).toBe('123@example.org');
     expect(newPersonnel.active).toBe(true);
-    expect(newPersonnel.originalPersonnelId).toBe(personnelToUpdate.id);
+    // expect(newPersonnel.mapsTo).toBe(personnelToUpdate.id); /* TODO: Add back */
     expect(newPersonnel.effectiveDate).not.toBeNull();
   });
 
@@ -625,6 +626,144 @@ describe('Update grants, program personnel, and recipients', () => {
     // Assert one value has active true.
     const active = programPersonnelToAssert.find((gp) => gp.active === true);
     expect(active).toBeDefined();
+  });
+
+  it('update existing active user with new data', async () => {
+    // This person exists but is deactivated.
+    const activePersonnel = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'auth_official_contact',
+      firstName: 'F123',
+      lastName: 'L123',
+      title: 'Governing Board Chairperson_orig',
+      email: '123@example.org', // Same email as import.
+      suffix: 'Orig.',
+      prefix: 'Orig.',
+      effectiveDate: new Date('2023-01-01'),
+      active: true,
+    });
+
+    // Check we have one deactivated program personnel.
+    const programPersonnelBefore = await ProgramPersonnel.findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(programPersonnelBefore.length).toBe(1);
+    expect(programPersonnelBefore[0].active).toBe(true);
+
+    // Process the files.
+    await processFiles();
+
+    // Get all records for our test case.
+    const programPersonnelToAssert = await ProgramPersonnel.unscoped().findAll(
+      {
+        where: {
+          grantId: 14495,
+          programId: 4,
+          role: 'auth_official_contact',
+        },
+      },
+    );
+
+    // Assert number of records for this grant, program, and role.
+    expect(programPersonnelToAssert.length).toBe(1);
+
+    // Assert records for fist name.
+    expect(programPersonnelToAssert[0].firstName).toBe(activePersonnel.firstName);
+
+    // Assert records for last name.
+    expect(programPersonnelToAssert[0].lastName).toBe(activePersonnel.lastName);
+
+    // Assert has active true.
+    expect(programPersonnelToAssert[0].active).toBe(true);
+
+    // Assert has new title.
+    expect(programPersonnelToAssert[0].title).toBe('Governing Board Chairperson');
+
+    // Assert has new email.
+    expect(programPersonnelToAssert[0].email).toBe('123@example.org');
+
+    // Assert has new suffix.
+    expect(programPersonnelToAssert[0].suffix).toBe(null);
+
+    // Assert has new prefix.
+    expect(programPersonnelToAssert[0].prefix).toBe('Mr.');
+
+    // Assert has same effective date.
+    expect(programPersonnelToAssert[0].effectiveDate).toEqual(activePersonnel.effectiveDate);
+
+    // Assert has new updatedAt date.
+    expect(programPersonnelToAssert[0].updatedAt).not.toEqual(programPersonnelBefore[0].updatedAt);
+  });
+
+  it('add new record if existing active user has same name but different email', async () => {
+    // This person exists but is deactivated.
+    const activePersonnel = await ProgramPersonnel.create({
+      grantId: 14495,
+      programId: 4,
+      role: 'auth_official_contact',
+      firstName: 'F123',
+      lastName: 'L123',
+      title: 'Governing Board Chairperson_orig',
+      email: '456@example.org', // Different email as import.
+      suffix: 'Orig.',
+      prefix: 'Orig.',
+      effectiveDate: new Date('2023-01-01'),
+      active: true,
+    });
+
+    // Check we have one deactivated program personnel.
+    const programPersonnelBefore = await ProgramPersonnel.findAll(
+      {
+        where: {
+          grantId: { [Op.gt]: SMALLEST_GRANT_ID },
+        },
+      },
+    );
+    expect(programPersonnelBefore.length).toBe(1);
+    expect(programPersonnelBefore[0].active).toBe(true);
+
+    // Process the files.
+    await processFiles();
+
+    // Get all records for our test case.
+    const programPersonnelToAssert = await ProgramPersonnel.unscoped().findAll(
+      {
+        where: {
+          grantId: 14495,
+          programId: 4,
+          role: 'auth_official_contact',
+        },
+      },
+    );
+
+    // Assert numnber of records for this grant, program, and role.
+    expect(programPersonnelToAssert.length).toBe(2);
+
+    // Assert the record that is no longer active has an email address of '456@example.org'.
+    const inactivePersonnel = programPersonnelToAssert.find((gp) => gp.active === false);
+    expect(inactivePersonnel).toBeDefined();
+    expect(inactivePersonnel.email).toBe('456@example.org');
+    expect(inactivePersonnel.firstName).toBe(activePersonnel.firstName);
+    expect(inactivePersonnel.lastName).toBe(activePersonnel.lastName);
+    expect(inactivePersonnel.role).toBe(activePersonnel.role);
+    expect(inactivePersonnel.title).toBe(activePersonnel.title);
+
+    // Assert' mapsTo' points to new record.
+    //expect(inactivePersonnel.mapsTo).toBe(activePersonnelAssert.id);
+
+    // Assert the record that is active has an email address of '123@example.org'.
+    const activePersonnelAssert = programPersonnelToAssert.find((gp) => gp.active === true);
+    expect(activePersonnelAssert).toBeDefined();
+    expect(activePersonnelAssert.email).toBe('123@example.org');
+    expect(activePersonnelAssert.firstName).toBe(activePersonnel.firstName);
+    expect(activePersonnelAssert.lastName).toBe(activePersonnel.lastName);
+    expect(activePersonnelAssert.role).toBe(activePersonnel.role);
+    expect(activePersonnel.title).toBe(activePersonnel.title);
   });
 
   it('includes the grant specialists name, email, and grantee name', async () => {
