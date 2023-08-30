@@ -20,12 +20,12 @@ module.exports = {
                 "programId",
                 "grantId",
                 role,
+                "email",
                 (ARRAY_AGG(prefix order by id desc))[1] prefix,
                 (ARRAY_AGG("firstName" order by id desc))[1] "firstName",
                 (ARRAY_AGG("lastName" order by id desc))[1] "lastName",
                 (ARRAY_AGG("suffix" order by id desc))[1] "suffix",
                 (ARRAY_AGG("title" order by id desc))[1] "title",
-                (ARRAY_AGG("email" order by id desc))[1] "email",
                 MAX("originalPersonnelId") "originalPersonnelId",
                 MIN("createdAt") "createdAt",
                 MAX("updatedAt") "updatedAt"
@@ -35,7 +35,8 @@ module.exports = {
                  "lastName",
                  "role",
                  "grantId",
-                 "programId"
+                 "programId",
+                 "email" -- Create two rows if email changes for same user and role.
          );`, { transaction });
 
       /* 2. Disable audit trail. */
@@ -50,9 +51,21 @@ module.exports = {
       /* 4. Enable audit trail. */
       await setAuditLoggingState(queryInterface, transaction, true);
 
+      /* 5. Add column 'mapsTo' to ProgramPersonnel as a FK to ProgramPersonnel.id. */
+      await queryInterface.addColumn('ProgramPersonnel', 'mapsTo', {
+        type: 'INTEGER',
+        allowNull: true,
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
+        references: {
+          model: {
+            tableName: 'ProgramPersonnel',
+          },
+          key: 'id',
+        },
+      }, { transaction });
+
       await queryInterface.sequelize.query(`
-      /* 5. Rename originalProgramPersonnelId to mapsTo in the ProgramPersonnel table. */
-      ALTER TABLE "ProgramPersonnel" RENAME COLUMN "originalPersonnelId" TO "mapsTo";
 
       /* 6. Insert the deduped records in order of id. */
       INSERT INTO "ProgramPersonnel" (

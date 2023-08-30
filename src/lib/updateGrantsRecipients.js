@@ -46,6 +46,7 @@ async function getProgramPersonnel(grantId, programId, program) {
     // Determine if this personnel exists wth a different name.
     const firstName = getPersonnelField(currentRole, 'first_name', program);
     const lastName = getPersonnelField(currentRole, 'last_name', program);
+    const email = getPersonnelField(currentRole, 'email', program);
 
     if (firstName && lastName) {
       // eslint-disable-next-line no-await-in-loop
@@ -60,8 +61,25 @@ async function getProgramPersonnel(grantId, programId, program) {
         },
       });
 
-      // We don't need to do anything if this person already exists with this role.
-      if (!existingPersonnel) {
+      // Create personnel object (if exists then update).
+      const personnelToAdd = {
+        programId,
+        grantId,
+        role: currentRole,
+        prefix: getPersonnelField(currentRole, 'prefix', program),
+        firstName,
+        lastName,
+        suffix: getPersonnelField(currentRole, 'suffix', program),
+        title: getPersonnelField(currentRole, 'title', program),
+        email,
+        active: true,
+      };
+
+      // If the personnel exists with a different email.
+      const existsWithDifferentEmail = existingPersonnel && existingPersonnel.email !== email;
+
+      // If the personnel doesn't exist or the email is different, then add it.
+      if (!existingPersonnel || existsWithDifferentEmail) {
         // eslint-disable-next-line no-await-in-loop
         const existingRole = await ProgramPersonnel.findOne({
           where: {
@@ -74,42 +92,36 @@ async function getProgramPersonnel(grantId, programId, program) {
           },
         });
 
-        // Create personnel object.
-        const personnelToAdd = {
-          programId,
-          grantId,
-          role: currentRole,
-          prefix: getPersonnelField(currentRole, 'prefix', program),
-          firstName,
-          lastName,
-          suffix: getPersonnelField(currentRole, 'suffix', program),
-          title: getPersonnelField(currentRole, 'title', program),
-          email: getPersonnelField(currentRole, 'email', program),
-          effectiveDate: null,
-          active: true,
-          originalPersonnelId: null,
-        };
-
-        // What if the person we are looping in the file already exists with this role???
-
-        if (!existingRole) {
-        // Personnel does not exist, create a new one.
+        // If this user doesn't exist or exists with a different email.
+        if (!existingRole && !existsWithDifferentEmail) {
+          // Personnel does not exist, create a new one.
           programPersonnelArray.push(personnelToAdd);
         } else {
-        // Add the new Grant Personnel record.
+          // Add the new Grant Personnel record.
           programPersonnelArray.push(
             {
               ...personnelToAdd,
-              originalPersonnelId: existingRole.id, // You have been replaced.
+              active: true, // Activate this person.
               effectiveDate: new Date(),
             },
           );
+
+          // Deactivate the old Grant Personnel record.
+          let oldBaseData = null;
+          if (existsWithDifferentEmail) {
+            oldBaseData = { ...existingPersonnel.dataValues };
+          } else {
+            oldBaseData = { ...existingRole.dataValues };
+          }
           // Also update the old Grant Personnel record with the active flag set to false.
           programPersonnelArray.push({
-            ...existingRole.dataValues,
+            ...oldBaseData,
             active: false, // Deactivate this person.
           });
         }
+      } else {
+        // Update the existing personnel.
+        programPersonnelArray.push({ ...personnelToAdd, id: existingPersonnel.id });
       }
     }
   }
