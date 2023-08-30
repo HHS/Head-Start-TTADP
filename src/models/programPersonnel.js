@@ -1,6 +1,9 @@
 const {
   Model, Op,
 } = require('sequelize');
+const {
+  afterCreate,
+} = require('./hooks/programPersonnel');
 
 export default (sequelize, DataTypes) => {
   class ProgramPersonnel extends Model {
@@ -80,6 +83,9 @@ export default (sequelize, DataTypes) => {
     modelName: 'ProgramPersonnel',
     tableName: 'ProgramPersonnel',
     freezeTableName: true,
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+    },
   });
   return ProgramPersonnel;
 };
