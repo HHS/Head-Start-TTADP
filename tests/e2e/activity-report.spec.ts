@@ -353,7 +353,7 @@ test.describe('Activity Report', () => {
     // click on the previously extracted recipient
     await page.getByRole('link', { name: recipient }).click();
     // navigate to the 'Goals & Objectives page
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     // check that previously created goals g1 and g2 are visible
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
@@ -482,7 +482,7 @@ test.describe('Activity Report', () => {
     // navigate to the RTR, select a recipient, and click add new goal
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // select recipients
@@ -588,7 +588,7 @@ test.describe('Activity Report', () => {
     // check first recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // confirm goal is in RTR
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
@@ -596,10 +596,10 @@ test.describe('Activity Report', () => {
     // check second recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 2 in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // check page title is updated (formerly TTAHUB-1322.spec.ts)
-    expect(await page.title()).toBe('Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
+    expect(await page.title()).toBe('RTTAPA Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
 
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
