@@ -27,18 +27,22 @@ export default function ObjectiveSupportType({
       </Drawer>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
-          <>
-            Support type
-            {' '}
-            <Req />
+          <div className="display-flex">
+            <Label htmlFor={inputName}>
+              <>
+                Support type
+                {' '}
+                <Req />
+              </>
+            </Label>
             <button
               type="button"
-              className="usa-button usa-button--unstyled margin-left-1"
+              className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled margin-left-1"
               ref={drawerTriggerRef}
             >
               Get help choosing a support type
             </button>
-          </>
+          </div>
         </Label>
         <Dropdown
           onChange={(e) => onChangeSupportType(e.target.value)}
