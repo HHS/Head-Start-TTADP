@@ -25,7 +25,7 @@ module.exports = {
                 (ARRAY_AGG("lastName" order by id desc))[1] "lastName",
                 (ARRAY_AGG("suffix" order by id desc))[1] "suffix",
                 (ARRAY_AGG("title" order by id desc))[1] "title",
-                LOWER(email) AS email,
+                (ARRAY_AGG("email" order by id desc))[1] "email",
                 MAX("originalPersonnelId") "originalPersonnelId",
                 MIN("createdAt") "createdAt",
                 MAX("updatedAt") "updatedAt"
@@ -33,7 +33,6 @@ module.exports = {
                  GROUP BY
                  "firstName",
                  "lastName",
-                 10, -- email
                  "role",
                  "grantId",
                  "programId"
@@ -68,7 +67,7 @@ module.exports = {
          "title",
          "createdAt",
          "updatedAt",
-         "active",
+         "active"
       )
       SELECT
         "firstName",
