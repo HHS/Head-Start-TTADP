@@ -359,7 +359,7 @@ test.describe('Activity Report', () => {
     // click on the previously extracted recipient
     await page.getByRole('link', { name: recipient }).click();
     // navigate to the 'Goals & Objectives page
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     // check that previously created goals g1 and g2 are visible
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
@@ -488,7 +488,7 @@ test.describe('Activity Report', () => {
     // navigate to the RTR, select a recipient, and click add new goal
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // select recipients
@@ -598,7 +598,7 @@ test.describe('Activity Report', () => {
     // check first recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // confirm goal is in RTR
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
@@ -606,10 +606,10 @@ test.describe('Activity Report', () => {
     // check second recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 2 in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // check page title is updated (formerly TTAHUB-1322.spec.ts)
-    expect(await page.title()).toBe('Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
+    expect(await page.title()).toBe('RTTAPA Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
 
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
@@ -806,5 +806,56 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1 o2 tta', { exact: true })).toBeVisible();
     await expect(page.getByText('g1 o1 tta', { exact: true })).not.toBeVisible();
     await expect(page.getByText('g1 o1 tta', { exact: true })).not.toBeVisible();
+  });
+
+  test('allows preservation of objectives', async ({ page }) => {
+    await page.goto('http://localhost:3000/');
+
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+
+    // add a recipient
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.keyboard.press('Enter'); 
+
+    const p = page.waitForURL('**/goals-objectives');
+ 
+    // visit the goals & objectives page
+    await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
+
+    await p;    
+
+    // create the goal
+    await page.getByTestId('label').click();
+    await page.keyboard.press('Enter');
+    await page.getByTestId('textarea').fill('Test goal for preserving objectives');
+
+    // create the objective
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Enter');
+    await page.getByLabel('TTA objective *').click();
+    await page.getByLabel('TTA objective *').fill('Test objective for preserving objectives');
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Enter');
+    
+    await blur(page);
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.keyboard.type('An unlikely statement');
+    
+    // save draft
+    await blur(page);
+    const p2 = page.waitForResponse('/api/activity-reports/goals');
+    await page.getByRole('button', { name: 'Save draft' }).click();
+
+    await p2;
+
+    await page.getByTestId('form').locator('div').filter({ hasText: 'Create new goal' }).nth(3).click();
+    await page.locator('#react-select-13-option-1').getByText('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the ').click();
+    await page.getByRole('button', { name: 'Keep objective' }).click();
+    await blur(page);
+  
+    expect(page.getByRole('textbox', { name: 'TTA provided for objective' }).getByText('An unlikely statement')).toBeVisible();
   });
 });
