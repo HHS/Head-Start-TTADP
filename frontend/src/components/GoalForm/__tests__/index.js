@@ -396,7 +396,7 @@ describe('create goal', () => {
     userEvent.type(objectiveText, 'test');
 
     const topicsText = screen.queryAllByLabelText(/topics \*/i);
-    expect(topicsText.length).toBe(2);
+    expect(topicsText.length).toBe(1);
     const topics = document.querySelector('#topics');
 
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
@@ -459,7 +459,7 @@ describe('create goal', () => {
     userEvent.type(objectiveText, 'test');
 
     const topicsText = screen.queryAllByLabelText(/topics \*/i);
-    expect(topicsText.length).toBe(2);
+    expect(topicsText.length).toBe(1);
     let topics = document.querySelector('#topics');
 
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
