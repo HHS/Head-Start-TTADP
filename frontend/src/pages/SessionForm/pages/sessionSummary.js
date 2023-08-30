@@ -547,21 +547,22 @@ const SessionSummary = ({ datePickerKey }) => {
         >
           <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
         </Drawer>
-        <Label htmlFor="objectiveSupportType">
-          <>
-            Support type
-            {' '}
-            <Req />
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled margin-left-1"
-              ref={supportTypeDrawerTriggerRef}
-            >
-              Get help choosing a support type
-            </button>
-          </>
-        </Label>
-
+        <div className="display-flex flex-align-baseline">
+          <Label htmlFor="objectiveSupportType">
+            <>
+              Support type
+              {' '}
+              <Req />
+            </>
+          </Label>
+          <button
+            type="button"
+            className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled margin-left-1"
+            ref={supportTypeDrawerTriggerRef}
+          >
+            Get help choosing a support type
+          </button>
+        </div>
         <Dropdown
           id="objectiveSupportType"
           name="objectiveSupportType"
