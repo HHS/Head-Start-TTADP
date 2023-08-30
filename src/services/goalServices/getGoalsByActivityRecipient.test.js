@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
 import faker from '@faker-js/faker';
+import crypto from 'crypto';
 import {
   sequelize,
   User,
@@ -9,6 +10,7 @@ import {
   Grant,
   ActivityRecipient,
   Goal,
+  GoalTemplate,
   ActivityReportObjective,
   Objective,
   ObjectiveTopic,
@@ -16,7 +18,7 @@ import {
 } from '../../models';
 
 import { getGoalsByActivityRecipient } from '../recipient';
-import { OBJECTIVE_STATUS } from '../../constants';
+import { OBJECTIVE_STATUS, CREATION_METHOD } from '../../constants';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
@@ -37,6 +39,12 @@ describe('Goals by Recipient Test', () => {
     id: 302,
     uei: 'NNA5N2KHMGA2',
     name: 'Recipient 3 with Goals',
+  };
+
+  const recipient4 = {
+    id: 303,
+    uei: 'NNA5N2KHMGB2',
+    name: 'Recipient 4 with Goals',
   };
 
   const grant1 = {
@@ -79,6 +87,17 @@ describe('Goals by Recipient Test', () => {
     recipientId: recipient3.id,
     regionId: 1,
     number: '12335',
+    programSpecialistName: 'Joe',
+    status: 'Active',
+    endDate: new Date(2020, 10, 2),
+    grantSpecialistName: 'Glen',
+  };
+
+  const grant5 = {
+    id: 305,
+    recipientId: recipient4.id,
+    regionId: 1,
+    number: '12336',
     programSpecialistName: 'Joe',
     status: 'Active',
     endDate: new Date(2020, 10, 2),
@@ -223,6 +242,7 @@ describe('Goals by Recipient Test', () => {
 
   let objectiveIds = [];
   let goalIds = [];
+  let curatedGoalTemplate;
 
   beforeAll(async () => {
     // Create User.
@@ -232,12 +252,14 @@ describe('Goals by Recipient Test', () => {
     await Recipient.create(recipient);
     await Recipient.create(recipient2);
     await Recipient.create(recipient3);
+    await Recipient.create(recipient4);
 
     // Create Grants.
     const savedGrant1 = await Grant.create(grant1);
     const savedGrant2 = await Grant.create(grant2);
     const savedGrant3 = await Grant.create(grant3);
     const savedGrant4 = await Grant.create(grant4);
+    const savedGrant5 = await Grant.create(grant5);
 
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
@@ -281,6 +303,19 @@ describe('Goals by Recipient Test', () => {
     await ActivityRecipient.create({
       activityReportId: savedGoalReport6.id,
       grantId: savedGrant4.id,
+    });
+    const n = faker.lorem.sentence(5);
+
+    const secret = 'secret';
+    const hash = crypto
+      .createHmac('md5', secret)
+      .update(n)
+      .digest('hex');
+
+    curatedGoalTemplate = await GoalTemplate.create({
+      hash,
+      templateName: n,
+      creationMethod: CREATION_METHOD.CURATED,
     });
 
     // Create Goals.
@@ -409,6 +444,18 @@ describe('Goals by Recipient Test', () => {
           grantId: grant4.id,
           createdAt: '2021-03-10T19:16:15.842Z',
           onApprovedAR: false,
+        }),
+
+        // 13, goal from template
+        Goal.create({
+          name: 'This is a goal created from a curated template',
+          status: 'In Progress',
+          timeframe: '1 month',
+          isFromSmartsheetTtaPlan: true,
+          grantId: grant5.id,
+          createdAt: '2021-03-10T19:16:15.842Z',
+          onApprovedAR: false,
+          goalTemplateId: curatedGoalTemplate.id,
         }),
       ],
     );
@@ -630,6 +677,12 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
+    await GoalTemplate.destroy({
+      where: {
+        id: curatedGoalTemplate.id,
+      },
+    });
+
     // Delete AR and AR Recipient.
     await ActivityRecipient.destroy({ where: { activityReportId: reportIdsToDelete } });
     await ActivityReport.destroy({ where: { id: reportIdsToDelete } });
@@ -773,6 +826,17 @@ describe('Goals by Recipient Test', () => {
       const moreTitles = moreObjectives.map((objective) => objective.title);
 
       expect(moreTitles).toContain(NEEDLE);
+    });
+
+    it('retreives goals created from curated templates', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(recipient4.id, 1, {
+        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
+      });
+
+      const curatedGoal = goalRows.find((goal) => goal.goalText === 'This is a goal created from a curated template');
+      expect(curatedGoal).toBeDefined();
+
+      expect(goalRows.length).toBe(1);
     });
   });
 });
