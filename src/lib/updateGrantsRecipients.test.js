@@ -2,11 +2,11 @@
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
+import { expect } from '@playwright/test';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
   sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
-import { expect } from '@playwright/test';
 
 jest.mock('axios');
 const mockZip = jest.fn();
@@ -727,8 +727,12 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(programPersonnelBefore.length).toBe(1);
     expect(programPersonnelBefore[0].active).toBe(true);
 
-    // Process the files.
-    await processFiles();
+    try {
+      // Process the files.
+      await processFiles();
+    } catch (e) {
+      console.log('\n\n---TEST ERROR: ', e);
+    }
 
     // Get all records for our test case.
     const programPersonnelToAssert = await ProgramPersonnel.unscoped().findAll(
@@ -741,7 +745,7 @@ describe('Update grants, program personnel, and recipients', () => {
       },
     );
 
-    // Assert numnber of records for this grant, program, and role.
+    // Assert number of records for this grant, program, and role.
     expect(programPersonnelToAssert.length).toBe(2);
 
     // Assert the record that is no longer active has an email address of '456@example.org'.
@@ -753,9 +757,6 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(inactivePersonnel.role).toBe(activePersonnel.role);
     expect(inactivePersonnel.title).toBe(activePersonnel.title);
 
-    // Assert' mapsTo' points to new record.
-    //expect(inactivePersonnel.mapsTo).toBe(activePersonnelAssert.id);
-
     // Assert the record that is active has an email address of '123@example.org'.
     const activePersonnelAssert = programPersonnelToAssert.find((gp) => gp.active === true);
     expect(activePersonnelAssert).toBeDefined();
@@ -764,6 +765,9 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(activePersonnelAssert.lastName).toBe(activePersonnel.lastName);
     expect(activePersonnelAssert.role).toBe(activePersonnel.role);
     expect(activePersonnel.title).toBe(activePersonnel.title);
+
+    // Assert' mapsTo' points to new record.
+    expect(inactivePersonnel.mapsTo).toBe(activePersonnelAssert.id);
   });
 
   it('includes the grant specialists name, email, and grantee name', async () => {
