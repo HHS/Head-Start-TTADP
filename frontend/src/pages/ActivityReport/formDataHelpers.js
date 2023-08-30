@@ -71,7 +71,7 @@ export const findWhatsChanged = (object, base) => {
 
           return true;
         })(),
-        // no multigrant/multirecipient reports should have prompts
+        // no multigrant/multirecipient reports should have prompts or source
         prompts: grantIds.length < 2 ? goal.prompts : [],
         source: grantIds.length < 2 ? goal.source : '',
       }));
@@ -129,6 +129,7 @@ export const convertGoalsToFormData = (
       grantIds,
       objectives: goal.objectives,
       source: grantIds.length < 2 ? goal.source : '',
+      prompts: grantIds.length < 2 ? goal.prompts : [],
     };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
@@ -137,6 +138,7 @@ export const convertGoalsToFormData = (
       ...goal,
       grantIds,
       source: grantIds.length < 2 ? goal.source : '',
+      prompts: grantIds.length < 2 ? goal.prompts : [],
     });
   }
 
