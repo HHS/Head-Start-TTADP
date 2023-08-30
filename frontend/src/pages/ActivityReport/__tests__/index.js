@@ -217,11 +217,17 @@ describe('ActivityReport', () => {
     });
 
     it('displays review submit save alert', async () => {
-      renderActivityReport('new', 'review');
-      fetchMock.post('/api/activity-reports', formData);
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        approvers: [],
+      });
+
+      renderActivityReport('1', 'review');
+      fetchMock.put('/api/activity-reports/1', formData());
       const button = await screen.findByRole('button', { name: 'Save Draft' });
       userEvent.click(button);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy());
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
 
