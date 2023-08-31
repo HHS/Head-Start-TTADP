@@ -12,6 +12,10 @@ export default (sequelize, DataTypes) => {
       ProgramPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       ProgramPersonnel.hasMany(models.ProgramPersonnel, {
         foreignKey: 'mapsTo',
+        as: 'mapsFromProgramPersonnel',
+      });
+      ProgramPersonnel.belongsTo(models.ProgramPersonnel, {
+        foreignKey: 'mapsTo',
         as: 'mapsToProgramPersonnel',
       });
     }
