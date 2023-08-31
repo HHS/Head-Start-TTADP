@@ -54,6 +54,7 @@ module.exports = {
               AND COALESCE(O."createdVia", 'activityReport') = 'activityReport' ) AS TMP;
 
         -- 3.) Clean Objective Orphan Topics.
+        DROP TABLE IF EXISTS temp_results_count;
         WITH deletedObjectiveTopics AS (
         DELETE
         FROM "ObjectiveTopics"
@@ -62,7 +63,8 @@ module.exports = {
               FROM TEMP_ORPHAN_OBJECTIVE_IDS)
         RETURNING *)
         SELECT 'Objective Topics', count(*)
-        INTO TEMP temp_results_count FROM deletedObjectiveTopics;
+        INTO TEMP temp_results_count
+        FROM deletedObjectiveTopics;
 
         -- 4.) Clean Objective Orphan Resources.
         WITH objectiveResources AS (
@@ -74,7 +76,7 @@ module.exports = {
         RETURNING *)
         INSERT INTO temp_results_count
         SELECT 'Objective Resources', count(*)
-        temp_results_count FROM objectiveResources;
+        FROM objectiveResources;
 
         -- 5.) Clean Objective Orphan Files.
         -- 5a.) Create Temp Table of Files being used by reports or non-orphan Objectives.
