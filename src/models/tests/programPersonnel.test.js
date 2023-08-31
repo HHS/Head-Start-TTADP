@@ -56,7 +56,7 @@ describe('ProgramPersonnel', () => {
       title: 'Director',
       email: 'john.doe@test.gov',
       effectiveDate: '2023-01-01',
-      // originalPersonnelId: 1,
+      mapsTo: 1,
     });
   });
   afterAll(async () => {
@@ -111,7 +111,7 @@ describe('ProgramPersonnel', () => {
     expect(programPersonnelToCheck.suffix).toEqual('Jr.');
     expect(programPersonnelToCheck.title).toEqual('Director');
     expect(programPersonnelToCheck.email).toEqual('john.doe@test.gov');
-    // expect(programPersonnelToCheck.originalPersonnelId).toEqual(1);
+    expect(programPersonnelToCheck.mapsTo).toEqual(1);
 
     // Update Grant Personnel.
     programPersonnelToCheck = await programPersonnel.update({
@@ -124,7 +124,7 @@ describe('ProgramPersonnel', () => {
       title: 'Director2',
       email: 'jane.doe@test.gov',
       effectiveDate: '2023-01-02',
-      // originalPersonnelId: 2,
+      mapsTo: null,
     });
 
     // Assert all grant personnel values.
@@ -144,7 +144,7 @@ describe('ProgramPersonnel', () => {
     expect(programPersonnelToCheck.suffix).toEqual('Sr2.');
     expect(programPersonnelToCheck.title).toEqual('Director2');
     expect(programPersonnelToCheck.email).toEqual('jane.doe@test.gov');
-    // expect(programPersonnelToCheck.originalPersonnelId).toEqual(2);
+    expect(programPersonnelToCheck.mapsTo).toEqual(null);
   });
 
   it('grant returns grant personnel', async () => {
