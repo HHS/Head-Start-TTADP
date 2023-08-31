@@ -48,7 +48,7 @@ export default function MyGroup({
             <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
             <Button
               type="button"
-              unstyled
+              className="usa-button--subtle"
               disabled={isAppLoading}
               onClick={async () => {
                 setIsAppLoading(true);
