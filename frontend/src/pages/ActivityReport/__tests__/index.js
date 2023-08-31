@@ -255,6 +255,12 @@ describe('ActivityReport', () => {
         activityRecipients: [{
           activityRecipientId: 1,
         }],
+        goalForEditing: {
+          name: 'goal 3',
+          activityReportGoals: [{ isActivelyEdited: true }],
+          prompts: [],
+          source: '',
+        },
         goals: [
           {
             name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
@@ -271,60 +277,61 @@ describe('ActivityReport', () => {
         }, {
           activityRecipientId: 1,
         }],
-        goals: [
-          {
-            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
-          },
-          {
-            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [], source: '',
-          },
-        ],
       };
 
       const changed = findWhatsChanged(young, old);
-      expect(changed).toEqual({
-        activityRecipients: [
-          {
-            activityRecipientId: 2,
-          },
-          {
-            activityRecipientId: 1,
-          },
-        ],
-        goals: [
-          {
-            activityReportGoals: [
-              {
-                isActivelyEdited: true,
-              },
-            ],
-            grantIds: [
-              2,
-              1,
-            ],
-            isActivelyEdited: true,
-            name: 'goal 1',
-            prompts: [],
-            source: '',
-          },
-          {
-            activityReportGoals: [
-              {
-                isActivelyEdited: false,
-              },
-            ],
-            grantIds: [
-              2,
-              1,
-            ],
-            isActivelyEdited: false,
-            name: 'goal 2',
-            prompts: [],
-            source: '',
-          },
-        ],
-        recipientsWhoHaveGoalsThatShouldBeRemoved: [],
-      });
+
+      expect(Object.keys(changed).sort()).toEqual(['activityRecipients', 'goals', 'recipientsWhoHaveGoalsThatShouldBeRemoved']);
+
+      expect(changed.recipientsWhoHaveGoalsThatShouldBeRemoved).toEqual([]);
+      expect(changed.activityRecipients.map((ar) => ar.activityRecipientId)).toEqual([2, 1]);
+      expect(changed.goals).toEqual([
+        {
+          activityReportGoals: [
+            {
+              isActivelyEdited: true,
+            },
+          ],
+          grantIds: [
+            2,
+            1,
+          ],
+          isActivelyEdited: true,
+          name: 'goal 3',
+          prompts: [],
+          source: '',
+        },
+        {
+          activityReportGoals: [
+            {
+              isActivelyEdited: true,
+            },
+          ],
+          grantIds: [
+            2,
+            1,
+          ],
+          isActivelyEdited: false,
+          name: 'goal 1',
+          prompts: [],
+          source: '',
+        },
+        {
+          activityReportGoals: [
+            {
+              isActivelyEdited: false,
+            },
+          ],
+          grantIds: [
+            2,
+            1,
+          ],
+          isActivelyEdited: false,
+          name: 'goal 2',
+          prompts: [],
+          source: '',
+        },
+      ]);
     });
 
     it('displays the creator name', async () => {
