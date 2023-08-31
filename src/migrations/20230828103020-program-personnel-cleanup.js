@@ -20,7 +20,7 @@ module.exports = {
                 "programId",
                 "grantId",
                 role,
-                "email",
+                (ARRAY_AGG("email" order by id desc))[1] "email",
                 (ARRAY_AGG(prefix order by id desc))[1] prefix,
                 (ARRAY_AGG("firstName" order by id desc))[1] "firstName",
                 (ARRAY_AGG("lastName" order by id desc))[1] "lastName",
@@ -66,6 +66,9 @@ module.exports = {
       }, { transaction });
 
       await queryInterface.sequelize.query(`
+      /* 5a. Drop old column */
+      ALTER TABLE "ProgramPersonnel"
+      DROP COLUMN "originalPersonnelId";
 
       /* 6. Insert the deduped records in order of id. */
       INSERT INTO "ProgramPersonnel" (
