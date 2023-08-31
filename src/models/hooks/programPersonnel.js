@@ -4,7 +4,7 @@ import { Op } from 'sequelize';
 const autoPopulateMapsTo = async (sequelize, instance, options) => {
   if (instance.active === true) {
     // Update all programPersonnel with the same grantId, programId, and role to map to this id.
-    await sequelize.models.ProgramPersonnel.update(
+    return sequelize.models.ProgramPersonnel.update(
       {
         mapsTo: instance.id,
         active: false,
@@ -19,12 +19,18 @@ const autoPopulateMapsTo = async (sequelize, instance, options) => {
       },
     );
   }
+  return Promise.resolve();
 };
 
-const afterCreate = async (sequelize, instance, options) => {
-  await autoPopulateMapsTo(sequelize, instance, options);
+const afterBulkCreate = async (sequelize, instances, options) => {
+  // Loop all instances and call autoPopulateMapsTo.
+  /*
+  await Promise.all(
+    instances.map(async (instance) => autoPopulateMapsTo(sequelize, instance, options)),
+  );
+  */
 };
 
 export {
-  afterCreate,
+  afterBulkCreate,
 };

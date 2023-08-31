@@ -2,7 +2,7 @@ const {
   Model, Op,
 } = require('sequelize');
 const {
-  afterCreate,
+  afterBulkCreate,
 } = require('./hooks/programPersonnel');
 
 export default (sequelize, DataTypes) => {
@@ -84,7 +84,7 @@ export default (sequelize, DataTypes) => {
     tableName: 'ProgramPersonnel',
     freezeTableName: true,
     hooks: {
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterBulkCreate: async (instances, options) => afterBulkCreate(sequelize, instances, options),
     },
   });
   return ProgramPersonnel;

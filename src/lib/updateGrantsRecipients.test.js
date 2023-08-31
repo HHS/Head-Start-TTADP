@@ -743,6 +743,8 @@ describe('Update grants, program personnel, and recipients', () => {
     // Assert number of records for this grant, program, and role.
     expect(programPersonnelToAssert.length).toBe(2);
 
+    console.log('\n\nIN TEST: ', programPersonnelToAssert);
+
     // Assert the record that is no longer active has an email address of '456@example.org'.
     const inactivePersonnel = programPersonnelToAssert.find((gp) => gp.active === false);
     expect(inactivePersonnel).toBeDefined();
@@ -760,6 +762,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(activePersonnelAssert.lastName).toBe(activePersonnel.lastName);
     expect(activePersonnelAssert.role).toBe(activePersonnel.role);
     expect(activePersonnel.title).toBe(activePersonnel.title);
+    expect(activePersonnel.mapsTo).toBe(null);
 
     // Assert' mapsTo' points to new record.
     expect(inactivePersonnel.mapsTo).toBe(activePersonnelAssert.id);

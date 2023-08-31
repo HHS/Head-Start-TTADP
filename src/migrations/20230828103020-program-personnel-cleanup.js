@@ -14,19 +14,18 @@ module.exports = {
 
         /* 1. Create a temp table of dedupe. */
          DROP TABLE IF EXISTS "ProgramPersonnelToKeep";
-         CREATE TABLE "ProgramPersonnelToKeep" AS (
+         CREATE TEMP TABLE "ProgramPersonnelToKeep" AS (
             SELECT
                 min(id) id,
                 "programId",
                 "grantId",
-                role,
-                (ARRAY_AGG("email" order by id desc))[1] "email",
+                "firstName",
+                "lastName",
+                "role",
+                "email",
                 (ARRAY_AGG(prefix order by id desc))[1] prefix,
-                (ARRAY_AGG("firstName" order by id desc))[1] "firstName",
-                (ARRAY_AGG("lastName" order by id desc))[1] "lastName",
                 (ARRAY_AGG("suffix" order by id desc))[1] "suffix",
                 (ARRAY_AGG("title" order by id desc))[1] "title",
-                MAX("originalPersonnelId") "originalPersonnelId",
                 MIN("createdAt") "createdAt",
                 MAX("updatedAt") "updatedAt"
                  FROM "ProgramPersonnel"
@@ -36,7 +35,7 @@ module.exports = {
                  "role",
                  "grantId",
                  "programId",
-                 "email" -- Create two rows if email changes for same user and role.
+                 "email" -- We want entries on email change.
          );`, { transaction });
 
       /* 2. Disable audit trail. */
