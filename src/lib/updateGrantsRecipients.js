@@ -72,6 +72,7 @@ async function getProgramPersonnel(grantId, programId, program) {
         suffix: getPersonnelField(currentRole, 'suffix', program),
         title: getPersonnelField(currentRole, 'title', program),
         email,
+
       };
 
       // If the personnel exists with a different email.
@@ -121,9 +122,13 @@ async function getProgramPersonnel(grantId, programId, program) {
         }
       } else {
         // Update the existing personnel.
-        const testing = { ...personnelToAdd, id: existingPersonnel.id };
-        console.log('\n\n\n----TESTING2: ', testing);
-        programPersonnelArray.push({ ...personnelToAdd, id: existingPersonnel.id, active: true });
+        const updatedPersonnel = {
+          ...personnelToAdd,
+          id: existingPersonnel.id,
+          active: true,
+          effectiveDate: existingPersonnel.effectiveDate,
+        };
+        programPersonnelArray.push(updatedPersonnel);
       }
     }
   }
@@ -344,7 +349,7 @@ export async function processFiles(hashSumHex) {
       await ProgramPersonnel.bulkCreate(
         programPersonnel,
         {
-          updateOnDuplicate: ['grantId', 'programId', 'firstName', 'lastName', 'role', 'email'],
+          updateOnDuplicate: ['suffix', 'prefix', 'title', 'active', 'effectiveDate', 'updatedAt', 'mapsTo'], // Only pass what fields we want to update.
           transaction,
           individualHooks: false, // We don't run these for afterBulkCreate.
         },

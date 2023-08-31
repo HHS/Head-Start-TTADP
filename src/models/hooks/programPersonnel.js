@@ -24,11 +24,9 @@ const autoPopulateMapsTo = async (sequelize, instance, options) => {
 
 const afterBulkCreate = async (sequelize, instances, options) => {
   // Loop all instances and call autoPopulateMapsTo.
-  /*
   await Promise.all(
     instances.map(async (instance) => autoPopulateMapsTo(sequelize, instance, options)),
   );
-  */
 };
 
 export {

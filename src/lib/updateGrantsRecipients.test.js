@@ -540,7 +540,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(personnelToAssert.length).toBe(6);
 
     // Filter auth_official_contact deactivated.
-    const authOfficialDeactivated = personnelToAssert.filter((gp) => gp.role === 'auth_official_contact' && gp.active === false);
+    const authOfficialDeactivated = personnelToAssert.filter((gp) => gp.programId === 4 && gp.role === 'auth_official_contact' && gp.active === false);
     expect(authOfficialDeactivated.length).toBe(2);
     // Check deactivated ids are what we expect.
     const ids = authOfficialDeactivated.map((gp) => gp.id);
@@ -559,8 +559,12 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(newPersonnel.title).toBe('Governing Board Chairperson');
     expect(newPersonnel.email).toBe('123@example.org');
     expect(newPersonnel.active).toBe(true);
-    // expect(newPersonnel.mapsTo).toBe(personnelToUpdate.id); /* TODO: Add back */
+    expect(newPersonnel.mapsTo).toBe(null);
     expect(newPersonnel.effectiveDate).not.toBeNull();
+
+    // Expect both deactivated personnel to have a mapsTo value of the newPersonnel.
+    expect(authOfficialDeactivated[0].mapsTo).toBe(newPersonnel.id);
+    expect(authOfficialDeactivated[1].mapsTo).toBe(newPersonnel.id);
   });
 
   it('add if user exists but is deactivated', async () => {
@@ -642,6 +646,7 @@ describe('Update grants, program personnel, and recipients', () => {
       prefix: 'Orig.',
       effectiveDate: new Date('2023-01-01'),
       active: true,
+      mapsTo: null,
     });
 
     // Check we have one deactivated program personnel.
@@ -692,6 +697,9 @@ describe('Update grants, program personnel, and recipients', () => {
 
     // Assert has new prefix.
     expect(programPersonnelToAssert[0].prefix).toBe('Mr.');
+
+    // Assert has new mapsTo.
+    expect(programPersonnelToAssert[0].mapsTo).toBe(null);
 
     // Assert has same effective date.
     expect(programPersonnelToAssert[0].effectiveDate).toEqual(activePersonnel.effectiveDate);
