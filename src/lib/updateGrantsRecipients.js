@@ -72,7 +72,6 @@ async function getProgramPersonnel(grantId, programId, program) {
         suffix: getPersonnelField(currentRole, 'suffix', program),
         title: getPersonnelField(currentRole, 'title', program),
         email,
-        active: true,
       };
 
       // If the personnel exists with a different email.
@@ -95,7 +94,7 @@ async function getProgramPersonnel(grantId, programId, program) {
         // If this user doesn't exist or exists with a different email.
         if (!existingRole && !existsWithDifferentEmail) {
           // Personnel does not exist, create a new one.
-          programPersonnelArray.push(personnelToAdd);
+          programPersonnelArray.push({ ...personnelToAdd, active: true });
         } else {
           // Add the new Grant Personnel record.
           programPersonnelArray.push(
@@ -107,21 +106,24 @@ async function getProgramPersonnel(grantId, programId, program) {
           );
 
           // Deactivate the old Grant Personnel record.
-          let oldBaseData = null;
+          let oldRecordToUpdate = null;
           if (existsWithDifferentEmail) {
-            oldBaseData = { ...existingPersonnel.dataValues };
+            oldRecordToUpdate = { ...existingPersonnel.dataValues };
           } else {
-            oldBaseData = { ...existingRole.dataValues };
+            oldRecordToUpdate = { ...existingRole.dataValues };
           }
+
           // Also update the old Grant Personnel record with the active flag set to false.
           programPersonnelArray.push({
-            ...oldBaseData,
-            active: false, // Deactivate this person.
+            ...oldRecordToUpdate,
+            active: false, // deactivate this person.
           });
         }
       } else {
         // Update the existing personnel.
-        programPersonnelArray.push({ ...personnelToAdd, id: existingPersonnel.id });
+        const testing = { ...personnelToAdd, id: existingPersonnel.id };
+        console.log('\n\n\n----TESTING2: ', testing);
+        programPersonnelArray.push({ ...personnelToAdd, id: existingPersonnel.id, active: true });
       }
     }
   }
@@ -335,7 +337,6 @@ export async function processFiles(hashSumHex) {
         {
           updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
           transaction,
-          // individualHooks: true,
         },
       );
 
@@ -343,9 +344,9 @@ export async function processFiles(hashSumHex) {
       await ProgramPersonnel.bulkCreate(
         programPersonnel,
         {
-          updateOnDuplicate: ['grantId', 'programId', 'firstName', 'lastName', 'email', 'role'],
+          updateOnDuplicate: ['grantId', 'programId', 'firstName', 'lastName', 'role', 'email'],
           transaction,
-          individualHooks: true,
+          individualHooks: false, // We don't run these for afterBulkCreate.
         },
       );
     });
