@@ -193,7 +193,7 @@ const GoalPicker = ({
         >
           Keep objective
         </Button>
-        <Button type="button" onClick={onRemove} className="usa-button--unstyled">Remove objective</Button>
+        <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
       </Modal>
       <div className="margin-top-3 position-relative">
         <Label>
