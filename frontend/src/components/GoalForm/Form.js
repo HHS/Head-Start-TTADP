@@ -44,7 +44,6 @@ export default function Form({
   topicOptions,
   isOnApprovedReport,
   isOnReport,
-  isCurated,
   status,
   datePickerKey,
   fetchError,
@@ -98,15 +97,7 @@ export default function Form({
 
   const showAlert = isOnReport && status !== 'Closed';
 
-  const isCuratedOnDraftReport = (isCurated && isOnReport && !isOnApprovedReport);
-
-  const showNewObjectiveButton = (() => {
-    if (isCuratedOnDraftReport) {
-      return false;
-    }
-
-    return (status !== 'Closed' && userCanEdit);
-  })();
+  const showNewObjectiveButton = (() => (status !== 'Closed' && userCanEdit))();
 
   return (
     <div className="ttahub-create-goals-form">
@@ -173,7 +164,7 @@ export default function Form({
           error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
           isOnReport={isOnApprovedReport}
           goalStatus={status}
-          userCanEdit={userCanEdit && !isCuratedOnDraftReport}
+          userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
         />
       </FeatureFlag>
@@ -187,7 +178,7 @@ export default function Form({
         key={datePickerKey}
         isLoading={isAppLoading}
         goalStatus={status}
-        userCanEdit={userCanEdit && !isCuratedOnDraftReport}
+        userCanEdit={userCanEdit}
       />
 
       { objectives.map((objective, i) => (
@@ -220,7 +211,6 @@ export default function Form({
 }
 
 Form.propTypes = {
-  isCurated: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   errors: PropTypes.arrayOf(
