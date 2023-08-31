@@ -823,6 +823,10 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
+        ordinal: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
         inpersonParticipants: {
           type: Sequelize.INTEGER,
           allowNull: true,
