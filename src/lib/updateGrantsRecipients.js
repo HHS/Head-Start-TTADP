@@ -340,20 +340,14 @@ export async function processFiles(hashSumHex) {
       );
 
       // Update grant personnel.
-      try {
-        console.log('\n\n\n---BULKS START', programPersonnel);
-        await ProgramPersonnel.bulkCreate(
-          programPersonnel,
-          {
-            updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
-            transaction,
-            individualHooks: true,
-          },
-        );
-      } catch (err) {
-        console.log('\n\n\n--BULKS ERROR', err);
-      }
-      console.log('\n\n\n---BULKS DONE');
+      await ProgramPersonnel.bulkCreate(
+        programPersonnel,
+        {
+          updateOnDuplicate: ['grantId', 'programId', 'firstName', 'lastName', 'email', 'role'],
+          transaction,
+          individualHooks: true,
+        },
+      );
     });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);
