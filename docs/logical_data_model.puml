@@ -561,7 +561,6 @@ class ProgramPersonnel{
  email : varchar(255)
  firstName : varchar(255)
  lastName : varchar(255)
-!issue='column missing from model' <color:#d54309>originalPersonnelId</color>: integer
  prefix : varchar(255)
  suffix : varchar(255)
  title : varchar(255)
@@ -1657,9 +1656,6 @@ class ZALZAFilter{
 ' Associations
 
 
-!issue='associations need to be defined both directions'
-ProgramPersonnel "1" --[#d54309,plain,thickness=2]-- "1" ProgramPersonnel : mapsToProgramPersonnel
-
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -1711,6 +1707,8 @@ Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : object
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
+!issue='associations need to be defined both directions'
+ProgramPersonnel "1" --[#d54309,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
