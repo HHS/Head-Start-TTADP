@@ -727,13 +727,8 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(programPersonnelBefore.length).toBe(1);
     expect(programPersonnelBefore[0].active).toBe(true);
 
-    try {
-      // Process the files.
-      await processFiles();
-    } catch (e) {
-      console.log('\n\n---TEST ERROR: ', e);
-    }
-
+    // Process the files.
+    await processFiles();
     // Get all records for our test case.
     const programPersonnelToAssert = await ProgramPersonnel.unscoped().findAll(
       {
