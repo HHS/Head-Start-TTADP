@@ -13,7 +13,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: /This button removes the filter: Date started is within/i }).click();
 
     // goals and objectives, add a new goal
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // save first goal, without an objective

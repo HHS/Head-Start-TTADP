@@ -38,12 +38,12 @@ describe('frequency graph widget', () => {
       activityRecipients: [{ grantId: 555 }],
     });
     reportThree = await createReport({
-      reason: ['Child Incidents'],
+      reason: ['Child Incident'],
       topics: ['Fiscal / Budget'],
       activityRecipients: [{ grantId: 555 }],
     });
     reportFour = await createReport({
-      reason: ['Change in Scope', 'Child Incidents'],
+      reason: ['Change in Scope', 'Child Incident'],
       topics: ['Five-Year Grant', 'Home Visiting', 'Fiscal / Budget'],
       activityRecipients: [{ grantId: 555 }],
     });
@@ -216,7 +216,7 @@ describe('frequency graph widget', () => {
 
     expect(reasons.find((r) => r.category === 'Change in Scope').count).toBe(3);
     expect(reasons.find((r) => r.category === 'Complaint').count).toBe(1);
-    expect(reasons.find((r) => r.category === 'Child Incidents').count).toBe(2);
+    expect(reasons.find((r) => r.category === 'Child Incident').count).toBe(2);
     expect(reasons.find((r) => r.category === 'Full Enrollment').count).toBe(0);
   });
 
