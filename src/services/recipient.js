@@ -12,6 +12,7 @@ import {
   ActivityRecipient,
   Topic,
   Permission,
+  ProgramPersonnel,
   User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
@@ -626,4 +627,81 @@ export async function getGoalsByActivityRecipient(
     statuses,
     allGoalIds,
   };
+}
+
+export async function recipientLeadership(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      'grantId',
+      'prefix',
+      'firstName',
+      'lastName',
+      'suffix',
+      'email',
+      'effectiveDate',
+      'role',
+      'fullName',
+
+    ],
+    where: {
+      active: true,
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: ['recipientId', 'id', 'regionId'],
+        where: {
+          recipientId,
+          regionId,
+        },
+      },
+    ],
+  });
+}
+
+export async function recipientLeadershipHistory(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      [
+        sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            'id',
+            sequelize.col('"ProgramPersonnel".id'),
+            'grantId',
+            sequelize.col('grantId'),
+            'prefix',
+            sequelize.col('prefix'),
+            'firstName',
+            sequelize.col('firstName'),
+            'lastName',
+            sequelize.col('lastName'),
+            'suffix',
+            sequelize.col('suffix'),
+            'effectiveDate',
+            sequelize.col('effectiveDate'),
+          ),
+        ),
+        'history',
+      ],
+      'role',
+    ],
+    where: {
+      '$grant.recipientId$': recipientId,
+      '$grant.regionId$': regionId,
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: [],
+      },
+    ],
+    group: ['role', 'grant->recipient.id'],
+    raw: true,
+  });
 }

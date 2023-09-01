@@ -4,6 +4,8 @@ import {
   recipientById,
   recipientsByName,
   recipientsByUserId,
+  recipientLeadership,
+  recipientLeadershipHistory,
 } from '../../services/recipient';
 import { goalsByIdAndRecipient } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -17,6 +19,26 @@ const namespace = 'SERVICE:RECIPIENT';
 
 const logContext = {
   namespace,
+};
+
+const checkAccessAndExistence = async (req, res) => {
+  const { recipientId, regionId } = req.params;
+  // Check if user has access to this region.
+  const userId = await currentUserId(req, res);
+  const readRegions = await getUserReadRegions(userId);
+  if (!readRegions.includes(parseInt(regionId, 10))) {
+    res.sendStatus(403);
+    return false;
+  }
+
+  // Check recipient exists.
+  const recipient = await recipientById(recipientId, []);
+  if (!recipient) {
+    res.sendStatus(404);
+    return false;
+  }
+
+  return true;
 };
 
 export async function getGoalsByIdandRecipient(req, res) {
@@ -107,25 +129,53 @@ export async function searchRecipients(req, res) {
 
 export async function getGoalsByRecipient(req, res) {
   try {
-    const { recipientId, regionId } = req.params;
-    // Check if user has access to this region.
-    const userId = await currentUserId(req, res);
-    const readRegions = await getUserReadRegions(userId);
-    if (!readRegions.includes(parseInt(regionId, 10))) {
-      res.sendStatus(403);
+    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+
+    if (!proceedQuestionMark) {
       return;
     }
 
-    // Check recipient exists.
-    const recipient = await recipientById(recipientId, []);
-    if (!recipient) {
-      res.sendStatus(404);
-      return;
-    }
+    const { recipientId, regionId } = req.params;
 
     // Get goals for recipient.
     const recipientGoals = await getGoalsByActivityRecipient(recipientId, regionId, req.query);
     res.json(recipientGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientLeadership(req, res) {
+  try {
+    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+
+    if (!proceedQuestionMark) {
+      return;
+    }
+
+    const { recipientId, regionId } = req.params;
+
+    // Get goals for recipient.
+    const leadership = await recipientLeadership(recipientId, regionId);
+    res.json(leadership);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientLeadershipHistory(req, res) {
+  try {
+    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+
+    if (!proceedQuestionMark) {
+      return;
+    }
+
+    const { recipientId, regionId } = req.params;
+
+    // Get goals for recipient.
+    const leadershipHistory = await recipientLeadershipHistory(recipientId, regionId);
+    res.json(leadershipHistory);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
