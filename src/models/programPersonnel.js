@@ -64,6 +64,12 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.INTEGER,
     },
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${(this.prefix || '')} ${(this.firstName || '')} ${(this.lastName || '')} ${(this.suffix || '')}`;
+      },
+    },
   }, {
     sequelize,
     modelName: 'ProgramPersonnel',
