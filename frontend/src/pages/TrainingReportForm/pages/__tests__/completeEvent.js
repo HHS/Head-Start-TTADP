@@ -91,7 +91,7 @@ describe('completeEvent', () => {
       expect(statusSelect).toHaveValue('Complete');
     });
 
-    it('not started is an option when there are no sessions', async () => {
+    it('not started and suspended are options when there are no sessions', async () => {
       fetchMock.getOnce(sessionsUrl, []);
 
       act(() => {
@@ -105,7 +105,10 @@ describe('completeEvent', () => {
 
       // but there should be no select
       const statusSelect = screen.queryByRole('combobox', { name: /status/i });
-      expect(statusSelect).toBeNull();
+      expect(statusSelect).not.toBeNull();
+      const options = screen.queryAllByRole('option');
+      const optionTexts = options.map((option) => option.textContent);
+      expect(optionTexts).toEqual(['Not started', 'Suspended']);
     });
 
     it('handles an error fetching sessions', async () => {
@@ -122,9 +125,11 @@ describe('completeEvent', () => {
       const status = await screen.findByText('Not started');
       expect(status).toBeInTheDocument();
 
-      // but there should be no select
       const statusSelect = screen.queryByRole('combobox', { name: /status/i });
-      expect(statusSelect).toBeNull();
+      expect(statusSelect).not.toBeNull();
+      const options = screen.queryAllByRole('option');
+      const optionTexts = options.map((option) => option.textContent);
+      expect(optionTexts).toEqual(['Not started', 'Suspended']);
     });
 
     it('calls onUpdatePage when the back button is clicked', async () => {
@@ -170,9 +175,11 @@ describe('completeEvent', () => {
       const status = await screen.findByText('Not started');
       expect(status).toBeInTheDocument();
 
-      // there should be no select
       const statusSelect = screen.queryByRole('combobox', { name: /status/i });
-      expect(statusSelect).toBeNull();
+      expect(statusSelect).not.toBeNull();
+      const options = screen.queryAllByRole('option');
+      const optionTexts = options.map((option) => option.textContent);
+      expect(optionTexts).toEqual(['Not started', 'Suspended']);
 
       const submitButton = await screen.findByRole('button', { name: /submit/i });
       act(() => {

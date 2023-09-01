@@ -126,11 +126,18 @@ const CompleteEvent = ({
     return null;
   }
 
-  const options = [
+  let options = [
     <option key="event-status-dropdown-option-in-progress">In progress</option>,
     <option key="event-status-dropdown-option-suspended">Suspended</option>,
     <option key="event-status-dropdown-option-complete">Complete</option>,
   ];
+
+  if (!sessions.length) {
+    options = [
+      <option key="event-status-dropdown-option-not-started">Not started</option>,
+      <option key="event-status-dropdown-option-suspended">Suspended</option>,
+    ];
+  }
 
   return (
     <div className="padding-x-1">
@@ -152,7 +159,7 @@ const CompleteEvent = ({
         {sessions.length}
       </ReadOnlyField>
 
-      { (sessions.length === 0 || !isOwner) && (
+      { (!isOwner) && (
         <>
           <ReadOnlyField label="Event status" name="status">
             {updatedStatus}
@@ -189,26 +196,26 @@ const CompleteEvent = ({
               ))}
             </tbody>
           </Table>
-          { isOwner && (
-          <div className="margin-top-4">
-            <FormItem
-              label="Event status"
-              name="status"
-              required
-            >
-              <Dropdown
-                label="Event status"
-                name="status"
-                id="status"
-                value={updatedStatus}
-                onChange={(e) => setUpdatedStatus(e.target.value)}
-              >
-                {options}
-              </Dropdown>
-            </FormItem>
-          </div>
-          )}
         </>
+      )}
+      { isOwner && (
+      <div className="margin-top-4">
+        <FormItem
+          label="Event status"
+          name="status"
+          required
+        >
+          <Dropdown
+            label="Event status"
+            name="status"
+            id="status"
+            value={updatedStatus}
+            onChange={(e) => setUpdatedStatus(e.target.value)}
+          >
+            {options}
+          </Dropdown>
+        </FormItem>
+      </div>
       )}
 
       {showSubmissionError && (
