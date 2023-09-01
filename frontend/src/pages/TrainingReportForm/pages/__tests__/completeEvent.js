@@ -3,6 +3,8 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -37,30 +39,34 @@ describe('completeEvent', () => {
         defaultValues,
       });
 
+      const history = createMemoryHistory();
+
       const formData = hookForm.watch();
 
       return (
-        <FormProvider {...hookForm}>
-          <UserContext.Provider value={{ user: { id: 1 } }}>
-            <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
-              <NetworkContext.Provider value={{ connectionActive: true }}>
-                {completeEvent.render(
-                  {},
-                  formData,
-                  1,
-                  false,
-                  jest.fn(),
-                  onSaveForm,
-                  onUpdatePage,
-                  false,
-                  '',
-                  onSubmit,
-                  () => <></>,
-                )}
-              </NetworkContext.Provider>
-            </AppLoadingContext.Provider>
-          </UserContext.Provider>
-        </FormProvider>
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            <UserContext.Provider value={{ user: { id: 1 } }}>
+              <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {completeEvent.render(
+                    {},
+                    formData,
+                    1,
+                    false,
+                    jest.fn(),
+                    onSaveForm,
+                    onUpdatePage,
+                    false,
+                    '',
+                    onSubmit,
+                    () => <></>,
+                  )}
+                </NetworkContext.Provider>
+              </AppLoadingContext.Provider>
+            </UserContext.Provider>
+          </FormProvider>
+        </Router>
       );
     };
 
@@ -109,6 +115,26 @@ describe('completeEvent', () => {
       const options = screen.queryAllByRole('option');
       const optionTexts = options.map((option) => option.textContent);
       expect(optionTexts).toEqual(['Not started', 'Suspended']);
+    });
+
+    it('suspended events change the button text and call "onSave"', async () => {
+      fetchMock.getOnce(sessionsUrl, []);
+
+      act(() => {
+        render(<RenderCompleteEvent />);
+      });
+
+      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+
+      act(() => {
+        userEvent.selectOptions(statusSelect, 'Suspended');
+      });
+
+      const submitButton = await screen.findByRole('button', { name: /suspend event/i });
+      userEvent.click(submitButton);
+
+      expect(onSaveForm).toHaveBeenCalled();
+      expect(onSubmit).not.toHaveBeenCalled();
     });
 
     it('handles an error fetching sessions', async () => {
