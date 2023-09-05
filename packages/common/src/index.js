@@ -85,7 +85,7 @@ const REASONS = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
-  'Child Incidents',
+  'Child Incident',
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
