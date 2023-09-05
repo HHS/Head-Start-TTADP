@@ -79,6 +79,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       where: {
         goalId: goalOnActivityReport.id,
       },
+      force: true,
     });
 
     await destroyReport(report);
@@ -90,6 +91,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
           goalOnOneGrant.id,
         ],
       },
+      force: true,
     });
 
     await Grant.destroy({
