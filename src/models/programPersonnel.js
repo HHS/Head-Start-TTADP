@@ -89,7 +89,37 @@ export default (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${(this.prefix || '')} ${(this.firstName || '')} ${(this.lastName || '')} ${(this.suffix || '')}`;
+        return `${(this.firstName || '')} ${(this.lastName || '')}`;
+      },
+    },
+    fullRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { programType, role } = this;
+
+        if (role.toLowerCase() === 'cfo') {
+          return 'Chief Financial Officer';
+        }
+
+        if (role.toLowerCase() === 'director') {
+          if (programType && programType.toLowerCase() === 'ehs') {
+            return 'Early Head Start Director';
+          }
+
+          if (programType && programType.toLowerCase() === 'hs') {
+            return 'Head Start Director';
+          }
+
+          return 'Director';
+        }
+
+        return role;
+      },
+    },
+    nameAndRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.fullName} - ${this.fullRole}`;
       },
     },
   }, {
