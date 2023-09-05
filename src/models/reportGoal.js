@@ -5,7 +5,7 @@ const {
 const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { generateJunctionTableAssociations } = require('./helpers/associations');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoal extends Model {
