@@ -46,6 +46,7 @@ async function getProgramPersonnel(grantId, programId, program) {
     // Determine if this personnel exists wth a different name.
     const firstName = getPersonnelField(currentRole, 'first_name', program);
     const lastName = getPersonnelField(currentRole, 'last_name', program);
+    const email = getPersonnelField(currentRole, 'email', program);
 
     if (firstName && lastName) {
       // eslint-disable-next-line no-await-in-loop
@@ -54,12 +55,13 @@ async function getProgramPersonnel(grantId, programId, program) {
           grantId,
           programId,
           role: currentRole,
-          firstName: { [Op.ne]: firstName },
-          lastName: { [Op.ne]: lastName },
+          firstName: { [Op.eq]: firstName },
+          lastName: { [Op.eq]: lastName },
+          active: true,
         },
       });
 
-      // Create personnel object.
+      // Create personnel object (if exists then update).
       const personnelToAdd = {
         programId,
         grantId,
@@ -76,23 +78,60 @@ async function getProgramPersonnel(grantId, programId, program) {
         programType: program.program_type,
       };
 
-      if (!existingPersonnel) {
-      // Personnel does not exist, create a new one.
-        programPersonnelArray.push(personnelToAdd);
-      } else {
-        // Add the new Grant Personnel record.
-        programPersonnelArray.push(
-          {
-            ...personnelToAdd,
-            originalPersonnelId: existingPersonnel.id,
-            effectiveDate: new Date(),
+      // If the personnel exists with a different email.
+      const existsWithDifferentEmail = existingPersonnel && existingPersonnel.email !== email;
+
+      // If the personnel doesn't exist or the email is different, then add it.
+      if (!existingPersonnel || existsWithDifferentEmail) {
+        // eslint-disable-next-line no-await-in-loop
+        const existingRole = await ProgramPersonnel.findOne({
+          where: {
+            grantId, // For this Grant
+            programId, // For this Program
+            role: currentRole, // For this Role
+            active: true, // Is this person still active?
+            firstName: { [Op.ne]: firstName }, // Does this exist with a different person?
+            lastName: { [Op.ne]: lastName }, // Does this exist with a different person?
           },
-        );
-        // Also update the old Grant Personnel record with the active flag set to false.
-        programPersonnelArray.push({
-          ...existingPersonnel.dataValues,
-          active: false,
         });
+
+        // If this user doesn't exist or exists with a different email.
+        if (!existingRole && !existsWithDifferentEmail) {
+          // Personnel does not exist, create a new one.
+          programPersonnelArray.push({ ...personnelToAdd, active: true });
+        } else {
+          // Add the new Grant Personnel record.
+          programPersonnelArray.push(
+            {
+              ...personnelToAdd,
+              active: true, // Activate this person.
+              effectiveDate: new Date(),
+            },
+          );
+
+          // Deactivate the old Grant Personnel record.
+          let oldRecordToUpdate = null;
+          if (existsWithDifferentEmail) {
+            oldRecordToUpdate = { ...existingPersonnel.dataValues };
+          } else {
+            oldRecordToUpdate = { ...existingRole.dataValues };
+          }
+
+          // Also update the old Grant Personnel record with the active flag set to false.
+          programPersonnelArray.push({
+            ...oldRecordToUpdate,
+            active: false, // deactivate this person.
+          });
+        }
+      } else {
+        // Update the existing personnel.
+        const updatedPersonnel = {
+          ...personnelToAdd,
+          id: existingPersonnel.id,
+          active: true,
+          effectiveDate: existingPersonnel.effectiveDate,
+        };
+        programPersonnelArray.push(updatedPersonnel);
       }
     }
   }
@@ -313,8 +352,9 @@ export async function processFiles(hashSumHex) {
       await ProgramPersonnel.bulkCreate(
         programPersonnel,
         {
-          updateOnDuplicate: ['active', 'email', 'prefix', 'title', 'suffix', 'originalPersonnelId', 'updatedAt'],
+          updateOnDuplicate: ['suffix', 'prefix', 'title', 'active', 'effectiveDate', 'updatedAt', 'mapsTo'], // Only pass what fields we want to update.
           transaction,
+          individualHooks: false, // We don't run these for afterBulkCreate.
         },
       );
     });

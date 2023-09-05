@@ -1,12 +1,23 @@
 const {
   Model, Op,
 } = require('sequelize');
+const {
+  afterBulkCreate,
+} = require('./hooks/programPersonnel');
 
 export default (sequelize, DataTypes) => {
   class ProgramPersonnel extends Model {
     static associate(models) {
       ProgramPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
       ProgramPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      ProgramPersonnel.hasMany(models.ProgramPersonnel, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromProgramPersonnel',
+      });
+      ProgramPersonnel.belongsTo(models.ProgramPersonnel, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToProgramPersonnel',
+      });
     }
   }
   ProgramPersonnel.init({
@@ -64,9 +75,16 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.BOOLEAN,
     },
-    originalPersonnelId: {
-      allowNull: true,
+    mapsTo: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'ProgramPersonnel',
+        },
+        key: 'id',
+      },
     },
     fullName: {
       type: DataTypes.VIRTUAL,
@@ -79,6 +97,9 @@ export default (sequelize, DataTypes) => {
     modelName: 'ProgramPersonnel',
     tableName: 'ProgramPersonnel',
     freezeTableName: true,
+    hooks: {
+      afterBulkCreate: async (instances, options) => afterBulkCreate(sequelize, instances, options),
+    },
   });
   return ProgramPersonnel;
 };
