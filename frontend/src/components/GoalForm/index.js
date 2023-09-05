@@ -892,7 +892,7 @@ export default function GoalForm({
           to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
         >
           <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-          <span>Back to Goals & Objectives</span>
+          <span>Back to RTTAPA</span>
         </Link>
       ) : null }
       <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
