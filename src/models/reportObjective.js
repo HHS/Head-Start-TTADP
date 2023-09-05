@@ -3,7 +3,7 @@ const {
   Op,
 } = require('sequelize');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associations');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjective extends Model {
