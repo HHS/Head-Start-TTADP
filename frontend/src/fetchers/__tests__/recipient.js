@@ -5,7 +5,6 @@ import {
   getRecipientGoals,
   goalsByIdAndRecipient,
   getRecipientLeadership,
-  getRecipientLeadershipHistory,
 } from '../recipient';
 
 const recipientUrl = join('/', 'api', 'recipient');
@@ -48,13 +47,6 @@ describe('recipient fetcher', () => {
     const url = join(recipientUrl, '1', 'region', '1', 'leadership');
     fetchMock.getOnce(url, { name: 'Tim Johnson the Recipient' });
     const res = await getRecipientLeadership('1', '1');
-    expect(res.name).toBe('Tim Johnson the Recipient');
-  });
-
-  it('getRecipientLeadershipHistory', async () => {
-    const url = join(recipientUrl, '1', 'region', '1', 'leadership', 'history');
-    fetchMock.getOnce(url, { name: 'Tim Johnson the Recipient' });
-    const res = await getRecipientLeadershipHistory('1', '1');
     expect(res.name).toBe('Tim Johnson the Recipient');
   });
 });

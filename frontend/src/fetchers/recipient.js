@@ -74,9 +74,3 @@ export const getRecipientLeadership = async (recipientId, regionId) => {
   const leadership = await get(url);
   return leadership.json();
 };
-
-export const getRecipientLeadershipHistory = async (recipientId, regionId) => {
-  const url = join(recipientUrl, recipientId, 'region', regionId, 'leadership', 'history');
-  const leadershipHistory = await get(url);
-  return leadershipHistory.json();
-};

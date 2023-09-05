@@ -7,13 +7,11 @@ import {
   getGoalsByIdandRecipient,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
-  getRecipientLeadershipHistory,
 } from './handlers';
 import {
   getGoalsByActivityRecipient,
   recipientById,
   recipientLeadership,
-  recipientLeadershipHistory,
   recipientsByName,
   recipientsByUserId,
 } from '../../services/recipient';
@@ -33,7 +31,6 @@ jest.mock('../../services/recipient', () => ({
   updateRecipientGoalStatusById: jest.fn(),
   recipientsByUserId: jest.fn(),
   recipientLeadership: jest.fn(),
-  recipientLeadershipHistory: jest.fn(),
 }));
 
 jest.mock('../../services/goals', () => ({
@@ -332,81 +329,6 @@ describe('getRecipientLeadership', () => {
     };
     getUserReadRegions.mockResolvedValue([2]);
     await getRecipientLeadership(req, mockResponse);
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
-  });
-});
-
-describe('getRecipientLeadershipHistory', () => {
-  const mockResponse = {
-    attachment: jest.fn(),
-    json: jest.fn(),
-    send: jest.fn(),
-    sendStatus: jest.fn(),
-    status: jest.fn(() => ({
-      end: jest.fn(),
-    })),
-  };
-  it('retrieves goals by recipient', async () => {
-    const req = {
-      params: {
-        recipientId: 100000,
-        regionId: 1,
-      },
-      session: {
-        userId: 1000,
-      },
-    };
-    recipientById.mockResolvedValue({});
-    getUserReadRegions.mockResolvedValue([1]);
-    recipientLeadershipHistory.mockResolvedValue([]);
-    await getRecipientLeadershipHistory(req, mockResponse);
-    expect(mockResponse.json).toHaveBeenCalledWith([]);
-  });
-
-  it('returns a 404 when a recipient can\'t be found', async () => {
-    const req = {
-      params: {
-        recipientId: 14565,
-        regionId: 1,
-      },
-      query: {
-        'region.in': 1,
-        modelType: 'grant',
-      },
-      session: {
-        userId: 1000,
-      },
-    };
-    recipientById.mockResolvedValue(null);
-    getUserReadRegions.mockResolvedValue([1]);
-    recipientLeadershipHistory.mockResolvedValue(null);
-    await getRecipientLeadershipHistory(req, mockResponse);
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-  });
-
-  it('returns a 500 on error', async () => {
-    const req = {
-      session: {
-        userId: 1000,
-      },
-    };
-    recipientById.mockResolvedValue({});
-    await getRecipientLeadershipHistory(req, mockResponse);
-    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-  });
-
-  it('returns a 403 on region permissions', async () => {
-    const req = {
-      params: {
-        recipientId: 14565,
-        regionId: 1,
-      },
-      session: {
-        userId: 1000,
-      },
-    };
-    getUserReadRegions.mockResolvedValue([2]);
-    await getRecipientLeadershipHistory(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
   });
 });
