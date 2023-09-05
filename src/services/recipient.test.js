@@ -829,12 +829,14 @@ describe('Recipient DB service', () => {
           id: objectives.map((o) => o.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Goal.destroy({
         where: {
           id: goals.map((g) => g.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Grant.destroy({
         where: {

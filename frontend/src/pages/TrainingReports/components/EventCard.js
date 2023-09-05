@@ -31,12 +31,14 @@ function EventCard({
   const isOwnerOrPoc = isOwner || isPoc;
   const isOwnerOrCollaborator = isOwner || isCollaborator;
 
+  const isNotComplete = data.status !== TRAINING_REPORT_STATUSES.COMPLETE;
+
   const isNotCompleteOrSuspended = ![
     TRAINING_REPORT_STATUSES.COMPLETE,
     TRAINING_REPORT_STATUSES.SUSPENDED,
   ].includes(data.status);
 
-  const canEditEvent = isNotCompleteOrSuspended && isOwnerOrPoc;
+  const canEditEvent = (isNotCompleteOrSuspended && isOwnerOrPoc) || (isNotComplete && isOwner);
   const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
   const menuItems = [];
 
