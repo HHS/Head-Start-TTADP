@@ -347,3 +347,15 @@ fill: #1B1B1B;
   border-color: $ttahub-medium-blue;
   border-bottom: 1px solid;
 }
+
+/* Like .usa-button--unstyled, but preserves spacing and
+ * radius so that it fits next to other styled buttons.
+ * e.g. <Button className="use-button--subtle" />
+ * Should look good in a modal.
+ */
+.usa-button.usa-button--subtle {
+  background: transparent;
+  color: $ttahub-medium-blue;
+  font-weight: normal;
+  text-decoration: underline;
+}

@@ -227,10 +227,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-address-starttls"
+    default: "kw-staging-smtp"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-1648/internal-goal-deplication-cleanup"
+    default: "kw-staging-smtp"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -549,12 +549,12 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -597,12 +597,12 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -645,12 +645,12 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
