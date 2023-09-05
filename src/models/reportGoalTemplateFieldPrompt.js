@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { PROMPT_FIELD_TYPE } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associations');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplateFieldPrompt extends Model {
