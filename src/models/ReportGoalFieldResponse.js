@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { generateJunctionTableAssociations } = require('./helpers/associations');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalFieldResponse extends Model {
@@ -8,8 +8,9 @@ export default (sequelize, DataTypes) => {
         models.ReportGoalFieldResponse,
         [
           models.ReportGoal,
-          models.GoalTemplateFieldPrompts,
+          models.GoalTemplateFieldPrompt,
         ],
+        { suffixes: null },
       );
     }
   }
