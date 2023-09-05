@@ -192,10 +192,12 @@ describe('saveReport', () => {
     await Objective.destroy({
       where: { goalId: goalsToDelete.map(({ id }) => id) },
       individualHooks: true,
+      force: true,
     });
     await Goal.destroy({
       where: { id: goalsToDelete.map(({ id }) => id) },
       individualHooks: true,
+      force: true,
     });
     await Grant.destroy({
       where: { id: [firstGrant.id, secondGrant.id] },

@@ -119,12 +119,14 @@ describe('getGoalsForReport', () => {
       where: {
         id: [objective1.id, objective2.id, excludeObjective.id],
       },
+      force: true,
     });
 
     await Goal.destroy({
       where: {
         id: [goal.id, excludedGoal.id],
       },
+      force: true,
     });
 
     await ActivityReport.destroy({
