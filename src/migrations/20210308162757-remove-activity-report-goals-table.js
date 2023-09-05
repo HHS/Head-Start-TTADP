@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.dropTable('ActivityReportGoals');
+    await queryInterface.dropTable('ActivityReportGoals', { force: true });
   },
 
   down: async (queryInterface, Sequelize) => {
