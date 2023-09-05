@@ -6,7 +6,7 @@ const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDat
 const {
   camelToPascalCase,
   generateJunctionTableAssociations,
-} = require('./helpers/associations');
+} = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportCollaborator extends Model {
@@ -29,8 +29,10 @@ export default (sequelize, DataTypes) => {
       // User
       generateJunctionTableAssociations(
         models.ReportCollaborator,
-        models.Report,
-        models.User,
+        [
+          models.Report,
+          models.User,
+        ],
       );
 
       Object.values(COLLABORATOR_TYPES).forEach((collaboratorType) => {
@@ -40,7 +42,7 @@ export default (sequelize, DataTypes) => {
         });
         this.scope({ method: ['collaboratorType', collaboratorType] }).belongsTo(models.User, {
           foreignKey: 'userId',
-          as:  `usersAs${camelToPascalCase(collaboratorType)}`,
+          as: `usersAs${camelToPascalCase(collaboratorType)}`,
         });
       });
 
