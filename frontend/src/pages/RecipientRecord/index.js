@@ -19,7 +19,6 @@ import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import RTTAPA from './pages/RTTAPA';
 import RTTAPAHistory from './pages/RTTAPAHistory';
 import FeatureFlag from '../../components/FeatureFlag';
-import GranteeStaffHistory from './pages/GranteeStaffHistory';
 
 function PageWithHeading({
   children,
@@ -175,20 +174,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientId={recipientId}
                 recipientSummary={recipientData}
               />
-            </PageWithHeading>
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/profile/grantee-staff-history"
-          render={() => (
-            <PageWithHeading
-              regionId={regionId}
-              recipientId={recipientId}
-              error={error}
-              recipientNameWithRegion={recipientNameWithRegion}
-              hasAlerts={hasAlerts}
-            >
-              <GranteeStaffHistory regionId={regionId} recipientId={recipientId} />
             </PageWithHeading>
           )}
         />

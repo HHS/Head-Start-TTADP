@@ -1,18 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { uniqBy } from 'lodash';
 import { Table } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import { getRecipientLeadership } from '../../../fetchers/recipient';
 
-const roleFormatted = (role) => {
-  switch (role.toLowerCase()) {
-    case 'director':
-      return 'Director';
-    default:
-      return '';
+const roleFormatted = (person) => {
+  const { programType, role } = person;
+
+  if (role.toLowerCase() === 'cfo') {
+    return 'Chief Financial Officer';
   }
+
+  if (role.toLowerCase() === 'director') {
+    if (programType.toLowerCase() === 'ehs') {
+      return 'Early Head Start Director';
+    }
+
+    if (programType.toLowerCase() === 'hs') {
+      return 'Head Start Director';
+    }
+
+    return 'Director';
+  }
+
+  return '';
 };
 
 export default function RecipientLeadership({ regionId, recipientId }) {
@@ -20,23 +31,20 @@ export default function RecipientLeadership({ regionId, recipientId }) {
 
   useEffect(() => {
     async function fetchRecipientLeadership() {
-      const l = await getRecipientLeadership(
+      const response = await getRecipientLeadership(
         String(recipientId),
         String(regionId),
       );
-      setLeadership(uniqBy(l, 'fullName'));
+      setLeadership(response);
     }
 
     fetchRecipientLeadership();
   }, [recipientId, regionId]);
 
-  const granteeStaffHistoryLink = `/recipient-tta-records/${recipientId}/region/${regionId}/profile/grantee-staff-history`;
-
   return (
     <Container className="ttahub-recipient-record--profile-table" paddingX={0} paddingY={0}>
-      <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0 display-flex flex-justify">
+      <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <h2 className="margin-0 padding-0">Recipient leadership</h2>
-        <Link to={granteeStaffHistoryLink}>Grantee staff history</Link>
       </div>
       <Table fullWidth striped stackedStyle="default">
         <thead>
@@ -46,12 +54,12 @@ export default function RecipientLeadership({ regionId, recipientId }) {
           <th scope="col">Email change date</th>
         </thead>
         <tbody>
-          {leadership.map((t) => (
+          {leadership.map((person) => (
             <tr>
-              <td data-label="Title">{roleFormatted(t.role)}</td>
-              <td data-label="Name">{t.fullName}</td>
-              <td data-label="Email">{t.email}</td>
-              <td data-label="Email change date">{t.effectiveDate || 'unavailable'}</td>
+              <td data-label="Title">{roleFormatted(person)}</td>
+              <td data-label="Name">{person.fullName}</td>
+              <td data-label="Email">{person.email}</td>
+              <td data-label="Email change date">{person.effectiveDate || 'unavailable'}</td>
             </tr>
           ))}
         </tbody>
