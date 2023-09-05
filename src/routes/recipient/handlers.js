@@ -5,7 +5,6 @@ import {
   recipientsByName,
   recipientsByUserId,
   recipientLeadership,
-  recipientLeadershipHistory,
 } from '../../services/recipient';
 import { goalsByIdAndRecipient } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -158,24 +157,6 @@ export async function getRecipientLeadership(req, res) {
     // Get goals for recipient.
     const leadership = await recipientLeadership(recipientId, regionId);
     res.json(leadership);
-  } catch (error) {
-    await handleErrors(req, res, error, logContext);
-  }
-}
-
-export async function getRecipientLeadershipHistory(req, res) {
-  try {
-    const proceedQuestionMark = await checkAccessAndExistence(req, res);
-
-    if (!proceedQuestionMark) {
-      return;
-    }
-
-    const { recipientId, regionId } = req.params;
-
-    // Get goals for recipient.
-    const leadershipHistory = await recipientLeadershipHistory(recipientId, regionId);
-    res.json(leadershipHistory);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

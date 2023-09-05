@@ -5,7 +5,6 @@ import {
   getGoalsByRecipient,
   getGoalsByIdandRecipient,
   getRecipientAndGrantsByUser,
-  getRecipientLeadershipHistory,
   getRecipientLeadership,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
@@ -16,7 +15,6 @@ router.get('/user', transactionWrapper(getRecipientAndGrantsByUser));
 router.get('/:recipientId', transactionWrapper(getRecipient));
 router.get('/:recipientId/region/:regionId/goals', transactionWrapper(getGoalsByRecipient));
 router.get('/:recipientId/goals', transactionWrapper(getGoalsByIdandRecipient));
-router.get('/:recipientId/region/:regionId/leadership/history', transactionWrapper(getRecipientLeadershipHistory));
 router.get('/:recipientId/region/:regionId/leadership', transactionWrapper(getRecipientLeadership));
 
 export default router;
