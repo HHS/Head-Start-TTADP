@@ -24,6 +24,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.INTEGER,
     },
+    programType: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
     role: {
       allowNull: false,
       type: DataTypes.STRING,

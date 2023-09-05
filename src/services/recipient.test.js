@@ -874,7 +874,7 @@ describe('Recipient DB service', () => {
   const createProgramPersonnel = async (
     grantId,
     programId,
-    role = 'Program Director',
+    role = 'director',
     active = true,
   ) => ProgramPersonnel.create({
     grantId,
@@ -954,13 +954,13 @@ describe('Recipient DB service', () => {
       await createProgramPersonnel(grant2.id, program2.id);
 
       // inactive program personnel
-      inactive = await createProgramPersonnel(grant.id, program1.id, 'Program Director', false);
+      inactive = await createProgramPersonnel(grant.id, program1.id, 'director', false);
 
       // program personnel to retrieve
-      cfo = await createProgramPersonnel(grant.id, program1.id, 'Chief Financial Officer');
-      director = await createProgramPersonnel(grant.id, program1.id, 'Program Director');
-      directorHeadStart = await createProgramPersonnel(grant.id, program1.id, 'Director of Head Start');
-      directorEarlyHeadStart = await createProgramPersonnel(grant.id, program1.id, 'Director of Early Head Start');
+      cfo = await createProgramPersonnel(grant.id, program1.id, 'director');
+      director = await createProgramPersonnel(grant.id, program1.id, 'director');
+      directorHeadStart = await createProgramPersonnel(grant.id, program1.id, 'director');
+      directorEarlyHeadStart = await createProgramPersonnel(grant.id, program1.id, 'director');
 
       inactive.update({
         mapsTo: director.id,
@@ -999,7 +999,7 @@ describe('Recipient DB service', () => {
 
       leadership.sort((a, b) => a.role.localeCompare(b.role));
       const roles = leadership.map((p) => p.role);
-      expect(roles).toEqual(['Chief Financial Officer', 'Director of Early Head Start', 'Director of Head Start', 'Program Director']);
+      expect(roles).toEqual(['director', 'director', 'director', 'director']);
       expect(leadership[0].history).toHaveLength(1);
       expect(leadership[0].history[0]).toEqual({
         id: cfo.id,
@@ -1113,14 +1113,14 @@ describe('Recipient DB service', () => {
 
       // Program personnel to ignore
       // because it's inactive
-      await createProgramPersonnel(grant.id, program1.id, 'Program Director', false);
+      await createProgramPersonnel(grant.id, program1.id, 'director', false);
 
       // program personnel to retrieve
       activePersonnel = await Promise.all([
-        createProgramPersonnel(grant.id, program1.id, 'Chief Financial Officer'),
-        createProgramPersonnel(grant.id, program1.id, 'Program Director'),
-        createProgramPersonnel(grant.id, program1.id, 'Director of Head Start'),
-        createProgramPersonnel(grant.id, program1.id, 'Director of Early Head Start'),
+        createProgramPersonnel(grant.id, program1.id, 'director'),
+        createProgramPersonnel(grant.id, program1.id, 'director'),
+        createProgramPersonnel(grant.id, program1.id, 'director'),
+        createProgramPersonnel(grant.id, program1.id, 'cfo'),
       ]);
     });
     afterAll(async () => {

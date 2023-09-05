@@ -645,6 +645,7 @@ export async function recipientLeadership(recipientId, regionId) {
     ],
     where: {
       active: true,
+      role: ['director', 'cfo'],
     },
     include: [
       {
@@ -692,6 +693,7 @@ export async function recipientLeadershipHistory(recipientId, regionId) {
     where: {
       '$grant.recipientId$': recipientId,
       '$grant.regionId$': regionId,
+      role: ['director', 'cfo'],
     },
     include: [
       {
