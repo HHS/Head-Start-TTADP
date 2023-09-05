@@ -1,5 +1,6 @@
 .ttahub-recipient-record--profile-table table {
   font-size: 14px;
+  margin: 0;
 }
 
 .ttahub-recipient-record--profile-table th {
