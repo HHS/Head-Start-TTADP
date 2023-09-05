@@ -1,41 +1,25 @@
 import React, { useEffect, useState } from 'react';
+import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 import Container from '../../../components/Container';
 import { getRecipientLeadership } from '../../../fetchers/recipient';
-
-const roleFormatted = (person) => {
-  const { programType, role } = person;
-
-  if (role.toLowerCase() === 'cfo') {
-    return 'Chief Financial Officer';
-  }
-
-  if (role.toLowerCase() === 'director') {
-    if (programType.toLowerCase() === 'ehs') {
-      return 'Early Head Start Director';
-    }
-
-    if (programType.toLowerCase() === 'hs') {
-      return 'Head Start Director';
-    }
-
-    return 'Director';
-  }
-
-  return '';
-};
 
 export default function RecipientLeadership({ regionId, recipientId }) {
   const [leadership, setLeadership] = useState([]);
 
   useEffect(() => {
     async function fetchRecipientLeadership() {
-      const response = await getRecipientLeadership(
-        String(recipientId),
-        String(regionId),
-      );
-      setLeadership(response);
+      try {
+        const response = await getRecipientLeadership(
+          String(recipientId),
+          String(regionId),
+        );
+
+        setLeadership(uniqBy(response, 'nameAndRole'));
+      } catch (err) {
+        setLeadership([]);
+      }
     }
 
     fetchRecipientLeadership();
@@ -48,15 +32,17 @@ export default function RecipientLeadership({ regionId, recipientId }) {
       </div>
       <Table fullWidth striped stackedStyle="default">
         <thead>
-          <th scope="col">Title</th>
-          <th scope="col">Name</th>
-          <th scope="col">Email</th>
-          <th scope="col">Email change date</th>
+          <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Email change date</th>
+          </tr>
         </thead>
         <tbody>
           {leadership.map((person) => (
-            <tr>
-              <td data-label="Title">{roleFormatted(person)}</td>
+            <tr key={person.id}>
+              <td data-label="Title">{person.fullRole}</td>
               <td data-label="Name">{person.fullName}</td>
               <td data-label="Email">{person.email}</td>
               <td data-label="Email change date">{person.effectiveDate || 'unavailable'}</td>
@@ -65,7 +51,6 @@ export default function RecipientLeadership({ regionId, recipientId }) {
         </tbody>
       </Table>
     </Container>
-
   );
 }
 

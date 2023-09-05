@@ -13,13 +13,14 @@
     max-height: 440px;
 }
 
-.ttahub-recipient-record-table-container .ttahub-recipient-record--table  th {
+.ttahub-recipient-record--profile-table  th {
     position: sticky;
     top: 0;
     background-color: white;
   }
 
-.usa-table.ttahub-recipient-record--table td,
-.usa-table.ttahub-recipient-record--table th {
+.ttahub-recipient-record--profile-table .usa-table td,
+.ttahub-recipient-record--profile-table .usa-table th {
     border: 0;
+    border-bottom: 0;
 }
