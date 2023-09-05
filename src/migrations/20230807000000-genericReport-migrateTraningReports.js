@@ -75,14 +75,14 @@ module.exports = {
 
       imported -> ReportImported() // this does not exist yet, but should be very simple
 
+      pageState -> ReportPageState
+
       I dont have a method/plan/structure for saving the page state. This needs to be added. Perferibly to a new table.
       */
 
       /* TODO: How to migrate from "SessionReportPilots"
         I have a few I dont know where I want to put them:
           duration
-          objectiveTrainers
-          objectiveSupportType
 
         {
           data.ownerId,
@@ -118,9 +118,11 @@ module.exports = {
         {
           data.objective,
           data.ttaProvided,
+          data.objectiveSupportType
         } -> ReportObjectiveTemplate(
           objectiveTitle
           ttaProvided,
+          supportType
         ) -> ObjectiveTemplate(
           objectiveTitle
         )
@@ -131,26 +133,26 @@ module.exports = {
 
         data.objectiveTopics -> ReportObjectiveTemplateTopics -> ObjectiveTemplateTopics
 
+        data.objectiveTrainers -> ReportObjectiveTemplateTrainers
+
         data.recipients -> ReportRecipients
 
         data.recipientNextSteps -> reportNextSteps( type = recipient)
 
         data.specialistNextSteps -> reportNextSteps( type = specialist)
 
-        same as above, I dont have a method/plan/structure for saving the page state. This needs
-        to be added. Perferibly to a new table.
         {
           data.deliveryMethod,
           data.numberOfParticipants,
           data.numberOfParticipantsInPerson,
           data.numberOfParticipantsVirtually,
           data.participants,
-        } -> reportParticipations( // Note this table needs to be added to the other migration file
+        } -> reportParticipations(
           deliveryMethod, // should/will be calculated from the distinct values if they are available, where either is null indicate the other type, both non-null it hybrid
           numberOfParticipants, // should/will be calculated from the distinct values if they are available
           inpersonParticipants,
           virtualParticipants
-        ) -> reportParticipationParticipants ( // Note this table needs to be added to the other migration file
+        ) -> reportParticipationParticipants (
           participentid
         ) -> Participants()
       */
