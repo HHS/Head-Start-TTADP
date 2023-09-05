@@ -12,11 +12,12 @@ const { ENTITY_TYPE } = require('../constants');
  */
 export default (sequelize, DataTypes) => {
   class ValidFor extends Model {
-    static associate(models) {
+    static preloadScopes(models) {
       ValidFor.belongsTo(models.ValidFor, {
         foreignKey: 'mapsTo',
         as: 'mapsToValidFor',
       });
+
       ValidFor.hasMany(models.ValidFor, {
         foreignKey: 'mapsTo',
         as: 'mapsFromValidFor',
@@ -29,6 +30,21 @@ export default (sequelize, DataTypes) => {
           required: false,
         }],
       });
+
+      models.ValidFor.addScope('reports', {
+        where: {
+          isReport: true,
+        },
+        include: [{
+          model: models.ValidFor,
+          as: 'mapsToValidFor',
+          attributes: [],
+          required: false,
+        }],
+      });
+    }
+
+    static associate(models) {
     }
   }
   ValidFor.init({
