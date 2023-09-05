@@ -2,6 +2,10 @@ const {
   Model,
 } = require('sequelize');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
+const {
+  camelToPascalCase,
+  generateJunctionTableAssociations,
+} = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -11,31 +15,30 @@ const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
  */
 export default (sequelize, DataTypes) => {
   class Status extends Model {
-    static associate(models) {
-      Status.belongsTo(models.Status, {
+    static preloadScopes(models) {
+      models.Status.belongsTo(models.Status, {
         foreignKey: 'mapsTo',
         as: 'mapsToStatus',
       });
-      Status.hasMany(models.Status, {
+      models.Status.hasMany(models.Status, {
         foreignKey: 'mapsTo',
         as: 'mapsFromStatuses',
       });
-      Status.belongsTo(models.Report, {
-        foreignKey: 'statusId',
-        as: 'report',
+
+      generateJunctionTableAssociations(
+        models.Status,
+        [models.ValidFor],
+      );
+
+      models.Status.addScope('defaultScope', {
+        include: [{
+          model: models.Status,
+          as: 'mapsToStatus',
+          required: false,
+        }],
       });
 
-      Status.belongsTo(models.ValidFor, {
-        foreignKey: 'validForId',
-        as: 'validFor',
-      });
-
-      models.ValidFor.hasMany(models.Status, {
-        foreignKey: 'validForId',
-        as: 'validForStatuses',
-      });
-
-      Status.addScope('validFor', (name) => ({
+      models.Status.addScope('validFor', (name) => ({
         includes: [{
           model: models.ValidFor,
           as: 'validFor',
@@ -44,6 +47,13 @@ export default (sequelize, DataTypes) => {
           where: { name },
         }],
       }));
+    }
+
+    static associate(models) {
+      Status.belongsTo(models.Report, {
+        foreignKey: 'statusId',
+        as: 'report',
+      });
 
       [
         {
@@ -80,14 +90,6 @@ export default (sequelize, DataTypes) => {
           as: `${prefix}s`,
         });
       });
-
-      models.Status.addScope('defaultScope', {
-        include: [{
-          model: models.Status,
-          as: 'mapsToStatus',
-          required: false,
-        }],
-      });
     }
   }
   Status.init({
@@ -109,6 +111,12 @@ export default (sequelize, DataTypes) => {
     validForId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ValidFor',
+        },
+        key: 'id',
+      },
     },
     mapsTo: {
       type: DataTypes.INTEGER,
