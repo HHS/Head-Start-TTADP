@@ -1250,6 +1250,7 @@ describe('filtersToScopes', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
 
       // Delete goal.
@@ -1257,6 +1258,7 @@ describe('filtersToScopes', () => {
         where: {
           id: goal.id,
         },
+        force: true,
       });
 
       // Delete reports.
@@ -2765,6 +2767,7 @@ describe('filtersToScopes', () => {
         await Objective.destroy({
           where: { id: objective.id },
           individualHooks: true,
+          force: true,
         });
       }
 
@@ -2772,6 +2775,7 @@ describe('filtersToScopes', () => {
         await Goal.destroy({
           where: { id: goal.id },
           individualHooks: true,
+          force: true,
         });
       }
 

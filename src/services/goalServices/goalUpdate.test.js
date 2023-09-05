@@ -51,6 +51,7 @@ describe('Change Goal Status', () => {
       where: {
         grantId: grant.id,
       },
+      force: true,
     });
 
     // Cleanup Grant.

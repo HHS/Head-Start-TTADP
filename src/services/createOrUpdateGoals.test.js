@@ -105,6 +105,7 @@ describe('createOrUpdateGoals', () => {
         goalId: goalIds,
       },
       individualHooks: true,
+      force: true,
     });
 
     await Goal.destroy({
@@ -112,6 +113,7 @@ describe('createOrUpdateGoals', () => {
         id: goalIds,
       },
       individualHooks: true,
+      force: true,
     });
 
     await Grant.destroy({
