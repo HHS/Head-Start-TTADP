@@ -68,7 +68,13 @@ fs
   db[auditModel.name] = auditModel;
 }
 
-Object.keys(db).forEach((modelName) => {
+Object.keys(db).sort().forEach((modelName) => {
+  if (db[modelName].preloadScopes) {
+    db[modelName].preloadScopes(db);
+  }
+});
+
+Object.keys(db).sort().forEach((modelName) => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
   }
