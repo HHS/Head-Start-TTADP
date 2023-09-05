@@ -49,7 +49,9 @@ export default function RecipientSummary({ summary, regionId }) {
 
   return (
     <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
-      <h2 className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">Recipient summary</h2>
+      <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
+        <h2 className="margin-0 padding-0">Recipient summary</h2>
+      </div>
       <div className="padding-x-3 padding-bottom-3">
         <div className="margin-bottom-2">
           <p className="margin-y-1"><strong>Region</strong></p>
