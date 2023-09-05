@@ -5,6 +5,9 @@ const {
 const {
   REPORT_TYPE,
 } = require('../constants');
+const {
+  afterCreate,
+} = require('./hooks/reportTrainingSession');
 
 export default (sequelize, DataTypes) => {
   class ReportTrainingSession extends Model {
@@ -80,6 +83,9 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'ReportTrainingSession',
   });
