@@ -3,6 +3,7 @@ const {
   GOAL_CLOSE_REASONS,
   GOAL_SUSPEND_REASONS,
   GOAL_SOURCES,
+  OBJECTIVE_SUPPORT_TYPES,
 } = require('@ttahub/common');
 const {
   prepMigration,
@@ -49,10 +50,14 @@ module.exports = {
        *    - ReportObjectiveTemplateFiles
        *    - ReportObjectiveTemplateResources
        *    - ReportObjectiveTemplateTopics
+       *    - ReportObjectiveTemplateTrainers
        *  - ReportObjectives-
        *    - ReportObjectiveFiles-
        *    - ReportObjectiveResources-
        *    - ReportObjectiveTopics-
+       *    - ReportObjectiveTrainers
+       *  - ReportParticipation -
+       *    - ReportParticipationParticipants
        *  - ReportImports
        *  - ReportPageStates
        *
@@ -62,6 +67,8 @@ module.exports = {
        * - Reasons-
        * - TargetPopulations-
        * - CollaboratorTypes-
+       * - SupportTypes -
+       * - Participants -
        *
        *  additional changes to tables that need additional columns to maintain quality
        *  data over time and maintain FOIA:
@@ -240,6 +247,76 @@ module.exports = {
         ]) s(name)
         WHERE vf.name = '${validForName}'
         ;`, { transaction })));
+
+      //---------------------------------------------------------------------------------
+
+      await queryInterface.createTable('SupportTypes', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        validForId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'SupportTypes',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      await queryInterface.sequelize.query(`
+        INSERT INTO "SupportTypes"
+        ("name", "validForId", "createdAt", "updatedAt")
+        SELECT
+          s.name,
+          vf.id,
+          current_timestamp,
+          current_timestamp,
+        FROM "ValidFor" vf
+        CROSS JOIN UNNEST(ARRAY[
+          ${OBJECTIVE_SUPPORT_TYPES.map((supportType) => `'${supportType}'`).join(',\n')}
+        ]) s(name)
+        WHERE vf.name = '${ENTITY_TYPE.OBJECTIVE}'
+        ;`, { transaction });
 
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Organizers', {
@@ -827,11 +904,7 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
         },
-        inpersonParticipants: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        virtualParticipants: {
+        duration: {
           type: Sequelize.INTEGER,
           allowNull: true,
         },
@@ -1968,6 +2041,18 @@ module.exports = {
             key: 'id',
           },
         },
+        supportTypeId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'SupportTypes',
+            },
+            key: 'id',
+          },
+        },
         templateTitle: {
           type: Sequelize.TEXT,
           allowNull: true,
@@ -2185,6 +2270,55 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTemplateTrainers', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.BIGINT,
+        },
+        reportObjectiveTemplateId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ReportObjectiveTemplates',
+            },
+            key: 'id',
+          },
+        },
+        nationalCenterId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'NationalCenters',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveTemplateTrainers', ['reportObjectiveTemplateId', 'nationalCenterId'], { transaction });
+
+      await queryInterface.addConstraint('ReportObjectiveTemplateTrainers', {
+        fields: ['reportObjectiveTemplateId', 'nationalCenterId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportObjectives', {
         id: {
           allowNull: false,
@@ -2240,6 +2374,18 @@ module.exports = {
           references: {
             model: {
               tableName: 'Statuses',
+            },
+            key: 'id',
+          },
+        },
+        supportTypeId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'SupportTypes',
             },
             key: 'id',
           },
@@ -2452,6 +2598,153 @@ module.exports = {
 
       await queryInterface.addConstraint('ReportObjectiveTopics', {
         fields: ['reportObjectiveId', 'topicId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('ReportObjectiveTrainers', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.BIGINT,
+        },
+        reportObjectiveId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ReportObjectiveTemplates',
+            },
+            key: 'id',
+          },
+        },
+        nationalCenterId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'NationalCenters',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportObjectiveTrainers', ['reportObjectiveId', 'nationalCenterId'], { transaction });
+
+      await queryInterface.addConstraint('ReportObjectiveTrainers', {
+        fields: ['reportObjectiveId', 'nationalCenterId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
+
+      await queryInterface.createTable('ReportParticipation', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
+        participantCount: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        inpersonParticipantCount: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        virtualParticipantCount: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
+
+      //---------------------------------------------------------------------------------
+
+      await queryInterface.createTable('ReportParticipationParticipants', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportParticipationId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ReportParticipation',
+            },
+            key: 'id',
+          },
+        },
+        participantId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Participants',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
+
+      await queryInterface.addIndex('ReportParticipationParticipants', ['reportParticipationId', 'participantId'], { transaction });
+
+      await queryInterface.addConstraint('ReportParticipationParticipants', {
+        fields: ['reportParticipationId', 'participantId'],
         type: 'unique',
         transaction,
       });
