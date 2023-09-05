@@ -195,6 +195,13 @@ const GOAL_SOURCES = [
   'Training event follow-up',
 ];
 
+const OBJECTIVE_SUPPORT_TYPES = [
+  'Introducing',
+  'Planning',
+  'Implementing',
+  'Maintaining',
+];
+
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
@@ -247,6 +254,7 @@ module.exports = {
   GOAL_CLOSE_REASONS,
   GOAL_SUSPEND_REASONS,
   GOAL_SOURCES,
+  OBJECTIVE_SUPPORT_TYPES,
   APPROVER_STATUSES,
   SCOPE_IDS,
   DECIMAL_BASE,
