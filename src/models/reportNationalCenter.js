@@ -2,7 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { REPORT_TYPE, NATIONAL_CENTER_ACTING_AS } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associations');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
