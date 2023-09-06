@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Alert,
   FormGroup,
@@ -7,17 +7,17 @@ import {
   Button,
 } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
-/*
 import {
   importTrainingReports,
 } from '../../fetchers/Admin';
-*/
 
 function TrainingReports() {
   const [error, setError] = useState();
   const [success, setSuccess] = useState();
   const [info, setInfo] = useState();
   const [uploadDisabled, setUploadDisabled] = useState(true);
+
+  const fileInputRef = useRef(null);
 
   const validCsvHeaders = [
     'Sheet Name',
@@ -40,20 +40,22 @@ function TrainingReports() {
     'Creator',
   ];
 
-  /*
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const importTr = async () => {
     try {
-      // const formData = new FormData(e.target);
-      // const plainFormData = Object.fromEntries(formData.entries());
+      // Get the file from the file input from ref.
+      const { files } = fileInputRef.current;
+      const file = files[0];
 
-      // await sendEmail(plainFormData);
+      // Get File.
+      const data = new FormData();
+      data.append('file', file);
+      await importTrainingReports(file);
       setSuccess('Training report successfully imported');
       setError('');
     } catch (err) {
-      setError('Error attempting to send email');
+      setError('Error attempting to import training reports.');
     }
-  }; */
+  };
 
   const onChange = (e) => {
     const { files } = e.target;
@@ -144,8 +146,8 @@ function TrainingReports() {
           <div className="display-flex">
             <FormGroup>
               <Label htmlFor="file-input-single">Input accepts a single file</Label>
-              <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} />
-              <Button className="margin-top-2" type="submit" disabled={uploadDisabled}>Upload training reports</Button>
+              <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
+              <Button className="margin-top-2" type="button" onClick={importTr} disabled={uploadDisabled}>Upload training reports</Button>
             </FormGroup>
           </div>
 

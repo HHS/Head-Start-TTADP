@@ -104,6 +104,14 @@ export const sendEmail = async (data) => {
 };
 
 export const importTrainingReports = async (data) => {
-  const result = await post((join('/', 'api', 'admin', 'training-reports')), data);
-  return result.json();
+  const adminTrUrl = join('/', 'api', 'admin', 'training-reports');
+  const res = await fetch(adminTrUrl, {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
 };
