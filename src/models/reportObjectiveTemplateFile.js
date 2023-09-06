@@ -54,14 +54,32 @@ export default (sequelize, DataTypes) => {
     reportObjectiveTemplateId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportObjectiveTemplates',
+        },
+        key: 'id',
+      },
     },
     fileId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Files',
+        },
+        key: 'id',
+      },
     },
     objectiveTemplateFileId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'ObjectiveTemplateFiles',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,
