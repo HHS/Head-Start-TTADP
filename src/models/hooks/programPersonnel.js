@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { Op } from 'sequelize';
 
-const autoPopulateMapsTo = async (sequelize, instance, options) => {
+const autoPopulateMapsTo = async (sequelize, instance, _options) => {
   if (instance.active === true) {
     // Update all programPersonnel with the same grantId, programId, and role to map to this id.
     return sequelize.models.ProgramPersonnel.update(
