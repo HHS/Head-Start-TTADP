@@ -7,9 +7,11 @@ import {
   Button,
 } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
+/*
 import {
   importTrainingReports,
 } from '../../fetchers/Admin';
+*/
 
 function TrainingReports() {
   const [error, setError] = useState();
@@ -74,7 +76,7 @@ function TrainingReports() {
       // Load the csv.
       const csv = event.target.result;
 
-      // Replace all instances of LF that are not followed by a  with a space.
+      // Replace all instances of LF that are not followed by a CR with a space.
       const cleanCsv = csv.replace(/\r(?!\n)/g, ' ');
 
       // Get all headers.
@@ -96,7 +98,7 @@ function TrainingReports() {
         return;
       }
 
-      // Get a distinct count of 'Event ID' column.
+      // Get a distinct count of 'Event ID' column's.
       const eventIds = cleanCsv.split('\r\n').map((row) => row.split(',')[1]).filter((id) => id !== 'Event ID' && id !== undefined);
       const distinctEventIds = [...new Set(eventIds)];
 
