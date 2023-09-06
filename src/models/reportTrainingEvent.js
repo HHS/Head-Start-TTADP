@@ -68,10 +68,22 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Regions',
+        },
+        key: 'id',
+      },
     },
     name: {
       type: DataTypes.TEXT,
@@ -81,6 +93,12 @@ export default (sequelize, DataTypes) => {
     organizerId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Organizers',
+        },
+        key: 'id',
+      },
     },
     audience: {
       type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(AUDIENCE))),
