@@ -102,3 +102,8 @@ export const sendEmail = async (data) => {
   const result = await post((join('/', 'api', 'admin', 'email')), data);
   return result.json();
 };
+
+export const importTrainingReports = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'training-reports')), data);
+  return result.json();
+};
