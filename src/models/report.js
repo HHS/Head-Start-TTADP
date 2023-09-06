@@ -8,32 +8,48 @@ const {
   COLLABORATOR_TYPES,
 } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const {
+  camelToPascalCase,
+  generateJunctionTableAssociations,
+} = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class Report extends Model {
     static associate(models) {
-      Report.hasOne(models.Status, {
-        foreignKey: 'statusId',
-        as: 'status',
-      });
-
-      // ValidFor aka reportType
-      models.ValidFor.addScope('reports', {
-        where: {
-          isReport: true,
+      console.log('%%%%%%%%%%%%%%%%%');
+      generateJunctionTableAssociations(
+        models.Report,
+        [
+          models.Status,
+          models.ValidFor,
+        ],
+        {
+          models: [
+            {
+              scope: {
+                method: ['validFor', null], // TODO: need to specify the right value
+              },
+              as: 'status',
+            },
+            {
+              scope: 'reports',
+              as: 'reportType',
+            },
+          ],
         },
-        include: [{
-          model: models.ValidFor,
-          as: 'mapsToValidFor',
-          attributes: [],
-          required: false,
-        }],
-      });
+      );
+      console.log('%%%%%%%%%%%%%%%%%');
 
-      models.Report.belongsTo(models.ValidFor.scope('reports'), {
-        foreignKey: 'reportTypeId',
-        as: 'reportType',
-      });
+      // Report.hasOne(models.Status, {
+      //   foreignKey: 'statusId',
+      //   as: 'status',
+      // });
+
+      // // ValidFor aka reportType
+      // models.Report.belongsTo(models.ValidFor.scope('reports'), {
+      //   foreignKey: 'reportTypeId',
+      //   as: 'reportType',
+      // });
 
       // report scopes
       Report.addScope('defaultScope', {
@@ -71,10 +87,22 @@ export default (sequelize, DataTypes) => {
     reportTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ValidFor',
+        },
+        key: 'id',
+      },
     },
     statusId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
     },
     context: {
       type: DataTypes.TEXT,
