@@ -89,7 +89,7 @@ module.exports = {
        *  */
 
       //---------------------------------------------------------------------------------
-      let x;
+      let x = 0;
       await queryInterface.createTable('ValidFor', {
         id: {
           type: Sequelize.INTEGER,
@@ -150,7 +150,6 @@ module.exports = {
        ;`, { transaction });
 
       //---------------------------------------------------------------------------------
-
       await queryInterface.createTable('Statuses', {
         id: {
           type: Sequelize.INTEGER,
@@ -302,7 +301,6 @@ module.exports = {
           },
         },
       }, { transaction });
-
       await queryInterface.sequelize.query(`
         INSERT INTO "SupportTypes"
         ("name", "validForId", "createdAt", "updatedAt")
@@ -310,7 +308,7 @@ module.exports = {
           s.name,
           vf.id,
           current_timestamp,
-          current_timestamp,
+          current_timestamp
         FROM "ValidFor" vf
         CROSS JOIN UNNEST(ARRAY[
           ${OBJECTIVE_SUPPORT_TYPES.map((supportType) => `'${supportType}'`).join(',\n')}
