@@ -4,7 +4,9 @@
  * @param {string} input - The PascalCase string to convert.
  * @returns {string} - The converted camelCase string.
  */
-const pascalToCamelCase = (input) => input[0].toLowerCase() + input.slice(1);
+const pascalToCamelCase = (input) => (input
+  ? input[0].toLowerCase() + input.slice(1)
+  : input);
 
 /**
  * Converts a camelCase string to PascalCase.
@@ -12,7 +14,39 @@ const pascalToCamelCase = (input) => input[0].toLowerCase() + input.slice(1);
  * @param {string} input - The camelCase string to convert.
  * @returns {string} - The converted PascalCase string.
  */
-const camelToPascalCase = (input) => input[0].toUpperCase() + input.slice(1);
+const camelToPascalCase = (input) => (input
+  ? input[0].toUpperCase() + input.slice(1)
+  : input);
+
+/**
+ * Function to make a word plural based on specific rules.
+ * @param {string} word - The word to be made plural.
+ * @returns {string} - The plural form of the word.
+ */
+const makePlural = (word) => {
+  // Define the rules for making words plural as a hash
+  const pluralRulesEndingIn = {
+    s: { regex: /(s)$/, ending: '$1es' }, // Words ending in "s" become "es"
+    consonantY: { regex: /([^aeiou])y$/, ending: '$1ies' }, // Words ending in consonant + "y" become "ies"
+    default: { ending: 's' }, // Default rule: just add "s" to the end of the word
+  };
+
+  // Apply the plural rules to the word using a switch statement
+  switch (true) {
+    case pluralRulesEndingIn.s.regex.test(word): // Check if word ends with "s"
+      return word.replace(
+        pluralRulesEndingIn.s.regex,
+        pluralRulesEndingIn.s.ending,
+      );
+    case pluralRulesEndingIn.consonantY.regex.test(word): // Check if word ends with consonant + "y"
+      return word.replace(
+        pluralRulesEndingIn.consonantY.regex,
+        pluralRulesEndingIn.consonantY.ending,
+      );
+    default: // Default rule: just add "s" to the end of the word
+      return word + pluralRulesEndingIn.default.ending;
+  }
+};
 
 /**
  * Generates an association between two objects in JavaScript.
@@ -37,12 +71,13 @@ const generateAssociation = (
   // Create the association between the `from` and `to` objects using the specified `type`
   // and options such as `foreignKey`, `as`, `through`, and `otherKey`.
 ) => {
+  console.log('####', from, to, as, through);
   from[type](to, {
     foreignKey,
     as,
     ...(through && { through, otherKey }),
   });
-  console.log('####', from, to, as);
+  console.log('####', from, to, as, through);
 };
 
 /**
@@ -69,6 +104,20 @@ const generateAssociationPair = (
   through,
   otherKey,
 ) => {
+  console.log('generateAssociationPair:',{
+    from,
+    to,
+    type1,
+    type2,
+    foreignKey,
+    as1,
+    as2,
+    through,
+    otherKey,
+  });
+  const asSuffix = through
+    ? `For${through.name}`
+    : '';
   // Generate association from source model to target model
   generateAssociation(
     from,
@@ -77,8 +126,8 @@ const generateAssociationPair = (
     foreignKey,
     // Use singular or plural alias based on association type
     type1 === 'belongsTo' || type1 === 'hasOne'
-      ? as1
-      : `${as1}s`,
+      ? `${as1}${asSuffix}`
+      : makePlural(`${as1}${asSuffix}`),
     through,
     otherKey,
   );
@@ -92,8 +141,8 @@ const generateAssociationPair = (
     otherKey || foreignKey,
     // Use singular or plural alias based on association type
     type2 === 'belongsTo' || type2 === 'hasOne'
-      ? as2
-      : `${as2}s`,
+      ? `${as2}${asSuffix}`
+      : makePlural(`${as2}${asSuffix}`),
     through,
     // Use other key or foreign key if other key provided
     otherKey ? foreignKey : otherKey,
@@ -103,22 +152,27 @@ const generateAssociationPair = (
 /**
  * Finds the foreign key in the source model that references the target model.
  *
- * @param {import('sequelize').Model|string} sourceModel - The source model object.
+ * @param {object} sourceModelAttributes - The source model object.
  * @param {import('sequelize').Model|string} targetModel - The target model object.
  * @returns {string|null} - The name of the foreign key if found, otherwise null.
  */
-const locateForeignKey = (sourceModel, targetModel) => {
+const locateForeignKey = (sourceModelAttributes, targetModel) => {
   // Get the table name of the target model
   const targetTable = targetModel.getTableName();
   const foreignKeys = [];
   // Iterate over the attributes of the source model
-  Object.entries(sourceModel.rawAttributes).forEach(([key, value]) => {
+  sourceModelAttributes.forEach(([key, value]) => {
     // Check if the attribute has a reference to the target table
-    if (value?.references?.model?.tableName === targetTable) {
+    if (value === targetTable) {
       foreignKeys.push(key); // Return the name of the foreign key
     }
   });
-
+  console.log('locateForeignKey:', {
+    sourceModelAttributes,
+    targetModel,
+    targetTable,
+    foreignKeys,
+  });
   return foreignKeys.length
     ? foreignKeys[0]
     : null; // No foreign key found
@@ -158,7 +212,7 @@ const getAssociationSettings = (
 
   // Check if suffix is provided
   const usableSuffix = suffix
-    ? `${suffixPrefix}${suffix}` // Add the prefix to the suffix if provided
+    ? `${suffixPrefix}${camelToPascalCase(suffix)}` // Add the prefix to the suffix if provided
     : null; // Set the suffix to null if not provided
 
   return {
@@ -180,6 +234,9 @@ const generateJunctionTableAssociations = (
   additionalData = null,
 ) => {
   console.log('@@@', junctionModel, additionalData && additionalData?.suffixes != null);
+  const junctionModelAttributes = Object.entries(junctionModel.rawAttributes)
+    .map(([key, value]) => ([key, value?.references?.model?.tableName]));
+    console.log(junctionModelAttributes);
   [
     null,
     ...(additionalData?.suffixes
@@ -211,12 +268,12 @@ const generateJunctionTableAssociations = (
           suffix: associatedModelSuffix,
         } = getAssociationSettings(
           associatedModels[modelIndex],
-          modelSuffix,
+          camelToPascalCase(modelSuffix),
           modelSuffixIndex,
           additionalData?.models?.[modelIndex],
           'For',
         );
-        const associatedModelForeignKey = locateForeignKey(junctionModel, model);
+        const associatedModelForeignKey = locateForeignKey(junctionModelAttributes, model);
         console.log('^^^^^', { associatedModel, associatedModelAs, associatedModelSuffix, associatedModelForeignKey });
         if (associatedModelForeignKey !== null) {
           generateAssociationPair(
@@ -232,6 +289,8 @@ const generateJunctionTableAssociations = (
           associatedModels
             .slice(modelIndex)
             .forEach((otherModel, otherModelIndex) => {
+              if (model === otherModel) return;
+              console.log({ modelIndex, otherModelIndex });
               [
                 null,
                 ...(additionalData?.models?.[modelIndex + otherModelIndex]?.suffixes !== undefined
@@ -250,7 +309,7 @@ const generateJunctionTableAssociations = (
                   additionalData?.models?.[modelIndex + otherModelIndex],
                   'For',
                 );
-                const otherAssociatedModelForeignKey = locateForeignKey(junctionModel, otherModel);
+                const otherAssociatedModelForeignKey = locateForeignKey(junctionModelAttributes, otherModel);
 
                 if (otherAssociatedModelForeignKey !== null) {
                   generateAssociationPair(
@@ -271,7 +330,8 @@ const generateJunctionTableAssociations = (
       });
     });
   });
-  console.log(junctionModel);
+  console.log(junctionModel, junctionModel.associations);
+  console.log('---------------------------------------------------------------------');
 };
 
 export {
