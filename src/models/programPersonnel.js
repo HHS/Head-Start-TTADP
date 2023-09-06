@@ -102,11 +102,11 @@ export default (sequelize, DataTypes) => {
 
         if (role.toLowerCase() === 'director') {
           if (programType && programType.toLowerCase() === 'ehs') {
-            return 'Early Head Start Director';
+            return 'Director for Early Head Start';
           }
 
           if (programType.toLowerCase() === 'hs') {
-            return 'Head Start Director';
+            return 'Director for Head Start';
           }
 
           return 'Director';

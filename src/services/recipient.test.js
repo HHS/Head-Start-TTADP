@@ -891,7 +891,6 @@ describe('Recipient DB service', () => {
         effectiveDate: active ? new Date() : new Date('2020/01/01'),
         mapsTo: null,
         email: faker.internet.email(),
-        programType,
       });
 
       // no way to return associations on create
