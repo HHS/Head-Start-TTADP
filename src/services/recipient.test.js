@@ -877,21 +877,39 @@ describe('Recipient DB service', () => {
       role = 'director',
       active = true,
       programType = 'HS',
-    ) => ProgramPersonnel.create({
-      grantId,
-      programId,
-      role,
-      title: '',
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
-      suffix: faker.name.suffix(),
-      prefix: faker.name.prefix(),
-      active,
-      effectiveDate: active ? new Date() : new Date('2020/01/01'),
-      mapsTo: null,
-      email: faker.internet.email(),
-      programType,
-    });
+    ) => {
+      const personnel = await ProgramPersonnel.create({
+        grantId,
+        programId,
+        role,
+        title: '',
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        suffix: faker.name.suffix(),
+        prefix: faker.name.prefix(),
+        active,
+        effectiveDate: active ? new Date() : new Date('2020/01/01'),
+        mapsTo: null,
+        email: faker.internet.email(),
+        programType,
+      });
+
+      // no way to return associations on create
+      // https://github.com/sequelize/sequelize/discussions/15186
+
+      return ProgramPersonnel.findByPk(personnel.id, {
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+          },
+          {
+            model: Program,
+            as: 'program',
+          },
+        ],
+      });
+    };
 
     const REGION_ID = 10;
 
@@ -968,7 +986,7 @@ describe('Recipient DB service', () => {
 
       // Program personnel to ignore
       // because it's on a different grant
-      await createProgramPersonnel(grant2.id, irrelevantProgram.id, 'director', true, 'HS');
+      await createProgramPersonnel(irrelevantGrant.id, irrelevantProgram.id, 'director', true, 'HS');
 
       // Program personnel to ignore
       // because it's inactive
