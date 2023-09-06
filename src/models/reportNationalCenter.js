@@ -38,10 +38,22 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     nationalCenterId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'NationalCenters',
+        },
+        key: 'id',
+      },
     },
     actingAs: {
       type: DataTypes.ENUM(Object.values(NATIONAL_CENTER_ACTING_AS)),
