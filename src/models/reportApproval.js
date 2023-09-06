@@ -33,6 +33,12 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     submissionStatus: {
       type: DataTypes.ENUM(Object.values(REPORT_STATUSES)),
