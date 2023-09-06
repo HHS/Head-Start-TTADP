@@ -45,10 +45,22 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Resources',
+        },
+        key: 'id',
+      },
     },
     sourceFields: {
       allowNull: true,
