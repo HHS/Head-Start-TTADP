@@ -43,6 +43,12 @@ export default (sequelize, DataTypes) => {
     objectiveFileId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'ObjectiveFiles',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,
