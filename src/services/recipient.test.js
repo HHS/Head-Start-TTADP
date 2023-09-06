@@ -913,6 +913,16 @@ describe('Recipient DB service', () => {
     const grant2 = {
       id: faker.datatype.number({ min: 10000, max: 100000 }),
       number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const irrelevantGrant = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID + 1,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -927,6 +937,7 @@ describe('Recipient DB service', () => {
       endDate: '2023/12/31',
       status: 'Active',
       name: `${faker.animal.type() + faker.company.companyName()} Program`,
+      programType: 'HS',
     };
 
     let activePersonnel;
@@ -935,20 +946,29 @@ describe('Recipient DB service', () => {
       await db.Recipient.create(recipient);
       await db.Grant.create(grant);
       await db.Grant.create(grant2);
+      await db.Grant.create(irrelevantGrant);
 
       const program1 = await db.Program.create({
         ...dummyProgram,
         id: faker.datatype.number({ min: 10000, max: 100000 }),
       });
+
       const program2 = await db.Program.create({
         ...dummyProgram,
         grantId: grant2.id,
+        programType: 'EHS',
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      const irrelevantProgram = await db.Program.create({
+        ...dummyProgram,
+        grantId: irrelevantGrant.id,
         id: faker.datatype.number({ min: 10000, max: 100000 }),
       });
 
       // Program personnel to ignore
       // because it's on a different grant
-      await createProgramPersonnel(grant2.id, program2.id, 'director', true, 'HS');
+      await createProgramPersonnel(grant2.id, irrelevantProgram.id, 'director', true, 'HS');
 
       // Program personnel to ignore
       // because it's inactive
@@ -957,27 +977,27 @@ describe('Recipient DB service', () => {
       // program personnel to retrieve
       activePersonnel = await Promise.all([
         createProgramPersonnel(grant.id, program1.id, 'director', true, 'HS'),
-        createProgramPersonnel(grant.id, program1.id, 'director', true, 'EHS'),
+        createProgramPersonnel(grant2.id, program2.id, 'director', true, 'EHS'),
         createProgramPersonnel(grant.id, program1.id, 'cfo', true, 'HS'),
-        createProgramPersonnel(grant.id, program1.id, 'cfo', true, 'EHS'),
+        createProgramPersonnel(grant2.id, program2.id, 'cfo', true, 'EHS'),
       ]);
     });
     afterAll(async () => {
       await db.ProgramPersonnel.destroy({
         where: {
-          grantId: [grant.id, grant2.id],
+          grantId: [grant.id, grant2.id, irrelevantGrant.id],
         },
       });
 
       await db.Program.destroy({
         where: {
-          grantId: [grant.id, grant2.id],
+          grantId: [grant.id, grant2.id, irrelevantGrant.id],
         },
       });
 
       await db.Grant.destroy({
         where: {
-          id: [grant.id, grant2.id],
+          id: [grant.id, grant2.id, irrelevantGrant.id],
         },
       });
 
