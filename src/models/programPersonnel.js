@@ -92,6 +92,8 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const { role, program } = this;
+        if (!role || !program) return role;
+
         const { programType } = program;
 
         if (role.toLowerCase() === 'cfo') {
@@ -103,7 +105,7 @@ export default (sequelize, DataTypes) => {
             return 'Early Head Start Director';
           }
 
-          if (programType && programType.toLowerCase() === 'hs') {
+          if (programType.toLowerCase() === 'hs') {
             return 'Head Start Director';
           }
 
