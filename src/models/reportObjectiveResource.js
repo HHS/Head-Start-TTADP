@@ -56,14 +56,32 @@ export default (sequelize, DataTypes) => {
     reportObjectiveId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportObjectives',
+        },
+        key: 'id',
+      },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Resources',
+        },
+        key: 'id',
+      },
     },
     objectiveResourceId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'ObjectiveResources',
+        },
+        key: 'id',
+      },
     },
     sourceFields: {
       allowNull: true,
