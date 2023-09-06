@@ -562,7 +562,6 @@ class ProgramPersonnel{
  firstName : varchar(255)
  lastName : varchar(255)
  prefix : varchar(255)
- programType : varchar(255)
  suffix : varchar(255)
  title : varchar(255)
 }

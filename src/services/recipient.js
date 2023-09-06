@@ -638,7 +638,6 @@ export async function recipientLeadership(recipientId, regionId) {
       'email',
       'effectiveDate',
       'role',
-      'programType',
       // our virtual columns, which is why we fetch so much cruft above
       'fullName',
       'fullRole',
@@ -659,6 +658,11 @@ export async function recipientLeadership(recipientId, regionId) {
           regionId,
           status: 'Active',
         },
+      },
+      {
+        required: true,
+        model: Program,
+        as: 'program',
       },
     ],
   });

@@ -75,7 +75,6 @@ async function getProgramPersonnel(grantId, programId, program) {
         effectiveDate: null,
         active: true,
         originalPersonnelId: null,
-        programType: program.program_type,
       };
 
       // If the personnel exists with a different email.

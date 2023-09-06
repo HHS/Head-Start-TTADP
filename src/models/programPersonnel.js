@@ -35,10 +35,6 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.INTEGER,
     },
-    programType: {
-      allowNull: true,
-      type: DataTypes.STRING,
-    },
     role: {
       allowNull: false,
       type: DataTypes.STRING,
@@ -95,7 +91,8 @@ export default (sequelize, DataTypes) => {
     fullRole: {
       type: DataTypes.VIRTUAL,
       get() {
-        const { programType, role } = this;
+        const { role, program } = this;
+        const { programType } = program;
 
         if (role.toLowerCase() === 'cfo') {
           return 'Chief Financial Officer';
