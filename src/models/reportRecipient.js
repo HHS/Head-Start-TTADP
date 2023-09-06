@@ -85,14 +85,32 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     grantId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'Grants',
+        },
+        key: 'id',
+      },
     },
     otherEntityId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'OtherEntities',
+        },
+        key: 'id',
+      },
     },
     recipientId: {
       type: DataTypes.VIRTUAL,
