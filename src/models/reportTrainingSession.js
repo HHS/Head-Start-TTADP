@@ -42,20 +42,39 @@ export default (sequelize, DataTypes) => {
     reportId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
     },
     reportTrainingEventId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportTrainingEvents',
+        },
+        key: 'id',
+      },
     },
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Regions',
+        },
+        key: 'id',
+      },
     },
     name: {
       type: DataTypes.TEXT,
       allowNull: false,
       unique: true,
     },
+    // TODO - move to correct table
     inpersonParticipants: {
       type: DataTypes.INTEGER,
       allowNull: true,
