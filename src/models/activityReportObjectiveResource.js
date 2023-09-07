@@ -28,10 +28,12 @@ export default (sequelize, DataTypes) => {
     activityReportObjectiveId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'ActivityReportObjectives' }, key: 'id' },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Resources' }, key: 'id' },
     },
     sourceFields: {
       allowNull: true,
