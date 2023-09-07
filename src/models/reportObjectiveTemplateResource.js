@@ -1,49 +1,11 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveTemplateResource extends Model {
     static associate(models) {
-      ReportObjectiveTemplateResource.belongsTo(models.ReportObjectiveTemplate, {
-        foreignKey: 'reportObjectiveTemplateId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTemplate',
-      });
-      ReportObjectiveTemplateResource.belongsTo(models.Resource, {
-        foreignKey: 'resourceId',
-        as: 'resource',
-      });
-      ReportObjectiveTemplateResource.belongsTo(models.ObjectiveTemplateResource, {
-        foreignKey: 'objectiveTemplateResourceId',
-        as: 'objectiveTemplateResource',
-      });
-      models.ObjectiveTemplateResource.hasMany(models.ReportObjectiveTemplateResource, {
-        foreignKey: 'objectiveTemplateResourceId',
-        as: 'reportObjectiveTemplateResources',
-      });
-      models.ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateResource, {
-        foreignKey: 'reportObjectiveTemplateId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTemplateResources',
-      });
-      models.Resource.hasMany(models.ReportObjectiveTemplateResource, {
-        foreignKey: 'resourceId',
-        as: 'resource',
-      });
-      models.ReportObjectiveTemplate.belongsToMany(models.Resource, {
-        through: models.ReportObjectiveTemplateResource,
-        foreignKey: 'reportObjectiveTemplateId',
-        otherKey: 'resourceId',
-        onDelete: 'cascade',
-        as: 'resources',
-      });
-      models.Resource.belongsToMany(models.ReportObjectiveTemplate, {
-        through: models.ReportObjectiveTemplateResource,
-        foreignKey: 'resourceId',
-        otherKey: 'reportObjectiveTemplateId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTemplates',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveTemplateResource.init({
@@ -75,7 +37,13 @@ export default (sequelize, DataTypes) => {
     },
     objectiveTemplateResourceId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'ObjectiveTemplateResources',
+        },
+        key: 'id',
+      },
     },
     sourceFields: {
       allowNull: true,
