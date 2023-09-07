@@ -3,6 +3,9 @@ const {
   Op,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
+const {
+  automaticallyGenerateJunctionTableAssociations,
+} = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -13,24 +16,7 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class CollaboratorType extends Model {
     static associate(models) {
-      CollaboratorType.belongsTo(models.CollaboratorType, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToCollaboratorType',
-      });
-      CollaboratorType.hasMany(models.CollaboratorType, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromCollaboratorTypes',
-      });
-
-      CollaboratorType.belongsTo(models.ValidFor, {
-        foreignKey: 'validForId',
-        as: 'validFor',
-      });
-
-      models.ValidFor.hasMany(models.CollaboratorType, {
-        foreignKey: 'validForId',
-        as: 'validForCollaboratorTypes',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.CollaboratorType.addScope('defaultScope', {
         include: [{
@@ -55,10 +41,22 @@ export default (sequelize, DataTypes) => {
     validForId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ValidFor',
+        },
+        key: 'id',
+      },
     },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'CollaboratorTypes',
+        },
+        key: 'id',
+      },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
