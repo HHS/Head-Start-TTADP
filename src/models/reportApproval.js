@@ -2,6 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { REPORT_STATUSES } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -12,15 +13,7 @@ const { REPORT_STATUSES } = require('../constants');
 export default (sequelize, DataTypes) => {
   class ReportApproval extends Model {
     static associate(models) {
-      ReportApproval.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
-
-      models.Report.hasOne(models.ReportApproval, { // TODO: limit scope by report type
-        foreignKey: 'reportId',
-        as: 'reportApproval',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportApproval.init({
