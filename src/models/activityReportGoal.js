@@ -33,10 +33,12 @@ export default (sequelize, DataTypes) => {
     activityReportId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'ActivityReports' }, key: 'id' },
     },
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Goals' }, key: 'id' },
     },
     isRttapa: {
       type: DataTypes.ENUM(['Yes', 'No']),
