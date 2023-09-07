@@ -3,18 +3,12 @@ const {
   Op,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplate extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportGoalTemplate,
-        [
-          models.Report,
-          models.GoalTemplate,
-        ],
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportGoalTemplate.init({
