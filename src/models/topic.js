@@ -66,6 +66,7 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Topics' }, key: 'id' },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
