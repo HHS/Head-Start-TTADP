@@ -8,55 +8,12 @@ const {
   AUDIENCE,
   ORGANIZER,
 } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportTrainingEvent extends Model {
     static associate(models) {
-      ReportTrainingEvent.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
-      ReportTrainingEvent.belongsTo(models.Region, {
-        foreignKey: 'regionId',
-        as: 'region',
-      });
-
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
-        .hasOne(models.ReportTrainingEvent, {
-          foreignKey: 'reportId',
-          as: 'event',
-        });
-      models.Region.hasMany(models.ReportTrainingEvent, {
-        foreignKey: 'regionId',
-        as: 'event',
-      });
-
-      // Organizer
-      models.Organizer.hasMany(models.ReportTrainingEvent, {
-        foreignKey: 'organizerId',
-        as: 'reportTrainingEvents',
-      });
-
-      models.ReportTrainingEvent.belongsTo(models.Organizer, {
-        foreignKey: 'organizerId',
-        as: 'organizer',
-      });
-
-      models.Organizer.belongsToMany(models.Report
-        .scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }), {
-        through: models.ReportTrainingEvent,
-        foreignKey: 'organizerId',
-        otherKey: 'reportId',
-        as: 'reports',
-      });
-
-      models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] })
-        .belongsToMany(models.Organizer, {
-          through: models.ReportTrainingEvent,
-          foreignKey: 'reportId',
-          otherKey: 'organizerId',
-          as: 'organizer',
-        });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportTrainingEvent.init({
@@ -64,6 +21,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     reportId: {
       type: DataTypes.BIGINT,
@@ -87,8 +45,7 @@ export default (sequelize, DataTypes) => {
     },
     name: {
       type: DataTypes.TEXT,
-      allowNull: false,
-      unique: true,
+      allowNull: true,
     },
     organizerId: {
       type: DataTypes.INTEGER,
@@ -107,7 +64,7 @@ export default (sequelize, DataTypes) => {
     trainingType: {
       type: DataTypes.ENUM(Object.values(TRAINING_TYPE)),
       allowNull: false,
-      defaultValue: TRAINING_TYPE.SERIES,
+      defaultValue: sequelize.literal(`'${TRAINING_TYPE.SERIES}'::"enum_ReportTrainingEvents_trainingType"`),
     },
     vision: {
       type: DataTypes.TEXT,
