@@ -25,10 +25,12 @@ export default (sequelize, DataTypes) => {
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Goals' }, key: 'id' },
     },
     goalTemplateFieldPromptId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'GoalTemplateFieldPrompts' }, key: 'id' },
     },
     response: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
