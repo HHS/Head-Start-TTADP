@@ -56,6 +56,7 @@ export default (sequelize, DataTypes) => {
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Regions' }, key: 'id' },
     },
     creationMethod: {
       allowNull: false,
