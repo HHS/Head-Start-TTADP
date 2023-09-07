@@ -48,6 +48,7 @@ export default (sequelize, DataTypes) => {
     homeRegionId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Regions' }, key: 'id' },
     },
     hsesUserId: {
       type: DataTypes.STRING,
