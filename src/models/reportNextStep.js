@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
   class ReportNextStep extends Model {
     static associate(models) {
       this.addScope('noteType', (noteType) => ({ where: { noteType } }));
-
+      // TODO swirch from mtrix to generateJunctionTableAssociations
       // Reports
       collectReportMatrixAssociationsForModel(models, this.modelName)
         .forEach(({
@@ -39,6 +39,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     reportId: {
       type: DataTypes.BIGINT,
@@ -61,6 +62,7 @@ export default (sequelize, DataTypes) => {
     completedDate: {
       type: DataTypes.DATEONLY,
       get: formatDate,
+      allowNull: true,
     },
   }, {
     sequelize,
