@@ -8,12 +8,36 @@ const {
 const {
   afterCreate,
 } = require('./hooks/reportTrainingSession');
-const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportTrainingSession extends Model {
     static associate(models) {
-      automaticallyGenerateJunctionTableAssociations(this, models);
+      // automaticallyGenerateJunctionTableAssociations(this, models);
+
+      generateJunctionTableAssociations(
+        this,
+        [
+          models.Report,
+          models.Report,
+          models.Region,
+        ],
+        {
+          models: [
+            {
+            },
+            {
+              scope: {
+                method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT],
+              },
+              as: 'reportTrainingEvent',
+              suffixes: ['reportTrainingEvent'],
+            },
+            {
+            },
+          ],
+        },
+      );
     }
   }
   ReportTrainingSession.init({
@@ -38,7 +62,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       references: {
         model: {
-          tableName: 'ReportTrainingEvents',
+          tableName: 'Reports',
         },
         key: 'id',
       },
