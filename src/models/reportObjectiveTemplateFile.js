@@ -1,47 +1,10 @@
 const { Model } = require('sequelize');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveTemplateFile extends Model {
     static associate(models) {
-      ReportObjectiveTemplateFile.belongsTo(models.ReportObjectiveTemplate, {
-        foreignKey: 'reportObjectiveTemplateId',
-        as: 'reportObjectiveTemplate',
-        onDelete: 'cascade',
-      });
-      ReportObjectiveTemplateFile.belongsTo(models.File, {
-        foreignKey: 'fileId',
-        as: 'file',
-      });
-      ReportObjectiveTemplateFile.belongsTo(models.ObjectiveTemplateFile, {
-        foreignKey: 'objectiveTemplateFileId',
-        as: 'objectiveTemplateFile',
-      });
-      models.ObjectiveTemplateFile.hasMany(models.ReportObjectiveTemplateFile, {
-        foreignKey: 'objectiveTemplateFileId',
-        as: 'reportObjectiveTemplateFiles',
-      });
-
-      models.ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateFile, {
-        foreignKey: 'reportObjectiveTemplateId',
-        as: 'reportObjectiveTemplateFiles',
-      });
-      models.ReportObjectiveTemplate.belongsToMany(models.File, {
-        through: models.ReportObjectiveTemplateFile,
-        foreignKey: 'reportObjectiveTemplateId',
-        otherKey: 'fileId',
-        as: 'files',
-      });
-
-      models.File.hasMany(models.ReportObjectiveTemplateFile, {
-        foreignKey: 'fileId',
-        as: 'reportObjectiveTemplateFiles',
-      });
-      models.File.belongsToMany(models.ReportObjectiveTemplate, {
-        through: models.ReportObjectiveTemplateFile,
-        foreignKey: 'fileId',
-        otherKey: 'reportObjectiveTemplateId',
-        as: 'reportObjectiveTemplates',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveTemplateFile.init({
