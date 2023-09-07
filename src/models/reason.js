@@ -2,6 +2,9 @@ const {
   Model,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
+const {
+  automaticallyGenerateJunctionTableAssociations,
+} = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -12,34 +15,7 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class Reason extends Model {
     static associate(models) {
-      Reason.belongsTo(models.Reason, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToReason',
-      });
-      Reason.hasMany(models.Reason, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromReasons',
-      });
-      Reason.hasMany(models.ReportReason, {
-        foreignKey: 'reasonId',
-        as: 'reportReasons',
-      });
-      Reason.belongsToMany(models.Report, {
-        through: models.ReportReason,
-        foreignKey: 'reasonId',
-        otherKey: 'reportId',
-        as: 'reports',
-      });
-
-      Reason.belongsTo(models.ValidFor, {
-        foreignKey: 'validForId',
-        as: 'validFor',
-      });
-
-      models.ValidFor.hasMany(models.Reason, {
-        foreignKey: 'validForId',
-        as: 'validForReasons',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.Reason.addScope('defaultScope', {
         include: [{
@@ -64,10 +40,22 @@ export default (sequelize, DataTypes) => {
     validForId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ValidFor',
+        },
+        key: 'id',
+      },
     },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'Reasons',
+        },
+        key: 'id',
+      },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
