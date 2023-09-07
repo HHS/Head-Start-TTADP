@@ -18,10 +18,12 @@ export default (sequelize, DataTypes) => {
     activityReportId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'ActivityReports' }, key: 'id' },
     },
     fileId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Files' }, key: 'id' },
     },
   }, {
     sequelize,
