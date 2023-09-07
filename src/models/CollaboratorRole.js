@@ -19,10 +19,12 @@ export default (sequelize, DataTypes) => {
     activityReportCollaboratorId: {
       allowNull: false,
       type: DataTypes.INTEGER,
+      references: { model: { tableName: 'ActivityReportCollaborators' }, key: 'id' },
     },
     roleId: {
       allowNull: false,
       type: DataTypes.INTEGER,
+      references: { model: { tableName: 'Roles' }, key: 'id' },
     },
   }, {
     sequelize,
