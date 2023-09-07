@@ -1,51 +1,10 @@
 const { Model } = require('sequelize');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveTemplateTopic extends Model {
     static associate(models) {
-      ReportObjectiveTemplateTopic.belongsTo(models.ReportObjectiveTemplate, {
-        foreignKey: 'reportObjectiveTemplateId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTemplate',
-      });
-      ReportObjectiveTemplateTopic.belongsTo(models.Topic, {
-        foreignKey: 'topicId',
-        onDelete: 'cascade',
-        as: 'topic',
-      });
-      ReportObjectiveTemplateTopic.belongsTo(models.ObjectiveTemplateTopic, {
-        foreignKey: 'objectiveTemplateTopicId',
-        onDelete: 'cascade',
-        as: 'objectiveTemplateTopic',
-      });
-      models.ObjectiveTemplateTopic.hasMany(models.ReportObjectiveTemplateTopic, {
-        foreignKey: 'objectiveTemplateTopicId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTemplateTopics',
-      });
-
-      models.ReportObjectiveTemplate.hasMany(models.ReportObjectiveTemplateTopic, {
-        foreignKey: 'reportObjectiveTemplateId',
-        as: 'reportObjectiveTemplateTopics',
-      });
-      models.Topic.hasMany(models.ReportObjectiveTemplateTopic, {
-        foreignKey: 'topicId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTemplateTopics',
-      });
-      models.ReportObjectiveTemplate.belongsToMany(models.Topic, {
-        through: models.ReportObjectiveTemplateTopic,
-        foreignKey: 'reportObjectiveTemplateId',
-        otherKey: 'topicId',
-        as: 'topics',
-      });
-
-      models.Topic.belongsToMany(models.ReportObjectiveTemplate, {
-        through: models.ReportObjectiveTemplateTopic,
-        foreignKey: 'topicId',
-        otherKey: 'reportObjectiveTemplateId',
-        as: 'reportObjectiveTemplates',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveTemplateTopic.init({
