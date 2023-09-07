@@ -206,7 +206,7 @@ function processAssociations(associations, tables, schemas) {
     schema.attributes.forEach((attribute) => {
       if (attribute.reference) {
         const source = /"([^"]*)"/.exec(attribute.reference)[1];
-        const target = schema.table;
+        const target = schema?.table;
         const key = `${source}***${target}`;
 
         if (!sourceTarget[key]) {
@@ -221,13 +221,13 @@ function processAssociations(associations, tables, schemas) {
     const source = schemas.find((s) => s.model?.name === association.source.name);
     const target = schemas.find((s) => s.model?.name === association.target.name);
 
-    let key = `${source.table}***${target.table}`;
+    let key = `${source?.table}***${target?.table}`;
     if (association.associationType.toLowerCase().startsWith('belongstomany')) {
-      const associationTables = [source.table, target.table];
+      const associationTables = [source?.table, target?.table];
       associationTables.sort();
       key = `${associationTables[0]}***${associationTables[1]}`;
     } else if (association.associationType.toLowerCase().startsWith('belongs')) {
-      key = `${target.table}***${source.table}`;
+      key = `${target?.table}***${source?.table}`;
     }
     if (!sourceTarget[key]) {
       sourceTarget[key] = [];
@@ -402,7 +402,7 @@ async function generateUML(schemas, tables, root) {
         associations.push(association);
       });
     }
-    uml += processClassDefinition(schema, schema.table);
+    uml += processClassDefinition(schema, schema?.table);
   });
 
   uml += processAssociations(associations, tables, schemas);
@@ -476,9 +476,9 @@ export default async function generateUMLFromDB() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const model:any = Object.values(db.sequelize.models)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .find((m: any) => m?.getTableName() === td.table);
+        .find((m: any) => m?.getTableName() === td?.table);
       return ({
-        table: td.table,
+        table: td?.table,
         model,
         attributes: td.fields,
         associations: model?.associations,
