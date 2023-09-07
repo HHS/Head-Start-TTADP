@@ -15,7 +15,6 @@ const {
 export default (sequelize, DataTypes) => {
   class Report extends Model {
     static associate(models) {
-      console.log('%%%%%%%%%%%%%%%%%');
       generateJunctionTableAssociations(
         models.Report,
         [
@@ -37,7 +36,6 @@ export default (sequelize, DataTypes) => {
           ],
         },
       );
-      console.log('%%%%%%%%%%%%%%%%%');
 
       // Report.hasOne(models.Status, {
       //   foreignKey: 'statusId',
