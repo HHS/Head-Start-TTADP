@@ -17,6 +17,9 @@ function TrainingReports() {
   const [info, setInfo] = useState();
   const [uploadDisabled, setUploadDisabled] = useState(true);
 
+  const [skipped, setSkipped] = useState([]);
+  const [errors, setErrors] = useState([]);
+
   const fileInputRef = useRef(null);
 
   const validCsvHeaders = [
@@ -42,6 +45,10 @@ function TrainingReports() {
 
   const importTr = async () => {
     try {
+      // Reset summary info.
+      setSkipped([]);
+      setErrors([]);
+
       // Get the file from the file input from ref.
       const { files } = fileInputRef.current;
       const file = files[0];
@@ -51,12 +58,13 @@ function TrainingReports() {
       data.append('file', file);
       const res = await importTrainingReports(file);
       setSuccess(`${res.count} events imported successfully.`);
+      setSkipped(res.skipped);
+      setErrors(res.errors);
       setError('');
     } catch (err) {
       setError('Error attempting to import training reports.');
     } finally {
       // Clear file input.
-      fileInputRef.current.value = null;
       setInfo('');
       setUploadDisabled(true);
     }
@@ -152,6 +160,15 @@ function TrainingReports() {
             <FormGroup>
               <Label htmlFor="file-input-single">Input accepts a single file</Label>
               <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
+              {(success) && (
+              <div>
+                <h3>Import Summary:</h3>
+                <ul>
+                  <li>{`${skipped.length} skipped: ${skipped.join(', ')} `}</li>
+                  <li>{`${errors.length} errors: ${errors.join(', ')}`}</li>
+                </ul>
+              </div>
+              )}
               <Button className="margin-top-2" type="button" onClick={importTr} disabled={uploadDisabled}>Upload training reports</Button>
             </FormGroup>
           </div>

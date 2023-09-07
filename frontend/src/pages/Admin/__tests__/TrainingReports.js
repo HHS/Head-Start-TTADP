@@ -128,7 +128,15 @@ describe('Training Reports page', () => {
     expect(uploadButton).not.toBeDisabled();
 
     // Mock fetch response for url 'trainingReportsUrl'.
-    fetchMock.post(trainingReportsUrl, { status: 200, body: { success: true, count: 2 } });
+    fetchMock.post(trainingReportsUrl, {
+      status: 200,
+      body: {
+        success: true,
+        count: 2,
+        skipped: ['event id 1', 'event id 2'],
+        errors: ['event id 2', 'event id 3'],
+      },
+    });
 
     // Click button 'Upload training reports'.
     userEvent.click(uploadButton);
@@ -136,6 +144,14 @@ describe('Training Reports page', () => {
     // Assert to see correct import count.
     const success = await screen.findByText(/2 events imported successfully./i);
     expect(success).toBeVisible();
+
+    // assert to see the text '2 skipped: event id 1, event id 2'.
+    const skipped = await screen.findByText(/2 skipped: event id 1, event id 2/i);
+    expect(skipped).toBeVisible();
+
+    // assert to see the text '2 errors: event id 2, event id 3'.
+    const errors = await screen.findByText(/2 errors: event id 2, event id 3/i);
+    expect(errors).toBeVisible();
 
     expect(uploadButton).toBeDisabled();
 
