@@ -38,6 +38,7 @@ export default (sequelize, DataTypes) => {
     goalTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'GoalTemplates' }, key: 'id' },
     },
     ordinal: {
       type: DataTypes.INTEGER,
