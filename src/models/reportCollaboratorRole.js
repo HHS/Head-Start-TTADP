@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -12,13 +12,7 @@ const { generateJunctionTableAssociations } = require('./helpers/associationsAnd
 export default (sequelize, DataTypes) => {
   class ReportCollaboratorRole extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportCollaboratorRole,
-        [
-          models.ReportCollaborator,
-          models.Role,
-        ],
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportCollaboratorRole.init({
@@ -35,7 +29,7 @@ export default (sequelize, DataTypes) => {
         model: {
           tableName: 'ReportCollaborators',
         },
-        key: 'id',
+        key: 'idx',
       },
     },
     roleId: {
