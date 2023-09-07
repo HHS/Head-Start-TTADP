@@ -133,6 +133,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     reportId: {
       type: DataTypes.BIGINT,
@@ -157,6 +158,12 @@ export default (sequelize, DataTypes) => {
     statusId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
     },
     note: {
       allowNull: true,
