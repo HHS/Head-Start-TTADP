@@ -1,18 +1,11 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalResource extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportGoalResource,
-        [
-          models.ReportGoal,
-          models.Resource,
-          models.GoalResource,
-        ],
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportGoalResource.init({
