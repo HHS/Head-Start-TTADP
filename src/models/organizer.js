@@ -2,28 +2,12 @@ const {
   Model,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class Organizer extends Model {
     static associate(models) {
-      Organizer.belongsTo(models.Organizer, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToOrganizer',
-      });
-      Organizer.hasMany(models.Organizer, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromOrganizers',
-      });
-
-      Organizer.belongsTo(models.ValidFor, {
-        foreignKey: 'validForId',
-        as: 'validFor',
-      });
-
-      models.ValidFor.hasMany(models.Organizer, {
-        foreignKey: 'validForId',
-        as: 'validForOrganizers',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.Organizer.addScope('defaultScope', {
         include: [{
@@ -48,10 +32,22 @@ export default (sequelize, DataTypes) => {
     validForId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ValidFor',
+        },
+        key: 'id',
+      },
     },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'Organizers',
+        },
+        key: 'id',
+      },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
