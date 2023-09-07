@@ -49,11 +49,16 @@ function TrainingReports() {
       // Get File.
       const data = new FormData();
       data.append('file', file);
-      await importTrainingReports(file);
-      setSuccess('Training report successfully imported');
+      const res = await importTrainingReports(file);
+      setSuccess(`${res.count} events imported successfully.`);
       setError('');
     } catch (err) {
       setError('Error attempting to import training reports.');
+    } finally {
+      // Clear file input.
+      fileInputRef.current.value = null;
+      setInfo('');
+      setUploadDisabled(true);
     }
   };
 
