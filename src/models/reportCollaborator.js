@@ -11,9 +11,6 @@ const {
 export default (sequelize, DataTypes) => {
   class ReportCollaborator extends Model {
     static associate(models) {
-      // Role - located in ReportCollaboratorRole
-      // Type - located in ReportCollaboratorType
-
       ReportCollaborator.addScope('collaboratorType', (collaboratorType) => ({
         include: [{
           attributes: [],
@@ -26,7 +23,6 @@ export default (sequelize, DataTypes) => {
         }],
       }));
 
-      // User
       generateJunctionTableAssociations(
         models.ReportCollaborator,
         [
