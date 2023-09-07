@@ -94,6 +94,12 @@ export default (sequelize, DataTypes) => {
     closeSuspendReasonId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'CloseSuspendReasons',
+        },
+        key: 'id',
+      },
     },
     endDate: {
       type: DataTypes.DATEONLY,
