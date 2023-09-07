@@ -66,6 +66,12 @@ export default (sequelize, DataTypes) => {
     statusId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
     },
     ttaProvided: DataTypes.TEXT,
     currentStatus: {
