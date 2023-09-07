@@ -39,10 +39,12 @@ export default (sequelize, DataTypes) => {
     activityReportId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'ActivityReports' }, key: 'id' },
     },
     objectiveId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Objectives' }, key: 'id' },
     },
     arOrder: {
       type: DataTypes.INTEGER,
