@@ -1,16 +1,10 @@
 const { Model } = require('sequelize');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveFile extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportObjectiveFile,
-        [
-          models.ReportObjective,
-          models.File,
-        ],
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveFile.init({
