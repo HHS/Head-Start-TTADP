@@ -78,6 +78,7 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Roles' }, key: 'id' },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
