@@ -158,7 +158,18 @@ function processClassDefinition(schema, key) {
     if (field.enumName) {
       foundEnums.push(processEnum(field.enumName, key, field.enums, modelField.type.type.values));
     }
+
     if (field.reference) {
+      if (!modelField?.references) {
+        issues.push(`!issue='column reference missing'`); //eslint-disable-line
+      } else {
+        const tableFieldReference = field.reference.replace('(', '.').replace(')', '');
+        console.log(Object.entries(modelField?.references?.model));
+        const modelFieldReference = `"${modelField?.references?.model}".${modelField?.references?.key}`;
+        if (tableFieldReference !== modelFieldReference) {
+          issues.push(`!issue='column reference does not match model: ${tableFieldReference} !== ${modelFieldReference}'`); //eslint-disable-line
+        }
+      }
       column += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
     }
 
