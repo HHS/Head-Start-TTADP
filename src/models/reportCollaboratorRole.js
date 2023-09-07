@@ -29,7 +29,7 @@ export default (sequelize, DataTypes) => {
         model: {
           tableName: 'ReportCollaborators',
         },
-        key: 'idx',
+        key: 'id',
       },
     },
     roleId: {
