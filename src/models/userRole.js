@@ -25,10 +25,12 @@ export default (sequelize, DataTypes) => {
     userId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: { model: { tableName: 'Users' }, key: 'id' },
     },
     roleId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: { model: { tableName: 'Roles' }, key: 'id' },
     },
   }, {
     sequelize,
