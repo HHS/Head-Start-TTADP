@@ -4,7 +4,7 @@ const {
 const {
   REPORT_TYPE,
 } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -15,14 +15,7 @@ const { generateJunctionTableAssociations } = require('./helpers/associationsAnd
 export default (sequelize, DataTypes) => {
   class ReportImport extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportImport,
-        [
-          models.Report,
-        ],
-      );
-
-      // TODO: Use matrix
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportImport.init({
