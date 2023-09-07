@@ -4,34 +4,23 @@ const {
 const { REPORT_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDataMatrix');
+const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportNextStep extends Model {
     static associate(models) {
       this.addScope('noteType', (noteType) => ({ where: { noteType } }));
-      // TODO swirch from mtrix to generateJunctionTableAssociations
-      // Reports
-      collectReportMatrixAssociationsForModel(models, this.modelName)
-        .forEach(({
-          model,
-          prefix,
-          associations,
-        }) => {
-          associations.forEach((config) => {
-            const localModel = config.method
-              ? this.scope({ method: config.method })
-              : this;
 
-            model.hasMany(localModel, {
-              foreignKey: 'reportId',
-              as: `reportNextStep${config.as}`,
-            });
-            localModel.belongsTo(model, {
-              foreignKey: 'reportId',
-              as: `${prefix}`,
-            });
-          });
-        });
+      generateJunctionTableAssociations(
+        this,
+        [
+          models.Report,
+        ],
+        {
+          suffixes: Object.values(NEXTSTEP_NOTETYPE).map((noteType) => noteType.toLowerCase()),
+          scopes: Object.values(NEXTSTEP_NOTETYPE).map((noteType) => ({ method: ['noteType', noteType] })),
+        },
+      );
     }
   }
   ReportNextStep.init({
