@@ -48,6 +48,53 @@ const makePlural = (word) => {
   }
 };
 
+const makeSingular = (str) => {
+  // Check if the last three characters are 'ies'
+  if (str.slice(-3) === 'ies') {
+    // Replace 'ies' with 'y'
+    return `${str.slice(0, -3)}y`;
+  }
+
+  // Check if the last two characters are 'es'
+  if (str.slice(-2) === 'es') {
+    // Remove the last two characters
+    return str.slice(0, -2);
+  }
+
+  // Check if the last character is 's'
+  if (str.slice(-1) === 's') {
+    // Remove the last character
+    return str.slice(0, -1);
+  }
+
+  // If no pluralization found, return the original string
+  return str;
+};
+
+const tableNameToForeignKey = (tableName) => `${makeSingular(camelToPascalCase(tableName))}Id`;
+
+const doesAssociationExist = (
+  from,
+  to,
+  type,
+  foreignKey,
+  as,
+  through,
+  otherKey,
+) => Object.values(from.associations)
+  .some((association) => (
+    association.source.name === from.name
+    && association.target.name === to.name
+    && association.associationType.toLowerCase() === type.toLowerCase()
+    && association.foreignKey === foreignKey
+    && association.as === as
+    && (through === null
+      || association.through?.name === through?.name
+      || association.through?.name === through?.model?.name)
+    && (otherKey === null
+      || association.otherKey === otherKey)
+  ));
+
 /**
  * Generates an association between two objects in JavaScript.
  *
@@ -56,7 +103,8 @@ const makePlural = (word) => {
  * @param {string} type - The type of association to create.
  * @param {string} foreignKey - The foreign key to use for the association.
  * @param {string} as - The name of the association.
- * @param {import('sequelize').Model} through - The intermediate table to use for a many-to-many association.
+ * @param {import('sequelize').Model} through - The intermediate table to use for a many-to-many
+ * association.
  * @param {string} otherKey - The foreign key on the `through` table for a many-to-many association.
  * @returns {void}
  */
@@ -71,13 +119,21 @@ const generateAssociation = (
   // Create the association between the `from` and `to` objects using the specified `type`
   // and options such as `foreignKey`, `as`, `through`, and `otherKey`.
 ) => {
-  console.log('####', from, to, as, through);
-  from[type](to, {
+  if (!doesAssociationExist(
+    from,
+    to,
+    type,
     foreignKey,
     as,
-    ...(through && { through, otherKey }),
-  });
-  console.log('####', from, to, as, through);
+    through,
+    otherKey,
+  )) {
+    from[type](to, {
+      foreignKey,
+      as,
+      ...(through && { through, otherKey }),
+    });
+  }
 };
 
 /**
@@ -90,7 +146,8 @@ const generateAssociation = (
  * @param {string} foreignKey - The foreign key used for the association.
  * @param {string} as1 - The alias for the association from the source model to the target model.
  * @param {string} as2 - The alias for the association from the target model to the source model.
- * @param {import('sequelize').Model|string} through - The intermediary model used for a many-to-many association.
+ * @param {import('sequelize').Model|string} through - The intermediary model used for a
+ * many-to-many association.
  * @param {string} otherKey - The foreign key used in the opposite direction of the association.
  */
 const generateAssociationPair = (
@@ -104,17 +161,6 @@ const generateAssociationPair = (
   through,
   otherKey,
 ) => {
-  console.log('generateAssociationPair:',{
-    from,
-    to,
-    type1,
-    type2,
-    foreignKey,
-    as1,
-    as2,
-    through,
-    otherKey,
-  });
   const asSuffix = through
     ? `For${through.name}`
     : '';
@@ -167,12 +213,7 @@ const locateForeignKey = (sourceModelAttributes, targetModel) => {
       foreignKeys.push(key); // Return the name of the foreign key
     }
   });
-  console.log('locateForeignKey:', {
-    sourceModelAttributes,
-    targetModel,
-    targetTable,
-    foreignKeys,
-  });
+
   return foreignKeys.length
     ? foreignKeys[0]
     : null; // No foreign key found
@@ -226,17 +267,22 @@ const getAssociationSettings = (
  *
  * @param {import('sequelize').Model} junctionModel
  * @param {import('sequelize').Model[]} associatedModels
- * @param {{ as?: string, suffixes?: string[], scope?: {}, scopes?: {}[], models?: { as?: string, suffixes?: string[], scope?: {}, scopes?: {}[] }[] }|null} additionalData
+ * @param {{
+ *  as?: string,
+ *  suffixes?: string[],
+ *  scope?: {},
+ *  scopes?: {}[],
+ *  models?: { as?: string, suffixes?: string[], scope?: {}, scopes?: {}[] }[]
+ * }|null} additionalData
  */
 const generateJunctionTableAssociations = (
   junctionModel,
   associatedModels,
   additionalData = null,
 ) => {
-  console.log('@@@', junctionModel, additionalData && additionalData?.suffixes != null);
   const junctionModelAttributes = Object.entries(junctionModel.rawAttributes)
     .map(([key, value]) => ([key, value?.references?.model?.tableName]));
-    console.log(junctionModelAttributes);
+
   [
     null,
     ...(additionalData?.suffixes
@@ -257,7 +303,7 @@ const generateJunctionTableAssociations = (
 
     associatedModels.forEach((model, modelIndex) => {
       [
-        null,
+        ...(!(additionalData?.models?.[modelIndex]?.skipNull) && [null]),
         ...(additionalData?.models?.[modelIndex]?.suffixes
           ? additionalData.models[modelIndex].suffixes
           : []),
@@ -274,7 +320,7 @@ const generateJunctionTableAssociations = (
           'For',
         );
         const associatedModelForeignKey = locateForeignKey(junctionModelAttributes, model);
-        console.log('^^^^^', { associatedModel, associatedModelAs, associatedModelSuffix, associatedModelForeignKey });
+
         if (associatedModelForeignKey !== null) {
           generateAssociationPair(
             centerModel,
@@ -290,14 +336,13 @@ const generateJunctionTableAssociations = (
             .slice(modelIndex)
             .forEach((otherModel, otherModelIndex) => {
               if (model === otherModel) return;
-              console.log({ modelIndex, otherModelIndex });
+
               [
-                null,
+                ...(!(additionalData?.models?.[modelIndex + otherModelIndex]?.skipNull) && [null]),
                 ...(additionalData?.models?.[modelIndex + otherModelIndex]?.suffixes !== undefined
                   ? additionalData.models[modelIndex + otherModelIndex].suffixes
                   : []),
               ].forEach((otherModelSuffix, otherModelSuffixIndex) => {
-                console.log('$$$$', junctionModel, associatedModels, otherModel, associatedModels[modelIndex + otherModelIndex], modelIndex, otherModelIndex);
                 const {
                   model: otherAssociatedModel,
                   as: otherAssociatedModelAs,
@@ -309,7 +354,10 @@ const generateJunctionTableAssociations = (
                   additionalData?.models?.[modelIndex + otherModelIndex],
                   'For',
                 );
-                const otherAssociatedModelForeignKey = locateForeignKey(junctionModelAttributes, otherModel);
+                const otherAssociatedModelForeignKey = locateForeignKey(
+                  junctionModelAttributes,
+                  otherModel,
+                );
 
                 if (otherAssociatedModelForeignKey !== null) {
                   generateAssociationPair(
@@ -330,8 +378,6 @@ const generateJunctionTableAssociations = (
       });
     });
   });
-  console.log(junctionModel, junctionModel.associations);
-  console.log('---------------------------------------------------------------------');
 };
 
 /**
@@ -356,11 +402,6 @@ const automaticallyGenerateJunctionTableAssociations = (
     .filter((model) => model);
 
   if (!associatedModels || associatedModels.length === 0) {
-    console.log(Object.entries(junctionModel.rawAttributes).map(([key, value]) => ([key, value?.references, value?.references?.model?.tableName])));
-    //filter out the keys starting with 'Z'
-    console.log(Object.entries(models)
-      .map(([key, value]) => ([key, value.getTableName()]))
-      .filter(([key, value]) => !key.startsWith('Z')));
     throw new Error('no tables in models');
   }
 
