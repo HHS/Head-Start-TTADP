@@ -1,17 +1,11 @@
 const { Model } = require('sequelize');
 const { PROMPT_FIELD_TYPE } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplateFieldPrompt extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportGoalTemplateFieldPrompt,
-        [
-          models.ReportGoalTemplate,
-          models.GoalTemplateFieldPrompt,
-        ],
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
 
       // TODO: think how to handle the related responses
       // ReportGoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, {
