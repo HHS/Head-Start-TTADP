@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDataMatrix');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -12,24 +12,7 @@ const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDat
 export default (sequelize, DataTypes) => {
   class ReportPageState extends Model {
     static associate(models) {
-      // Reports
-      collectReportMatrixAssociationsForModel(models, this.modelName)
-        .forEach(({
-          model,
-          prefix,
-          associations,
-        }) => {
-          associations.forEach((config) => {
-            model.hasOne(this, {
-              foreignKey: 'reportId',
-              as: `reportPageState${config.as}`,
-            });
-            this.belongsTo(model, {
-              foreignKey: 'reportId',
-              as: `${prefix}`,
-            });
-          });
-        });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportPageState.init({
