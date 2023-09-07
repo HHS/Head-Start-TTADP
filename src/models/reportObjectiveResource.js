@@ -1,49 +1,11 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveResource extends Model {
     static associate(models) {
-      ReportObjectiveResource.belongsTo(models.ReportObjective, {
-        foreignKey: 'reportObjectiveId',
-        onDelete: 'cascade',
-        as: 'reportObjective',
-      });
-      ReportObjectiveResource.belongsTo(models.Resource, {
-        foreignKey: 'resourceId',
-        as: 'resource',
-      });
-      ReportObjectiveResource.belongsTo(models.ObjectiveResource, {
-        foreignKey: 'objectiveResourceId',
-        as: 'objectiveResource',
-      });
-
-      models.ObjectiveResource.hasMany(models.ReportObjectiveResource, {
-        foreignKey: 'objectiveResourceId',
-        as: 'reportObjectiveResources',
-      });
-
-      models.ReportObjective.hasMany(models.ReportObjectiveResource, {
-        foreignKey: 'reportObjectiveId',
-        as: 'reportObjectiveResources',
-      });
-      models.ReportObjective.belongsToMany(models.Resource, {
-        through: models.ReportObjectiveResource,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
-
-      models.Resource.hasMany(models.ReportObjectiveResource, {
-        foreignKey: 'resourceId',
-        as: 'reportObjectiveResources',
-      });
-      models.Resource.belongsToMany(models.ReportObjective, {
-        through: models.ReportObjectiveResource,
-        foreignKey: 'resourceId',
-        otherKey: 'reportObjectiveId',
-        as: 'reportObjectives',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveResource.init({
