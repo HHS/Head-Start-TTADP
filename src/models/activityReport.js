@@ -124,10 +124,12 @@ export default (sequelize, DataTypes) => {
     userId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Users' }, key: 'id' },
     },
     lastUpdatedById: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Users' }, key: 'id' },
     },
     ECLKCResourcesUsed: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
@@ -195,6 +197,7 @@ export default (sequelize, DataTypes) => {
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Regions' }, key: 'id' },
     },
     submissionStatus: {
       allowNull: true,
