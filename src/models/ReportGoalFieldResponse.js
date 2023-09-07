@@ -1,17 +1,10 @@
 const { Model } = require('sequelize');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportGoalFieldResponse extends Model {
     static associate(models) {
-      generateJunctionTableAssociations(
-        models.ReportGoalFieldResponse,
-        [
-          models.ReportGoal,
-          models.GoalTemplateFieldPrompt,
-        ],
-        { suffixes: null },
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportGoalFieldResponse.init({
