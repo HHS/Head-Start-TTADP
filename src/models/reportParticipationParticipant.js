@@ -36,8 +36,8 @@ export default (sequelize, DataTypes) => {
       },
     },
     participantId: {
-      type: DataTypes.BIGINT,
-      allowNull: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
       references: {
         model: {
           tableName: 'Participants',
