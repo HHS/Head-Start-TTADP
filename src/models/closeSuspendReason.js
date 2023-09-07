@@ -2,6 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { ENTITY_TYPE } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -12,24 +13,7 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class CloseSuspendReason extends Model {
     static associate(models) {
-      CloseSuspendReason.belongsTo(models.CloseSuspendReason, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToCloseSuspendReason',
-      });
-      CloseSuspendReason.hasMany(models.CloseSuspendReason, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromCloseSuspendReasons',
-      });
-
-      CloseSuspendReason.belongsTo(models.ValidFor, {
-        foreignKey: 'validForId',
-        as: 'validFor',
-      });
-
-      models.ValidFor.hasMany(models.CloseSuspendReason, {
-        foreignKey: 'validForId',
-        as: 'validForCloseSuspendReasons',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
 
       CloseSuspendReason.addScope('validFor', (name) => ({
         includes: [{
@@ -73,10 +57,22 @@ export default (sequelize, DataTypes) => {
     validForId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'ValidFor',
+        },
+        key: 'id',
+      },
     },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: {
+          tableName: 'CloseSuspendReasons',
+        },
+        key: 'id',
+      },
     },
     latestName: {
       type: DataTypes.VIRTUAL(DataTypes.STRING),
