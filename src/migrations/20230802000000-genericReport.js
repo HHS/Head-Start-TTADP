@@ -898,14 +898,6 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        ordinal: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        duration: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -959,7 +951,7 @@ module.exports = {
             .ENUM(Object.values(REPORT_STATUSES)),
         },
         calculatedStatus: {
-          allowNull: true,
+          allowNull: false,
           type: Sequelize.DataTypes
             .ENUM(Object.values(REPORT_STATUSES)),
         },
@@ -1192,7 +1184,7 @@ module.exports = {
           },
         },
         statusId: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1303,7 +1295,7 @@ module.exports = {
         },
         roleId: {
           type: Sequelize.INTEGER,
-          allowNull: true,
+          allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1360,12 +1352,12 @@ module.exports = {
           allowNull: false,
         },
         noteType: {
-          allowNull: true,
+          allowNull: false,
           type: Sequelize.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
         },
         completedDate: {
           type: Sequelize.DATEONLY,
-          allowNull: false,
+          allowNull: true,
         },
         createdAt: {
           allowNull: false,
