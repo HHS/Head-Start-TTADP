@@ -334,10 +334,45 @@ const generateJunctionTableAssociations = (
   console.log('---------------------------------------------------------------------');
 };
 
+/**
+ * Automatically generates junction table associations for a given junction model.
+ *
+ * @param {object} junctionModel - The junction model object.
+ * @param {array} models - An array of all the models in the application.
+ * @returns {array} - An array of associated models for the junction table.
+ */
+const automaticallyGenerateJunctionTableAssociations = (
+  junctionModel,
+  models = {},
+) => {
+  // Filter the raw attributes of the junction model to find only those that have a reference to
+  // another model's table name
+  const associatedModels = Object.entries(junctionModel.rawAttributes)
+    .filter(([key, value]) => value?.references?.model?.tableName !== null)
+    // Map each filtered attribute to its associated model by finding the model with the matching
+    // table name
+    .map(([key, value]) => Object.values(models)
+      .find((model) => model.getTableName() === value?.references?.model?.tableName))
+    .filter((model) => model);
+
+  if (!associatedModels || associatedModels.length === 0) {
+    console.log(Object.entries(junctionModel.rawAttributes).map(([key, value]) => ([key, value?.references, value?.references?.model?.tableName])));
+    //filter out the keys starting with 'Z'
+    console.log(Object.entries(models)
+      .map(([key, value]) => ([key, value.getTableName()]))
+      .filter(([key, value]) => !key.startsWith('Z')));
+    throw new Error('no tables in models');
+  }
+
+  // Generate junction table associations using the junction model and associated models
+  return generateJunctionTableAssociations(junctionModel, associatedModels);
+};
+
 export {
   pascalToCamelCase,
   camelToPascalCase,
   generateAssociation,
   generateAssociationPair,
   generateJunctionTableAssociations,
+  automaticallyGenerateJunctionTableAssociations,
 };
