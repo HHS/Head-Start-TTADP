@@ -2,6 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -12,24 +13,7 @@ const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {
     static associate(models) {
-      NationalCenter.belongsTo(models.NationalCenter, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToNationalCenter',
-      });
-      NationalCenter.hasMany(models.NationalCenter, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromNationalCenters',
-      });
-      NationalCenter.hasMany(models.ReportNationalCenter, {
-        foreignKey: 'nationalCenterId',
-        as: 'reportNationalCanter',
-      });
-      NationalCenter.belongsToMany(models.Report, {
-        through: models.ReportNationalCenter,
-        foreignKey: 'nationalCenterId',
-        otherKey: 'reportId',
-        as: 'reports',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.NationalCenter.addScope('defaultScope', {
         include: [{
