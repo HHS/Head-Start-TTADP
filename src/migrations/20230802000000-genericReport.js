@@ -2607,7 +2607,7 @@ module.exports = {
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'ReportObjectiveTemplates',
+              tableName: 'ReportObjectives',
             },
             key: 'id',
           },
