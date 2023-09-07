@@ -24,10 +24,12 @@ export default (sequelize, DataTypes) => {
     goalTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'GoalTemplates' }, key: 'id' },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Resources' }, key: 'id' },
     },
     sourceFields: {
       allowNull: true,
