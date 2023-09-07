@@ -1,49 +1,10 @@
 const { Model } = require('sequelize');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveTopic extends Model {
     static associate(models) {
-      ReportObjectiveTopic.belongsTo(models.ReportObjective, {
-        foreignKey: 'reportObjectiveId',
-        onDelete: 'cascade',
-        as: 'reportObjective',
-      });
-      ReportObjectiveTopic.belongsTo(models.Topic, {
-        foreignKey: 'topicId',
-        onDelete: 'cascade',
-        as: 'topic',
-      });
-      ReportObjectiveTopic.belongsTo(models.ObjectiveTopic, {
-        foreignKey: 'objectiveTopicId',
-        onDelete: 'cascade',
-        as: 'objectiveTopic',
-      });
-      models.ObjectiveTopic.hasMany(models.ReportObjectiveTopic, {
-        foreignKey: 'objectiveTopicId',
-        onDelete: 'cascade',
-        as: 'reportObjectiveTopics',
-      });
-
-      models.ReportObjective.hasMany(models.ReportObjectiveTopic, {
-        foreignKey: 'reportObjectiveId',
-        as: 'reportObjectiveTopics',
-      });
-      models.Topic.hasMany(models.ReportObjectiveTopic, {
-        foreignKey: 'topicId',
-        as: 'reportObjectiveTopics',
-      });
-      models.ReportObjective.belongsToMany(models.Topic, {
-        through: models.ReportObjectiveTopic,
-        foreignKey: 'reportObjectiveId',
-        otherKey: 'topicId',
-        as: 'topics',
-      });
-      models.Topic.belongsToMany(models.ReportObjective, {
-        through: models.ReportObjectiveTopic,
-        foreignKey: 'topicId',
-        otherKey: 'reportObjectiveId',
-        as: 'reportObjectives',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveTopic.init({
