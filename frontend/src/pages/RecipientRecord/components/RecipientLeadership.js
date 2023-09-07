@@ -7,6 +7,10 @@ import { getRecipientLeadership } from '../../../fetchers/recipient';
 
 export default function RecipientLeadership({ regionId, recipientId }) {
   const [leadership, setLeadership] = useState([]);
+  const [sort, setSort] = useState({
+    sortBy: null,
+    direction: 'desc',
+  });
 
   useEffect(() => {
     async function fetchRecipientLeadership() {
@@ -25,6 +29,64 @@ export default function RecipientLeadership({ regionId, recipientId }) {
     fetchRecipientLeadership();
   }, [recipientId, regionId]);
 
+  const doSort = (key) => {
+    if (sort.sortBy === key) {
+      setSort({
+        sortBy: key,
+        direction: sort.direction === 'asc' ? 'desc' : 'asc',
+      });
+    } else {
+      setSort({
+        sortBy: key,
+        direction: 'asc',
+      });
+    }
+
+    const sortedLeadership = [...leadership].sort((a, b) => {
+      let val = 0;
+      if (a[key] > b[key]) {
+        val = 1;
+      } else if (a[key] < b[key]) {
+        val = -1;
+      }
+      return sort.direction === 'asc' ? val : -val;
+    });
+
+    setLeadership(sortedLeadership);
+  };
+
+  const renderColumnHeader = (displayName, name) => {
+    const getClassNamesFor = (n) => (sort.sortBy === n ? sort.direction : '');
+    const sortClassName = getClassNamesFor(name);
+    let fullAriaSort;
+    switch (sortClassName) {
+      case 'asc':
+        fullAriaSort = 'ascending';
+        break;
+      case 'desc':
+        fullAriaSort = 'descending';
+        break;
+      default:
+        fullAriaSort = 'none';
+        break;
+    }
+    return (
+      <th scope="col" aria-sort={fullAriaSort}>
+        <button
+          type="button"
+          onClick={() => {
+            doSort(name);
+          }}
+          className={`sortable ${sortClassName}`}
+          aria-label={`${displayName} Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
+        >
+          {displayName}
+        </button>
+      </th>
+    );
+  };
+
   return (
     <Container className="ttahub-recipient-record--profile-table" paddingX={0} paddingY={0}>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
@@ -33,10 +95,10 @@ export default function RecipientLeadership({ regionId, recipientId }) {
       <Table fullWidth striped stackedStyle="default">
         <thead>
           <tr>
-            <th scope="col">Title</th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Email change date</th>
+            {renderColumnHeader('Title', 'fullRole')}
+            {renderColumnHeader('Name', 'fullName')}
+            {renderColumnHeader('Email', 'email')}
+            {renderColumnHeader('Email change date', 'effectiveDate')}
           </tr>
         </thead>
         <tbody>
