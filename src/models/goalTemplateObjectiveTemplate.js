@@ -17,10 +17,12 @@ export default (sequelize, DataTypes) => {
     goalTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'GoalTemplates' }, key: 'id' },
     },
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'ObjectiveTemplates' }, key: 'id' },
     },
   }, {
     sequelize,
