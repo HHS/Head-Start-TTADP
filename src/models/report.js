@@ -9,7 +9,6 @@ const {
 } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
-  camelToPascalCase,
   generateJunctionTableAssociations,
 } = require('./helpers/associationsAndScopes');
 
