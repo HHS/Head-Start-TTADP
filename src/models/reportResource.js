@@ -1,38 +1,11 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportResource extends Model {
     static associate(models) {
-      ReportResource.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
-      ReportResource.belongsTo(models.Resource, {
-        foreignKey: 'resourceId',
-        as: 'resource',
-      });
-
-      models.Report.hasMany(models.ReportResource, {
-        foreignKey: 'reportId',
-        as: 'reportResources',
-      });
-      models.Resource.hasMany(models.ReportResource, {
-        foreignKey: 'resourceId',
-        as: 'reportResources',
-      });
-      models.Report.belongsToMany(models.Resource, {
-        through: models.ReportResource,
-        foreignKey: 'reportId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
-      models.Resource.belongsToMany(models.Report, {
-        through: models.ReportResource,
-        foreignKey: 'resourceId',
-        otherKey: 'reportId',
-        as: 'reports',
-      });
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportResource.init({
