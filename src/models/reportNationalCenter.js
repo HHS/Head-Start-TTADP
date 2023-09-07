@@ -2,7 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { REPORT_TYPE, NATIONAL_CENTER_ACTING_AS } = require('../constants');
-const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 /**
  * Status table. Stores topics used in activity reports and tta plans.
@@ -19,14 +19,7 @@ export default (sequelize, DataTypes) => {
         },
       });
 
-      // TODO: needs to support matrix
-      generateJunctionTableAssociations(
-        models.ReportNationalCenter, // TODO: needs to support .scope(NATIONAL_CENTER_ACTING_AS.TRAINER)
-        [
-          models.Report, // TODO: to support with & without .scope({ method: ['reportType', REPORT_TYPE.REPORT_SESSION] })
-          models.NationalCenter,
-        ],
-      );
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportNationalCenter.init({
@@ -34,6 +27,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     reportId: {
       type: DataTypes.BIGINT,
