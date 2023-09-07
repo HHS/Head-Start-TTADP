@@ -5,46 +5,12 @@ const {
 const {
   ENTITY_TYPE,
 } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
 export default (sequelize, DataTypes) => {
   class ReportObjectiveTemplate extends Model {
     static associate(models) {
-      ReportObjectiveTemplate.belongsTo(models.Report, {
-        foreignKey: 'reportId',
-        as: 'report',
-      });
-      ReportObjectiveTemplate.belongsTo(models.ObjectiveTemplate, {
-        foreignKey: 'objectiveTemplateId',
-        as: 'objectiveTemplate',
-      });
-
-      ReportObjectiveTemplate.belongsTo(models.ReportGoalTemplate, {
-        foreignKey: 'reportGoalTemplateId',
-        as: 'reportGoalTemplate',
-      });
-
-      models.ReportGoalTemplate.hasMany(models.ReportObjectiveTemplate, {
-        foreignKey: 'reportGoalTemplateId',
-        as: 'reportObjectiveTemplates',
-      });
-
-      // TODO: switch to scope model, my require relocating
-      models.Report.hasMany(models.ReportObjectiveTemplate, {
-        foreignKey: 'reportId',
-        as: 'reportObjectiveTemplates',
-        scope: {
-          [sequelize.col('"Report".reportType')]: {
-            [Op.in]: [
-              ENTITY_TYPE.REPORT_SESSION,
-            ],
-          },
-        },
-      });
-      models.ObjectiveTemplate.hasMany(models.ReportObjectiveTemplate, {
-        foreignKey: 'objectiveTemplateId',
-        as: 'reportObjectiveTemplates',
-      });
-      // TODO: add both through associations between report and ObjectiveTemplate
+      automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportObjectiveTemplate.init({
@@ -76,7 +42,7 @@ export default (sequelize, DataTypes) => {
     },
     reportGoalTemplateId: {
       type: DataTypes.BIGINT,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'ReportGoalTemplates',
@@ -84,9 +50,19 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    supportTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'SupportTypes',
+        },
+        key: 'id',
+      },
+    },
     templateTitle: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,
