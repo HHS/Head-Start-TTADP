@@ -199,13 +199,14 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     await ActivityReport.destroy({ where: { id: [activityReport1.id, activityReport2.id] } });
 
     // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goal.id } });
+    await Objective.destroy({ where: { goalId: goal.id }, force: true });
 
     // Delete Goal.
     await Goal.destroy({
       where: {
         id: goal.id,
       },
+      force: true,
     });
 
     // Delete Grant.
