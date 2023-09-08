@@ -17,7 +17,21 @@ export default function ObjectiveSuspendModal({
   objectiveSuspendContextInputName,
   objectiveSuspendContext,
   onChangeSuspendContext,
+  onChangeStatus,
+  setError,
+  error,
 }) {
+  const onClick = () => {
+    if (!objectiveSuspendReason) {
+      setError(true);
+      return;
+    }
+
+    // hey if we're here, we're suspendin'
+    onChangeStatus('Suspended');
+    modalRef.current.toggleModal();
+  };
+
   return (
     <VanillaModal
       forceAction
@@ -26,16 +40,17 @@ export default function ObjectiveSuspendModal({
         <>
           Why are you suspending this objective?
           {' '}
-          <span>(required)</span>
+          <span className="smart-hub--form-required">(required)</span>
         </>
       )}
       modalRef={modalRef}
     >
       <Fieldset>
-        <FormGroup>
+        <FormGroup error={error.props.children}>
           <Label className="usa-sr-only" htmlFor={`suspend-objective-${objectiveId}-reason`}>
             Reason for suspension
           </Label>
+          { error }
           { SUSPEND_REASONS.map((r) => (
             <Radio
               id={`suspend-objective-${objectiveId}-reason-${r.trim().replace(' ', '-').toLowerCase()}`}
@@ -46,6 +61,7 @@ export default function ObjectiveSuspendModal({
               value={r}
               className="smart-hub--report-checkbox"
               checked={objectiveSuspendReason === r}
+              required
             />
           ))}
         </FormGroup>
@@ -62,7 +78,7 @@ export default function ObjectiveSuspendModal({
           onChange={onChangeSuspendContext}
         />
       </FormGroup>
-      <Button type="button">Submit</Button>
+      <Button type="button" onClick={onClick}>Submit</Button>
       <ModalToggleButton modalRef={modalRef} className="usa-button--subtle">Cancel</ModalToggleButton>
     </VanillaModal>
   );
@@ -80,4 +96,7 @@ ObjectiveSuspendModal.propTypes = {
   objectiveSuspendContextInputName: PropTypes.string.isRequired,
   objectiveSuspendContext: PropTypes.string.isRequired,
   onChangeSuspendContext: PropTypes.func.isRequired,
+  onChangeStatus: PropTypes.func.isRequired,
+  setError: PropTypes.func.isRequired,
+  error: PropTypes.node.isRequired,
 };
