@@ -185,7 +185,7 @@ test.describe('Activity Report', () => {
 
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1o1');
     // Topics.
-    await page.getByText('Topics *Get help choosing topics').click()
+    await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -236,7 +236,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await blur(page);
     await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');  
-    await page.getByText('Topics *Get help choosing topics').click()
+    await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -660,7 +660,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.getByText('Topics *Get help choosing topics').click()
+    await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -737,7 +737,7 @@ test.describe('Activity Report', () => {
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1 o1 title');
 
     // select a topic
-    await page.getByText('Topics *Get help choosing topics').click()
+    await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -833,7 +833,7 @@ test.describe('Activity Report', () => {
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await blur(page);
 
-    await page.getByText('Topics *Get help choosing topics').click()
+    await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');    
 
