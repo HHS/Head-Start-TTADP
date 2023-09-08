@@ -126,6 +126,8 @@ class ActivityReportObjectives{
  * updatedAt : timestamp with time zone : now()
  arOrder : integer : 1
  status : varchar(255)
+ suspendContext : text
+ suspendReason : enum
  title : text
  ttaProvided : text
 }
