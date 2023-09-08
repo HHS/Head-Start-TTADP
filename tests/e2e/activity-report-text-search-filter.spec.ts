@@ -113,7 +113,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
 
     // Topics.
-    await page.getByText('Topics *Get help choosing topics').click()
+    await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
