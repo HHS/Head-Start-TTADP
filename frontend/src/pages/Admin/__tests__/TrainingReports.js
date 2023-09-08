@@ -39,9 +39,9 @@ describe('Training Reports page', () => {
     const fileInput = await screen.findByTestId('file-input-input');
     expect(fileInput).toBeVisible();
 
-    // Assert button 'Upload training reports' is disabled.
+    // Assert button 'Upload training reports' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
-    expect(uploadButton).toBeDisabled();
+    expect(uploadButton).toBeVisible();
   });
 
   it('displays csv required error', async () => {
@@ -60,9 +60,9 @@ describe('Training Reports page', () => {
     const error = await screen.findByText(/Please upload a CSV file./i);
     expect(error).toBeVisible();
 
-    // Assert button 'Upload training reports' is disabled.
+    // Assert button 'Upload training reports' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
-    expect(uploadButton).toBeDisabled();
+    expect(uploadButton).toBeVisible();
   });
 
   it('displays duplicate event id error', async () => {
@@ -81,9 +81,9 @@ describe('Training Reports page', () => {
     const error = await screen.findByText(/Duplicate Event IDs found. Please correct and try again./i);
     expect(error).toBeVisible();
 
-    // Assert button 'Upload training reports' is disabled.
+    // Assert button 'Upload training reports' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
-    expect(uploadButton).toBeDisabled();
+    expect(uploadButton).toBeVisible();
   });
 
   it('displays missing columns error', async () => {
@@ -102,9 +102,9 @@ describe('Training Reports page', () => {
     const error = await screen.findByText(/Required headers missing: Event ID, Edit Title, Creator/i);
     expect(error).toBeVisible();
 
-    // Assert button 'Upload training reports' is disabled.
+    // Assert button 'Upload training reports' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
-    expect(uploadButton).toBeDisabled();
+    expect(uploadButton).toBeVisible();
   });
 
   it('displays good import csv', async () => {
@@ -123,9 +123,9 @@ describe('Training Reports page', () => {
     const error = await screen.findByText(/2 events will be imported./i);
     expect(error).toBeVisible();
 
-    // Assert button 'Upload training reports' is disabled.
+    // Assert button 'Upload training reports' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
-    expect(uploadButton).not.toBeDisabled();
+    expect(uploadButton).toBeVisible();
 
     // Mock fetch response for url 'trainingReportsUrl'.
     fetchMock.post(trainingReportsUrl, {
@@ -153,7 +153,7 @@ describe('Training Reports page', () => {
     const errors = await screen.findByText(/2 errors: event id 2, event id 3/i);
     expect(errors).toBeVisible();
 
-    expect(uploadButton).toBeDisabled();
+    expect(uploadButton).toBeVisible();
 
     // Assert the text '2 events will be imported.' is no longer displayed.
     const info = screen.queryAllByText(/2 events will be imported./i);
@@ -176,9 +176,9 @@ describe('Training Reports page', () => {
     const error = await screen.findByText(/2 events will be imported./i);
     expect(error).toBeVisible();
 
-    // Assert button 'Upload training reports' is disabled.
+    // Assert button 'Upload training reports' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
-    expect(uploadButton).not.toBeDisabled();
+    expect(uploadButton).toBeVisible();
 
     // Mock fetch error response for url 'trainingReportsUrl'.
     fetchMock.post(trainingReportsUrl, { status: 500, body: { success: false, count: 0 } });
@@ -189,5 +189,35 @@ describe('Training Reports page', () => {
     // Assert to see correct import count.
     const errorResponse = await screen.findByText(/Error attempting to import training reports./i);
     expect(errorResponse).toBeVisible();
+  });
+
+  it('displays error if no import file is selected', async () => {
+    // Render.
+    const history = createMemoryHistory();
+    render(<Router history={history}><TrainingReports /></Router>);
+
+    // Assert by data-testid 'file-input-input'.
+    const fileInput = await screen.findByTestId('file-input-input');
+    expect(fileInput).toBeVisible();
+
+    // Click the button 'Upload training reports'.
+    const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
+    userEvent.click(uploadButton);
+
+    // Verify error message is displayed.
+    let error = await screen.findByText(/Please select a file to import./i);
+    expect(error).toBeVisible();
+
+    // Load 'TrainingReports_Duplicate_EventIds.csv' into a file object.
+    const file = new File([goodTrainingReportsCsv], 'TrainingReports_Duplicate_EventIds.csv', { type: 'text/csv' });
+    userEvent.upload(fileInput, file);
+
+    // Assert to see correct import count.
+    const info = await screen.findByText(/2 events will be imported./i);
+    expect(info).toBeVisible();
+
+    // Assert error message is no longer visible.
+    error = screen.queryAllByText(/Please select a file to import./i);
+    expect(error.length).toBe(0);
   });
 });

@@ -15,7 +15,6 @@ function TrainingReports() {
   const [error, setError] = useState();
   const [success, setSuccess] = useState();
   const [info, setInfo] = useState();
-  const [uploadDisabled, setUploadDisabled] = useState(true);
 
   const [skipped, setSkipped] = useState([]);
   const [errors, setErrors] = useState([]);
@@ -53,9 +52,13 @@ function TrainingReports() {
       const { files } = fileInputRef.current;
       const file = files[0];
 
+      // If there is no file to import throw an error.
+      if (!file) {
+        setError('Please select a file to import.');
+        return;
+      }
+
       // Get File.
-      const data = new FormData();
-      data.append('file', file);
       const res = await importTrainingReports(file);
       setSuccess(`${res.count} events imported successfully.`);
       setSkipped(res.skipped);
@@ -66,7 +69,6 @@ function TrainingReports() {
     } finally {
       // Clear file input.
       setInfo('');
-      setUploadDisabled(true);
     }
   };
 
@@ -81,7 +83,6 @@ function TrainingReports() {
     // Verify that the file is a CSV.
     if (files.length === 1 && files[0].type !== 'text/csv') {
       setError('Please upload a CSV file.');
-      setUploadDisabled(true);
       e.target.value = null;
       return;
     }
@@ -102,13 +103,11 @@ function TrainingReports() {
       const invalidHeaders = headers.filter((header) => !validCsvHeaders.includes(header));
       if (requiredHeaders.length > 0) {
         setError(`Required headers missing: ${requiredHeaders.join(', ')}`);
-        setUploadDisabled(true);
         e.target.value = null;
         return;
       }
       if (invalidHeaders.length > 0) {
         setError(`Invalid headers found: ${invalidHeaders.join(', ')}`);
-        setUploadDisabled(true);
         e.target.value = null;
         return;
       }
@@ -120,7 +119,6 @@ function TrainingReports() {
       // Check if we have duplicate 'Event ID' values.
       if (distinctEventIds.length !== eventIds.length) {
         setError('Duplicate Event IDs found. Please correct and try again.');
-        setUploadDisabled(true);
         e.target.value = null;
         return;
       }
@@ -130,7 +128,6 @@ function TrainingReports() {
 
       // Clear errors and enable import button.
       setError('');
-      setUploadDisabled(false);
     };
 
     // call reader with the file.
@@ -169,7 +166,7 @@ function TrainingReports() {
                 </ul>
               </div>
               )}
-              <Button className="margin-top-2" type="button" onClick={importTr} disabled={uploadDisabled}>Upload training reports</Button>
+              <Button className="margin-top-2" type="button" onClick={importTr}>Upload training reports</Button>
             </FormGroup>
           </div>
 
