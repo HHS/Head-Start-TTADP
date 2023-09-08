@@ -83,19 +83,13 @@ const createOrUpdateReportTrainingEvent = async (
 
 const syncReportTrainingEvent = async (
   data: FullReportTrainingEventDataType,
+  metaDataProcessors: Array<(...args: any[]) => Promise<any>>,
 ) => {
-  const report = await syncReport({
-    ...data,
-    ...(!Object.keys(data).includes('reportType') && { reportType: REPORT_TYPE.REPORT_TRAINING_EVENT }),
-  });
   const remappedData = dataRemap(data);
-  const { matched: filteredData, unmatched } = await filterData({
-    ...remappedData,
-    reportId: report.reportId,
-  });
+  const { matched: filteredData, unmatched } = await filterData(remappedData);
 
   const reportDescriptor: ReportDescriptor = {
-    reportId: report.reportId,
+    reportId: data.reportId,
     reportType: REPORT_TYPE.REPORT_TRAINING_EVENT,
     regionId: data.regionId,
   };
@@ -155,6 +149,8 @@ const syncReportTrainingEvent = async (
 
 const getReportTrainingEvents = async (
   reportIds?: number[],
+  scope?: object,
+  includes?: [(...args: any[]) => any, string[]][],
 ) => Report.findAll({
   attributes: [],
   where: {
@@ -168,13 +164,25 @@ const getReportTrainingEvents = async (
       required: true,
       attributes: [],
     },
-    // TODO: add the other table includes here
+    ...(includes
+      && includes.length
+      && includes.map(([typedInclude, metaDate]) => {
+        if (metaDate && metaDate.length) {
+          return metaDate.map((md) => typedInclude(
+            REPORT_TYPE.REPORT_TRAINING_EVENT,
+            metaDate,
+          ));
+        }
+        return typedInclude(REPORT_TYPE.REPORT_TRAINING_EVENT);
+      })),
   ],
 });
 
 const getReportTrainingEvent = async (
   reportId: number,
-) => getReportTrainingEvents([reportId]);
+  scope?: object,
+  includes?: [(...args: any[]) => any, string[]][],
+) => getReportTrainingEvents([reportId], scope, includes);
 
 export {
   dataRemap,
