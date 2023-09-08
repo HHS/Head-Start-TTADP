@@ -158,7 +158,7 @@ function TrainingReports() {
           )}
           <div className="display-flex">
             <FormGroup>
-              <Label htmlFor="file-input-single">Input accepts a single file</Label>
+              <Label htmlFor="tr-file-input-single">Input accepts a single file</Label>
               <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
               {(success) && (
               <div>
