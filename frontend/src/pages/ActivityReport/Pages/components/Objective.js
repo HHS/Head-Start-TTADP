@@ -53,7 +53,7 @@ export default function Objective({
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
-  const { getValues } = useFormContext();
+  const { getValues, setError, clearErrors } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
@@ -164,7 +164,10 @@ export default function Objective({
       name: objectiveSuspendInputName,
     },
   } = useController({
-    name: `${fieldArrayName}[${index}].status`,
+    rules: {
+      required: objective.status === 'Suspended',
+    },
+    name: `${fieldArrayName}[${index}].suspendReason`,
     defaultValue: objective.suspendReason || '',
   });
 
@@ -175,7 +178,7 @@ export default function Objective({
       name: objectiveSuspendContextInputName,
     },
   } = useController({
-    name: `${fieldArrayName}[${index}].status`,
+    name: `${fieldArrayName}[${index}].suspendContext`,
     rules: { required: true },
     defaultValue: objective.suspendContext || '',
   });
@@ -210,7 +213,7 @@ export default function Objective({
     setStatusForCalculations(newObjective.status);
   };
 
-  const onUploadFile = async (files, _objective, setError) => {
+  const onUploadFile = async (files, _objective, setUploadError) => {
     // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
@@ -233,7 +236,7 @@ export default function Objective({
       const response = await uploadObjectivesFile(data);
       return response;
     } catch (error) {
-      setError('There was an error uploading your file(s).');
+      setUploadError('There was an error uploading your file(s).');
       return null;
     } finally {
       setIsAppLoading(false);
@@ -255,16 +258,24 @@ export default function Objective({
     const { value: updatedStatus } = event.target;
 
     if (updatedStatus === 'Suspended') {
-      //
-
       modalRef.current.toggleModal();
-
       return;
     }
 
-    //
-
+    onChangeSuspendContext('');
+    onChangeSuspendReason('');
     onChangeStatus(updatedStatus);
+  };
+
+  const setStatusReasonError = (on) => {
+    if (on) {
+      setError(`${fieldArrayName}[${index}].suspendReason`, {
+        type: 'required',
+        message: 'Reason for suspension is required',
+      });
+    } else {
+      clearErrors(`${fieldArrayName}[${index}].suspendReason`);
+    }
   };
 
   return (
@@ -354,6 +365,11 @@ export default function Objective({
         objectiveSuspendContextInputName={objectiveSuspendContextInputName}
         objectiveSuspendContext={objectiveSuspendContext}
         onChangeSuspendContext={onChangeSuspendContext}
+        onChangeStatus={onChangeStatus}
+        setError={setStatusReasonError}
+        error={errors.suspendReason
+          ? ERROR_FORMAT(errors.suspendReason.message)
+          : NO_ERROR}
       />
 
       <ObjectiveStatus
@@ -362,6 +378,8 @@ export default function Objective({
         status={objectiveStatus}
         onChangeStatus={onUpdateStatus}
         userCanEdit
+        suspendContext={objectiveSuspendContext}
+        suspendReason={objectiveSuspendReason}
       />
     </>
   );
@@ -384,6 +402,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     topics: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    suspendReason: PropTypes.shape({
       message: PropTypes.string,
     }),
   }).isRequired,

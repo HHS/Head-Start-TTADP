@@ -464,6 +464,15 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
+    const suspendContext = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].suspendContext
+      ? objective.activityReportObjectives[0].suspendContext : null;
+    const suspendReason = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].suspendReason
+      ? objective.activityReportObjectives[0].suspendReason : null;
+
     const { id } = objective;
 
     return [...objectives, {
@@ -475,6 +484,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
+      suspendContext,
+      suspendReason,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
@@ -704,6 +715,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 [Op.ne]: '',
               },
             },
+            {
+              status: {
+                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+              },
+            },
           ],
         },
         attributes: [
@@ -734,6 +750,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
+              'suspendReason',
+              'suspendContext',
             ],
             required: false,
             where: {
@@ -1761,7 +1779,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
     return [];
   }
 
-  // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
     || o.topics.length
@@ -1777,6 +1794,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      suspendReason,
+      suspendContext,
       ...updatedFields
     } = objective;
 
@@ -1799,6 +1818,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         await savedObjective.update({
           title,
         }, { individualHooks: true });
+        await savedObjective.save({ individualHooks: true });
       }
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
@@ -1850,6 +1870,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       {
         ...metadata,
         status,
+        suspendContext,
+        suspendReason,
         ttaProvided: objective.ttaProvided,
         order: index,
       },

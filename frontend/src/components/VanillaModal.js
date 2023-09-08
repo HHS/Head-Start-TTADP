@@ -36,7 +36,7 @@ export default function VanillaModal({
 }
 
 VanillaModal.propTypes = {
-  heading: PropTypes.oneOfType(PropTypes.string, PropTypes.node).isRequired,
+  heading: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
   modalRef: PropTypes.oneOfType([
