@@ -72,7 +72,7 @@ const ActivitySummary = ({
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient names';
+  const recipientLabel = otherEntitySelected ? 'Other entities ' : 'Recipient names ';
   const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
   const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
   const placeholderText = '- Select -';
@@ -177,7 +177,7 @@ const ActivitySummary = ({
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
-            label="Collaborating specialists"
+            label="Collaborating specialists "
             name="activityReportCollaborators"
             required={false}
           >
@@ -199,7 +199,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Target populations addressed"
+            label="Target populations addressed "
             name="targetPopulations"
             required
           >
@@ -241,7 +241,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Reasons"
+            label="Reasons "
             name="reason"
           >
             <MultiSelect
@@ -311,6 +311,7 @@ const ActivitySummary = ({
               <FormItem
                 label="Duration in hours (round to the nearest half hour)"
                 name="duration"
+                required
               >
                 <TextInput
                   id="duration"
@@ -319,6 +320,7 @@ const ActivitySummary = ({
                   min={0}
                   max={99.5}
                   step={0.5}
+                  required
                   inputRef={
                     register({
                       required: 'Enter duration',
@@ -448,6 +450,7 @@ const ActivitySummary = ({
                   name="numberOfParticipants"
                   type="number"
                   min={1}
+                  required
                   inputRef={
                     register({
                       required: 'Enter number of participants',
