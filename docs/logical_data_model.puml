@@ -531,6 +531,8 @@ class Objectives{
  lastSuspendedAt : timestamp with time zone
  rtrOrder : integer : 1
  status : varchar(255)
+ suspendContext : text
+ suspendReason : enum
  title : text
 }
 
