@@ -23,7 +23,9 @@ describe('ObjectiveStatus', () => {
     expect(dropdown).toBeVisible();
 
     const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(3);
+    expect(options).toHaveLength(4);
+    const optionText = options.map((option) => option.textContent);
+    expect(optionText).toEqual(['Not Started', 'In Progress', 'Suspended', 'Complete']);
 
     userEvent.selectOptions(dropdown, 'Complete');
     expect(onChangeStatus).toHaveBeenCalledWith('Complete');
@@ -45,7 +47,9 @@ describe('ObjectiveStatus', () => {
     expect(dropdown).toBeVisible();
 
     const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(2);
+    expect(options).toHaveLength(3);
+    const optionText = options.map((option) => option.textContent);
+    expect(optionText).toEqual(['In Progress', 'Suspended', 'Complete']);
   });
 
   it('shows the read only view when the goal is not started', async () => {

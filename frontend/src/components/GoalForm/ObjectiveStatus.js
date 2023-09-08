@@ -28,6 +28,7 @@ export default function ObjectiveStatus({
       return (
         <>
           <option>In Progress</option>
+          <option>Suspended</option>
           <option>Complete</option>
         </>
       );
@@ -38,6 +39,7 @@ export default function ObjectiveStatus({
       <>
         <option>Not Started</option>
         <option>In Progress</option>
+        <option>Suspended</option>
         <option>Complete</option>
       </>
     );
