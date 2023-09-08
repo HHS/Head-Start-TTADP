@@ -901,6 +901,8 @@ describe('create goal', () => {
       isRttapa: 'No',
       prompts: [],
       sources: [],
+      onAnyReport: true,
+      onApprovedAR: false,
       grants: [{
         id: 1,
         number: '1',

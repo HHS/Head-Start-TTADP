@@ -388,8 +388,9 @@ describe('Topics and frequency graph widget', () => {
           thirdGoalObjA.id,
         ],
       },
+      force: true,
     });
-    await Goal.destroy({ where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] } });
+    await Goal.destroy({ where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] }, force: true });
     await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
