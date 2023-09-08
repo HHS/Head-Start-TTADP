@@ -51,6 +51,7 @@ export default function ObjectiveTitle({
             inputName={inputName}
             disabled={isLoading}
             value={title}
+            className="ttahub--objective-title"
           />
         </>
       )}

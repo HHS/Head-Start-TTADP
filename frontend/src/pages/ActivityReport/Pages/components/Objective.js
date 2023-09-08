@@ -1,5 +1,5 @@
 import React, {
-  useState, useMemo, useContext,
+  useState, useMemo, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +7,7 @@ import {
   useController, useFormContext,
 } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
+
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
@@ -25,6 +26,7 @@ import {
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
+import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 
 export default function Objective({
   objective,
@@ -39,6 +41,8 @@ export default function Objective({
   initialObjectiveStatus,
   reportId,
 }) {
+  const modalRef = useRef();
+
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
   const initialObjective = (() => ({
@@ -153,6 +157,29 @@ export default function Objective({
     defaultValue: objective.status || 'Not Started',
   });
 
+  const {
+    field: {
+      onChange: onChangeSuspendReason,
+      value: objectiveSuspendReason,
+      name: objectiveSuspendInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].status`,
+    defaultValue: objective.suspendReason || '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSuspendContext,
+      value: objectiveSuspendContext,
+      name: objectiveSuspendContextInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].status`,
+    rules: { required: true },
+    defaultValue: objective.suspendContext || '',
+  });
+
   const isOnApprovedReport = useMemo(() => objective.activityReports
     && objective.activityReports.some(
       (report) => report.status === REPORT_STATUSES.APPROVED,
@@ -223,6 +250,22 @@ export default function Objective({
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
   const onRemove = () => remove(index);
+
+  const onUpdateStatus = (event) => {
+    const { value: updatedStatus } = event.target;
+
+    if (updatedStatus === 'Suspended') {
+      //
+
+      modalRef.current.toggleModal();
+
+      return;
+    }
+
+    //
+
+    onChangeStatus(updatedStatus);
+  };
 
   return (
     <>
@@ -301,11 +344,23 @@ export default function Objective({
           : NO_ERROR}
         validateTta={onBlurTta}
       />
+
+      <ObjectiveSuspendModal
+        objectiveId={selectedObjective.id}
+        modalRef={modalRef}
+        objectiveSuspendReason={objectiveSuspendReason}
+        onChangeSuspendReason={onChangeSuspendReason}
+        objectiveSuspendInputName={objectiveSuspendInputName}
+        objectiveSuspendContextInputName={objectiveSuspendContextInputName}
+        objectiveSuspendContext={objectiveSuspendContext}
+        onChangeSuspendContext={onChangeSuspendContext}
+      />
+
       <ObjectiveStatus
         onBlur={onBlurStatus}
         inputName={objectiveStatusInputName}
         status={objectiveStatus}
-        onChangeStatus={onChangeStatus}
+        onChangeStatus={onUpdateStatus}
         userCanEdit
       />
     </>

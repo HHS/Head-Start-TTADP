@@ -7,7 +7,7 @@ import {
 const DEFAULT_TEXTAREA_HEIGHT = 160;
 
 export default function AutomaticResizingTextarea({
-  onUpdateText, onBlur, inputName, disabled, value,
+  onUpdateText, onBlur, inputName, disabled, value, className,
 }) {
   const [height, setHeight] = useState(`${DEFAULT_TEXTAREA_HEIGHT}px`);
   const onChange = (e) => {
@@ -19,6 +19,7 @@ export default function AutomaticResizingTextarea({
 
   return (
     <Textarea
+      className={className}
       onBlur={onBlur}
       id={inputName}
       name={inputName}
@@ -37,8 +38,10 @@ AutomaticResizingTextarea.propTypes = {
   inputName: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
   value: PropTypes.string.isRequired,
+  className: PropTypes.string,
 };
 
 AutomaticResizingTextarea.defaultProps = {
   disabled: false,
+  className: '',
 };

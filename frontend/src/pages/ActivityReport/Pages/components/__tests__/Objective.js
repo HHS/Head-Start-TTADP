@@ -194,9 +194,9 @@ describe('Objective', () => {
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
     expect(await screen.findByText(/Existing objective/i, { selector: 'p' })).toBeVisible();
     expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
-    expect(Array.from(document.querySelectorAll('textarea'))).toHaveLength(0);
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(0);
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
     expect(await screen.findByText(/Create a new objective/i)).toBeVisible();
-    expect(Array.from(document.querySelectorAll('textarea'))).toHaveLength(1);
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(1);
   });
 });
