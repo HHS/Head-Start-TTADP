@@ -2,7 +2,7 @@ import React from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS', 'EHS-CCP'].map((label, value) => ({ value, label }));
+const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS'].map((label, value) => ({ value, label }));
 
 export default function FilterProgramType({
   onApply,
