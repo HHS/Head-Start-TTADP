@@ -121,6 +121,7 @@ export default function ObjectiveTopics({
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}
           getOptionValue={(option) => option.id}
+          required
         />
       </FormGroup>
     </>
