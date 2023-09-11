@@ -12,10 +12,11 @@ import { syncCollaboratorsForType } from './reportCollaborator';
 import { syncReportNationalCenters } from './reportNationalCenter';
 import { syncReportReasons } from './reportReason';
 import { syncReportTargetPopulations } from './reportTargetPopulation';
+import organizer from '../../models/organizer';
 
 const {
-  Report,
   ReportTrainingEvent,
+  Organizer,
 } = db;
 
 interface ReportTrainingEventDataType {
@@ -64,7 +65,7 @@ const filterData = async (
 const createOrUpdateReportTrainingEvent = async (
   data: ReportTrainingEventDataType,
 ) => {
-  let reportTrainingEvent;
+  let reportTrainingEvent;;
   if (data.id) { // sync/update report path
     reportTrainingEvent = await ReportTrainingEvent.findById(data.id);
     const changedData = collectChangedValues(data, reportTrainingEvent);
@@ -93,7 +94,7 @@ const syncReportTrainingEvent = async (
     reportType: REPORT_TYPE.REPORT_TRAINING_EVENT,
     regionId: data.regionId,
   };
-  // TODO: handle the unmatched data
+  // TODO: Refector to use metaDataProcessors array, and collect and return all unmatched data sets
   await Promise.all([
     createOrUpdateReportTrainingEvent(filteredData),
     (unmatched.goal)
@@ -147,47 +148,36 @@ const syncReportTrainingEvent = async (
   ]);
 };
 
-const getReportTrainingEvents = async (
-  reportIds?: number[],
-  scope?: object,
-  includes?: [(...args: any[]) => any, string[]][],
-) => Report.findAll({
-  attributes: [],
-  where: {
-    id: reportIds,
-    reportType: REPORT_TYPE.REPORT_TRAINING_EVENT,
-  },
+const includeReportTrainingEvent = () => ({
+  model: ReportTrainingEvent,
+  as: 'reportTrainingEvent',
+  required: true,
+  attributes: [
+    'id',
+    'regionId',
+    'name',
+    'audience',
+    'trainingType',
+    'vision',
+    'createdAt',
+    'updatedAt',
+  ],
   includes: [
     {
-      model: ReportTrainingEvent,
-      as: 'reportTrainingEvent',
+      model: Organizer,
+      as: 'organizer',
       required: true,
-      attributes: [],
+      attributes: [
+        'id',
+        'name',
+      ],
     },
-    ...(includes
-      && includes.length
-      && includes.map(([typedInclude, metaDate]) => {
-        if (metaDate && metaDate.length) {
-          return metaDate.map((md) => typedInclude(
-            REPORT_TYPE.REPORT_TRAINING_EVENT,
-            metaDate,
-          ));
-        }
-        return typedInclude(REPORT_TYPE.REPORT_TRAINING_EVENT);
-      })),
   ],
 });
-
-const getReportTrainingEvent = async (
-  reportId: number,
-  scope?: object,
-  includes?: [(...args: any[]) => any, string[]][],
-) => getReportTrainingEvents([reportId], scope, includes);
 
 export {
   dataRemap,
   filterData,
   syncReportTrainingEvent,
-  getReportTrainingEvents,
-  getReportTrainingEvent,
+  includeReportTrainingEvent,
 };
