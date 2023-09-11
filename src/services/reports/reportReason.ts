@@ -4,7 +4,9 @@ import {
   syncGenericEnums,
   getReportGenericEnums,
   getReportGenericEnum,
+  includeGenericEnums,
 } from './reportGenericEnum';
+import { REPORT_TYPE } from '../../constants';
 
 const {
   Reason,
@@ -47,8 +49,17 @@ const getReportReason = async (
   reasonId,
 );
 
+const includeReportReason = (
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+) => includeGenericEnums(
+  ReportReason,
+  reasonEnumInfo,
+  reportType,
+);
+
 export {
   syncReportReasons,
   getReportReasons,
   getReportReason,
+  includeReportReason,
 };
