@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
-import { Label } from '@trussworks/react-uswds';
+import { Label, Button } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
@@ -14,6 +14,7 @@ import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
 import GoalForm from './GoalForm';
+import Modal from '../../../../components/VanillaModal';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -55,6 +56,9 @@ const GoalPicker = ({
   const selectedGoals = useWatch({ name: 'goals' });
   const activityRecipients = watch('activityRecipients');
   const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
+
+  const modalRef = useRef();
+  const [selectedGoal, setSelectedGoal] = useState(null);
 
   const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
     const { id, name } = goal;
@@ -122,10 +126,8 @@ const GoalPicker = ({
     )),
   ];
 
-  const onSelectGoal = async (goal) => {
-    setValue('goalForEditing.objectives', []);
+  const onChangeGoal = async (goal) => {
     onChange(goal);
-
     if (goal.isCurated) {
       const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
       if (prompts) {
@@ -141,14 +143,62 @@ const GoalPicker = ({
     if (goal.goalIds) {
       setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
     }
+
+    setSelectedGoal(null);
+  };
+
+  const onKeep = async () => {
+    const savedObjectives = goalForEditing.objectives.map((o) => ({ ...o }));
+    onChangeGoal(selectedGoal);
+    setValue('goalForEditing.objectives', savedObjectives);
+    modalRef.current.toggleModal();
+  };
+
+  const onRemove = async () => {
+    setValue('goalForEditing.objectives', []);
+    onChangeGoal(selectedGoal);
+    modalRef.current.toggleModal();
+  };
+
+  const onSelectGoal = async (goal) => {
+    const objectivesLength = (() => {
+      if (goalForEditing) {
+        return goalForEditing.objectives.length;
+      }
+      return 0;
+    })();
+
+    if (objectivesLength && modalRef.current) {
+      setSelectedGoal(goal);
+      modalRef.current.toggleModal();
+      return;
+    }
+
+    setValue('goalForEditing.objectives', []);
+    onChangeGoal(goal);
   };
 
   return (
     <>
+      <Modal
+        modalRef={modalRef}
+        heading="You have selected a different goal."
+      >
+        <p>Do you want to keep the current objective summary information or remove it?</p>
+        <Button
+          type="button"
+          className="margin-right-1"
+          onClick={onKeep}
+          data-focus="true"
+        >
+          Keep objective
+        </Button>
+        <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
+      </Modal>
       <div className="margin-top-3 position-relative">
         <Label>
-          Select recipient&apos;s goal
-          {' '}
+          Select recipient&apos;s goal&nbsp;
+          {'   '}
           <Req />
           <Select
             name="goalForEditing"
@@ -169,6 +219,7 @@ const GoalPicker = ({
             }}
             placeholder="- Select -"
             value={goalForEditing}
+            required
           />
         </Label>
         {goalForEditing ? (

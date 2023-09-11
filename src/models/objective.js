@@ -127,6 +127,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
+    paranoid: true,
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),

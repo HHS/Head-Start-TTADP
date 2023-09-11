@@ -258,6 +258,7 @@ describe('goal filtersToScopes', () => {
         id: objectiveIds,
       },
       individualHooks: true,
+      force: true,
     });
 
     await ActivityReportGoal.destroy({
@@ -272,6 +273,7 @@ describe('goal filtersToScopes', () => {
         id: possibleGoalIds,
       },
       individualHooks: true,
+      force: true,
     });
 
     await Promise.all(
@@ -340,6 +342,7 @@ describe('goal filtersToScopes', () => {
           id: goalForGroups.id,
         },
         individualHooks: true,
+        force: true,
       });
 
       await GroupGrant.destroy({
@@ -1128,6 +1131,7 @@ describe('goal filtersToScopes', () => {
           id: o.map((ob) => ob.id),
         },
         individualHooks: true,
+        force: true,
       });
 
       await ActivityReportGoal.destroy({
@@ -1142,6 +1146,7 @@ describe('goal filtersToScopes', () => {
           id: goals.map((g) => g.id),
         },
         individualHooks: true,
+        force: true,
       });
 
       await NextStep.destroy({
@@ -1489,6 +1494,7 @@ describe('goal filtersToScopes', () => {
           id: o.map((ob) => ob.id),
         },
         individualHooks: true,
+        force: true,
       });
 
       await ActivityReportGoal.destroy({
@@ -1503,6 +1509,7 @@ describe('goal filtersToScopes', () => {
           id: goals.map((g) => g.id),
         },
         individualHooks: true,
+        force: true,
       });
 
       await Promise.all(reports.map((r) => (
@@ -1792,6 +1799,7 @@ describe('goal filtersToScopes', () => {
           id: o.map((ob) => ob.id),
         },
         individualHooks: true,
+        force: true,
       });
 
       await ActivityReportGoal.destroy({
@@ -1806,6 +1814,7 @@ describe('goal filtersToScopes', () => {
           id: goals.map((g) => g.id),
         },
         individualHooks: true,
+        force: true,
       });
 
       await NextStep.destroy({

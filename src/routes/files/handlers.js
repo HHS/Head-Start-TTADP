@@ -143,7 +143,7 @@ const deleteHandler = async (req, res) => {
 
       const eventPolicy = new EventPolicy(user, event);
 
-      if (!eventPolicy.canUpdate()) {
+      if (!eventPolicy.canUploadFile()) {
         res.sendStatus(403);
         return;
       }
@@ -173,72 +173,6 @@ const deleteHandler = async (req, res) => {
     if (canDelete) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
-    }
-    res.status(204).send();
-  } catch (error) {
-    handleErrors(req, res, error, logContext);
-  }
-};
-
-const linkHandler = async (req, res) => {
-  const {
-    reportId,
-    reportObjectiveId,
-    objectiveId,
-    objectiveTemplateId,
-    fileId,
-  } = req.params;
-
-  const userId = await currentUserId(req, res);
-
-  const user = await userById(userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
-
-  if (!authorization.canUpdate()) {
-    res.sendStatus(403);
-    return;
-  }
-  try {
-    const file = await getFileById(fileId);
-    if (reportId
-      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
-      createActivityReportFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportId,
-        file.size,
-      );
-    } else if (reportObjectiveId
-      && !(
-        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
-          .includes(reportObjectiveId)
-      )) {
-      createActivityReportObjectiveFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportObjectiveId,
-        file.size,
-      );
-    } else if (objectiveId
-      && !(file.objectiveFiles.map((r) => r.objectiveId).includes(objectiveId))) {
-      createObjectiveFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportId,
-        file.size,
-      );
-    } else if (objectiveTemplateId
-      && !(
-        file.objectiveTemplateFiles.map((r) => r.objectiveTemplateId)
-          .includes(objectiveTemplateId)
-      )) {
-      createObjectiveTemplateFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        objectiveTemplateId,
-        file.size,
-      );
     }
     res.status(204).send();
   } catch (error) {
@@ -362,7 +296,7 @@ const uploadHandler = async (req, res) => {
 
       const eventPolicy = new EventPolicy(user, event);
 
-      if (!eventPolicy.canUpdate()) {
+      if (!eventPolicy.canUploadFile()) {
         return res.sendStatus(403);
       }
 
@@ -565,7 +499,6 @@ async function deleteActivityReportObjectiveFile(req, res) {
 
 export {
   deleteHandler,
-  linkHandler,
   uploadHandler,
   deleteOnlyFile,
   uploadObjectivesFile,

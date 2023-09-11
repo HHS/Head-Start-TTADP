@@ -41,6 +41,7 @@ describe('Import TTA plan goals', () => {
           where: {
             id: goals.map((goal) => goal.id),
           },
+          force: true,
         });
         await importGoals(fileName, regionId);
       } catch (error) {
@@ -262,6 +263,7 @@ describe('Import TTA plan goals', () => {
           name: goalWithoutCreatedVia.name,
           grantId: goalWithoutCreatedVia.grantId,
         },
+        force: true,
       });
 
       await importGoals(fileName, regionId);
@@ -343,6 +345,7 @@ describe('Import TTA plan goals', () => {
           name: aGoal.name,
           grantId: aGoal.grantId,
         },
+        force: true,
       });
 
       await importGoals(fileName, regionId);
