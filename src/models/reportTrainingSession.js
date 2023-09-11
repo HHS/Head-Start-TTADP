@@ -32,6 +32,7 @@ export default (sequelize, DataTypes) => {
               },
               as: 'reportTrainingEvent',
               suffixes: ['reportTrainingEvent'],
+              skipNull: true,
             },
             {
             },
