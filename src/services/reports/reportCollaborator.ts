@@ -1,5 +1,7 @@
 import db from '../../models';
 import { auditLogger } from '../../logger';
+import { REPORT_TYPE, COLLABORATOR_TYPES } from '../../constants';
+import { filterDataToModel, remapData, collectChangedValues } from '../../lib/modelUtils';
 
 /* TODO: need to incorporate the validation that the users referenced have the required
     permissions. To do this we need some discrete method to corelate the permissions with
@@ -14,8 +16,8 @@ const {
 } = db;
 
 const syncCollaboratorsForType = async (
-  report: { id: number, type: string, regionId: number },
-  collaboratorType: number | string,
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE], regionId: number },
+  collaboratorType: number | typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
   userIds: number[],
 ) => {
   try {
@@ -151,6 +153,33 @@ const syncCollaboratorsForType = async (
   }
 };
 
+const collaboratorRemapping = {
+  [REPORT_TYPE.REPORT_TRAINING_EVENT]: {
+    [COLLABORATOR_TYPES.INSTANTIATOR]: {},
+    [COLLABORATOR_TYPES.OWNER]: {},
+    [COLLABORATOR_TYPES.EDITOR]: {},
+  },
+};
+
+/**
+ * Remaps attribute names in the given data object using a provided remapping function.
+ * @param data - The data object to be remapped.
+ * @returns The remapped data object.
+ */
+const dataRemap = (
+  data: Record<string, any>,
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+  collaboratorType: number | typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
+) => remapData(data, reportTrainingEventRemapping);
+
+const syncReportCollaborator = async (
+  report: { id: number, type: string, regionId: number },
+  collaboratorType: number | string,
+  data: object,
+) => {
+
+};
+
 const getCollaboratorsForType = async (
   report: { id: number, type: string, regionId: number },
   collaboratorType: number | string,
@@ -202,7 +231,57 @@ const getCollaboratorsForType = async (
   ],
 });
 
+const includeReportCollaborator = (
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+  collaboratorType: typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
+) => ({
+  model: ReportCollaborator,
+  as: '', // TODO: fix using the collaboratorType
+  attributes: [
+    // TODO: filter this down to whats needed.
+  ],
+  includes: [
+    {
+      model: CollaboratorType,
+      as: 'collaboratorTypes',
+      required: true,
+      where: {
+        validFor: reportType,
+        ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
+        ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
+      },
+      attributes: [],
+      through: {
+        attributes: [],
+      },
+    },
+    {
+      model: Role,
+      as: 'roles',
+      required: true,
+      attributes: [
+        'name',
+        'isSpecialist',
+      ],
+      through: {
+        attributes: [],
+      },
+    },
+    {
+      model: User,
+      as: 'user',
+      required: true,
+      attributes: [
+        'name',
+        'email',
+        'homeRegionId',
+      ],
+    },
+  ],
+});
+
 export {
   syncCollaboratorsForType,
   getCollaboratorsForType,
+  includeReportCollaborator,
 };
