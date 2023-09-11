@@ -1,4 +1,4 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useMemo, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Button } from '@trussworks/react-uswds';
@@ -7,11 +7,15 @@ import ObjectiveTopics from './ObjectiveTopics';
 import ResourceRepeater from './ResourceRepeater';
 import ObjectiveFiles from './ObjectiveFiles';
 import {
-  OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
+  OBJECTIVE_FORM_FIELD_INDEXES,
+  validateListOfResources,
+  OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
 
 import ObjectiveStatus from './ObjectiveStatus';
 import AppLoadingContext from '../../AppLoadingContext';
+import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
+import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
 
 const [
   objectiveTitleError,
@@ -48,6 +52,8 @@ export default function ObjectiveForm({
 
   const { isAppLoading } = useContext(AppLoadingContext);
 
+  const modalRef = useRef(null);
+
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
@@ -56,6 +62,14 @@ export default function ObjectiveForm({
     setObjective({ ...objective, files: e });
   };
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
+
+  const onUpdateStatus = (newStatus) => {
+    if (newStatus === 'Suspended') {
+      modalRef.current.toggleModal();
+      return;
+    }
+    onChangeStatus(newStatus);
+  };
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -92,6 +106,12 @@ export default function ObjectiveForm({
 
     const newErrors = [...errors];
     newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES, 1, error);
+    setObjectiveError(index, newErrors);
+  };
+
+  const setSuspendReasonError = () => {
+    const newErrors = [...errors];
+    newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.STATUS_SUSPEND_REASON, 1, <span className="usa-error-message">Select a reason for suspension</span>);
     setObjectiveError(index, newErrors);
   };
 
@@ -153,13 +173,36 @@ export default function ObjectiveForm({
       />
       )}
 
+      <ObjectiveSuspendModal
+        objectiveId={objective.id}
+        modalRef={modalRef}
+        objectiveSuspendReason={objective.suspendReason}
+        onChangeSuspendReason={(e) => setObjective({ ...objective, suspendReason: e.target.value })}
+        objectiveSuspendInputName={`suspend-objective-${objective.id}-reason`}
+        objectiveSuspendContextInputName={`suspend-objective-${objective.id}-context`}
+        objectiveSuspendContext={objective.suspendContext}
+        onChangeSuspendContext={(e) => setObjective({
+          ...objective,
+          suspendContext: e.target.value,
+        })}
+        onChangeStatus={onChangeStatus}
+        setError={setSuspendReasonError}
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.STATUS_SUSPEND_REASON]}
+      />
+
       <ObjectiveStatus
         status={status}
         goalStatus={goalStatus}
-        onChangeStatus={onChangeStatus}
+        onChangeStatus={onUpdateStatus}
         inputName={`objective-status-${index}`}
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
+      />
+
+      <ObjectiveStatusSuspendReason
+        status={status}
+        suspendContext={objective.suspendContext}
+        suspendReason={objective.suspendReason}
       />
 
     </div>
@@ -174,6 +217,8 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
+    suspendReason: PropTypes.string,
+    suspendContext: PropTypes.string,
     isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
       PropTypes.string,
