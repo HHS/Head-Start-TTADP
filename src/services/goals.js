@@ -83,6 +83,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           'onAR',
           'onAnyReport',
         ],
+        'suspendReason',
+        'suspendContext',
       ],
       model: Objective,
       as: 'objectives',
@@ -1212,6 +1214,8 @@ export async function createOrUpdateGoals(goals) {
           files,
           status: objectiveStatus,
           id: objectiveIdsMayContainStrings,
+          suspendContext,
+          suspendReason,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1227,6 +1231,7 @@ export async function createOrUpdateGoals(goals) {
             where: {
               id: objectiveIds,
               status: OBJECTIVE_STATUS.COMPLETE,
+              goalId: newGoal.id,
             },
           });
 
@@ -1251,7 +1256,10 @@ export async function createOrUpdateGoals(goals) {
           });
         }
 
+        // if there isn't an objective for that goal/objective id
         if (!objective) {
+          // first we check to see if there is an objective with the same title
+          // so we can reuse it (given it is not complete)
           objective = await Objective.findOne({
             where: {
               status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
@@ -1259,6 +1267,7 @@ export async function createOrUpdateGoals(goals) {
               goalId: newGoal.id,
             },
           });
+          // and if there isn't, we create a new one
           if (!objective) {
             objective = await Objective.create({
               status: objectiveStatus,
@@ -1269,13 +1278,27 @@ export async function createOrUpdateGoals(goals) {
           }
         }
 
-        await objective.update({
+        // here we update the objective, checking to see if the objective is on an approved AR
+        // and if the title has changed before we update the title specifically...
+        // otherwise, we only update the status and rtrOrder
+        objective.set({
           ...(!objective.dataValues.onApprovedAR
             && title.trim() !== objective.dataValues.title.trim()
             && { title }),
           status: objectiveStatus,
           rtrOrder: index + 1,
-        }, { individualHooks: true });
+        });
+
+        // if the objective has been suspended, a reason and context should have been collected
+        if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
+          objective.set({
+            suspendContext,
+            suspendReason,
+          });
+        }
+
+        // save the objective to the database
+        await objective.save({ individualHooks: true });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
         const deleteUnusedAssociations = true;
