@@ -7,6 +7,7 @@ import { getEditorState, reportIsEditable } from '../../../../utils';
 import Section from '../Review/ReviewSection';
 import './RecipientReviewSection.scss';
 import AttachmentReviewSection from './AttachmentReviewSection';
+import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
 
 const RecipientReviewSection = () => {
   const { watch } = useFormContext();
@@ -72,6 +73,15 @@ const RecipientReviewSection = () => {
                         {' '}
                         {objective.status}
                       </div>
+                      { objective.status === 'Suspended' && objective.suspendReason && (
+                        <div className="margin-top-1">
+                          <ObjectiveStatusSuspendReason
+                            status={objective.status}
+                            suspendReason={objective.suspendReason}
+                            suspendContext={objective.suspendContext}
+                          />
+                        </div>
+                      )}
                       <div className="margin-top-1">
                         <span className="text-bold">TTA provided:</span>
                         {' '}
