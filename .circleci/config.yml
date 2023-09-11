@@ -395,6 +395,16 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
             ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
             echo "scan results saved in $OUTPUT_FILE"
+      - run:
+          name: Test similarity
+          command: |
+            mkdir -p coverage/similarity
+            cd similarity_api/src
+            source venv/bin/activate
+            pip install pytest pytest-cov
+            pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
+            coverage report --show-missing --skip-covered
+            coverage html -d ~/project/coverage/similarity --skip-covered
       - store_artifacts:
           path: reports/
     resource_class: large
