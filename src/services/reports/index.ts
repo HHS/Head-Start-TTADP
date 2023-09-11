@@ -1,7 +1,7 @@
 import db from '../../models';
 import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../constants';
 import { syncReport } from './report';
-import { syncReportCollaborator, includeReportCollaborator } from './reportCollaborator';
+import { syncCollaboratorsForType, includeReportCollaborator } from './reportCollaborator';
 import { syncReportGoal, includeReportGoal } from './reportGoal';
 import { syncReportGoalTemplate, includeReportGoalTemplate } from './reportGoalTemplate';
 import { syncReportImport, includeReportImport } from './reportImport';
@@ -14,8 +14,9 @@ import { syncReportParticipation, includeReportParticipation } from './reportPar
 import { syncReportReason, includeReportReason } from './reportReason';
 import { syncReportRecipient, includeReportRecipient } from './reportRecipient';
 import { syncReportTargetPopulation, includeReportTargetPopulation } from './reportTargetPopulation';
-import { syncReportTrainingEvent, getReportTrainingEvent, getReportTrainingEvents } from './reportTrainingEvent';
-import { syncReportTrainingSession, getReportTrainingSession, getReportTrainingSessions } from './reportTrainingSession';
+import { syncReportTrainingEvent, includeTrainingSession } from './reportTrainingEvent';
+import { syncReportTrainingSession, includeReportTrainingEvent } from './reportTrainingSession';
+import report from '../../models/report';
 
 const {
   Report,
@@ -38,19 +39,37 @@ const {
 
 const actions = {
   [REPORT_TYPE.REPORT_TRAINING_EVENT]: {
-    syncer: syncReportTrainingEvent,
+    syncer: {
+      func: syncReportTrainingEvent,
+      remapDef: {
+        'data."Event ID': 'trainingEvent.id',
+        'regionId': 'trainingEvent.regionId',
+        'data."Edit Title"': 'trainingEvent.name',
+        'data.eventOrganizer': 'trainingEvent.organizer.name',
+        'data."Audience"': 'trainingEvent.audience.*',
+        'data.vision': 'trainingEvent.vision',
+      },
+    },
+    reportSyncer: {
+      func: syncReport,
+      remapDef: {
+        'data.id': 'report.id',
+        'data.status': 'report.status.name',
+        'data.startDate': 'report.startDate',
+        'data.endDate': 'report.endDate',
+      },
+    },
     processorModels: [
-      [syncReportNationalCenter],
-      [syncReportCollaborator, [
-        COLLABORATOR_TYPES.OWNER,
-        COLLABORATOR_TYPES.INSTANTIATOR,
-        COLLABORATOR_TYPES.EDITOR,
-      ]],
-      [syncReportReason],
-      [syncReportTargetPopulation],
-      [syncReportImport],
-      [syncReportPageState],
-      [syncReportGoalTemplate],
+      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': 'nationalCenters.*.name'}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ower': `${COLLABORATOR_TYPES.INSTANTIATOR}.0`}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `${COLLABORATOR_TYPES.OWNER}.0.id`}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `${COLLABORATOR_TYPES.EDITOR}.*.id`}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `${COLLABORATOR_TYPES.POC}.*.id`}},
+      { func: syncReportReason, remapDef: { 'data.reasons.*': 'reasons.*.name'}},
+      { func: syncReportTargetPopulation, remapDef: { 'data."Target Population(s)".*': 'targetPopulations.*.name'}},
+      { func: syncReportImport, remapDef: { 'imported': 'import' } },
+      { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
+      { func: syncReportGoalTemplate, remapDef: { 'data.goal': 'goalTemplate.0.name' } },
     ],
     includes: [
       [includeReportTrainingEvent],
@@ -72,7 +91,8 @@ const actions = {
     processorModels: [
       [syncReportCollaborator, [
         COLLABORATOR_TYPES.OWNER,
-        COLLABORATOR_TYPES.INSTANTIATOR]],
+        COLLABORATOR_TYPES.INSTANTIATOR,
+      ]],
       [syncReportRecipient],
       [syncReportGoalTemplate],
       [syncReportObjectiveTemplate],
@@ -149,11 +169,9 @@ const getAllTypedReports = async (
   where: {
     ...(reportIds && reportIds.length && { id: reportIds }), // Filter by report IDs if provided
     reportType, // Filter by report type
-    ...(scope && { scope }), // Filter by scope if provided
+    scope, // Filter by scope if provided
   },
-  includes: [
-    ...(includes && includes.length && { includes}), // Include associations if provided
-  ],
+  includes,
 });
 
 /**
