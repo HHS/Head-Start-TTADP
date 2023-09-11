@@ -4,7 +4,9 @@ import {
   syncGenericEnums,
   getReportGenericEnums,
   getReportGenericEnum,
+  includeGenericEnums,
 } from './reportGenericEnum';
+import { REPORT_TYPE } from '../../constants';
 
 const {
   TargetPopulation,
@@ -19,36 +21,45 @@ const targetPopulationEnumInfo:EnumInfo = {
 
 const syncReportTargetPopulations = async (
   report: { id: number, type: string, regionId: number },
-  nationalCenterIds: number[] | null = null,
+  targetPopulationIds: number[] | null = null,
 ) => syncGenericEnums(
   ReportTargetPopulation,
   targetPopulationEnumInfo,
   report,
-  nationalCenterIds,
+  targetPopulationIds,
 );
 
 const getReportTargetPopulations = async (
   report: { id: number, type: string, regionId: number },
-  nationalCenterIds: number[] | null = null,
+  targetPopulationIds: number[] | null = null,
 ):Promise<object[]> => getReportGenericEnums(
   ReportTargetPopulation,
   targetPopulationEnumInfo,
   report,
-  nationalCenterIds,
+  targetPopulationIds,
 );
 
 const getReportTargetPopulation = async (
   report: { id: number, type: string, regionId: number },
-  nationalCenterId: number,
+  targetPopulationId: number,
 ):Promise<object[]> => getReportGenericEnum(
   ReportTargetPopulation,
   targetPopulationEnumInfo,
   report,
-  nationalCenterId,
+  targetPopulationId,
+);
+
+const includeReportTargetPopulation = (
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+) => includeGenericEnums(
+  ReportTargetPopulation,
+  targetPopulationEnumInfo,
+  reportType,
 );
 
 export {
   syncReportTargetPopulations,
   getReportTargetPopulations,
   getReportTargetPopulation,
+  includeReportTargetPopulation,
 };
