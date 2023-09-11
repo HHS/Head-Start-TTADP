@@ -4,6 +4,8 @@ import {
   EnumInfo,
   findAll,
 } from '../enums/generic';
+import { REPORT_TYPE } from '../../constants';
+import validFor from '../../models/validFor';
 
 interface ReportGenericEnumType {
   id: number,
@@ -183,6 +185,38 @@ const syncGenericEnums = async (
   }
 };
 
+const includeGenericEnums = (
+  model: ReportEnumModel,
+  enumInfo: EnumInfo,
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+) => ({
+  model,
+  as: '', // TODO: figure out how to get this
+  attributes: [
+    'id',
+    [`"${enumInfo.as}".id`, 'enumId'],
+    [`"${enumInfo.as}".name`, 'name'],
+  ],
+  includes: [{
+    model: enumInfo.model,
+    as: enumInfo.as,
+    required: true,
+    attributes: [],
+    ...(enumInfo?.entityTypeFiltered && {
+      includes: [{
+        model: validFor,
+        as: 'validFor',
+        required: true,
+        attributes: [],
+        where: {
+          name: reportType,
+          isReport: true,
+        },
+      }],
+    }),
+  }],
+});
+
 export {
   type EnumInfo,
   type ReportGenericEnumType,
@@ -190,4 +224,5 @@ export {
   getReportGenericEnums,
   getReportGenericEnum,
   syncGenericEnums,
+  includeGenericEnums,
 };
