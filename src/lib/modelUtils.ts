@@ -1,13 +1,14 @@
 import { DataType, Model } from 'sequelize';
+import * as dotWild from 'dot-wild';
 
 // Define the mapping between Sequelize data types and TypeScript data types
 const dataTypeMapping: Record<string, string> = {
-  [DataType.STRING]: 'string',
-  [DataType.INTEGER]: 'number',
-  [DataType.FLOAT]: 'number',
-  [DataType.DOUBLE]: 'number',
-  [DataType.BOOLEAN]: 'boolean',
-  [DataType.BIGINTEGER]: 'number',
+  // [typeof DataType.STRING]: 'string',
+  // [typeof DataType.INTEGER]: 'number',
+  // [typeof DataType.FLOAT]: 'number',
+  // [typeof DataType.DOUBLE]: 'number',
+  // [typeof DataType.BOOLEAN]: 'boolean',
+  // [typeof DataType.BIGINTEGER]: 'number',
   // Add more mappings as needed
 };
 
@@ -57,6 +58,39 @@ const switchAttributeNames = (
     });
 
   return switchedObj;
+};
+
+const remapData = (
+  jsonData: any,
+  remappingDefinition: any,
+  reverse = false,
+): any => {
+  let remappedData = JSON.parse(JSON.stringify(jsonData));
+
+  Object.keys(remappingDefinition).forEach((key) => {
+    const sourcePath = reverse ? remappingDefinition[key] : key;
+    const targetPath = reverse ? key : remappingDefinition[key];
+    const sourceValue = dotWild.get(jsonData, sourcePath);
+
+    if (sourceValue !== undefined) {
+      remappedData = dotWild.set(remappedData, targetPath, sourceValue);
+      remappedData = dotWild.remove(remappedData, sourcePath);
+
+      // recursively check and remove empty parent objects\arrays
+      let parentPath = sourcePath.substring(0, sourcePath.lastIndexOf('.'));
+      while (parentPath && parentPath !== '') {
+        const parentValue = dotWild.get(remappedData, parentPath);
+        if (Array.isArray(parentValue) && parentValue.length === 0) {
+          remappedData = dotWild.remove(remappedData, parentPath);
+        } else if (typeof parentValue === 'object' && Object.keys(parentValue).length === 0) {
+          remappedData = dotWild.remove(remappedData, parentPath);
+        }
+        parentPath = parentPath.substring(0, parentPath.lastIndexOf('.'));
+      }
+    }
+  });
+
+  return remappedData;
 };
 
 /**
@@ -141,6 +175,7 @@ export {
   getColumnInformation,
   filterDataToModel,
   switchAttributeNames,
+  remapData,
   isDeepEqual,
   collectChangedValues,
 };
