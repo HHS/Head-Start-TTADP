@@ -102,6 +102,40 @@ const syncReportRecipients = async (
   }
 };
 
+const includeReportRecipient = () => ({
+  model: ReportRecipient,
+  as: 'ReportRecipients',
+  attributes: [
+    // TODO: filter this down to whats needed.
+  ],
+  includes: [
+    {
+      model: Grant,
+      as: 'grant',
+      required: false,
+      attributes: [
+        // TODO: filter this down to whats needed.
+      ],
+      include: [{
+        model: Recipient,
+        as: 'recipient',
+        required: true,
+        attributes: [
+          // TODO: filter this down to whats needed.
+        ],
+      }],
+    },
+    {
+      model: OtherEntity,
+      as: 'otherEntity',
+      required: false,
+      attributes: [
+        // TODO: filter this down to whats needed.
+      ],
+    },
+  ],
+});
+
 const getReportRecipients = async (
   reportId: number,
 ):Promise<object[]> => ReportRecipient.findAll({
@@ -142,4 +176,5 @@ const getReportRecipients = async (
 export {
   syncReportRecipients,
   getReportRecipients,
+  includeReportRecipient,
 };
