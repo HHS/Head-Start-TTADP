@@ -71,17 +71,17 @@ export default function RecipientLeadership({ regionId, recipientId }) {
         break;
     }
     return (
-      <th scope="col" aria-sort={fullAriaSort}>
+      <th scope="col" aria-sort={fullAriaSort} className="padding-x-1">
         <button
           type="button"
           onClick={() => {
             doSort(name);
           }}
-          className={`sortable ${sortClassName}`}
+          className={`sortable ${sortClassName} position-relative`}
           aria-label={`${displayName} Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
-          {displayName}
+          <span>{displayName}</span>
         </button>
       </th>
     );

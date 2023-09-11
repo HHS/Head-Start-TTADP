@@ -1,9 +1,3 @@
-.ttahub-recipient-record--profile-table  th {
-  position: sticky;
-  top: 0;
-  background-color: white;
-}
-
 .ttahub-recipient-record--profile-table .usa-table td,
 .ttahub-recipient-record--profile-table .usa-table th {
   border: 0;
@@ -16,30 +10,45 @@
 }
 
 .ttahub-recipient-record--profile-table th {
+  container: ttahub-recipient-record--profile-table-th / inline-size;
   vertical-align: bottom;
+  position: sticky;
+  top: 0;
+  background-color: white;
 }
 
 .ttahub-recipient-record--profile-table thead th[aria-sort] {
   background: white;
 }
 
-.ttahub-recipient-record--profile-table th > button.sortable {
+.ttahub-recipient-record--profile-table th > .sortable {
   position: relative;
   background: none;
   border: none;
   font-weight: bold;
 }
+
 .ttahub-recipient-record--profile-table th > .sortable::after {
+  display: none;
+}
+.ttahub-recipient-record--profile-table th > .sortable span::after {
   content: "";
   background-image: url(../../../images/sort_both.png);
   background-repeat: no-repeat;
   background-position: center bottom;
   display: inline-block;
   position: absolute;
-  right: -15px;
-  top: -2px;
+  height: 100%;
+  right: -12px;
+  bottom: 0;
   width: 10px;
   height: 20px;
+}
+
+@container ttahub-recipient-record--profile-table-th (min-width: 1px) {
+  th > .sortable::after {
+    right: -10px;
+  }
 }
   
 .ttahub-recipient-record--profile-table th > .sortable.asc::after {
