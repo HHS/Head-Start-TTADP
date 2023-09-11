@@ -10,7 +10,6 @@
 }
 
 .ttahub-recipient-record--profile-table th {
-  container: ttahub-recipient-record--profile-table-th / inline-size;
   vertical-align: bottom;
   position: sticky;
   top: 0;
@@ -45,12 +44,12 @@
   height: 20px;
 }
 
-@container ttahub-recipient-record--profile-table-th (min-width: 1px) {
-  th > .sortable::after {
-    right: -10px;
+@media(max-width: 1160px) and (min-width: 40em) {
+  .ttahub-recipient-record--profile-table th > .sortable span::after {
+    right: auto
   }
 }
-  
+ 
 .ttahub-recipient-record--profile-table th > .sortable.asc::after {
   background-image: url(../../../images/sort_asc.png);
 }
