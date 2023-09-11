@@ -14,7 +14,6 @@ import db, {
 import { processObjectiveForResourcesById } from '../resource';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
-import resource from '../../models/resource';
 
 describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
@@ -105,6 +104,7 @@ describe('destroyGoal handler', () => {
         goalId: goal.id,
       },
       individualHooks: true,
+      force: true,
     });
 
     await Goal.destroy({
@@ -112,6 +112,7 @@ describe('destroyGoal handler', () => {
         id: [goal.id, goalTwo.id],
       },
       individualHooks: true,
+      force: true,
     });
 
     await Grant.destroy({

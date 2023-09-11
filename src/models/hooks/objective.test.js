@@ -47,12 +47,14 @@ describe('objective model hooks', () => {
       where: {
         id: [objective1.id, objective2.id, objective3.id],
       },
+      force: true,
     });
 
     await Goal.destroy({
       where: {
         id: goal.id,
       },
+      force: true,
     });
 
     await Grant.destroy({
@@ -89,7 +91,7 @@ describe('objective model hooks', () => {
     testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Draft');
 
-    await Objective.destroy({ where: { id: objective1.id } });
+    await Objective.destroy({ where: { id: objective1.id }, force: true });
   });
 
   it('updates when the goal matches the qualifications', async () => {

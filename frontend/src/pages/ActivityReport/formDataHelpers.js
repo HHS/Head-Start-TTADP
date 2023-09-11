@@ -50,8 +50,9 @@ export const findWhatsChanged = (object, base) => {
       let currentlyEditing = false;
 
       accumulator.goals = [
+        (base.goalForEditing || null),
         ...(base.goals || []),
-      ].map((goal) => ({
+      ].filter((g) => g).map((goal) => ({
         ...goal,
         grantIds,
         isActivelyEdited: (() => {
@@ -71,7 +72,7 @@ export const findWhatsChanged = (object, base) => {
 
           return true;
         })(),
-        // no multigrant/multirecipient reports should have prompts
+        // no multigrant/multirecipient reports should have prompts or source
         prompts: grantIds.length < 2 ? goal.prompts : [],
         source: grantIds.length < 2 ? goal.source : '',
       }));
@@ -118,10 +119,9 @@ export const convertGoalsToFormData = (
   if (
     // if any of the goals ids are included in the activelyEditedGoals id array
     goal.activityReportGoals
-    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited
+    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
     && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
-    && !accumulatedData.goalForEditing)
-  ) {
+    && !accumulatedData.goalForEditing) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
     accumulatedData.goalForEditing = {
@@ -129,6 +129,7 @@ export const convertGoalsToFormData = (
       grantIds,
       objectives: goal.objectives,
       source: grantIds.length < 2 ? goal.source : '',
+      prompts: grantIds.length < 2 ? goal.prompts : [],
     };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
@@ -137,6 +138,7 @@ export const convertGoalsToFormData = (
       ...goal,
       grantIds,
       source: grantIds.length < 2 ? goal.source : '',
+      prompts: grantIds.length < 2 ? goal.prompts : [],
     });
   }
 

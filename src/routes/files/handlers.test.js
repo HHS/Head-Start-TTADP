@@ -21,7 +21,6 @@ import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
-// import { s3Queue } from '../../services/s3Queue';
 import * as s3Queue from '../../services/s3Queue';
 
 jest.mock('bull');
@@ -175,9 +174,10 @@ describe('File Upload', () => {
             objective.dataValues.id, secondTestObjective.dataValues.id,
           ],
         },
+        force: true,
       },
     );
-    await Goal.destroy({ where: { id: goal.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });

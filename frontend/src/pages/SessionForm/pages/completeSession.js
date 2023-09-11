@@ -88,11 +88,12 @@ const CompleteSession = ({
           required
         >
           <Dropdown
-            label="Session status"
+            label="Session status "
             name="status"
             id="status"
             value={updatedStatus}
             onChange={(e) => setUpdatedStatus(e.target.value)}
+            required
           >
             {options}
           </Dropdown>

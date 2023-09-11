@@ -1,7 +1,6 @@
 import express from 'express';
 import {
   uploadHandler,
-  linkHandler,
   deleteHandler,
   deleteObjectiveFileHandler,
   deleteOnlyFile,
@@ -22,7 +21,6 @@ const router = express.Router();
 /**
  * API for file uploads
  */
-router.post('/link/', transactionWrapper(linkHandler));
 router.post('/', transactionWrapper(uploadHandler));
 router.post('/objectives', transactionWrapper(uploadObjectivesFile));
 router.delete('/s/:eventSessionId/:fileId', (req, res, next) => checkIdParam(req, res, next, 'eventSessionId'), checkFileIdParam, transactionWrapper(deleteHandler));

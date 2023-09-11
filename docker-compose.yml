@@ -77,6 +77,21 @@ services:
       - 9600:9600 # required for Performance Analyzer
     networks:
       - smarthub
+  testingonly:
+    build:
+      context: .
+    ports:
+      - "9999:9999"
+    depends_on:
+      - db
+    volumes:
+      - ".:/app:rw"
+    command: yarn start:testingonly
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=development
+    networks:
+      - smarthub
 volumes:
   dbdata: {}
   miniodata: {}

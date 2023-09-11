@@ -43,6 +43,7 @@ module.exports = {
           `DO $$
           ------------------------------------------------------------------------------------
           BEGIN
+            DROP TABLE IF EXISTS "__temp_TopicGoals";
             CREATE TEMP TABLE "__temp_TopicGoals" (
               id integer NOT NULL,
               "topicId" integer NOT NULL,
