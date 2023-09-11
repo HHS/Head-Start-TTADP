@@ -255,8 +255,8 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     status: status || objective.status,
     ttaProvided,
     arOrder: order + 1,
-    suspendContext,
-    suspendReason,
+    suspendContext: suspendContext || null,
+    suspendReason: suspendReason || null,
   }, {
     where: { id: activityReportObjectiveId },
     individualHooks: true,

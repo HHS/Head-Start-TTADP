@@ -17,8 +17,8 @@ export const NEW_OBJECTIVE = () => ({
   roles: [],
   status: 'Not Started',
   isNew: true,
-  suspendReason: '',
-  suspendContext: '',
+  suspendReason: null,
+  suspendContext: null,
 });
 
 export const OBJECTIVE_PROP = PropTypes.shape({
