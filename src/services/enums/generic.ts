@@ -68,12 +68,12 @@ const findAll = async (
 const findById = async (
   model: EnumModel,
   id: number,
-): Promise<GenericEnumModel> => model.findByPk(id);
+): Promise<GenericEnumType> => model.findByPk(id);
 
 const findOrCreateByName = async (
   model: EnumModel,
   data: { name: string, mapsTo?: number },
-):Promise<GenericEnumModel> => {
+):Promise<GenericEnumType> => {
   // TODO: find if exists, if not then create
 };
 
