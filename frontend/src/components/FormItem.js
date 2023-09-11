@@ -5,6 +5,7 @@ import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import {
   Label, FormGroup, ErrorMessage, Fieldset,
 } from '@trussworks/react-uswds';
+import Req from './Req';
 
 import './FormItem.scss';
 
@@ -70,10 +71,10 @@ function FormItem({
     <>
       {label}
       {required && (
-      <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-        {' '}
-        *
-      </span>
+        <>
+          {' '}
+          <Req announce />
+        </>
       )}
     </>
   );

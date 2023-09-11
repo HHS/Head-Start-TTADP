@@ -174,9 +174,10 @@ describe('File Upload', () => {
             objective.dataValues.id, secondTestObjective.dataValues.id,
           ],
         },
+        force: true,
       },
     );
-    await Goal.destroy({ where: { id: goal.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
