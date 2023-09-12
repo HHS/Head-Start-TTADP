@@ -3,7 +3,7 @@ import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../consta
 import { syncReport } from './report';
 import { syncCollaboratorsForType, includeReportCollaborator } from './reportCollaborator';
 import { syncReportGoal, includeReportGoal } from './reportGoal';
-import { syncReportGoalTemplate, includeReportGoalTemplate } from './reportGoalTemplate';
+import { syncReportGoalTemplates, includeReportGoalTemplate } from './reportGoalTemplate';
 import { syncReportImport, includeReportImport } from './reportImport';
 import { syncReportNationalCenter, includeReportNationalCenter } from './reportNationalCenter';
 import { syncReportNextStep, includeReportNextStep } from './reportNextStep';
@@ -42,34 +42,34 @@ const actions = {
     syncer: {
       func: syncReportTrainingEvent,
       remapDef: {
-        'data."Event ID': 'trainingEvent.id',
-        'regionId': 'trainingEvent.regionId',
-        'data."Edit Title"': 'trainingEvent.name',
-        'data.eventOrganizer': 'trainingEvent.organizer.name',
-        'data."Audience"': 'trainingEvent.audience.*',
-        'data.vision': 'trainingEvent.vision',
+        'data."Event ID': 'id',
+        'regionId': 'regionId',
+        'data."Edit Title"': 'name',
+        'data.eventOrganizer': 'organizer.name',
+        'data."Audience"': 'audience.*',
+        'data.vision': 'vision',
       },
     },
     reportSyncer: {
       func: syncReport,
       remapDef: {
-        'data.id': 'report.id',
-        'data.status': 'report.status.name',
-        'data.startDate': 'report.startDate',
-        'data.endDate': 'report.endDate',
+        'data.id': 'id',
+        'data.status': 'status.name',
+        'data.startDate': 'startDate',
+        'data.endDate': 'endDate',
       },
     },
     processorModels: [
-      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': 'nationalCenters.*.name'}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ower': `${COLLABORATOR_TYPES.INSTANTIATOR}.0`}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `${COLLABORATOR_TYPES.OWNER}.0.id`}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `${COLLABORATOR_TYPES.EDITOR}.*.id`}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `${COLLABORATOR_TYPES.POC}.*.id`}},
-      { func: syncReportReason, remapDef: { 'data.reasons.*': 'reasons.*.name'}},
-      { func: syncReportTargetPopulation, remapDef: { 'data."Target Population(s)".*': 'targetPopulations.*.name'}},
+      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name'}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ower': `0`}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`}},
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`}},
+      { func: syncReportReason, remapDef: { 'data.reasons.*': '*.name'}},
+      { func: syncReportTargetPopulation, remapDef: { 'data."Target Population(s)".*': '*.name'}},
       { func: syncReportImport, remapDef: { 'imported': 'import' } },
       { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
-      { func: syncReportGoalTemplate, remapDef: { 'data.goal': 'goalTemplate.0.name' } },
+      { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name' } },
     ],
     includes: [
       [includeReportTrainingEvent],
@@ -87,23 +87,56 @@ const actions = {
     ],
   },
   [REPORT_TYPE.REPORT_TRAINING_SESSION]: {
-    syncer: syncReportTrainingSession,
+    syncer: {
+      func: syncReportTrainingSession,
+      remapDef: {
+        'data.eventDisplayId': 'id',
+        'regionId': 'regionId',
+        'eventId': 'reportTrainingEventId',
+        'data.sessionName': 'name',
+      },
+    },
+    reportSyncer: {
+      func: syncReport,
+      remapDef: {
+        'data.id': 'id',
+        'data.status': 'status.name',
+        'data.context': 'context',
+        'data.startDate': 'startDate',
+        'data.endDate': 'endDate',
+      },
+    },
     processorModels: [
-      [syncReportCollaborator, [
-        COLLABORATOR_TYPES.OWNER,
-        COLLABORATOR_TYPES.INSTANTIATOR,
-      ]],
-      [syncReportRecipient],
-      [syncReportGoalTemplate],
-      [syncReportObjectiveTemplate],
-      [syncReportGoal],
-      [syncReportObjective],
-      [syncReportNextStep, [
-        NEXTSTEP_NOTETYPE.RECIPIENT,
-        NEXTSTEP_NOTETYPE.SPECIALIST,
-      ]],
-      [syncReportParticipation],
-      [syncReportPageState],
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ownerId': `0.id`, 'data.eventOwner': '0.id' } },
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
+      // { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
+      // { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
+      { func: syncReportRecipient, remapDef: { 'data.recipients.*': '*' } },
+      {
+        func: syncReportObjectiveTemplate,
+        remapDef: {
+          'data.objective': '0.title',
+          'data.ttaProvided': '0.ttaProvided',
+          'data.supportType': '0.supportType',
+          'data.files': '0.files',
+          'data.objectiveResources': '0.resources',
+          'data.topics': '0.topics',
+          'data.objectiveTrainers': '0.trainers',
+        },
+      },
+      { func: syncReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT, remapDef: { 'data.recipientNextSteps.*': '*' } },
+      { func: syncReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST, remapDef: { 'data.specialistNextSteps.*': '*' } },
+      {
+        func: syncReportParticipation,
+        remapDef: {
+          'data.deliveryMethod': 'deliveryMethod',
+          'data.numberOfParticipants': 'numberOfParticipants',
+          'data.numberOfParticipantsInPerson': 'numberOfParticipantsInPerson',
+          'data.numberOfParticipantsVirtually': 'numberOfParticipantsVirtually',
+          'data.participants': 'participants',
+        },
+      },
+      { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
     ],
     includes: [
       [includeTrainingSession],

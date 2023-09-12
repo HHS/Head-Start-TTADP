@@ -69,6 +69,8 @@ module.exports = {
        * - CollaboratorTypes-
        * - SupportTypes -
        * - Participants -
+       * - Audiences -
+       * - TrainingType -
        *
        *  additional changes to tables that need additional columns to maintain quality
        *  data over time and maintain FOIA:

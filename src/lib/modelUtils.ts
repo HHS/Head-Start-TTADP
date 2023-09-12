@@ -1,14 +1,14 @@
-import { DataType, Model } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import * as dotWild from 'dot-wild';
 
 // Define the mapping between Sequelize data types and TypeScript data types
-const dataTypeMapping: Record<string, string> = {
-  // [typeof DataType.STRING]: 'string',
-  // [typeof DataType.INTEGER]: 'number',
-  // [typeof DataType.FLOAT]: 'number',
-  // [typeof DataType.DOUBLE]: 'number',
-  // [typeof DataType.BOOLEAN]: 'boolean',
-  // [typeof DataType.BIGINTEGER]: 'number',
+const dataTypeMapping = {
+  [DataTypes.STRING.key]: 'string',
+  [DataTypes.INTEGER.key]: 'number',
+  [DataTypes.FLOAT.key]: 'number',
+  [DataTypes.DOUBLE.key]: 'number',
+  [DataTypes.BOOLEAN.key]: 'boolean',
+  [DataTypes.BIGINT.key]: 'number',
   // Add more mappings as needed
 };
 
@@ -32,10 +32,9 @@ const filterDataToModel = async (
   return Object.entries(data)
     .reduce((acc, [key, value]) => {
       const matchColumn = modelData.find((md) => md.columnName === key);
-
       if (matchColumn
-        && ((value === null && matchColumn.allowNull)
-          || (typeof value === dataTypeMapping[matchColumn.dataType]))
+        && ((value === null && matchColumn?.allowNull)
+          || (typeof value === dataTypeMapping[matchColumn?.dataType]))
       ) {
         acc.matched[key] = value;
       } else {
@@ -46,51 +45,218 @@ const filterDataToModel = async (
     }, { matched: {}, unmatched: {} });
 };
 
-const switchAttributeNames = (
-  obj: Record<string, any>,
-  remappings: Record<string, string>,
-): Record<string, any> => {
-  const switchedObj: Record<string, any> = {};
+const remapPrune = (
+  data,
+  prunePath: string,
+  options: { deleteEmptyParents?: boolean },
+) => {
+  const {
+    deleteEmptyParents = true,
+  } = options;
 
-  Object.entries(obj)
-    .forEach(([key, value]) => {
-      switchedObj[remappings[key] || key] = value;
-    });
+  let prune = data;
+  // Remove the source path from the remapped data
+  prune = dotWild.remove(prune, prunePath);
 
-  return switchedObj;
+  if (deleteEmptyParents) {
+    // Recursively check and remove empty parent objects/arrays
+    let parentPath = prunePath.substring(
+      0,
+      prunePath.includes('.')
+        ? prunePath.lastIndexOf('.')
+        : 0,
+    );
+    while (parentPath && parentPath !== '') {
+      const parentValue = dotWild.get(prune, parentPath);
+
+      // If the parent value is an empty array, add remove
+      if (Array.isArray(parentValue) && parentValue.length === 0) {
+        prune = dotWild.remove(prune, parentPath);
+      // If the parent value is an empty object, add remove
+      } else if (typeof parentValue === 'object' && Object.keys(parentValue).length === 0) {
+        prune = dotWild.remove(prune, parentPath);
+      }
+
+      // Update the parent path to check the next level
+      parentPath = parentPath.includes('.')
+        ? parentPath.substring(0, parentPath.lastIndexOf('.'))
+        : '';
+    }
+  }
+  return prune;
 };
 
-const remapData = (
-  jsonData: any,
-  remappingDefinition: any,
-  reverse = false,
-): any => {
-  let remappedData = JSON.parse(JSON.stringify(jsonData));
+/**
+ * Remaps the data based on the provided remapping definition.
+ * @param data - The JSON data to be remapped.
+ * @param remappingDefinition - The remapping definition object.
+ * @param reverse - Flag indicating whether to perform reverse remapping. Default is false.
+ * @returns The remapped data.
+ */
+const remap = (
+  data: object | object[],
+  remappingDefinition: Record<string, string | (
+    (
+      processedDate:object | object[],
+      sourceValue: object | object[]
+    ) => object | object[]
+    |
+    string
+  )[]>,
+  options:{
+    reverse?: boolean,
+    keepUnmappedValues?: boolean,
+    deleteMappedValues?: boolean,
+    deleteEmptyParents?: boolean,
+  } = {},
+): object | object[] => {
+  // If jsonData is null or undefined, return null
+  if (data === null || data === undefined) return null;
+  const {
+    reverse = false,
+    deleteMappedValues = true,
+    deleteEmptyParents = true,
+    keepUnmappedValues = true,
+  } = options;
 
+  let remappedData;
+  let unmappedData = data;
+  if (keepUnmappedValues) {
+    remappedData = data;
+  } else if (Array.isArray(data)) {
+    remappedData = [];
+  } else {
+    remappedData = {};
+  }
+
+  // Iterate over each key in the remapping definition
   Object.keys(remappingDefinition).forEach((key) => {
-    const sourcePath = reverse ? remappingDefinition[key] : key;
-    const targetPath = reverse ? key : remappingDefinition[key];
-    const sourceValue = dotWild.get(jsonData, sourcePath);
+    // Determine the source and target paths based on the reverse flag
+    // eslint-disable-next-line no-nested-ternary
+    const sourcePath:string = reverse
+      ? Array.isArray(remappingDefinition[key])
+        ? remappingDefinition[key].slice(-1)
+        : remappingDefinition[key]
+      : key;
+    const targetDefinition = reverse
+      ? key
+      : remappingDefinition[key];
+    const targetActions = Array.isArray(targetDefinition)
+      ? targetDefinition
+      : [targetDefinition];
+    // Get the value from the source path in the remapped data
+    let sourceValue = dotWild.get(
+      keepUnmappedValues
+        ? remappedData
+        : data,
+      sourcePath,
+    );
 
+    // If the source value exists
     if (sourceValue !== undefined) {
-      remappedData = dotWild.set(remappedData, targetPath, sourceValue);
-      remappedData = dotWild.remove(remappedData, sourcePath);
-
-      // recursively check and remove empty parent objects\arrays
-      let parentPath = sourcePath.substring(0, sourcePath.lastIndexOf('.'));
-      while (parentPath && parentPath !== '') {
-        const parentValue = dotWild.get(remappedData, parentPath);
-        if (Array.isArray(parentValue) && parentValue.length === 0) {
-          remappedData = dotWild.remove(remappedData, parentPath);
-        } else if (typeof parentValue === 'object' && Object.keys(parentValue).length === 0) {
-          remappedData = dotWild.remove(remappedData, parentPath);
+      targetActions.forEach((targetAction) => {
+        if (targetAction instanceof Function) {
+          sourceValue = targetAction(sourceValue);
+          // Set the source value at the target path in the remapped data
+        } else if (Array.isArray(sourceValue) && targetAction.includes('*')) {
+          sourceValue.forEach((value, index) => {
+            const updatedTargetAction = targetAction.replace('*', index.toString());
+            remappedData = dotWild.set(remappedData, updatedTargetAction, value);
+          });
+        } else {
+          remappedData = dotWild.set(remappedData, targetAction, sourceValue);
         }
-        parentPath = parentPath.substring(0, parentPath.lastIndexOf('.'));
+      });
+
+      // if keepUnmappedValues && deleteMappedValues, remove sourcePath and empty parent structures
+      if (keepUnmappedValues && deleteMappedValues) {
+        remappedData = remapPrune(remappedData, sourcePath, { deleteEmptyParents });
+      }
+      unmappedData = remapPrune(unmappedData, sourcePath, { deleteEmptyParents });
+    }
+  });
+
+  return { mapped: remappedData, unmapped: unmappedData };
+};
+
+const processData = (
+  jsonData: object | object[],
+  processDefinition: Record<
+  string,
+  (
+    processedDate:object | object[],
+    sourceValue: object | object[]
+  ) => object | object[]>,
+  options:{
+    deleteProcessedValues?: boolean,
+    deleteEmptyParents?: boolean,
+    keepUnprocessedValues?: boolean,
+  } = {},
+) => {
+  // If jsonData is null or undefined, return null
+  if (jsonData === null || jsonData === undefined) return null;
+  const {
+    deleteProcessedValues = true,
+    deleteEmptyParents = true,
+    keepUnprocessedValues = true,
+  } = options;
+
+  let processedData;
+  if (keepUnprocessedValues) {
+    processedData = jsonData;
+  } else if (Array.isArray(jsonData)) {
+    processedData = [];
+  } else {
+    processedData = {};
+  }
+
+  // Iterate over each key in the remapping definition
+  Object.keys(processDefinition).forEach((key) => {
+    const sourcePath = key;
+    const targetProcessor = processDefinition[key];
+    const sourceValue = dotWild.get(
+      keepUnprocessedValues
+        ? processedData
+        : jsonData,
+      sourcePath,
+    );
+    // If the source value exists
+    if (sourceValue !== undefined) {
+      processedData = targetProcessor(processedData, sourceValue);
+
+      if (keepUnprocessedValues && deleteProcessedValues) {
+        processedData = dotWild.remove(processedData, sourcePath);
+
+        if (deleteEmptyParents) {
+          // Recursively check and remove empty parent objects/arrays
+          let parentPath = sourcePath.substring(
+            0,
+            sourcePath.includes('.')
+              ? sourcePath.lastIndexOf('.')
+              : 0,
+          );
+          while (parentPath && parentPath !== '') {
+            const parentValue = dotWild.get(processedData, parentPath);
+
+            // If the parent value is an empty array, add remove
+            if (Array.isArray(parentValue) && parentValue.length === 0) {
+              processedData = dotWild.remove(processedData, parentPath);
+            // If the parent value is an empty object, add remove
+            } else if (typeof parentValue === 'object' && Object.keys(parentValue).length === 0) {
+              processedData = dotWild.remove(processedData, parentPath);
+            }
+
+            // Update the parent path to check the next level
+            parentPath = parentPath.includes('.')
+              ? parentPath.substring(0, parentPath.lastIndexOf('.'))
+              : '';
+          }
+        }
       }
     }
   });
 
-  return remappedData;
+  return processedData;
 };
 
 /**
@@ -174,8 +340,7 @@ const collectChangedValues = (
 export {
   getColumnInformation,
   filterDataToModel,
-  switchAttributeNames,
-  remapData,
+  remap,
   isDeepEqual,
   collectChangedValues,
 };
