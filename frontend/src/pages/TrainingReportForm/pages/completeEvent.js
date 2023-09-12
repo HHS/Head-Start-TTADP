@@ -218,31 +218,12 @@ const CompleteEvent = ({
           </Table>
         </>
       )}
-      { isOwner && (
-      <div className="margin-top-4">
-        <FormItem
-          label="Event status"
-          name="status"
-          required
-        >
-          <Dropdown
-            label="Event status"
-            name="status"
-            id="status"
-            value={updatedStatus}
-            onChange={(e) => setUpdatedStatus(e.target.value)}
-          >
-            {options}
-          </Dropdown>
-        </FormItem>
-      </div>
-      )}
 
       {showSubmissionError && (
-        <div className="margin-top-4">
-          <Alert type="error" noIcon>
-            <p className="usa-prose text-bold margin-y-0">Incomplete report</p>
-            {
+      <div className="margin-top-4">
+        <Alert type="error" noIcon>
+          <p className="usa-prose text-bold margin-y-0">Incomplete report</p>
+          {
               !areAllPagesComplete && (
                 <>
                   <p className="usa-prose margin-y-0">This report cannot be submitted until all sections are complete. Please review the following sections:</p>
@@ -256,7 +237,7 @@ const CompleteEvent = ({
                 </>
               )
             }
-            {
+          {
               !areAllSessionsComplete && (
                 <>
                   <p className="usa-prose margin-y-0">This report cannot be submitted until all sessions are complete.</p>
@@ -270,8 +251,31 @@ const CompleteEvent = ({
                 </>
               )
             }
-          </Alert>
-        </div>
+        </Alert>
+      </div>
+      )}
+
+      { isOwner && (
+      <div className="margin-top-4">
+        <FormItem
+          label="Event status"
+          name="status"
+          required
+        >
+          <Dropdown
+            label="Event status"
+            name="status"
+            id="status"
+            value={updatedStatus}
+            onChange={(e) => {
+              clearErrors('status');
+              setUpdatedStatus(e.target.value);
+            }}
+          >
+            {options}
+          </Dropdown>
+        </FormItem>
+      </div>
       )}
 
       <DraftAlert />
