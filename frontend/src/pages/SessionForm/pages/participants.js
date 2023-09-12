@@ -8,7 +8,6 @@ import {
   Button,
   Radio,
   TextInput,
-  Textarea,
 } from '@trussworks/react-uswds';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
@@ -214,21 +213,6 @@ const Participants = () => {
           )}
         </div>
       </div>
-
-      <FormItem
-        label="TTA provided "
-        name="ttaProvided"
-        required
-      >
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
-      </FormItem>
     </>
   );
 };
