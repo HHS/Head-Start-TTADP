@@ -19,7 +19,7 @@ import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
-import { getEventsByStatus } from '../../fetchers/event';
+import { getEventsByStatus, deleteEvent } from '../../fetchers/event';
 import { deleteSession } from '../../fetchers/session';
 import AppLoadingContext from '../../AppLoadingContext';
 import { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
@@ -171,6 +171,22 @@ export default function TrainingReports({ match }) {
     }
   };
 
+  const onDeleteEvent = async (eventId) => {
+    try {
+      // delete the event
+      await deleteEvent(String(eventId));
+
+      // update the UI, exclude the deleted event.
+      const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== eventId);
+
+      // update the events state.
+      setDisplayEvents(events);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(e);
+    }
+  };
+
   return (
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
@@ -241,6 +257,7 @@ export default function TrainingReports({ match }) {
                 events={displayEvents}
                 eventType={status}
                 onRemoveSession={onRemoveSession}
+                onDeleteEvent={onDeleteEvent}
               />
             </WidgetContainer>
           </Grid>

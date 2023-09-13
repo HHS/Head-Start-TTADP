@@ -28,6 +28,7 @@ const notStartedEvents = [{
     reasons: ['New Program/Option', ' New Staff/Turnover', 'Ongoing Quality Improvement', 'School Readiness Goals', 'Emergent Needs'],
     startDate: '01/02/2021',
     endDate: '01/03/2021',
+    status: 'Not started',
   },
   sessionReports: [],
 },
@@ -42,6 +43,7 @@ const notStartedEvents = [{
     eventOrganizer: 'Not started event organizer 2',
     startDate: '02/02/2021',
     endDate: '02/03/2021',
+    status: 'Not started',
   },
   sessionReports: [],
 },
@@ -148,9 +150,10 @@ describe('TrainingReports', () => {
     );
   };
 
+  // Not started.
+  const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
+
   beforeEach(async () => {
-    // Not started.
-    const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
     fetchMock.get(notStartedUrl, notStartedEvents);
 
     // In progress.
@@ -168,6 +171,74 @@ describe('TrainingReports', () => {
 
   afterEach(async () => {
     fetchMock.restore();
+  });
+
+  describe('delete a event', () => {
+    beforeEach(async () => {
+      act(() => {
+        renderTrainingReports({
+          ...nonCentralOfficeUser,
+          permissions: [
+            {
+              regionId: 2,
+              scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+            },
+            {
+              regionId: 2,
+              scopeId: SCOPE_IDS.ADMIN,
+            },
+          ],
+        }, EVENT_STATUS.NOT_STARTED);
+
+        fetchMock.get(notStartedUrl, [{ ...notStartedEvents[0] }], { overwriteRoutes: true });
+      });
+
+      await act(async () => {
+        const button = await screen.findByRole('button', { name: /actions for event 1/i });
+        userEvent.click(button);
+      });
+    });
+
+    afterEach(() => {
+      fetchMock.restore();
+    });
+
+    it('handles success', async () => {
+      fetchMock.delete('/api/events/id/1', { message: 'Success!' });
+      expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
+
+      await act(async () => {
+        const deleteButton = await screen.findByRole('button', { name: /delete event/i });
+        userEvent.click(deleteButton);
+      });
+
+      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument());
+
+      await act(async () => {
+        const confirmButton = await screen.findByRole('button', { name: /this button will delete the event/i, hidden: true });
+        userEvent.click(confirmButton);
+      });
+
+      expect(screen.queryByText('Not started event 1')).toBeNull();
+    });
+
+    it('handles failure', async () => {
+      fetchMock.delete('/api/events/id/1', 500);
+      expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
+      await act(async () => {
+        const deleteButton = await screen.findByRole('button', { name: /delete event/i });
+        userEvent.click(deleteButton);
+      });
+
+      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument());
+
+      await act(async () => {
+        const confirmButton = await screen.findByRole('button', { name: /this button will delete the event/i, hidden: true });
+        userEvent.click(confirmButton);
+      });
+
+      expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
+    });
   });
 
   it('renders the training reports page', async () => {

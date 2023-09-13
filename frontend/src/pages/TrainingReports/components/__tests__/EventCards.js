@@ -70,6 +70,7 @@ describe('EventCards', () => {
     events = defaultEvents,
     eventType = EVENT_STATUS.NOT_STARTED,
     user = DEFAULT_USER,
+    onDeleteEvent = jest.fn(),
   ) => {
     render((
       <MemoryRouter>
@@ -78,6 +79,7 @@ describe('EventCards', () => {
             events={events}
             eventType={eventType}
             onRemoveSession={jest.fn()}
+            onDeleteEvent={onDeleteEvent}
           />
         </UserContext.Provider>
       </MemoryRouter>));
@@ -355,7 +357,74 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     button.click(button);
+  });
+
+  it('admin see delete event', () => {
+    const deleteFunction = jest.fn();
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      regionId: 1,
+      collaboratorIds: [3],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: 'Collab Event ID 1',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        reasons: ['New Program/Option'],
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+        status: 'Not started',
+      },
+      sessionReports: [],
+    }];
+
+    const COLLABORATOR_USER = {
+      id: 1,
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.ADMIN,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderEventCards(
+      collaboratorEvents,
+      EVENT_STATUS.NOT_STARTED,
+      COLLABORATOR_USER,
+      deleteFunction,
+    );
+
+    // Collaborator Event.
+    expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
+    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
+
+    // Show correct actions for collaborator event.
+    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    button.click(button);
+    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+
+    // Click delete.
+    expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
+    const deleteBtn = screen.getByRole('button', { name: /delete event/i });
+    deleteBtn.click();
+
+    expect(screen.getByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /this button will delete the event/i });
+    confirmBtn.click();
+    expect(deleteFunction).toHaveBeenCalledWith(1);
   });
 });
