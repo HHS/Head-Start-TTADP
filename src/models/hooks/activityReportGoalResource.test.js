@@ -96,6 +96,7 @@ describe('activityReportGoalResource hooks', () => {
     await Goal.destroy({
       where: { id: goalToDestroy.id },
       individualHooks: true,
+      force: true,
     });
 
     await Resource.destroy({

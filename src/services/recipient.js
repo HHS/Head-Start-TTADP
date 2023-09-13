@@ -7,6 +7,7 @@ import {
   Program,
   sequelize,
   Goal,
+  GoalTemplate,
   ActivityReport,
   Objective,
   ActivityRecipient,
@@ -20,6 +21,7 @@ import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
   GOAL_STATUS,
+  CREATION_METHOD,
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
@@ -429,6 +431,7 @@ export async function getGoalsByActivityRecipient(
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
       { createdVia: 'rtr' },
+      { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
     ],
     [Op.and]: scopes,
   };
@@ -453,10 +456,17 @@ export async function getGoalsByActivityRecipient(
       'onApprovedAR',
       'isRttapa',
       'source',
+      'goalTemplateId',
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
     ],
     where: goalWhere,
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['creationMethod', 'id'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
