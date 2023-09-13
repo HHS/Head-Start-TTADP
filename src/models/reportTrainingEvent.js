@@ -61,10 +61,6 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
-    audience: {
-      type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(AUDIENCE))),
-      allowNull: false,
-    },
     trainingType: {
       type: DataTypes.ENUM(Object.values(TRAINING_TYPE)),
       allowNull: false,

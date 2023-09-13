@@ -18,6 +18,8 @@ const {
   GOAL_STATUS,
   OBJECTIVE_STATUS,
   COLLABORATOR_APPROVAL_STATUSES,
+  AUDIENCE,
+  TRAINING_TYPE,
 } = require('../constants');
 
 module.exports = {
@@ -70,7 +72,6 @@ module.exports = {
        * - SupportTypes -
        * - Participants -
        * - Audiences -
-       * - TrainingType -
        *
        *  additional changes to tables that need additional columns to maintain quality
        *  data over time and maintain FOIA:
@@ -91,7 +92,6 @@ module.exports = {
        *  */
 
       //---------------------------------------------------------------------------------
-      let x = 0;
       await queryInterface.createTable('ValidFor', {
         id: {
           type: Sequelize.INTEGER,
@@ -371,6 +371,74 @@ module.exports = {
           },
         },
       }, { transaction });
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('Audiences', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        validForId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ValidFor',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        deletedAt: {
+          type: Sequelize.DATE,
+          allowNull: true,
+          default: null,
+        },
+        mapsTo: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Audiences',
+            },
+            key: 'id',
+          },
+        },
+      }, { transaction });
+
+      await queryInterface.sequelize.query(`
+      INSERT INTO "Audiences"
+      ("name", "validForId", "createdAt", "updatedAt")
+      SELECT
+        s.name,
+        vf.id,
+        current_timestamp,
+        current_timestamp
+      FROM "ValidFor" vf
+      CROSS JOIN UNNEST(ARRAY[
+        ${Object.values(AUDIENCE).map((audience) => `'${audience}'`).join(',\n')}
+      ]) s(name)
+      WHERE vf.name = '${REPORT_TYPE.REPORT_TRAINING_EVENT}'
+      ;`, { transaction });
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Participants', {
         id: {
@@ -757,21 +825,57 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
-      const TRAINING_TYPE = {
-        SERIES: 'series',
-      };
+      await queryInterface.createTable('ReportAudiences', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        reportId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Reports',
+            },
+            key: 'id',
+          },
+        },
+        audienceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Audiences',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
+      await queryInterface.addIndex('ReportAudiences', ['reportId', 'audienceId'], { transaction });
 
-      const AUDIENCE = {
-        RECIPIENTS: 'Recipients',
-        TTA_SPECIALISTS: 'TTA specialists',
-        FEDERAL_STAFF: 'Federal staff',
-      };
+      await queryInterface.addConstraint('ReportAudiences', {
+        fields: ['reportId', 'audienceId'],
+        type: 'unique',
+        transaction,
+      });
 
-      const ORGANIZER = {
-        REGIONAL_W_NC: 'Regional w/NC',
-        REGIONAL_WO_NC: 'Regional w/o NC',
-        IST: 'IST',
-      };
+      //---------------------------------------------------------------------------------
 
       await queryInterface.createTable('ReportTrainingEvents', {
         id: {
@@ -823,10 +927,6 @@ module.exports = {
             },
             key: 'id',
           },
-        },
-        audience: {
-          type: Sequelize.ARRAY(Sequelize.ENUM(Object.values(AUDIENCE))),
-          allowNull: false,
         },
         trainingType: {
           type: Sequelize.ENUM(Object.values(TRAINING_TYPE)),
