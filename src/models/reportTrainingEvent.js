@@ -43,6 +43,10 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    eventId: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     name: {
       type: DataTypes.TEXT,
       allowNull: true,

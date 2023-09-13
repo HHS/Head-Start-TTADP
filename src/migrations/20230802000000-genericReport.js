@@ -804,6 +804,10 @@ module.exports = {
             key: 'id',
           },
         },
+        eventId: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
         name: {
           type: Sequelize.TEXT,
           allowNull: true,
