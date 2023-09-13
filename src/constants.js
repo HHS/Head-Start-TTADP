@@ -182,7 +182,7 @@ const GRANT_INACTIVATION_REASONS = {
 
 const REPORT_TYPE = {
   REPORT_TRAINING_EVENT: 'report.trainingEvent',
-  REPORT_TRAINING_SESSION: 'resport.trainingSession',
+  REPORT_TRAINING_SESSION: 'report.trainingSession',
 };
 
 const ENTITY_TYPE = {
