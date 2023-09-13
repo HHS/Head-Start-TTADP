@@ -4,6 +4,7 @@ const {
 
 const originalGoalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
 const updatedGoalName = '(Monitoring) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+const sharedGoalTemplateId = 18172;
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -16,7 +17,8 @@ module.exports = {
       -- update goal text for class goal
         UPDATE "Goals"
           SET
-            "name" = '${updatedGoalName}'
+            "name" = '${updatedGoalName}',
+            "goalTemplateId" = ${sharedGoalTemplateId}
           WHERE "name" = '${originalGoalName}';
 
       -- update activity report goals
@@ -32,10 +34,7 @@ module.exports = {
             "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod",
             "templateName" = '${updatedGoalName}',
             "hash" = MD5(TRIM('${updatedGoalName}'))
-          WHERE "id" in (
-            SELECT DISTINCT "goalTemplateId" FROM "Goals" WHERE "name" = '${updatedGoalName}' AND "goalTemplateId" is not null
-          );
-          `, { transaction });
+          WHERE "id" = ${sharedGoalTemplateId};`, { transaction });
     });
   },
 
