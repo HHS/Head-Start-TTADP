@@ -2,6 +2,7 @@
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+import SCOPES from '../middleware/scopeConstants';
 import { auditLogger } from '../logger';
 import db from '../models';
 import {
@@ -14,6 +15,7 @@ const {
   EventReportPilot,
   SessionReportPilot,
   User,
+  Permission,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -284,6 +286,41 @@ export async function findEventsByCollaboratorId(id: number): Promise<EventShape
 
 export async function findEventsByRegionId(id: number): Promise<EventShape[] | null> {
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
+}
+
+export async function findEventCreators(regionId: number): Promise<EventShape[] | null> {
+  // Get all users who have read write tr permission for this region.
+  const creators = await User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      [Op.and]: {
+        '$permissions.scopeId$': {
+          [Op.eq]: SCOPES.READ_WRITE_TRAINING_REPORTS,
+        },
+        '$permissions.regionId$': {
+          [Op.eq]: regionId,
+        },
+      },
+    },
+    include: [
+      {
+        attributes: [
+          'id',
+          'scopeId',
+          'regionId',
+          'userId',
+        ],
+        model: Permission,
+        as: 'permissions',
+        required: true,
+        where: {
+          regionId,
+        },
+      },
+    ],
+  });
+
+  return creators;
 }
 
 /**

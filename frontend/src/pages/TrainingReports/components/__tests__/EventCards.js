@@ -362,7 +362,7 @@ describe('EventCards', () => {
     button.click(button);
   });
 
-  it('admin see delete event', () => {
+  it('admin see edit and delete event', () => {
     const deleteFunction = jest.fn();
     const collaboratorEvents = [{
       id: 1,
@@ -413,7 +413,7 @@ describe('EventCards', () => {
     const button = screen.getByRole('button', { name: /actions for event 1/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
 

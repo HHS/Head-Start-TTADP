@@ -14,6 +14,7 @@ import {
   updateEvent,
   destroyEvent,
   findEventsByStatus,
+  findEventCreators,
 } from '../../services/event';
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
@@ -101,6 +102,22 @@ export const getHandler = async (req, res) => {
     }
 
     return res.status(httpCodes.OK).send(event);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const findEventCreatorsHandler = async (req, res) => {
+  try {
+    const { creatorRegionId } = req.params;
+    // return a 400 if the creatorRegionId is not provided.
+    if (!creatorRegionId) {
+      console.log('---------------------here');
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a creatorRegionId' });
+    }
+
+    const creators = await findEventCreators(creatorRegionId);
+    return res.status(httpCodes.OK).send(creators);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }
