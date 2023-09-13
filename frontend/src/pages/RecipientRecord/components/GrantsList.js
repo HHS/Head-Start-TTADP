@@ -10,7 +10,7 @@ export default function GrantsList({ summary }) {
       return summary.grants.map((grant) => (
         <tr key={grant.id}>
           <td>
-            <a style={{ display: 'table-cell' }} title="Links to HSES" aria-label={`Links to Grant ${grant.number} on HSES`} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
+            <a aria-label={`Links to Grant ${grant.number} on HSES`} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
               {grant.number}
             </a>
           </td>
