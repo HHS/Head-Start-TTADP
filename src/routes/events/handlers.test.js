@@ -6,6 +6,7 @@ import {
   updateHandler,
   deleteHandler,
   getByStatus,
+  findEventCreatorsHandler,
 } from './handlers';
 import {
   createEvent,
@@ -16,6 +17,7 @@ import {
   findEventsByRegionId,
   updateEvent,
   findEventsByStatus,
+  findEventCreators,
 } from '../../services/event';
 import EventReport from '../../policies/event';
 
@@ -31,6 +33,7 @@ jest.mock('../../services/event', () => ({
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
+  findEventCreators: jest.fn(),
 }));
 
 const mockEvent = {
@@ -148,6 +151,36 @@ describe('event handlers', () => {
 
     it('returns 400 when no body', async () => {
       await createHandler({ body: null }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+  });
+
+  describe('findEventCreatorsHandler', () => {
+    const mockRequest = {
+      params: {
+        creatorRegionId: 1,
+      },
+      body: {
+      },
+    };
+
+    it('returns the creators', async () => {
+      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('returns 400 when no creator region id', async () => {
+      await findEventCreatorsHandler(
+        {
+          params: {
+            creatorRegionId: null,
+          },
+          body: {
+          },
+        },
+        mockResponse,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
   });
