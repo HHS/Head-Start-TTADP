@@ -50,10 +50,10 @@
   }
 }
  
-.ttahub-recipient-record--profile-table th > .sortable.asc::after {
+.ttahub-recipient-record--profile-table th > .sortable.asc span::after {
   background-image: url(../../../images/sort_asc.png);
 }
   
-.ttahub-recipient-record--profile-table th > .sortable.desc::after {
+.ttahub-recipient-record--profile-table th > .sortable.desc span::after {
   background-image: url(../../../images/sort_desc.png);
 }
