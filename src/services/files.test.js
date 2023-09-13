@@ -92,6 +92,7 @@ describe('files service', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
 
       await File.destroy({

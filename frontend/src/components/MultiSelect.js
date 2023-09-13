@@ -192,6 +192,7 @@ function MultiSelect({
             placeholder={placeholderText || ''}
             onCreateOption={onCreateOption}
             isMulti
+            required={!!(required)}
           />
         );
       }}

@@ -88,6 +88,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       where: {
         id: [goal.id, goal2.id],
       },
+      force: true,
     });
 
     await ActivityReport.destroy({

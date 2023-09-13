@@ -153,6 +153,7 @@ describe('propagateDestroyToFile', () => {
 
     await Objective.destroy({
       where: { id: objective.id },
+      force: true,
     });
 
     await ActivityReport.destroy({
@@ -204,6 +205,7 @@ describe('propagateDestroyToFile', () => {
     await Objective.destroy({
       where: { id: objective.id },
       transaction,
+      force: true,
     });
 
     await File.destroy({

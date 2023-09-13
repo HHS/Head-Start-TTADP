@@ -92,6 +92,7 @@ describe('activityReportObjective hooks', () => {
 
     await Objective.destroy({
       where: { id: objective.id },
+      force: true,
     });
 
     await ActivityReport.destroy({

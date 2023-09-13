@@ -74,7 +74,7 @@ describe('cacheGoalMetadata', () => {
   afterAll(async () => {
     await ActivityReportGoal.destroy({ where: { activityReportId: activityReport.id } });
     await destroyReport(activityReport);
-    await Goal.destroy({ where: { id: goal.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
   });
 
@@ -317,8 +317,8 @@ describe('cacheObjectiveMetadata', () => {
       .destroy({ where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } } });
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
-    await Objective.destroy({ where: { id: objective.id } });
-    await Goal.destroy({ where: { id: goal.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({

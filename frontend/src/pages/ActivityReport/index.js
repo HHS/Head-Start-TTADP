@@ -444,15 +444,19 @@ function ActivityReport({
           ? user.roles[0].fullName
           : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
-        const updatedReport = await saveReport(
-          reportId.current, {
-            ...updatedFields,
-            version: 2,
-            approverUserIds:
-            approverIds,
-            pageState: data.pageState,
-          }, {},
-        );
+
+        const isEmpty = Object.keys(updatedFields).length === 0;
+
+        const updatedReport = isEmpty
+          ? { ...formData }
+          : await saveReport(
+            reportId.current, {
+              ...updatedFields,
+              version: 2,
+              approverUserIds: approverIds,
+              pageState: data.pageState,
+            }, {},
+          );
 
         let reportData = {
           ...updatedReport,

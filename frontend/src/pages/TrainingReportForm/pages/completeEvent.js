@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { useHistory } from 'react-router-dom';
 import {
   Alert, Button, Table, Dropdown, ErrorMessage,
 } from '@trussworks/react-uswds';
@@ -41,8 +42,9 @@ const CompleteEvent = ({
   const [error, updateError] = useState();
   const [sessions, setSessions] = useState();
   const [showSubmissionError, setShowSubmissionError] = useState(false);
-
   const [showError, setShowError] = useState(false);
+
+  const history = useHistory();
 
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
@@ -126,11 +128,36 @@ const CompleteEvent = ({
     return null;
   }
 
-  const options = [
+  let options = [
     <option key="event-status-dropdown-option-in-progress">In progress</option>,
     <option key="event-status-dropdown-option-suspended">Suspended</option>,
     <option key="event-status-dropdown-option-complete">Complete</option>,
   ];
+
+  if (!sessions.length) {
+    options = [
+      <option key="event-status-dropdown-option-not-started">Not started</option>,
+      <option key="event-status-dropdown-option-suspended">Suspended</option>,
+    ];
+  }
+
+  const SubmitButton = () => {
+    const onSuspend = async () => {
+      await onSaveForm(updatedStatus);
+      const newPath = '/training-reports/suspended';
+      history.push(newPath);
+    };
+
+    if (isOwner && updatedStatus === 'Suspended') {
+      return (<Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onSuspend}>Suspend event</Button>);
+    }
+
+    if (isOwner) {
+      return (<Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>);
+    }
+
+    return null;
+  };
 
   return (
     <div className="padding-x-1">
@@ -152,7 +179,7 @@ const CompleteEvent = ({
         {sessions.length}
       </ReadOnlyField>
 
-      { (sessions.length === 0 || !isOwner) && (
+      { (!isOwner) && (
         <>
           <ReadOnlyField label="Event status" name="status">
             {updatedStatus}
@@ -189,26 +216,26 @@ const CompleteEvent = ({
               ))}
             </tbody>
           </Table>
-          { isOwner && (
-          <div className="margin-top-4">
-            <FormItem
-              label="Event status"
-              name="status"
-              required
-            >
-              <Dropdown
-                label="Event status"
-                name="status"
-                id="status"
-                value={updatedStatus}
-                onChange={(e) => setUpdatedStatus(e.target.value)}
-              >
-                {options}
-              </Dropdown>
-            </FormItem>
-          </div>
-          )}
         </>
+      )}
+      { isOwner && (
+      <div className="margin-top-4">
+        <FormItem
+          label="Event status"
+          name="status"
+          required
+        >
+          <Dropdown
+            label="Event status"
+            name="status"
+            id="status"
+            value={updatedStatus}
+            onChange={(e) => setUpdatedStatus(e.target.value)}
+          >
+            {options}
+          </Dropdown>
+        </FormItem>
+      </div>
       )}
 
       {showSubmissionError && (
@@ -249,7 +276,7 @@ const CompleteEvent = ({
 
       <DraftAlert />
       <div className="display-flex">
-        { isOwner && (<Button id="submit-event" className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Submit event</Button>)}
+        <SubmitButton />
         <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveForm(updatedStatus)}>Save draft</Button>
         <Button id="back-button" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
