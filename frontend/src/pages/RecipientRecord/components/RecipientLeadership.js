@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { uniqBy } from 'lodash';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 import Container from '../../../components/Container';
@@ -20,7 +21,12 @@ export default function RecipientLeadership({ regionId, recipientId }) {
           String(regionId),
         );
 
-        setLeadership(uniqBy(response, 'nameAndRole'));
+        const leadershipData = response.map((person) => ({
+          ...person,
+          effectiveDate: person.effectiveDate ? moment(person.effectiveDate).format('MM/DD/YYYY') : null,
+        }));
+
+        setLeadership(uniqBy(leadershipData, 'nameAndRole'));
       } catch (err) {
         setLeadership([]);
       }

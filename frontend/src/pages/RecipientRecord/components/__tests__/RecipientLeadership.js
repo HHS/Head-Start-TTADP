@@ -24,7 +24,7 @@ describe('RecipientLeadership', () => {
         fullName: 'Frog Person',
         fullRole: 'Frog Stuff',
         email: 'frog@pond.net',
-        effectiveDate: '2021-09-28',
+        effectiveDate: new Date(),
         nameAndRole: 'Frog Person - Frog Stuff',
       },
       {
@@ -32,7 +32,7 @@ describe('RecipientLeadership', () => {
         fullName: 'Frog Person',
         fullRole: 'Frog Stuff',
         email: 'frog@pond.net',
-        effectiveDate: '2021-09-28',
+        effectiveDate: new Date(),
         nameAndRole: 'Frog Person - Frog Stuff',
       },
     ]);
@@ -49,7 +49,7 @@ describe('RecipientLeadership', () => {
         fullName: 'Frog Person',
         fullRole: 'Frog Stuff',
         email: 'frog@pond.net',
-        effectiveDate: '2021-09-28',
+        effectiveDate: new Date(),
         nameAndRole: 'Frog Person - Frog Stuff',
       },
       {
@@ -57,7 +57,7 @@ describe('RecipientLeadership', () => {
         fullName: 'Frog Person',
         fullRole: 'Frog Commander',
         email: 'frog@pond.net',
-        effectiveDate: '2021-09-28',
+        effectiveDate: new Date(),
         nameAndRole: 'Frog Person - Frog Commander',
       },
     ]);
