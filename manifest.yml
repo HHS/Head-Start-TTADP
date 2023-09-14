@@ -1,6 +1,7 @@
 ---
 applications:
   - name: tta-smarthub-((env))
+    strategy: rolling
     buildpacks:
       - https://github.com/cloudfoundry/nodejs-buildpack
     env:
@@ -47,9 +48,9 @@ applications:
         command: yarn start:worker
         memory: ((worker_memory))
   - name: tta-similarity-api-((env))
+    strategy: rolling
     buildpacks:
       - python_buildpack
-    strategy: rolling
     path: similarity_api/src
     env:
       NEW_RELIC_APP_NAME: tta-similarity-api-((env))
