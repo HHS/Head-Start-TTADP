@@ -111,8 +111,9 @@ describe('TrainingReportForm', () => {
   it('displays an error when failing to fetch users', async () => {
     fetchMock.reset();
     fetchMock.get('/api/users/training-report-users?regionId=1', 500);
-
+    fetchMock.get('api/events/creators/123', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
     fetchMock.getOnce('/api/events/id/123', {
+      id: 123,
       regionId: '1',
       reportId: 1,
       collaboratorIds: [],
@@ -174,6 +175,7 @@ describe('TrainingReportForm', () => {
 
   it('tests the on save & continue button', async () => {
     fetchMock.getOnce('/api/events/id/123', {
+      id: 123,
       regionId: '1',
       reportId: 1,
       data: {
@@ -191,6 +193,8 @@ describe('TrainingReportForm', () => {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
     });
+
+    fetchMock.get('api/events/creators/123', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
 
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
@@ -328,6 +332,8 @@ describe('TrainingReportForm', () => {
       },
     });
 
+    fetchMock.get('api/events/creators/1', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
+
     fetchMock.put('/api/events/id/1', {
       regionId: '1',
       reportId: 1,
@@ -373,6 +379,8 @@ describe('TrainingReportForm', () => {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
     });
+
+    fetchMock.get('api/events/creators/1', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
 
     fetchMock.put('/api/events/id/1', {
       regionId: '1',
@@ -442,6 +450,7 @@ describe('TrainingReportForm', () => {
 
     fetchMock.get('/api/events/id/1', completedForm);
     fetchMock.put('/api/events/id/1', completedForm);
+    fetchMock.get('api/events/creators/1', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
       { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
@@ -503,6 +512,7 @@ describe('TrainingReportForm', () => {
     };
 
     fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.get('api/events/creators/1', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
     fetchMock.put('/api/events/id/1', completedForm);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
@@ -566,6 +576,7 @@ describe('TrainingReportForm', () => {
 
     fetchMock.get('/api/events/id/1', completedForm);
     fetchMock.put('/api/events/id/1', completedForm);
+    fetchMock.get('api/events/creators/1', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
       { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
@@ -628,6 +639,8 @@ describe('TrainingReportForm', () => {
     };
 
     fetchMock.get('/api/events/id/1', completedForm);
+
+    fetchMock.get('api/events/creators/1', [{ id: 1, name: 'Ted User' }, { id: 2, name: 'Ted User 2' }]);
     fetchMock.put('/api/events/id/1', 500);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
@@ -637,6 +650,7 @@ describe('TrainingReportForm', () => {
     act(() => {
       renderTrainingReportForm('1', 'complete-event');
     });
+
 
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'GET' })).toBe(true));
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
