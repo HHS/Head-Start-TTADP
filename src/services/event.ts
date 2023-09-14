@@ -248,8 +248,10 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     data,
   } = request;
 
+  // Get current json owner.
+  const { owner } = event.data;
   // if owner changes update the json owner.
-  if (ownerId !== event.data.owner.id) {
+  if (owner && ownerId !== event.data.owner.id) {
     // get the new owner.
     const newOwner = await User.findByPk(ownerId, { attributes: ['id', 'name', 'email'], raw: true });
     // update the owner in the data.
