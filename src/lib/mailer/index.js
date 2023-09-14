@@ -81,10 +81,11 @@ export const frequencyToInterval = (freq) => {
  * @returns {string[]} - A deduplicated and filtered array of email addresses.
  */
 export const filterAndDeduplicateEmails = (emails) => {
-  const filteredEmails = emails
-    .filter((email) => !email.startsWith('no-send_'))
+  console.log(emails);
+  const filteredEmails = emails.flat()
+    .filter((email) => typeof email === 'string' && !email.startsWith('no-send_'))
     .filter((email, index, array) => array.indexOf(email) === index);
-
+console.log(filteredEmails);
   return filteredEmails;
 };
 
