@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+import { Model, Op } from 'sequelize';
 import { auditLogger } from '../../logger';
 import {
   EnumInfo,
@@ -93,17 +93,19 @@ const getReportGenericEnum = async (
   [genericEnumId],
 );
 
-// TODO: this needs alot of work
 const syncGenericEnums = async (
   model: ReportEnumModel,
   enumInfo: EnumInfo,
   report: { id: number, type: string, regionId: number },
-  genericEnumIds: number[] | null = null,
-):Promise<[
-  void | ReportGenericEnumType[],
-  void | ReportGenericEnumType[],
-  void | ReportGenericEnumType[],
-]> => {
+  genericEnums: { id?: number, name?: string }[] | null = null,
+): Promise<{
+  promises: Promise<[
+    void | ReportGenericEnumType[],
+    void | ReportEnumModel,
+    void | ReportGenericEnumType[],
+  ]>,
+  unmatched: { id?: number, name?: string }[] | null,
+}> => {
   try {
     // in parallel:
     //    validate that the type is valid for the report type
@@ -113,7 +115,10 @@ const syncGenericEnums = async (
         enumInfo.model,
         {
           ...(enumInfo?.entityTypeFiltered && { validFor: report.type }),
-          id: genericEnumIds,
+          [Op.or]: [
+            { id: genericEnums.filter(({ id }) => id).map(({ id }) => id) },
+            { name: genericEnums.filter(({ name }) => name).map(({ name }) => name) },
+          ],
         },
       ),
       getReportGenericEnums(
@@ -123,11 +128,21 @@ const syncGenericEnums = async (
       ),
     ]);
 
+    // collect the valid ids, the invalid enums, and the current enum ids
     const [
       incomingValidEnumIds,
+      incomingInvalidEnum,
       currentEnumIds,
     ] = [
       incomingValidEnums.map((ive) => ive.id),
+      genericEnums.reduce((acc, ge) => {
+        const matched = incomingValidEnums
+          .find(({ id, name }) => ge.id === id || ge.name === name);
+        if (!matched) {
+          acc.push(ge);
+        }
+        return acc;
+      }, []),
       currentEnums.map((ce) => ce.id),
     ];
     // filter to the create, update, and destroy lists
@@ -143,42 +158,43 @@ const syncGenericEnums = async (
     // in parallel:
     //    perform in insert/update/delete based on the sub lists
     //        if a sublist is empty, do not call the db at all for that sublist
-    // @ts-ignore ts(2322)
-    // eslint-disable-next-line @typescript-eslint/return-await
-    return Promise.all([
-      (createList && createList.length)
-        ? model.bulkCreate(
-          createList.map((id) => ({
-            [enumInfo.keyName]: id,
-            reportId: report.id,
-          })),
-          { individualHooks: true },
-        )
-        : Promise.resolve(),
-      (updateList && updateList.length)
-        ? model.update(
-          {
-            updatedAt: new Date(),
-          },
-          {
-            where: {
-              [enumInfo.keyName]: updateList,
+    return {
+      promises: Promise.all([
+        (createList && createList.length)
+          ? model.bulkCreate(
+            createList.map((id) => ({
+              [enumInfo.keyName]: id,
               reportId: report.id,
+            })),
+            { individualHooks: true },
+          )
+          : Promise.resolve(),
+        (updateList && updateList.length)
+          ? model.update(
+            {
+              updatedAt: new Date(),
+            },
+            {
+              where: {
+                [enumInfo.keyName]: updateList,
+                reportId: report.id,
+              },
+              individualHooks: true,
+            },
+          )
+          : Promise.resolve(),
+        (destroyList && destroyList.length)
+          ? model.destroy({
+            where: {
+              reportId: report.id,
+              [enumInfo.keyName]: destroyList,
             },
             individualHooks: true,
-          },
-        )
-        : Promise.resolve(),
-      (destroyList && destroyList.length)
-        ? model.destroy({
-          where: {
-            reportId: report.id,
-            [enumInfo.keyName]: destroyList,
-          },
-          individualHooks: true,
-        })
-        : Promise.resolve(),
-    ]);
+          })
+          : Promise.resolve(),
+      ]),
+      unmatched: incomingInvalidEnum,
+    };
   } catch (err) {
     auditLogger.error(err);
     throw err;
