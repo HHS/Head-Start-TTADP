@@ -110,7 +110,6 @@ export const getHandler = async (req, res) => {
 export const findEventCreatorsHandler = async (req, res) => {
   try {
     const { eventId } = req.params;
-    console.log('\n\n\n=======EventId: ', eventId);
     const auth = await getEventAuthorization(req, res, {});
     if (!auth.isAdmin()) {
       return res.status(403).send({ message: 'User is not authorized get event creators' });
