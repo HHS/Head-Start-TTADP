@@ -318,6 +318,7 @@ export async function findEventCreators(regionId: number): Promise<EventShape[] 
         },
       },
     ],
+    order: [['name', 'ASC']],
   });
 
   return creators;

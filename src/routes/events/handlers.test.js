@@ -158,7 +158,7 @@ describe('event handlers', () => {
   describe('findEventCreatorsHandler', () => {
     const mockRequest = {
       params: {
-        creatorRegionId: 1,
+        eventId: 1,
       },
       body: {
       },
@@ -168,9 +168,30 @@ describe('event handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         isAdmin: () => true,
       }));
+      findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
       findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
       await findEventCreatorsHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('adds the current owner if they do not exist', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => true,
+      }));
+      findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
+      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('throws a 404 is event is not found', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => true,
+      }));
+      findEventById.mockResolvedValueOnce(null);
+      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 403 user is not an admin', async () => {
