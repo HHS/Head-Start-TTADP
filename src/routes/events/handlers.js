@@ -110,10 +110,6 @@ export const getHandler = async (req, res) => {
 export const findEventCreatorsHandler = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const auth = await getEventAuthorization(req, res, {});
-    if (!auth.isAdmin()) {
-      return res.status(403).send({ message: 'User is not authorized get event creators' });
-    }
 
     // return a 400 if the eventId is not provided.
     if (!eventId) {
@@ -124,6 +120,12 @@ export const findEventCreatorsHandler = async (req, res) => {
     const event = await findEventById(eventId);
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
+    // Check authorization.
+    const auth = await getEventAuthorization(req, res, event);
+    if (!auth.canWriteInRegion()) {
+      return res.status(403).send({ message: 'User is not authorized get event creators' });
     }
 
     // Get the regionId and ownerId from the event.
