@@ -17,7 +17,7 @@ import {
   defaultValues,
 } from './constants';
 import { getTrainingReportUsers } from '../../fetchers/users';
-import { eventById, updateEvent, findCreatorsByRegionId } from '../../fetchers/event';
+import { eventById, updateEvent, findEventCreators } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
@@ -177,10 +177,11 @@ export default function TrainingReportForm({ match }) {
       try {
         const event = await eventById(trainingReportId);
         console.log('region', event.regionId);
-        const eventCreators = await findCreatorsByRegionId(event.regionId);
+        const eventCreators = await findEventCreators(event.id);
         console.log('eventCreators', eventCreators);
         console.log('event', event);
-        resetFormData(hookForm.reset, { ...event, data: { ...event.data, eventCreators: [...eventCreators] } });
+        resetFormData(hookForm.reset,
+          { ...event, data: { ...event.data, eventCreators: [...eventCreators] } });
         reportId.current = trainingReportId;
       } catch (e) {
         setError('Error fetching training report');

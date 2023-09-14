@@ -138,7 +138,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             <Controller
               render={({ onChange: controllerOnChange, value }) => (
                 <Select
-                  value={eventCreatorOptions.find((option) => option.label === value)}
+                  value={eventCreatorOptions.find((option) => option.value === value)}
                   inputId="ownerId"
                   name="ownerId"
                   className="usa-select"
