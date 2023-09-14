@@ -651,7 +651,6 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm('1', 'complete-event');
     });
 
-
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'GET' })).toBe(true));
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
     await waitFor(async () => expect(await screen.findByRole('button', { name: /Event summary complete/i })).toBeInTheDocument());
