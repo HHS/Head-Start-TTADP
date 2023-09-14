@@ -28,3 +28,8 @@ export const getEventsByStatus = async (status, filters) => {
 export const deleteEvent = async (eventId) => {
   await destroy(join(eventsUrl, 'id', eventId.toString(DECIMAL_BASE)));
 };
+
+export const findEventCreators = async (eventId) => {
+  const res = await get(`/api/events/creators/:eventId${String(eventId)}`);
+  return res.json();
+};

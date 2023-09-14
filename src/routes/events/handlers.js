@@ -109,18 +109,35 @@ export const getHandler = async (req, res) => {
 
 export const findEventCreatorsHandler = async (req, res) => {
   try {
-    const { creatorRegionId } = req.params;
+    const { eventId } = req.params;
     const auth = await getEventAuthorization(req, res, {});
     if (!auth.isAdmin()) {
       return res.status(403).send({ message: 'User is not authorized get event creators' });
     }
 
-    // return a 400 if the creatorRegionId is not provided.
-    if (!creatorRegionId) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a creatorRegionId' });
+    // return a 400 if the eventId is not provided.
+    if (!eventId) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a eventId' });
     }
 
-    const creators = await findEventCreators(creatorRegionId);
+    // Get the event.
+    const event = await findEventById(eventId);
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
+    // Get the regionId and ownerId from the event.
+    const { regionId, ownerId } = event;
+    const creators = await findEventCreators(regionId);
+
+    // Check if creators contains the current ownerId.
+    const currentOwner = creators.find((creator) => creator.id === ownerId);
+    if (!currentOwner) {
+      // If the current ownerId is not in the creators array, add it.
+      const owner = await userById(ownerId);
+      creators.push({ id: owner.id, name: owner.name });
+    }
+
     return res.status(httpCodes.OK).send(creators);
   } catch (error) {
     return handleErrors(req, res, error, logContext);

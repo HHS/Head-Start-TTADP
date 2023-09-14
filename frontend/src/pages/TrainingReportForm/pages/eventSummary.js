@@ -63,6 +63,8 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
 
+  console.log('summary: ', data);
+
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
 
@@ -80,6 +82,8 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     eventName,
     owner,
     status,
+    eventCreators,
+    ownerId,
   } = data;
 
   console.log('data: ', data);
@@ -91,6 +95,11 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
   const ownerName = owner && owner.name ? owner.name : '';
 
+  const eventCreatorOptions = !eventCreators
+    ? []
+    : eventCreators.map((o) => ({ value: o.id, label: o.name }));
+  console.log('ownerId: ', ownerId);
+  console.log('options: ', eventCreatorOptions);
   return (
     <div className="padding-x-1">
       <Helmet>
@@ -129,9 +138,9 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
             <Controller
               render={({ onChange: controllerOnChange, value }) => (
                 <Select
-                  value={eventOrganizerOptions.find((option) => option.value === value)}
-                  inputId="creatorName"
-                  name="creatorName"
+                  value={eventCreatorOptions.find((option) => option.label === value)}
+                  inputId="ownerId"
+                  name="ownerId"
                   className="usa-select"
                   styles={selectOptionsReset}
                   components={{
@@ -141,7 +150,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                     controllerOnChange(s.value);
                   }}
                   inputRef={register({ required: 'Select an event creator' })}
-                  options={eventOrganizerOptions}
+                  options={eventCreatorOptions}
                   required
                 />
               )}
