@@ -86,6 +86,14 @@ const remapPrune = (
   return prune;
 };
 
+type RemappingDefinition = Record<string, string | (
+  (
+    data: object | object[]
+  ) => object | object[]
+  |
+  string
+)[]>;
+
 /**
  * Remaps the data based on the provided remapping definition.
  * @param data - The JSON data to be remapped.
@@ -95,21 +103,17 @@ const remapPrune = (
  */
 const remap = (
   data: object | object[],
-  remappingDefinition: Record<string, string | (
-    (
-      processedDate:object | object[],
-      sourceValue: object | object[]
-    ) => object | object[]
-    |
-    string
-  )[]>,
+  remappingDefinition: RemappingDefinition,
   options:{
     reverse?: boolean,
     keepUnmappedValues?: boolean,
     deleteMappedValues?: boolean,
     deleteEmptyParents?: boolean,
   } = {},
-): object | object[] => {
+): {
+  mapped: object | object[],
+  unmapped: object | object[],
+} => {
   // If jsonData is null or undefined, return null
   if (data === null || data === undefined) return null;
   const {
@@ -177,86 +181,6 @@ const remap = (
   });
 
   return { mapped: remappedData, unmapped: unmappedData };
-};
-
-const processData = (
-  jsonData: object | object[],
-  processDefinition: Record<
-  string,
-  (
-    processedDate:object | object[],
-    sourceValue: object | object[]
-  ) => object | object[]>,
-  options:{
-    deleteProcessedValues?: boolean,
-    deleteEmptyParents?: boolean,
-    keepUnprocessedValues?: boolean,
-  } = {},
-) => {
-  // If jsonData is null or undefined, return null
-  if (jsonData === null || jsonData === undefined) return null;
-  const {
-    deleteProcessedValues = true,
-    deleteEmptyParents = true,
-    keepUnprocessedValues = true,
-  } = options;
-
-  let processedData;
-  if (keepUnprocessedValues) {
-    processedData = jsonData;
-  } else if (Array.isArray(jsonData)) {
-    processedData = [];
-  } else {
-    processedData = {};
-  }
-
-  // Iterate over each key in the remapping definition
-  Object.keys(processDefinition).forEach((key) => {
-    const sourcePath = key;
-    const targetProcessor = processDefinition[key];
-    const sourceValue = dotWild.get(
-      keepUnprocessedValues
-        ? processedData
-        : jsonData,
-      sourcePath,
-    );
-    // If the source value exists
-    if (sourceValue !== undefined) {
-      processedData = targetProcessor(processedData, sourceValue);
-
-      if (keepUnprocessedValues && deleteProcessedValues) {
-        processedData = dotWild.remove(processedData, sourcePath);
-
-        if (deleteEmptyParents) {
-          // Recursively check and remove empty parent objects/arrays
-          let parentPath = sourcePath.substring(
-            0,
-            sourcePath.includes('.')
-              ? sourcePath.lastIndexOf('.')
-              : 0,
-          );
-          while (parentPath && parentPath !== '') {
-            const parentValue = dotWild.get(processedData, parentPath);
-
-            // If the parent value is an empty array, add remove
-            if (Array.isArray(parentValue) && parentValue.length === 0) {
-              processedData = dotWild.remove(processedData, parentPath);
-            // If the parent value is an empty object, add remove
-            } else if (typeof parentValue === 'object' && Object.keys(parentValue).length === 0) {
-              processedData = dotWild.remove(processedData, parentPath);
-            }
-
-            // Update the parent path to check the next level
-            parentPath = parentPath.includes('.')
-              ? parentPath.substring(0, parentPath.lastIndexOf('.'))
-              : '';
-          }
-        }
-      }
-    }
-  });
-
-  return processedData;
 };
 
 /**
