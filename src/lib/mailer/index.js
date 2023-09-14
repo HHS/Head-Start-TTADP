@@ -73,6 +73,21 @@ export const frequencyToInterval = (freq) => {
   return date;
 };
 
+/**
+ * Filters and deduplicates an array of email addresses, removing duplicates
+ * and excluding email addresses that start with 'no-send_'.
+ *
+ * @param {string[]} emails - An array of email addresses to filter and deduplicate.
+ * @returns {string[]} - A deduplicated and filtered array of email addresses.
+ */
+export const filterAndDeduplicateEmails = (emails) => {
+  const filteredEmails = emails
+    .filter((email) => !email.startsWith('no-send_'))
+    .filter((email, index, array) => array.indexOf(email) === index);
+
+  return filteredEmails;
+};
+
 export const onFailedNotification = (job, error) => {
   auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
   logEmailNotification(job, false, error);
@@ -134,7 +149,7 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
       message: {
-        to: toEmails,
+        to: filterAndDeduplicateEmails(toEmails),
       },
       locals: {
         managerName: approverName,
@@ -188,7 +203,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'report_approved'),
       message: {
-        to: toEmails,
+        to: filterAndDeduplicateEmails(toEmails),
       },
       locals: {
         reportPath,
@@ -221,7 +236,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
     });
     return email.send({
       template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
-      message: { to: addresses },
+      message: { to: filterAndDeduplicateEmails(addresses) },
       locals: { reportPath, displayId, recipientNamesDisplay },
     });
   }
@@ -257,7 +272,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
       message: {
-        to: [approverEmail],
+        to: filterAndDeduplicateEmails([approverEmail]),
       },
       locals: {
         reportPath,
@@ -298,7 +313,7 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
     return email.send({
       template: path.resolve(emailTemplatePath, 'collaborator_added'),
       message: {
-        to: [newCollaborator.email],
+        to: filterAndDeduplicateEmails([newCollaborator.email]),
       },
       locals: {
         reportPath,
@@ -647,7 +662,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, templateType),
       message: {
-        to: [user.email],
+        to: filterAndDeduplicateEmails([user.email]),
       },
       locals: {
         user,
@@ -702,7 +717,7 @@ export const sendEmailVerificationRequestWithToken = (user, token) => {
   return email.send({
     template: path.resolve(emailTemplatePath, 'email_verification'),
     message: {
-      to: [user.email],
+      to: filterAndDeduplicateEmails([user.email]),
     },
     locals: {
       token,
