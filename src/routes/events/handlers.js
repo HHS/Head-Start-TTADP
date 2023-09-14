@@ -110,9 +110,13 @@ export const getHandler = async (req, res) => {
 export const findEventCreatorsHandler = async (req, res) => {
   try {
     const { creatorRegionId } = req.params;
+    const auth = await getEventAuthorization(req, res, {});
+    if (!auth.isAdmin()) {
+      return res.status(403).send({ message: 'User is not authorized get event creators' });
+    }
+
     // return a 400 if the creatorRegionId is not provided.
     if (!creatorRegionId) {
-      console.log('---------------------here');
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a creatorRegionId' });
     }
 

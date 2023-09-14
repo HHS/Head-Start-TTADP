@@ -165,12 +165,36 @@ describe('event handlers', () => {
     };
 
     it('returns the creators', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => true,
+      }));
       findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
       await findEventCreatorsHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
+    it('returns 403 user is not an admin', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => false,
+      }));
+      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
+      await findEventCreatorsHandler(
+        {
+          params: {
+            creatorRegionId: 1,
+          },
+          body: {
+          },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+    });
+
     it('returns 400 when no creator region id', async () => {
+      EventReport.mockImplementationOnce(() => ({
+        isAdmin: () => true,
+      }));
       await findEventCreatorsHandler(
         {
           params: {
