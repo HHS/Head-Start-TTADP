@@ -52,6 +52,8 @@ applications:
     buildpacks:
       - python_buildpack
     path: similarity_api/src
+    services:
+      - ttahub-((env))
     env:
       NEW_RELIC_APP_NAME: tta-similarity-api-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
