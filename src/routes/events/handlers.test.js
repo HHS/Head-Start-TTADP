@@ -166,7 +166,7 @@ describe('event handlers', () => {
 
     it('returns the creators', async () => {
       EventReport.mockImplementationOnce(() => ({
-        isAdmin: () => true,
+        canWriteInRegion: () => true,
       }));
       findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
       findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
@@ -176,7 +176,7 @@ describe('event handlers', () => {
 
     it('adds the current owner if they do not exist', async () => {
       EventReport.mockImplementationOnce(() => ({
-        isAdmin: () => true,
+        canWriteInRegion: () => true,
       }));
       findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
       findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
@@ -186,7 +186,7 @@ describe('event handlers', () => {
 
     it('throws a 404 is event is not found', async () => {
       EventReport.mockImplementationOnce(() => ({
-        isAdmin: () => true,
+        canWriteInRegion: () => true,
       }));
       findEventById.mockResolvedValueOnce(null);
       findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
@@ -196,13 +196,14 @@ describe('event handlers', () => {
 
     it('returns 403 user is not an admin', async () => {
       EventReport.mockImplementationOnce(() => ({
-        isAdmin: () => false,
+        canWriteInRegion: () => false,
       }));
+      findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
       findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
       await findEventCreatorsHandler(
         {
           params: {
-            creatorRegionId: 1,
+            eventId: 1,
           },
           body: {
           },
@@ -214,7 +215,7 @@ describe('event handlers', () => {
 
     it('returns 400 when no creator region id', async () => {
       EventReport.mockImplementationOnce(() => ({
-        isAdmin: () => true,
+        canWriteInRegion: () => true,
       }));
       await findEventCreatorsHandler(
         {
