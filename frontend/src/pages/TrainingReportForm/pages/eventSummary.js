@@ -63,8 +63,6 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
 
-  console.log('summary: ', data);
-
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
 
@@ -83,10 +81,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     owner,
     status,
     eventCreators,
-    ownerId,
   } = data;
-
-  console.log('data: ', data);
 
   const { user } = useContext(UserContext);
   const hasAdminRights = isAdmin(user);
@@ -98,8 +93,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const eventCreatorOptions = !eventCreators
     ? []
     : eventCreators.map((o) => ({ value: o.id, label: o.name }));
-  console.log('ownerId: ', ownerId);
-  console.log('options: ', eventCreatorOptions);
+
   return (
     <div className="padding-x-1">
       <Helmet>
@@ -163,7 +157,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                   return true;
                 },
               }}
-              name="eventOrganizer"
+              name="ownerId"
               defaultValue=""
             />
           </div>

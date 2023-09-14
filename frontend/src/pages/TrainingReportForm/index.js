@@ -176,10 +176,7 @@ export default function TrainingReportForm({ match }) {
       }
       try {
         const event = await eventById(trainingReportId);
-        console.log('region', event.regionId);
         const eventCreators = await findEventCreators(event.id);
-        console.log('eventCreators', eventCreators);
-        console.log('event', event);
         resetFormData(hookForm.reset,
           { ...event, data: { ...event.data, eventCreators: [...eventCreators] } });
         reportId.current = trainingReportId;

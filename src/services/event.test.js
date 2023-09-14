@@ -15,6 +15,7 @@ import {
   findEventsByStatus,
   findEventCreators,
 } from './event';
+import { createUser } from '../routes/admin/user';
 
 describe('event service', () => {
   afterAll(async () => {
@@ -27,6 +28,11 @@ describe('event service', () => {
     collaboratorIds: [num],
     data: {
       status: 'active',
+      owner: {
+        id: num,
+        name: 'test',
+        email: 'test@test.com',
+      },
     },
   });
 
@@ -74,6 +80,33 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('update owner json', async () => {
+      const created = await createAnEvent(99_927);
+      const newOwner = await db.User.create({
+        homeRegionId: 1,
+        name: 'New Owner',
+        hsesUsername: 'DF431423',
+        hsesUserId: 'DF431423',
+        email: 'newowner@test.com',
+        role: [],
+        lastLogin: new Date(),
+      });
+
+      const updated = await updateEvent(created.id, {
+        ownerId: newOwner.id,
+        pocIds: [123],
+        regionId: 123,
+        collaboratorIds: [123],
+        data: {},
+      });
+
+      expect(updated.data.owner).toHaveProperty('id', newOwner.id);
+      expect(updated.data.owner).toHaveProperty('name', 'New Owner');
+      expect(updated.data.owner).toHaveProperty('email', 'newowner@test.com');
+
+      await destroyEvent(created.id);
+      await db.User.destroy({ where: { id: newOwner.id } });
+    });
     it('creates a new event when the id cannot be found', async () => {
       const found = await findEventById(99_999);
       expect(found).toBeNull();
