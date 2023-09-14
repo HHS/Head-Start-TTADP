@@ -14,6 +14,7 @@ import {
   notificationQueue as notificationQueueMock,
   notificationQueue as notificationDigestQueueMock,
   notifyRecipientReportApproved,
+  filterAndDeduplicateEmails,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -1049,6 +1050,26 @@ describe('mailer tests', () => {
 
     it('"approved" digest which logs on bad date', async () => {
       await expect(approvedDigest('')).rejects.toThrow();
+    });
+  });
+
+  describe('filterAndDeduplicateEmails', () => {
+    it('should return an array with unique emails when given an array with duplicate emails', () => {
+      const emails = ['test@example.com', 'test@example.com', 'another@example.com'];
+      const result = filterAndDeduplicateEmails(emails);
+      expect(result).toEqual(['test@example.com', 'another@example.com']);
+    });
+
+    it('should return an array without emails starting with "no-send_"', () => {
+      const emails = ['test@example.com', 'test@example.com', 'another@example.com', 'unique@example.com', 'no-send_test@example.com'];
+      const result = filterAndDeduplicateEmails(emails);
+      expect(result).toEqual(['test@example.com', 'another@example.com', 'unique@example.com']);
+    });
+
+    it('should return an empty array when given an empty array', () => {
+      const emails = [];
+      const result = filterAndDeduplicateEmails(emails);
+      expect(result).toEqual([]);
     });
   });
 });
