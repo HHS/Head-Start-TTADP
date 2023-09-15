@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { blur } from './common';
 
 test.describe('Recipient record', () => {
   test('create a basic goal', async ({ page }) => {  
@@ -13,15 +14,19 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: /This button removes the filter: Date started is within/i }).click();
 
     // goals and objectives, add a new goal
-    await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+    await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').first().click();
+    await page.getByText('Recipient grant numbers *').click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     // select a second grant as well
     await page.keyboard.press('Enter');
+
+    await blur(page);
+
     await page.getByTestId('textarea').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();

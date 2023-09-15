@@ -196,6 +196,23 @@ describe('event service', () => {
       await destroyEvent(created4.id);
     });
 
+    it('shows all if user is admin', async () => {
+      const created = await createAnEventWithStatus(98_900, TRS.NOT_STARTED);
+      const found = await findEventsByStatus(
+        TRS.NOT_STARTED,
+        [],
+        98_989,
+        null,
+        false,
+        { ownerId: 98_900 },
+        true, // isAdmin?
+      );
+
+      expect(found.length).toBe(1);
+      expect(found[0].data).toHaveProperty('status', TRS.NOT_STARTED);
+      await destroyEvent(created.id);
+    });
+
     it('findEventsByStatus sort order', async () => {
       // eventId is used for sorting, then startDate
       const e1 = await createAnEventWithData(11_111, { eventId: 'C', startDate: '2020-01-02', status: TRS.NOT_STARTED });

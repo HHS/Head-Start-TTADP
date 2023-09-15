@@ -260,5 +260,6 @@ export async function destroyGoal(goal) {
     where: {
       id: goal.id,
     },
+    force: true,
   });
 }

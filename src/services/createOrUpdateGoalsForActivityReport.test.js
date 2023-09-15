@@ -144,7 +144,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     });
 
     // Delete OE Obj's.
-    await Objective.destroy({ where: { id: oeObjectiveIds } });
+    await Objective.destroy({ where: { id: oeObjectiveIds }, force: true });
 
     // Delete OE Recipient.
     await ActivityRecipient.destroy({
@@ -157,13 +157,14 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     await ActivityReport.destroy({ where: { id: otherEntityReport.id } });
 
     // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goalIds } });
+    await Objective.destroy({ where: { goalId: goalIds }, force: true });
 
     // Delete Goal.
     await Goal.destroy({
       where: {
         id: goalIds,
       },
+      force: true,
     });
 
     // Delete Grant.

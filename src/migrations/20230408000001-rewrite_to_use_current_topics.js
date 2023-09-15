@@ -17,6 +17,7 @@ module.exports = {
       // then update ActivityReports.topics
       await queryInterface.sequelize.query(
         `
+        DROP TABLE IF EXISTS renamed_topics;
         CREATE TEMP TABLE renamed_topics AS
         SELECT DISTINCT
           lt.id legacy_tid,
@@ -29,6 +30,7 @@ module.exports = {
         WHERE lt.name IN ('Teaching Practices / Teacher-Child Interactions', 'Child Assessment, Development, Screening')
         ;
 
+        DROP TABLE IF EXISTS updated_legacy_ars;
         CREATE TEMP TABLE updated_legacy_ars AS
         WITH updater AS (
           UPDATE "ActivityReports"
@@ -64,7 +66,8 @@ module.exports = {
         INSERT INTO updated_legacy_ars
         SELECT * FROM additional_round
         ;
-        
+
+        DROP TABLE IF EXISTS updated_activity_reports;
         CREATE TEMP TABLE updated_activity_reports AS
         WITH updater AS (
           WITH renames AS (
@@ -76,7 +79,7 @@ module.exports = {
           UPDATE "ActivityReports"
           SET topics = ARRAY_REPLACE(topics, legacy_name, current_name)
           FROM renames
-          WHERE legacy_name = ANY(topics) 
+          WHERE legacy_name = ANY(topics)
           RETURNING
             id updated_id,
             legacy_name
@@ -84,6 +87,7 @@ module.exports = {
         ;
 
         /* We don't actually need to make any of these changes
+        DROP TABLE IF EXISTS updated_objective_topics;
         CREATE TEMP TABLE updated_objective_topics AS
         WITH updater AS (
           UPDATE "ObjectiveTopics"
@@ -96,6 +100,7 @@ module.exports = {
         ) SELECT * FROM updater
         ;
 
+        DROP TABLE IF EXISTS updated_ar_objective_topics;
         CREATE TEMP TABLE updated_ar_objective_topics AS
         WITH updater AS (
           UPDATE "ActivityReportObjectiveTopics"
@@ -107,7 +112,8 @@ module.exports = {
             legacy_tid
         ) SELECT * FROM updater
         ;
-        
+
+        DROP TABLE IF EXISTS updated_objective_template_topics;
         CREATE TEMP TABLE updated_objective_template_topics AS
         WITH updater AS (
           UPDATE "ObjectiveTemplateTopics"
@@ -119,7 +125,8 @@ module.exports = {
             legacy_tid
         ) SELECT * FROM updater
         ;
-        
+
+        DROP TABLE IF EXISTS updated_role_topics;
         CREATE TEMP TABLE updated_role_topics AS
         WITH updater AS (
           UPDATE "RoleTopics"
@@ -131,7 +138,7 @@ module.exports = {
             legacy_tid
         ) SELECT * FROM updater
         ;
-        
+
         SELECT 'updated_objective_topics' tablename, COUNT(*) updates
         FROM updated_objective_topics
         UNION

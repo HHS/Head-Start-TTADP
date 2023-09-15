@@ -1,10 +1,18 @@
 import { test, expect } from '@playwright/test';
 import Joi from 'joi';
+import { reseed } from '../utils/common';
 import { root, validateSchema } from './common';
 
-test.describe('get /widgets/:widgetId', () => {
+test.beforeAll(async ({ request }) => {
+  console.log("Reseeding before widget tests.");
+  await reseed(request);
+  console.log("Finished reseeding before widget tests.");
+});
+
+test.describe('widgets', () => {
 
   test('overview', async ({ request }) => {
+    console.log("widgets > overview beginning");
     const response = await request.get(`${root}/widgets/overview`);
     expect(response.status()).toBe(200);
 
@@ -108,12 +116,12 @@ test.describe('get /widgets/:widgetId', () => {
       category: Joi.string().required(),
       count: Joi.number().integer().required()
     });
-    
+
     const reasonsSchema = Joi.object({
       category: Joi.string().required(),
       count: Joi.number().integer().required()
     });
-    
+
     const schema = Joi.object({
       topics: Joi.array().items(topicSchema).required(),
       reasons: Joi.array().items(reasonsSchema).required()
@@ -174,5 +182,5 @@ test.describe('get /widgets/:widgetId', () => {
 
     await validateSchema(response, schema, expect);
   });
-
 });
+

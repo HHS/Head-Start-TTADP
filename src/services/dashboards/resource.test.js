@@ -280,8 +280,8 @@ describe('Resources dashboard', () => {
 
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
     await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: objective.id } });
-    await Goal.destroy({ where: { id: goal.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE } });
     await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });

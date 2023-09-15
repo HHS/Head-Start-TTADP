@@ -162,6 +162,7 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Goal',
+    paranoid: true,
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),

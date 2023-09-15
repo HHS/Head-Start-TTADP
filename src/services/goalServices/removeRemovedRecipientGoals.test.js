@@ -209,6 +209,7 @@ describe('removeRemovedRecipientsGoals', () => {
       where: {
         id: [firstObjective.id, secondObjective.id, thirdObjective.id],
       },
+      force: true,
     });
 
     await ActivityReportGoal.destroy({
@@ -221,6 +222,7 @@ describe('removeRemovedRecipientsGoals', () => {
       where: {
         grantId: [grantOne.id, grantTwo.id],
       },
+      force: true,
     });
 
     await ActivityRecipient.destroy({

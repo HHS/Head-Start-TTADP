@@ -66,6 +66,7 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
       await sequelize.models.ObjectiveTemplate.destroy({
         where: {
@@ -129,6 +130,7 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
       await sequelize.models.ObjectiveTemplate.destroy({
         where: {
@@ -172,6 +174,7 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
     });
     it('should not throw an error if the file is not used on an approved report', async () => {
@@ -197,6 +200,7 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
     });
   });

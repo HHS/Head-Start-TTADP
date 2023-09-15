@@ -25,6 +25,10 @@ const RenderSubmitter = ({
     defaultValues: formData,
   });
 
+  hookForm.register('goalsAndObjectives');
+  // eslint-disable-next-line react/prop-types
+  hookForm.setValue('goalsAndObjectives', formData.goalsAndObjectives || []);
+
   return (
     <FormProvider {...hookForm}>
       <Submitter
@@ -57,11 +61,12 @@ const renderReview = (
   calculatedStatus,
   onFormSubmit,
   complete = true,
-  onSave = () => { },
-  resetToDraft = () => { },
+  onSave = jest.fn(),
+  resetToDraft = jest.fn(),
   approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
   user = defaultUser,
   creatorRole = null,
+  hasIncompleteGoalPrompts = false,
 ) => {
   const formData = {
     approvers,
@@ -70,6 +75,16 @@ const renderReview = (
     id: 1,
     creatorRole,
   };
+
+  if (hasIncompleteGoalPrompts) {
+    formData.goalsAndObjectives = [{
+      isCurated: true,
+      prompts: [{
+        allGoalsHavePromptResponse: false,
+        title: 'FEI Goal',
+      }],
+    }];
+  }
 
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
@@ -117,6 +132,26 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
+    });
+
+    it('shows an error if goals are missing prompts', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        jest.fn(),
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        true,
+      );
+
+      const alert = await screen.findByText('Incomplete report');
+      expect(alert).toBeVisible();
+
+      expect(await screen.findByText(/some goals are incomplete/i)).toBeVisible();
+      expect(await screen.findByText(/fei goal/i)).toBeVisible();
     });
 
     it('fails to submit if there are pages that have not been completed', async () => {

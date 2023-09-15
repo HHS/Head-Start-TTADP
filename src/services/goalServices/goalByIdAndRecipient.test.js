@@ -211,6 +211,7 @@ describe('goalById', () => {
         goalId: goalOnActivityReport.id,
       },
       individualHooks: true,
+      force: true,
     });
 
     await ActivityReportGoal.destroy({
@@ -227,6 +228,7 @@ describe('goalById', () => {
         id: [goalOnActivityReport.id, otherGoal.id],
       },
       individualHooks: true,
+      force: true,
     });
 
     await Grant.destroy({

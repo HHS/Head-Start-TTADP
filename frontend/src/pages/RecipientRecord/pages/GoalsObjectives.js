@@ -42,7 +42,7 @@ export default function GoalsObjectives({
     <>
       <Helmet>
         <title>
-          Goals and Objectives -
+          RTTAPA Goals and Objectives -
           {' '}
           {recipientName}
         </title>

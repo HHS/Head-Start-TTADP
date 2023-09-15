@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.16.1-browsers
+      - image: cimg/node:18.17.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.16.1-browsers
+      - image: cimg/node:18.17.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:18.16.1-browsers
+      - image: cimg/node:18.17.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -227,10 +227,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-ses-switchover"
+    default: "kw-staging-smtp"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "al-ttahub-519-grant-personnel"
+    default: "kw-staging-smtp"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -253,16 +253,16 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v9-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v9-yarn-deps-
+            - v14-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
             - packages/common/node_modules
-          key: v9-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v11-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -412,6 +412,42 @@ jobs:
       - store_artifacts:
           path: playwright/api
     resource_class: large
+  test_utils:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:utils
+      - store_artifacts:
+          path: playwright/utilsTests
+    resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -513,12 +549,12 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -561,12 +597,12 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS                
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -609,12 +645,12 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS                
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -660,7 +696,7 @@ jobs:
                 smtp_host_test: SMTP_HOST_TEST
                 smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: SMTP_IGNORE_TLS                
+                smtp_ignore_tls: SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
@@ -689,6 +725,9 @@ workflows:
       - test_api:
           requires:
             - build_and_lint
+      - test_utils:
+          requires:
+            - build_and_lint
       - cucumber_test:
           requires:
             - build_and_lint
@@ -701,6 +740,7 @@ workflows:
             - test_frontend
             - test_e2e
             - test_api
+            - test_utils
             - cucumber_test
             - dynamic_security_scan
           filters:
@@ -732,6 +772,9 @@ workflows:
           requires:
             - build_and_lint
       - test_api:
+          requires:
+            - build_and_lint
+      - test_utils:
           requires:
             - build_and_lint
       - dynamic_security_scan:

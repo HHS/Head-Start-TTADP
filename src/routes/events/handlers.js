@@ -45,6 +45,7 @@ export const getByStatus = async (req, res) => {
       null,
       false,
       scopes,
+      auth.isAdmin(),
     );
 
     return res.status(httpCodes.OK).send(events);

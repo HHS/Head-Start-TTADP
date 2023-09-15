@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
 import cookieSession from '../middleware/sessionMiddleware';
+import { isTestingOrCI } from '../middleware/testingOnlyMiddleware';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';

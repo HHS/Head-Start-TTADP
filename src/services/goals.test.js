@@ -103,21 +103,25 @@ describe('Goals DB service', () => {
         where: {
           id: objectiveOne.id,
         },
+        force: true,
       });
       await Objective.destroy({
         where: {
           id: objectiveTwo.id,
         },
+        force: true,
       });
       await Objective.destroy({
         where: {
           id: objectiveThree.id,
         },
+        force: true,
       });
       await Objective.destroy({
         where: {
           id: objectiveFour.id,
         },
+        force: true,
       });
 
       // Goal.
@@ -125,6 +129,7 @@ describe('Goals DB service', () => {
         where: {
           id: goal.id,
         },
+        force: true,
       });
 
       // Grant.

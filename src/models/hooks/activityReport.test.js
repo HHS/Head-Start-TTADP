@@ -170,6 +170,7 @@ describe('activity report model hooks', () => {
         where: {
           id: [objective.id, objective2.id],
         },
+        force: true,
       });
 
       await ActivityReport.destroy({
@@ -182,6 +183,7 @@ describe('activity report model hooks', () => {
         where: {
           id: goal.id,
         },
+        force: true,
       });
 
       await Grant.unscoped().destroy({

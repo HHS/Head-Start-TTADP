@@ -180,72 +180,6 @@ const deleteHandler = async (req, res) => {
   }
 };
 
-const linkHandler = async (req, res) => {
-  const {
-    reportId,
-    reportObjectiveId,
-    objectiveId,
-    objectiveTemplateId,
-    fileId,
-  } = req.params;
-
-  const userId = await currentUserId(req, res);
-
-  const user = await userById(userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
-
-  if (!authorization.canUpdate()) {
-    res.sendStatus(403);
-    return;
-  }
-  try {
-    const file = await getFileById(fileId);
-    if (reportId
-      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
-      createActivityReportFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportId,
-        file.size,
-      );
-    } else if (reportObjectiveId
-      && !(
-        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
-          .includes(reportObjectiveId)
-      )) {
-      createActivityReportObjectiveFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportObjectiveId,
-        file.size,
-      );
-    } else if (objectiveId
-      && !(file.objectiveFiles.map((r) => r.objectiveId).includes(objectiveId))) {
-      createObjectiveFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportId,
-        file.size,
-      );
-    } else if (objectiveTemplateId
-      && !(
-        file.objectiveTemplateFiles.map((r) => r.objectiveTemplateId)
-          .includes(objectiveTemplateId)
-      )) {
-      createObjectiveTemplateFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        objectiveTemplateId,
-        file.size,
-      );
-    }
-    res.status(204).send();
-  } catch (error) {
-    handleErrors(req, res, error, logContext);
-  }
-};
-
 // TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 const parseFormPromise = (req) => new Promise((resolve, reject) => {
   const form = new multiparty.Form();
@@ -565,7 +499,6 @@ async function deleteActivityReportObjectiveFile(req, res) {
 
 export {
   deleteHandler,
-  linkHandler,
   uploadHandler,
   deleteOnlyFile,
   uploadObjectivesFile,

@@ -59,6 +59,7 @@ describe('saveObjectiveAssociations', () => {
           id: [existingObjective.id],
         },
         individualHooks: true,
+        force: true,
       });
 
       await Topic.destroy({

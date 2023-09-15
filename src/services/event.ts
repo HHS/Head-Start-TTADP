@@ -310,7 +310,10 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
  * @param userId
  * @returns
  */
-export async function filterEventsByStatus(events: EventShape[], status: string, userId: number) : Promise<EventShape[]> {
+export async function filterEventsByStatus(events: EventShape[], status: string, userId: number, isAdmin = false) : Promise<EventShape[]> {
+  // do not filter if admin
+  if (isAdmin) return events;
+
   switch (status) {
     case TRS.NOT_STARTED:
     case null:
@@ -372,7 +375,15 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
   }
 }
 
-export async function findEventsByStatus(status: string, readableRegions: number[], userId: number, fallbackValue = undefined, allowNull = false, scopes = undefined): Promise<EventShape[] | null> {
+export async function findEventsByStatus(
+  status: string,
+  readableRegions: number[],
+  userId: number,
+  fallbackValue = undefined,
+  allowNull = false,
+  scopes = undefined,
+  isAdmin = false,
+): Promise<EventShape[] | null> {
   const events = await findEventHelperBlob({
     key: 'status',
     value: status,
@@ -382,7 +393,7 @@ export async function findEventsByStatus(status: string, readableRegions: number
     scopes,
   }) as EventShape[];
 
-  const es = await filterEventsByStatus(events, status, userId);
+  const es = await filterEventsByStatus(events, status, userId, isAdmin);
   return es;
 }
 
