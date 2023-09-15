@@ -1,6 +1,8 @@
 import db from '../../models';
 import {
   EnumInfo,
+  EnumSyncResponse,
+  ReportGenericEnumType,
   syncGenericEnums,
   getReportGenericEnums,
   getReportGenericEnum,
@@ -20,9 +22,9 @@ const audienceEnumInfo:EnumInfo = {
 };
 
 const syncReportAudiences = async (
-  report: { id: number, type: string, regionId: number },
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   audienceEnums: { id?: number, name?: string }[] | null = null,
-) => syncGenericEnums(
+): Promise<EnumSyncResponse> => syncGenericEnums(
   ReportAudience,
   audienceEnumInfo,
   report,
@@ -30,23 +32,23 @@ const syncReportAudiences = async (
 );
 
 const getReportAudiences = async (
-  report: { id: number, type: string, regionId: number },
-  nationalCenterIds: number[] | null = null,
-):Promise<object[]> => getReportGenericEnums(
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  audienceIds: number[] | null = null,
+):Promise<ReportGenericEnumType[]> => getReportGenericEnums(
   ReportAudience,
   audienceEnumInfo,
   report,
-  nationalCenterIds,
+  audienceIds,
 );
 
 const getReportAudience = async (
-  report: { id: number, type: string, regionId: number },
-  nationalCenterId: number,
-):Promise<object[]> => getReportGenericEnum(
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  audienceId: number,
+):Promise<ReportGenericEnumType[]> => getReportGenericEnum(
   ReportAudience,
   audienceEnumInfo,
   report,
-  nationalCenterId,
+  audienceId,
 );
 
 const includeReportAudience = (
