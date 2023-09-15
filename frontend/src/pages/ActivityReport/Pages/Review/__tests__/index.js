@@ -44,7 +44,10 @@ const RenderReview = ({
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { ...formData },
+    defaultValues: {
+      goalsAndObjectives: [],
+      ...formData,
+    },
   });
 
   return (
@@ -87,6 +90,7 @@ const renderReview = (
   calculatedStatus = REPORT_STATUSES.DRAFT,
   formData = {
     additionalNotes: '',
+    goalsAndObjectives: [],
   },
   onSubmit = jest.fn(),
   onReview = jest.fn(),
@@ -210,7 +214,7 @@ describe('ReviewSubmit', () => {
       const isApprover = false;
       const isPendingApprover = false;
       const calculatedStatus = REPORT_STATUSES.DRAFT;
-      const formData = { additionalNotes: '' };
+      const formData = { additionalNotes: '', goalsAndObjectives: [] };
       const onSubmit = jest.fn();
       const onReview = jest.fn();
       const onResetToDraft = jest.fn();

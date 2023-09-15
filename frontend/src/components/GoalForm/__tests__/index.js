@@ -150,7 +150,7 @@ describe('create goal', () => {
     await screen.findByText(BEFORE_OBJECTIVES_CREATE_GOAL);
     await screen.findByText(BEFORE_OBJECTIVES_SELECT_RECIPIENTS);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
     userEvent.click(addObjectiveButton);
 
@@ -180,7 +180,7 @@ describe('create goal', () => {
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -261,7 +261,7 @@ describe('create goal', () => {
 
     await screen.findByText(/Enter the recipient's goal/i);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -310,7 +310,7 @@ describe('create goal', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', 500);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -383,7 +383,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -396,7 +396,7 @@ describe('create goal', () => {
     userEvent.type(objectiveText, 'test');
 
     const topicsText = screen.queryAllByLabelText(/topics \*/i);
-    expect(topicsText.length).toBe(2);
+    expect(topicsText.length).toBe(1);
     const topics = document.querySelector('#topics');
 
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
@@ -418,7 +418,7 @@ describe('create goal', () => {
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    await screen.findByRole('textbox', { name: /Recipient's goal/i });
     expect(fetchMock.called()).toBeTruthy();
   });
 
@@ -446,7 +446,7 @@ describe('create goal', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
 
-    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    let goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -459,7 +459,7 @@ describe('create goal', () => {
     userEvent.type(objectiveText, 'test');
 
     const topicsText = screen.queryAllByLabelText(/topics \*/i);
-    expect(topicsText.length).toBe(2);
+    expect(topicsText.length).toBe(1);
     let topics = document.querySelector('#topics');
 
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
@@ -491,7 +491,7 @@ describe('create goal', () => {
 
     await screen.findByTestId('create-goal-form-cancel');
 
-    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is more goal text');
 
     ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -521,7 +521,7 @@ describe('create goal', () => {
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    await screen.findByRole('textbox', { name: /Recipient's goal/i });
   });
 
   it('allows editing of goals', async () => {
@@ -541,7 +541,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
 
-    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    let goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -571,7 +571,7 @@ describe('create goal', () => {
     const editButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /edit/i });
     userEvent.click(editButton);
 
-    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
 
     expect(goalText.value).toBe('This is goal text');
     userEvent.type(goalText, ' and I want to meet my goals');
@@ -602,7 +602,7 @@ describe('create goal', () => {
     fetchMock.post('/api/goals', postResponse);
     expect(fetchMock.called('/api/goals')).toBe(false);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -662,7 +662,7 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -756,7 +756,7 @@ describe('create goal', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -901,6 +901,8 @@ describe('create goal', () => {
       isRttapa: 'No',
       prompts: [],
       sources: [],
+      onAnyReport: true,
+      onApprovedAR: false,
       grants: [{
         id: 1,
         number: '1',

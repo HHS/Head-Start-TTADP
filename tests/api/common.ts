@@ -1,4 +1,4 @@
-import { APIResponse, expect } from '@playwright/test';
+import { APIResponse } from '@playwright/test';
 import Joi from 'joi';
 
 export const root = `http://localhost:8080/api`;

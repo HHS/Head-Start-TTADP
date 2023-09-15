@@ -26,7 +26,7 @@ import {
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { OBJECTIVE_STATUS } from '../constants';
 import { createReport, destroyReport } from '../testUtils';
 
 describe('Recipient DB service', () => {
@@ -829,12 +829,14 @@ describe('Recipient DB service', () => {
           id: objectives.map((o) => o.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Goal.destroy({
         where: {
           id: goals.map((g) => g.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Grant.destroy({
         where: {
