@@ -12,6 +12,11 @@ const findById = async (
   id: number,
 ) => genericEnum.findById(Status, id);
 
+const findByName = async (
+  name: string,
+  validFor: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE],
+) => genericEnum.findByName(Status, name, validFor);
+
 const create = async (
   data: {
     name: string,
@@ -38,6 +43,7 @@ const deleteById = async (
 export {
   findAll,
   findById,
+  findByName,
   create,
   updateById,
   deleteById,
