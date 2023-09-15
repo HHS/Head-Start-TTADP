@@ -9,11 +9,14 @@ import {
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import eventSummary, { isPageComplete } from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 
-const user = {
+const { ADMIN, READ_WRITE_TRAINING_REPORTS } = SCOPE_IDS;
+
+const defaultUser = {
   name: 'name',
   id: 1,
   flags: [],
@@ -55,7 +58,7 @@ describe('eventSummary', () => {
       eventName: 'Event-name-1',
     };
 
-    const RenderEventSummary = () => {
+    const RenderEventSummary = (user = defaultUser) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: defaultFormValues,
@@ -63,7 +66,7 @@ describe('eventSummary', () => {
 
       return (
         <FormProvider {...hookForm}>
-          <UserContext.Provider value={{ user }}>
+          <UserContext.Provider value={user}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               {eventSummary.render(
                 {
@@ -77,6 +80,10 @@ describe('eventSummary', () => {
                         id: 2,
                         fullName: 'Tedwina User',
                       },
+                    ],
+                    eventCreators: [
+                      { id: 1, name: 'IST 1' },
+                      { id: 2, name: 'IST 2' },
                     ],
                   },
                 },
@@ -126,6 +133,34 @@ describe('eventSummary', () => {
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
+    });
+
+    it('admin users can edit title and owner fields', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: ADMIN },
+        ],
+      };
+      act(() => {
+        render(<RenderEventSummary user={adminUser} />);
+      });
+      expect(await screen.findByRole('textbox', { name: /event name required/i })).toBeInTheDocument();
+      expect(await screen.findByTestId('creator-select')).toBeInTheDocument();
+    });
+
+    it('non admin users can edit title and owner fields', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
+        ],
+      };
+      act(() => {
+        render(<RenderEventSummary user={adminUser} />);
+      });
+      expect(screen.queryAllByRole('textbox', { name: /event name required/i }).length).toBe(0);
+      expect(screen.queryAllByTestId('creator-select').length).toBe(0);
     });
   });
 });

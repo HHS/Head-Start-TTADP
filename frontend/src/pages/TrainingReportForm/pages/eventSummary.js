@@ -80,13 +80,11 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     eventName,
     owner,
     status,
-    eventCreators,
   } = data;
 
   const { user } = useContext(UserContext);
   const hasAdminRights = isAdmin(user);
-
-  const { users: { collaborators, pointOfContact } } = additionalData;
+  const { users: { collaborators, pointOfContact, eventCreators } } = additionalData;
 
   const ownerName = owner && owner.name ? owner.name : '';
 
@@ -124,7 +122,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               />
             </FormItem>
           </div>
-          <div className="margin-top-2">
+          <div className="margin-top-2" data-testid="creator-select">
             <Label htmlFor="creatorName">
               Creator name
               <Req />
@@ -429,6 +427,7 @@ EventSummary.propTypes = {
     users: PropTypes.shape({
       pointOfContact: PropTypes.arrayOf(PropTypes.shape(userProp)),
       collaborators: PropTypes.arrayOf(PropTypes.shape(userProp)),
+      eventCreators: PropTypes.arrayOf(PropTypes.shape(userProp)),
     }),
   }).isRequired,
   datePickerKey: PropTypes.string.isRequired,
