@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+import { Model, Op } from 'sequelize';
 import { auditLogger } from '../../logger';
 import { ENTITY_TYPE } from '../../constants';
 import db from '../../models';
@@ -146,6 +146,213 @@ const deleteById = async (
   individualHooks: true,
 });
 
+//---------------------------------------------------------------------------
+interface EntityGenericEnum {
+  id: number,
+  [key: string]: number | string,
+  enumId: number,
+  name: string,
+}
+
+// @ts-ignore
+interface EntityEnumModel extends Model {
+  findAll: (args: {
+    attributes: (object | string)[],
+    where: object,
+    include: object[],
+  }) => Promise<EntityGenericEnum[]>,
+  bulkCreate: (
+    args: { [x:string]: number }[],
+    options: { individualHooks: boolean },
+  ) => Promise<EntityGenericEnum[]>,
+  update: (
+    args: { updatedAt: Date },
+    options: {
+      where?: object,
+      individualHooks?: boolean,
+    },
+  ) => Promise<this>,
+  destroy: (
+    options?: {
+      where?: object,
+      individualHooks?: boolean,
+    },
+  ) => Promise<void>,
+}
+// @ts-check
+
+type EnumSyncResponse = {
+  promises: Promise<any[]>,
+  unmatched: { id?: number, name?: string }[] | null,
+};
+
+const getEntityGenericEnum = async (
+  entityEnumModel: EntityEnumModel,
+  enumInfo: EnumInfo,
+  entity: { name: string, id: number, type: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+  genericEnumIds: number[] | null = null,
+): Promise<EntityGenericEnum[]> => entityEnumModel.findAll({
+  attributes: [
+    'id',
+    entity.name,
+    [`"${enumInfo.as}".id`, 'enumId'],
+    [`"${enumInfo.as}".name`, 'name'],
+  ],
+  where: {
+    [entity.name]: entity.id,
+    ...(genericEnumIds && { genericEnumIds }),
+  },
+  include: [
+    {
+      model: enumInfo.model,
+      as: enumInfo.as,
+      where: {
+        mapsTo: null,
+        ...(enumInfo?.entityTypeFiltered && { validFor: entity.type }),
+      },
+      attributes: [
+        'id',
+        'name',
+      ],
+      required: true,
+    },
+  ],
+});
+
+const syncEntityGenericEnum = async (
+  entityEnumModel: EntityEnumModel,
+  enumInfo: EnumInfo,
+  entity: { name: string, id: number, type: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+  genericEnums: { id?: number, name?: string }[] | null = null,
+): Promise<EnumSyncResponse> => {
+  try {
+    // in parallel:
+    //    validate that the type is valid for the report type
+    //    get current collaborators for this report having this type
+    const [incomingValidEnums, currentEnums] = await Promise.all([
+      findAll(
+        enumInfo.model,
+        {
+          ...(enumInfo?.entityTypeFiltered && { validFor: entity.type }),
+          [Op.or]: [
+            { id: genericEnums.filter(({ id }) => id).map(({ id }) => id) },
+            { name: genericEnums.filter(({ name }) => name).map(({ name }) => name) },
+          ],
+        },
+      ),
+      getEntityGenericEnum(
+        entityEnumModel,
+        enumInfo,
+        entity,
+      ),
+    ]);
+
+    // collect the valid ids, the invalid enums, and the current enum ids
+    const [
+      incomingValidEnumIds,
+      incomingInvalidEnum,
+      currentEnumIds,
+    ] = [
+      incomingValidEnums.map((ive) => ive.id),
+      genericEnums.reduce((acc, ge) => {
+        const matched = incomingValidEnums
+          .find(({ id, name }) => ge.id === id || ge.name === name);
+        if (!matched) {
+          acc.push(ge);
+        }
+        return acc;
+      }, []),
+      currentEnums.map((ce) => ce.id),
+    ];
+    // filter to the create, update, and destroy lists
+    const [
+      createList,
+      updateList,
+      destroyList,
+    ] = [
+      incomingValidEnumIds.filter((iveId) => !currentEnumIds.includes(iveId)),
+      incomingValidEnumIds.filter((iveId) => currentEnumIds.includes(iveId)),
+      currentEnumIds.filter((ceId) => incomingValidEnumIds.includes(ceId)),
+    ];
+    // in parallel:
+    //    perform in insert/update/delete based on the sub lists
+    //        if a sublist is empty, do not call the db at all for that sublist
+    return {
+      promises: Promise.all([
+        (createList && createList.length)
+          ? entityEnumModel.bulkCreate(
+            createList.map((id) => ({
+              [enumInfo.keyName]: id,
+              [entity.name]: entity.id,
+            })),
+            { individualHooks: true },
+          )
+          : Promise.resolve(),
+        (updateList && updateList.length)
+          ? entityEnumModel.update(
+            {
+              updatedAt: new Date(),
+            },
+            {
+              where: {
+                [enumInfo.keyName]: updateList,
+                [entity.name]: entity.id,
+              },
+              individualHooks: true,
+            },
+          )
+          : Promise.resolve(),
+        (destroyList && destroyList.length)
+          ? entityEnumModel.destroy({
+            where: {
+              [entity.name]: entity.id,
+              [enumInfo.keyName]: destroyList,
+            },
+            individualHooks: true,
+          })
+          : Promise.resolve(),
+      ]),
+      unmatched: incomingInvalidEnum,
+    };
+  } catch (err) {
+    auditLogger.error(err);
+    throw err;
+  }
+};
+
+const includeEntityGenericEnums = (
+  model: EntityEnumModel,
+  enumInfo: EnumInfo,
+  entity: { name: string, type: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+) => ({
+  model,
+  as: '', // TODO: figure out how to get this
+  attributes: [
+    'id',
+    [entity.name],
+    [`"${enumInfo.as}".id`, 'enumId'],
+    [`"${enumInfo.as}".name`, 'name'],
+  ],
+  includes: [{
+    model: enumInfo.model,
+    as: enumInfo.as,
+    required: true,
+    attributes: [],
+    ...(enumInfo?.entityTypeFiltered && {
+      includes: [{
+        model: ValidFor,
+        as: 'validFor',
+        required: true,
+        attributes: [],
+        where: {
+          name: entity.type,
+          isReport: true,
+        },
+      }],
+    }),
+  }],
+});
+
 export {
   type EnumInfo,
   type GenericEnumType,
@@ -155,4 +362,9 @@ export {
   create,
   updateById,
   deleteById,
+  type EntityEnumModel,
+  type EntityGenericEnum,
+  getEntityGenericEnum,
+  syncEntityGenericEnum,
+  includeEntityGenericEnums,
 };
