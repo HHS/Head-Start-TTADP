@@ -264,6 +264,7 @@ const collectChangedValues = (
 export {
   getColumnInformation,
   filterDataToModel,
+  type RemappingDefinition,
   remap,
   isDeepEqual,
   collectChangedValues,
