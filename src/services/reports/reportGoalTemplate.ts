@@ -14,13 +14,14 @@ const { auditLoger } = require('../../logger');
  * report goal templates.
  */
 const getCurrentReportGoalTemplates = async (
-  reportId: number,
+  reportIds: number[],
 ): Promise<object[]> => ReportGoalTemplate.findAll({ // Find all report goal templates
   attributes: [
-    // filter this down to whats needed.
+    ['reportId'],
+    ['goalTemplateId'],
   ],
   where: {
-    reportId, // Filter by reportId
+    reportId: reportIds, // Filter by reportId
   },
   include: [
     {
@@ -37,38 +38,44 @@ const getCurrentReportGoalTemplates = async (
  * @returns A promise that resolves to an array of matching goal templates.
  */
 const getMatchingGoalTemplates = async (
-  regionId: number,
-  goalTemplates: ({ goalTemplateId?: number, name: string })[],
-): Promise<object[]> => GoalTemplate.findAll({
+  goalTemplates: ({ goalTemplateId?: number, name?: string, regionId?: number })[],
+): Promise<{
+  goalTemplateId: number,
+  name: string,
+  regionId: number | null,
+}[]> => GoalTemplate.findAll({
   attributes: [
     ['id', 'goalTemplateId'], // Rename id column to goalTemplateId
     ['templateName', 'name'], // Rename templateName column to name
     ['regionId'], // Include regionId column
   ],
   where: {
-    regionId, // Filter by regionId
-    [Op.or]: {
-      // Filter goalTemplates array for objects with goalTemplateId property and map to an
-      // array of goalTemplateIds
-      id: goalTemplates
-        .filter((goalTemplate) => Object.keys(goalTemplate).includes('goalTemplateId'))
-        .map((goalTemplate) => goalTemplate?.goalTemplateId),
-      // Filter goalTemplates array for objects with name property and map to an
-      // array of names
-      name: goalTemplates
-        .filter((goalTemplate) => Object.keys(goalTemplate).includes('name'))
-        .map(({ name }) => name),
-    },
+    [Op.or]: [
+      ...goalTemplates.map(({ goalTemplateId, name, regionId }) => ({
+        [Op.and]: {
+          [Op.or]: {
+            ...(goalTemplateId && { id: goalTemplateId }),
+            ...(name && { templateName: name }),
+          },
+          ...(regionId
+            ? { regionId }
+            : { regionId: null }),
+        },
+      })),
+    ],
   },
   raw: true, // Return raw data instead of Sequelize models
 });
 
 // TODO: this needs alot of work
 const syncReportGoalTemplates = async (
-  report: { id: number, type: string, regionId: number },
-  goalTemplates: ({ goalTemplateId?: number, name: string })[],
+  report: { id: number, type: string },
+  data: ({ goalTemplateId?: number, name?: string, regionId?: number })[],
 ) => {
   try {
+    const regionIds = [...new Set(
+      data.filter(({ regionId }) => regionId).map(({ regionId }) => regionId),
+    )];
     // in parallel:
     //    get all the current goalTemplates attached to the report
     //    look up all the passed goalTemplates, wait until the regionId is know before looking
@@ -79,11 +86,8 @@ const syncReportGoalTemplates = async (
       // Array of goal templates that match the criteria
       matchingGoalTemplates,
     ] = await Promise.all([
-      getCurrentReportGoalTemplates(report.regionId), // Filter by report id
-      getMatchingGoalTemplates(
-        report.regionId, // Filter by regionId
-        goalTemplates,
-      ),
+      getCurrentReportGoalTemplates(regionIds), // Filter by report ids
+      getMatchingGoalTemplates(data),
     ]);
     // make any needed new goalTemplates
     // TODO: issue the usecases needed to be solved here are:
@@ -92,17 +96,19 @@ const syncReportGoalTemplates = async (
     //    # a goalTemplate edit is requested... what should be done
     //        # if it is only used on this report, and no children of the report have
     //          reached a foia-able state, then allow the update
-    const newGoalTemplates = await Promise.all(goalTemplates // Array of goal templates
+    const newGoalTemplates = await Promise.all(data // Array of goal templates
       .filter((goalTemplate) => ( // Filter out existing goal templates
         !(
           (
             goalTemplate?.goalTemplateId // Check if goal template has an ID
             && matchingGoalTemplates
+              .filter(({ regionId }) => regionId === goalTemplate?.regionId)
               .map(({ goalTemplateId }) => goalTemplateId)
-              .includes(goalTemplate)
+              .includes(goalTemplate.goalTemplateId)
           ) || (
             goalTemplate?.name // Check if goal template has a name
             && matchingGoalTemplates
+              .filter(({ regionId }) => regionId === goalTemplate?.regionId)
               .map(({ name }) => name)
               .includes(goalTemplate.name)
           )
@@ -111,7 +117,7 @@ const syncReportGoalTemplates = async (
       .map(async (goalTemplate) => GoalTemplate.create( // Create new goal templates
         {
           templateName: goalTemplate.name, // Set the template name
-          regionId: report.regionId, // Set the region ID
+          regionId: goalTemplate.regionId, // Set the region ID
           creationMethod: null, // TODO: figure out what should go here
         },
         {
@@ -124,7 +130,7 @@ const syncReportGoalTemplates = async (
       )));
     // filter to the positive, nuteral, and negative lists
     const deltaLists = {
-      ...goalTemplates.reduce((acc, goalTemplate) => {
+      ...data.reduce((acc, goalTemplate) => {
         if (currentReportGoalTemplates
           .map(({ goalTemplateId }) => goalTemplateId)
           .includes(goalTemplate.goalTemplateId)) {
@@ -138,7 +144,7 @@ const syncReportGoalTemplates = async (
         updateList: [],
       })),
       ...currentReportGoalTemplates.reduce((acc, currentReportGoalTemplate) => {
-        if (!goalTemplates
+        if (!data
           .map(({ goalTemplateId }) => goalTemplateId)
           .includes(currentReportGoalTemplate.goalTemplateId)) {
           // is removed
