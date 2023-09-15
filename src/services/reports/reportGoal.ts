@@ -1,12 +1,19 @@
 export {};
 const {
+  Goal,
+  GoalFieldResponse,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
   Grant,
   ReportGoal,
+  ReportGoalFieldResponse,
+  ReportGoalTemplate,
+  ReportGoalTemplateFieldPrompt,
 } = require('../../models');
 const { auditLoger } = require('../../logger');
 
 // TODO: this needs alot of work
-const syncGoals = async (
+const syncReportGoals = async (
   reportId: number,
 ) => {
   try {
@@ -23,29 +30,47 @@ const syncGoals = async (
   }
 };
 
-const getGoals = async (
+const getReportGoals = async (
   reportId: number,
   goalIds: number[] | null = null,
 ):Promise<object[]> => ReportGoal.findAll({
   attributes: [
-    // filter this down to whats needed.
+    // TODO: filter this down to whats needed.
   ],
   where: {
     reportId,
     ...(goalIds && { goalIds }),
   },
   include: [
-    // fill out anything thats needed
+    // TODO: fill out anything thats needed
   ],
 });
 
-const getGoal = async (
+const getReportGoal = async (
   reportId: number,
   goalId: number,
-):Promise<object[]> => getGoals(reportId, [goalId]);
+):Promise<object[]> => getReportGoals(reportId, [goalId]);
+
+const includeReportGoals = () => ({
+  model: ReportGoal,
+  as: 'reportGoals',
+  required: false,
+  attributes: [], // TODO: fill this out
+  include: [
+    {
+      model: ReportGoalTemplate,
+    },
+    {
+      model: GoalTemplate,
+    },
+    {
+      model: Goal,
+    },
+  ],
+});
 
 module.exports = {
-  syncGoals,
-  getGoals,
-  getGoal,
+  syncReportGoals,
+  getReportGoals,
+  getReportGoal,
 };
