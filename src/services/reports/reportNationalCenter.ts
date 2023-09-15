@@ -1,6 +1,8 @@
 import db from '../../models';
 import {
   EnumInfo,
+  EnumSyncResponse,
+  ReportGenericEnumType,
   syncGenericEnums,
   getReportGenericEnums,
   getReportGenericEnum,
@@ -20,19 +22,19 @@ const nationalCenterEnumInfo:EnumInfo = {
 };
 
 const syncReportNationalCenters = async (
-  report: { id: number, type: string, regionId: number },
-  nationalCenterIds: number[] | null = null,
-) => syncGenericEnums(
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  nationalCenterEnums: { id?: number, name?: string }[] | null = null,
+): Promise<EnumSyncResponse> => syncGenericEnums(
   ReportNationalCenter,
   nationalCenterEnumInfo,
   report,
-  nationalCenterIds,
+  nationalCenterEnums,
 );
 
 const getReportNationalCenters = async (
-  report: { id: number, type: string, regionId: number },
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   nationalCenterIds: number[] | null = null,
-):Promise<object[]> => getReportGenericEnums(
+):Promise<ReportGenericEnumType[]> => getReportGenericEnums(
   ReportNationalCenter,
   nationalCenterEnumInfo,
   report,
@@ -40,9 +42,9 @@ const getReportNationalCenters = async (
 );
 
 const getReportNationalCenter = async (
-  report: { id: number, type: string, regionId: number },
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   nationalCenterId: number,
-):Promise<object[]> => getReportGenericEnum(
+):Promise<ReportGenericEnumType[]> => getReportGenericEnum(
   ReportNationalCenter,
   nationalCenterEnumInfo,
   report,
