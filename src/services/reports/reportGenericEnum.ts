@@ -99,11 +99,7 @@ const syncGenericEnums = async (
   report: { id: number, type: string, regionId: number },
   genericEnums: { id?: number, name?: string }[] | null = null,
 ): Promise<{
-  promises: Promise<[
-    void | ReportGenericEnumType[],
-    void | ReportEnumModel,
-    void | ReportGenericEnumType[],
-  ]>,
+  promises: Promise<[any]>,
   unmatched: { id?: number, name?: string }[] | null,
 }> => {
   try {
