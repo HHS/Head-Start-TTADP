@@ -1,8 +1,10 @@
 import db from '../../models';
 import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../constants';
 import { syncReport } from './report';
+import { syncReportApproval, includeReportApproval } from './reportApproval';
+import { syncReportAudiences, includeReportAudience } from './reportAudience';
 import { syncCollaboratorsForType, includeReportCollaborator } from './reportCollaborator';
-import { syncReportGoal, includeReportGoal } from './reportGoal';
+import { syncReportGoals, includeReportGoal } from './reportGoal';
 import { syncReportGoalTemplates, includeReportGoalTemplate } from './reportGoalTemplate';
 import { syncReportImport, includeReportImport } from './reportImport';
 import { syncReportNationalCenter, includeReportNationalCenter } from './reportNationalCenter';
@@ -16,10 +18,12 @@ import { syncReportRecipient, includeReportRecipient } from './reportRecipient';
 import { syncReportTargetPopulation, includeReportTargetPopulation } from './reportTargetPopulation';
 import { syncReportTrainingEvent, includeTrainingSession } from './reportTrainingEvent';
 import { syncReportTrainingSession, includeReportTrainingEvent } from './reportTrainingSession';
-import report from '../../models/report';
+import { RemappingDefinition, remap } from '../../lib/modelUtils';
 
 const {
   Report,
+  ReportApproval,
+  ReportAudience,
   ReportCollaborator,
   ReportGoal,
   ReportGoalTemplate,
@@ -37,21 +41,26 @@ const {
   ReportTrainingSession,
 } = db;
 
-const actions = {
-  [REPORT_TYPE.REPORT_TRAINING_EVENT]: {
-    syncer: {
-      func: syncReportTrainingEvent,
-      remapDef: {
-        'data."Event ID': 'id',
-        'regionId': 'regionId',
-        'data."Edit Title"': 'name',
-        'data.eventOrganizer': 'organizer.name',
-        'data."Audience"': 'audience.*',
-        'data.vision': 'vision',
-      },
+type Actions = {
+  [key: string]: {
+    report: {
+      remapDef: RemappingDefinition,
     },
-    reportSyncer: {
-      func: syncReport,
+    syncers: {
+      func: Function,
+      type?: string,
+      remapDef: RemappingDefinition
+    }[],
+    includes: {
+      func: Function,
+      type?: string,
+    }[],
+  },
+};
+
+const actions:Actions = {
+  [REPORT_TYPE.REPORT_TRAINING_EVENT]: {
+    report: {
       remapDef: {
         'data.id': 'id',
         'data.status': 'status.name',
@@ -59,45 +68,47 @@ const actions = {
         'data.endDate': 'endDate',
       },
     },
-    processorModels: [
-      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name'}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ower': `0`}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`}},
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`}},
-      { func: syncReportReason, remapDef: { 'data.reasons.*': '*.name'}},
-      { func: syncReportTargetPopulation, remapDef: { 'data."Target Population(s)".*': '*.name'}},
+    syncers: [
+      {
+        func: syncReportTrainingEvent,
+        remapDef: {
+          'data."Event ID': 'eventId',
+          'regionId': 'regionId',
+          'data."Edit Title"': 'name',
+          'data.eventOrganizer': 'organizer.name',
+          'data."Audience"': 'audience.*',
+          'data.vision': 'vision',
+        },
+      },
+      { func: syncReportAudiences, remapDef: { 'data.audience.*': '*.name' } },
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': `0`} },
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
+      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
+      { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name', 'regionId': '0.regionId' } },
       { func: syncReportImport, remapDef: { 'imported': 'import' } },
+      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name'} },
       { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
-      { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name' } },
+      { func: syncReportReason, remapDef: { 'data.reasons.*': '*.name'} },
+      { func: syncReportTargetPopulation, remapDef: { 'data."Target Population(s)".*': '*.name'} },
     ],
     includes: [
-      [includeReportTrainingEvent],
-      [includeReportNationalCenter],
-      [includeReportCollaborator, [
-        COLLABORATOR_TYPES.OWNER,
-        COLLABORATOR_TYPES.INSTANTIATOR,
-        COLLABORATOR_TYPES.EDITOR,
-      ]],
-      [includeReportReason],
-      [includeReportTargetPopulation],
-      [includeReportImport],
-      [includeReportPageState],
-      [includeReportGoalTemplate],
+      { func: includeReportTrainingEvent },
+      { func: includeReportAudience },
+      { func: includeReportCollaborator, type: COLLABORATOR_TYPES.OWNER },
+      { func: includeReportCollaborator, type: COLLABORATOR_TYPES.INSTANTIATOR },
+      { func: includeReportCollaborator, type: COLLABORATOR_TYPES.EDITOR },
+      { func: includeReportCollaborator, type: COLLABORATOR_TYPES.POC },
+      { func: includeReportGoalTemplate },
+      { func: includeReportImport },
+      { func: includeReportNationalCenter},
+      { func: includeReportPageState },
+      { func: includeReportReason },
+      { func: includeReportTargetPopulation },
     ],
   },
   [REPORT_TYPE.REPORT_TRAINING_SESSION]: {
-    syncer: {
-      func: syncReportTrainingSession,
-      remapDef: {
-        'data.eventDisplayId': 'id',
-        'regionId': 'regionId',
-        'eventId': 'reportTrainingEventId',
-        'data.sessionName': 'name',
-      },
-    },
-    reportSyncer: {
-      func: syncReport,
+    report: {
       remapDef: {
         'data.id': 'id',
         'data.status': 'status.name',
@@ -106,7 +117,16 @@ const actions = {
         'data.endDate': 'endDate',
       },
     },
-    processorModels: [
+    syncers: [
+        {
+        func: syncReportTrainingSession,
+        remapDef: {
+          'data.eventDisplayId': 'id',
+          'regionId': 'regionId',
+          'eventId': 'reportTrainingEventId',
+          'data.sessionName': 'name',
+        },
+      },
       { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ownerId': `0.id`, 'data.eventOwner': '0.id' } },
       { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
       // { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
@@ -139,21 +159,18 @@ const actions = {
       { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
     ],
     includes: [
-      [includeTrainingSession],
-      [includeReportCollaborator, [
-        COLLABORATOR_TYPES.OWNER,
-        COLLABORATOR_TYPES.INSTANTIATOR]],
-      [includeReportRecipient],
-      [includeReportGoalTemplate],
-      [includeReportObjectiveTemplate],
-      [includeReportGoal],
-      [includeReportObjective],
-      [includeReportNextStep, [
-        NEXTSTEP_NOTETYPE.RECIPIENT,
-        NEXTSTEP_NOTETYPE.SPECIALIST,
-      ]],
-      [includeReportParticipation],
-      [includeReportPageState],
+      { func: includeTrainingSession },
+      { func: includeReportCollaborator, type: COLLABORATOR_TYPES.OWNER },
+      { func: includeReportCollaborator, type: COLLABORATOR_TYPES.INSTANTIATOR },
+      { func: includeReportGoal },
+      { func: includeReportGoalTemplate },
+      { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT},
+      { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST },
+      { func: includeReportObjective },
+      { func: includeReportObjectiveTemplate },
+      { func: includeReportPageState },
+      { func: includeReportParticipation },
+      { func: includeReportRecipient },
     ],
   },
 };
@@ -249,6 +266,42 @@ const collectIncludes = (reportType) => {
     : [];
 };
 
+const syncMetaData = async (
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  syncer: { func: Function, type?: string, remapDef?: RemappingDefinition },
+  data,
+): Promise<{ promises: Promise<any>[], unmapped: object | object[]}> => {
+  const { func, type, remapDef } = syncer;
+  let dataToSync;
+  let dataNotUsed;
+  if (remapDef) {
+    ({
+      mapped: dataToSync,
+      unmapped: dataNotUsed,
+    } = remap(
+      data,
+      remapDef,
+      { keepUnmappedValues: false},
+    ));
+  } else {
+    dataToSync = data;
+    dataNotUsed = null;
+  }
+
+  const { promises, unmatched } = await func(report, dataToSync, type);
+
+  if (remapDef && unmatched && Object.keys(unmatched).length > 0) {
+    const { mapped: reverseMapped } = remap(
+      unmatched,
+      remapDef,
+      { reverse: true, keepUnmappedValues: false},
+    );
+     // TODO: some how merge reverseMapped and dataNotUsed
+  }
+
+  return { promises, unmapped: dataNotUsed };
+}
+
 /**
  * This function performs a synchronization process for a given report type and data.
  * It first calls the `syncReport` function to retrieve a report and unmatched data from it.
@@ -265,28 +318,39 @@ const sync = async (
   data: object,
 ) => {
   // Retrieve the syncer and processorModels for the given reportType
-  const { syncer, processorModels } = actions[reportType];
+  const { report: reportDef, syncers } = actions[reportType];
+
+  const {
+    mapped: reportData,
+    unmapped: reportUnmappedData,
+  } = remap(
+    data,
+    reportDef.remapDef,
+    { keepUnmappedValues: false},
+  );
 
   // Call syncReport to get the report and unmatched data
   const { report, unmatched: unmatchedFromReport } = await syncReport({
-    ...data,
+    ...reportData,
     ...(!Object.keys(data).includes('reportType') && { reportType }),
   });
 
-  // Call syncer to sync the data with the processor models
-  const { typedReport, unmatchedSets: typedUnmatchedSets } = await syncer(
-    {
-      ...data,
-      reportId: report.reportId,
-    },
-    processorModels,
-  );
+  const metaDataResults:{ promises: Promise<any>[], unmapped: object | object[]}[] = await Promise.all(syncers
+    .map(async (syncer) => syncMetaData(
+      { id: report.id, type: reportType },
+      syncer,
+      data
+    )));
+
+  // await all remaining promises in parallel
+  const metadataPromises = await Promise.all(metaDataResults.map(({ promises }) => promises).flat());
+  const unmatchedFromMetaData = metaDataResults.map(({ unmapped }) => unmapped);
 
   // Calculate the unmatched data by intersecting the unmatched data from the report and the
   // typed unmatched sets
   const unmatchedData = intersectObjects([
     unmatchedFromReport,
-    ...typedUnmatchedSets,
+    ...unmatchedFromMetaData,
   ]);
 
   // TODO: store/log it some where
