@@ -1,5 +1,9 @@
 import { Model } from 'sequelize';
 import { auditLogger } from '../../logger';
+import { ENTITY_TYPE } from '../../constants';
+import db from '../../models';
+
+const { ValidFor } = db;
 
 // @ts-ignore ts(2430)
 interface EnumModel extends Model {
@@ -9,7 +13,13 @@ interface EnumModel extends Model {
     include?: object[],
     order?: object[],
   }) => Promise<GenericEnumType[]>,
-  findByPk: () => Promise<GenericEnumType>,
+  findByPk: (id: number) => Promise<GenericEnumType>,
+  findOne: (args: {
+    attributes?: (object | string)[],
+    where?: object,
+    include?: object[],
+    order?: object[],
+  }) => Promise<GenericEnumType>,
   bulkCreate: (
     args: { name: string, mapsTo?: number }[],
     options: { individualHooks: boolean },
@@ -70,9 +80,27 @@ const findById = async (
   id: number,
 ): Promise<GenericEnumType> => model.findByPk(id);
 
+const findByName = async (
+  model: EnumModel,
+  name: string,
+  validFor?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE],
+): Promise<GenericEnumType> => model.findOne({
+  where: { name },
+  ...(validFor && {
+    include: [{
+      model: ValidFor,
+      as: 'validFor',
+      required: true,
+      attributes: [],
+      where: { name: validFor },
+    }],
+  }),
+});
+
 const findOrCreateByName = async (
   model: EnumModel,
   data: { name: string, mapsTo?: number },
+  validFor?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE],
 ):Promise<GenericEnumType> => {
   // TODO: find if exists, if not then create
 };
@@ -123,6 +151,7 @@ export {
   type GenericEnumType,
   findAll,
   findById,
+  findByName,
   create,
   updateById,
   deleteById,
