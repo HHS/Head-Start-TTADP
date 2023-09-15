@@ -22,6 +22,6 @@ DB_NAME = os.environ.get("POSTGRES_DB") or (vcap_credentials and vcap_credential
 PORT = os.environ.get("PORT") or (vcap_credentials and vcap_credentials.get('port')) or 5432
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SQLALCHEMY_DATABASE_URI = (vcap_credentials and vcap_credentials.get('uri')) or f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{PORT}/{DB_NAME}"
+SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{PORT}/{DB_NAME}"
 
 API_KEY = os.environ["SIMILARITY_API_KEY"]
