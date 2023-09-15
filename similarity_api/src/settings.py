@@ -7,8 +7,8 @@ def get_postgres_credentials_from_vcap():
     if vcap_services:
         services = json.loads(vcap_services)
 
-        if 'postgresql' in services:
-            postgres_service = services['postgresql'][0]
+        if 'aws-rds' in services:
+            postgres_service = services['aws-rds'][0]
             return postgres_service['credentials']
 
     return None
