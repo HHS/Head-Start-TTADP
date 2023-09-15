@@ -2,7 +2,6 @@ export {};
 const { Op } = require('sequelize');
 const {
   GoalTemplate,
-  Grant,
   ReportGoalTemplate,
 } = require('../../models');
 const { auditLoger } = require('../../logger');
