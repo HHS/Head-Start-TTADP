@@ -155,82 +155,6 @@ describe('event handlers', () => {
     });
   });
 
-  describe('findEventCreatorsHandler', () => {
-    const mockRequest = {
-      params: {
-        eventId: 1,
-      },
-      body: {
-      },
-    };
-
-    it('returns the creators', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
-      }));
-      findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
-      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
-      await findEventCreatorsHandler(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-    });
-
-    it('adds the current owner if they do not exist', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
-      }));
-      findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
-      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
-      await findEventCreatorsHandler(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-    });
-
-    it('throws a 404 is event is not found', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
-      }));
-      findEventById.mockResolvedValueOnce(null);
-      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
-      await findEventCreatorsHandler(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-    });
-
-    it('returns 403 user is not an admin', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => false,
-      }));
-      findEventById.mockResolvedValueOnce({ id: 1, regionId: 1, ownerId: 1 });
-      findEventCreators.mockResolvedValueOnce([{ userId: 1, name: 'test' }]);
-      await findEventCreatorsHandler(
-        {
-          params: {
-            eventId: 1,
-          },
-          body: {
-          },
-        },
-        mockResponse,
-      );
-      expect(mockResponse.status).toHaveBeenCalledWith(403);
-    });
-
-    it('returns 400 when no creator region id', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
-      }));
-      await findEventCreatorsHandler(
-        {
-          params: {
-            creatorRegionId: null,
-          },
-          body: {
-          },
-        },
-        mockResponse,
-      );
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-    });
-  });
-
   describe('updateHandler', () => {
     const mockRequest = {
       session: {
@@ -420,6 +344,73 @@ describe('event handlers', () => {
         mockResponse,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('findEventCreatorsHandler', () => {
+    const mockRequest = {
+      params: {
+        eventId: 1,
+      },
+      body: {
+      },
+    };
+
+    beforeEach(() => {
+      // Reset all mocks.
+      jest.clearAllMocks();
+    });
+
+    it('returns the creators', async () => {
+      EventReport.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      findEventById.mockResolvedValue({ id: 1, regionId: 1, ownerId: 1 });
+      findEventCreators.mockResolvedValue([{ userId: 1, name: 'test' }]);
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('adds the current owner if they do not exist', async () => {
+      EventReport.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      findEventById.mockResolvedValue({ id: 1, regionId: 1, ownerId: 1 });
+      findEventCreators.mockResolvedValue([{ userId: 1, name: 'test' }]);
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('returns 400 when no creator region id', async () => {
+      await findEventCreatorsHandler(
+        {
+          params: {
+            eventId: null,
+          },
+          body: {
+          },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 404 when no event', async () => {
+      EventReport.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      findEventById.mockResolvedValue(null);
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 403 when the user cannot write the event', async () => {
+      EventReport.mockImplementation(() => ({
+        canWriteInRegion: () => false,
+      }));
+      findEventById.mockResolvedValue({ id: 1, regionId: 1, ownerId: 1 });
+      await findEventCreatorsHandler(mockRequest, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
 });

@@ -124,9 +124,7 @@ export const findEventCreatorsHandler = async (req, res) => {
 
     // Check authorization.
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canWriteInRegion()) {
-      return res.status(403).send({ message: 'User is not authorized get event creators' });
-    }
+    if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
 
     // Get the regionId and ownerId from the event.
     const { regionId, ownerId } = event;
