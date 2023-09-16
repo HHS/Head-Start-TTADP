@@ -364,6 +364,7 @@ export {
   deleteById,
   type EntityEnumModel,
   type EntityGenericEnum,
+  type EnumSyncResponse,
   getEntityGenericEnum,
   syncEntityGenericEnum,
   includeEntityGenericEnums,
