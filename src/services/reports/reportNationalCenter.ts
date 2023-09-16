@@ -5,7 +5,6 @@ import {
   ReportGenericEnumType,
   syncGenericEnums,
   getReportGenericEnums,
-  getReportGenericEnum,
   includeGenericEnums,
 } from './reportGenericEnum';
 import { REPORT_TYPE } from '../../constants';
@@ -41,16 +40,6 @@ const getReportNationalCenters = async (
   nationalCenterIds,
 );
 
-const getReportNationalCenter = async (
-  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  nationalCenterId: number,
-):Promise<ReportGenericEnumType[]> => getReportGenericEnum(
-  ReportNationalCenter,
-  nationalCenterEnumInfo,
-  report,
-  nationalCenterId,
-);
-
 const includeReportNationalCenter = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => includeGenericEnums(
@@ -62,6 +51,5 @@ const includeReportNationalCenter = (
 export {
   syncReportNationalCenters,
   getReportNationalCenters,
-  getReportNationalCenter,
   includeReportNationalCenter,
 };
