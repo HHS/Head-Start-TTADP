@@ -1,10 +1,11 @@
 import { Model, Op } from 'sequelize';
 import { auditLogger } from '../../logger';
 import {
-  EnumInfo,
+  type EnumInfo,
   findAll,
-  EntityEnumModel,
-  EntityGenericEnum,
+  type EntityEnumModel,
+  type EntityGenericEnum,
+  type EnumSyncResponse,
   getEntityGenericEnum,
   syncEntityGenericEnum,
   includeEntityGenericEnums,
@@ -15,11 +16,6 @@ import validFor from '../../models/validFor';
 interface ReportGenericEnumType extends EntityGenericEnum {
   reportId?: number,
 }
-
-type EnumSyncResponse = {
-  promises: Promise<any[]>,
-  unmatched: { id?: number, name?: string }[] | null,
-};
 
 const getReportGenericEnums = async (
   reportEnumModel: EntityEnumModel,
