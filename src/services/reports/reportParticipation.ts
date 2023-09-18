@@ -1,4 +1,4 @@
-import { syncReportParticipationParticipants } from "./reportParticipationParticipant";
+import { syncReportParticipationParticipants, includeReportParticipationParticipants } from "./reportParticipationParticipant";
 import { REPORT_TYPE } from '../../constants';
 import db from '../../models';
 
@@ -17,7 +17,7 @@ const syncReportParticipation = async (
 ) => {
   // TODO: find record if exists
   let reportParticipation = await ReportParticipation.findOne({
-    attributes: [], //TODO fix
+    attributes: [], // TODO fix
     where: { reportId: report.id },
   });
   let reportParticipationUpdate: Promise<any>;
@@ -27,6 +27,7 @@ const syncReportParticipation = async (
       reportId: report.id,
     });
   } else {
+    // update value if already exists, based
     // not awaited so the promise can be returned, that way it can be awaited with other awaits
     reportParticipationUpdate = ReportParticipation.update(
       {}, // TODO: delta data
@@ -39,7 +40,6 @@ const syncReportParticipation = async (
       },
     );
   }
-  // update value if already exists, based
   const {
     promises: participantPromises,
     unmatched: participantUnmatched,
@@ -58,4 +58,21 @@ const syncReportParticipation = async (
       && { participants: participantUnmatched }),
     },
   };
+};
+
+const includeReportParticipation = (
+  type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+) => ({
+  model: ReportParticipation,
+  as: '', // TODO: look up as
+  required: false,
+  attributes: [],
+  include: [
+    includeReportParticipationParticipants(type),
+  ],
+});
+
+export {
+  syncReportParticipation,
+  includeReportParticipation,
 };
