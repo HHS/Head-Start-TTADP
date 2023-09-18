@@ -2232,6 +2232,12 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);
   await saveGoalsForReport(goals, report);
+  // updating the goals is updating the report, sorry everyone
+  await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id = ${activityReportId}`);
+  // note that for some reason (probably sequelize automagic)
+  // both model.update() and model.set() + model.save() do NOT update the updatedAt field
+  // even if you explicitly set it in the update or save to the current new Date()
+  // hence the raw query above
   return getGoalsForReport(activityReportId);
 }
 
