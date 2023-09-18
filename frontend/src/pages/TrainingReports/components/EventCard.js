@@ -26,7 +26,7 @@ function EventCard({
   } = event;
 
   const { eventId } = data;
-
+  const idForLink = eventId.split('-').pop();
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
@@ -49,7 +49,7 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${eventId}/session/new/`);
+        history.push(`/training-report/${idForLink}/session/new/`);
       },
     });
   }
@@ -59,7 +59,7 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${eventId}/event-summary`);
+        history.push(`/training-report/${idForLink}/event-summary`);
       },
     });
   }
@@ -68,7 +68,7 @@ function EventCard({
   menuItems.push({
     label: 'View event',
     onClick: () => {
-      history.push(`/training-report/view/${eventId}`);
+      history.push(`/training-report/view/${idForLink}`);
     },
   });
 
@@ -79,7 +79,6 @@ function EventCard({
   };
 
   // get the last four digits of the event id
-  const idForLink = eventId.split('-').pop();
   const link = canEditEvent ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
   const contextMenuLabel = `Actions for event ${eventId}`;
 

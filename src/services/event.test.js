@@ -6,7 +6,7 @@ import {
   createEvent,
   updateEvent,
   destroyEvent,
-  findEventById,
+  findEventByDbId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByCollaboratorId,
@@ -73,7 +73,7 @@ describe('event service', () => {
     });
 
     it('creates a new event when the id cannot be found', async () => {
-      const found = await findEventById(99_999);
+      const found = await findEventByDbId(99_999);
       expect(found).toBeNull();
 
       const updated = await updateEvent(99_999, {
@@ -92,9 +92,9 @@ describe('event service', () => {
   });
 
   describe('finders', () => {
-    it('findEventById', async () => {
+    it('findEventByDbId', async () => {
       const created = await createAnEvent(98_989);
-      const found = await findEventById(created.id);
+      const found = await findEventByDbId(created.id);
       expect(found).toHaveProperty('id');
       expect(found).toHaveProperty('ownerId', 98_989);
       await destroyEvent(created.id);
