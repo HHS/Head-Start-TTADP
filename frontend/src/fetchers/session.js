@@ -11,8 +11,8 @@ export const createSession = async (eventId) => {
   return response.json();
 };
 
-export const getSessionByEventIdAndSessionIndex = async (eventId, sessionIndex) => {
-  const response = await get(join(sessionsUrl, 'eventId', eventId, 'sessionIndex', sessionIndex));
+export const getSessionBySessionId = async (sessionId) => {
+  const response = await get(join(sessionsUrl, 'id', sessionId));
   return response.json();
 };
 
