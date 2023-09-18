@@ -141,7 +141,7 @@ describe('EventCards', () => {
       pocIds: [2],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -157,7 +157,7 @@ describe('EventCards', () => {
       pocIds: [3],
       data: {
         eventName: 'Region event 2',
-        eventId: 'Region event ID 2',
+        eventId: 'TR-R02-1235',
         eventOrganizer: 'Sample Region event organizer 2',
         reasons: ['New Staff/Turnover'],
         startDate: '02/02/2021',
@@ -182,7 +182,7 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
@@ -190,14 +190,14 @@ describe('EventCards', () => {
 
     // Region Event.
     expect(screen.getByText('Region event 2')).toBeInTheDocument();
-    expect(screen.getByText('Region event ID 2')).toBeInTheDocument();
+    expect(screen.getByText('TR-R02-1235')).toBeInTheDocument();
     expect(screen.getByText('Sample Region event organizer 2')).toBeInTheDocument();
     expect(screen.getByText('02/02/2021')).toBeInTheDocument();
     expect(screen.getByText('02/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Staff/Turnover').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    let button = screen.getByRole('button', { name: /actions for event 1/i });
+    let button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe('EventCards', () => {
     button.click(button);
 
     // Show correct actions for region event.
-    button = screen.getByRole('button', { name: /actions for event 2/i });
+    button = screen.getByRole('button', { name: /actions for event TR-R02-1235/i });
     button.click(button);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
@@ -221,7 +221,7 @@ describe('EventCards', () => {
       pocIds: [2],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -246,14 +246,14 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
@@ -270,7 +270,7 @@ describe('EventCards', () => {
       pocIds: [4],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -295,14 +295,14 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
@@ -319,7 +319,7 @@ describe('EventCards', () => {
       pocIds: [4],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -344,14 +344,14 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
