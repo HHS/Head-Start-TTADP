@@ -4,7 +4,6 @@ import { findEventById, findEventByDbId } from '../../services/event';
 import {
   createSession,
   findSessionsByEventId,
-  findSessionByEventIdAndSessionIndex,
   findSessionById,
   updateSession,
   destroySession,
@@ -23,20 +22,16 @@ export const getHandler = async (req, res) => {
     const {
       id,
       eventId,
-      sessionIndex,
     } = req.params;
 
     let sessionEventId = eventId;
-    const params = [id, eventId, sessionIndex];
+    const params = [id, eventId];
 
     if (params.every((param) => typeof param === 'undefined')) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
-    if (sessionIndex && eventId) {
-      session = await findSessionByEventIdAndSessionIndex(eventId, sessionIndex);
-      sessionEventId = session.eventId;
-    } else if (id) {
+    if (id) {
       session = await findSessionById(id);
       sessionEventId = session.eventId;
     } else if (eventId) {

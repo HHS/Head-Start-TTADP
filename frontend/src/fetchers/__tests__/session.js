@@ -26,7 +26,7 @@ describe('session fetchers', () => {
     const sessionId = '1';
     const response = { id: 1 };
     fetchMock.get(join(sessionsUrl, 'id', sessionId), response);
-    const result = await getSessionBySessionId();
+    const result = await getSessionBySessionId(sessionId);
     expect(result).toEqual(response);
   });
   it('getSessionsByEventId', async () => {

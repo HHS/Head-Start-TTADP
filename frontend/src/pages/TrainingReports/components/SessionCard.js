@@ -45,7 +45,6 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
-    sessionIndex,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -98,7 +97,7 @@ function SessionCard({
             isWriteable
               ? (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
-                  <Link to={`/training-report/${eventId}/session/${sessionIndex}/session-summary`} className="margin-right-4">
+                  <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`} className="margin-right-4">
                     <Pencil />
                     Edit session
                   </Link>
@@ -152,7 +151,6 @@ export const sessionPropTypes = PropTypes.shape({
     objectiveSupportType: PropTypes.string.isRequired,
     objectiveTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
     objectiveTrainers: PropTypes.arrayOf(PropTypes.string).isRequired,
-    sessionIndex: PropTypes.string.isRequired,
     status: PropTypes.oneOf([
       'In progress',
       'Complete',

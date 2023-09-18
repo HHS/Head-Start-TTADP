@@ -275,7 +275,9 @@ export async function findEventById(eventId: string, scopes: WhereOptions[] = [{
     [Op.and]: [
       {
         data: {
-          eventId,
+          eventId: {
+            [Op.endsWith]: `-${eventId}`,
+          },
         },
       },
       ...scopes,
