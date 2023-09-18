@@ -13,7 +13,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues } from './constants';
-import { createSession, getSessionByEventIdAndSessionIndex, updateSession } from '../../fetchers/session';
+import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
@@ -150,7 +150,7 @@ export default function SessionForm({ match }) {
         return;
       }
       try {
-        const session = await getSessionByEventIdAndSessionIndex(trainingReportId, sessionId);
+        const session = await getSessionBySessionId(sessionId);
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
       } catch (e) {
@@ -164,7 +164,7 @@ export default function SessionForm({ match }) {
     // isAppLoading is a little out of place but by including it, we
     // ensure that the correct form data is loading
     // TODO: Dig into why it's needed and remove it if possible
-  }, [currentPage, isAppLoading, hookForm.reset, reportFetched, trainingReportId, sessionId]);
+  }, [currentPage, isAppLoading, hookForm.reset, reportFetched, sessionId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
