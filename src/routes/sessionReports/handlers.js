@@ -84,7 +84,7 @@ export const createHandler = async (req, res) => {
     if (!auth.canCreateSession()) { return res.sendStatus(403); }
 
     const session = await createSession({
-      eventId,
+      eventId: event.id,
       data: {
         ...data,
         eventName: event.data.eventName,

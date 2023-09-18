@@ -14,7 +14,7 @@ import {
   getPossibleSessionParticipants,
 } from '../../services/sessionReports';
 import EventReport from '../../policies/event';
-import { findEventById } from '../../services/event';
+import { findEventById, findEventByDbId } from '../../services/event';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
@@ -64,7 +64,7 @@ describe('session report handlers', () => {
         canEditSession: () => true,
       }));
       findSessionById.mockResolvedValueOnce(mockSession);
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -73,7 +73,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canEditSession: () => true,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       findSessionsByEventId.mockResolvedValueOnce(mockSession);
       await getHandler({ session: { userId: 1 }, params: { eventId: 99_998 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -155,7 +155,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canEditSession: () => true,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
       updateSession.mockResolvedValueOnce(mockSession);
       await updateHandler(mockRequest, mockResponse);
@@ -166,7 +166,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canEditSession: () => true,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
       updateSession.mockResolvedValueOnce(mockSession);
       await updateHandler(mockRequest, mockResponse);
@@ -177,7 +177,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canEditSession: () => false,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -199,7 +199,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canDeleteSession: () => true,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -212,7 +212,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canDeleteSession: () => false,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventByDbId.mockResolvedValueOnce(mockEvent);
       findSessionById.mockResolvedValueOnce(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
