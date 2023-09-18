@@ -1,7 +1,10 @@
+import Semaphore from '../lib/semaphore';
 import db from '../../models';
 import { auditLogger } from '../../logger';
 import { REPORT_TYPE, COLLABORATOR_TYPES } from '../../constants';
-import { filterDataToModel, remapData, collectChangedValues } from '../../lib/modelUtils';
+import { filterDataToModel, remap, collectChangedValues } from '../../lib/modelUtils';
+
+const semaphore = new Semaphore(1);
 
 /* TODO: need to incorporate the validation that the users referenced have the required
     permissions. To do this we need some discrete method to corelate the permissions with
@@ -15,7 +18,27 @@ const {
   User,
 } = db;
 
-const syncCollaboratorsForType = async (
+const createOrUpdateReportCollaborators = async (
+  reportId: number,
+  userIds: number[],
+) => {
+  // As there are multiple types of collaborator roles held by a user, this path might
+  // try to be hit in parallel for a single set of data. To protect the process a semaphore
+  // is used to limit the parallel execution of the sensitive step.
+  await semaphore.acquire();
+  const newReportCollaborators = await ReportCollaborator.bulkCreate(
+    userIds.map((userId) => ({ userId, reportId })),
+    {
+      updateOnDuplicate: ['updatedAt'],
+      individualHooks: true,
+      returning: true,
+    },
+  );
+  semaphore.release();
+  return newReportCollaborators;
+};
+
+const syncReportCollaboratorsForType = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE], regionId: number },
   collaboratorType: number | typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
   userIds: number[],
@@ -96,15 +119,13 @@ const syncCollaboratorsForType = async (
 
     let fullCreateCollaboratorTypeList;
     if (createCollaboratorList && createCollaboratorList.length) {
-      const newReportCollaborators = await ReportCollaborator.bulkCreate(
-        createCollaboratorList.map((userId) => ({ userId, reportId: report.id })),
-        {
-          individualHooks: true,
-          returning: true,
-        },
+      const newReportCollaborators = await createOrUpdateReportCollaborators(
+        report.id,
+        createCollaboratorList,
       );
       fullCreateCollaboratorTypeList = [
-        ...newReportCollaborators, //TODO: this will likely need some cleanup to only get the required values.
+        // TODO: this will likely need some cleanup to only get the required values.
+        ...newReportCollaborators,
         ...createCollaboratorTypeList,
       ];
     } else {
@@ -153,32 +174,63 @@ const syncCollaboratorsForType = async (
   }
 };
 
-const collaboratorRemapping = {
-  [REPORT_TYPE.REPORT_TRAINING_EVENT]: {
-    [COLLABORATOR_TYPES.INSTANTIATOR]: {},
-    [COLLABORATOR_TYPES.OWNER]: {},
-    [COLLABORATOR_TYPES.EDITOR]: {},
-  },
-};
-
-/**
- * Remaps attribute names in the given data object using a provided remapping function.
- * @param data - The data object to be remapped.
- * @returns The remapped data object.
- */
-const dataRemap = (
-  data: Record<string, any>,
-  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-  collaboratorType: number | typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
-) => remapData(data, reportTrainingEventRemapping);
-
 const syncReportCollaborator = async (
   report: { id: number, type: string, regionId: number },
   collaboratorType: number | string,
   data: object,
 ) => {
-
+  // TODO: everything
 };
+
+const includeReportCollaborator = (
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+  collaboratorType: typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
+) => ({
+  model: ReportCollaborator,
+  as: '', // TODO: fix using the collaboratorType
+  attributes: [
+    'reportId',
+    'userId',
+  ],
+  includes: [
+    {
+      model: CollaboratorType,
+      as: 'collaboratorTypes',
+      required: true,
+      where: {
+        validFor: reportType,
+        ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
+        ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
+      },
+      attributes: [],
+      through: {
+        attributes: [],
+      },
+    },
+    {
+      model: Role,
+      as: 'roles',
+      required: true,
+      attributes: [
+        'name',
+        'isSpecialist',
+      ],
+      through: {
+        attributes: [],
+      },
+    },
+    {
+      model: User,
+      as: 'user',
+      required: true,
+      attributes: [
+        'name',
+        'email',
+        'homeRegionId',
+      ],
+    },
+  ],
+});
 
 const getCollaboratorsForType = async (
   report: { id: number, type: string, regionId: number },
@@ -231,57 +283,8 @@ const getCollaboratorsForType = async (
   ],
 });
 
-const includeReportCollaborator = (
-  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-  collaboratorType: typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
-) => ({
-  model: ReportCollaborator,
-  as: '', // TODO: fix using the collaboratorType
-  attributes: [
-    // TODO: filter this down to whats needed.
-  ],
-  includes: [
-    {
-      model: CollaboratorType,
-      as: 'collaboratorTypes',
-      required: true,
-      where: {
-        validFor: reportType,
-        ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
-        ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
-      },
-      attributes: [],
-      through: {
-        attributes: [],
-      },
-    },
-    {
-      model: Role,
-      as: 'roles',
-      required: true,
-      attributes: [
-        'name',
-        'isSpecialist',
-      ],
-      through: {
-        attributes: [],
-      },
-    },
-    {
-      model: User,
-      as: 'user',
-      required: true,
-      attributes: [
-        'name',
-        'email',
-        'homeRegionId',
-      ],
-    },
-  ],
-});
-
 export {
-  syncCollaboratorsForType,
+  syncReportCollaboratorsForType,
   getCollaboratorsForType,
   includeReportCollaborator,
 };
