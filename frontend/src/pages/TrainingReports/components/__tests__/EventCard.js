@@ -16,7 +16,7 @@ describe('EventCard', () => {
     regionId: 1,
     data: {
       eventName: 'This is my event title',
-      eventId: 'This is my event ID',
+      eventId: 'TR-R01-1234',
       eventOrganizer: 'This is my event organizer',
       reasons: ['New Program/Option', 'New Staff/Turnover'],
       startDate: '01/02/2021',
@@ -66,7 +66,7 @@ describe('EventCard', () => {
   it('renders correctly', () => {
     renderEventCard();
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    expect(screen.getByText('This is my event ID')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('This is my event organizer')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('---')).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('EventCard', () => {
 
   it('displays sessions', () => {
     renderEventCard();
-    const expBtn = screen.getByRole('button', { name: /view sessions for event this is my event id/i });
+    const expBtn = screen.getByRole('button', { name: /view sessions for event TR-R01-1234/i });
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
 
     // Expand Objectives via click.
@@ -90,17 +90,17 @@ describe('EventCard', () => {
   it('hides the edit and create options', async () => {
     renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
     renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete' } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
@@ -109,11 +109,11 @@ describe('EventCard', () => {
   it('hides the edit and create options for users with only write permission and no event roles', async () => {
     renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 12 });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
   });
 
   it('only shows the view options with view permission', async () => {
@@ -124,7 +124,7 @@ describe('EventCard', () => {
         permissions: [{ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId: 1 }],
       });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
@@ -146,11 +146,11 @@ describe('EventCard', () => {
       ],
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).toBeNull();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1234/event-summary');
   });
 });
