@@ -3,7 +3,7 @@ import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../consta
 import { syncReport } from './report';
 import { syncReportApproval, includeReportApproval } from './reportApproval';
 import { syncReportAudiences, includeReportAudience } from './reportAudience';
-import { syncCollaboratorsForType, includeReportCollaborator } from './reportCollaborator';
+import { syncReportCollaboratorsForType, includeReportCollaborator } from './reportCollaborator';
 import { syncReportGoals, includeReportGoal } from './reportGoal';
 import { syncReportGoalTemplates, includeReportGoalTemplate } from './reportGoalTemplate';
 import { syncReportImport, includeReportImport } from './reportImport';
@@ -81,10 +81,10 @@ const actions:Actions = {
         },
       },
       { func: syncReportAudiences, remapDef: { 'data.audience.*': '*.name' } },
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': `0`} },
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': `0`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
       { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name', 'regionId': '0.regionId' } },
       { func: syncReportImport, remapDef: { 'imported': 'import' } },
       { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name'} },
@@ -127,10 +127,10 @@ const actions:Actions = {
           'data.sessionName': 'name',
         },
       },
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ownerId': `0.id`, 'data.eventOwner': '0.id' } },
-      { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
-      // { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
-      // { func: syncCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ownerId': `0.id`, 'data.eventOwner': '0.id' } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
+      // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
+      // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
       { func: syncReportRecipient, remapDef: { 'data.recipients.*': '*' } },
       {
         func: syncReportObjectiveTemplate,
