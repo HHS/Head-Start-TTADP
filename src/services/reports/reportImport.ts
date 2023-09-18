@@ -8,13 +8,18 @@ const syncReportImports = async (
   entity: {},
 ) => {};
 
-const includeReportImports = () => ({});
+const includeReportImports = () => ({
+  model: ReportImport,
+  as: '', // TODO: figure this out
+  required: false,
+  attributes: [],
+});
 
 const getReportImports = async (
-  report: { id: number, type: }
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
 ) => ReportImport.findAll({
   attributes: [],
-  where: {}
+  where: { reportId: report.id },
 });
 
 export {
