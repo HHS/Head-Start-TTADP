@@ -78,7 +78,9 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
-  const link = canEditEvent ? `/training-report/${eventId}/event-summary` : `/training-report/view/${eventId}`;
+  // get the last four digits of the event id
+  const idForLink = eventId.split('-').pop();
+  const link = canEditEvent ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
   const contextMenuLabel = `Actions for event ${eventId}`;
 
   return (
