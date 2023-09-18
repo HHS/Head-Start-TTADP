@@ -30,7 +30,7 @@ const syncReportParticipationParticipants = async (
   participantEnums,
 );
 
-const getReportAudiences = async (
+const getReportParticipationParticipants = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   participantIds: number[] | null = null,
 ):Promise<EntityGenericEnum[]> => getEntityGenericEnum(
@@ -40,7 +40,7 @@ const getReportAudiences = async (
   participantIds,
 );
 
-const includeReportAudience = (
+const includeReportParticipationParticipants = (
   type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => includeEntityGenericEnums(
   ReportParticipationParticipant,
@@ -50,6 +50,6 @@ const includeReportAudience = (
 
 export {
   syncReportParticipationParticipants,
-  getReportAudiences,
-  includeReportAudience,
+  getReportParticipationParticipants,
+  includeReportParticipationParticipants,
 };
