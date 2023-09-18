@@ -37,6 +37,7 @@ module.exports = {
        *  - ReportTrainingEvents-
        *  - ReportTrainingSessions-
        *  - ReportApprovals-
+       *  - ReportAudiences
        *  - ReportRecipients-
        *  - ReportCollaborators-
        *    - ReportCollaboratorTypes-
