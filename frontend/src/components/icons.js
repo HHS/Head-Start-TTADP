@@ -9,7 +9,6 @@ import {
   faPencil,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons';
-// import { faPenCircle } from '@fortawesome/pro-solid-svg-icons';
 import colors from '../colors';
 
 const InProgress = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faClock} />;
