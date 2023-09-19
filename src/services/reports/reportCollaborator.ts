@@ -1,4 +1,4 @@
-import Semaphore from '../lib/semaphore';
+import Semaphore from '../../lib/semaphore';
 import db from '../../models';
 import { auditLogger } from '../../logger';
 import { REPORT_TYPE, COLLABORATOR_TYPES } from '../../constants';
