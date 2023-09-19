@@ -125,7 +125,7 @@ export async function createRttapa(
             ON tx.topic = txx.name
             LEFT JOIN "Topics" txy
             ON txx."mapsTo" = txy.id
-            GROUP BY TRUE
+            GROUP BY 1=1
           ) "goalTopics",
           (
             SELECT ARRAY_AGG(DISTINCT rarr.r)

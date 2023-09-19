@@ -43,7 +43,7 @@ const recalculateOnAR = async (
       WHERE g.id = "GoalFieldResponses"."goalId"
       AND arg."id" != ${instance.activityReportGoalId}
       AND argfr."goalTemplateFieldPromptId" = ${instance.goalTemplateFieldPromptId}
-      GROUP BY TRUE
+      GROUP BY 1=1
     ), FALSE)`),
   },
   {
