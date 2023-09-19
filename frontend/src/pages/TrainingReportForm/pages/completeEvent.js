@@ -219,6 +219,29 @@ const CompleteEvent = ({
         </>
       )}
 
+      { isOwner && (
+      <div className="margin-top-4">
+        <FormItem
+          label="Event status"
+          name="status"
+          required
+        >
+          <Dropdown
+            label="Event status"
+            name="status"
+            id="status"
+            value={updatedStatus}
+            onChange={(e) => {
+              clearErrors('status');
+              setUpdatedStatus(e.target.value);
+            }}
+          >
+            {options}
+          </Dropdown>
+        </FormItem>
+      </div>
+      )}
+
       {showSubmissionError && (
       <div className="margin-top-4">
         <Alert type="error" noIcon>
@@ -252,29 +275,6 @@ const CompleteEvent = ({
               )
             }
         </Alert>
-      </div>
-      )}
-
-      { isOwner && (
-      <div className="margin-top-4">
-        <FormItem
-          label="Event status"
-          name="status"
-          required
-        >
-          <Dropdown
-            label="Event status"
-            name="status"
-            id="status"
-            value={updatedStatus}
-            onChange={(e) => {
-              clearErrors('status');
-              setUpdatedStatus(e.target.value);
-            }}
-          >
-            {options}
-          </Dropdown>
-        </FormItem>
       </div>
       )}
 
