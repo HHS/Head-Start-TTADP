@@ -189,7 +189,7 @@ type EnumSyncResponse = {
 const getEntityGenericEnum = async (
   entityEnumModel: EntityEnumModel,
   enumInfo: EnumInfo,
-  entity: { name: string, id: number, type: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+  entity: { name: string, id: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
   genericEnumIds: number[] | null = null,
 ): Promise<EntityGenericEnum[]> => entityEnumModel.findAll({
   attributes: [
@@ -207,13 +207,9 @@ const getEntityGenericEnum = async (
       model: enumInfo.model,
       as: enumInfo.as,
       where: {
-        mapsTo: null,
-        ...(enumInfo?.entityTypeFiltered && { validFor: entity.type }),
+        ...(enumInfo?.entityTypeFiltered && entity?.type && { validFor: entity.type }),
       },
-      attributes: [
-        'id',
-        'name',
-      ],
+      attributes: [],
       required: true,
     },
   ],
