@@ -182,7 +182,7 @@ export default function NextStepsRepeater({
 
       <PlusButton
         onClick={onAddNewStep}
-        text={`Add ${stepType} next step`}
+        text="Add next step"
         testId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-button`}
         className="margin-bottom-2"
       />
