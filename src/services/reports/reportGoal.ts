@@ -1,4 +1,7 @@
-export {};
+import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
+import db from '../../models';
+import { auditLogger } from '../../logger';
+
 const {
   Goal,
   GoalFieldResponse,
@@ -9,14 +12,15 @@ const {
   ReportGoalFieldResponse,
   ReportGoalTemplate,
   ReportGoalTemplateFieldPrompt,
-} = require('../../models');
-const { auditLoger } = require('../../logger');
+} = db;
 
 // TODO: this needs alot of work
 const syncReportGoals = async (
   reportId: number,
+  data,
 ) => {
   try {
+    const { matched, unmatched } = await filterDataToModel(data, ReportGoal);
   // in parallel:
   //    validate that the type is valid for the report type
   //    get current collaborators for this report having this type
@@ -25,7 +29,7 @@ const syncReportGoals = async (
   //    perform in insert/update/delete based on the sub lists
   //        if a sublist is empty, do not call the db at all for that sublist
   } catch (err) {
-    auditLoger.error(err);
+    auditLogger.error(err);
     throw err;
   }
 };
@@ -69,7 +73,7 @@ const includeReportGoals = () => ({
   ],
 });
 
-module.exports = {
+export {
   syncReportGoals,
   getReportGoals,
   getReportGoal,
