@@ -24,7 +24,7 @@ const syncReportParticipationParticipants = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   participantEnums: { id?: number, name?: string }[] | null = null,
 ): Promise<EnumSyncResponse> => syncEntityGenericEnum(
-  ReportParticipationParticipant,
+  ReportCollaboratorType,
   collaboratorTypesEnumInfo,
   { name: 'reportParticipationId', ...entity },
   participantEnums,
