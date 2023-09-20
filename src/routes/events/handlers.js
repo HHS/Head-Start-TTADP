@@ -133,6 +133,11 @@ export const updateHandler = async (req, res) => {
 
     // Get event to update.
     const eventToUpdate = await findEventById(eventId);
+
+    if (!eventToUpdate) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
     const auth = await getEventAuthorization(req, res, eventToUpdate);
     if (!auth.canEditEvent()) { return res.status(403).send({ message: 'User is not authorized to update event' }); }
 
@@ -152,7 +157,7 @@ export const updateHandler = async (req, res) => {
       }
     }
 
-    const event = await updateEvent(eventId, req.body);
+    const event = await updateEvent(eventToUpdate.id, req.body);
 
     return res.status(httpCodes.CREATED).send(event);
   } catch (error) {
