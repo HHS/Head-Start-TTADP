@@ -1,4 +1,4 @@
-import { filterDataToModel, switchAttributeNames, collectChangedValues } from '../../lib/modelUtils';
+import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
 import {
   REPORT_TYPE,
@@ -37,15 +37,6 @@ const reportTrainingEventRemapping: Record<string, string> = {
 };
 
 /**
- * Remaps attribute names in the given data object using a provided remapping function.
- * @param data - The data object to be remapped.
- * @returns The remapped data object.
- */
-const dataRemap = (
-  data: Record<string, any>,
-) => switchAttributeNames(data, reportTrainingEventRemapping);
-
-/**
  * This function filters the given data object and separates it into two parts:
  * - matched: an object that contains only the properties that match the structure of
  *            ReportTrainingEventDataType
@@ -65,7 +56,7 @@ const filterData = async (
 const createOrUpdateReportTrainingEvent = async (
   data: ReportTrainingEventDataType,
 ) => {
-  let reportTrainingEvent;;
+  let reportTrainingEvent;
   if (data.id) { // sync/update report path
     reportTrainingEvent = await ReportTrainingEvent.findById(data.id);
     const changedData = collectChangedValues(data, reportTrainingEvent);
@@ -86,8 +77,7 @@ const syncReportTrainingEvent = async (
   data: FullReportTrainingEventDataType,
   metaDataProcessors: Array<(...args: any[]) => Promise<any>>,
 ) => {
-  const remappedData = dataRemap(data);
-  const { matched: filteredData, unmatched } = await filterData(remappedData);
+  const { matched: filteredData, unmatched } = await filterData(data);
 
   const reportDescriptor: ReportDescriptor = {
     reportId: data.reportId,
