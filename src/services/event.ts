@@ -270,7 +270,7 @@ export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}])
   return findEventHelper(where) as Promise<EventShape>;
 }
 
-export async function findEventById(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
       {

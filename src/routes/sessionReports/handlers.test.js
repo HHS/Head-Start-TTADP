@@ -14,7 +14,7 @@ import {
   getPossibleSessionParticipants,
 } from '../../services/sessionReports';
 import EventReport from '../../policies/event';
-import { findEventById, findEventByDbId } from '../../services/event';
+import { findEventBySmartsheetIdSuffix, findEventByDbId } from '../../services/event';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
@@ -64,7 +64,7 @@ describe('session report handlers', () => {
         canEditSession: () => true,
       }));
       findSessionById.mockResolvedValue(mockSession);
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -73,7 +73,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       findSessionsByEventId.mockResolvedValue(mockSession);
       await getHandler({ session: { userId: 1 }, params: { eventId: 99_998 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -106,7 +106,7 @@ describe('session report handlers', () => {
     };
 
     it('returns the session', async () => {
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canCreateSession: () => true,
       }));
@@ -126,13 +126,13 @@ describe('session report handlers', () => {
     });
 
     it('returns 404 if there is no event', async () => {
-      findEventById.mockResolvedValue(null);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(null);
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 403 when permissions are inadequate', async () => {
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canCreateSession: () => false,
       }));

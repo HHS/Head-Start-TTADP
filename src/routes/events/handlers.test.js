@@ -10,7 +10,7 @@ import {
 import {
   createEvent,
   findEventsByCollaboratorId,
-  findEventById,
+  findEventBySmartsheetIdSuffix,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
@@ -24,7 +24,7 @@ jest.mock('../../policies/event');
 jest.mock('../../services/event', () => ({
   createEvent: jest.fn(),
   findEventsByCollaboratorId: jest.fn(),
-  findEventById: jest.fn(),
+  findEventBySmartsheetIdSuffix: jest.fn(),
   findEventsByOwnerId: jest.fn(),
   findEventsByPocId: jest.fn(),
   findEventsByRegionId: jest.fn(),
@@ -69,7 +69,7 @@ describe('event handlers', () => {
 
   describe('getHandler', () => {
     it('returns the event', async () => {
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({
         canRead: () => true,
       }));
@@ -83,7 +83,7 @@ describe('event handlers', () => {
     });
 
     it('404 when not found by eventId', async () => {
-      findEventById.mockResolvedValue(null);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(null);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
@@ -117,7 +117,7 @@ describe('event handlers', () => {
         canRead: () => false,
         isPoc: () => false,
       }));
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
@@ -173,7 +173,7 @@ describe('event handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditEvent: () => true,
       }));
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       updateEvent.mockResolvedValue(mockEvent);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
@@ -189,7 +189,7 @@ describe('event handlers', () => {
         canEditEvent: () => true,
         canSuspendOrCompleteEvent: () => true,
       }));
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       updateEvent.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
@@ -212,7 +212,7 @@ describe('event handlers', () => {
         canSuspendOrCompleteEvent: () => false,
       }));
       updateEvent.mockResolvedValue(mockEvent);
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
         body: {
@@ -234,7 +234,7 @@ describe('event handlers', () => {
         canSuspendOrCompleteEvent: () => true,
       }));
       updateEvent.mockResolvedValue(mockEvent);
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
         body: {
@@ -255,7 +255,7 @@ describe('event handlers', () => {
         canEditEvent: () => true,
         canSuspendOrCompleteEvent: () => false,
       }));
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       updateEvent.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
@@ -278,8 +278,8 @@ describe('event handlers', () => {
       EventReport.mockImplementation(() => ({
         canDelete: () => true,
       }));
-      findEventById.mockResolvedValue(mockEvent);
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
         mockResponse,
@@ -287,7 +287,7 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
     it('returns 404 when no event', async () => {
-      findEventById.mockResolvedValue(null);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(null);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
         mockResponse,
@@ -299,7 +299,7 @@ describe('event handlers', () => {
       EventReport.mockImplementation(() => ({
         canDelete: () => false,
       }));
-      findEventById.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
         mockResponse,
@@ -308,7 +308,7 @@ describe('event handlers', () => {
     });
 
     it('handles errors', async () => {
-      findEventById.mockRejectedValue(new Error('error'));
+      findEventBySmartsheetIdSuffix.mockRejectedValue(new Error('error'));
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id }, query: {} },
         mockResponse,

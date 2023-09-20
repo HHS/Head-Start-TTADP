@@ -1,7 +1,7 @@
 import { cast } from 'sequelize';
 import db from '../models';
 import { SessionReportShape } from './types/sessionReport';
-import { findEventById, findEventByDbId } from './event';
+import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
 const { SessionReportPilot, EventReportPilot } = db;
 
@@ -115,7 +115,7 @@ export async function updateSession(id, request) {
 
   const { eventId, data } = request;
 
-  const event = await findEventById(eventId);
+  const event = await findEventBySmartsheetIdSuffix(eventId);
 
   await SessionReportPilot.update(
     {

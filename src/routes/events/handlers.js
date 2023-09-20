@@ -7,7 +7,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createEvent,
   findEventsByCollaboratorId,
-  findEventById,
+  findEventBySmartsheetIdSuffix,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
@@ -79,7 +79,7 @@ export const getHandler = async (req, res) => {
     }
 
     if (eventId) {
-      event = await findEventById(eventId, scopes);
+      event = await findEventBySmartsheetIdSuffix(eventId, scopes);
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
@@ -132,7 +132,7 @@ export const updateHandler = async (req, res) => {
     }
 
     // Get event to update.
-    const eventToUpdate = await findEventById(eventId);
+    const eventToUpdate = await findEventBySmartsheetIdSuffix(eventId);
 
     if (!eventToUpdate) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
@@ -169,7 +169,7 @@ export const deleteHandler = async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const event = await findEventById(eventId);
+    const event = await findEventBySmartsheetIdSuffix(eventId);
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
