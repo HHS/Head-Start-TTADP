@@ -5,7 +5,6 @@ import {
   ReportGenericEnumType,
   syncGenericEnums,
   getReportGenericEnums,
-  getReportGenericEnum,
   includeGenericEnums,
 } from './reportGenericEnum';
 import { REPORT_TYPE } from '../../constants';
@@ -41,16 +40,6 @@ const getReportTargetPopulations = async (
   targetPopulationIds,
 );
 
-const getReportTargetPopulation = async (
-  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  targetPopulationId: number,
-):Promise<ReportGenericEnumType[]> => getReportGenericEnum(
-  ReportTargetPopulation,
-  targetPopulationEnumInfo,
-  report,
-  targetPopulationId,
-);
-
 const includeReportTargetPopulation = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => includeGenericEnums(
@@ -62,6 +51,5 @@ const includeReportTargetPopulation = (
 export {
   syncReportTargetPopulations,
   getReportTargetPopulations,
-  getReportTargetPopulation,
   includeReportTargetPopulation,
 };
