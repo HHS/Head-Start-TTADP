@@ -48,6 +48,13 @@ const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
+const OBJECTIVE_SUPPORT_TYPES = [
+  'Introducing',
+  'Planning',
+  'Implementing',
+  'Maintaining',
+];
+
 const NEXTSTEP_NOTETYPE = {
   SPECIALIST: 'SPECIALIST',
   RECIPIENT: 'RECIPIENT',
@@ -265,6 +272,7 @@ module.exports = {
   GOAL_STATUS,
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
+  OBJECTIVE_SUPPORT_TYPES,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
