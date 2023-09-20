@@ -20,7 +20,6 @@ function EventCard({
   const history = useHistory();
 
   const {
-    id,
     data,
     sessionReports,
   } = event;
@@ -139,7 +138,7 @@ function EventCard({
       {sessionReports.map((s) => (
         <SessionCard
           key={`session_${uuidv4()}`}
-          eventId={id}
+          eventId={idForLink}
           session={s}
           expanded={reportsExpanded}
           isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
