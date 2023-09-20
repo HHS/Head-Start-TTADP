@@ -102,7 +102,30 @@ const findOrCreateByName = async (
   data: { name: string, mapsTo?: number },
   validFor?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE],
 ):Promise<GenericEnumType> => {
-  // TODO: find if exists, if not then create
+  let instance = model.findOne({
+    where: {
+      name: data.name,
+    },
+    ...(validFor && {
+      include: [{
+        model: ValidFor,
+        as: 'validFor',
+        required: true,
+        attributes: [],
+        where: { name: validFor },
+      }],
+    }),
+  });
+
+  if(!instance) {
+    instance = model.create({
+      name: data.name,
+      ...(data.mapsTo && { mapsTo: data.mapsTo }),
+    }, {
+      return
+    });
+  }
+  return instance;
 };
 
 // TODO: add support of just setting the mapsTo and other values passed in data
