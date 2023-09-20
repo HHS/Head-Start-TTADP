@@ -7,10 +7,14 @@ import {
   syncEntityGenericEnum,
   includeEntityGenericEnums,
 } from '../enums/generic';
+import { REPORT_TYPE } from '../../constants';
 
 const {
-  ReportCollaboratorRoles,
+  ReportCollaborator,
+  ReportCollaboratorRole,
   Role,
+  User,
+  UserRole,
 } = db;
 
 const rolesEnumInfo:EnumInfo = {
@@ -20,22 +24,113 @@ const rolesEnumInfo:EnumInfo = {
 };
 
 const syncReportCollaboratorRoles = async (
-  entity: {},
-) => {};
+  entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+) => {
+  const [
+    currentCollaboratorRoles,
+    currentRolesOfCollaborators,
+  ] = await Promise.all([
+    ReportCollaboratorRole.findAll({
+      attributes: [
+        ['id', 'reportCollaboratorRoleId'],
+        'reportCollaboratorId',
+        'roleId',
+      ],
+      include: [{
+        model: ReportCollaborator,
+        as: 'reportCollaborator',
+        attributes: [],
+        required: true,
+        where: { reportId: entity.id },
+      }],
+    }),
+    ReportCollaborator.findAll({
+      attributes: [
+        ['id', 'reportCollaboratorId'],
+        ['"userRoles"."roleId"', 'roleId'],
+      ],
+      where: { reportId: entity.id },
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: [],
+        required: true,
+        include: [{
+          model: UserRole,
+          as: 'userRoles',
+          attributes: [],
+          required: true,
+        }],
+      }],
+    }),
+  ]);
 
-const includeReportCollaboratorRoles = () => includeEntityGenericEnums(
-  ReportCollaboratorRoles,
+  const [
+    insertList,
+    updateList,
+    deleteList,
+  ] = [
+    currentRolesOfCollaborators
+      .filter(({ reportCollaboratorId, roleId }) => !currentCollaboratorRoles
+        .find((ccr) => ccr.reportCollaboratorId === reportCollaboratorId
+        && ccr.roleId === roleId)),
+    currentCollaboratorRoles
+      .filter(({ reportCollaboratorId, roleId }) => currentRolesOfCollaborators
+        .find((croc) => croc.reportCollaboratorId === reportCollaboratorId
+        && croc.roleId === roleId))
+      .map(({ reportCollaboratorRoleId }) => reportCollaboratorRoleId),
+    currentCollaboratorRoles
+      .filter(({ reportCollaboratorId, roleId }) => !currentRolesOfCollaborators
+        .find((croc) => croc.reportCollaboratorId === reportCollaboratorId
+        && croc.roleId === roleId))
+      .map(({ reportCollaboratorRoleId }) => reportCollaboratorRoleId),
+  ];
+
+  return {
+    primises: Promise.all([
+      insertList && insertList.length > 0
+        ? ReportCollaboratorRole.bulkCreate(
+          insertList,
+          {
+            individualHooks: true,
+          },
+        )
+        : Promise.resolve(),
+      updateList && updateList.length > 0
+        ? ReportCollaboratorRole.update(
+          { updatedAt: 'now' }, // TODO: fix
+          {
+            where: { id: updateList },
+            individualHooks: true,
+          },
+        )
+        : Promise.resolve(),
+      deleteList && deleteList.length > 0
+        ? ReportCollaboratorRole.destroy({
+          where: { id: deleteList },
+          individualHooks: true,
+        })
+        : Promise.resolve(),
+    ]),
+    unmatched: null,
+  };
+};
+
+const includeReportCollaboratorRoles = (
+  type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+) => includeEntityGenericEnums(
+  ReportCollaboratorRole,
   rolesEnumInfo,
-  { name: 'reportParticipationId', type },
+  { name: 'reportCollaboratorId', type },
 );
 
 const getReportCollaboratorRoles = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   participantIds: number[] | null = null,
 ):Promise<EntityGenericEnum[]> => getEntityGenericEnum(
-  ReportCollaboratorRoles,
+  ReportCollaboratorRole,
   rolesEnumInfo,
-  { name: 'reportCollaboratorRoleId', ...entity },
+  { name: 'reportCollaboratorId', ...entity },
   participantIds,
 );
 
