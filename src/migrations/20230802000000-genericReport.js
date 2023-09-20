@@ -3,7 +3,6 @@ const {
   GOAL_CLOSE_REASONS,
   GOAL_SUSPEND_REASONS,
   GOAL_SOURCES,
-  OBJECTIVE_SUPPORT_TYPES,
 } = require('@ttahub/common');
 const {
   prepMigration,
@@ -17,9 +16,12 @@ const {
   ENTITY_TYPE,
   GOAL_STATUS,
   OBJECTIVE_STATUS,
+  OBJECTIVE_SUPPORT_TYPES,
   COLLABORATOR_APPROVAL_STATUSES,
   AUDIENCE,
   TRAINING_TYPE,
+  NEXTSTEP_NOTETYPE,
+  SOURCE_FIELD,
 } = require('../constants');
 
 module.exports = {
@@ -42,6 +44,8 @@ module.exports = {
        *  - ReportCollaborators-
        *    - ReportCollaboratorTypes-
        *    - ReportCollaboratorRoles-
+       *  - ReportNextSteps
+       *  - ReportNextStepResources
        *  - ReportResources-
        *  - ReportFiles-
        *  - ReportGoalTemplates-
@@ -304,6 +308,7 @@ module.exports = {
           },
         },
       }, { transaction });
+
       await queryInterface.sequelize.query(`
         INSERT INTO "SupportTypes"
         ("name", "validForId", "createdAt", "updatedAt")
@@ -440,6 +445,7 @@ module.exports = {
       ]) s(name)
       WHERE vf.name = '${REPORT_TYPE.REPORT_TRAINING_EVENT}'
       ;`, { transaction });
+
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Participants', {
         id: {
@@ -1430,10 +1436,6 @@ module.exports = {
       });
 
       //---------------------------------------------------------------------------------
-      const NEXTSTEP_NOTETYPE = {
-        SPECIALIST: 'SPECIALIST',
-        RECIPIENT: 'RECIPIENT',
-      };
 
       await queryInterface.createTable('ReportNextSteps', {
         id: {
@@ -1477,46 +1479,63 @@ module.exports = {
       }, { transaction });
 
       //---------------------------------------------------------------------------------
-      const SOURCE_FIELD = {
-        REPORT: {
-          NONECLKC: 'nonECLKCResourcesUsed',
-          ECLKC: 'ECLKCResourcesUsed',
-          CONTEXT: 'context',
-          NOTES: 'additionalNotes',
-          RESOURCE: 'resource',
+
+      await queryInterface.createTable('ReportNextStepResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.BIGINT,
         },
-        NEXTSTEPS: {
-          NOTE: 'note',
-          RESOURCE: 'resource',
+        reportNextStepId: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'ReportNextSteps',
+            },
+            key: 'id',
+          },
         },
-        GOAL: {
-          NAME: 'name',
-          TIMEFRAME: 'timeframe',
-          RESOURCE: 'resource',
+        resourceId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
         },
-        GOALTEMPLATE: {
-          NAME: 'name',
-          RESOURCE: 'resource',
+        sourceFields: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.ARRAY(Sequelize.ENUM(
+            Object.values(SOURCE_FIELD.NEXTSTEPS),
+          )),
         },
-        REPORTGOAL: {
-          NAME: 'name',
-          TIMEFRAME: 'timeframe',
-          RESOURCE: 'resource',
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
         },
-        OBJECTIVE: {
-          TITLE: 'title',
-          RESOURCE: 'resource',
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
         },
-        OBJECTIVETEMPLATE: {
-          TITLE: 'title',
-          RESOURCE: 'resource',
-        },
-        REPORTOBJECTIVE: {
-          TITLE: 'title',
-          TTAPROVIDED: 'ttaProvided',
-          RESOURCE: 'resource',
-        },
-      };
+      }, { transaction });
+      await queryInterface.addIndex('ReportNextStepResources', ['reportNextStepId', 'resourceId'], { transaction });
+
+      await queryInterface.addConstraint('ReportNextStepResources', {
+        fields: ['reportNextStepId', 'resourceId'],
+        type: 'unique',
+        transaction,
+      });
+
+      //---------------------------------------------------------------------------------
 
       await queryInterface.createTable('ReportResources', {
         id: {
