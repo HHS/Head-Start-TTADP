@@ -1,6 +1,6 @@
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
-import { findEventById, findEventByDbId } from '../../services/event';
+import { findEventById } from '../../services/event';
 import {
   createSession,
   findSessionsByEventId,
@@ -36,15 +36,18 @@ export const getHandler = async (req, res) => {
       sessionEventId = session.eventId;
     } else if (eventId) {
       sessionEventId = eventId;
-      session = await findSessionsByEventId(eventId);
     }
 
     // Event auth.
-    const event = await findEventByDbId(sessionEventId);
+    const event = await findEventById(sessionEventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
+    }
+
+    if (!session && eventId) {
+      session = await findSessionsByEventId(event.id);
     }
 
     if (!session) {
@@ -117,7 +120,7 @@ export const updateHandler = async (req, res) => {
     }
 
     // Authorization is through the associated event
-    const event = await findEventByDbId(eventId);
+    const event = await findEventById(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) { return res.sendStatus(403); }
