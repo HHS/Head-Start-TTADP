@@ -11,13 +11,14 @@ import { syncReportNationalCenter, includeReportNationalCenter } from './reportN
 import { syncReportNextStep, includeReportNextStep } from './reportNextStep';
 import { syncReportObjective, includeReportObjective } from './reportObjective';
 import { syncReportObjectiveTemplate, includeReportObjectiveTemplate } from './reportObjectiveTemplate';
-import { syncReportPageState, includeReportPageState } from './reportPageState';
+import { syncReportPageStates, includeReportPageStates } from './reportPageState';
 import { syncReportParticipation, includeReportParticipation } from './reportParticipation';
-import { syncReportReason, includeReportReason } from './reportReason';
-import { syncReportRecipient, includeReportRecipient } from './reportRecipient';
-import { syncReportTargetPopulation, includeReportTargetPopulation } from './reportTargetPopulation';
-import { syncReportTrainingEvent, includeTrainingSession } from './reportTrainingEvent';
-import { syncReportTrainingSession, includeReportTrainingEvent } from './reportTrainingSession';
+import { syncReportReasons, includeReportReasons } from './reportReason';
+import { syncReportRecipients, includeReportRecipients } from './reportRecipient';
+import { syncReportResources, includeReportResources } from './reportResource';
+import { syncReportTargetPopulations, includeReportTargetPopulations } from './reportTargetPopulation';
+import { syncReportTrainingEvent, includeReportTrainingEvent } from './reportTrainingEvent';
+import { syncReportTrainingSession, includeReportTrainingSession } from './reportTrainingSession';
 import { RemappingDefinition, remap } from '../../lib/modelUtils';
 
 const {
@@ -81,16 +82,17 @@ const actions:Actions = {
         },
       },
       { func: syncReportAudiences, remapDef: { 'data.audience.*': '*.name' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': `0`} },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': `0` } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id` } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id` } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id` } },
       { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name', 'regionId': '0.regionId' } },
       { func: syncReportImport, remapDef: { 'imported': 'import' } },
       { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name'} },
-      { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
-      { func: syncReportReason, remapDef: { 'data.reasons.*': '*.name'} },
-      { func: syncReportTargetPopulation, remapDef: { 'data."Target Population(s)".*': '*.name'} },
+      { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
+      { func: syncReportReasons, remapDef: { 'data.reasons.*': '*.name' } },
+      { func: syncReportResources, remapDef: { } },
+      { func: syncReportTargetPopulations, remapDef: { 'data."Target Population(s)".*': '*.name'} },
     ],
     includes: [
       { func: includeReportTrainingEvent },
@@ -102,9 +104,9 @@ const actions:Actions = {
       { func: includeReportGoalTemplate },
       { func: includeReportImport },
       { func: includeReportNationalCenter},
-      { func: includeReportPageState },
-      { func: includeReportReason },
-      { func: includeReportTargetPopulation },
+      { func: includeReportPageStates },
+      { func: includeReportReasons },
+      { func: includeReportTargetPopulations },
     ],
   },
   [REPORT_TYPE.REPORT_TRAINING_SESSION]: {
@@ -131,7 +133,7 @@ const actions:Actions = {
       { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
       // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
       // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
-      { func: syncReportRecipient, remapDef: { 'data.recipients.*': '*' } },
+      { func: syncReportRecipients, remapDef: { 'data.recipients.*': '*' } },
       {
         func: syncReportObjectiveTemplate,
         remapDef: {
@@ -156,19 +158,19 @@ const actions:Actions = {
           'data.participants': 'participants',
         },
       },
-      { func: syncReportPageState, remapDef: { 'data.pageState': 'pageState' } },
+      { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
     ],
     includes: [
-      { func: includeTrainingSession },
+      { func: includeReportTrainingSession },
       { func: includeReportCollaborator, type: COLLABORATOR_TYPES.OWNER },
       { func: includeReportCollaborator, type: COLLABORATOR_TYPES.INSTANTIATOR },
       { func: includeReportGoal },
       { func: includeReportGoalTemplate },
-      { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT},
+      { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT },
       { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST },
       { func: includeReportObjective },
       { func: includeReportObjectiveTemplate },
-      { func: includeReportPageState },
+      { func: includeReportPageStates },
       { func: includeReportParticipation },
       { func: includeReportRecipient },
     ],
@@ -270,7 +272,7 @@ const syncMetaData = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   syncer: { func: Function, type?: string, remapDef?: RemappingDefinition },
   data,
-): Promise<{ promises: Promise<any>[], unmapped: object | object[]}> => {
+): Promise<{ promises: Promise<any>[], unmapped: object | object[] }> => {
   const { func, type, remapDef } = syncer;
   let dataToSync;
   let dataNotUsed;
@@ -281,7 +283,7 @@ const syncMetaData = async (
     } = remap(
       data,
       remapDef,
-      { keepUnmappedValues: false},
+      { keepUnmappedValues: false },
     ));
   } else {
     dataToSync = data;
@@ -294,13 +296,13 @@ const syncMetaData = async (
     const { mapped: reverseMapped } = remap(
       unmatched,
       remapDef,
-      { reverse: true, keepUnmappedValues: false},
+      { reverse: true, keepUnmappedValues: false },
     );
-     // TODO: some how merge reverseMapped and dataNotUsed
+    // TODO: some how merge reverseMapped and dataNotUsed
   }
 
   return { promises, unmapped: dataNotUsed };
-}
+};
 
 /**
  * This function performs a synchronization process for a given report type and data.
@@ -326,7 +328,7 @@ const sync = async (
   } = remap(
     data,
     reportDef.remapDef,
-    { keepUnmappedValues: false},
+    { keepUnmappedValues: false },
   );
 
   // Call syncReport to get the report and unmatched data
@@ -335,15 +337,19 @@ const sync = async (
     ...(!Object.keys(data).includes('reportType') && { reportType }),
   });
 
-  const metaDataResults:{ promises: Promise<any>[], unmapped: object | object[]}[] = await Promise.all(syncers
+  const metaDataResults:{
+    promises: Promise<any>[],
+    unmapped: object | object[],
+  }[] = await Promise.all(syncers
     .map(async (syncer) => syncMetaData(
       { id: report.id, type: reportType },
       syncer,
-      data
+      data,
     )));
 
   // await all remaining promises in parallel
-  const metadataPromises = await Promise.all(metaDataResults.map(({ promises }) => promises).flat());
+  const metadataPromises = await Promise
+    .all(metaDataResults.map(({ promises }) => promises).flat());
   const unmatchedFromMetaData = metaDataResults.map(({ unmapped }) => unmapped);
 
   // Calculate the unmatched data by intersecting the unmatched data from the report and the
@@ -375,26 +381,25 @@ const getOne = async (
   scope,
 );
 
+/**
+ * Retrieves all reports of a given type and with specified IDs.
+ * @param reportType - The type of report to retrieve.
+ * @param reportIds - An array of report IDs to retrieve.
+ * @param scope - Optional scope object for filtering the reports.
+ * @returns A promise that resolves to an array of typed reports.
+ */
 const getAll = async (
-  /**
-   * Retrieves all reports of a given type and with specified IDs.
-   * @param reportType - The type of report to retrieve.
-   * @param reportIds - An array of report IDs to retrieve.
-   * @param scope - Optional scope object for filtering the reports.
-   * @returns A promise that resolves to an array of typed reports.
-   */
-  const getAll = async (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
   reportIds: number[],
   scope?: object,
   // Call the function `getAllTypedReports` with the provided arguments
   // and return the result.
 ) => getAllTypedReports(
-    reportType,
-    reportIds,
-    collectIncludes(reportType),
-    scope,
-  );
+  reportType,
+  reportIds,
+  collectIncludes(reportType),
+  scope,
+);
 
 export {
   sync,
