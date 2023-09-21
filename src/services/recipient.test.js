@@ -1,5 +1,6 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
+import crypto from 'crypto';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   Recipient,
@@ -12,6 +13,9 @@ import {
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalFieldResponse,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
   Topic,
   ActivityReportGoal,
   Permission,
@@ -26,7 +30,7 @@ import {
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
-import { OBJECTIVE_STATUS } from '../constants';
+import { GOAL_STATUS, OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
 import { createReport, destroyReport } from '../testUtils';
 
 describe('Recipient DB service', () => {
@@ -680,6 +684,190 @@ describe('Recipient DB service', () => {
     it('returns an empty array if the user is not found', async () => {
       const foundRecipients = await recipientsByUserId(999999999);
       expect(foundRecipients.length).toBe(0);
+    });
+  });
+
+  describe('de-duplicating on goal field responses', () => {
+    let recipient;
+    let goals;
+    let grant;
+    let template;
+
+    const region = 5;
+
+    beforeAll(async () => {
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        uei: faker.datatype.string(),
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      });
+
+      const goal = {
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+        status: GOAL_STATUS.IN_PROGRESS,
+      };
+
+      grant = await Grant.create({
+        status: 'Active',
+        regionId: region,
+        id: faker.datatype.number({ min: 1000 }),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        startDate: '2019-01-01',
+        endDate: '2024-01-01',
+      });
+
+      const secret = 'secret';
+      const hash = crypto
+        .createHmac('md5', secret)
+        .update(goal.name)
+        .digest('hex');
+
+      template = await GoalTemplate.create({
+        hash,
+        templateName: goal.name,
+        creationMethod: AUTOMATIC_CREATION,
+      });
+
+      const fieldPrompt = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        title: 'why do anything?',
+        prompt: 'why do anything?',
+        ordinal: 1,
+        hint: '',
+        caution: '',
+        fieldType: 'multiselect',
+        required: {},
+        options: [
+          'gotta',
+          'dont have to',
+          'not sure',
+          'too tired to answer',
+        ],
+      });
+
+      const goal1 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal2 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal3 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal4 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      goals = [goal1, goal2, goal3, goal4];
+
+      await GoalFieldResponse.create({
+        goalId: goal1.id,
+        goalTemplateFieldPromptId: fieldPrompt.id,
+        response: ['gotta'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal2.id,
+        goalTemplateFieldPromptId: fieldPrompt.id,
+        response: ['not sure', 'dont have to'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal3.id,
+        goalTemplateFieldPromptId: fieldPrompt.id,
+        response: ['not sure', 'dont have to'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await GoalTemplateFieldPrompt.destroy({
+        where: {
+          goalTemplateId: template.id,
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await GoalTemplate.destroy({
+        where: {
+          id: template.id,
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: goals.map((g) => g.grantId),
+        },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('properly de-duplicates based on responses', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(3);
+
+      const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
+      expect(doubler).toBeTruthy();
+
+      expect(doubler.ids.length).toBe(2);
+
+      const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
+      expect(singler).toBeTruthy();
+      expect(singler.ids.length).toBe(1);
+
+      const noResponse = goalRows.find((r) => r.responsesForComparison === '');
+      expect(noResponse).toBeTruthy();
+      expect(noResponse.ids.length).toBe(1);
     });
   });
 
