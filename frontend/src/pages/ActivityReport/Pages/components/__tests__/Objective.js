@@ -194,9 +194,46 @@ describe('Objective', () => {
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
     expect(await screen.findByText(/Existing objective/i, { selector: 'p' })).toBeVisible();
     expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
-    expect(Array.from(document.querySelectorAll('textarea'))).toHaveLength(0);
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(0);
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
     expect(await screen.findByText(/Create a new objective/i)).toBeVisible();
-    expect(Array.from(document.querySelectorAll('textarea'))).toHaveLength(1);
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(1);
+  });
+
+  it('you can change status to suspended', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'Suspended');
+
+    const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
+    userEvent.click(recipientRequestReason);
+
+    const context = await screen.findByLabelText(/Additional context/i);
+    userEvent.type(context, 'This is the context');
+
+    userEvent.click(await screen.findByText(/Submit/i));
+
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+    expect(await screen.findByText(/reason suspended/i)).toBeVisible();
+    expect(await screen.findByText(/recipient request - this is the context/i)).toBeVisible();
+  });
+
+  it('when changing status to suspended, you can cancel', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'Suspended');
+
+    const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
+    userEvent.click(recipientRequestReason);
+
+    const context = await screen.findByLabelText(/Additional context/i);
+    userEvent.type(context, 'This is the context');
+
+    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls="modal-suspend-objective--"]' }));
+
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+    expect(await screen.findByText(/not started/i)).toBeVisible();
   });
 });
