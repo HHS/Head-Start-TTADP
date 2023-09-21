@@ -2,7 +2,7 @@ import moment from 'moment';
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
+import db, {
   Recipient,
   Grant,
   Program,
@@ -19,6 +19,7 @@ import {
   Topic,
   ActivityReportGoal,
   Permission,
+  ProgramPersonnel,
   sequelize,
 } from '../models';
 import {
@@ -27,6 +28,7 @@ import {
   recipientsByName,
   recipientsByUserId,
   getGoalsByActivityRecipient,
+  recipientLeadership,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
@@ -1055,6 +1057,182 @@ describe('Recipient DB service', () => {
       expect(objective.topics.length).toBe(4);
       expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
       expect(objective.activityReports.length).toBe(1);
+    });
+  });
+
+  describe('recipientLeadership', () => {
+    const createProgramPersonnel = async (
+      grantId,
+      programId,
+      role = 'director',
+      active = true,
+      programType = 'HS',
+    ) => {
+      const personnel = await ProgramPersonnel.create({
+        grantId,
+        programId,
+        role,
+        title: '',
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        suffix: faker.name.suffix(),
+        prefix: faker.name.prefix(),
+        active,
+        effectiveDate: active ? new Date() : new Date('2020/01/01'),
+        mapsTo: null,
+        email: faker.internet.email(),
+      });
+
+      // no way to return associations on create
+      // https://github.com/sequelize/sequelize/discussions/15186
+
+      return ProgramPersonnel.findByPk(personnel.id, {
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+          },
+          {
+            model: Program,
+            as: 'program',
+          },
+        ],
+      });
+    };
+
+    const REGION_ID = 10;
+
+    const recipient = {
+      name: faker.datatype.string({ min: 10 }),
+      id: faker.datatype.number({ min: 10000 }),
+      uei: faker.datatype.string({ min: 10 }),
+    };
+    const grant = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const grant2 = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const irrelevantGrant = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID + 1,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const dummyProgram = {
+      grantId: grant.id,
+      startYear: '2023',
+      startDate: '2023/01/01',
+      endDate: '2023/12/31',
+      status: 'Active',
+      name: `${faker.animal.type() + faker.company.companyName()} Program`,
+      programType: 'HS',
+    };
+
+    let activePersonnel;
+
+    beforeAll(async () => {
+      await db.Recipient.create(recipient);
+      await db.Grant.create(grant);
+      await db.Grant.create(grant2);
+      await db.Grant.create(irrelevantGrant);
+
+      const program1 = await db.Program.create({
+        ...dummyProgram,
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      const program2 = await db.Program.create({
+        ...dummyProgram,
+        grantId: grant2.id,
+        programType: 'EHS',
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      const irrelevantProgram = await db.Program.create({
+        ...dummyProgram,
+        grantId: irrelevantGrant.id,
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      // Program personnel to ignore
+      // because it's on a different grant
+      await createProgramPersonnel(irrelevantGrant.id, irrelevantProgram.id, 'director', true, 'HS');
+
+      // Program personnel to ignore
+      // because it's inactive
+      await createProgramPersonnel(grant.id, program1.id, 'director', false, 'HS');
+
+      // program personnel to retrieve
+      activePersonnel = await Promise.all([
+        createProgramPersonnel(grant.id, program1.id, 'director', true, 'HS'),
+        createProgramPersonnel(grant2.id, program2.id, 'director', true, 'EHS'),
+        createProgramPersonnel(grant.id, program1.id, 'cfo', true, 'HS'),
+        createProgramPersonnel(grant2.id, program2.id, 'cfo', true, 'EHS'),
+      ]);
+    });
+    afterAll(async () => {
+      await db.ProgramPersonnel.destroy({
+        where: {
+          grantId: [grant.id, grant2.id, irrelevantGrant.id],
+        },
+      });
+
+      await db.Program.destroy({
+        where: {
+          grantId: [grant.id, grant2.id, irrelevantGrant.id],
+        },
+      });
+
+      await db.Grant.destroy({
+        where: {
+          id: [grant.id, grant2.id, irrelevantGrant.id],
+        },
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+    });
+
+    it('retrieves the correct program personnel', async () => {
+      const leadership = await recipientLeadership(recipient.id, REGION_ID);
+
+      expect(leadership.length).toBe(4);
+
+      activePersonnel.sort((a, b) => a.nameAndRole.localeCompare(b.nameAndRole));
+
+      const expectedNamesAndTitles = activePersonnel.map((p) => ({
+        fullName: `${p.firstName} ${p.lastName}`,
+        fullRole: p.fullRole,
+      }));
+
+      leadership.sort((a, b) => a.nameAndRole.localeCompare(b.nameAndRole));
+
+      leadership.forEach((p, i) => {
+        expect(p.fullName).toBe(expectedNamesAndTitles[i].fullName);
+        expect(p.fullRole).toBe(expectedNamesAndTitles[i].fullRole);
+      });
     });
   });
 });
