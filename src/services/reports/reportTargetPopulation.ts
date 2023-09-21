@@ -40,7 +40,7 @@ const getReportTargetPopulations = async (
   targetPopulationIds,
 );
 
-const includeReportTargetPopulation = (
+const includeReportTargetPopulations = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => includeGenericEnums(
   ReportTargetPopulation,
@@ -51,5 +51,5 @@ const includeReportTargetPopulation = (
 export {
   syncReportTargetPopulations,
   getReportTargetPopulations,
-  includeReportTargetPopulation,
+  includeReportTargetPopulations,
 };
