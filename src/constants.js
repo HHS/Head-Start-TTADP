@@ -36,6 +36,7 @@ const GOAL_STATUS = {
 const GRANT_PERSONNEL_ROLES = [
   'auth_official_contact',
   'ceo',
+  'cfo',
   'policy_council',
   'director',
 ];

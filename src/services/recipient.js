@@ -14,6 +14,7 @@ import {
   ActivityRecipient,
   Topic,
   Permission,
+  ProgramPersonnel,
   User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
@@ -648,4 +649,43 @@ export async function getGoalsByActivityRecipient(
     statuses,
     allGoalIds,
   };
+}
+
+export async function recipientLeadership(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      'grantId',
+      'firstName',
+      'lastName',
+      'email',
+      'effectiveDate',
+      'role',
+      // our virtual columns, which is why we fetch so much cruft above
+      'fullName',
+      'fullRole',
+      'nameAndRole',
+    ],
+    where: {
+      active: true,
+      role: ['director', 'cfo'],
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: ['recipientId', 'id', 'regionId'],
+        where: {
+          recipientId,
+          regionId,
+          status: 'Active',
+        },
+      },
+      {
+        required: true,
+        model: Program,
+        as: 'program',
+      },
+    ],
+  });
 }
