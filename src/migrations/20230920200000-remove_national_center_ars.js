@@ -438,9 +438,12 @@ module.exports = {
         WITH unified_deletes AS (
           SELECT DISTINCT id gtotid
           FROM "GoalTemplateObjectiveTemplates"
-          LEFT JOIN ots_to_delete
+          JOIN ots_to_delete
             ON otid = "objectiveTemplateId"
-          LEFT JOIN gts_to_delete
+          UNION
+          SELECT DISTINCT id gtotid
+          FROM "GoalTemplateObjectiveTemplates"
+          JOIN gts_to_delete
             ON gtid = "goalTemplateId"
         ),
         deletes AS (
@@ -557,7 +560,7 @@ module.exports = {
         UNION
         SELECT 34,'deleted_goaltemplates', count(*) FROM deleted_goaltemplates
         UNION
-        SELECT 35'deleted_ars', count(*) FROM deleted_ars
+        SELECT 35,'deleted_ars', count(*) FROM deleted_ars
         ORDER BY 1
         ;
 
