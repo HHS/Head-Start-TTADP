@@ -102,7 +102,7 @@ const syncReportRecipients = async (
   }
 };
 
-const includeReportRecipient = () => ({
+const includeReportRecipients = () => ({
   model: ReportRecipient,
   as: 'ReportRecipients',
   attributes: [
@@ -176,5 +176,5 @@ const getReportRecipients = async (
 export {
   syncReportRecipients,
   getReportRecipients,
-  includeReportRecipient,
+  includeReportRecipients,
 };
