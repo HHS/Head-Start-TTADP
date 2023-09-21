@@ -10,6 +10,14 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.sequelize.query(`
+        ---------------------------------------------------
+        -- NOTE:
+        -- Files and Resources are most properly managed by
+        -- maintenance jobs, so this and similar migrations
+        -- won't delete them directly. Deleting the link
+        -- records will give the maintenance job the info
+        -- it needs to perform its housekeeping.
+        ---------------------------------------------------
         -------- Deleting unwanted ARs --------
         -- Create the AR deletion list
         -- Remove AR link records: -------------
