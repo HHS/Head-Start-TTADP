@@ -3,7 +3,7 @@ import db from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
-const { SessionReportPilot, EventReportPilot } = db;
+const { SessionReportPilot, EventReportPilot, SessionReportPilotFile } = db;
 
 const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
@@ -14,6 +14,10 @@ const validateFields = (request, requiredFields) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
+  await SessionReportPilotFile.destroy(
+    { where: { sessionReportPilotId: id } },
+    { individualHooks: true },
+  );
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
