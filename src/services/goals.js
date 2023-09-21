@@ -558,7 +558,19 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
               ...(currentPrompt.reportResponse || []),
             ],
           );
+
+          if (
+            existingPrompt.allGoalsHavePromptResponse
+            && (
+              (currentPrompt.response || []).length || (currentPrompt.reportResponse || []).length
+            )
+          ) {
+            existingPrompt.allGoalsHavePromptResponse = true;
+          } else {
+            existingPrompt.allGoalsHavePromptResponse = false;
+          }
         }
+
         return previousPrompts;
       }
 
@@ -571,6 +583,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         fieldType: currentPrompt.fieldType,
         options: currentPrompt.options,
         validations: currentPrompt.validations,
+        allGoalsHavePromptResponse: false,
       };
 
       if (forReport) {
@@ -581,6 +594,10 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
           ],
         );
         newPrompt.reportResponse = (currentPrompt.reportResponse || []);
+
+        if (newPrompt.response.length || newPrompt.reportResponse.length) {
+          newPrompt.allGoalsHavePromptResponse = true;
+        }
       }
 
       if (!forReport) {

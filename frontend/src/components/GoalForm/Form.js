@@ -97,6 +97,8 @@ export default function Form({
 
   const showAlert = isOnReport && status !== 'Closed';
 
+  const showNewObjectiveButton = (() => (status !== 'Closed' && userCanEdit))();
+
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
@@ -198,7 +200,7 @@ export default function Form({
         />
       ))}
 
-      { (status !== 'Closed' && userCanEdit) && (
+      { (showNewObjectiveButton) && (
         <div className="margin-top-4">
           {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
           <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
