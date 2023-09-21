@@ -61,6 +61,7 @@ export default function GoalSource({
           }}
           disabled={isLoading}
           value={source}
+          required
         >
           <option value="" disabled selected hidden>- Select -</option>
           {GOAL_SOURCES.map((s) => (

@@ -197,8 +197,8 @@ const GoalPicker = ({
       </Modal>
       <div className="margin-top-3 position-relative">
         <Label>
-          Select recipient&apos;s goal
-          {' '}
+          Select recipient&apos;s goal&nbsp;
+          {'   '}
           <Req />
           <Select
             name="goalForEditing"
@@ -219,6 +219,7 @@ const GoalPicker = ({
             }}
             placeholder="- Select -"
             value={goalForEditing}
+            required
           />
         </Label>
         {goalForEditing ? (

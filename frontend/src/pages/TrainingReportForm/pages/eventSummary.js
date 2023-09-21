@@ -120,6 +120,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               }}
               inputRef={register({ required: 'Select an event organizer' })}
               options={eventOrganizerOptions}
+              required
             />
           )}
           control={control}
@@ -138,7 +139,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Event collaborators"
+          label="Event collaborators "
           name="collaboratorIds"
           required
         >
@@ -163,6 +164,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                 getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
                 options={collaborators}
+                required
               />
             )}
             control={control}
@@ -206,6 +208,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               getOptionLabel={(option) => option.fullName}
               getOptionValue={(option) => option.id}
               options={pointOfContact}
+              required
               isMulti
             />
           )}
@@ -302,7 +305,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           Training type
           <Req />
         </Label>
-        <Dropdown id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
+        <Dropdown required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
           <option>Series</option>
         </Dropdown>
       </div>

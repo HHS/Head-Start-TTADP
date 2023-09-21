@@ -217,11 +217,17 @@ describe('ActivityReport', () => {
     });
 
     it('displays review submit save alert', async () => {
-      renderActivityReport('new', 'review');
-      fetchMock.post('/api/activity-reports', formData);
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        approvers: [],
+      });
+
+      renderActivityReport('1', 'review');
+      fetchMock.put('/api/activity-reports/1', formData());
       const button = await screen.findByRole('button', { name: 'Save Draft' });
       userEvent.click(button);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy());
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
 
@@ -247,7 +253,11 @@ describe('ActivityReport', () => {
         startDate: 'blah', creatorRole: '',
       };
       const result = findWhatsChanged(orig, changed);
-      expect(result).toEqual({ startDate: null, creatorRole: null });
+      expect(result).toEqual({ creatorRole: null });
+
+      // ensure NaN values are removed
+      const out = findWhatsChanged({ duration: Number('a') }, { duration: 1 });
+      expect(out).toEqual({});
     });
 
     it('access correct fields when diffing turns up activity recipients', () => {
