@@ -1,6 +1,11 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
-import { getRecipient, getRecipientGoals, goalsByIdAndRecipient } from '../recipient';
+import {
+  getRecipient,
+  getRecipientGoals,
+  goalsByIdAndRecipient,
+  getRecipientLeadership,
+} from '../recipient';
 
 const recipientUrl = join('/', 'api', 'recipient');
 
@@ -36,5 +41,12 @@ describe('recipient fetcher', () => {
     await expect(getRecipientGoals(1, 'asdf')).rejects.toThrow(
       'Region ID must be a number',
     );
+  });
+
+  it('getRecipientLeadership', async () => {
+    const url = join(recipientUrl, '1', 'region', '1', 'leadership');
+    fetchMock.getOnce(url, { name: 'Tim Johnson the Recipient' });
+    const res = await getRecipientLeadership('1', '1');
+    expect(res.name).toBe('Tim Johnson the Recipient');
   });
 });
