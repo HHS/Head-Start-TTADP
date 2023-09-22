@@ -171,6 +171,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <Profile
                 recipientName={recipientName}
                 regionId={regionId}
+                recipientId={recipientId}
                 recipientSummary={recipientData}
               />
             </PageWithHeading>

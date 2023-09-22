@@ -71,8 +71,10 @@ async function getProgramPersonnel(grantId, programId, program) {
         lastName,
         suffix: getPersonnelField(currentRole, 'suffix', program),
         title: getPersonnelField(currentRole, 'title', program),
-        email,
-
+        email: getPersonnelField(currentRole, 'email', program),
+        effectiveDate: null,
+        active: true,
+        originalPersonnelId: null,
       };
 
       // If the personnel exists with a different email.
