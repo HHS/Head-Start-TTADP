@@ -1,11 +1,13 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import fetchMock from 'fetch-mock';
 import { render, screen } from '@testing-library/react';
 import Profile from '../Profile';
 
 describe('Recipient Record - Profile', () => {
   const renderRecipientProfile = (summary) => {
-    render(<Profile recipientSummary={summary} />);
+    fetchMock.get('/api/recipient/1/region/1/leadership', []);
+    render(<Profile recipientSummary={summary} recipientId={1} regionId={1} />);
   };
 
   it('renders the recipient summary approriately', async () => {
