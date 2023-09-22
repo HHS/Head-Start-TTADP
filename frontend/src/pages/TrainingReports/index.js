@@ -182,6 +182,7 @@ export default function TrainingReports({ match }) {
       // update the events state.
       setDisplayEvents(events);
     } catch (e) {
+      updateError('Unable to delete event');
       // eslint-disable-next-line no-console
       console.log(e);
     }
