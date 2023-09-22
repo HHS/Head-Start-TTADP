@@ -83,6 +83,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           'onAR',
           'onAnyReport',
         ],
+        'suspendReason',
+        'suspendContext',
       ],
       model: Objective,
       as: 'objectives',
@@ -464,6 +466,15 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
+    const suspendContext = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].suspendContext
+      ? objective.activityReportObjectives[0].suspendContext : null;
+    const suspendReason = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].suspendReason
+      ? objective.activityReportObjectives[0].suspendReason : null;
+
     const { id } = objective;
 
     return [...objectives, {
@@ -475,6 +486,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
+      suspendContext,
+      suspendReason,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
@@ -721,6 +734,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 [Op.ne]: '',
               },
             },
+            {
+              status: {
+                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+              },
+            },
           ],
         },
         attributes: [
@@ -751,6 +769,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
+              'suspendReason',
+              'suspendContext',
             ],
             required: false,
             where: {
@@ -1211,6 +1231,8 @@ export async function createOrUpdateGoals(goals) {
           files,
           status: objectiveStatus,
           id: objectiveIdsMayContainStrings,
+          suspendContext,
+          suspendReason,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1226,6 +1248,7 @@ export async function createOrUpdateGoals(goals) {
             where: {
               id: objectiveIds,
               status: OBJECTIVE_STATUS.COMPLETE,
+              goalId: newGoal.id,
             },
           });
 
@@ -1250,7 +1273,10 @@ export async function createOrUpdateGoals(goals) {
           });
         }
 
+        // if there isn't an objective for that goal/objective id
         if (!objective) {
+          // first we check to see if there is an objective with the same title
+          // so we can reuse it (given it is not complete)
           objective = await Objective.findOne({
             where: {
               status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
@@ -1258,6 +1284,7 @@ export async function createOrUpdateGoals(goals) {
               goalId: newGoal.id,
             },
           });
+          // and if there isn't, we create a new one
           if (!objective) {
             objective = await Objective.create({
               status: objectiveStatus,
@@ -1268,13 +1295,27 @@ export async function createOrUpdateGoals(goals) {
           }
         }
 
-        await objective.update({
+        // here we update the objective, checking to see if the objective is on an approved AR
+        // and if the title has changed before we update the title specifically...
+        // otherwise, we only update the status and rtrOrder
+        objective.set({
           ...(!objective.dataValues.onApprovedAR
             && title.trim() !== objective.dataValues.title.trim()
             && { title }),
           status: objectiveStatus,
           rtrOrder: index + 1,
-        }, { individualHooks: true });
+        });
+
+        // if the objective has been suspended, a reason and context should have been collected
+        if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
+          objective.set({
+            suspendContext,
+            suspendReason,
+          });
+        }
+
+        // save the objective to the database
+        await objective.save({ individualHooks: true });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
         const deleteUnusedAssociations = true;
@@ -1778,7 +1819,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
     return [];
   }
 
-  // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
     || o.topics.length
@@ -1794,6 +1834,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      suspendReason,
+      suspendContext,
       ...updatedFields
     } = objective;
 
@@ -1816,6 +1858,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         await savedObjective.update({
           title,
         }, { individualHooks: true });
+        await savedObjective.save({ individualHooks: true });
       }
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
@@ -1867,6 +1910,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       {
         ...metadata,
         status,
+        suspendContext,
+        suspendReason,
         ttaProvided: objective.ttaProvided,
         order: index,
       },
@@ -2232,6 +2277,16 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);
   await saveGoalsForReport(goals, report);
+  // updating the goals is updating the report, sorry everyone
+  await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id = ${activityReportId}`);
+  // note that for some reason (probably sequelize automagic)
+  // both model.update() and model.set() + model.save() do NOT update the updatedAt field
+  // even if you explicitly set it in the update or save to the current new Date()
+  // hence the raw query above
+  //
+  // note also that if we are able to spend some time refactoring
+  // the usage of react-hook-form on the frontend AR report, we'd likely
+  // not have to worry about this, it's just a little bit disjointed right now
   return getGoalsForReport(activityReportId);
 }
 

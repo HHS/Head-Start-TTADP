@@ -7,12 +7,14 @@ import {
   Program,
   sequelize,
   Goal,
+  GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
   Objective,
   ActivityRecipient,
   Topic,
   Permission,
+  ProgramPersonnel,
   User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
@@ -461,6 +463,12 @@ export async function getGoalsByActivityRecipient(
     where: goalWhere,
     include: [
       {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+      {
         model: GoalTemplate,
         as: 'goalTemplate',
         attributes: ['creationMethod', 'id'],
@@ -561,10 +569,14 @@ export async function getGoalsByActivityRecipient(
   const allGoalIds = [];
 
   const r = sorted.reduce((previous, current) => {
+    const responsesForComparison = (current.responses || [])
+      .map((gfr) => gfr.response).sort().join();
+
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status
         && g.goalText.trim() === current.name.trim()
-        && g.source === current.source,
+        && g.source === current.source
+        && g.responsesForComparison === responsesForComparison,
     );
 
     allGoalIds.push(current.id);
@@ -599,6 +611,7 @@ export async function getGoalsByActivityRecipient(
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
+      responsesForComparison,
     };
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
@@ -636,4 +649,43 @@ export async function getGoalsByActivityRecipient(
     statuses,
     allGoalIds,
   };
+}
+
+export async function recipientLeadership(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      'grantId',
+      'firstName',
+      'lastName',
+      'email',
+      'effectiveDate',
+      'role',
+      // our virtual columns, which is why we fetch so much cruft above
+      'fullName',
+      'fullRole',
+      'nameAndRole',
+    ],
+    where: {
+      active: true,
+      role: ['director', 'cfo'],
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: ['recipientId', 'id', 'regionId'],
+        where: {
+          recipientId,
+          regionId,
+          status: 'Active',
+        },
+      },
+      {
+        required: true,
+        model: Program,
+        as: 'program',
+      },
+    ],
+  });
 }
