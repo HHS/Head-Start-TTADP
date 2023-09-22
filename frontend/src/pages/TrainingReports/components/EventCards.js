@@ -18,7 +18,7 @@ function EventCards({
               event={event}
               onRemoveSession={onRemoveSession}
               onDeleteEvent={onDeleteEvent}
-              index={arr.length - index}
+              zIndex={arr.length - index}
             />
           ))
           : <p className="usa-prose text-bold margin-y-0 padding-2">There are no events.</p>

@@ -18,7 +18,7 @@ function EventCard({
   event,
   onRemoveSession,
   onDeleteEvent,
-  index,
+  zIndex,
 }) {
   const modalRef = useRef(null);
   const { user } = useContext(UserContext);
@@ -107,14 +107,14 @@ function EventCard({
         modalId="remove-objective-modal"
         onOk={async () => onDeleteEvent(id)}
         okButtonText="Delete"
-        okButtonAriaLabel="This button will delete the event"
+        okButtonAriaLabel="delete event"
       >
         <p>The event and all session reports will be lost.</p>
       </Modal>
       <article
         className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2 position-relative"
         data-testid="eventCard"
-        style={{ zIndex: index }}
+        style={{ zIndex }}
       >
         <div className="ttahub-event-card__row position-relative">
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
@@ -186,7 +186,7 @@ EventCard.propTypes = {
   event: eventPropTypes.isRequired,
   onRemoveSession: PropTypes.func.isRequired,
   onDeleteEvent: PropTypes.func.isRequired,
-  index: PropTypes.number.isRequired,
+  zIndex: PropTypes.number.isRequired,
 };
 
 export default EventCard;
