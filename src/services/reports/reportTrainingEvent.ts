@@ -98,8 +98,6 @@ const includeReportTrainingEvent = () => ({
 });
 
 export {
-  dataRemap,
-  filterData,
   syncReportTrainingEvent,
   includeReportTrainingEvent,
 };
