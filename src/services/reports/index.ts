@@ -172,7 +172,7 @@ const actions:Actions = {
       { func: includeReportObjectiveTemplate },
       { func: includeReportPageStates },
       { func: includeReportParticipation },
-      { func: includeReportRecipient },
+      { func: includeReportRecipients },
     ],
   },
 };
