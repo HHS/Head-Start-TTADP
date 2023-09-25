@@ -10,7 +10,7 @@ import { syncReportImport, includeReportImport } from './reportImport';
 import { syncReportNationalCenter, includeReportNationalCenter } from './reportNationalCenter';
 import { syncReportNextStep, includeReportNextStep } from './reportNextStep';
 import { syncReportObjective, includeReportObjective } from './reportObjective';
-import { syncReportObjectiveTemplate, includeReportObjectiveTemplate } from './reportObjectiveTemplate';
+import { syncReportObjectiveTemplates, includeReportObjectiveTemplates } from './reportObjectiveTemplate';
 import { syncReportPageStates, includeReportPageStates } from './reportPageState';
 import { syncReportParticipation, includeReportParticipation } from './reportParticipation';
 import { syncReportReasons, includeReportReasons } from './reportReason';
@@ -88,11 +88,11 @@ const actions:Actions = {
       { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id` } },
       { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name', 'regionId': '0.regionId' } },
       { func: syncReportImport, remapDef: { 'imported': 'import' } },
-      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name'} },
+      { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name' } },
       { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
       { func: syncReportReasons, remapDef: { 'data.reasons.*': '*.name' } },
       { func: syncReportResources, remapDef: { } },
-      { func: syncReportTargetPopulations, remapDef: { 'data."Target Population(s)".*': '*.name'} },
+      { func: syncReportTargetPopulations, remapDef: { 'data."Target Population(s)".*': '*.name' } },
     ],
     includes: [
       { func: includeReportTrainingEvent },
@@ -103,7 +103,7 @@ const actions:Actions = {
       { func: includeReportCollaborator, type: COLLABORATOR_TYPES.POC },
       { func: includeReportGoalTemplate },
       { func: includeReportImport },
-      { func: includeReportNationalCenter},
+      { func: includeReportNationalCenter },
       { func: includeReportPageStates },
       { func: includeReportReasons },
       { func: includeReportTargetPopulations },
@@ -120,7 +120,7 @@ const actions:Actions = {
       },
     },
     syncers: [
-        {
+      {
         func: syncReportTrainingSession,
         remapDef: {
           'data.eventDisplayId': 'id',
@@ -135,7 +135,7 @@ const actions:Actions = {
       // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
       { func: syncReportRecipients, remapDef: { 'data.recipients.*': '*' } },
       {
-        func: syncReportObjectiveTemplate,
+        func: syncReportObjectiveTemplates,
         remapDef: {
           'data.objective': '0.title',
           'data.ttaProvided': '0.ttaProvided',
@@ -169,7 +169,7 @@ const actions:Actions = {
       { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT },
       { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST },
       { func: includeReportObjective },
-      { func: includeReportObjectiveTemplate },
+      { func: includeReportObjectiveTemplates },
       { func: includeReportPageStates },
       { func: includeReportParticipation },
       { func: includeReportRecipients },
