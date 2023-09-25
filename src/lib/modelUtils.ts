@@ -261,6 +261,17 @@ const collectChangedValues = (
   return changedValues;
 };
 
+const includeToFindAll = async (
+  includeFunc,
+  where,
+) => {
+  const { as, model, ...args } = includeFunc();
+  return model.findAll({
+    where,
+    ...args,
+  });
+};
+
 export {
   getColumnInformation,
   filterDataToModel,
@@ -268,4 +279,5 @@ export {
   remap,
   isDeepEqual,
   collectChangedValues,
+  includeToFindAll,
 };
