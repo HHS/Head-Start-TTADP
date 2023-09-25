@@ -419,11 +419,11 @@ describe('EventCards', () => {
 
     // Click delete.
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
-    const deleteBtn = screen.getByRole('button', { name: /delete event/i });
-    deleteBtn.click();
+    const deleteBtns = screen.queryAllByRole('button', { name: /delete event/i });
+    deleteBtns[0].click();
 
     expect(screen.getByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
-    const confirmBtn = screen.getByRole('button', { name: /this button will delete the event/i });
+    const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     confirmBtn.click();
     expect(deleteFunction).toHaveBeenCalledWith(1);
   });

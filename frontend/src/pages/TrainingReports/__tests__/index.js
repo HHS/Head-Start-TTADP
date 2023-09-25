@@ -208,14 +208,14 @@ describe('TrainingReports', () => {
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
 
       await act(async () => {
-        const deleteButton = await screen.findByRole('button', { name: /delete event/i });
-        userEvent.click(deleteButton);
+        const deleteButtons = screen.queryAllByRole('button', { name: /delete event/i });
+        userEvent.click(deleteButtons[0]);
       });
 
       await waitFor(() => expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument());
 
       await act(async () => {
-        const confirmButton = await screen.findByRole('button', { name: /this button will delete the event/i, hidden: true });
+        const confirmButton = await screen.findByRole('button', { name: /delete event/i, hidden: true });
         userEvent.click(confirmButton);
       });
 
@@ -226,14 +226,14 @@ describe('TrainingReports', () => {
       fetchMock.delete('/api/events/id/1', 500);
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
       await act(async () => {
-        const deleteButton = await screen.findByRole('button', { name: /delete event/i });
-        userEvent.click(deleteButton);
+        const deleteButtons = screen.queryAllByRole('button', { name: /delete event/i });
+        userEvent.click(deleteButtons[0]);
       });
 
       await waitFor(() => expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument());
 
       await act(async () => {
-        const confirmButton = await screen.findByRole('button', { name: /this button will delete the event/i, hidden: true });
+        const confirmButton = await screen.findByRole('button', { name: /delete event/i, hidden: true });
         userEvent.click(confirmButton);
       });
 
