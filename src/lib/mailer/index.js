@@ -80,10 +80,10 @@ export const onFailedNotification = (job, error) => {
 
 export const onCompletedNotification = (job, result) => {
   if (result != null) {
-    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
+    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data.report.id}`);
     logEmailNotification(job, true, result);
   } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set`);
     logEmailNotification(job, false, { preferences: 'off' });
   }
 };
@@ -374,6 +374,70 @@ export const programSpecialistRecipientReportApprovedNotification = (
   } catch (err) {
     auditLogger.error(err);
   }
+};
+
+export const trCollaboratorAdded = async (
+  report,
+  newCollaboratorId,
+) => {
+  try {
+    const collaborator = await userById(newCollaboratorId);
+    if (!collaborator) {
+      throw new Error(`Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`);
+    }
+
+    const data = {
+      report: report.dataValues,
+      collaborator,
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * Process function for collaboratorAssigned jobs added to notification queue
+ * Sends email to user about new ability to edit a report
+ */
+export const notifyTrCollaboratorAssigned = (job, transport = defaultTransport) => {
+  const { report, collaborator } = job.data;
+  const { data } = report;
+
+  // due to the way sequelize sends the JSON column :(
+  const parsedData = JSON.parse(data.val); // parse the JSON string
+  const { eventId } = parsedData; // extract the pretty url
+
+  // Set these inside the function to allow easier testing
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+
+  logger.debug(`MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`);
+
+  if (SEND_NOTIFICATIONS === 'true') {
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+    const email = new Email({
+      message: {
+        from: FROM_EMAIL_ADDRESS,
+      },
+      send,
+      transport,
+      htmlToText: {
+        wordwrap: 120,
+      },
+    });
+    return email.send({
+      template: path.resolve(emailTemplatePath, 'tr_collaborator_added'),
+      message: {
+        to: [collaborator.email],
+      },
+      locals: {
+        reportPath,
+        displayId: eventId,
+      },
+    });
+  }
+  return Promise.resolve(null);
 };
 
 export const changesRequestedNotification = (
@@ -678,6 +742,11 @@ export const processNotificationQueue = () => {
   notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
   notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
   notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+    notifyTrCollaboratorAssigned,
+  );
 };
 
 /**
