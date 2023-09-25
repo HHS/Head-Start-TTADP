@@ -59,8 +59,6 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
-    networks:
-      - smarthub
   similarity_api:
     build:
       context: ./similarity_api
@@ -73,8 +71,6 @@ services:
       - POSTGRES_HOST=postgres_docker
     volumes:
       - "./similarity_api/src:/app:rw"
-    networks:
-      - smarthub
   owasp_zap_backend:
     image: owasp/zap2docker-stable:latest
     platform: linux/arm64
@@ -83,8 +79,6 @@ services:
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
-    networks:
-      - smarthub
     depends_on:
       - backend
   owasp_zap_similarity:
@@ -95,9 +89,5 @@ services:
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
-    networks:
-      - smarthub
     depends_on:
       - similarity_api
-networks:
-  smarthub:
