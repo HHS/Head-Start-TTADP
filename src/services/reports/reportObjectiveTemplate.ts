@@ -1,7 +1,12 @@
 import { Op } from 'sequelize';
 import { REPORT_TYPE } from '../../constants';
-import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 import db from '../../models';
+
+import { includeReportObjectiveTemplateFiles } from './reportObjectiveTemplateFile';
+import { includeReportObjectiveTemplateResources } from './reportObjectiveTemplateResource';
+import { includeReportObjectiveTemplateTopics } from './reportObjectiveTemplateTopic';
+import { includeReportObjectiveTemplateTrainers } from './reportObjectiveTemplateTrainer';
 
 const {
   ReportObjectiveTemplate,
@@ -197,9 +202,34 @@ const syncReportObjectiveTemplates = async (
   };
 };
 
-const includeReportObjectiveTemplates = () => {};
+const includeReportObjectiveTemplates = () => ({
+  model: ReportObjectiveTemplate,
+  as: '', // TODO: fix
+  required: false,
+  attributes: [],
+  includes: [
+    includeReportObjectiveTemplateFiles(),
+    includeReportObjectiveTemplateResources(),
+    includeReportObjectiveTemplateTopics(),
+    includeReportObjectiveTemplateTrainers(),
+  ],
+});
+
+const getReportObjectiveTemplates = async (
+  reportId: number,
+  objectiveTemplateIds: number[] | null = null,
+) => includeToFindAll(
+  includeReportObjectiveTemplates,
+  {
+    reportId,
+    ...(objectiveTemplateIds
+      && objectiveTemplateIds.length > 0
+      && { objectiveTemplateId: objectiveTemplateIds }),
+  },
+);
 
 export {
   syncReportObjectiveTemplates,
   includeReportObjectiveTemplates,
+  getReportObjectiveTemplates,
 };
