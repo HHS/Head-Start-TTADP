@@ -104,7 +104,7 @@ function EventCard({
       <Modal
         modalRef={modalRef}
         title="Are you sure you want to delete this event?"
-        modalId="remove-objective-modal"
+        modalId={`remove-event-modal-${id}`}
         onOk={async () => onDeleteEvent(id)}
         okButtonText="Delete"
         okButtonAriaLabel="delete event"
