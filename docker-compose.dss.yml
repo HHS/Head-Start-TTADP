@@ -5,6 +5,8 @@ services:
       context: .
     command: yarn start:web
     user: ${CURRENT_USER:-root}
+    networks:
+      - smarthub
     ports:
       - "8080:8080"
     depends_on:
@@ -28,3 +30,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secretpass
       POSTGRES_DB: ttasmarthub
+    networks:
+      - smarthub
+networks:
+  smarthub:
