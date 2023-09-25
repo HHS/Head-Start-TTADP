@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import db from '../../models';
 import { auditLogger } from '../../logger';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 
 const {
   Grant,
@@ -106,7 +107,7 @@ const includeReportRecipients = () => ({
   model: ReportRecipient,
   as: 'ReportRecipients',
   attributes: [
-    // TODO: filter this down to whats needed.
+    'id',
   ],
   includes: [
     {
@@ -114,14 +115,19 @@ const includeReportRecipients = () => ({
       as: 'grant',
       required: false,
       attributes: [
-        // TODO: filter this down to whats needed.
+        'id',
+        'number',
+        'regionId',
+        'status',
       ],
       include: [{
         model: Recipient,
         as: 'recipient',
         required: true,
         attributes: [
-          // TODO: filter this down to whats needed.
+          'id',
+          'name',
+          'uei',
         ],
       }],
     },
@@ -130,7 +136,8 @@ const includeReportRecipients = () => ({
       as: 'otherEntity',
       required: false,
       attributes: [
-        // TODO: filter this down to whats needed.
+        'id',
+        'name',
       ],
     },
   ],
@@ -138,43 +145,15 @@ const includeReportRecipients = () => ({
 
 const getReportRecipients = async (
   reportId: number,
-):Promise<object[]> => ReportRecipient.findAll({
-  attributes: [
-    // TODO: filter this down to whats needed.
-  ],
-  where: {
+) => includeToFindAll(
+  includeReportRecipients,
+  {
     reportId,
   },
-  include: [
-    {
-      model: Grant,
-      as: 'grant',
-      required: false,
-      attributes: [
-        // TODO: filter this down to whats needed.
-      ],
-      include: [{
-        model: Recipient,
-        as: 'recipient',
-        required: true,
-        attributes: [
-          // TODO: filter this down to whats needed.
-        ],
-      }],
-    },
-    {
-      model: OtherEntity,
-      as: 'otherEntity',
-      required: false,
-      attributes: [
-        // TODO: filter this down to whats needed.
-      ],
-    },
-  ],
-});
+);
 
 export {
   syncReportRecipients,
-  getReportRecipients,
   includeReportRecipients,
+  getReportRecipients,
 };
