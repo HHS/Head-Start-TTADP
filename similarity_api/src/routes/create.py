@@ -6,7 +6,7 @@ def create_routes(app: Flask):
 
   @app.route('/openapi.json')
   def serve_openapi():
-      return send_from_directory(app.static_folder, 'openapi.json')
+      return send_from_directory(str(app.static_folder), 'openapi.json')
 
   @app.route('/compute', methods=['POST'])
   @api_key_header
