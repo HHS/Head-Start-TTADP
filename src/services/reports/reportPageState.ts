@@ -1,38 +1,11 @@
+import merge from 'deepmerge';
 import { REPORT_TYPE } from '../../constants';
-import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 import db from '../../models';
 
 const {
   ReportPageState,
 } = db;
-
-const mergePageStates = (
-  currentValues,
-  newValues,
-) => {
-  if (typeof newValues !== 'object' || typeof currentValues !== 'object') {
-    return newValues;
-  }
-
-  const merged = { ...currentValues };
-
-  Object.keys(newValues).forEach((key) => {
-    if (typeof newValues[key] === 'object' && typeof currentValues[key] === 'object') {
-      merged[key] = mergePageStates(newValues[key], currentValues[key]);
-    } else {
-      merged[key] = newValues[key];
-    }
-  });
-
-  // Add properties from objectB that are not present in objectA
-  Object.keys(currentValues).forEach((key) => {
-    if (!(key in newValues)) {
-      merged[key] = currentValues[key];
-    }
-  });
-
-  return merged;
-};
 
 const syncReportPageStates = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
@@ -57,7 +30,7 @@ const syncReportPageStates = async (
   if (currentPageState) {
     const mergedMatched = {
       ...matched,
-      pageState: mergePageStates(currentPageState.pageState, matched.pageState),
+      pageState: merge(currentPageState.pageState, matched.pageState),
     };
 
     const changedData = collectChangedValues(mergedMatched, currentPageState);
@@ -80,9 +53,24 @@ const syncReportPageStates = async (
   };
 };
 
-const includeReportPageStates = () => ({});
+const includeReportPageStates = () => ({
+  model: ReportPageState,
+  as: '', // TODO: fix
+  attributes: [
+    'id',
+    'pageState',
+    'updatedAt',
+  ],
+});
 
-const getReportPageStates = async () => {};
+const getReportPageStates = async (
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+) => includeToFindAll(
+  includeReportPageStates,
+  {
+    reportId: report.id,
+  },
+);
 
 export {
   syncReportPageStates,
