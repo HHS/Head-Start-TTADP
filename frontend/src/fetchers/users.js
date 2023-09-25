@@ -17,8 +17,8 @@ export const getActiveUsers = async () => {
   return res.blob();
 };
 
-export const getTrainingReportUsers = async (regionId) => {
-  const res = await get(join('/', 'api', 'users', 'training-report-users', `?regionId=${String(regionId)}`));
+export const getTrainingReportUsers = async (regionId, eventId) => {
+  const res = await get(join('/', 'api', 'users', 'training-report-users', `?regionId=${String(regionId)}&eventId=${String(eventId)}`));
   return res.json();
 };
 

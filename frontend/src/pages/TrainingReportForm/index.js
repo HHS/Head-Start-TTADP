@@ -17,7 +17,7 @@ import {
   defaultValues,
 } from './constants';
 import { getTrainingReportUsers } from '../../fetchers/users';
-import { eventById, updateEvent, findEventCreators } from '../../fetchers/event';
+import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
@@ -156,10 +156,9 @@ export default function TrainingReportForm({ match }) {
       }
 
       try {
-        const users = await getTrainingReportUsers(eventRegion);
         const eventId = hookForm.getValues('id');
-        const eventCreators = await findEventCreators(eventId);
-        updateAdditionalData({ users: { ...users, eventCreators } });
+        const users = await getTrainingReportUsers(eventRegion, eventId);
+        updateAdditionalData(users);
       } catch (e) {
         updateErrorMessage('Error fetching collaborators and points of contact');
       } finally {
