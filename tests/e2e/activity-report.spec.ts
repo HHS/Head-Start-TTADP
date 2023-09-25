@@ -129,7 +129,7 @@ async function activitySummary(
   await page.keyboard.press('Enter');
   await blur(page);
   await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
-  await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2021');
+  await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
   await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
   await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText(ttaType || 'Training').click();
   await page.getByText('Virtual').click();
