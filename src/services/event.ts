@@ -298,42 +298,6 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
   return findEventHelper({ regionId: id }, true) as Promise<EventShape[]>;
 }
 
-export async function findEventCreators(regionId: number): Promise<EventShape[] | null> {
-  // Get all users who have read write tr permission for this region.
-  const creators = await User.findAll({
-    attributes: ['id', 'name'],
-    where: {
-      [Op.and]: {
-        '$permissions.scopeId$': {
-          [Op.eq]: SCOPES.READ_WRITE_TRAINING_REPORTS,
-        },
-        '$permissions.regionId$': {
-          [Op.eq]: regionId,
-        },
-      },
-    },
-    include: [
-      {
-        attributes: [
-          'id',
-          'scopeId',
-          'regionId',
-          'userId',
-        ],
-        model: Permission,
-        as: 'permissions',
-        required: true,
-        where: {
-          regionId,
-        },
-      },
-    ],
-    order: [['name', 'ASC']],
-  });
-
-  return creators;
-}
-
 /**
  *
  * remember, regional filtering is done in the previous step

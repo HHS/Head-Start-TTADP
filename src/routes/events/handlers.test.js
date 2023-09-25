@@ -16,7 +16,6 @@ import {
   findEventsByRegionId,
   updateEvent,
   findEventsByStatus,
-  findEventCreators,
 } from '../../services/event';
 import EventReport from '../../policies/event';
 
@@ -32,7 +31,6 @@ jest.mock('../../services/event', () => ({
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
-  findEventCreators: jest.fn(),
 }));
 
 const mockEvent = {

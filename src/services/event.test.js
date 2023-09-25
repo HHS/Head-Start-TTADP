@@ -13,9 +13,7 @@ import {
   findEventsByCollaboratorId,
   findEventsByRegionId,
   findEventsByStatus,
-  findEventCreators,
 } from './event';
-import { createUser } from '../routes/admin/user';
 
 describe('event service', () => {
   afterAll(async () => {
@@ -345,107 +343,6 @@ describe('event service', () => {
       await destroyEvent(event1.id);
       await destroyEvent(event2.id);
       await destroyEvent(event3.id);
-    });
-  });
-  describe('find event creators', () => {
-    let userIds = [];
-    beforeAll(async () => {
-      // Create a user with READ_WRITE_TRAINING_REPORTS permissions for region 1.
-      const user1 = await db.User.create({
-        homeRegionId: 1,
-        name: 'User region 1 RW',
-        hsesUsername: 'JS431423',
-        hsesUserId: 'JS431423',
-        role: [],
-        lastLogin: new Date(),
-      });
-
-      await db.Permission.create({
-        userId: user1.id,
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
-
-      // Create a user with READ_WRITE_TRAINING_REPORTS permissions for region 2.
-      const user2 = await db.User.create({
-        homeRegionId: 1,
-        name: 'User region 1 RW',
-        hsesUsername: 'JS581423',
-        hsesUserId: 'JS581423',
-        role: [],
-        lastLogin: new Date(),
-      });
-
-      await db.Permission.create({
-        userId: user2.id,
-        regionId: 2,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
-
-      // Create a user with READ_WRITE_TRAINING_REPORTS permissions for region 2 & 3.
-      const user3 = await db.User.create({
-        homeRegionId: 1,
-        name: 'User region 2 and 3 RW',
-        hsesUsername: 'BS581423',
-        hsesUserId: 'BS581423',
-        role: [],
-        lastLogin: new Date(),
-      });
-
-      await db.Permission.create({
-        userId: user3.id,
-        regionId: 2,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
-
-      await db.Permission.create({
-        userId: user3.id,
-        regionId: 3,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
-
-      // Create a user with READ_TRAINING_REPORTS permissions for region 2.
-      const user4 = await db.User.create({
-        homeRegionId: 1,
-        name: 'User region 3 R',
-        hsesUsername: 'BS5841423',
-        hsesUserId: 'BS5841423',
-        role: [],
-        lastLogin: new Date(),
-      });
-
-      await db.Permission.create({
-        userId: user4.id,
-        regionId: 4,
-        scopeId: SCOPES.READ_TRAINING_REPORTS,
-      });
-
-      userIds = [user1.id, user2.id, user3.id, user4.id];
-    });
-
-    afterAll(async () => {
-      await db.Permission.destroy({ where: { userId: userIds } });
-      await db.User.destroy({ where: { id: userIds } });
-    });
-
-    it('findEventCreators', async () => {
-      // Contains user 1.
-      let creators = await findEventCreators(1);
-      creators = creators.filter((c) => userIds.includes(c.id));
-      expect(creators.length).toBe(1);
-      expect(creators[0].id).toBe(userIds[0]);
-
-      // Creators array contains user 2 and user 3.c
-      creators = await findEventCreators(2);
-      creators = creators.filter((c) => userIds.includes(c.id));
-      expect(creators.length).toBe(2);
-      expect(creators.map((c) => c.id)).toContain(userIds[1]);
-      expect(creators.map((c) => c.id)).toContain(userIds[2]);
-
-      // Contains no users.
-      creators = await findEventCreators(4);
-      creators = creators.filter((c) => userIds.includes(c.id));
-      expect(creators.length).toBe(0);
     });
   });
 });
