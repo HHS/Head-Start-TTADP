@@ -1,6 +1,7 @@
 import { syncReportParticipationParticipants, includeReportParticipationParticipants } from "./reportParticipationParticipant";
 import { REPORT_TYPE } from '../../constants';
 import db from '../../models';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 
 const {
   ReportParticipation,
@@ -72,7 +73,17 @@ const includeReportParticipation = (
   ],
 });
 
+const getReportParticipation = async (
+  reportId: number,
+) => includeToFindAll(
+  includeReportParticipation,
+  {
+    reportId,
+  },
+);
+
 export {
   syncReportParticipation,
   includeReportParticipation,
+  getReportParticipation,
 };
