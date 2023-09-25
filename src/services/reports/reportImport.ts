@@ -1,26 +1,32 @@
 import db from '../../models';
 import { REPORT_TYPE } from '../../constants';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 
 const {
   ReportImport,
 } = db;
 const syncReportImports = async (
   entity: {},
-) => {};
+) => {}; // TODO: everything
 
 const includeReportImports = () => ({
   model: ReportImport,
   as: '', // TODO: figure this out
   required: false,
-  attributes: [],
+  attributes: [
+    'id',
+    'data',
+  ],
 });
 
 const getReportImports = async (
-  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-) => ReportImport.findAll({
-  attributes: [],
-  where: { reportId: report.id },
-});
+  reportId: number,
+) => includeToFindAll(
+  includeReportImports,
+  {
+    reportId,
+  },
+);
 
 export {
   syncReportImports,
