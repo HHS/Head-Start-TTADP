@@ -35,7 +35,7 @@ function PaginationCard({
         totalPages={getTotalPages()}
         onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
-        onClickPageNumber={(e, page) => handlePageChange(page)}
+        onClickPageNumber={(_e, page) => handlePageChange(page)}
       />
     </div>
   );
