@@ -118,8 +118,6 @@ const ActivitySummary = ({
     setEndDateKey(`endDate-${newEnd}`);
   };
 
-  const currentDate = moment().format('MM/DD/YYYY');
-
   return (
     <>
       <Helmet>
@@ -280,8 +278,6 @@ const ActivitySummary = ({
                   isStartDate
                   inputId="startDate"
                   endDate={endDate}
-                  maxDate={currentDate}
-                  validationMessage="Activity start date cannot be in the future"
                 />
               </FormItem>
             </Grid>
@@ -306,8 +302,6 @@ const ActivitySummary = ({
                   value={endDate}
                   minDate={startDate}
                   key={endDateKey}
-                  maxDate={currentDate}
-                  validationMessage="Activity end date cannot be in the future"
                 />
               </FormItem>
             </Grid>

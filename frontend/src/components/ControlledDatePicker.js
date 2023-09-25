@@ -21,7 +21,6 @@ export default function ControlledDatePicker({
   isStartDate,
   inputId,
   endDate,
-  validationMessage,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -63,11 +62,11 @@ export default function ControlledDatePicker({
     }
 
     if (newValue.isBefore(min.moment)) {
-      return validationMessage || `Please enter a date after ${min.display}`;
+      return `Please enter a date after ${min.display}`;
     }
 
     if (newValue.isAfter(max.moment)) {
-      return validationMessage || `Please enter a date before ${max.display}`;
+      return `Please enter a date before ${max.display}`;
     }
 
     return true;
@@ -133,7 +132,6 @@ ControlledDatePicker.propTypes = {
   setEndDate: PropTypes.func,
   inputId: PropTypes.string.isRequired,
   endDate: PropTypes.string,
-  validationMessage: PropTypes.string,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -143,5 +141,4 @@ ControlledDatePicker.defaultProps = {
   isStartDate: false,
   setEndDate: () => {},
   value: '',
-  validationMessage: '',
 };
