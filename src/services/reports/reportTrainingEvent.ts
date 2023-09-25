@@ -1,4 +1,4 @@
-import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 import db from '../../models';
 import {
   REPORT_TYPE,
@@ -93,7 +93,17 @@ const includeReportTrainingEvent = () => ({
   ],
 });
 
+const getReportTrainingEvent = async (
+  reportId: number,
+) => includeToFindAll(
+  includeReportTrainingEvent,
+  {
+    reportId,
+  },
+);
+
 export {
   syncReportTrainingEvent,
   includeReportTrainingEvent,
+  getReportTrainingEvent,
 };
