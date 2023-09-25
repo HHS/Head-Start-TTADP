@@ -158,7 +158,7 @@ export default function TrainingReportForm({ match }) {
       try {
         const eventId = hookForm.getValues('id');
         const users = await getTrainingReportUsers(eventRegion, eventId);
-        updateAdditionalData(users);
+        updateAdditionalData({ users });
       } catch (e) {
         updateErrorMessage('Error fetching collaborators and points of contact');
       } finally {
