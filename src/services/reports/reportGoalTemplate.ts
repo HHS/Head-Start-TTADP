@@ -190,6 +190,20 @@ const syncReportGoalTemplates = async (
   }
 };
 
+const includeReportGoalTemplates = () => ({
+  model: ReportGoalTemplate,
+  as: '',
+  required: false,
+  attributes: [
+    'id',
+  ],
+  includes: [
+    {
+      model: null, // TODO: finish
+    },
+  ],
+});
+
 const getGoalTemplates = async (
   report: { id: number, type: string, regionId: number },
   goalTemplateIds: number[] | null = null,
@@ -206,13 +220,7 @@ const getGoalTemplates = async (
   ],
 });
 
-const getGoalTemplate = async (
-  report: { id: number, type: string, regionId: number },
-  goalTemplateId: number,
-):Promise<object[]> => getGoalTemplates(report, [goalTemplateId]);
-
 module.exports = {
-  syncGoalTemplates,
-  getGoalTemplates,
-  getGoalTemplate,
+  syncReportGoalTemplates,
+  getReportGoalTemplates,
 };
