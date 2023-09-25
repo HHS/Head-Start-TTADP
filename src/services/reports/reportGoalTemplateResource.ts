@@ -1,3 +1,4 @@
+// TODO: everything
 const syncReportGoalTemplateResources = async (
   entity: {},
 ) => {};
