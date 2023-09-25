@@ -81,7 +81,7 @@ describe('eventSummary', () => {
                         fullName: 'Tedwina User',
                       },
                     ],
-                    eventCreators: [
+                    creators: [
                       { id: 1, name: 'IST 1' },
                       { id: 2, name: 'IST 2' },
                     ],
