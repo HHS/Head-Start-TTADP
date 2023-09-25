@@ -49,7 +49,6 @@ applications:
         memory: ((worker_memory))
   - name: tta-similarity-api-((env))
     strategy: rolling
-    health-check-type: process
     buildpacks:
       - python_buildpack
     path: similarity_api/src
@@ -64,3 +63,4 @@ applications:
         command: flask run --host=0.0.0.0
         memory: ((similarity_api_memory))
         disk_quota: ((similarity_api_disk_quota))
+        health-check-type: process
