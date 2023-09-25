@@ -6,4 +6,4 @@ RUN pip install psycopg2
 RUN pip freeze > requirements.txt
 EXPOSE 5000
 ENV FLASK_ENV=development
-CMD ["flask", "run", "--host", "0.0.0.0", "--debug"]
+CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8080", "--debug"]
