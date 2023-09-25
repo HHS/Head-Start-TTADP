@@ -2,11 +2,8 @@ import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
 import {
   REPORT_TYPE,
-  COLLABORATOR_TYPES,
-  AUDIENCE,
   TRAINING_TYPE,
 } from '../../constants';
-import { ReportDataType, ReportDescriptor, syncReport } from './report';
 
 const {
   ReportTrainingEvent,
@@ -78,7 +75,6 @@ const includeReportTrainingEvent = () => ({
     'id',
     'regionId',
     'name',
-    'audience',
     'trainingType',
     'vision',
     'createdAt',
