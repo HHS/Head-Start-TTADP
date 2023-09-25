@@ -84,13 +84,13 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
   const { user } = useContext(UserContext);
   const hasAdminRights = isAdmin(user);
-  const { users: { collaborators, pointOfContact, eventCreators } } = additionalData;
+  const { users: { collaborators, pointOfContact, creators } } = additionalData;
 
   const ownerName = owner && owner.name ? owner.name : '';
 
-  const eventCreatorOptions = !eventCreators
+  const eventCreatorOptions = !creators
     ? []
-    : eventCreators.map((o) => ({ value: o.id, label: o.name }));
+    : creators.map((o) => ({ value: o.id, label: o.name }));
 
   return (
     <div className="padding-x-1">
@@ -427,7 +427,7 @@ EventSummary.propTypes = {
     users: PropTypes.shape({
       pointOfContact: PropTypes.arrayOf(PropTypes.shape(userProp)),
       collaborators: PropTypes.arrayOf(PropTypes.shape(userProp)),
-      eventCreators: PropTypes.arrayOf(PropTypes.shape(userProp)),
+      creators: PropTypes.arrayOf(PropTypes.shape(userProp)),
     }),
   }).isRequired,
   datePickerKey: PropTypes.string.isRequired,
