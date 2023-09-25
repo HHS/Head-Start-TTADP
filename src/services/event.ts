@@ -254,7 +254,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       regionId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
-    { where: { id } },
+    { where: { id }, individualHooks: true },
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
