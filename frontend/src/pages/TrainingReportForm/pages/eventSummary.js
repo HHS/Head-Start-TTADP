@@ -83,6 +83,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   } = data;
 
   const { user } = useContext(UserContext);
+
   const hasAdminRights = isAdmin(user);
   const { users: { collaborators, pointOfContact, creators } } = additionalData;
 
@@ -91,7 +92,6 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const eventCreatorOptions = !creators
     ? []
     : creators.map((o) => ({ value: o.id, label: o.name }));
-
   return (
     <div className="padding-x-1">
       <Helmet>

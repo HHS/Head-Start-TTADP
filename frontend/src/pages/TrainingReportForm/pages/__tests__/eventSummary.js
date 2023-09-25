@@ -9,7 +9,7 @@ import {
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import eventSummary, { isPageComplete } from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -54,6 +54,8 @@ describe('eventSummary', () => {
     const onSaveDraft = jest.fn();
 
     const defaultFormValues = {
+      ownerId: 1,
+      status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       eventId: 'Event-id-1',
       eventName: 'Event-name-1',
     };
@@ -145,11 +147,24 @@ describe('eventSummary', () => {
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
       });
-      expect(await screen.findByRole('textbox', { name: /event name required/i })).toBeInTheDocument();
-      expect(await screen.findByTestId('creator-select')).toBeInTheDocument();
+
+      // Event name.
+      const eventName = await screen.findByRole('textbox', { name: /event name required/i });
+      expect(eventName).toBeInTheDocument();
+
+      // Change the value in the event name field.
+      const creatorSelect = await screen.findByTestId('creator-select');
+      expect(creatorSelect).toBeInTheDocument();
+
+      // Update event name field.
+      userEvent.clear(eventName);
+      userEvent.type(eventName, 'Event name 2');
+
+      // Assert new event name.
+      expect(eventName).toHaveValue('Event name 2');
     });
 
-    it('non admin users can edit title and owner fields', async () => {
+    it('non admin users cant edit title and owner fields', async () => {
       const adminUser = {
         ...defaultUser,
         permissions: [
