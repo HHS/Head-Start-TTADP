@@ -69,7 +69,7 @@ test.describe('Activity Report Text Search Filter', () => {
 
     // Start and End Dates.
     await page.getByLabel('Start date *mm/dd/yyyy').fill('01/17/2023');
-    await page.getByLabel('End date *mm/dd/yyyy').fill('01/17/2023');
+    await page.getByLabel('End date *mm/dd/yyyy').fill('01/18/2023');
     // Duration.
     await page.getByLabel('Duration in hours (round to the nearest half hour) *').click();
     await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('9.5');
