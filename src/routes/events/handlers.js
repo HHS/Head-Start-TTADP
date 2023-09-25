@@ -14,7 +14,6 @@ import {
   updateEvent,
   destroyEvent,
   findEventsByStatus,
-  findEventCreators,
 } from '../../services/event';
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
@@ -102,43 +101,6 @@ export const getHandler = async (req, res) => {
     }
 
     return res.status(httpCodes.OK).send(event);
-  } catch (error) {
-    return handleErrors(req, res, error, logContext);
-  }
-};
-
-export const findEventCreatorsHandler = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-
-    // return a 400 if the eventId is not provided.
-    if (!eventId) {
-      return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a eventId' });
-    }
-
-    // Get the event.
-    const event = await findEventById(eventId);
-    if (!event) {
-      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
-    }
-
-    // Check authorization.
-    const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
-
-    // Get the regionId and ownerId from the event.
-    const { regionId, ownerId } = event;
-    const creators = await findEventCreators(regionId);
-
-    // Check if creators contains the current ownerId.
-    const currentOwner = creators.find((creator) => creator.id === ownerId);
-    if (!currentOwner) {
-      // If the current ownerId is not in the creators array, add it.
-      const owner = await userById(ownerId);
-      creators.push({ id: owner.id, name: owner.name });
-    }
-
-    return res.status(httpCodes.OK).send(creators);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

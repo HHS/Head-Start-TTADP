@@ -6,7 +6,6 @@ import {
   getHandler,
   deleteHandler,
   getByStatus,
-  findEventCreatorsHandler,
 } from './handlers';
 
 const router = express.Router();
@@ -20,6 +19,5 @@ router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler));
 router.post('/', transactionWrapper(createHandler));
 router.put('/id/:eventId', transactionWrapper(updateHandler));
 router.delete('/id/:eventId', transactionWrapper(deleteHandler));
-router.get('/creators/:eventId', transactionWrapper(findEventCreatorsHandler));
 
 export default router;

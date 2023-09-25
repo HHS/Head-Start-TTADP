@@ -161,15 +161,17 @@ export async function getTrainingReportUsers(req, res) {
     const user = await userById(await currentUserId(req, res));
 
     const authorization = new EventPolicy(user, {});
-    const { regionId } = req.query;
+    const { regionId, eventId } = req.query;
 
     const region = parseInt(regionId, DECIMAL_BASE);
+    const event = parseInt(eventId, DECIMAL_BASE);
 
     if (!authorization.canGetTrainingReportUsersInRegion(region)) {
       res.sendStatus(403);
       return;
     }
-    res.json(await getTrainingReportUsersByRegion(region));
+
+    res.json(await getTrainingReportUsersByRegion(region, event));
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
