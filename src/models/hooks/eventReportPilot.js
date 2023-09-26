@@ -1,6 +1,5 @@
 /* eslint-disable global-require */
 /* eslint-disable import/prefer-default-export */
-const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
@@ -25,6 +24,28 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
     // process notifications for new collaborators
     await Promise.all(
       newCollaboratorIds.map((id) => trCollaboratorAdded(instance, id)),
+    );
+  }
+};
+
+const notifyNewPoc = async (_sequelize, instance) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed) && changed.includes('pocIds')) {
+    const { pocIds } = instance;
+    const oldPocIds = instance.previous('pocIds');
+
+    const newPocIds = pocIds.filter((id) => (
+      !oldPocIds.includes(id)));
+
+    if (newPocIds.length === 0) {
+      return;
+    }
+
+    // eslint-disable-next-line global-require
+    const { trPocAdded } = require('../../lib/mailer');
+
+    await Promise.all(
+      newPocIds.map((id) => trPocAdded(instance, id)),
     );
   }
 };
@@ -54,6 +75,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
   await notifyPocEventComplete(sequelize, instance, options);
   await notifyVisionAndGoalComplete(sequelize, instance, options);
+  await notifyNewPoc(sequelize, instance, options);
 };
 
 export {
