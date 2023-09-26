@@ -1,9 +1,8 @@
 import pytest
-import numpy as np
 
 from flask import Flask
-from unittest.mock import patch, MagicMock
-from sim.compute import compute_goal_similarities, find_similar_goals, calculate_string_similarity
+from unittest.mock import patch
+from sim.compute import calculate_string_similarity
 
 app = Flask(__name__)
 
@@ -30,5 +29,4 @@ def test_string_similarity():
             assert result.data == b'{"similarity":0.5070884823799133}\n'
 
 if __name__ == "__main__":
-    # Run the tests
     pytest.main()
