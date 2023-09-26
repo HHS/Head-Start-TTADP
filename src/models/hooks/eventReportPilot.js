@@ -1,4 +1,8 @@
+/* eslint-disable global-require */
 /* eslint-disable import/prefer-default-export */
+const { Op } = require('sequelize');
+const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
+const { auditLogger } = require('../../logger');
 
 const notifyNewCollaborators = async (_sequelize, instance) => {
   const changed = instance.changed();
@@ -25,7 +29,24 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
   }
 };
 
-const notifyPocEventComplete = async (sequelize, instance, options) => {};
+const notifyPocEventComplete = async (sequelize, instance, options) => {
+  try {
+    // first we need to see if the session is newly complete
+    if (instance.changed() && instance.changed().includes('data')) {
+      const previous = instance.previous('data') || {};
+      const current = JSON.parse(instance.data.val) || {};
+
+      if (
+        current.status === TRAINING_REPORT_STATUSES.COMPLETE
+        && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
+        const { trPocEventComplete } = require('../../lib/mailer');
+        await trPocEventComplete(instance.dataValues);
+      }
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ err }));
+  }
+};
 
 const notifyVisionAndGoalComplete = async (sequelize, instance, options) => {};
 

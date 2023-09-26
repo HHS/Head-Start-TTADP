@@ -67,6 +67,10 @@ export default async function logEmailNotification(job, success, result) {
         emailTo = [data.poc.email];
         template = path.resolve(emailTemplatePath, 'tr_session_created', 'subject.pug');
         break;
+      case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
+        emailTo = [data.poc.email];
+        template = path.resolve(emailTemplatePath, 'tr_event_complete', 'subject.pug');
+        break;
       default:
         break;
     }
