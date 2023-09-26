@@ -434,13 +434,11 @@ export const trSessionCreated = async (event) => {
   }
 };
 
-export const notifyPocSessionCreated = (job, transport = defaultTransport) => {
+export const notifyPocSessionCreated = async (job, transport = defaultTransport) => {
   const { report, poc } = job.data;
-  const { data } = report;
 
-  // due to the way sequelize sends the JSON column :(
-  const parsedData = JSON.parse(data.val); // parse the JSON string
-  const { eventId } = parsedData; // extract the pretty url
+  const { data } = report;
+  const { eventId } = data;
 
   const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
 
@@ -488,10 +486,7 @@ export const trSessionCompleted = async (event) => {
 export const notifyPocSessionCompleted = (job, transport = defaultTransport) => {
   const { report, poc } = job.data;
   const { data } = report;
-
-  // due to the way sequelize sends the JSON column :(
-  const parsedData = JSON.parse(data.val); // parse the JSON string
-  const { eventId } = parsedData; // extract the pretty url
+  const { eventId } = data;
 
   const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
 
@@ -879,6 +874,11 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
     notifyPocSessionCreated,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
+    notifyPocSessionCompleted,
   );
 };
 
