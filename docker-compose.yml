@@ -31,12 +31,12 @@ services:
     command: ["--endpoint-url", "http://minio:9000", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
     depends_on:
       - minio
-  # clamav-rest:
-  #   image: ajilaag/clamav-rest
-  #   ports:
-  #     - "9443:9443"
-  #   environment:
-  #     - MAX_FILE_SIZE=30M
+  clamav-rest:
+    image: ajilaag/clamav-rest
+    ports:
+      - "9443:9443"
+    environment:
+      - MAX_FILE_SIZE=30M
   redis:
     image: redis:5.0.6-alpine
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
