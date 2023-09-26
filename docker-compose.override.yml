@@ -63,7 +63,7 @@ services:
     build:
       context: ./similarity_api
     ports:
-      - "9100:5000"
+      - "9100:8080"
     env_file: .env
     depends_on:
       - db
