@@ -462,6 +462,57 @@ export const notifyPocSessionCreated = (job, transport = defaultTransport) => {
 };
 
 /**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
+export const trSessionCompleted = async (event) => {
+  try {
+    if (!event.pocIds && !event.pocIds.length) {
+      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
+    }
+
+    await Promise.all(event.pocIds.map(async (id) => {
+      const user = await userById(id);
+
+      const data = {
+        report: event,
+        poc: user,
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+export const notifyPocSessionCompleted = (job, transport = defaultTransport) => {
+  const { report, poc } = job.data;
+  const { data } = report;
+
+  // due to the way sequelize sends the JSON column :(
+  const parsedData = JSON.parse(data.val); // parse the JSON string
+  const { eventId } = parsedData; // extract the pretty url
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+
+  const locals = {
+    reportPath,
+    displayId: eventId,
+  };
+
+  const debugMessage = `MAILER: Notifying ${poc.email} that a session was completed for TR ${report.id}`;
+  const emailTo = [poc.email];
+
+  return genericTRNotificationFunction(
+    emailTo,
+    locals,
+    debugMessage,
+    'tr_session_completed',
+    transport,
+  );
+};
+
+/**
  *
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId

@@ -25,6 +25,35 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   }
 };
 
+const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
+  try {
+    // first we need to see if the session is newly complete
+    if (instance.changed() && instance.changed('data')) {
+      const previous = instance.previous('data') || {};
+      const current = instance.data || {};
+      if (
+        current.status === TRAINING_REPORT_STATUSES.COMPLETE
+        && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
+        const { EventReportPilot } = sequelize.models;
+
+        const event = await EventReportPilot.findOne({
+          where: {
+            id: instance.eventId,
+          },
+          transaction: options.transaction,
+        });
+
+        if (event) {
+          const { trSessionComplete } = require('../../lib/mailer');
+          await trSessionComplete(event);
+        }
+      }
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ err }));
+  }
+};
+
 const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
   try {
     const { EventReportPilot } = sequelize.models;
@@ -81,6 +110,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
+  await notifyPocIfSessionComplete(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
