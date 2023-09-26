@@ -9,7 +9,7 @@ import {
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
-import { SCOPE_IDS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { SCOPE_IDS } from '@ttahub/common';
 import eventSummary, { isPageComplete } from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -54,8 +54,6 @@ describe('eventSummary', () => {
     const onSaveDraft = jest.fn();
 
     const defaultFormValues = {
-      ownerId: 1,
-      status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       eventId: 'Event-id-1',
       eventName: 'Event-name-1',
     };
