@@ -51,13 +51,18 @@ describe('EventCard', () => {
     ],
   };
 
-  const renderEventCard = (event = defaultEvent, user = DEFAULT_USER) => {
+  const renderEventCard = (
+    event = defaultEvent,
+    user = DEFAULT_USER,
+    onDeleteEvent = jest.fn(),
+  ) => {
     render((
       <UserContext.Provider value={{ user }}>
         <Router history={history}>
           <EventCard
             event={event}
             onRemoveSession={jest.fn()}
+            onDeleteEvent={onDeleteEvent}
           />
         </Router>
       </UserContext.Provider>));
@@ -152,5 +157,80 @@ describe('EventCard', () => {
     expect(screen.queryByText(/create session/i)).toBeNull();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1/event-summary');
+  });
+
+  it('hides the delete for events that arent not started or suspended', async () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } }, DEFAULT_USER);
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/delete event/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the delete for events that are not started or suspended', async () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } }, {
+      ...DEFAULT_USER,
+      permissions: [{
+        scopeId: SCOPE_IDS.ADMIN,
+        regionId: 1,
+      },
+      ],
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+    expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
+  });
+
+  it('shows the delete modal for events and calls the correct function', async () => {
+    const onDeleteEvent = jest.fn();
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } }, {
+      ...DEFAULT_USER,
+      permissions: [{
+        scopeId: SCOPE_IDS.ADMIN,
+        regionId: 1,
+      },
+      ],
+    }, onDeleteEvent);
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+
+    expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
+    const deleteBtns = screen.queryAllByRole('button', { name: /delete event/i });
+    deleteBtns[0].click();
+
+    expect(await screen.findByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /delete event/i });
+    confirmBtn.click();
+    expect(onDeleteEvent).toHaveBeenCalledWith(1);
+  });
+
+  it('calls the appropriate context menu paths', () => {
+    history.push = jest.fn();
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Not started' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+
+    // Edit event.
+    const editEvent = screen.queryByText(/edit event/i);
+    expect(editEvent).toBeInTheDocument();
+    editEvent.click();
+    expect(history.push).toHaveBeenCalledWith('/training-report/1/event-summary');
+
+    // Create session.
+    contextBtn.click();
+    const createSession = screen.queryByText(/create session/i);
+    expect(createSession).toBeInTheDocument();
+    createSession.click();
+    expect(history.push).toHaveBeenCalledWith('/training-report/1/session/new/');
+
+    // View event.
+    contextBtn.click();
+    const viewEvent = screen.queryByText(/view event/i);
+    expect(viewEvent).toBeInTheDocument();
+    viewEvent.click();
+    expect(history.push).toHaveBeenCalledWith('/training-report/view/1');
   });
 });
