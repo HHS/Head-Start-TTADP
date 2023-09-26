@@ -562,7 +562,63 @@ export const notifyTrCollaboratorAssigned = async (job, transport = defaultTrans
     'tr_collaborator_added',
   );
 };
+/**
+ *
+ * @param {db.models.EventReportPilot.dataValues} report
+ * @param {number} newCollaboratorId
+ */
+export const trPocEventComplete = async (
+  event,
+) => {
+  try {
+    if (!event.pocIds && !event.pocIds.length) {
+      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
+    }
 
+    await Promise.all(event.pocIds.map(async (id) => {
+      const user = await userById(id);
+
+      const data = {
+        report: event,
+        poc: user,
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * Process function for collaboratorAssigned jobs added to notification queue
+ * Sends email to user about new ability to edit a report
+ */
+export const notifytrPocEventComplete = async (job, transport = defaultTransport) => {
+  const { report, poc } = job.data;
+  const { data } = report;
+
+  // due to the way sequelize sends the JSON column :(
+  const parsedData = JSON.parse(data.val); // parse the JSON string
+  const { eventId } = parsedData; // extract the pretty url
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+
+  const locals = {
+    reportPath,
+    displayId: eventId,
+  };
+
+  const debugMessage = `MAILER: Notifying ${poc.email} that TR ${report.id} is complete`;
+  const emailTo = [poc.email];
+
+  return genericTRNotificationFunction(
+    emailTo,
+    locals,
+    debugMessage,
+    'tr_event_complete',
+  );
+};
 export const changesRequestedNotification = (
   report,
   approver,
@@ -879,6 +935,11 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
     notifyPocSessionCompleted,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+    notifytrPocEventComplete,
   );
 };
 
