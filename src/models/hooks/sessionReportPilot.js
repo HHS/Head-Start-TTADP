@@ -28,9 +28,10 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
 const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
   try {
     // first we need to see if the session is newly complete
-    if (instance.changed() && instance.changed('data')) {
+    if (instance.changed() && instance.changed().includes('data')) {
       const previous = instance.previous('data') || {};
-      const current = instance.data || {};
+      const current = JSON.parse(instance.data.val) || {};
+
       if (
         current.status === TRAINING_REPORT_STATUSES.COMPLETE
         && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
@@ -44,8 +45,8 @@ const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
         });
 
         if (event) {
-          const { trSessionComplete } = require('../../lib/mailer');
-          await trSessionComplete(event);
+          const { trSessionCompleted } = require('../../lib/mailer');
+          await trSessionCompleted(event.dataValues);
         }
       }
     }
@@ -96,7 +97,7 @@ const notifySessionCreated = async (sequelize, instance, options) => {
 
     if (event) {
       const { trSessionCreated } = require('../../lib/mailer');
-      await trSessionCreated(event);
+      await trSessionCreated(event.dataValues);
     }
   } catch (err) {
     auditLogger.error(JSON.stringify({ err }));
