@@ -156,8 +156,8 @@ export default function TrainingReportForm({ match }) {
       }
 
       try {
-        const eventId = hookForm.getValues('id');
-        const users = await getTrainingReportUsers(eventRegion, eventId);
+        console.log('useeffect');
+        const users = await getTrainingReportUsers(eventRegion, trainingReportId);
         updateAdditionalData({ users });
       } catch (e) {
         updateErrorMessage('Error fetching collaborators and points of contact');
@@ -167,7 +167,7 @@ export default function TrainingReportForm({ match }) {
     }
 
     fetchUsers();
-  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData, hookForm]);
+  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data
@@ -177,8 +177,7 @@ export default function TrainingReportForm({ match }) {
       }
       try {
         const event = await eventById(trainingReportId);
-        resetFormData(hookForm.reset,
-          { ...event, data: { ...event.data } });
+        resetFormData(hookForm.reset, event);
         reportId.current = trainingReportId;
       } catch (e) {
         setError('Error fetching training report');
