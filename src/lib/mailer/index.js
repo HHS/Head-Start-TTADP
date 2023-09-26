@@ -562,6 +562,59 @@ export const notifyTrCollaboratorAssigned = async (job, transport = defaultTrans
     'tr_collaborator_added',
   );
 };
+
+/**
+ *
+ * @param {db.models.EventReportPilot.dataValues} report
+ * @param {number} newCollaboratorId
+ */
+export const trPocAdded = async (
+  report,
+  newPocId,
+) => {
+  try {
+    const poc = await userById(newPocId);
+    if (!poc) {
+      throw new Error(`Unable to notify user with ID ${newPocId} that they were added as a POC to TR ${report.id}, a user with that ID does not exist`);
+    }
+
+    const data = {
+      report: report.dataValues,
+      poc,
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+export const notifyTrPocAssigned = async (job, transport = defaultTransport) => {
+  const { report, poc } = job.data;
+  const { data } = report;
+
+  // due to the way sequelize sends the JSON column :(
+  const parsedData = JSON.parse(data.val); // parse the JSON string
+  const { eventId } = parsedData; // extract the pretty url
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+
+  const locals = {
+    reportPath,
+    displayId: eventId,
+  };
+
+  const debugMessage = `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`;
+  const emailTo = [poc.email];
+
+  return genericTRNotificationFunction(
+    emailTo,
+    locals,
+    debugMessage,
+    'tr_poc_added',
+  );
+};
+
 /**
  *
  * @param {db.models.EventReportPilot.dataValues} report
@@ -940,6 +993,11 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
     notifytrPocEventComplete,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+    notifyTrPocAssigned,
   );
 };
 
