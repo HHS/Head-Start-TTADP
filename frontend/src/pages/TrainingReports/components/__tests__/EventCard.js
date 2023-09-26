@@ -205,4 +205,32 @@ describe('EventCard', () => {
     confirmBtn.click();
     expect(onDeleteEvent).toHaveBeenCalledWith(1);
   });
+
+  it('calls the appropriate context menu paths', () => {
+    history.push = jest.fn();
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Not started' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    contextBtn.click();
+
+    // Edit event.
+    const editEvent = screen.queryByText(/edit event/i);
+    expect(editEvent).toBeInTheDocument();
+    editEvent.click();
+    expect(history.push).toHaveBeenCalledWith('/training-report/1/event-summary');
+
+    // Create session.
+    contextBtn.click();
+    const createSession = screen.queryByText(/create session/i);
+    expect(createSession).toBeInTheDocument();
+    createSession.click();
+    expect(history.push).toHaveBeenCalledWith('/training-report/1/session/new/');
+
+    // View event.
+    contextBtn.click();
+    const viewEvent = screen.queryByText(/view event/i);
+    expect(viewEvent).toBeInTheDocument();
+    viewEvent.click();
+    expect(history.push).toHaveBeenCalledWith('/training-report/view/1');
+  });
 });
