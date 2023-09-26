@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
@@ -54,8 +55,28 @@ const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
   }
 };
 
+const notifySessionCreated = async (sequelize, instance, options) => {
+  try {
+    const { EventReportPilot } = sequelize.models;
+    const event = await EventReportPilot.findOne({
+      where: {
+        id: instance.eventId,
+      },
+      transaction: options.transaction,
+    });
+
+    if (event) {
+      const { trSessionCreated } = require('../../lib/mailer');
+      await trSessionCreated(event);
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ err }));
+  }
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
+  await notifySessionCreated(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
