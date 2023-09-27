@@ -152,6 +152,7 @@ describe('recipient record page', () => {
 
   it('shows the recipient name', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
     act(() => renderRecipientRecord());
 
     const recipientName = await screen.findByRole('heading', { level: 1 });
@@ -160,6 +161,7 @@ describe('recipient record page', () => {
 
   it('renders the navigation', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
     act(() => renderRecipientRecord());
 
     const backToSearch = await screen.findByRole('link', { name: /back to search/i });
@@ -184,6 +186,7 @@ describe('recipient record page', () => {
 
   it('navigates to the profile page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/recipient/1/region/45/leadership', []);
     memoryHistory.push('/recipient-tta-records/1/region/45/profile');
     act(() => renderRecipientRecord());
     const heading = await screen.findByRole('heading', { name: /recipient summary/i });
