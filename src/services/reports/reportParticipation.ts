@@ -1,4 +1,4 @@
-import { syncReportParticipationParticipants, includeReportParticipationParticipants } from "./reportParticipationParticipant";
+import { syncReportParticipationParticipants, includeReportParticipationParticipants } from './reportParticipationParticipant';
 import { REPORT_TYPE } from '../../constants';
 import db from '../../models';
 import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
