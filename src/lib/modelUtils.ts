@@ -1,5 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import * as dotWild from 'dot-wild';
+import merge from 'deepmerge';
 
 // Define the mapping between Sequelize data types and TypeScript data types
 const dataTypeMapping = {
@@ -263,11 +264,17 @@ const collectChangedValues = (
 
 const includeToFindAll = async (
   includeFunc,
-  where,
+  moreWhere,
+  funcArgs = null,
 ) => {
-  const { as, model, ...args } = includeFunc();
-  return model.findAll({
+  const {
+    as,
+    model,
     where,
+    ...args
+  } = includeFunc(...funcArgs);
+  return model.findAll({
+    where: merge(where, moreWhere),
     ...args,
   });
 };
