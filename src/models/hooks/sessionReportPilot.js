@@ -29,8 +29,9 @@ const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
   try {
     // first we need to see if the session is newly complete
     if (instance.changed() && instance.changed().includes('data')) {
-      const previous = instance.previous('data') || {};
-      const current = JSON.parse(instance.data.val) || {};
+      const previous = instance.previous('data') || null;
+      const current = JSON.parse(instance.data.val) || null;
+      if (!current || !previous) return;
 
       if (
         current.status === TRAINING_REPORT_STATUSES.COMPLETE
