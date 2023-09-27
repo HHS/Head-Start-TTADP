@@ -14,7 +14,7 @@ const syncReportResources = async (
   table: { name: string, id: number, column?: string },
   data,
 ) => {
-  const foundUrls = data.flatMap((datum) => collectURLsFromField(datum));
+  const foundUrls = [...new Set(data.flatMap((datum) => collectURLsFromField(datum)))];
   const [
     currentReportResources,
     matchingResources,
