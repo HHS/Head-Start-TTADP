@@ -38,6 +38,10 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
         model: db.File,
         as: 'files',
       },
+      {
+        model: db.EventReportPilot,
+        as: 'event',
+      },
     ],
   };
 
@@ -61,6 +65,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     data: session?.data ?? {},
     files: session?.files ?? [],
     updatedAt: session?.updatedAt,
+    event: session?.event ?? {},
   };
 }
 
