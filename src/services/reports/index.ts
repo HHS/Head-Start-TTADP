@@ -8,7 +8,7 @@ import { syncReportGoals, includeReportGoal } from './reportGoal';
 import { syncReportGoalTemplates, includeReportGoalTemplate } from './reportGoalTemplate';
 import { syncReportImport, includeReportImport } from './reportImport';
 import { syncReportNationalCenter, includeReportNationalCenter } from './reportNationalCenter';
-import { syncReportNextStep, includeReportNextStep } from './reportNextStep';
+import { syncReportNextSteps, includeReportNextSteps } from './reportNextStep';
 import { syncReportObjective, includeReportObjective } from './reportObjective';
 import { syncReportObjectiveTemplates, includeReportObjectiveTemplates } from './reportObjectiveTemplate';
 import { syncReportPageStates, includeReportPageStates } from './reportPageState';
@@ -86,7 +86,14 @@ const actions:Actions = {
       { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id` } },
       { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id` } },
       { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id` } },
-      { func: syncReportGoalTemplates, remapDef: { 'data.goal': '0.name', 'regionId': '0.regionId' } },
+      { func: syncReportGoalTemplates,
+        remapDef: {
+          'data.goal': '0.templateName',
+          'regionId': '0.regionId',
+          'data.timeframe': '0.timeframe',
+          'data.endDate': '0.endDate',
+        },
+      },
       { func: syncReportImport, remapDef: { 'imported': 'import' } },
       { func: syncReportNationalCenter, remapDef: { 'data."National Center(s) Requested".*': '*.name' } },
       { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
@@ -146,8 +153,8 @@ const actions:Actions = {
           'data.objectiveTrainers': '0.trainers',
         },
       },
-      { func: syncReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT, remapDef: { 'data.recipientNextSteps.*': '*' } },
-      { func: syncReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST, remapDef: { 'data.specialistNextSteps.*': '*' } },
+      { func: syncReportNextSteps, type: NEXTSTEP_NOTETYPE.RECIPIENT, remapDef: { 'data.recipientNextSteps.*': '*' } },
+      { func: syncReportNextSteps, type: NEXTSTEP_NOTETYPE.SPECIALIST, remapDef: { 'data.specialistNextSteps.*': '*' } },
       {
         func: syncReportParticipation,
         remapDef: {
@@ -166,8 +173,8 @@ const actions:Actions = {
       { func: includeReportCollaborator, type: COLLABORATOR_TYPES.INSTANTIATOR },
       { func: includeReportGoal },
       { func: includeReportGoalTemplate },
-      { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT },
-      { func: includeReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST },
+      { func: includeReportNextSteps, type: NEXTSTEP_NOTETYPE.RECIPIENT },
+      { func: includeReportNextSteps, type: NEXTSTEP_NOTETYPE.SPECIALIST },
       { func: includeReportObjective },
       { func: includeReportObjectiveTemplates },
       { func: includeReportPageStates },
