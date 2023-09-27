@@ -1,10 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import moment from 'moment';
 import {
   render,
   screen,
   act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useForm, FormProvider } from 'react-hook-form';
 import nextSteps, { isPageComplete } from '../nextSteps';
 import { nextStepsFields } from '../../constants';
@@ -14,6 +16,9 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 
 describe('nextSteps', () => {
+  const userId = 1;
+  const todaysDate = moment().format('YYYY-MM-DD');
+
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({
@@ -122,6 +127,9 @@ describe('nextSteps', () => {
         1: NOT_STARTED,
         2: NOT_STARTED,
       },
+      event: {
+        pocIds: [],
+      },
       ...nextStepsFields,
     };
 
@@ -137,12 +145,12 @@ describe('nextSteps', () => {
           setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
         }}
         >
-          <UserContext.Provider value={{ user: { id: 1 } }}>
+          <UserContext.Provider value={{ user: { id: userId } }}>
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {nextSteps.render(
                   null,
-                  defaultFormValues,
+                  formValues,
                   1,
                   false,
                   jest.fn(),
@@ -171,6 +179,90 @@ describe('nextSteps', () => {
       expect(await screen.findByText(/When does the recipient anticipate completing step 1\?/i)).toBeVisible();
       const textAreas = document.querySelectorAll('textarea');
       expect(textAreas.length).toBe(2);
+    });
+
+    it('shows checkbox for poc', async () => {
+      act(() => {
+        const updatedValues = {
+          ...defaultFormValues,
+          event: { pocIds: [userId] },
+        };
+
+        render(<RenderNextSteps
+          formValues={updatedValues}
+        />);
+      });
+
+      expect(await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i)).toBeVisible();
+    });
+
+    it('allows selection of checkbox and sets alternate values', async () => {
+      act(() => {
+        const updatedValues = {
+          ...defaultFormValues,
+          event: { pocIds: [userId] },
+        };
+
+        render(<RenderNextSteps
+          formValues={updatedValues}
+        />);
+      });
+
+      const checkbox = await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i);
+      expect(checkbox).not.toBeChecked();
+
+      act(() => {
+        userEvent.click(checkbox);
+      });
+
+      expect(checkbox).toBeChecked();
+
+      const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
+      expect(hiddenInputs.length).toBe(2);
+
+      const hiddenInputValues = Array.from(hiddenInputs).map((input) => input.value);
+      expect(hiddenInputValues.includes(todaysDate)).toBe(true);
+      expect(hiddenInputValues.includes(userId.toString())).toBe(true);
+    });
+
+    it('shows read only for pocs when pocComplete', async () => {
+      act(() => {
+        const updatedValues = {
+          ...defaultFormValues,
+          event: { pocIds: [userId] },
+          pocComplete: true,
+          pocCompleteId: userId,
+          pocCompleteDate: todaysDate,
+          specialistNextSteps: [{
+            note: 'Very special note',
+            completeDate: '01/01/2022',
+          }],
+          recipientNextSteps: [{
+            note: 'Other note',
+            completeDate: '01/01/2021',
+          }],
+        };
+
+        render(<RenderNextSteps
+          formValues={updatedValues}
+        />);
+      });
+
+      // confirm alert
+      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
+      expect(alert).toBeVisible();
+
+      // confirm read-only
+      const checkbox = screen.queryByRole('checkbox');
+      expect(checkbox).not.toBeInTheDocument();
+      const textareas = document.querySelectorAll('textarea');
+      expect(textareas.length).toBe(0);
+
+      // confirm content
+      expect(await screen.findByText(/very special note/i)).toBeVisible();
+      expect(await screen.findByText('01/01/2022')).toBeVisible();
+      expect(await screen.findByText(/other note/i)).toBeVisible();
+      expect(await screen.findByText('01/01/2021')).toBeVisible();
     });
   });
 });
