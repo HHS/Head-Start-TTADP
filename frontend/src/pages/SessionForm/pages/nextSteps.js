@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useController } from 'react-hook-form';
 import {
   Button,
   Checkbox,
@@ -14,16 +14,73 @@ import {
 } from '../constants';
 import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRepeater';
 import UserContext from '../../../UserContext';
+import PocCompleteView from '../components/PocCompleteView';
+import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
+import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
+import ReadOnlyField from '../../../components/ReadOnlyField';
 
 const NextSteps = ({ formData }) => {
   const { user } = useContext(UserContext);
-  const { register } = useFormContext();
-  const isPoc = (() => {
-    if (!formData.event || !formData.event.pocIds) {
-      return false;
+  const { register, setValue } = useFormContext();
+  const { isPoc } = useTrainingReportRole(formData.event, user.id);
+  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
+
+  const {
+    field: {
+      onChange: onChangePocComplete,
+      name: namePocComplete,
+      value: valuePocComplete,
+    },
+  } = useController({
+    name: 'pocComplete',
+    defaultValue: false,
+  });
+
+  const onChange = (e) => {
+    onChangePocComplete(e.target.checked);
+
+    if (e.target.checked) {
+      setValue('pocCompleteId', user.id);
+      setValue('pocCompleteDate', moment().format('YYYY-MM-DD'));
+    } else {
+      setValue('pocCompleteId', null);
+      setValue('pocCompleteDate', null);
     }
-    return formData.event.pocIds.includes(user.id);
-  })();
+  };
+
+  if (showReadOnlyView) {
+    return (
+      <PocCompleteView formData={formData} userId={user.id}>
+        <Helmet>
+          <title>Next steps</title>
+        </Helmet>
+
+        <h2>Specialist&apos;s next steps</h2>
+        { formData.specialistNextSteps.map((step, index) => (
+          <>
+            <ReadOnlyField label={`Step ${index + 1}`}>
+              {step.note}
+            </ReadOnlyField>
+            <ReadOnlyField label="Anticipated completion date">
+              {step.completeDate}
+            </ReadOnlyField>
+          </>
+        ))}
+
+        <h2>Recipient&apos;s next steps</h2>
+        { formData.recipientNextSteps.map((step, index) => (
+          <>
+            <ReadOnlyField label={`Step ${index + 1}`}>
+              {step.note}
+            </ReadOnlyField>
+            <ReadOnlyField label="Anticipated completion date">
+              {step.completeDate}
+            </ReadOnlyField>
+          </>
+        ))}
+      </PocCompleteView>
+    );
+  }
 
   return (
     <>
@@ -49,26 +106,37 @@ const NextSteps = ({ formData }) => {
       {isPoc ? (
         <>
           <Checkbox
-            id="pocComplete"
-            name="pocComplete"
+            id={namePocComplete}
+            name={namePocComplete}
             label="Email the event creator and collaborator to let them know my work is complete."
             className="margin-top-2"
-            inputRef={register()}
+            value={valuePocComplete}
+            onChange={onChange}
           />
         </>
-      ) : <input type="hidden" id="pocComplete" name="pocComplete" ref={register()} />}
+      ) : <input type="hidden" id={namePocComplete} name={namePocComplete} />}
+      <input type="hidden" id="pocCompleteId" name="pocCompleteId" ref={register()} />
+      <input type="hidden" id="pocCompleteDate" name="pocCompleteDate" ref={register()} />
     </>
   );
 };
 
 NextSteps.propTypes = {
   formData: PropTypes.shape({
-    data: PropTypes.shape({
-      pocComplete: PropTypes.bool,
-    }),
+    pocComplete: PropTypes.bool,
+    pocCompleteId: PropTypes.number,
+    pocCompleteDate: PropTypes.string,
     event: PropTypes.shape({
       pocIds: PropTypes.arrayOf(PropTypes.number),
     }),
+    specialistNextSteps: PropTypes.arrayOf(PropTypes.shape({
+      note: PropTypes.string,
+      completeDate: PropTypes.string,
+    })),
+    recipientNextSteps: PropTypes.arrayOf(PropTypes.shape({
+      note: PropTypes.string,
+      completeDate: PropTypes.string,
+    })),
   }).isRequired,
 };
 
