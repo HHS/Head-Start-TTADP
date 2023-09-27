@@ -204,7 +204,7 @@ const includeReportGoalTemplates = () => ({
   ],
 });
 
-const getGoalTemplates = async (
+const getReportGoalTemplates = async (
   report: { id: number, type: string, regionId: number },
   goalTemplateIds: number[] | null = null,
 ):Promise<object[]> => ReportGoalTemplate.findAll({
