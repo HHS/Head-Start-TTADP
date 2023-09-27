@@ -11,6 +11,7 @@ import { nextStepsFields } from '../../constants';
 import NetworkContext from '../../../../NetworkContext';
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
 
 describe('nextSteps', () => {
   describe('isPageComplete', () => {
@@ -136,23 +137,25 @@ describe('nextSteps', () => {
           setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
         }}
         >
-          <FormProvider {...hookForm}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {nextSteps.render(
-                null,
-                defaultFormValues,
-                1,
-                false,
-                jest.fn(),
-                onSaveDraft,
-                jest.fn(),
-                false,
-                'key',
-                () => {},
-                () => <></>,
-              )}
-            </NetworkContext.Provider>
-          </FormProvider>
+          <UserContext.Provider value={{ user: { id: 1 } }}>
+            <FormProvider {...hookForm}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {nextSteps.render(
+                  null,
+                  defaultFormValues,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveDraft,
+                  jest.fn(),
+                  false,
+                  'key',
+                  () => {},
+                  () => <></>,
+                )}
+              </NetworkContext.Provider>
+            </FormProvider>
+          </UserContext.Provider>
         </AppLoadingContext.Provider>
       );
     };
