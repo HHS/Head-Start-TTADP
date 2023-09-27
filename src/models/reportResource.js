@@ -35,12 +35,17 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
-    sourceFields: {
+    tableName: {
+      allowNull: false,
+      type: DataTypes.TEXT,
+    },
+    columnName: {
       allowNull: true,
-      default: null,
-      type: DataTypes.ARRAY(DataTypes.ENUM(
-        Object.values(SOURCE_FIELD.REPORT),
-      )), // TODO: fix source fields
+      type: DataTypes.TEXT,
+    },
+    tableId: {
+      allowNull: false,
+      type: DataTypes.BIGINT,
     },
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
