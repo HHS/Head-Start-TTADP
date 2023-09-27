@@ -11,7 +11,7 @@ export default function PlusButton({
 }) {
   return (
     <>
-      <Button type="button" className={`ttahub-plus-button ${className}`} data-testId={testId} unstyled onClick={onClick}>
+      <Button type="button" className={`ttahub-plus-button ${className}`} data-testid={testId} unstyled onClick={onClick}>
         <i className="fa-regular fa-circle-plus margin-right-1" />
         {text}
       </Button>
