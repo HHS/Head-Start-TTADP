@@ -42,6 +42,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    timeframe: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
