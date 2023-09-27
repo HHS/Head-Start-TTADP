@@ -14,13 +14,13 @@ export const sessionSummaryFields = {
   objectiveSupportType: '',
   files: [],
   regionId: '',
+  ttaProvided: '',
 };
 
 export const participantsFields = {
   participants: [],
   deliveryMethod: '',
   numberOfParticipants: '',
-  ttaProvided: '',
 };
 
 export const nextStepsFields = {

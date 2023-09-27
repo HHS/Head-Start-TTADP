@@ -9,7 +9,6 @@ import {
   Button,
   Radio,
   TextInput,
-  Textarea,
 } from '@trussworks/react-uswds';
 import { capitalize } from 'lodash';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -258,21 +257,6 @@ const Participants = ({ formData }) => {
           )}
         </div>
       </div>
-
-      <FormItem
-        label="TTA provided "
-        name="ttaProvided"
-        required
-      >
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
-      </FormItem>
     </>
   );
 };
