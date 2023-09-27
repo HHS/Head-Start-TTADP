@@ -13,9 +13,7 @@ export default function PocCompleteView({ formData, userId, children }) {
   return (
     <>
       <Alert type="info">
-        <p className="usa-alert__text">
-          {message}
-        </p>
+        {message}
       </Alert>
       { children }
     </>
