@@ -1568,12 +1568,17 @@ module.exports = {
             key: 'id',
           },
         },
-        sourceFields: {
+        tableName: {
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        columnName: {
           allowNull: true,
-          default: null,
-          type: Sequelize.ARRAY(Sequelize.ENUM(
-            Object.values(SOURCE_FIELD.REPORT),
-          )),
+          type: Sequelize.TEXT,
+        },
+        tableId: {
+          allowNull: false,
+          type: Sequelize.BIGINT,
         },
         createdAt: {
           allowNull: false,
@@ -1674,6 +1679,23 @@ module.exports = {
           },
         },
         // TODO: do we need to cache the name to the template...yes
+        templateName: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        timeframe: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        endDate: {
+          type: Sequelize.DATEONLY,
+          allowNull: true,
+        },
+        isActivelyEdited: {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+          allowNull: true,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
