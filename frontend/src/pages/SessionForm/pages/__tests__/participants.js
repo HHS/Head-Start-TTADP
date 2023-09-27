@@ -13,6 +13,7 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import participants, { isPageComplete } from '../participants';
 import NetworkContext from '../../../../NetworkContext';
+import UserContext from '../../../../UserContext';
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
@@ -92,23 +93,25 @@ describe('participants', () => {
           setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
         }}
         >
-          <FormProvider {...hookForm}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {participants.render(
-                null,
-                defaultFormValues,
-                1,
-                false,
-                jest.fn(),
-                onSaveDraft,
-                jest.fn(),
-                false,
-                'key',
-                jest.fn(),
-                () => <></>,
-              )}
-            </NetworkContext.Provider>
-          </FormProvider>
+          <UserContext.Provider value={{ user: { id: 1 } }}>
+            <FormProvider {...hookForm}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {participants.render(
+                  null,
+                  defaultFormValues,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveDraft,
+                  jest.fn(),
+                  false,
+                  'key',
+                  jest.fn(),
+                  () => <></>,
+                )}
+              </NetworkContext.Provider>
+            </FormProvider>
+          </UserContext.Provider>
         </AppLoadingContext.Provider>
       );
     };
