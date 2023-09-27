@@ -169,7 +169,7 @@ commands:
       - run:
           name: Push application with deployment vars
           command: |
-            cf push --strategy rolling \
+            cf push --strategy rolling -s cflinuxfs4 \
               --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
@@ -191,7 +191,7 @@ commands:
       - run:
           name: Push maintenance application
           command: |
-            cd maintenance_page && cf push --vars-file ../<<parameters.deploy_config_file >>
+            cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -223,14 +223,14 @@ parameters:
     type: string
   staging_git_branch:
     description: "Name of github branch that will deploy to staging"
-    default: "main"
+    default: "switch-cflinuxfs4"
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-staging-smtp"
+    default: "switch-cflinuxfs4"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "change-to-force-ssl"
+    default: "switch-cflinuxfs4"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
