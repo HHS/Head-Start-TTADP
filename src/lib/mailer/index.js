@@ -347,7 +347,6 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
   return null; // Don't send anything if SEND_NOTIFICATIONS is not 'true'
 };
 
-
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
   // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
