@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import join from 'url-join';
+import moment from 'moment';
 import {
   render,
   screen,
@@ -65,6 +66,8 @@ describe('participants', () => {
     });
   });
   describe('render', () => {
+    const userId = 1;
+    const todaysDate = moment().format('YYYY-MM-DD');
     const onSaveDraft = jest.fn();
 
     const defaultFormValues = {
@@ -93,12 +96,12 @@ describe('participants', () => {
           setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
         }}
         >
-          <UserContext.Provider value={{ user: { id: 1 } }}>
+          <UserContext.Provider value={{ user: { id: userId } }}>
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {participants.render(
                   null,
-                  defaultFormValues,
+                  formValues,
                   1,
                   false,
                   jest.fn(),
@@ -164,6 +167,81 @@ describe('participants', () => {
           '2',
         );
       });
+    });
+    it('shows read only mode', async () => {
+      const readOnlyFormValues = {
+        ...defaultFormValues,
+        pocComplete: true,
+        pocCompleteId: userId,
+        pocCompleteDate: todaysDate,
+        event: {
+          pocIds: [userId],
+        },
+        recipients: [
+          {
+            id: 1,
+            label: 'R1 R1 G1',
+          },
+        ],
+        deliveryMethod: 'in-person',
+        numberOfParticipants: 1,
+        participants: ['Home Visitor'],
+      };
+
+      act(() => {
+        render(<RenderParticipants formValues={readOnlyFormValues} />);
+      });
+      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+
+      // confirm alert
+      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
+      expect(alert).toBeVisible();
+
+      // confirm in-person is capitalized
+      const inPerson = await screen.findByText('In-person');
+      expect(inPerson).toBeVisible();
+    });
+
+    it('shows read only mode correctly for hybrid', async () => {
+      const readOnlyFormValues = {
+        ...defaultFormValues,
+        pocComplete: true,
+        pocCompleteId: userId,
+        pocCompleteDate: todaysDate,
+        event: {
+          pocIds: [userId],
+        },
+        recipients: [
+          {
+            id: 1,
+            label: 'R1 R1 G1',
+          },
+        ],
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: 2,
+        numberOfParticipantsInPerson: 1,
+        numberOfParticipantsVirtually: 1,
+        participants: ['Home Visitor'],
+      };
+
+      act(() => {
+        render(<RenderParticipants formValues={readOnlyFormValues} />);
+      });
+      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+
+      // confirm alert
+      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
+      expect(alert).toBeVisible();
+
+      // confirm hybrid is capitalized
+      const inPerson = await screen.findByText('Hybrid');
+      expect(inPerson).toBeVisible();
+
+      // confirm data is "headed" correctly
+      const inPersonLabel = await screen.findByText(/Number of participants attending in person/i);
+      expect(inPersonLabel).toBeVisible();
+      const virtuallyLabel = await screen.findByText(/Number of participants attending virtually/i);
+      expect(virtuallyLabel).toBeVisible();
     });
   });
 });

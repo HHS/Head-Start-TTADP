@@ -16,9 +16,6 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 
 describe('nextSteps', () => {
-  const userId = 1;
-  const todaysDate = moment().format('YYYY-MM-DD');
-
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({
@@ -114,6 +111,8 @@ describe('nextSteps', () => {
   });
   describe('render', () => {
     const onSaveDraft = jest.fn();
+    const userId = 1;
+    const todaysDate = moment().format('YYYY-MM-DD');
 
     const defaultFormValues = {
       id: 1,
