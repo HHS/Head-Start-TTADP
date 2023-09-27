@@ -5,6 +5,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import visionGoal, { isPageComplete } from '../visionGoal';
 import NetworkContext from '../../../../NetworkContext';
+import UserContext from '../../../../UserContext';
 
 describe('visionGoal', () => {
   describe('isPageComplete', () => {
@@ -40,36 +41,38 @@ describe('visionGoal', () => {
       });
 
       return (
-        <FormProvider {...hookForm}>
-          <NetworkContext.Provider value={{ connectionActive: true }}>
-            {visionGoal.render(
-              {
-                users: {
-                  pointOfContact: [{
-                    id: 1,
-                    fullName: 'Ted User',
-                  }],
-                  collaborators: [
-                    {
-                      id: 2,
-                      fullName: 'Tedwina User',
-                    },
-                  ],
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <FormProvider {...hookForm}>
+            <NetworkContext.Provider value={{ connectionActive: true }}>
+              {visionGoal.render(
+                {
+                  users: {
+                    pointOfContact: [{
+                      id: 1,
+                      fullName: 'Ted User',
+                    }],
+                    collaborators: [
+                      {
+                        id: 2,
+                        fullName: 'Tedwina User',
+                      },
+                    ],
+                  },
                 },
-              },
-              defaultFormValues,
-              1,
-              false,
-              jest.fn(),
-              onSaveDraft,
-              jest.fn(),
-              false,
-              'key',
-              jest.fn(),
-              () => <></>,
-            )}
-          </NetworkContext.Provider>
-        </FormProvider>
+                defaultFormValues,
+                1,
+                false,
+                jest.fn(),
+                onSaveDraft,
+                jest.fn(),
+                false,
+                'key',
+                jest.fn(),
+                () => <></>,
+              )}
+            </NetworkContext.Provider>
+          </FormProvider>
+        </UserContext.Provider>
       );
     };
 

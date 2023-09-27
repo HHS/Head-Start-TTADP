@@ -2,10 +2,8 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
-import { useFormContext, useController } from 'react-hook-form';
 import {
   Button,
-  Checkbox,
   Fieldset,
 } from '@trussworks/react-uswds';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -14,39 +12,16 @@ import {
 } from '../constants';
 import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRepeater';
 import UserContext from '../../../UserContext';
-import PocCompleteView from '../components/PocCompleteView';
+import PocCompleteView from '../../../components/PocCompleteView';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import ReadOnlyField from '../../../components/ReadOnlyField';
+import PocCompleteCheckbox from '../../../components/PocCompleteCheckbox';
 
 const NextSteps = ({ formData }) => {
   const { user } = useContext(UserContext);
-  const { register, setValue } = useFormContext();
   const { isPoc } = useTrainingReportRole(formData.event, user.id);
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
-
-  const {
-    field: {
-      onChange: onChangePocComplete,
-      name: namePocComplete,
-      value: valuePocComplete,
-    },
-  } = useController({
-    name: 'pocComplete',
-    defaultValue: false,
-  });
-
-  const onChange = (e) => {
-    onChangePocComplete(e.target.checked);
-
-    if (e.target.checked) {
-      setValue('pocCompleteId', user.id);
-      setValue('pocCompleteDate', moment().format('YYYY-MM-DD'));
-    } else {
-      setValue('pocCompleteId', null);
-      setValue('pocCompleteDate', null);
-    }
-  };
 
   if (showReadOnlyView) {
     return (
@@ -103,20 +78,10 @@ const NextSteps = ({ formData }) => {
           recipientType="recipient"
         />
       </Fieldset>
-      {isPoc ? (
-        <>
-          <Checkbox
-            id={namePocComplete}
-            name={namePocComplete}
-            label="Email the event creator and collaborator to let them know my work is complete."
-            className="margin-top-2"
-            value={valuePocComplete}
-            onChange={onChange}
-          />
-        </>
-      ) : <input type="hidden" id={namePocComplete} name={namePocComplete} />}
-      <input type="hidden" id="pocCompleteId" name="pocCompleteId" ref={register()} />
-      <input type="hidden" id="pocCompleteDate" name="pocCompleteDate" ref={register()} />
+      <PocCompleteCheckbox
+        userId={user.id}
+        isPoc={isPoc}
+      />
     </>
   );
 };

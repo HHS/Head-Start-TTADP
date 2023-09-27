@@ -23,7 +23,7 @@ import { getPossibleSessionParticipants } from '../../../fetchers/session';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import UserContext from '../../../UserContext';
-import PocCompleteView from '../components/PocCompleteView';
+import PocCompleteView from '../../../components/PocCompleteView';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 
 const placeholderText = '- Select -';
