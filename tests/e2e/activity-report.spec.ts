@@ -654,7 +654,7 @@ test.describe('Activity Report', () => {
 
     // fill out the objectives form
     await page.getByRole('button', { name: 'Add new objective' }).click();
-    await page.getByTestId('textarea').fill('test');
+    await page.getByTestId('form').getByTestId('textarea').fill('test');
 
     // fill in an invalid resource
     await page.getByTestId('textInput').fill('asdfasdf');

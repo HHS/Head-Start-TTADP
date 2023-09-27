@@ -253,7 +253,13 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       {
         model: sequelize.models.ActivityReportObjective,
         as: 'activityReportObjectives',
-        attributes: ['id', 'objectiveId', 'status'],
+        attributes: [
+          'id',
+          'objectiveId',
+          'status',
+          'suspendReason',
+          'suspendContext',
+        ],
         where: {
           objectiveId: objectiveIds,
         },
@@ -324,6 +330,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
 
     return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
       const newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+      // status is the same, no need to update
       if (newStatus === objectiveToUpdate.status) {
         return Promise.resolve();
       }
@@ -336,17 +343,22 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
         }
 
         objectiveToUpdate.set('lastInProgressAt', latestEndDate);
-        objectiveToUpdate.set('status', newStatus);
-        // in this case, we don't want to run hooks because we don't want to update the
-        // status metadata
-        return objectiveToUpdate.save({ hooks: false });
       }
 
-      return objectiveToUpdate.update({
-        status: newStatus,
-      }, {
-        individualHooks: true,
-      });
+      /**
+       * if the objective is suspended, we want to capture the reason and context
+       */
+      if (newStatus === OBJECTIVE_STATUS.SUSPENDED) {
+        objectiveToUpdate.set('suspendReason', aro.suspendReason);
+        objectiveToUpdate.set('suspendContext', aro.suspendContext);
+      }
+
+      // if we've gotten this far, we want to update the status
+      objectiveToUpdate.set('status', newStatus);
+
+      // in this case, we don't want to run hooks because we don't want to update the
+      // status metadata
+      return objectiveToUpdate.save({ hooks: false });
     })));
   }));
 };
