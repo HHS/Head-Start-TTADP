@@ -543,6 +543,21 @@ const SessionSummary = ({ datePickerKey }) => {
 
       </Fieldset>
 
+      <FormItem
+        label="TTA provided "
+        name="ttaProvided"
+        required
+      >
+        <Textarea
+          required
+          id="ttaProvided"
+          name="ttaProvided"
+          inputRef={register({
+            required: 'Describe the tta provided',
+          })}
+        />
+      </FormItem>
+
       <div className="margin-top-2">
         <Drawer
           triggerRef={supportTypeDrawerTriggerRef}
