@@ -10,6 +10,8 @@ import {
   getPossibleSessionParticipants,
 } from './sessionReports';
 
+jest.mock('bull');
+
 describe('session reports service', () => {
   let eventId;
 
