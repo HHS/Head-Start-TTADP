@@ -295,9 +295,9 @@ describe('mailer tests', () => {
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyApproverAssigned({
+      expect(notifyApproverAssigned({
         data: { report: mockReport },
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport)).toBeNull();
     });
   });
   describe('Add Collaborators', () => {
@@ -317,9 +317,9 @@ describe('mailer tests', () => {
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyCollaboratorAssigned({
+      expect(notifyCollaboratorAssigned({
         data: { report: mockReport, newCollaborator: mockCollaborator1 },
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport)).toBeNull();
     });
   });
 
