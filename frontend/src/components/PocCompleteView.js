@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Alert } from '@trussworks/react-uswds';
 
-export default function PocCompleteView({ formData, userId, children }) {
+export default function PocCompleteView({
+  formData, userId, children, reportType,
+}) {
   const formattedDate = moment(formData.pocCompleteDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
 
-  let message = `A regional point of contact completed your portion of the session report on ${formattedDate} and sent an email to the event creator and collaborator`;
+  let message = `A regional point of contact completed your portion of the ${reportType} report on ${formattedDate} and sent an email to the event creator and collaborator`;
   if (userId === Number(formData.pocCompleteId)) {
-    message = `You completed your portion of the session report on ${formattedDate} and sent an email to the event creator and collaborator`;
+    message = `You completed your portion of the ${reportType} report on ${formattedDate} and sent an email to the event creator and collaborator`;
   }
   return (
     <>
@@ -27,4 +29,9 @@ PocCompleteView.propTypes = {
   }).isRequired,
   userId: PropTypes.number.isRequired,
   children: PropTypes.node.isRequired,
+  reportType: PropTypes.string,
+};
+
+PocCompleteView.defaultProps = {
+  reportType: 'session',
 };

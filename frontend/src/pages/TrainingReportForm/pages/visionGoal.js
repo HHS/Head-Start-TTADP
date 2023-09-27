@@ -25,7 +25,7 @@ const VisionGoal = ({ formData }) => {
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
   if (showReadOnlyView) {
     return (
-      <PocCompleteView formData={formData} userId={user.id}>
+      <PocCompleteView formData={formData} userId={user.id} reportType="training">
         <Helmet>
           <title>Vision and goal</title>
         </Helmet>
