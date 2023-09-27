@@ -32,26 +32,26 @@ const NextSteps = ({ formData }) => {
 
         <h2>Specialist&apos;s next steps</h2>
         { formData.specialistNextSteps.map((step, index) => (
-          <>
+          <div key={`specialist-step${step.note}`}>
             <ReadOnlyField label={`Step ${index + 1}`}>
               {step.note}
             </ReadOnlyField>
             <ReadOnlyField label="Anticipated completion date">
               {step.completeDate}
             </ReadOnlyField>
-          </>
+          </div>
         ))}
 
         <h2>Recipient&apos;s next steps</h2>
         { formData.recipientNextSteps.map((step, index) => (
-          <>
+          <div key={`receipient-step${step.note}`}>
             <ReadOnlyField label={`Step ${index + 1}`}>
               {step.note}
             </ReadOnlyField>
             <ReadOnlyField label="Anticipated completion date">
               {step.completeDate}
             </ReadOnlyField>
-          </>
+          </div>
         ))}
       </PocCompleteView>
     );
