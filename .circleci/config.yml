@@ -201,10 +201,10 @@ commands:
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
-      - run:
-          name: Push maintenance application
-          command: |
-            cd maintenance_page && cf push --vars-file ../<<parameters.deploy_config_file >>
+      # - run:
+      #     name: Push maintenance application
+      #     command: |
+      #       cd maintenance_page && cf push --vars-file ../<<parameters.deploy_config_file >>
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
