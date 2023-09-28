@@ -161,13 +161,6 @@ describe('participants', () => {
           '2',
         );
       });
-
-      act(() => {
-        userEvent.type(
-          screen.getByLabelText(/TTA provided/i),
-          'TTA provided',
-        );
-      });
     });
   });
 });

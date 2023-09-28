@@ -50,6 +50,8 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
+  await page.locator('#ttaProvided').fill('TTA');
+
   await page.getByTestId('dropdown').selectOption('Introducing');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -69,7 +71,7 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByText('Hybrid').click();
   await page.getByLabel('Number of participants attending in person *').fill('5');
   await page.getByLabel('Number of participants attending virtually *').fill('5');
-  await page.getByTestId('textarea').fill('TTA');
+
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // next steps
