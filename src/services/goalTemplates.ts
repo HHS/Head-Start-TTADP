@@ -314,6 +314,7 @@ export async function setFieldPromptForCuratedTemplate(
             goalTemplateFieldPromptId: promptId,
             goalId: goalIdsToUpdate,
           },
+          individualHooks: true,
         },
       ),
       ...recordsToCreate.map(async (rtc) => GoalFieldResponseModel.create(rtc)),
