@@ -50,7 +50,7 @@ const notifyNewPoc = async (_sequelize, instance) => {
   }
 };
 
-const notifyPocEventComplete = async (sequelize, instance, options) => {
+const notifyPocEventComplete = async (_sequelize, instance) => {
   try {
     // first we need to see if the session is newly complete
     if (instance.changed() && instance.changed().includes('data')) {
@@ -69,7 +69,23 @@ const notifyPocEventComplete = async (sequelize, instance, options) => {
   }
 };
 
-const notifyVisionAndGoalComplete = async (sequelize, instance, options) => {};
+const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
+  try {
+    // first we need to see if the session is newly complete
+    if (instance.changed() && instance.changed().includes('data')) {
+      const previous = instance.previous('data') || {};
+      const current = JSON.parse(instance.data.val) || {};
+
+      if (
+        current.pocComplete && !previous.pocComplete) {
+        const { trVisionAndGoalComplete } = require('../../lib/mailer');
+        await trVisionAndGoalComplete(instance.dataValues);
+      }
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ err }));
+  }
+};
 
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
