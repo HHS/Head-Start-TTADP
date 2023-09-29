@@ -1,7 +1,8 @@
 // TODO: how to handle this, check how to pipe everything through the other resource system.
+import { DataTypes } from 'sequelize';
 import { collectURLsFromField, findOrCreateResources } from '../resource';
 import { REPORT_TYPE } from '../../constants';
-import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
+import { filterDataToModel, collectChangedValues, includeToFindAll, getColumnNamesFromModelForType } from '../../lib/modelUtils';
 import db from '../../models';
 
 const {
@@ -10,7 +11,7 @@ const {
 } = db;
 
 const syncReportResources = async (
-  report: { id: number, type },
+  report: { id: number },
   table: { name: string, id: number, column?: string },
   data,
 ) => {
@@ -96,6 +97,29 @@ const syncReportResources = async (
   };
 };
 
+const checkForSyncableReportResources = async (
+  report: { id: number },
+  model,
+  id,
+  data,
+) => {
+  const tableName = model.getTableName();
+  const columns = await getColumnNamesFromModelForType(model, DataTypes.TEXT);
+  return Promise.all(
+    Object.keys(data)
+      .filter((key) => columns.includes(key))
+      .map(async (key) => syncReportResources(
+        report,
+        {
+          name: tableName,
+          column: key,
+          id,
+        },
+        [data[key]],
+      )),
+  );
+};
+
 const includeReportResources = () => ({
   model: ReportResource,
   as: 'reportResorces',
@@ -135,6 +159,7 @@ const getReportResources = async (
 
 export {
   syncReportResources,
+  checkForSyncableReportResources,
   includeReportResources,
   getReportResources,
 };
