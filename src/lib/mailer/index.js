@@ -376,19 +376,20 @@ export const programSpecialistRecipientReportApprovedNotification = (
   }
 };
 
-export const genericTRNotificationFunction = async (
-  emailTo,
-  locals,
-  debugMessage,
-  templatePath,
-  transport = defaultTransport,
-) => {
+export const sendTrainingReportNotification = async (job, transport = defaultTransport) => {
   // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS, CI } = process.env;
+  const { data } = job;
+
+  const {
+    emailTo,
+    templatePath,
+    debugMessage,
+  } = data;
 
   logger.debug(debugMessage);
 
-  if (SEND_NOTIFICATIONS === 'true') {
+  if (SEND_NOTIFICATIONS === 'true' && !CI) {
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -404,7 +405,7 @@ export const genericTRNotificationFunction = async (
       message: {
         to: emailTo,
       },
-      locals,
+      data,
     });
   }
   return Promise.resolve(null);
@@ -423,9 +424,15 @@ export const trVisionAndGoalComplete = async (event) => {
     await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
       const user = await userById(id);
 
+      const { eventId } = event.data;
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
+
       const data = {
-        report: event,
-        user,
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
+        templatePath: 'tr_poc_vision_goal_complete',
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
@@ -433,31 +440,6 @@ export const trVisionAndGoalComplete = async (event) => {
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-export const notifyVisionAndGoalComplete = async (job, transport = defaultTransport) => {
-  const { report, user } = job.data;
-
-  const { data } = report;
-  const { eventId } = data;
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${user.email} that a POC completed work on TR ${report.id}`;
-  const emailTo = [user.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_poc_vision_goal_complete',
-    transport,
-  );
 };
 
 /**
@@ -472,10 +454,15 @@ export const trPocSessionComplete = async (event) => {
 
     await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
       const user = await userById(id);
+      const { eventId } = event.data;
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
 
       const data = {
-        report: event,
-        user,
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
+        templatePath: 'tr_poc_session_complete',
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
@@ -483,31 +470,6 @@ export const trPocSessionComplete = async (event) => {
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-export const notifyPocCompletedSession = async (job, transport = defaultTransport) => {
-  const { report, user } = job.data;
-
-  const { data } = report;
-  const { eventId } = data;
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${user.email} that a POC completed work on TR ${report.id}`;
-  const emailTo = [user.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_poc_session_complete',
-    transport,
-  );
 };
 
 /**
@@ -522,9 +484,15 @@ export const trSessionCreated = async (event) => {
     await Promise.all(event.pocIds.map(async (id) => {
       const user = await userById(id);
 
+      const { eventId } = event.data;
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
+
       const data = {
-        report: event,
-        poc: user,
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
+        templatePath: 'tr_session_created',
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
@@ -532,31 +500,6 @@ export const trSessionCreated = async (event) => {
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-export const notifyPocSessionCreated = async (job, transport = defaultTransport) => {
-  const { report, poc } = job.data;
-
-  const { data } = report;
-  const { eventId } = data;
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${poc.email} that a session was created for TR ${report.id}`;
-  const emailTo = [poc.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_session_created',
-    transport,
-  );
 };
 
 /**
@@ -571,40 +514,22 @@ export const trSessionCompleted = async (event) => {
     await Promise.all(event.pocIds.map(async (id) => {
       const user = await userById(id);
 
-      const data = {
-        report: event,
-        poc: user,
-      };
+      const { eventId } = event.data;
 
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
+
+      const data = {
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a session was completed for TR ${event.id}`,
+        templatePath: 'tr_session_completed',
+      };
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
     }));
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-export const notifyPocSessionCompleted = (job, transport = defaultTransport) => {
-  const { report, poc } = job.data;
-  const { data } = report;
-  const { eventId } = data;
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${poc.email} that a session was completed for TR ${report.id}`;
-  const emailTo = [poc.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_session_completed',
-    transport,
-  );
 };
 
 /**
@@ -622,45 +547,23 @@ export const trCollaboratorAdded = async (
       throw new Error(`Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`);
     }
 
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+
     const data = {
-      report: report.dataValues,
-      collaborator,
+      displayId: eventId,
+      user: collaborator,
+      reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`,
+      emailTo: [collaborator.email],
+      templatePath: 'tr_collaborator_added',
+      debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-/**
- * Process function for collaboratorAssigned jobs added to notification queue
- * Sends email to user about new ability to edit a report
- */
-export const notifyTrCollaboratorAssigned = async (job, transport = defaultTransport) => {
-  const { report, collaborator } = job.data;
-  const { data } = report;
-
-  // due to the way sequelize sends the JSON column :(
-  const parsedData = JSON.parse(data.val); // parse the JSON string
-  const { eventId } = parsedData; // extract the pretty url
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`;
-  const emailTo = [collaborator.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_collaborator_added',
-  );
 };
 
 /**
@@ -674,45 +577,23 @@ export const trPocAdded = async (
 ) => {
   try {
     const poc = await userById(newPocId);
-    if (!poc) {
-      throw new Error(`Unable to notify user with ID ${newPocId} that they were added as a POC to TR ${report.id}, a user with that ID does not exist`);
-    }
 
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
     const data = {
-      report: report.dataValues,
-      poc,
+      displayId: eventId,
+      reportPath,
+      emailTo: [poc.email],
+      debugMessage: `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`,
+      templatePath: 'tr_poc_added',
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-export const notifyTrPocAssigned = async (job, transport = defaultTransport) => {
-  const { report, poc } = job.data;
-  const { data } = report;
-
-  // due to the way sequelize sends the JSON column :(
-  const parsedData = JSON.parse(data.val); // parse the JSON string
-  const { eventId } = parsedData; // extract the pretty url
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`;
-  const emailTo = [poc.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_poc_added',
-  );
 };
 
 /**
@@ -730,10 +611,15 @@ export const trPocEventComplete = async (
 
     await Promise.all(event.pocIds.map(async (id) => {
       const user = await userById(id);
+      const parsedData = JSON.parse(event.data.val); // parse the JSON string
+      const { eventId } = parsedData; // extract the pretty url
 
       const data = {
-        report: event,
-        poc: user,
+        displayId: eventId,
+        emailTo: [user.email],
+        reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`,
+        debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
+        templatePath: 'tr_event_complete',
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
@@ -741,36 +627,6 @@ export const trPocEventComplete = async (
   } catch (err) {
     auditLogger.error(err);
   }
-};
-
-/**
- * Process function for collaboratorAssigned jobs added to notification queue
- * Sends email to user about new ability to edit a report
- */
-export const notifytrPocEventComplete = async (job, transport = defaultTransport) => {
-  const { report, poc } = job.data;
-  const { data } = report;
-
-  // due to the way sequelize sends the JSON column :(
-  const parsedData = JSON.parse(data.val); // parse the JSON string
-  const { eventId } = parsedData; // extract the pretty url
-
-  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
-
-  const locals = {
-    reportPath,
-    displayId: eventId,
-  };
-
-  const debugMessage = `MAILER: Notifying ${poc.email} that TR ${report.id} is complete`;
-  const emailTo = [poc.email];
-
-  return genericTRNotificationFunction(
-    emailTo,
-    locals,
-    debugMessage,
-    'tr_event_complete',
-  );
 };
 
 export const changesRequestedNotification = (
@@ -1078,37 +934,37 @@ export const processNotificationQueue = () => {
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    notifyTrCollaboratorAssigned,
+    sendTrainingReportNotification,
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    notifyPocSessionCreated,
+    sendTrainingReportNotification,
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    notifyPocSessionCompleted,
+    sendTrainingReportNotification,
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    notifytrPocEventComplete,
+    sendTrainingReportNotification,
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-    notifyTrPocAssigned,
+    sendTrainingReportNotification,
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
-    notifyVisionAndGoalComplete,
+    sendTrainingReportNotification,
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-    notifyPocCompletedSession,
+    sendTrainingReportNotification,
   );
 };
 

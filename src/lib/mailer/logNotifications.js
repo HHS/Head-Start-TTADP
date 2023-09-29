@@ -56,32 +56,14 @@ export default async function logEmailNotification(job, success, result) {
         template = path.resolve(emailTemplatePath, 'recipient_report_approved', 'subject.pug');
         break;
       case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:
-        emailTo = [data.collaborator.email];
-        template = path.resolve(emailTemplatePath, 'tr_collaborator_added', 'subject.pug');
-        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED:
-        emailTo = [data.poc.email];
-        template = path.resolve(emailTemplatePath, 'tr_session_completed', 'subject.pug');
-        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED:
-        emailTo = [data.poc.email];
-        template = path.resolve(emailTemplatePath, 'tr_session_created', 'subject.pug');
-        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
-        emailTo = [data.poc.email];
-        template = path.resolve(emailTemplatePath, 'tr_event_complete', 'subject.pug');
-        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED:
-        emailTo = [data.poc.email];
-        template = path.resolve(emailTemplatePath, 'tr_poc_added', 'subject.pug');
-        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE:
-        emailTo = [data.user.email];
-        template = path.resolve(emailTemplatePath, 'tr_poc_session_complete', 'subject.pug');
-        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE:
-        emailTo = [data.user.email];
-        template = path.resolve(emailTemplatePath, 'tr_poc_vision_goal_complete', 'subject.pug');
+        emailTo = data.emailTo;
+        template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
         break;
       default:
         break;
