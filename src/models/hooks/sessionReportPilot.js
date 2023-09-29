@@ -121,8 +121,8 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
           transaction: options.transaction,
         });
 
-        const { trVisionAndGoalComplete } = require('../../lib/mailer');
-        await trVisionAndGoalComplete(event);
+        const { trPocSessionComplete } = require('../../lib/mailer');
+        await trPocSessionComplete(event);
       }
     }
   } catch (err) {
