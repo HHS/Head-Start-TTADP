@@ -156,7 +156,6 @@ export default function TrainingReportForm({ match }) {
       }
 
       try {
-        console.log('useeffect');
         const users = await getTrainingReportUsers(eventRegion, trainingReportId);
         updateAdditionalData({ users });
       } catch (e) {
