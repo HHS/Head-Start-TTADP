@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
@@ -132,6 +133,13 @@ export default (sequelize, DataTypes) => {
     isReferenced: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    suspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(SUSPEND_REASONS),
+    },
+    suspendContext: {
+      type: DataTypes.TEXT,
     },
   }, {
     sequelize,
