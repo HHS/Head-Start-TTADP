@@ -340,6 +340,7 @@ describe('mailer tests', () => {
   describe('sendTrainingReportNotification', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
+      process.env.CI = '';
       const data = {
         emailTo: [mockNewCollaborator.email],
         templatePath: 'tr_session_completed',
