@@ -6,11 +6,12 @@ import {
   beforeUpdate,
   beforeDestroy,
 } from './sessionReportPilot';
-import { trSessionCreated, trSessionCompleted } from '../../lib/mailer';
+import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../../lib/mailer';
 
 jest.mock('../../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
   trSessionCompleted: jest.fn(),
+  trPocSessionComplete: jest.fn(),
 }));
 
 describe('sessionReportPilot hooks', () => {
@@ -158,6 +159,90 @@ describe('sessionReportPilot hooks', () => {
     });
 
     it('dont notifySessionComplete if already completed', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => ({
+              update: mockUpdate,
+            })),
+          },
+        },
+      };
+
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => ['data']),
+        previous: jest.fn(() => ({
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        })),
+        data: {
+          val: JSON.stringify({
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          }),
+        },
+      };
+
+      await afterUpdate(mockSequelize, instance, mockOptions);
+      expect(trSessionCompleted).not.toHaveBeenCalled();
+    });
+
+    it('participantsAndNextStepsComplete', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => ({
+              update: mockUpdate,
+            })),
+          },
+        },
+      };
+
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => ['data']),
+        previous: jest.fn(() => ({
+          pocComplete: false,
+        })),
+        data: {
+          val: JSON.stringify({
+            pocComplete: true,
+          }),
+        },
+      };
+
+      await afterUpdate(mockSequelize, instance, mockOptions);
+      expect(trPocSessionComplete).toHaveBeenCalled();
+    });
+
+    it('dont participantsAndNextStepsComplete', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => ({
+              update: mockUpdate,
+            })),
+          },
+        },
+      };
+
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => ['data']),
+        previous: jest.fn(() => ({
+          pocComplete: false,
+        })),
+        data: {
+          val: JSON.stringify({
+            pocComplete: false,
+          }),
+        },
+      };
+
+      await afterUpdate(mockSequelize, instance, mockOptions);
+      expect(trPocSessionComplete).not.toHaveBeenCalled();
+    });
+
+    it('dont trSessionCompleted if already completed', async () => {
       const mockSequelize = {
         models: {
           EventReportPilot: {
