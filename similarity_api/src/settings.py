@@ -19,7 +19,7 @@ DB_USERNAME = os.environ.get("POSTGRES_USERNAME") or (vcap_credentials and vcap_
 DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or (vcap_credentials and vcap_credentials.get('password'))
 DB_HOST = os.environ.get("POSTGRES_HOST") or (vcap_credentials and vcap_credentials.get('host'))
 DB_NAME = os.environ.get("POSTGRES_DB") or (vcap_credentials and vcap_credentials.get('db_name'))
-PORT = os.environ.get("PORT") or (vcap_credentials and vcap_credentials.get('port')) or 5432
+PORT = (vcap_credentials and vcap_credentials.get('port')) or 5432
 
 print("DB_USERNAME: {}".format(DB_USERNAME))
 print("DB_HOST: {}".format(DB_HOST))
