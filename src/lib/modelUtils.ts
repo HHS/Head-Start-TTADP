@@ -4,12 +4,43 @@ import merge from 'deepmerge';
 
 // Define the mapping between Sequelize data types and TypeScript data types
 const dataTypeMapping = {
+  [DataTypes.ABSTRACT.key]: undefined,
   [DataTypes.STRING.key]: 'string',
+  [DataTypes.CHAR.key]: 'string',
+  [DataTypes.TEXT.key]: 'string',
+  [DataTypes.NUMBER.key]: 'number',
+  [DataTypes.TINYINT.key]: 'number',
+  [DataTypes.SMALLINT.key]: 'number',
+  [DataTypes.MEDIUMINT.key]: 'number',
   [DataTypes.INTEGER.key]: 'number',
-  [DataTypes.FLOAT.key]: 'number',
-  [DataTypes.DOUBLE.key]: 'number',
-  [DataTypes.BOOLEAN.key]: 'boolean',
   [DataTypes.BIGINT.key]: 'number',
+  [DataTypes.FLOAT.key]: 'number',
+  [DataTypes.REAL.key]: 'number',
+  [DataTypes.DOUBLE.key]: 'number',
+  [DataTypes.DECIMAL.key]: 'number',
+  [DataTypes.BOOLEAN.key]: 'boolean',
+  [DataTypes.TIME.key]: 'string',
+  [DataTypes.DATE.key]: 'string',
+  [DataTypes.DATEONLY.key]: 'string',
+  [DataTypes.HSTORE.key]: undefined,
+  [DataTypes.JSON.key]: 'object',
+  [DataTypes.JSONB.key]: 'object',
+  [DataTypes.NOW.key]: undefined,
+  [DataTypes.BLOB.key]: undefined,
+  [DataTypes.RANGE.key]: undefined,
+  [DataTypes.UUID.key]: 'string',
+  [DataTypes.UUIDV1.key]: 'string',
+  [DataTypes.UUIDV4.key]: 'string',
+  [DataTypes.VIRTUAL.key]: undefined,
+  [DataTypes.ENUM.key]: 'string',
+  [DataTypes.ARRAY.key]: undefined,
+  [DataTypes.GEOMETRY.key]: 'object',
+  [DataTypes.GEOGRAPHY.key]: 'object',
+  [DataTypes.CIDR.key]: 'string',
+  [DataTypes.INET.key]: 'string',
+  [DataTypes.MACADDR.key]: 'string',
+  [DataTypes.CITEXT.key]: undefined,
+  [DataTypes.TSVECTOR.key]: undefined,
   // Add more mappings as needed
 };
 
@@ -22,6 +53,16 @@ const getColumnInformation = async (model: typeof Model) => {
     allowNull: columnDetails.allowNull,
   }));
   return columns;
+};
+
+const getColumnNamesFromModelForType = async (
+  model: typeof Model,
+  type,
+) => {
+  const modelData = await getColumnInformation(model);
+  return modelData
+    .filter(({ dataType }) => dataType === type)
+    .map(({ columnName }) => columnName);
 };
 
 const filterDataToModel = async (
@@ -280,6 +321,7 @@ const includeToFindAll = async (
 };
 
 export {
+  getColumnNamesFromModelForType,
   getColumnInformation,
   filterDataToModel,
   type RemappingDefinition,
