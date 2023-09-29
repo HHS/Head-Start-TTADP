@@ -4,6 +4,13 @@ const {
 } = require('sequelize');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+  beforeDestroy,
+} = require('./hooks/reportObjective');
 
 export default (sequelize, DataTypes) => {
   class ReportObjective extends Model {
@@ -91,6 +98,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'ReportObjective',
   });
