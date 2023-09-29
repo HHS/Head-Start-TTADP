@@ -2,6 +2,7 @@
 applications:
   - name: tta-smarthub-((env))
     strategy: rolling
+    stack: cflinuxfs4
     buildpacks:
       - https://github.com/cloudfoundry/nodejs-buildpack
     env:
@@ -49,6 +50,7 @@ applications:
         memory: ((worker_memory))
   - name: tta-similarity-api-((env))
     strategy: rolling
+    stack: cflinuxfs4
     health-check-type: process
     buildpacks:
       - python_buildpack
