@@ -5,6 +5,13 @@ const { REPORT_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDataMatrix');
 const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+  beforeDestroy,
+} = require('./hooks/reportNextStep');
 
 export default (sequelize, DataTypes) => {
   class ReportNextStep extends Model {
@@ -54,6 +61,13 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
   }, {
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'ReportNextStep',
   });
