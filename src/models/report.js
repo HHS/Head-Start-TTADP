@@ -9,6 +9,13 @@ const {
 } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+  beforeDestroy,
+} = require('./hooks/report');
+const {
   generateJunctionTableAssociations,
 } = require('./helpers/associationsAndScopes');
 
@@ -132,6 +139,13 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Report',
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
   });
   return Report;
 };
