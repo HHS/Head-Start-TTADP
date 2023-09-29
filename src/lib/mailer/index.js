@@ -493,6 +493,10 @@ export const trSessionCreated = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
         templatePath: 'tr_session_created',
+        report: {
+          ...event,
+          displayId: eventId,
+        },
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
