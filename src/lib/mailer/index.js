@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
+import { uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
@@ -405,7 +406,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
       message: {
         to: emailTo,
       },
-      data,
+      locals: data,
     });
   }
   return Promise.resolve(null);
@@ -416,10 +417,10 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
  */
 export const trVisionAndGoalComplete = async (event) => {
   try {
-    const thoseWhoRequireNotifying = [
+    const thoseWhoRequireNotifying = uniq([
       event.ownerId,
       ...event.collaboratorIds,
-    ];
+    ]);
 
     await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
       const user = await userById(id);
