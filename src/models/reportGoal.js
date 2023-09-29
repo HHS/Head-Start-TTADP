@@ -6,6 +6,13 @@ const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+  beforeDestroy,
+} = require('./hooks/reportGoal');
 
 export default (sequelize, DataTypes) => {
   class ReportGoal extends Model {
@@ -130,6 +137,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'ReportGoal',
   });
