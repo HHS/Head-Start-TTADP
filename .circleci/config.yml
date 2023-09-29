@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.17
+      - image: cimg/python:3.9.18
   docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:18.17.1-browsers
