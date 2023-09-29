@@ -413,6 +413,106 @@ export const genericTRNotificationFunction = async (
 /**
  * @param {db.models.EventReportPilot.dataValues} event
  */
+export const trVisionAndGoalComplete = async (event) => {
+  try {
+    const thoseWhoRequireNotifying = [
+      event.ownerId,
+      ...event.collaboratorIds,
+    ];
+
+    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
+      const user = await userById(id);
+
+      const data = {
+        report: event,
+        user,
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+export const notifyVisionAndGoalComplete = async (job, transport = defaultTransport) => {
+  const { report, user } = job.data;
+
+  const { data } = report;
+  const { eventId } = data;
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+
+  const locals = {
+    reportPath,
+    displayId: eventId,
+  };
+
+  const debugMessage = `MAILER: Notifying ${user.email} that a POC completed work on TR ${report.id}`;
+  const emailTo = [user.email];
+
+  return genericTRNotificationFunction(
+    emailTo,
+    locals,
+    debugMessage,
+    'tr_poc_vision_goal_complete',
+    transport,
+  );
+};
+
+/**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
+export const trPocSessionComplete = async (event) => {
+  try {
+    const thoseWhoRequireNotifying = [
+      event.ownerId,
+      ...event.collaboratorIds,
+    ];
+
+    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
+      const user = await userById(id);
+
+      const data = {
+        report: event,
+        user,
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+export const notifyPocCompletedSession = async (job, transport = defaultTransport) => {
+  const { report, user } = job.data;
+
+  const { data } = report;
+  const { eventId } = data;
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+
+  const locals = {
+    reportPath,
+    displayId: eventId,
+  };
+
+  const debugMessage = `MAILER: Notifying ${user.email} that a POC completed work on TR ${report.id}`;
+  const emailTo = [user.email];
+
+  return genericTRNotificationFunction(
+    emailTo,
+    locals,
+    debugMessage,
+    'tr_poc_session_complete',
+    transport,
+  );
+};
+
+/**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
 export const trSessionCreated = async (event) => {
   try {
     if (!event.pocIds && !event.pocIds.length) {
@@ -672,6 +772,7 @@ export const notifytrPocEventComplete = async (job, transport = defaultTransport
     'tr_event_complete',
   );
 };
+
 export const changesRequestedNotification = (
   report,
   approver,
@@ -998,6 +1099,16 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
     notifyTrPocAssigned,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+    notifyVisionAndGoalComplete,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+    notifyPocCompletedSession,
   );
 };
 
