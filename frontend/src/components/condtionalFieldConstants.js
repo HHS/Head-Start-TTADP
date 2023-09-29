@@ -4,7 +4,7 @@ export const MULTISELECT_VALIDATION_DICTIONARY = {
   maxSelections: (validation) => (selectedOptions) => (
     selectedOptions.length <= validation.value
   ) || validation.message,
-  minSelections: (validation, selectedOptions) => (
+  minSelections: (validation) => (selectedOptions) => (
     selectedOptions.length >= validation.value
   ) || validation.message,
 };
