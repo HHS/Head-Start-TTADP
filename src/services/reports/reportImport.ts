@@ -5,11 +5,11 @@ import { filterDataToModel, collectChangedValues, includeToFindAll } from '../..
 const {
   ReportImport,
 } = db;
-const syncReportImports = async (
+const syncReportImport = async (
   entity: {},
 ) => {}; // TODO: everything
 
-const includeReportImports = () => ({
+const includeReportImport = () => ({
   model: ReportImport,
   as: '', // TODO: figure this out
   required: false,
@@ -22,14 +22,14 @@ const includeReportImports = () => ({
 const getReportImports = async (
   reportId: number,
 ) => includeToFindAll(
-  includeReportImports,
+  includeReportImport,
   {
     reportId,
   },
 );
 
 export {
-  syncReportImports,
+  syncReportImport,
+  includeReportImport,
   getReportImports,
-  includeReportImports,
 };
