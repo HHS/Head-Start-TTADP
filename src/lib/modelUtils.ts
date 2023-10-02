@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataTypes, Model } from 'sequelize';
 import * as dotWild from 'dot-wild';
 import merge from 'deepmerge';
