@@ -350,11 +350,6 @@ const setModelAttributesAsFlagged = async (
     prefix,
   );
 
-  console.log(
-    includes,
-    aggregates,
-    aggregateObjects,
-  );
   const [foiaableDataSets] = await model.findAll({
     attributes: [
       ['id', `${prefix}Id`],
