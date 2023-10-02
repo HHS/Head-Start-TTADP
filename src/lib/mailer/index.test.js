@@ -1139,6 +1139,10 @@ describe('mailer tests', () => {
     beforeEach(() => {
       notificationQueueMock.add.mockClear();
       logger.error.mockClear();
+      process.env.CI = '';
+    });
+    afterEach(() => {
+      process.env.CI = '';
     });
     const mockEvent = {
       id: 1,
@@ -1165,6 +1169,13 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
+    it('trVisionAndGoal on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trVisionAndGoalComplete(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
     it('trPocSessionComplete success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trPocSessionComplete(mockEvent);
@@ -1174,6 +1185,13 @@ describe('mailer tests', () => {
           EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
           expect.any(Object),
         );
+    });
+    it('trPocSessionComplete on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocSessionComplete(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
     });
     it('trPocSessionComplete error', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
@@ -1197,6 +1215,13 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
+    it('trSessionCreated early return on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCreated(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
     it('trSessionCompleted success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trSessionCompleted(mockEvent);
@@ -1212,6 +1237,13 @@ describe('mailer tests', () => {
       await trSessionCompleted();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trSessionCompleted early return on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCompleted(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
     });
     it('trCollaboratorAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
@@ -1231,6 +1263,13 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
+    it('trCollaboratorAdded early return', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trCollaboratorAdded();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
     it('trPocAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trPocAdded({
@@ -1249,6 +1288,13 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
+    it('trPocAdded early return', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocAdded(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
     it('trPocEventComplete success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trPocEventComplete({
@@ -1266,6 +1312,15 @@ describe('mailer tests', () => {
       await trPocEventComplete();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trPocEventComplete early return on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocEventComplete({
+        id: 1, data: { val: JSON.stringify(mockEvent) }, pocIds: [4, 5],
+      });
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
     });
   });
 });
