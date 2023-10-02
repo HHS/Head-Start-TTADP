@@ -18,7 +18,7 @@ export default function GoalsObjectives({
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
-    GOALS_OBJECTIVES_FILTER_KEY,
+    GOALS_OBJECTIVES_FILTER_KEY(recipientId),
     [],
   );
 
