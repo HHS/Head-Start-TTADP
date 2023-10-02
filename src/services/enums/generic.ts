@@ -26,7 +26,7 @@ interface EnumModel extends Model {
   ) => Promise<GenericEnumType[]>,
   create: (
     args: { name: string, mapsTo?: number },
-    options: { individualHooks: boolean },
+    options: { individualHooks?: boolean, returning?: boolean },
   ) => Promise<GenericEnumType>,
   update: (
     args: { updatedAt: Date },
@@ -117,13 +117,11 @@ const findOrCreateByName = async (
     }),
   });
 
-  if(!instance) {
+  if (!instance) {
     instance = model.create({
       name: data.name,
       ...(data.mapsTo && { mapsTo: data.mapsTo }),
-    }, {
-      return
-    });
+    }, { returning: true });
   }
   return instance;
 };
