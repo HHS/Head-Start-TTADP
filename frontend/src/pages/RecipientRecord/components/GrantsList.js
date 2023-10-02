@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
-import './GrantsList.css';
 import { getDistinctSortedArray } from '../../../utils';
 
 export default function GrantsList({ summary }) {
@@ -11,7 +10,7 @@ export default function GrantsList({ summary }) {
       return summary.grants.map((grant) => (
         <tr key={grant.id}>
           <td>
-            <a style={{ display: 'table-cell' }} title="Links to HSES" aria-label={`Links to Grant ${grant.number} on HSES`} className="padding-y-3" href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
+            <a aria-label={`Links to Grant ${grant.number} on HSES`} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
               {grant.number}
             </a>
           </td>
@@ -39,8 +38,10 @@ export default function GrantsList({ summary }) {
   };
 
   return (
-    <Container className="ttahub-recipient-record--grants-list" paddingX={0} paddingY={0}>
-      <h2 className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">Grants</h2>
+    <Container className="ttahub-recipient-record--grants-list ttahub-recipient-record--profile-table" paddingX={0} paddingY={0}>
+      <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
+        <h2 className="margin-0 padding-0">Grants</h2>
+      </div>
       <div className="usa-table-container--scrollable margin-0 ttahub-recipient-record-table-container">
         <table className="usa-table usa-table--striped ttahub-recipient-record--table ttahub--recipient-summary-table usa-table--borderless width-full margin-y-1">
           <caption className="sr-only">
