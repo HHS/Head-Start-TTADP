@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../utils';
 import './ReadOnlyObjective.scss';
+import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
 
 const TTAProvided = ({ tta }) => {
   const defaultEditorState = getEditorState(tta);
@@ -90,12 +91,20 @@ export default function ReadOnlyObjective({ objective }) {
           </div>
         )
         : null }
+
+      <ObjectiveStatusSuspendReason
+        status={objective.status}
+        suspendReason={objective.suspendReason}
+        suspendContext={objective.suspendContext}
+      />
     </div>
   );
 }
 
 ReadOnlyObjective.propTypes = {
   objective: PropTypes.shape({
+    suspendContext: PropTypes.string,
+    suspendReason: PropTypes.string,
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string,
