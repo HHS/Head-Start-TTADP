@@ -34,27 +34,6 @@ const syncReportGoals = async (
   }
 };
 
-const getReportGoals = async (
-  reportId: number,
-  goalIds: number[] | null = null,
-):Promise<object[]> => ReportGoal.findAll({
-  attributes: [
-    // TODO: filter this down to whats needed.
-  ],
-  where: {
-    reportId,
-    ...(goalIds && { goalIds }),
-  },
-  include: [
-    // TODO: fill out anything thats needed
-  ],
-});
-
-const getReportGoal = async (
-  reportId: number,
-  goalId: number,
-):Promise<object[]> => getReportGoals(reportId, [goalId]);
-
 const includeReportGoals = () => ({
   model: ReportGoal,
   as: 'reportGoals',
@@ -73,8 +52,24 @@ const includeReportGoals = () => ({
   ],
 });
 
+const getReportGoals = async (
+  reportId: number,
+  goalIds: number[] | null = null,
+):Promise<object[]> => ReportGoal.findAll({
+  attributes: [
+    // TODO: filter this down to whats needed.
+  ],
+  where: {
+    reportId,
+    ...(goalIds && { goalIds }),
+  },
+  include: [
+    // TODO: fill out anything thats needed
+  ],
+});
+
 export {
   syncReportGoals,
   getReportGoals,
-  getReportGoal,
+  includeReportGoals,
 };
