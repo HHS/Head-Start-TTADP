@@ -15,7 +15,7 @@ function ResourceUse({ data, loading }) {
       <HorizontalTableWidget
         id="resourceUse"
         headers={data.headers}
-        data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading }))}
+        data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading, link: d.heading }))}
         firstHeading="Resource URL"
       />
     </WidgetContainer>
