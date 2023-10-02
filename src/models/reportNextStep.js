@@ -3,7 +3,6 @@ const {
 } = require('sequelize');
 const { REPORT_TYPE, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDataMatrix');
 const { generateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 const {
   beforeValidate,
