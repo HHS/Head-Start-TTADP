@@ -88,7 +88,7 @@ describe('PrintGoals', () => {
 
     render(
       <Router history={memoryHistory}>
-        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID) }}>
           <UserContext.Provider value={{ user }}>
             <PrintGoals
               location={location}
