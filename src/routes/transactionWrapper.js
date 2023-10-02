@@ -13,7 +13,6 @@ export default function transactionWrapper(originalFunction, context = '') {
   return async function wrapper(req, res, next) {
     let error;
     const startTime = Date.now();
-    console.log(originalFunction);
     try {
       return sequelize.transaction(async () => {
         let result;
