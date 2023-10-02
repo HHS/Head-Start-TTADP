@@ -416,6 +416,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
  * @param {db.models.EventReportPilot.dataValues} event
  */
 export const trVisionAndGoalComplete = async (event) => {
+  if (process.env.CI) return;
   try {
     const thoseWhoRequireNotifying = uniq([
       event.ownerId,
@@ -447,6 +448,7 @@ export const trVisionAndGoalComplete = async (event) => {
  * @param {db.models.EventReportPilot.dataValues} event
  */
 export const trPocSessionComplete = async (event) => {
+  if (process.env.CI) return;
   try {
     const thoseWhoRequireNotifying = [
       event.ownerId,
@@ -477,6 +479,7 @@ export const trPocSessionComplete = async (event) => {
  * @param {db.models.EventReportPilot.dataValues} event
  */
 export const trSessionCreated = async (event) => {
+  if (process.env.CI) return;
   try {
     if (!event.pocIds && !event.pocIds.length) {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
@@ -546,6 +549,7 @@ export const trCollaboratorAdded = async (
   report,
   newCollaboratorId,
 ) => {
+  if (process.env.CI) return;
   try {
     const collaborator = await userById(newCollaboratorId);
     if (!collaborator) {
@@ -580,6 +584,7 @@ export const trPocAdded = async (
   report,
   newPocId,
 ) => {
+  if (process.env.CI) return;
   try {
     const poc = await userById(newPocId);
 
@@ -609,6 +614,7 @@ export const trPocAdded = async (
 export const trPocEventComplete = async (
   event,
 ) => {
+  if (process.env.CI) return;
   try {
     if (!event.pocIds && !event.pocIds.length) {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
