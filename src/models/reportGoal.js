@@ -18,44 +18,6 @@ export default (sequelize, DataTypes) => {
   class ReportGoal extends Model {
     static associate(models) {
       automaticallyGenerateJunctionTableAssociations(this, models);
-
-      // // TODO: fix
-      // [
-      //   {
-      //     model: models.Report,
-      //     prefix: 'report',
-      //   },
-      //   {
-      //     model: models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }),
-      //     prefix: 'reportTrainingSession',
-      //   }
-      // ].forEach(({
-      //   model,
-      //   prefix,
-      // }) => {
-      //   models.ReportGoal.belogsTo(model, {
-      //     foreignKey: 'reportId',
-      //     as: prefix,
-      //   });
-      //   model.hasMany(models.ReportGoal, {
-      //     foreignKey: 'reportId',
-      //     as: 'reportGoals',
-      //   });
-
-      //   model.belongsToMany(models.Goal, {
-      //     through: models.ReportGoal,
-      //     foreignKey: 'reportId',
-      //     otherKey: 'goalId',
-      //     as: 'goals',
-      //   });
-
-      //   models.Goal.belongsToMany(model, {
-      //     through: models.ReportGoal,
-      //     foreignKey: 'goalId',
-      //     otherKey: 'reportId',
-      //     as: `${prefix}s`,
-      //   });
-      // });
     }
   }
   ReportGoal.init({
