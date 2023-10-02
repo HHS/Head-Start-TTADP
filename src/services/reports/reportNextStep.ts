@@ -89,3 +89,9 @@ const getReportNextSteps = async (
   },
   [noteType],
 );
+
+export {
+  syncReportNextSteps,
+  includeReportNextSteps,
+  getReportNextSteps,
+};
