@@ -63,6 +63,6 @@ applications:
     processes:
       - type: web
         instances: ((similarity_api_instances))
-        command: gunicorn -w 4 -b 0.0.0.0:8080 similarity_api.src.app:app
+        command: gunicorn -w 4 -b 0.0.0.0:8080 src.app:app
         memory: ((similarity_api_memory))
         disk_quota: ((similarity_api_disk_quota))
