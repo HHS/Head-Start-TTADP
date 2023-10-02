@@ -1,10 +1,11 @@
-export {};
-const { Op } = require('sequelize');
+import { Op } from 'sequelize';
+import db from '../../models';
+import { auditLogger } from '../../logger';
+
 const {
   GoalTemplate,
   ReportGoalTemplate,
-} = require('../../models');
-const { auditLoger } = require('../../logger');
+} = db;
 
 /**
  * Retrieves the current report goal templates based on the provided reportId.
@@ -185,7 +186,7 @@ const syncReportGoalTemplates = async (
       ),
     ]);
   } catch (err) {
-    auditLoger.error(err);
+    auditLogger.error(err);
     throw err;
   }
 };
@@ -220,7 +221,8 @@ const getReportGoalTemplates = async (
   ],
 });
 
-module.exports = {
+export {
   syncReportGoalTemplates,
+  includeReportGoalTemplates,
   getReportGoalTemplates,
 };
