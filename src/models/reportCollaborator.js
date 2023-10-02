@@ -2,9 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { ENTITY_TYPE, COLLABORATOR_TYPES } = require('../constants');
-const { collectReportMatrixAssociationsForModel } = require('./helpers/reportDataMatrix');
 const {
-  camelToPascalCase,
   generateJunctionTableAssociations,
 } = require('./helpers/associationsAndScopes');
 const {
@@ -41,94 +39,6 @@ export default (sequelize, DataTypes) => {
           scopes: Object.values(COLLABORATOR_TYPES).map((collaboratorType) => ({ method: ['collaboratorType', collaboratorType] })),
         },
       );
-
-      // Object.values(COLLABORATOR_TYPES).forEach((collaboratorType) => {
-      //   models.User.hasMany(this.scope({ method: ['collaboratorType', collaboratorType] }), {
-      //     foreignKey: 'userId',
-      //     as: `reportCollaboratorsAs${camelToPascalCase(collaboratorType)}`,
-      //   });
-      //   this.scope({ method: ['collaboratorType', collaboratorType] }).belongsTo(models.User, {
-      //     foreignKey: 'userId',
-      //     as: `usersAs${camelToPascalCase(collaboratorType)}`,
-      //   });
-      // });
-
-      // // Status
-      // this.belongsTo(models.Status, {
-      //   foreignKey: 'statusId',
-      //   as: 'status',
-      // });
-
-      // models.Status.hasMany(this, {
-      //   foreignKey: 'statusId',
-      //   as: 'reportCollaborators',
-      // });
-
-      // console.log('####', ReportCollaborator.associations);
-      // console.log('####', models.User.associations);
-
-      // // Reports
-      // collectReportMatrixAssociationsForModel(models, ReportCollaborator.name)
-      //   .forEach(({
-      //     model,
-      //     type,
-      //     prefix,
-      //     associations,
-      //   }) => {
-      //     console.log({
-      //       model,
-      //       type,
-      //       prefix,
-      //       associations,
-      //     });
-      //     associations.forEach((config) => {
-      //       const localModel = config.method
-      //         ? this.scope({ method: config.method })
-      //         : this;
-
-      //         config.forward.forEach((details) => model[details.type](localModel,{
-      //           foreignKey: 'reportId',
-      //           as: ``,
-      //         }));
-      //         config.reverse.forEach((details) => localModel[details.type](model,{
-      //           foreignKey: 'reportId',
-      //           as: ``,
-      //         }));
-
-      //       switch(config.associationType) {
-      //         case 'hasOne':
-      //           model.hasOne(localModel, {
-      //             foreignKey: 'reportId',
-      //             as: config.as,
-      //           });
-      //           break;
-      //         case 'hasMany':
-      //           model.hasMany(localModel, {
-      //           foreignKey: 'reportId',
-      //           as: config.as,
-      //         });
-      //           break;
-      //       }
-
-      //       model.belongsToMany(models.User, {
-      //         through: localModel,
-      //         foreignKey: 'reportId',
-      //         otherKey: 'userId',
-      //         as: config.as
-      //           ? `usersAs${config.as}For${prefix}`
-      //           : `usersFor${prefix}`,
-      //       });
-      //       models.User.belongsToMany(model, {
-      //         through: localModel,
-      //         foreignKey: 'userId',
-      //         otherKey: 'reportId',
-      //         as: config.as
-      //           ? `${prefix}sAs${config.as}`
-      //           : `${prefix}s`,
-      //       });
-
-      //     });
-      //   });
     }
   }
   ReportCollaborator.init({
