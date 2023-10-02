@@ -37,46 +37,6 @@ export default (sequelize, DataTypes) => {
     }
 
     static associate(models) {
-      // Status.belongsTo(models.Report, {
-      //   foreignKey: 'statusId',
-      //   as: 'report',
-      // });
-
-      // [
-      //   {
-      //     model: models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_EVENT] }),
-      //     type: ENTITY_TYPE.REPORT_TRAINING_EVENT,
-      //     prefix: 'reportTrainingEvent',
-      //   },
-      //   {
-      //     model: models.Report.scope({ method: ['reportType', REPORT_TYPE.REPORT_TRAINING_SESSION] }),
-      //     type: ENTITY_TYPE.REPORT_TRAINING_SESSION,
-      //     prefix: 'reportTrainingSession',
-      //   },
-      //   {
-      //     model: models.ReportGoal,
-      //     type: ENTITY_TYPE.GOAL,
-      //     prefix: 'reportGoal',
-      //   },
-      //   {
-      //     model: models.ReportObjective,
-      //     type: ENTITY_TYPE.OBJECTIVE,
-      //     prefix: 'reportObjective',
-      //   },
-      // ].forEach(({
-      //   model,
-      //   type,
-      //   prefix,
-      // }) => {
-      //   model.belongsTo(models.Status.scope({ method: ['validFor', type] }), {
-      //     foreignKey: 'statusId',
-      //     as: `${prefix}Status`,
-      //   });
-      //   models.Status.scope({ method: ['validFor', type] }).hasMany(model, {
-      //     foreignKey: 'statusId',
-      //     as: `${prefix}s`,
-      //   });
-      // });
     }
   }
   Status.init({
