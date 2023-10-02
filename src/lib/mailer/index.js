@@ -514,6 +514,7 @@ export const trSessionCreated = async (event) => {
  * @param {db.models.EventReportPilot.dataValues} event
  */
 export const trSessionCompleted = async (event) => {
+  if (process.env.CI) return;
   try {
     if (!event.pocIds && !event.pocIds.length) {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
