@@ -40,7 +40,7 @@ const getReportNationalCenters = async (
   nationalCenterIds,
 );
 
-const includeReportNationalCenter = (
+const includeReportNationalCenters = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => includeGenericEnums(
   ReportNationalCenter,
@@ -51,5 +51,5 @@ const includeReportNationalCenter = (
 export {
   syncReportNationalCenters,
   getReportNationalCenters,
-  includeReportNationalCenter,
+  includeReportNationalCenters,
 };
