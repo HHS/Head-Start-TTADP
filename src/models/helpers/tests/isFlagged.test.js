@@ -146,8 +146,6 @@ describe('findFlaggedModelsFromModel', () => {
       prefix,
     );
 
-    console.log(result.includes, result.aggregates, result.aggregateObjects);
-
     expect(result.includes).toEqual([
       {
         model: Objective,
