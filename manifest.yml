@@ -63,6 +63,6 @@ applications:
     processes:
       - type: web
         instances: ((similarity_api_instances))
-        command: flask run --host=0.0.0.0 --port=8080
+        command: gunicorn -w 4 -b 0.0.0.0:8080 similarity_api:app
         memory: ((similarity_api_memory))
         disk_quota: ((similarity_api_disk_quota))
