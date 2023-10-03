@@ -330,13 +330,19 @@ describe('processData', () => {
 
   describe('convertEmails', () => {
     it('handles null emails', async () => {
-      const emails = await convertEmails(null);
+      const emails = convertEmails(null);
       expect(emails).toBe(null);
     });
 
     it('handles emails lacking a @', async () => {
-      const emails = await convertEmails('test,test2@test.com,test3');
+      const emails = convertEmails('test,test2@test.com,test3');
       expect(emails.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)).toBeTruthy();
+    });
+
+    it('should convert a single email address to a transformed email address', () => {
+      const input = 'real@example.com';
+      const output = convertEmails(input);
+      expect(output).toMatch(/^no-send_/);
     });
   });
 

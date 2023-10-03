@@ -11,7 +11,10 @@ import {
 } from './sessionReports';
 
 describe('session reports service', () => {
-  let eventId;
+  let event;
+
+  const eventId = 'R01-PD-99_888';
+  const eventIdSubstring = '99_888';
 
   beforeAll(async () => {
     const eventData = {
@@ -19,24 +22,26 @@ describe('session reports service', () => {
       regionId: 99_888,
       pocIds: [99_888],
       collaboratorIds: [99_888],
-      data: {},
+      data: {
+        eventId,
+      },
     };
     const created = await createEvent(eventData);
-    eventId = created.id;
+    event = created;
   });
 
   afterAll(async () => {
-    await destroyEvent(eventId);
+    await destroyEvent(event.id);
     await db.sequelize.close();
   });
 
   describe('createSession', () => {
     it('works', async () => {
-      const created = await createSession({ eventId, data: {} });
+      const created = await createSession({ eventId: event.id, data: {} });
 
       expect(created).toMatchObject({
         id: expect.anything(),
-        eventId,
+        eventId: eventIdSubstring,
       });
 
       await destroySession(created.id);
@@ -45,10 +50,10 @@ describe('session reports service', () => {
 
   describe('updateSession', () => {
     it('works', async () => {
-      const created = await createSession({ eventId, data: {} });
+      const created = await createSession({ eventId: event.id, data: {} });
 
       const updatedData = {
-        eventId,
+        eventId: eventIdSubstring,
         data: {
           harry: 'potter',
         },
@@ -56,7 +61,7 @@ describe('session reports service', () => {
       const updated = await updateSession(created.id, updatedData);
 
       expect(updated).toMatchObject({
-        eventId,
+        eventId: eventIdSubstring,
         data: updatedData.data,
       });
 
@@ -67,12 +72,12 @@ describe('session reports service', () => {
       const found = await findSessionById(99_999);
       expect(found).toBeNull();
 
-      const updatedData = { eventId, data: { harry: 'potter' } };
+      const updatedData = { eventId: event.id, data: { harry: 'potter' } };
       const updated = await updateSession(99_999, updatedData);
 
       expect(updated).toMatchObject({
         id: expect.anything(),
-        eventId,
+        eventId: eventIdSubstring,
         data: updatedData.data,
       });
 
@@ -82,13 +87,13 @@ describe('session reports service', () => {
 
   describe('findSessionById', () => {
     it('works', async () => {
-      const created = await createSession({ eventId, data: {} });
+      const created = await createSession({ eventId: event.id, data: {} });
 
       const found = await findSessionById(created.id);
 
       expect(found).toMatchObject({
         id: created.id,
-        eventId,
+        eventId: eventIdSubstring,
       });
 
       await destroySession(created.id);
@@ -97,20 +102,20 @@ describe('session reports service', () => {
 
   describe('findSessionsByEventId', () => {
     it('works', async () => {
-      const created1 = await createSession({ eventId, data: {} });
-      const created2 = await createSession({ eventId, data: {} });
+      const created1 = await createSession({ eventId: event.id, data: {} });
+      const created2 = await createSession({ eventId: event.id, data: {} });
 
-      const found = await findSessionsByEventId(eventId);
+      const found = await findSessionsByEventId(event.id);
 
       expect(found).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: created1.id,
-            eventId,
+            eventId: event.id,
           }),
           expect.objectContaining({
             id: created2.id,
-            eventId,
+            eventId: event.id,
           }),
         ]),
       );

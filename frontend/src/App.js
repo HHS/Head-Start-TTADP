@@ -272,7 +272,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/view/:trainingReportId([0-9]*)"
+          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
@@ -283,7 +283,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
@@ -294,7 +294,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
