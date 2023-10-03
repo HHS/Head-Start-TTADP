@@ -137,7 +137,7 @@ export default function TrainingReportForm({ match }) {
     if (!trainingReportId) {
       return;
     }
-    const newPath = `/training-reports/${trainingReportId}}`;
+    const newPath = `/training-reports/${trainingReportId}`;
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 

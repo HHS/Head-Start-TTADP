@@ -18,6 +18,7 @@ const newEvent = ({
   collaboratorIds = [],
   regionId = 1,
   status = null,
+  data,
 }) => ({
   ownerId,
   pocIds,
@@ -25,6 +26,8 @@ const newEvent = ({
   regionId,
   data: {
     status,
+    eventId: `R${regionId.toString().padStart(2, '0')}-PD-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+    ...data,
   },
 });
 
@@ -149,15 +152,19 @@ describe('findEventByStatus', () => {
     let e2;
 
     beforeAll(async () => {
+      const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
+      const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
       e = await createEvent(newEvent({
         ownerId: owner.id,
         status: TRAINING_REPORT_STATUSES.NOT_STARTED,
         pocIds: [poc.id],
         collaboratorIds: [collaborator.id],
+        data: { title: 'A', eventId: firstId },
       }));
       e2 = await createEvent(newEvent({
         ownerId: otherWrite.id,
         status: TRAINING_REPORT_STATUSES.NOT_STARTED,
+        data: { title: 'B', eventId: secondId },
       }));
     });
 
@@ -303,15 +310,19 @@ describe('findEventByStatus', () => {
     let e2;
 
     beforeAll(async () => {
+      const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
+      const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
       e = await createEvent(newEvent({
         ownerId: owner.id,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         pocIds: [poc.id],
         collaboratorIds: [collaborator.id],
+        data: { title: 'A', eventId: firstId },
       }));
       e2 = await createEvent(newEvent({
         ownerId: otherWrite.id,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        data: { title: 'B', eventId: secondId },
       }));
 
       await createSession(newSession(
@@ -342,11 +353,14 @@ describe('findEventByStatus', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
       const data = mockSend.mock.calls[0][0];
-
       expect(data.length).toBe(2);
+      const ids = data.map((d) => d.id);
+      expect(ids).toContain(e.id);
+      expect(ids).toContain(e2.id);
       expect(data[0].id).toBe(e.id);
       expect(data[0].sessionReports.length).toBe(2);
       expect(data[1].id).toBe(e2.id);
+      expect(data[1].sessionReports.length).toBe(0);
     });
 
     it('collab', async () => {
@@ -478,15 +492,19 @@ describe('findEventByStatus', () => {
     let e2;
 
     beforeAll(async () => {
+      const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
+      const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
       e = await createEvent(newEvent({
         ownerId: owner.id,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         pocIds: [poc.id],
         collaboratorIds: [collaborator.id],
+        data: { title: 'A', eventId: firstId },
       }));
       e2 = await createEvent(newEvent({
         ownerId: otherWrite.id,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        data: { title: 'B', eventId: secondId },
       }));
 
       await createSession(newSession(
@@ -667,15 +685,19 @@ describe('findEventByStatus', () => {
     let e2;
 
     beforeAll(async () => {
+      const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
+      const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
       e = await createEvent(newEvent({
         ownerId: owner.id,
         status: TRAINING_REPORT_STATUSES.SUSPENDED,
         pocIds: [poc.id],
         collaboratorIds: [collaborator.id],
+        data: { title: 'A', eventId: firstId },
       }));
       e2 = await createEvent(newEvent({
         ownerId: otherWrite.id,
         status: TRAINING_REPORT_STATUSES.SUSPENDED,
+        data: { title: 'B', eventId: secondId },
       }));
 
       await createSession(newSession(
