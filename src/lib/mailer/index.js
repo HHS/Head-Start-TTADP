@@ -73,6 +73,21 @@ export const frequencyToInterval = (freq) => {
   return date;
 };
 
+/**
+ * Filters and deduplicates an array of email addresses, removing duplicates
+ * and excluding email addresses that start with 'no-send_'.
+ *
+ * @param {string[]} emails - An array of email addresses to filter and deduplicate.
+ * @returns {string[]} - A deduplicated and filtered array of email addresses.
+ */
+export const filterAndDeduplicateEmails = (emails) => {
+  const filteredEmails = emails.flat()
+    .filter((email) => typeof email === 'string' && !email.startsWith('no-send_'))
+    .filter((email, index, array) => array.indexOf(email) === index);
+
+  return filteredEmails;
+};
+
 export const onFailedNotification = (job, error) => {
   auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
   logEmailNotification(job, false, error);
@@ -83,8 +98,7 @@ export const onCompletedNotification = (job, result) => {
     logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
     logEmailNotification(job, true, result);
   } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
-    logEmailNotification(job, false, { preferences: 'off' });
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set or marked as "no-send"`);
   }
 };
 
@@ -93,7 +107,7 @@ export const onCompletedNotification = (job, result) => {
  * Sends group email to report author and collaborators about a single approver's requested changes
  */
 export const notifyChangesRequested = (job, transport = defaultTransport) => {
-  const toEmails = [];
+  const addresses = [];
   const {
     report, approver, authorWithSetting, collabsWithSettings,
   } = job.data;
@@ -112,11 +126,13 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     const collabArray = collabsWithSettings.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     if (authorWithSetting) {
-      toEmails.push(authorWithSetting.email);
+      addresses.push(authorWithSetting.email);
     }
     if (collabArray && collabArray.length > 0) {
-      toEmails.push(collabArray);
+      addresses.push(collabArray);
     }
+
+    const toEmails = filterAndDeduplicateEmails(addresses);
 
     if (toEmails.length === 0) {
       return null;
@@ -153,7 +169,7 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
  * Sends group email to report author and collaborators about approved status
  */
 export const notifyReportApproved = (job, transport = defaultTransport) => {
-  const toEmails = [];
+  const addresses = [];
   const { report, authorWithSetting, collabsWithSettings } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
@@ -166,15 +182,17 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     if (authorWithSetting) {
-      toEmails.push(authorWithSetting.email);
+      addresses.push(authorWithSetting.email);
     }
     if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
-      toEmails.push(collaboratorEmailAddresses);
+      addresses.push(collaboratorEmailAddresses);
     }
+    const toEmails = filterAndDeduplicateEmails(addresses);
 
     if (toEmails.length === 0) {
-      return null;
+      return null; // Don't send anything if the "to" array is empty
     }
+
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -209,9 +227,15 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
     const recipientNames = recipients.map((r) => r.name);
     const recipientNamesDisplay = recipientNames.join(', ').trim();
 
-    logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
+    logger.info(`MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`);
     const addresses = programSpecialists.map((c) => c.email);
-    if (addresses.length === 0) return null;
+    const toEmails = filterAndDeduplicateEmails(addresses);
+
+    if (toEmails.length === 0) {
+      return null;
+    }
+    logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
+
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: { from: FROM_EMAIL_ADDRESS },
@@ -221,7 +245,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
     });
     return email.send({
       template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
-      message: { to: addresses },
+      message: { to: toEmails },
       locals: { reportPath, displayId, recipientNamesDisplay },
     });
   }
@@ -233,7 +257,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
  * Sends email to user about new ability to approve a report
  */
 export const notifyApproverAssigned = (job, transport = defaultTransport) => {
-// Set these inside the function to allow easier testing
+  // Set these inside the function to allow easier testing
   const { report, newApprover } = job.data;
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
@@ -242,6 +266,12 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       displayId,
     } = report;
     const approverEmail = newApprover.user.email;
+    logger.debug(`MAILER: Attempting to notify ${approverEmail} that they were requested to approve report ${displayId}`);
+    const toEmails = filterAndDeduplicateEmails([approverEmail]);
+
+    if (toEmails.length === 0) {
+      return null;
+    }
     logger.debug(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
@@ -257,7 +287,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
       message: {
-        to: [approverEmail],
+        to: toEmails,
       },
       locals: {
         reportPath,
@@ -265,7 +295,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       },
     });
   }
-  return Promise.resolve(null);
+  return null;
 };
 
 /**
@@ -281,10 +311,17 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
 
-  logger.debug(`MAILER: Notifying ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
-
   if (SEND_NOTIFICATIONS === 'true') {
+    logger.debug(`MAILER: Attempting to notify ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
+
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+    const toEmails = filterAndDeduplicateEmails([newCollaborator.email]);
+
+    if (toEmails.length === 0) {
+      return null;
+    }
+    logger.debug(`MAILER: Notifying ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
+
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -295,10 +332,11 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
         wordwrap: 120,
       },
     });
+
     return email.send({
       template: path.resolve(emailTemplatePath, 'collaborator_added'),
       message: {
-        to: [newCollaborator.email],
+        to: toEmails,
       },
       locals: {
         reportPath,
@@ -306,7 +344,7 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
       },
     });
   }
-  return Promise.resolve(null);
+  return null; // Don't send anything if SEND_NOTIFICATIONS is not 'true'
 };
 
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
@@ -627,9 +665,14 @@ export const notifyDigest = (job, transport = defaultTransport) => {
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
 
-  logger.debug(`MAILER: Creating ${user.email}'s ${type} digest for ${freq}`);
-
   if (SEND_NOTIFICATIONS === 'true') {
+    logger.debug(`MAILER: Attempting to create ${user.email}'s ${type} digest for ${freq}`);
+    const toEmails = filterAndDeduplicateEmails([user.email]);
+
+    if (toEmails.length === 0) {
+      return null;
+    }
+    logger.debug(`MAILER: Creating ${user.email}'s ${type} digest for ${freq}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/`;
 
     const templateType = reports && reports.length > 0 ? 'digest' : 'digest_empty';
@@ -647,7 +690,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, templateType),
       message: {
-        to: [user.email],
+        to: toEmails,
       },
       locals: {
         user,
@@ -686,6 +729,12 @@ export const processNotificationQueue = () => {
  * @returns Promise<any>
  */
 export const sendEmailVerificationRequestWithToken = (user, token) => {
+  const toEmails = filterAndDeduplicateEmails([user.email]);
+
+  if (toEmails.length === 0) {
+    return null;
+  }
+
   const email = new Email({
     message: {
       from: process.env.FROM_EMAIL_ADDRESS,
@@ -702,7 +751,7 @@ export const sendEmailVerificationRequestWithToken = (user, token) => {
   return email.send({
     template: path.resolve(emailTemplatePath, 'email_verification'),
     message: {
-      to: [user.email],
+      to: toEmails,
     },
     locals: {
       token,
