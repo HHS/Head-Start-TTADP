@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import EventCards from '../EventCards';
@@ -362,7 +363,7 @@ describe('EventCards', () => {
     button.click(button);
   });
 
-  it('admin see edit and delete event', () => {
+  it('admins see edit and delete event', () => {
     const deleteFunction = jest.fn();
     const collaboratorEvents = [{
       id: 1,
@@ -372,7 +373,7 @@ describe('EventCards', () => {
       pocIds: [4],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: '-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -403,15 +404,15 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
-    button.click(button);
+    const button = screen.getByRole('button', { name: /actions for event -1234/i });
+    userEvent.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
@@ -420,11 +421,11 @@ describe('EventCards', () => {
     // Click delete.
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
     const deleteBtns = screen.queryAllByRole('button', { name: /delete event/i });
-    deleteBtns[0].click();
+    userEvent.click(deleteBtns[0]);
 
     expect(screen.getByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
-    confirmBtn.click();
-    expect(deleteFunction).toHaveBeenCalledWith(1);
+    userEvent.click(confirmBtn);
+    expect(deleteFunction).toHaveBeenCalledWith('1234', 1);
   });
 });
