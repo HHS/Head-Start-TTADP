@@ -31,6 +31,8 @@ function EventCard({
     sessionReports,
   } = event;
 
+  const { eventId } = data;
+  const idForLink = eventId.split('-').pop();
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
@@ -58,7 +60,7 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${event.id}/session/new/`);
+        history.push(`/training-report/${idForLink}/session/new/`);
       },
     });
   }
@@ -68,7 +70,7 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${event.id}/event-summary`);
+        history.push(`/training-report/${idForLink}/event-summary`);
       },
     });
   }
@@ -77,7 +79,7 @@ function EventCard({
   menuItems.push({
     label: 'View event',
     onClick: () => {
-      history.push(`/training-report/view/${event.id}`);
+      history.push(`/training-report/view/${idForLink}`);
     },
   });
 
@@ -96,16 +98,17 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
-  const link = canEditEvent ? `/training-report/${event.id}/event-summary` : `/training-report/view/${event.id}`;
-  const contextMenuLabel = `Actions for event ${event.id}`;
+  // get the last four digits of the event id
+  const link = canEditEvent ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
+  const contextMenuLabel = `Actions for event ${eventId}`;
 
   return (
     <>
       <Modal
         modalRef={modalRef}
         title="Are you sure you want to delete this event?"
-        modalId={`remove-event-modal-${id}`}
-        onOk={async () => onDeleteEvent(id)}
+        modalId={`remove-event-modal-${idForLink}`}
+        onOk={async () => onDeleteEvent(idForLink, id)}
         okButtonText="Delete"
         okButtonAriaLabel="delete event"
       >
@@ -168,14 +171,13 @@ function EventCard({
         {sessionReports.map((s) => (
           <SessionCard
             key={`session_${uuidv4()}`}
-            eventId={id}
+            eventId={idForLink}
             session={s}
             expanded={reportsExpanded}
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
             onRemoveSession={onRemoveSession}
           />
         ))}
-
       </article>
 
     </>
