@@ -853,6 +853,51 @@ describe('create goal', () => {
     expect(endDate.value).toBe('10/08/2021');
   });
 
+  it('objective can be suspended', async () => {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
+      name: 'This is a goal name',
+      status: 'In Progress',
+      endDate: '10/08/2021',
+      goalNumbers: ['G-12389'],
+      isRttapa: null,
+      prompts: [],
+      sources: [],
+      grants: [{
+        id: 1,
+        number: '1',
+        programs: [{
+          programType: 'EHS',
+        }],
+        status: 'Active',
+      }],
+      objectives: [
+        {
+          id: 1238474,
+          title: 'This is an objective',
+          status: 'Not Started',
+          resources: [],
+          topics: [topicsFromApi[0]],
+        },
+      ],
+    }]);
+
+    renderForm(defaultRecipient, '12389');
+    const objectiveStatus = await screen.findByRole('combobox', { name: /objective status/i });
+
+    userEvent.selectOptions(objectiveStatus, 'Suspended');
+    const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
+    userEvent.click(recipientRequestReason);
+
+    const context = await screen.findByLabelText(/Additional context/i);
+    userEvent.type(context, 'This is the context');
+
+    userEvent.click(await screen.findByText(/Submit/i));
+
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+    expect(await screen.findByText(/reason suspended/i)).toBeVisible();
+    expect(await screen.findByText(/recipient request - this is the context/i)).toBeVisible();
+  });
+
   it('draft goals don\'t show status dropdowns', async () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',

@@ -41,6 +41,7 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/users/training-report-users?regionId=1', {
       pointOfContact: [],
       collaborators: [],
+      creators: [],
     });
   });
 
@@ -637,6 +638,7 @@ describe('TrainingReportForm', () => {
     };
 
     fetchMock.get('/api/events/id/1', completedForm);
+
     fetchMock.put('/api/events/id/1', 500);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },

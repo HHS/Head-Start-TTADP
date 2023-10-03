@@ -1,5 +1,6 @@
 import React, {
   useState,
+  useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -8,6 +9,7 @@ import {
   TARGET_POPULATIONS,
   EVENT_TARGET_POPULATIONS,
   REASONS,
+  TRAINING_REPORT_STATUSES,
 } from '@ttahub/common';
 import { useFormContext, Controller } from 'react-hook-form';
 import {
@@ -15,6 +17,7 @@ import {
   Dropdown,
   Fieldset,
   Radio,
+  TextInput,
 } from '@trussworks/react-uswds';
 import MultiSelect from '../../../components/MultiSelect';
 import FormItem from '../../../components/FormItem';
@@ -28,6 +31,8 @@ import {
   eventSummaryFields,
   pageComplete,
 } from '../constants';
+import UserContext from '../../../UserContext';
+import isAdmin from '../../../permissions';
 
 const placeholderText = '- Select -';
 
@@ -74,12 +79,19 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     eventId,
     eventName,
     owner,
+    status,
   } = data;
 
-  const { users: { collaborators, pointOfContact } } = additionalData;
+  const { user } = useContext(UserContext);
+
+  const hasAdminRights = isAdmin(user);
+  const { users: { collaborators, pointOfContact, creators } } = additionalData;
 
   const ownerName = owner && owner.name ? owner.name : '';
 
+  const eventCreatorOptions = !creators
+    ? []
+    : creators.map((o) => ({ value: o.id, label: o.name }));
   return (
     <div className="padding-x-1">
       <Helmet>
@@ -91,13 +103,74 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
         {eventId}
       </ReadOnlyField>
 
-      <ReadOnlyField label="Event name">
-        {eventName}
-      </ReadOnlyField>
+      {hasAdminRights && (status !== TRAINING_REPORT_STATUSES.COMPLETE) ? (
 
-      <ReadOnlyField label="Event creator">
-        {ownerName}
-      </ReadOnlyField>
+        <>
+          <div className="margin-top-2">
+            <FormItem
+              label="Event name "
+              name="eventName"
+              htmlFor="eventName"
+              required
+            >
+              <TextInput
+                id="eventName"
+                name="eventName"
+                type="text"
+                required
+                inputRef={register({ required: 'Enter event name' })}
+              />
+            </FormItem>
+          </div>
+          <div className="margin-top-2" data-testid="creator-select">
+            <Label htmlFor="creatorName">
+              Creator name
+              <Req />
+            </Label>
+            <Controller
+              render={({ onChange: controllerOnChange, value }) => (
+                <Select
+                  value={eventCreatorOptions.find((option) => option.value === value)}
+                  inputId="ownerId"
+                  name="ownerId"
+                  className="usa-select"
+                  styles={selectOptionsReset}
+                  components={{
+                    DropdownIndicator: null,
+                  }}
+                  onChange={(s) => {
+                    controllerOnChange(s.value);
+                  }}
+                  inputRef={register({ required: 'Select an event creator' })}
+                  options={eventCreatorOptions}
+                  required
+                />
+              )}
+              control={control}
+              rules={{
+                validate: (value) => {
+                  if (!value || value.length === 0) {
+                    return 'Select an event organizer';
+                  }
+                  return true;
+                },
+              }}
+              name="ownerId"
+              defaultValue=""
+            />
+          </div>
+        </>
+      )
+        : (
+          <>
+            <ReadOnlyField label="Event name">
+              {eventName}
+            </ReadOnlyField>
+            <ReadOnlyField label="Event creator">
+              {ownerName}
+            </ReadOnlyField>
+          </>
+        )}
 
       <div className="margin-top-2">
         <Label htmlFor="eventOrganizer">
@@ -354,6 +427,7 @@ EventSummary.propTypes = {
     users: PropTypes.shape({
       pointOfContact: PropTypes.arrayOf(PropTypes.shape(userProp)),
       collaborators: PropTypes.arrayOf(PropTypes.shape(userProp)),
+      creators: PropTypes.arrayOf(PropTypes.shape(userProp)),
     }),
   }).isRequired,
   datePickerKey: PropTypes.string.isRequired,

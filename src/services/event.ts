@@ -2,6 +2,7 @@
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+import SCOPES from '../middleware/scopeConstants';
 import { auditLogger } from '../logger';
 import db from '../models';
 import {
@@ -14,6 +15,7 @@ const {
   EventReportPilot,
   SessionReportPilot,
   User,
+  Permission,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -245,6 +247,16 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     regionId,
     data,
   } = request;
+
+  // Get current json owner.
+  const { owner } = event.data;
+  // if owner changes update the json owner.
+  if (owner && ownerId !== event.data.owner.id) {
+    // get the new owner.
+    const newOwner = await User.findByPk(ownerId, { attributes: ['id', 'name', 'email'], raw: true });
+    // update the owner in the data.
+    data.owner = newOwner;
+  }
 
   await EventReportPilot.update(
     {
