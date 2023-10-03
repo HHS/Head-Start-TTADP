@@ -177,7 +177,7 @@ export const deleteHandler = async (req, res) => {
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
-    await destroyEvent(eventId);
+    await destroyEvent(event.id);
     return res.status(httpCodes.OK).send({ message: 'Event deleted' });
   } catch (error) {
     return handleErrors(req, res, error, logContext);

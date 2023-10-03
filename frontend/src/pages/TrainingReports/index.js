@@ -171,13 +171,21 @@ export default function TrainingReports({ match }) {
     }
   };
 
-  const onDeleteEvent = async (eventId) => {
+  /**
+   *
+   * eventId is the number from smartsheet (used in queries)
+   * id is the event id from the DB
+   *
+   * @param {number} eventId
+   * @param {number} id
+   */
+  const onDeleteEvent = async (eventId, id) => {
     try {
       // delete the event
       await deleteEvent(String(eventId));
 
       // update the UI, exclude the deleted event.
-      const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== eventId);
+      const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
 
       // update the events state.
       setDisplayEvents(events);
