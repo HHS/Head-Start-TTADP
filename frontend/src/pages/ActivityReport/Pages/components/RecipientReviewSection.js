@@ -40,6 +40,11 @@ const RecipientReviewSection = () => {
                 {goal.goalNumber && ` (${goal.goalNumber})`}
               </div>
               <div className="margin-top-1">
+                <span className="text-bold">Anticipated close date:</span>
+                {' '}
+                {goal.endDate}
+              </div>
+              <div className="margin-top-1">
                 <>
                   {objectives.map((objective) => (
                     <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
