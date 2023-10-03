@@ -1,6 +1,7 @@
 import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import EventCard from '../EventCard';
@@ -84,11 +85,11 @@ describe('EventCard', () => {
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
 
     // Expand Objectives via click.
-    expBtn.click();
+    userEvent.click(expBtn);
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).not.toBeInTheDocument();
 
     // Collapse Objectives via click.
-    expBtn.click();
+    userEvent.click(expBtn);
     expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
   });
 
@@ -96,7 +97,7 @@ describe('EventCard', () => {
     renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 2, permissions: [] });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
-    contextBtn.click();
+    userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
@@ -106,7 +107,7 @@ describe('EventCard', () => {
     renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete' } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
-    contextBtn.click();
+    userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
   });
@@ -115,7 +116,7 @@ describe('EventCard', () => {
     renderEventCard(defaultEvent, { ...DEFAULT_USER, id: 12 });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
-    contextBtn.click();
+    userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
@@ -152,7 +153,7 @@ describe('EventCard', () => {
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
-    contextBtn.click();
+    userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).toBeNull();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
@@ -162,7 +163,7 @@ describe('EventCard', () => {
   it('hides the delete for events that arent not started or suspended', async () => {
     renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } }, DEFAULT_USER);
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/delete event/i)).not.toBeInTheDocument();
   });
@@ -177,8 +178,8 @@ describe('EventCard', () => {
       ],
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
-    contextBtn.click();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
   });
 
@@ -193,44 +194,44 @@ describe('EventCard', () => {
       ],
     }, onDeleteEvent);
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
-    contextBtn.click();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
 
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
     const deleteBtns = screen.queryAllByRole('button', { name: /delete event/i });
-    deleteBtns[0].click();
+    userEvent.click(deleteBtns[0]);
 
     expect(await screen.findByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
-    confirmBtn.click();
-    expect(onDeleteEvent).toHaveBeenCalledWith(1);
+    userEvent.click(confirmBtn);
+    expect(onDeleteEvent).toHaveBeenCalledWith('1234', 1);
   });
 
   it('calls the appropriate context menu paths', () => {
     history.push = jest.fn();
     renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Not started' } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event 1/i });
-    contextBtn.click();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
 
     // Edit event.
     const editEvent = screen.queryByText(/edit event/i);
     expect(editEvent).toBeInTheDocument();
-    editEvent.click();
-    expect(history.push).toHaveBeenCalledWith('/training-report/1/event-summary');
+    userEvent.click(editEvent);
+    expect(history.push).toHaveBeenCalledWith('/training-report/1234/event-summary');
 
     // Create session.
-    contextBtn.click();
+    userEvent.click(contextBtn);
     const createSession = screen.queryByText(/create session/i);
     expect(createSession).toBeInTheDocument();
-    createSession.click();
-    expect(history.push).toHaveBeenCalledWith('/training-report/1/session/new/');
+    userEvent.click(createSession);
+    expect(history.push).toHaveBeenCalledWith('/training-report/1234/session/new/');
 
     // View event.
     contextBtn.click();
     const viewEvent = screen.queryByText(/view event/i);
     expect(viewEvent).toBeInTheDocument();
-    viewEvent.click();
-    expect(history.push).toHaveBeenCalledWith('/training-report/view/1');
+    userEvent.click(viewEvent);
+    expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
   });
 });
