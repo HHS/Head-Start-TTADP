@@ -23,7 +23,7 @@ const notStartedEvents = [{
   pocIds: [],
   data: {
     eventName: 'Not started event 1',
-    eventId: 'Not started event ID 1',
+    eventId: '-1',
     eventOrganizer: 'Not started event organizer 1',
     reasons: ['New Program/Option', ' New Staff/Turnover', 'Ongoing Quality Improvement', 'School Readiness Goals', 'Emergent Needs'],
     startDate: '01/02/2021',
@@ -39,7 +39,7 @@ const notStartedEvents = [{
   pocIds: [],
   data: {
     eventName: 'Not started event 2',
-    eventId: 'Not started event ID 2',
+    eventId: '-2',
     eventOrganizer: 'Not started event organizer 2',
     startDate: '02/02/2021',
     endDate: '02/03/2021',
@@ -57,7 +57,7 @@ const inProgressEvents = [{
   regionId: 2,
   data: {
     eventName: 'In progress event 1',
-    eventId: 'In progress event ID 1',
+    eventId: '-3',
     eventOrganizer: 'In progress event organizer 1',
     reasons: ['Emergent Needs'],
     startDate: '03/02/2021',
@@ -88,7 +88,7 @@ const completeEvents = [{
   pocIds: [],
   data: {
     eventName: 'Complete event 1',
-    eventId: 'Complete event ID 1',
+    eventId: '-4',
     eventOrganizer: 'Complete event organizer 1',
     reasons: ['New Staff/Turnover'],
     startDate: '04/02/2021',
@@ -105,7 +105,7 @@ const suspendedEvents = [{
   pocIds: [],
   data: {
     eventName: 'suspended event 1',
-    eventId: 'suspended event ID 1',
+    eventId: '-5',
     eventOrganizer: 'suspended event organizer 1',
     reasons: ['New Staff/Turnover'],
     startDate: '05/02/2021',
@@ -173,7 +173,7 @@ describe('TrainingReports', () => {
     fetchMock.restore();
   });
 
-  describe('delete a event', () => {
+  describe('delete an event', () => {
     beforeEach(async () => {
       act(() => {
         renderTrainingReports({
@@ -194,7 +194,7 @@ describe('TrainingReports', () => {
       });
 
       await act(async () => {
-        const button = await screen.findByRole('button', { name: /actions for event 1/i });
+        const button = await screen.findByRole('button', { name: /actions for event -1/i });
         userEvent.click(button);
       });
     });
@@ -295,14 +295,14 @@ describe('TrainingReports', () => {
     // Not started event 1.
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
     expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/not started event ID 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/-1/i)).toBeInTheDocument();
     expect(await screen.findByText(/not started event organizer 1/i)).toBeInTheDocument();
     expect(await screen.findByText('01/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('01/03/2021')).toBeInTheDocument();
 
     // Not started event 2.
     expect(await screen.findByText(/not started event 2/i)).toBeInTheDocument();
-    expect(await screen.findByText(/not started event ID 2/i)).toBeInTheDocument();
+    expect(await screen.findByText(/-2/i)).toBeInTheDocument();
     expect(await screen.findByText(/not started event organizer 2/i)).toBeInTheDocument();
     expect(await screen.findByText('02/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('02/03/2021')).toBeInTheDocument();
@@ -374,7 +374,7 @@ describe('TrainingReports', () => {
     // In progress event 1.
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
     expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/in progress event ID 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/-3/i)).toBeInTheDocument();
     expect(await screen.findByText(/in progress event organizer 1/i)).toBeInTheDocument();
     expect(await screen.findByText('03/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('03/03/2021')).toBeInTheDocument();
@@ -387,7 +387,7 @@ describe('TrainingReports', () => {
     // In complete event 1.
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
     expect(await screen.findByText(/complete event 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/complete event ID 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/-4/i)).toBeInTheDocument();
     expect(await screen.findByText(/complete event organizer 1/i)).toBeInTheDocument();
     expect(await screen.findByText('04/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('04/03/2021')).toBeInTheDocument();
@@ -400,7 +400,7 @@ describe('TrainingReports', () => {
 
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
     expect(await screen.findByText(/suspended event 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/suspended event ID 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/-5/i)).toBeInTheDocument();
     expect(await screen.findByText(/suspended event organizer 1/i)).toBeInTheDocument();
     expect(await screen.findByText('05/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('05/03/2021')).toBeInTheDocument();
