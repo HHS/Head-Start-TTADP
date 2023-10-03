@@ -60,7 +60,7 @@ describe('goalFieldResponseHooks', () => {
       });
 
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
+        id: faker.datatype.number({ min: 133434 }),
         name: faker.name.firstName(),
       });
 
