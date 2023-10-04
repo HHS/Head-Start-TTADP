@@ -21,11 +21,6 @@ DB_HOST = os.environ.get("POSTGRES_HOST") or (vcap_credentials and vcap_credenti
 DB_NAME = os.environ.get("POSTGRES_DB") or (vcap_credentials and vcap_credentials.get('db_name'))
 PORT = (vcap_credentials and vcap_credentials.get('port')) or 5432
 
-print("DB_USERNAME: {}".format(DB_USERNAME))
-print("DB_HOST: {}".format(DB_HOST))
-print("DB_NAME: {}".format(DB_NAME))
-print("PORT: {}".format(PORT))
-
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{PORT}/{DB_NAME}"
 
