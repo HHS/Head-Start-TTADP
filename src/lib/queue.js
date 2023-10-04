@@ -36,10 +36,6 @@ const generateRedisConfig = () => {
     tlsEnabled: false,
     redisOpts: {
       redis: { password },
-      limiter: {
-        max: 1000,
-        duration: 5000,
-      },
     },
   };
 };
