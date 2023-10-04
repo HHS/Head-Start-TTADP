@@ -69,6 +69,7 @@ const renderTable = (user, dateTime) => {
 
 describe('Table menus & selections', () => {
   mockWindowProperty('sessionStorage', {
+
     setItem: jest.fn(),
     getItem: jest.fn(),
     removeItem: jest.fn(),

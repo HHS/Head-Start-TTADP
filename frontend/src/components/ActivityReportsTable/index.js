@@ -13,6 +13,7 @@ import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
+import useQueryStringFromSortConfig from '../../hooks/useQueryStringFromSortConfig';
 
 function ActivityReportsTable({
   filters,
@@ -26,7 +27,6 @@ function ActivityReportsTable({
   const [error, setError] = useState('');
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
-  const [perPage] = useState(REPORTS_PER_PAGE);
   const [reportsCount, setReportsCount] = useState(0);
   const [downloadError, setDownloadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -34,11 +34,11 @@ function ActivityReportsTable({
     sortBy: 'updatedAt',
     direction: 'desc',
     activePage: 1,
+    offset: 0,
+    perPage: REPORTS_PER_PAGE,
   }, 'activityReportsTable');
 
-  const { activePage } = sortConfig;
-
-  const [offset, setOffset] = useState((activePage - 1) * perPage);
+  const queryString = useQueryStringFromSortConfig(sortConfig);
 
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
@@ -46,11 +46,10 @@ function ActivityReportsTable({
   // a side effect that resets the pagination when the filters change
   useEffect(() => {
     if (resetPagination) {
-      setSortConfig({ ...sortConfig, activePage: 1 });
-      setOffset(0); // 0 times perpage = 0
+      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
       setResetPagination(false);
     }
-  }, [activePage, perPage, resetPagination, setResetPagination, setSortConfig, sortConfig]);
+  }, [resetPagination, setResetPagination, setSortConfig, sortConfig]);
 
   useEffect(() => {
     async function fetchReports() {
@@ -58,10 +57,7 @@ function ActivityReportsTable({
       const filterQuery = filtersToQueryString(filters);
       try {
         const { count, rows } = await getReports(
-          sortConfig.sortBy,
-          sortConfig.direction,
-          offset,
-          perPage,
+          queryString,
           filterQuery,
         );
 
@@ -86,7 +82,7 @@ function ActivityReportsTable({
     }
 
     fetchReports();
-  }, [sortConfig, offset, perPage, filters, resetPagination]);
+  }, [filters, resetPagination, queryString]);
 
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
@@ -131,14 +127,16 @@ function ActivityReportsTable({
   const handlePageChange = (pageNumber) => {
     if (!loading) {
       // copy state
-      const sort = { ...sortConfig };
+      const sort = {
+        ...sortConfig,
+        offset: (pageNumber - 1) * sortConfig.perPage,
+      };
 
       // mutate
       sort.activePage = pageNumber;
 
       // store it
       setSortConfig(sort);
-      setOffset((pageNumber - 1) * perPage);
     }
   };
 
@@ -152,8 +150,13 @@ function ActivityReportsTable({
       direction = 'desc';
     }
 
-    setOffset(0);
-    setSortConfig({ sortBy, direction, activePage: 1 });
+    setSortConfig({
+      sortBy,
+      direction,
+      activePage: 1,
+      offset: 0,
+      perPage: REPORTS_PER_PAGE,
+    });
   };
 
   const handleDownloadAllReports = async () => {
@@ -261,9 +264,9 @@ function ActivityReportsTable({
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
           count={reportsCount}
-          activePage={activePage}
-          offset={offset}
-          perPage={perPage}
+          activePage={sortConfig.activePage}
+          offset={sortConfig.offset}
+          perPage={sortConfig.perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
           setDownloadError={setDownloadError}

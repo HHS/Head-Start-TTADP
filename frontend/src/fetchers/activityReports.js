@@ -64,8 +64,8 @@ function combineTopics(report, expandedTopics) {
   return topicsArr;
 }
 
-export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, filters) => {
-  const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
+export const getReports = async (queryString = `sortBy=updatedAt&sortDir=desc&offset=0&limit=${REPORTS_PER_PAGE}`, filters) => {
+  const reports = await get(`${activityReportUrl}?${queryString}${filters ? `&${filters}` : ''}`);
   const json = await reports.json();
   const {
     count, rows: rawRows, recipients, topics,

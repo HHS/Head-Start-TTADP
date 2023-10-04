@@ -32,13 +32,14 @@ export default function useSessionSort(defaultSortConfig, key) {
           const parsedStorage = JSON.parse(currentStorage);
           // this is really just to make sure nothing weird gets in there
           const {
-            sortBy, direction, activePage, offset,
+            sortBy, direction, activePage, offset, perPage,
           } = parsedStorage;
           return {
             sortBy,
             direction,
             offset: parseInt(offset, DECIMAL_BASE),
             activePage: parseInt(activePage, DECIMAL_BASE),
+            perPage: parseInt(perPage, DECIMAL_BASE),
           };
         }
       } catch (error) {

@@ -21,7 +21,7 @@ export const convertToResponse = (
   [isAlerts ? 'alertsCount' : 'count']: count, [isAlerts ? 'alerts' : 'rows']: [], recipients: [], topics: [],
 });
 
-export const withText = (text) => (content, node) => {
+export const withText = (text) => (_content, node) => {
   const hasText = (n) => n.textContent === text;
   const nodeHasText = hasText(node);
   const childrenDontHaveText = Array.from(node.children).every(
