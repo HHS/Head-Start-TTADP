@@ -19,7 +19,7 @@ def create_routes(app: Flask):
           recipient_id = data["recipient_id"]
           text = data["text"]
           return find_similar_goals(recipient_id, text, alpha)
-      elif "text_1" and "text_2" in data:
+      elif "text_1" in data and "text_2" in data:
           text_1 = data["text_1"]
           text_2 = data["text_2"]
           return calculate_string_similarity(text_1, text_2)
