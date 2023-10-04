@@ -146,7 +146,6 @@ const bulkIndex = async (documents, indexName, passedClient) => {
   Search index documents.
 */
 const search = async (indexName, fields, query, passedClient) => {
-  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
@@ -186,7 +185,7 @@ const search = async (indexName, fields, query, passedClient) => {
     };
 
     // Search an index.
-    res = await client.search({
+    const res = await client.search({
       index: indexName,
       body,
     });
@@ -194,11 +193,7 @@ const search = async (indexName, fields, query, passedClient) => {
     return res.body.hits;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to search the index '${indexName}' with query '${query}': ${error.message}`);
-    return {
-      data: query,
-      status: res ? res.statusCode : 500,
-      res: res || { message: error.message },
-    };
+    throw error;
   }
 };
 /*
@@ -234,11 +229,7 @@ const updateIndexDocument = async (job) => {
     return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to update the index '${indexName} for id ${id}': ${error.message}`);
-    return {
-      data: job.data,
-      status: res ? res.statusCode : 500,
-      res: res || { message: error.message },
-    };
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 
@@ -266,11 +257,7 @@ const deleteIndexDocument = async (job) => {
     return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to delete document '${id}' for index '${indexName}': ${error.message}`);
-    return {
-      data: job.data,
-      status: res ? res.statusCode : 500,
-      res: res || { message: error.message },
-    };
+    return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
   }
 };
 
@@ -290,14 +277,10 @@ const deleteIndex = async (indexName, passedClient) => {
     logger.info(`AWS OpenSearch: Successfully deleted index '${indexName}'`);
     return res;
   } catch (error) {
-    const notFound = error.meta.body.error.type === 'index_not_found_exception';
-    if (!notFound) {
+    const alreadyExisted = error.meta.body.error.type === 'index_not_found_exception';
+    if (!alreadyExisted) {
       auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
-      return {
-        data: indexName,
-        status: res ? res.statusCode : 500,
-        res: res || { message: error.message },
-      };
+      throw error;
     }
     return res;
   }
