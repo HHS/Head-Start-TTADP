@@ -23,13 +23,13 @@ const VisionGoal = ({ formData }) => {
   const { user } = useContext(UserContext);
   const { isPoc } = useTrainingReportRole(formData, user.id);
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
+
   if (showReadOnlyView) {
     return (
       <PocCompleteView formData={formData} userId={user.id} reportType="training">
         <Helmet>
           <title>Vision and goal</title>
         </Helmet>
-
         <>
           <ReadOnlyField label="Event vision">
             {formData.vision}
@@ -38,7 +38,6 @@ const VisionGoal = ({ formData }) => {
             {formData.goal}
           </ReadOnlyField>
         </>
-
       </PocCompleteView>
     );
   }
