@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
 import { skipIf } from '../helpers/flowControl';
+import { checkForAttemptToChangeFoiaableValue } from '../helpers/isFlagged';
 
 const autoPopulateOnAR = (sequelize, instance, options) => {
   if (skipIf(options, 'autoPopulateOnAR')) return;
@@ -152,6 +153,10 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnApprovedAR(sequelize, instance, options);
 };
 
+const beforeUpdate = async (sequelize, instance, options) => {
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   if (skipIf(options, 'afterCreate')) return;
   await propagateCreateToTemplate(sequelize, instance, options);
@@ -168,6 +173,7 @@ export {
   propagateCreateToTemplate,
   propagateDestroyToTemplate,
   beforeValidate,
+  beforeUpdate,
   afterCreate,
   afterDestroy,
 };
