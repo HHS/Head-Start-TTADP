@@ -23,7 +23,7 @@ const generateRedisConfig = () => {
         redis: { password, tls: {} },
         limiter: {
           max: 1000,
-          duration: 5000,
+          duration: 300000,
         },
       },
     };
