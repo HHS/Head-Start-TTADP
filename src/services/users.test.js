@@ -296,6 +296,7 @@ describe('Users DB service', () => {
           collaboratorIds: [],
           regionId: [1],
           data: {
+            eventId: `-${eventReportPilotId}`,
           },
           imported: {},
         }),

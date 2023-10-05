@@ -1,8 +1,9 @@
 import { cast } from 'sequelize';
 import db from '../models';
 import { SessionReportShape } from './types/sessionReport';
+import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
-const { SessionReportPilot } = db;
+const { SessionReportPilot, EventReportPilot, SessionReportPilotFile } = db;
 
 const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
@@ -13,12 +14,17 @@ const validateFields = (request, requiredFields) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
+  await SessionReportPilotFile.destroy(
+    { where: { sessionReportPilotId: id } },
+    { individualHooks: true },
+  );
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
 type WhereOptions = {
   id?: number;
   eventId?: number;
+  data?: unknown;
 };
 
 // eslint-disable-next-line max-len
@@ -39,7 +45,7 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
         as: 'files',
       },
       {
-        model: db.EventReportPilot,
+        model: EventReportPilot,
         as: 'event',
       },
     ],
@@ -59,9 +65,20 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     return session;
   }
 
+  const eventId = (() => {
+    if (session.event) {
+      const fullId = session.event.data.eventId;
+      // we need to get the last four digits of the smartsheet provided
+      // event id, which is in the format R01-PD-1037
+      return fullId.substring(fullId.lastIndexOf('-') + 1);
+    }
+
+    return null;
+  })();
+
   return {
     id: session?.id,
-    eventId: session?.eventId,
+    eventId,
     data: session?.data ?? {},
     files: session?.files ?? [],
     updatedAt: session?.updatedAt,
@@ -74,8 +91,14 @@ export async function createSession(request) {
 
   const { eventId, data } = request;
 
+  const event = await findEventByDbId(eventId);
+
+  if (!event) {
+    throw new Error(`Event with id ${eventId} not found`);
+  }
+
   const created = await SessionReportPilot.create({
-    eventId,
+    eventId: event.id,
     data: cast(JSON.stringify(data), 'jsonb'),
   }, {
     individualHooks: true,
@@ -97,9 +120,11 @@ export async function updateSession(id, request) {
 
   const { eventId, data } = request;
 
+  const event = await findEventBySmartsheetIdSuffix(eventId);
+
   await SessionReportPilot.update(
     {
-      eventId,
+      eventId: event.id,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
     {
