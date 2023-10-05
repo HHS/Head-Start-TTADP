@@ -1,5 +1,7 @@
 const { Model } = require('sequelize');
-// const { auditLogger } = require('../logger');
+const {
+  beforeUpdate,
+} = require('./hooks/objectiveTemplateTopic');
 
 /**
    * ObjectiveTopic table. Junction table
@@ -40,6 +42,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateTopic',
+    hooks: {
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+    },
   });
   return ObjectiveTemplateTopic;
 };
