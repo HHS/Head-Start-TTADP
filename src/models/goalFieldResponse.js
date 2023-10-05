@@ -1,6 +1,7 @@
 const { Model } = require('sequelize');
 const {
   beforeValidate,
+  afterUpdate,
 } = require('./hooks/goalFieldResponse');
 
 export default (sequelize, DataTypes) => {
@@ -49,6 +50,7 @@ export default (sequelize, DataTypes) => {
     modelName: 'GoalFieldResponse',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return GoalFieldResponse;
