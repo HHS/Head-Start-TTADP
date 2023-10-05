@@ -401,6 +401,36 @@ const setModelAttributesAsReferenced = async (
   modelId,
 );
 
+//----------------------------------------------------
+
+const getFoiaableColumnsForModel = async (
+  models,
+  model,
+) => models.Foiaable.findAll({
+  attributes: ['column'],
+  where: { table: model.getTableName() },
+  raw: true,
+});
+
+const checkForAttemptToChangeFoiaableValue = async (
+  sequelize,
+  instance,
+  options,
+) => {
+  const foiaableColumns = await getFoiaableColumnsForModel(sequelize.models, instance.constructor);
+
+  const updatedColumns = instance.changed();
+
+  // Check if any updated column matches the foiaable columns
+  const updatedFoiaableColumns = updatedColumns.find((column) => foiaableColumns.includes(column));
+
+  if (updatedFoiaableColumns && updatedFoiaableColumns.length > 0) {
+    throw new Error(`Cannot update foiaable columns (${updatedFoiaableColumns.join(',')}) on table ${instance.constructor.getTableName()}`);
+  }
+};
+
+//----------------------------------------------------
+
 export {
   autoPopulateIsFlagged,
   autoPopulateIsFoiaable,
@@ -412,4 +442,6 @@ export {
   setModelAttributesAsFlagged,
   setModelAttributesAsFoiaable,
   setModelAttributesAsReferenced,
+  getFoiaableColumnsForModel,
+  checkForAttemptToChangeFoiaableValue,
 };
