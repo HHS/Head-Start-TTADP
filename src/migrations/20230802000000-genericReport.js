@@ -70,6 +70,7 @@ module.exports = {
        *  - ReportPageStates
        *
        * additional tables needed to maintain quality data over time and maintain FOIA:
+       * - Foiaable
        * - ValidFor-
        * - Statuses-
        * - Reasons-
@@ -97,6 +98,33 @@ module.exports = {
        * - ObjectiveTopics - isFoiaable
        *  */
 
+      //---------------------------------------------------------------------------------
+      await queryInterface.createTable('Foiaable', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        table: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        column: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.fn('NOW'),
+        },
+      }, { transaction });
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ValidFor', {
         id: {
