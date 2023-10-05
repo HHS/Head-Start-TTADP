@@ -13,7 +13,7 @@ import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
-import useQueryStringFromSortConfig from '../../hooks/useQueryStringFromSortConfig';
+import useUrlSearchParamsFromSortConfig from '../../hooks/useUrlSearchParamsFromSortConfig';
 
 function ActivityReportsTable({
   filters,
@@ -38,7 +38,7 @@ function ActivityReportsTable({
     perPage: REPORTS_PER_PAGE,
   }, 'activityReportsTable');
 
-  const queryString = useQueryStringFromSortConfig(sortConfig);
+  const urlParams = useUrlSearchParamsFromSortConfig(sortConfig);
 
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
@@ -57,7 +57,7 @@ function ActivityReportsTable({
       const filterQuery = filtersToQueryString(filters);
       try {
         const { count, rows } = await getReports(
-          queryString,
+          urlParams.toString(),
           filterQuery,
         );
 
@@ -82,7 +82,7 @@ function ActivityReportsTable({
     }
 
     fetchReports();
-  }, [filters, resetPagination, queryString]);
+  }, [filters, resetPagination, urlParams]);
 
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})

@@ -1,7 +1,6 @@
 import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { get } from './index';
-import { GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../utils';
 
 const recipientUrl = join('/', 'api', 'recipient');
@@ -47,7 +46,13 @@ export const goalsByIdAndRecipient = async (goalIds, recipientId) => {
   return goals.json();
 };
 
-export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, filters, goalIds = []) => {
+export const getRecipientGoals = async (
+  recipientId,
+  regionId,
+  queryString,
+  filters,
+  goalIds = [],
+) => {
   const id = parseInt(recipientId, DECIMAL_BASE);
   if (Number.isNaN(id)) {
     throw new Error('Recipient ID must be a number');
@@ -60,7 +65,8 @@ export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updated
 
   const goalsParam = goalIds.map((goalId) => `goalIds=${goalId}`);
   const recipientGoalsUrl = join(recipientUrl, recipientId, 'region', regionId, 'goals');
-  const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${goalsParam && goalsParam.length ? `&${goalsParam.join('&')}` : ''}${filters ? `&${filters}` : ''}`);
+  const url = `${recipientGoalsUrl}?${queryString}${goalsParam && goalsParam.length ? `&${goalsParam.join('&')}` : ''}${filters ? `&${filters}` : ''}`;
+  const goals = await get(url);
   return goals.json();
 };
 

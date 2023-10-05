@@ -20,6 +20,7 @@ import useSessionSort from '../../hooks/useSessionSort';
 import FilterContext from '../../FilterContext';
 
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
+import useQueryStringFromSortConfig from '../../hooks/useUrlSearchParamsFromSortConfig';
 
 const Graph = memo(GoalStatusChart);
 
@@ -43,12 +44,11 @@ function GoalDataController({
     count: 0,
   });
 
-  const queryString = useRef(filtersToQueryString(filters));
+  const filterQueryString = useRef(filtersToQueryString(filters));
 
   // Page Behavior.
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
 
   const defaultSort = showNewGoals
     ? {
@@ -65,7 +65,10 @@ function GoalDataController({
     ...defaultSort,
     activePage: 1,
     offset: 0,
+    perPage: GOALS_PER_PAGE,
   }, `goalsTable/${recipientId}/${regionId}`);
+
+  const urlParams = useQueryStringFromSortConfig(sortConfig);
 
   useEffect(() => {
     async function fetchGoals(query) {
@@ -74,10 +77,7 @@ function GoalDataController({
         const response = await getRecipientGoals(
           recipientId,
           regionId,
-          sortConfig.sortBy,
-          sortConfig.direction,
-          sortConfig.offset,
-          goalsPerPage,
+          urlParams.toString(),
           query,
         );
         setData(response);
@@ -88,18 +88,21 @@ function GoalDataController({
         setLoading(false);
       }
     }
+
+    if (!urlParams) return;
+
     const filterQuery = filtersToQueryString(filters);
-    if (filterQuery !== queryString.current) {
+    if (filterQuery !== filterQueryString.current) {
       setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
-      queryString.current = filterQuery;
+      filterQueryString.current = filterQuery;
       return;
     }
     fetchGoals(filterQuery);
-  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig, goalsPerPage]);
+  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig, urlParams]);
 
   const handlePageChange = (pageNumber) => {
     setSortConfig({
-      ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * goalsPerPage,
+      ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * sortConfig.perPage,
     });
   };
 
@@ -115,8 +118,8 @@ function GoalDataController({
       ...sortConfig,
       activePage: 1,
       offset: 0,
+      perPage: perPageValue,
     });
-    setGoalsPerPage(perPageValue);
   };
 
   const displayGoals = useMemo(() => (
@@ -148,7 +151,7 @@ function GoalDataController({
           sortConfig={sortConfig}
           setGoals={setGoals}
           loading={loading}
-          perPage={goalsPerPage}
+          perPage={sortConfig.perPage}
           perPageChange={perPageChange}
         />
       </FilterContext.Provider>

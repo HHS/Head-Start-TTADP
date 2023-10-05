@@ -8,6 +8,7 @@ import PrintToPdf from '../../../components/PrintToPDF';
 import './PrintGoals.css';
 
 const OFFSET = 0;
+
 export default function PrintGoals({ location, recipientId, regionId }) {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,22 +21,27 @@ export default function PrintGoals({ location, recipientId, regionId }) {
         sortBy: 'goalStatus',
         direction: 'asc',
         activePage: 1,
-        offset: 0,
+        offset: OFFSET,
       };
 
     const goalIds = location.state && location.state.selectedGoalIds
       ? location.state.selectedGoalIds
       : [];
+
+    const urlParams = new URLSearchParams({
+      sortBy: sortConfig.sortBy,
+      sortDir: sortConfig.direction,
+      offset: 0,
+      limit: 'false',
+    });
+
     async function fetchGoals(query) {
       setLoading(true);
       try {
         const { goalRows } = await getRecipientGoals(
           recipientId,
           regionId,
-          sortConfig.sortBy,
-          sortConfig.direction,
-          OFFSET,
-          false,
+          urlParams.toString(),
           query,
           goalIds,
         );

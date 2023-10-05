@@ -22,6 +22,7 @@ import { getRecipientGoals } from '../../../fetchers/recipient';
 import { createRttapa } from '../../../fetchers/rttapa';
 import GoalsToggle from './components/GoalsToggle';
 import AppLoadingContext from '../../../AppLoadingContext';
+import useUrlSearchParamsFromSortConfig from '../../../hooks/useUrlSearchParamsFromSortConfig';
 
 const FormItem = ({
   label, name, required, errors, children,
@@ -93,24 +94,21 @@ export default function RTTAPA({
   const [showGoals, setShowGoals] = useState(false);
 
   const goalIds = goals.map((g) => g.id);
+  const urlParams = useUrlSearchParamsFromSortConfig({
+    sortBy: 'goalName',
+    direction: 'desc',
+    offset: 0,
+    perPage: 'false',
+  });
 
   useEffect(() => {
     async function getGoals() {
       setIsAppLoading(true);
       try {
-        const sortConfig = {
-          sortBy: 'goalName',
-          direction: 'desc',
-          offset: 0,
-        };
-
         const { goalRows } = await getRecipientGoals(
           recipientId,
           regionId,
-          sortConfig.sortBy,
-          sortConfig.direction,
-          sortConfig.offset,
-          false,
+          urlParams.toString(),
           false,
           initialGoalIds,
         );
@@ -127,7 +125,7 @@ export default function RTTAPA({
         getGoals();
       }
     }
-  }, [initialGoalIds, goals, recipientId, regionId, setIsAppLoading]);
+  }, [initialGoalIds, goals, recipientId, regionId, setIsAppLoading, urlParams]);
 
   const onSubmit = async (data) => {
     if (!goals || !goals.length) {
