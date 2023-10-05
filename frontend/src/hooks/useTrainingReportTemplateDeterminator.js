@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useRef } from 'react';
 
 /**
  * Determine whether to show the POC complete view or the form.
@@ -7,5 +7,6 @@ import { useMemo } from 'react';
  */
 export default function useTrainingReportTemplateDeterminator(formData, isPoc) {
   // eslint-disable-next-line max-len
-  return useMemo(() => isPoc && formData.pocComplete && formData.pocCompleteId && formData.pocCompleteDate, [formData.pocComplete, formData.pocCompleteDate, formData.pocCompleteId, isPoc]);
+  const ref = useRef(isPoc && formData.pocComplete && formData.pocCompleteId && formData.pocCompleteDate);
+  return ref.current;
 }
