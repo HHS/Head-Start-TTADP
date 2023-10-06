@@ -5,6 +5,7 @@ const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
+  beforeDestroy,
   afterUpdate,
   afterCreate,
 } = require('./hooks/objective');
@@ -147,8 +148,9 @@ export default (sequelize, DataTypes) => {
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
