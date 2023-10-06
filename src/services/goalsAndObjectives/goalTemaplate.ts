@@ -53,17 +53,15 @@ const distributeGoalFromGoalTemplate = async (
   goalTemplateId: number,
   recipientGrants: { recipeintId: number, grantId: number }[],
 ) => {
+  // TODO: question? should the code explicitly prevent execution by anything other then the worker?
   /**  TODO:
   * 1: in parallel
   *   Locate GoalTemplate
   *   check that each of the grants is active
-  * 3. call syncGoals for all of the grants that are still still active
-  * 4. return a structure
-  * {
-  *   recipientId,
-  *   grantId,
-  *   goalId,
-  * }[]  */
+  * 3. call syncGoals for all of the grants that are still active
+  */
+  // TODO: if a recipient grant was active when added to a report but was replaced prior to the
+  // report being approved, should the goal be placed on the replacing grant?
   const [
     goalTemplate,
     activeGrants,
@@ -86,18 +84,18 @@ const distributeGoalFromGoalTemplate = async (
   const goalTemplateToGoalRemapDef = {
     id: 'goalTemplateId',
     templateName: 'name',
+    goalTemplateResources: 'goalResources',
   };
   const { mapped, unmapped } = remap(
     goalTemplate,
     goalTemplateToGoalRemapDef,
     { keepUnmappedValues: true },
   );
-  return Promise.all(
-    activeGrants.map((async ({ id: grantId }) => syncGoals(
-      grantId,
-      mapped,
-    ))),
-  );
+
+  return syncGoals(activeGrants.map((async ({ id: grantId }) => ({
+    grantId,
+    ...mapped,
+  }))));
 };
 
 export {
