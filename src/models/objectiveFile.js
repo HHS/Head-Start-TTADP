@@ -1,8 +1,9 @@
 const { Model } = require('sequelize');
 const {
   beforeValidate,
-  afterCreate,
+  beforeUpdate,
   beforeDestroy,
+  afterCreate,
   afterDestroy,
 } = require('./hooks/objectiveFile');
 
@@ -51,8 +52,9 @@ export default (sequelize, DataTypes) => {
     modelName: 'ObjectiveFile',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
