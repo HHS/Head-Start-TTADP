@@ -1,7 +1,13 @@
 import { AUTOMATIC_CREATION } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
+import { skipIf } from '../helpers/flowControl';
+import {
+  checkForAttemptToChangeFoiaableValue,
+  checkForAttemptToRemoveFoiaableValue,
+  autoPopulateFlag,
+} from '../helpers/isFlagged';
 
-const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');
+import { cleanupOrphanFiles } from '../helpers/orphanCleanupHelper';
 
 // When a new file is added to an objective, add the file to the template or update the
 // updatedAt value.
@@ -114,6 +120,19 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
   }
 };
 
+const beforeValidate = async (sequelize, instance, options) => {
+  if (skipIf(options, 'beforeValidate')) return;
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await propagateCreateToTemplate(sequelize, instance, options);
 };
@@ -123,6 +142,7 @@ const beforeDestroy = async (sequelize, instance, options) => {
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
+  await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
   await propagateDestroyToFile(sequelize, instance, options);
   await cleanupOrphanFiles(sequelize, instance.fileId);
 };
@@ -131,6 +151,8 @@ export {
   propagateCreateToTemplate,
   propagateDestroyToTemplate,
   checkForUseOnApprovedReport,
+  beforeValidate,
+  beforeUpdate,
   afterCreate,
   beforeDestroy,
   afterDestroy,
