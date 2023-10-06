@@ -1,4 +1,10 @@
 const {
+  REASONS,
+  TARGET_POPULATIONS,
+  EVENT_TARGET_POPULATIONS,
+} = require('@ttahub/common');
+
+const {
   prepMigration,
 } = require('../lib/migration');
 
@@ -20,6 +26,7 @@ module.exports = {
         -- Add new statuses for reports
         -- Add Reasons
         -- Add TargetPopulations
+        -- Add Organizers
         ----- REPORTS -----
         -- Insert Report records
         -- Create a mapping table
@@ -29,6 +36,7 @@ module.exports = {
         -- Populate ReportParticipation
         -- Populate ReportNextSteps
         -- Populate ReportPageStates
+        -- Populate ReportImports
         ----- REPORT LINK TABLES ------
         -- Skip ReportApprovals: no approvals for TRs
         -- Insert ReportCollaborators
@@ -37,10 +45,20 @@ module.exports = {
         -- Insert ReportFiles from SessionReportPilotFiles
         -- Insert ReportNationalCenters
         -- Insert ReportReasons
-        -- Insert ReportPageStates
-        ----- GOAL TEMPLATES ------
-        -- How
+        -- Insert ReportTargetPopulations
+        -- Insert ReportRecipients
+        ----- GOALS ------
+        -- Find or insert GoalTemplates text for region
+        -- Find or insert Goals for session Grants
+        -- Insert ReportGoals
         ----- OBJECTIVES ------
+        -- Find or insert Objectives for sessions
+        -- Insert ObjectiveTopics
+        -- Insert ObjectiveResources
+        -- Find or insert ObjectiveTemplates text for region on complete session
+        -- Insert ObjectiveTemplateTopics
+        -- Insert ObjectiveTemplateResources
+        -- 
 
 
         ----- Populate dimensional tables -----
@@ -70,92 +88,54 @@ module.exports = {
         WHERE LEFT(name, 6) = 'report'
         ;
         -- Add new Reasons
-        INSERT INTO "Reasons" (
+        INSERT INTO "Reasons"(
           name,
           "validForId",
           "createdAt",
           "updatedAt"
         )
         SELECT
-          'Below Competitive Threshold (CLASS)',
+          s.name,
           1,
           NOW(),
           NOW()
-        UNION
-        SELECT  'Below Quality Threshold (CLASS)', 1, NOW(), NOW()
-        UNION
-        SELECT  'Change in Scope', 1, NOW(), NOW()
-        UNION
-        SELECT  'Child Incident', 1, NOW(), NOW()
-        UNION
-        SELECT  'Complaint', 1, NOW(), NOW()
-        UNION
-        SELECT  'COVID-19 response', 1, NOW(), NOW()
-        UNION
-        SELECT  'Full Enrollment', 1, NOW(), NOW()
-        UNION
-        SELECT  'New Recipient', 1, NOW(), NOW()
-        UNION
-        SELECT  'New Director or Management', 1, NOW(), NOW()
-        UNION
-        SELECT  'New Program Option', 1, NOW(), NOW()
-        UNION
-        SELECT  'New Staff / Turnover', 1, NOW(), NOW()
-        UNION
-        SELECT  'Ongoing Quality Improvement', 1, NOW(), NOW()
-        UNION
-        SELECT  'Planning/Coordination (also TTA Plan Agreement)', 1, NOW(), NOW()
-        UNION
-        SELECT  'School Readiness Goals', 1, NOW(), NOW()
-        UNION
-        SELECT  'Monitoring | Area of Concern', 1, NOW(), NOW()
-        UNION
-        SELECT  'Monitoring | Noncompliance', 1, NOW(), NOW()
-        UNION
-        SELECT  'Monitoring | Deficiency', 1, NOW(), NOW()
+        FROM UNNEST(ARRAY[
+          ${REASONS.map((reasons) => `'${reasons}'`).join(',\n')}
+        ]) s(name)
         ;
 
         -- Add new TargetPopulations
-        INSERT INTO "TargetPopulations" (
+        INSERT INTO "TargetPopulations"(
           name,
           "validForId",
           "createdAt",
           "updatedAt"
         )
         SELECT
-          'Infants and Toddlers (ages birth to 3)',
+          s.name,
+          1,
+          NOW(),
+          NOW()
+        FROM UNNEST(ARRAY[
+          ${TARGET_POPULATIONS.map((tp) => `'${tp}'`).join(',\n')},
+          ${EVENT_TARGET_POPULATIONS.map((etp) => `'${etp}'`).join(',\n')}
+        ]) s(name)
+        ;
+
+        INSERT INTO "Organizers" (
+          name,
+          "validForId",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          'Regional PD Event (with National Centers)',
           1,
           NOW(),
           NOW()
         UNION
-        SELECT  'Preschool (ages 3-5)', 1, NOW(), NOW()
-        UNION
-        SELECT  'Pregnant Women', 1, NOW(), NOW()
-        UNION
-        SELECT  'Affected by Child Welfare Involvement', 1, NOW(), NOW()
-        UNION
-        SELECT  'Affected by Disaster', 1, NOW(), NOW()
-        UNION
-        SELECT  'Affected by Substance Use', 1, NOW(), NOW()
-        UNION
-        SELECT  'Children Experiencing Homelessness', 1, NOW(), NOW()
-        UNION
-        SELECT  'Children with Disabilities', 1, NOW(), NOW()
-        UNION
-        SELECT  'Children with Special Health Care Needs', 1, NOW(), NOW()
-        UNION
-        SELECT  'Dual-Language Learners', 1, NOW(), NOW()
-        UNION
-        SELECT  'Program Staff', 1, NOW(), NOW()
-        UNION
-        SELECT  'Children/Families affected by systemic discrimination/bias/exclusion', 1, NOW(), NOW()
-        UNION
-        SELECT  'Children/Families affected by traumatic events', 1, NOW(), NOW()
-        UNION
-        SELECT  'Parents/Families impacted by health disparities', 1, NOW(), NOW()
+        SELECT 'IST TTA/Visit', 1, NOW(), NOW()
         ;
-
-        
 
         ------ Collect all reports that will generate report IDs
         DROP TABLE IF EXISTS interim_reports;
@@ -220,11 +200,12 @@ module.exports = {
         SET reports_id = id
         FROM "Reports" r
         WHERE (string_to_array(r.context, 'XYX'))[2]::integer = pilot_record_id
+          AND r."reportTypeId" = interim_reports."reportTypeId" 
         ;
 
         -- Set Reports.context back to its normal values
         UPDATE "Reports"
-        SET context = NULLIF((string_to_array(context, 'XYX'))[1], 'null'
+        SET context = NULLIF((string_to_array(context, 'XYX'))[1], 'null')
         ;
 
       
@@ -235,14 +216,28 @@ module.exports = {
           "eventId",
           name,
           "organizerId",
-          audience,
           "trainingType",
           vision,
           "createdAt",
           "updatedAt"
         )
         SELECT
+          ir.reports_id,
+          RIGHT(SPLIT_PART(erp.data->>'eventId','-',1),2)::int,
+          erp.data->>'eventId',
+          erp.data->>'eventName',
+          org.id,
+          COALESCE(erp.data->>'trainingType', 'Series')::"enum_ReportTrainingEvents_trainingType",
+          erp.data->>'vision',
+          erp."createdAt",
+          erp."updatedAt"
         FROM "EventReportPilots" erp
+        JOIN interim_reports ir
+          ON erp.id = pilot_record_id
+          AND "reportTypeId" = 1
+        JOIN "Organizers" org
+          ON erp.data->>'eventOrganizer' = org.name
+        ;
 
         INSERT INTO "ReportTrainingSessions"(
           "reportId",
@@ -253,15 +248,265 @@ module.exports = {
           "updatedAt"
         )
         SELECT
-          
+          ir.reports_id,
+          ir_events.reports_id,
+          (srp.data->>'regionId')::int,
+          srp.data->>'eventName',
+          srp."createdAt",
+          srp."updatedAt"
         FROM "SessionReportPilots" srp
         JOIN interim_reports ir
-          ON pilot_record_id = srp.id
-          AND ir."reportTypeId" = 2
-        JOIN "Reports" r
           ON srp.id = pilot_record_id
+          AND ir."reportTypeId" = 2
+        JOIN interim_reports ir_events
+          ON srp.data->>'eventDisplayId' = ir_events.data->>'eventId'
+          AND ir_events."reportTypeId" = 1
+        ;
 
-        --
+        ----- REPORT TABLE EXTENSIONS -----
+        -- Populate ReportParticipation
+        -- Note: "inpersonParticipantCount" & "virtualParticipantCount"
+        -- are for future use and aren't populated in pilot TRs
+        INSERT INTO "ReportParticipation" (
+          "reportId",
+          "participantCount",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          (data->>'numberOfParticipants')::int,
+          "createdAt",
+          "updatedAt"
+        FROM interim_reports
+        WHERE NULLIF(data->>'numberOfParticipants','') IS NOT NULL
+        ;
+
+        -- Populate ReportNextSteps
+        -- TODO swap in interpolations
+        INSERT INTO "ReportNextSteps" (
+          "reportId",
+          note,
+          "noteType",
+          "completedDate",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          data->'recipientNextSteps'->0->>'note',
+          'RECIPIENT'::"enum_ReportNextSteps_noteType",
+          -- '${NEXTSTEP_NOTETYPE.RECIPIENT}'::"enum_ReportNextSteps_noteType",
+          TO_DATE(NULLIF((data->'recipientNextSteps'->0->>'completeDate'),''),'MM/DD/YYYY'),
+          "createdAt",
+          "updatedAt"
+        FROM interim_reports
+        WHERE COALESCE((data->'recipientNextSteps'->0->>'note'),'') != ''
+        UNION
+        SELECT
+          reports_id,
+          data->'specialistNextSteps'->0->>'note',
+          'SPECIALIST'::"enum_ReportNextSteps_noteType",
+          -- '${NEXTSTEP_NOTETYPE.SPECIALIST}'::"enum_ReportNextSteps_noteType",
+          TO_DATE(NULLIF((data->'specialistNextSteps'->0->>'completeDate'),''),'MM/DD/YYYY'),
+          "createdAt",
+          "updatedAt"
+        FROM interim_reports
+        WHERE COALESCE((data->'specialistNextSteps'->0->>'note'),'') != ''
+        ;
+
+        -- Populate ReportPageStates
+        INSERT INTO "ReportPageStates" (
+          "reportId",
+          "pageState",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          data->'pageState',
+          "createdAt",
+          "updatedAt"
+        FROM interim_reports
+        WHERE data->'pageState' IS NOT NULL
+        ;
+
+        -- Populate ReportImports
+        INSERT INTO "ReportImports" (
+          "reportId",
+          data,
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          erp.imported,
+          erp."createdAt",
+          erp."updatedAt"
+        FROM "EventReportPilots" erp
+        JOIN interim_reports ir
+          ON pilot_record_id = erp.id
+        WHERE imported IS NOT NULL
+        ;
+
+        ----- REPORT LINK TABLES ------
+
+        -- Skip ReportApprovals: no approvals for TRs
+
+        -- Reused Collaborator tables
+        DROP TABLE IF EXISTS owner_status;
+        CREATE TEMP TABLE owner_status
+        AS
+        SELECT s.id sid
+        FROM "Statuses" s
+        JOIN "ValidFor" v
+          ON s."validForId" = v.id
+          AND v.name = 'collaborator'
+        WHERE s.name = 'approved' -- TODO: this is terminal, which could lock editing, but the others statuses make even less sense for events
+        ;
+        DROP TABLE IF EXISTS obj_trainers;
+        CREATE TEMP TABLE obj_trainers
+        AS
+        SELECT
+          reports_id rs_id,
+          jsonb_array_elements(data->'objectiveTrainers')->>0 nationaltrainer,
+          split_part((jsonb_array_elements(data->'objectiveTrainers')->>0), ', ',2) trainername
+        FROM interim_reports
+        ;
+
+        -- Insert ReportCollaborators
+        INSERT INTO "ReportCollaborators" (
+          "reportId",
+          "userId",
+          "statusId",
+          note,
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          u.id,
+          os.sid,
+          'EventReportPilots.data->creator',
+          ir."createdAt",
+          ir."updatedAt"
+        FROM interim_reports ir
+        JOIN "Users" u
+          ON LOWER(ir.data->>'creator') = LOWER(u.email)
+        CROSS JOIN owner_status os
+        UNION
+        SELECT
+          reports_id,
+          u.id,
+          os.sid,
+          'SessionReportPilots.data->objectiveTrainers',
+          ir."createdAt",
+          ir."updatedAt"
+        FROM interim_reports ir
+        JOIN obj_trainers ot
+          ON ot.rs_id = ir.reports_id
+        JOIN "Users" u
+          ON LOWER(u.name) = LOWER(ot.trainername)
+        CROSS JOIN owner_status os
+        ;
+
+        -- Insert ReportCollaboratorRoles
+        -- TODO: confirm roles are not relevant in TR context
+
+        -- Insert ReportCollaboratorTypes
+        -- TODO: add in the type links
+
+        -- Insert ReportFiles from SessionReportPilotFiles
+        INSERT INTO "ReportFiles" (
+          "reportId",
+          "fileId",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          srpf."fileId",
+          srpf."createdAt",
+          srpf."updatedAt"
+        FROM "SessionReportPilotFiles" srpf
+        JOIN interim_reports ir
+          ON "sessionReportPilotId" = pilot_record_id
+          AND "reportTypeId" = 2
+        ;
+
+        -- Insert ReportNationalCenters
+        INSERT INTO "ReportNationalCenters" (
+          "reportId",
+          "nationalCenterId",
+          "actingAs",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          nc.id,
+          'trainer',
+          ir."createdAt",
+          ir."updatedAt"
+        FROM interim_reports ir
+        JOIN obj_trainers ot
+          ON ot.rs_id = ir.reports_id
+        JOIN "NationalCenters" nc
+          ON ot.nationaltrainer = nc.name
+        ;
+
+        -- Insert ReportReasons
+        INSERT INTO "ReportReasons" (
+          "reportId",
+          "reasonId",
+          "createdAt",
+          "updatedAt"
+        )
+        WITH reasonparts AS (
+          SELECT
+            reports_id rs_id,
+            jsonb_array_elements(data->'reasons') rp
+          FROM interim_reports
+          WHERE data->'reasons' IS NOT NULL
+        ),
+        joined_reasons AS (
+          SELECT
+            rs_id,
+            string_agg(rp->>0,' | ') jr
+          FROM reasonparts
+          WHERE rp->>0 != ''
+          GROUP BY 1
+        ),
+        reclipped_reasons AS (
+          SELECT
+            rs_id,
+            UNNEST(string_to_array(jr,E'\n')) rr
+          FROM joined_reasons
+        ),
+        corrected_reasons AS (
+          SELECT
+            rs_id,
+            CASE rr
+              WHEN 'New Staff/Turnover' THEN 'New Staff / Turnover'
+              WHEN 'Child Incidents' THEN 'Child Incident'
+              WHEN 'New Program/Option' THEN 'New Program Option'
+              ELSE rr
+            END AS reason
+          FROM reclipped_reasons 
+        )
+        SELECT
+          reports_id,
+          r.id,
+          ir."createdAt",
+          ir."updatedAt"
+        FROM interim_reports ir
+        JOIN corrected_reasons cr
+          ON reports_id = rs_id
+        JOIN "Reasons" r
+          ON cr.reason = r.name
+        ;
+
+        -- Insert ReportTargetPopulations
         INSERT INTO "ReportTargetPopulations" (
           "reportId",
           "targetPopulationId",
@@ -270,21 +515,95 @@ module.exports = {
         )
         WITH unnested_target_populations AS (
         SELECT
-          id,
+          reports_id,
+          "createdAt",
+          "updatedAt",
           UNNEST(
             string_to_array(jsonb_array_elements_text(data->'targetPopulations'),E'\n')
-          ) target_population
-        FROM "EventReportPilots" erp
+          ) target_population_name
+        FROM interim_reports erp
         )
         SELECT
           reports_id,
-          utp.id,
+          tp.id,
+          utp."createdAt",
+          utp."updatedAt"
+        FROM "TargetPopulations" tp
+        JOIN unnested_target_populations utp
+          ON tp.name = utp.target_population_name
+        ;
+        
+        -- Insert ReportRecipients
+        INSERT INTO "ReportRecipients" (
+          "reportId",
+          "grantId",
           "createdAt",
           "updatedAt"
-        FROM unnested_target_populations utp
-        JOIN interim_reports ir
-          ON utp.id = ir.pilot_record_id
+        )
+        SELECT
+          reports_id,
+          ((jsonb_array_elements(data->'recipients'))->>'value')::bigint,
+          "createdAt",
+          "updatedAt"
+        FROM interim_reports
+        WHERE data->'recipients' IS NOT NULL
         ;
+
+
+        ----- GOALS ------
+        -- Find or insert GoalTemplates text for region
+        -- There's really only the one goal in recent data, so not getting real fancy on the deduping logic here
+        INSERT INTO "GoalTemplates" (
+          hash,
+          "templateName",
+          "regionId",
+          "creationMethod",
+          "createdAt",
+          "updatedAt",
+          "lastUsed",
+          "templateNameModifiedAt"
+        )
+        WITH newgoaltexts AS (
+          SELECT
+            rte."regionId",
+            TRIM(LOWER(data->>'goal')) newgoaltext
+          FROM interim_reports ir
+          JOIN "ReportTrainingEvents" rte
+            ON ir.reports_id = rte."reportId"
+          WHERE NULLIF((data->>'goal'),'') IS NOT NULL
+          EXCEPT
+          SELECT
+            "regionId",
+            TRIM(LOWER("templateName"))
+          FROM "GoalTemplates"
+        )
+        SELECT
+          MD5(data->>'goal'),
+          data->>'goal',
+          rte."regionId",
+          'Automatic', -- TODO: check if this should be considered a Curated goal
+          ir."createdAt",
+          ir."updatedAt",
+          ir."updatedAt",
+          ir."createdAt"
+        FROM interim_reports ir
+        JOIN "ReportTrainingEvents" rte
+          ON ir.reports_id = rte."reportId"
+        JOIN newgoaltexts n
+          ON TRIM(LOWER(ir.data->>'goal')) = newgoaltext
+          AND n."regionId" = rte."regionId"
+        ;
+
+        -- Create Goals for session Grants
+
+
+        /*
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        */
 
 
 

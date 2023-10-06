@@ -216,7 +216,7 @@ const COLLABORATOR_APPROVAL_STATUSES = {
 };
 
 const TRAINING_TYPE = {
-  SERIES: 'series',
+  SERIES: 'Series',
 };
 
 const AUDIENCE = {
