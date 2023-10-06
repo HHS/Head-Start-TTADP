@@ -55,6 +55,7 @@ import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import useGaUserData from './hooks/useGaUserData';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -74,34 +75,7 @@ function App() {
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
 
-  useEffect(() => {
-    try {
-      if (!user) {
-        return;
-      }
-      if (window.dataLayer && Array.isArray(window.dataLayer)) {
-        const eventNames = window.dataLayer.map((item) => item.event);
-        if (eventNames.includes('userData')) {
-          return;
-        }
-
-        if (!user.id || !user.roles) {
-          return;
-        }
-
-        const event = {
-          event: 'userData',
-          user_id: user.id,
-          user_roles: user.roles,
-        };
-
-        window.dataLayer.push(event);
-      }
-    } catch (err) {
-    // eslint-disable-next-line no-console
-      console.log('Error sending user data to Google Analytics', err);
-    }
-  }, [user]);
+  useGaUserData(user);
 
   useEffect(() => {
     try {
