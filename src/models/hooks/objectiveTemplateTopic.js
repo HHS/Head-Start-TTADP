@@ -10,8 +10,6 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  autoPopulateFlag(sequelize, instance, options, 'onAR');
-  autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
   autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
   autoPopulateFlag(sequelize, instance, options, 'isReferenced');
 };
