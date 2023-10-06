@@ -163,6 +163,7 @@
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
+    "@testing-library/react-hooks": "^8.0.1",
     "cross-env": "^7.0.2",
     "eslint": "^7.20.0",
     "eslint-config-airbnb": "^18.2.0",
