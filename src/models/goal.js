@@ -4,6 +4,7 @@ const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
   beforeUpdate,
+  beforeDestroy,
   afterCreate,
   afterUpdate,
 } = require('./hooks/goal');
@@ -174,6 +175,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
