@@ -1,5 +1,10 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/objectiveTemplateFile');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+  afterDestroy,
+} = require('./hooks/objectiveTemplateFile');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveTemplateFile extends Model {
@@ -35,6 +40,9 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ObjectiveTemplateFile',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
