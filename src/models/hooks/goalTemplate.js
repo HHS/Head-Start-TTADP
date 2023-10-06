@@ -1,5 +1,10 @@
-const { Op } = require('sequelize');
-const { AUTOMATIC_CREATION } = require('../../constants');
+import { Op } from 'sequelize';
+import { AUTOMATIC_CREATION } from '../../constants';
+import {
+  checkForAttemptToChangeFoiaableValue,
+  checkForAttemptToRemoveFoiaableValue,
+  autoPopulateFlag,
+} from '../helpers/isFlagged';
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -72,14 +77,24 @@ const propagateTemplateName = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
   autoPopulateHash(sequelize, instance, options);
   autoPopulateTemplateNameModifiedAt(sequelize, instance, options);
   autoPopulateCreationMethod(sequelize, instance, options);
 };
 
-const beforeUpdate = (sequelize, instance, options) => {
+const beforeUpdate = async (sequelize, instance, options) => {
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
   autoPopulateHash(sequelize, instance, options);
   autoPopulateTemplateNameModifiedAt(sequelize, instance, options);
+};
+
+const beforeDestroy = async (sequelize, instance, options) => {
+  await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -99,6 +114,7 @@ export {
   propagateTemplateName,
   beforeValidate,
   beforeUpdate,
+  beforeDestroy,
   afterCreate,
   afterUpdate,
 };
