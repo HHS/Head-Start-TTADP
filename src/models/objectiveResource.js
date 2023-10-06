@@ -1,6 +1,12 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/objectiveResource');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+  afterCreate,
+  afterDestroy,
+} = require('./hooks/objectiveResource');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveResource extends Model {
@@ -73,6 +79,8 @@ export default (sequelize, DataTypes) => {
     modelName: 'ObjectiveResource',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
