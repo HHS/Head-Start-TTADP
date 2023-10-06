@@ -46,10 +46,17 @@ describe('SessionCard', () => {
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
-  it('hides edit link', () => {
+  it('hides edit link based on permissions', () => {
     renderSessionCard(defaultSession, false);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+  });
+
+  it('hides edit link if session is complete', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete session/i)).not.toBeInTheDocument();
   });
 
   it('shows the edit link with the correct permissions', () => {
