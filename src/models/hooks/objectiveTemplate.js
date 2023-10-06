@@ -1,5 +1,11 @@
 import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
+import { skipIf } from '../helpers/flowControl';
+import {
+  checkForAttemptToChangeFoiaableValue,
+  checkForAttemptToRemoveFoiaableValue,
+  autoPopulateFlag,
+} from '../helpers/isFlagged';
 
 const autoPopulateHash = (sequelize, instance, options) => {
   const changed = instance.changed();
@@ -63,14 +69,25 @@ const propagateTemplateTitle = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = (sequelize, instance, options) => {
+  if (skipIf(options, 'beforeValidate')) return;
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
   autoPopulateHash(sequelize, instance, options);
   autoPopulateTemplateTitleModifiedAt(sequelize, instance, options);
   autoPopulateCreationMethod(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
   autoPopulateHash(sequelize, instance, options);
   autoPopulateTemplateTitleModifiedAt(sequelize, instance, options);
+};
+
+const beforeDestroy = async (sequelize, instance, options) => {
+  await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -83,5 +100,6 @@ export {
   propagateTemplateTitle,
   beforeValidate,
   beforeUpdate,
+  beforeDestroy,
   afterUpdate,
 };
