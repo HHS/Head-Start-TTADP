@@ -2,7 +2,12 @@
 import { DataTypes } from 'sequelize';
 import { collectURLsFromField, findOrCreateResources } from '../resource';
 import { REPORT_TYPE } from '../../constants';
-import { filterDataToModel, collectChangedValues, includeToFindAll, getColumnNamesFromModelForType } from '../../lib/modelUtils';
+import {
+  filterDataToModel,
+  collectChangedValues,
+  includeToFindAll,
+  getColumnNamesFromModelForType,
+} from '../../lib/modelUtils';
 import db from '../../models';
 
 const {
