@@ -1,6 +1,8 @@
 const { Model } = require('sequelize');
 const {
+  beforeValidate,
   beforeUpdate,
+  beforeDestroy,
 } = require('./hooks/objectiveTemplateTopic');
 
 /**
@@ -43,7 +45,9 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ObjectiveTemplateTopic',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
     },
   });
   return ObjectiveTemplateTopic;
