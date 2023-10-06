@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { syncReportParticipationParticipants, includeReportParticipationParticipants } from './reportParticipationParticipant';
 import { REPORT_TYPE } from '../../constants';
 import db from '../../models';
