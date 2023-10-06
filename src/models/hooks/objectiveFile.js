@@ -2,32 +2,13 @@ import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 import { skipIf } from '../helpers/flowControl';
+import {
+  checkForAttemptToChangeFoiaableValue,
+  checkForAttemptToRemoveFoiaableValue,
+  autoPopulateFlag,
+} from '../helpers/isFlagged';
 
-const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');
-
-const autoPopulateOnAR = (sequelize, instance, options) => {
-  if (skipIf(options, 'autoPopulateOnAR')) return;
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.onAR === undefined
-    || instance.onAR === null) {
-    instance.set('onAR', false);
-    if (!options.fields.includes('onAR')) {
-      options.fields.push('onAR');
-    }
-  }
-};
-
-const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
-  if (skipIf(options, 'autoPopulateOnApprovedAR')) return;
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.onApprovedAR === undefined
-    || instance.onApprovedAR === null) {
-    instance.set('onApprovedAR', false);
-    if (!options.fields.includes('onApprovedAR')) {
-      options.fields.push('onApprovedAR');
-    }
-  }
-};
+import { cleanupOrphanFiles } from '../helpers/orphanCleanupHelper';
 
 // When a new file is added to an objective, add the file to the template or update the
 // updatedAt value.
@@ -174,8 +155,10 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  autoPopulateOnAR(sequelize, instance, options);
-  autoPopulateOnApprovedAR(sequelize, instance, options);
+  autoPopulateFlag(sequelize, instance, options, 'onAR');
+  autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -183,9 +166,14 @@ const afterCreate = async (sequelize, instance, options) => {
   await propagateCreateToTemplate(sequelize, instance, options);
 };
 
+const beforeUpdate = async (sequelize, instance, options) => {
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
+};
+
 const beforeDestroy = async (sequelize, instance, options) => {
   if (skipIf(options, 'beforeDestroy')) return;
-  await checkForUseOnApprovedReport(sequelize, instance, options);
+  await checkForUseOnApprovedReport(sequelize, instance, options); // TODO: check to see if this can be removed
+  await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
@@ -196,12 +184,11 @@ const afterDestroy = async (sequelize, instance, options) => {
 };
 
 export {
-  autoPopulateOnAR,
-  autoPopulateOnApprovedAR,
   propagateCreateToTemplate,
   checkForUseOnApprovedReport,
   propagateDestroyToTemplate,
   beforeValidate,
+  beforeUpdate,
   afterCreate,
   beforeDestroy,
   afterDestroy,
