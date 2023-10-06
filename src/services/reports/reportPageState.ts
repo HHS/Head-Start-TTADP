@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import merge from 'deepmerge';
 import { REPORT_TYPE } from '../../constants';
 import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
