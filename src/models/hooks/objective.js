@@ -1,5 +1,10 @@
 import { Op } from 'sequelize';
 import { OBJECTIVE_STATUS } from '../../constants';
+import {
+  checkForAttemptToChangeFoiaableValue,
+  checkForAttemptToRemoveFoiaableValue,
+  autoPopulateFlag,
+} from '../helpers/isFlagged';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -22,28 +27,6 @@ const findOrCreateObjectiveTemplate = async (
     transaction,
   });
   return { id: objectiveTemplate[0].id, title };
-};
-
-const autoPopulateOnAR = (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.onAR === undefined
-    || instance.onAR === null) {
-    instance.set('onAR', false);
-    if (!options.fields.includes('onAR')) {
-      options.fields.push('onAR');
-    }
-  }
-};
-
-const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.onApprovedAR === undefined
-    || instance.onApprovedAR === null) {
-    instance.set('onApprovedAR', false);
-    if (!options.fields.includes('onApprovedAR')) {
-      options.fields.push('onApprovedAR');
-    }
-  }
 };
 
 const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
@@ -273,13 +256,16 @@ const beforeValidate = async (sequelize, instance, options) => {
     options.fields = []; //eslint-disable-line
   }
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
-  autoPopulateOnAR(sequelize, instance, options);
-  autoPopulateOnApprovedAR(sequelize, instance, options);
+  autoPopulateFlag(sequelize, instance, options, 'onAR');
+  autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
@@ -295,15 +281,19 @@ const afterCreate = async (sequelize, instance, options) => {
   await propogateStatusToParentGoal(sequelize, instance, options);
 };
 
+const beforeDestroy = async (sequelize, instance, options) => {
+  await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
+};
+
 export {
   findOrCreateObjectiveTemplate,
   // autoPopulateObjectiveTemplateId,
-  autoPopulateOnApprovedAR,
   preventTitleChangeWhenOnApprovedAR,
   linkObjectiveGoalTemplates,
   propagateTitle,
   beforeValidate,
   beforeUpdate,
+  beforeDestroy,
   afterUpdate,
   afterCreate,
 };
