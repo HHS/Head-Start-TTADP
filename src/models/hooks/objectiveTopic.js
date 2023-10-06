@@ -131,6 +131,8 @@ const beforeValidate = async (sequelize, instance, options) => {
   }
   autoPopulateFlag(sequelize, instance, options, 'onAR');
   autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
