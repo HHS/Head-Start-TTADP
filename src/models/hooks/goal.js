@@ -1,4 +1,9 @@
-const { GOAL_STATUS } = require('../../constants');
+import { GOAL_STATUS } from '../../constants';
+import {
+  checkForAttemptToChangeFoiaableValue,
+  checkForAttemptToRemoveFoiaableValue,
+  autoPopulateFlag,
+} from '../helpers/isFlagged';
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -24,26 +29,6 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     transaction,
   });
   return { id: goalTemplate[0].id, name };
-};
-
-const autoPopulateOnAR = (sequelize, instance, options) => {
-  if (instance.onAR === undefined
-    || instance.onAR === null) {
-    instance.set('onAR', false);
-    if (!options.fields.includes('onAR')) {
-      options.fields.push('onAR');
-    }
-  }
-};
-
-const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
-  if (instance.onApprovedAR === undefined
-    || instance.onApprovedAR === null) {
-    instance.set('onApprovedAR', false);
-    if (!options.fields.includes('onApprovedAR')) {
-      options.fields.push('onApprovedAR');
-    }
-  }
 };
 
 const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
@@ -148,15 +133,22 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  autoPopulateOnAR(sequelize, instance, options);
-  autoPopulateOnApprovedAR(sequelize, instance, options);
+  autoPopulateFlag(sequelize, instance, options, 'onAR');
+  autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
+  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
+  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
-  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
+  await checkForAttemptToChangeFoiaableValue(sequelize, instance, options);
+  preventNameChangeWhenOnApprovedAR(sequelize, instance, options); // TODO: remove
   autoPopulateStatusChangeDates(sequelize, instance, options);
+};
+
+const beforeDestroy = async (sequelize, instance, options) => {
+  await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -171,12 +163,12 @@ const afterUpdate = async (sequelize, instance, options) => {
 export {
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
-  autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
   propagateName,
   beforeValidate,
   beforeUpdate,
+  beforeDestroy,
   afterCreate,
   afterUpdate,
 };
