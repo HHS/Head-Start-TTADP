@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -7,7 +8,7 @@ import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import RecipientRecord from '../index';
+import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
 
@@ -17,31 +18,31 @@ const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 const memoryHistory = createMemoryHistory();
 
-describe('recipient record page', () => {
-  const user = {
-    id: 2,
-    permissions: [
-      {
-        scopeId: ADMIN,
-      },
-      {
-        regionId: 45,
-        userId: 2,
-        scopeId: 1,
-      },
-      {
-        regionId: 45,
-        userId: 2,
-        scopeId: 2,
-      },
-      {
-        regionId: 45,
-        userId: 2,
-        scopeId: 3,
-      },
-    ],
-  };
+const user = {
+  id: 2,
+  permissions: [
+    {
+      scopeId: ADMIN,
+    },
+    {
+      regionId: 45,
+      userId: 2,
+      scopeId: 1,
+    },
+    {
+      regionId: 45,
+      userId: 2,
+      scopeId: 2,
+    },
+    {
+      regionId: 45,
+      userId: 2,
+      scopeId: 3,
+    },
+  ],
+};
 
+describe('recipient record page', () => {
   const theMightyRecipient = {
     id: 1,
     name: 'the Mighty Recipient',
@@ -235,5 +236,68 @@ describe('recipient record page', () => {
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/TTA Goals for the Mighty Recipient/i);
+  });
+});
+
+describe('PageWithHeading', () => {
+  const defaultProps = {
+    regionId: 1,
+    recipientId: 1,
+    error: null,
+    recipientNameWithRegion: 'Recipient Region 1',
+    backLink: <></>,
+    slug: 'slug-juice',
+  };
+  it('chooses the best CSS class if there is no backlink', async () => {
+    render(
+      <Router history={memoryHistory}>
+        <UserContext.Provider value={{ user }}>
+          <AppLoadingContext.Provider value={
+          {
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }
+        }
+          >
+            <PageWithHeading {...defaultProps}><h2>Test</h2></PageWithHeading>
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
+      </Router>,
+    );
+
+    const heading = document.querySelector('.ttahub-recipient-record--heading');
+    expect(heading.classList.contains('margin-top-5')).toBe(true);
+    expect(heading.classList.contains('margin-top-0')).toBe(false);
+  });
+  it('chooses the best CSS class if there is a backlink', async () => {
+    // eslint-disable-next-line jsx-a11y/anchor-is-valid
+    const backLink = <div><a href="#">Back to the void</a></div>;
+
+    const ps = {
+      ...defaultProps,
+      backLink,
+    };
+
+    render(
+      <Router history={memoryHistory}>
+        <UserContext.Provider value={{ user }}>
+          <AppLoadingContext.Provider value={
+          {
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }
+        }
+          >
+            <PageWithHeading {...ps}><h2>Test</h2></PageWithHeading>
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
+      </Router>,
+    );
+
+    const heading = document.querySelector('.ttahub-recipient-record--heading');
+    expect(heading.classList.contains('margin-top-5')).toBe(false);
+    expect(heading.classList.contains('margin-top-0')).toBe(true);
   });
 });

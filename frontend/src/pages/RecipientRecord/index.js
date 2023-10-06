@@ -20,7 +20,7 @@ import RTTAPA from './pages/RTTAPA';
 import RTTAPAHistory from './pages/RTTAPAHistory';
 import FeatureFlag from '../../components/FeatureFlag';
 
-function PageWithHeading({
+export function PageWithHeading({
   children,
   regionId,
   recipientId,

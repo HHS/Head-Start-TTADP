@@ -102,9 +102,7 @@ function RecipientSearch({ user }) {
        * we need to handle that first. Changing that will trigger this hook again
        */
       if (query !== inputRef.current.value) {
-        if (inputRef.current) {
-          updateQuery(inputRef.current.value);
-        }
+        updateQuery(inputRef.current.value);
         return;
       }
 
