@@ -1,6 +1,11 @@
 const { Model } = require('sequelize');
 const { CREATION_METHOD } = require('../constants');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+  afterUpdate,
+} = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
 export default (sequelize, DataTypes) => {
@@ -88,6 +93,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
