@@ -1,5 +1,10 @@
 const { Model } = require('sequelize');
 const { PROMPT_FIELD_TYPE } = require('../constants');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+} = require('./hooks/goalTemplateFieldPrompt');
 
 export default (sequelize, DataTypes) => {
   class GoalTemplateFieldPrompt extends Model {
@@ -81,6 +86,11 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'GoalTemplateFieldPrompt',
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    },
   });
   return GoalTemplateFieldPrompt;
 };
