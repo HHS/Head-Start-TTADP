@@ -1,6 +1,8 @@
 const { Model } = require('sequelize');
 const {
   beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
 } = require('./hooks/goalFieldResponse');
 
 export default (sequelize, DataTypes) => {
@@ -59,6 +61,8 @@ export default (sequelize, DataTypes) => {
     modelName: 'GoalFieldResponse',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
     },
   });
   return GoalFieldResponse;
