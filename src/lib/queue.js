@@ -1,6 +1,6 @@
 import Queue from 'bull';
 
-const generateRedisConfig = () => {
+const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
     const {
       'aws-elasticache-redis': [{
@@ -12,7 +12,8 @@ const generateRedisConfig = () => {
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
-    return {
+
+    let redisSettings = {
       uri,
       host,
       port,
@@ -21,12 +22,24 @@ const generateRedisConfig = () => {
       // eslint-disable-next-line no-empty-pattern
       redisOpts: {
         redis: { password, tls: {} },
-        limiter: {
-          max: 1000,
-          duration: 300000,
-        },
       },
     };
+
+    // Explicitly set the rate limiter settings.
+    if (enableRateLimiter) {
+      redisSettings = {
+        ...redisSettings,
+        redisOpts: {
+          ...redisSettings.redisOpts,
+          limiter: {
+            max: 1000,
+            duration: 300000,
+          },
+        },
+      };
+    }
+
+    return redisSettings;
   }
   const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
   return {
@@ -44,7 +57,7 @@ const {
   host,
   port,
   redisOpts,
-} = generateRedisConfig();
+} = generateRedisConfig(true);
 
 export { generateRedisConfig };
 
