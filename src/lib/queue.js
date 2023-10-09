@@ -32,8 +32,8 @@ const generateRedisConfig = (enableRateLimiter = false) => {
         redisOpts: {
           ...redisSettings.redisOpts,
           limiter: {
-            max: 1000,
-            duration: 300000,
+            max: process.env.REDIS_LIMITER_MAX || 1000,
+            duration: process.env.REDIS_LIMITER_DURATION || 300000,
           },
         },
       };
