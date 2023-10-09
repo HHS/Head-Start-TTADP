@@ -13,6 +13,7 @@ const {
   GOAL_STATUS,
   OBJECTIVE_STATUS,
   APPROVAL_STATUSES,
+  NEXTSTEP_NOTETYPE,
 } = require('../constants');
 
 module.exports = {
