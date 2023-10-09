@@ -92,21 +92,30 @@ const createIndex = async (indexName, passedClient) => {
 */
 const addIndexDocument = async (job) => {
   const {
-    indexName, id, document, passedClient,
+    indexName, id, document, passedClient, preventRethrow,
   } = job.data;
+  let res;
+  try {
     // Initialize the client.
-  const client = passedClient || await getClient();
+    const client = passedClient || await getClient();
 
-  // Add a document to an index.
-  const res = await client.index({
-    index: indexName,
-    id,
-    body: document,
-    refresh: true, // triggers manual refresh.
-  });
-  logger.info(`AWS OpenSearch: Successfully added document ${id} to index ${indexName}`);
+    // Add a document to an index.
+    res = await client.index({
+      index: indexName,
+      id,
+      body: document,
+      refresh: true, // triggers manual refresh.
+    });
+    logger.info(`AWS OpenSearch: Successfully added document ${id} to index ${indexName}`);
 
-  return { data: job.data, status: 200, res: res || undefined };
+    return { data: job.data, status: 200, res: res || undefined };
+  } catch (error) {
+    if (preventRethrow) {
+      // This path is for running in CI.
+      return { data: job.data, status: 500, res: res || undefined };
+    }
+    throw error;
+  }
 };
 /*
   Bulk document index.
@@ -212,22 +221,32 @@ const updateIndexDocument = async (job) => {
 */
 const deleteIndexDocument = async (job) => {
   const {
-    indexName, id, passedClient,
+    indexName, id, passedClient, preventRethrow,
   } = job.data;
 
+  let res;
+
+  try {
   // Initialize the client.
-  const client = passedClient || await getClient();
+    const client = passedClient || await getClient();
 
-  // Delete index document.
-  const res = await client.delete({
-    index: indexName,
-    id,
-    refresh: true, // triggers manual refresh.
-    body: { ignore_unavailable: true },
-  });
-  logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
+    // Delete index document.
+    res = await client.delete({
+      index: indexName,
+      id,
+      refresh: true, // triggers manual refresh.
+      body: { ignore_unavailable: true },
+    });
+    logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
 
-  return { data: job.data, status: 200, res: res || undefined };
+    return { data: job.data, status: 200, res: res || undefined };
+  } catch (error) {
+    if (preventRethrow) {
+      // This path is for running in CI.
+      return { data: job.data, status: 500, res: res || undefined };
+    }
+    throw error;
+  }
 };
 
 /*
