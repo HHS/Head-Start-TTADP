@@ -48,19 +48,19 @@ module.exports = {
         -- Insert ReportTargetPopulations
         -- Insert ReportRecipients
         ----- OBJECTIVES ------
-        -- Find or insert Objectives for sessions
-        -- Insert ObjectiveTopics
-        -- Insert ObjectiveFiles
-        -- Insert ObjectiveResources
-        -- Find or insert ObjectiveTemplates text for region on complete session
+        -- REMOVE: Find or insert Objectives for sessions
+        -- REMOVE: Insert ObjectiveTopics
+        -- REMOVE: Insert ObjectiveFiles
+        -- REMOVE: Insert ObjectiveResources
+        -- Find or insert ObjectiveTemplates text for region on created session
         -- Insert ObjectiveTemplateTopics
         -- Insert ObjectiveTemplateResources
         ----- GOALS ------
         -- Find or insert GoalTemplates text for region
         -- Insert ReportGoalTemplates
-        -- Find or insert Goals for session Grants
-        -- Insert ReportGoals
-        -- Update Objectives with goalId
+        -- REMOVE: Find or insert Goals for session Grants
+        -- REMOVE: Insert ReportGoals
+        -- REMOVE: Update Objectives with goalId
         -- Insert GoalTemplateObjectiveTemplates
 
 
@@ -606,7 +606,7 @@ module.exports = {
           AND TRIM(LOWER(data->>'objective')) = TRIM(LOWER(o.title))
         CROSS JOIN objstats os
         GROUP BY 1,2,3,4,5,6,7,8,9
-        ;
+        ;/*
         CREATE TEMP TABLE 
         INSERT INTO "Objectives" (
           title,
@@ -623,8 +623,6 @@ module.exports = {
         WHERE to_insert
         ;
 
-        
-        /*
         UPDATE session_objectives
         SET oid = o.id
         FROM "Objectives" o
@@ -653,9 +651,8 @@ module.exports = {
           updated_at
         FROM session_objectives
         WHERE to_insert
-        */
 
-        
+        */
         -- Insert ObjectiveTopics TODO
         -- Insert ObjectiveFiles TODO
         -- Insert ObjectiveResources TODO
@@ -708,9 +705,10 @@ module.exports = {
         JOIN newgoaltexts n
           ON TRIM(LOWER(ir.data->>'goal')) = newgoaltext
           AND n."regionId" = rte."regionId"
-        ;
+        ;/*
 
         -- Insert ReportGoalTemplates TODO
+
 
         -- Create Goals for session Grants
         CREATE TEMP TABLE goals_to_insert
@@ -746,7 +744,7 @@ module.exports = {
           AND rts."regionId" = gt."regionId"
         CROSS JOIN goalstats gs
         WHERE s."isTerminal"
-        ;
+        ;*/
 
         INSERT INTO "Goals" (
           name,
@@ -768,7 +766,7 @@ module.exports = {
           updated_at,
           gtid,
           grid,
-          created_at"
+          created_at
         FROM goals_to_insert gti
         ;
 
