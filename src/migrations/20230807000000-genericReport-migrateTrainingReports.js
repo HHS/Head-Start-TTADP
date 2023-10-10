@@ -24,7 +24,6 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         ----- Populate dimensional tables -----
-        -- Add new statuses for reports
         -- Add Reasons
         -- Add TargetPopulations
         -- Add Organizers
@@ -48,46 +47,50 @@ module.exports = {
         -- Insert ReportReasons
         -- Insert ReportTargetPopulations
         -- Insert ReportRecipients
-        ----- GOALS ------
-        -- Find or insert GoalTemplates text for region
-        -- Find or insert Goals for session Grants
-        -- Insert ReportGoals
         ----- OBJECTIVES ------
         -- Find or insert Objectives for sessions
         -- Insert ObjectiveTopics
+        -- Insert ObjectiveFiles
         -- Insert ObjectiveResources
         -- Find or insert ObjectiveTemplates text for region on complete session
         -- Insert ObjectiveTemplateTopics
         -- Insert ObjectiveTemplateResources
-        -- 
+        ----- GOALS ------
+        -- Find or insert GoalTemplates text for region
+        -- Insert ReportGoalTemplates
+        -- Find or insert Goals for session Grants
+        -- Insert ReportGoals
+        -- Update Objectives with goalId
+        -- Insert GoalTemplateObjectiveTemplates
 
 
-        ----- Populate dimensional tables -----
-        -- Add new Statuses
+        ------------------------------------------------------------------------------------------------
+        ----- Populate dimensional tables --------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------
+        -- TODO: remove these status inserts once Objective statuses are populating in the generic migration
         INSERT INTO "Statuses" (
           name,
           "isTerminal",
+          ordinal,
           "validForId",
           "createdAt",
           "updatedAt"
         )
         SELECT
-          'Not started',
+          'Not Started',
           FALSE,
           1,
+          4,
           NOW(),
           NOW()
         UNION
-        SELECT 'In progress', FALSE, id, NOW(), NOW()
-        FROM "ValidFor"
-        WHERE LEFT(name, 6) = 'report'
+        SELECT 'In Progress', FALSE, 2,4, NOW(), NOW()
         UNION
-        SELECT 'Suspended', FALSE, 1, NOW(), NOW()
+        SELECT 'Suspended', FALSE, 3,4, NOW(), NOW()
         UNION
-        SELECT 'Complete', TRUE, id, NOW(), NOW()
-        FROM "ValidFor"
-        WHERE LEFT(name, 6) = 'report'
+        SELECT 'Complete', TRUE, 4,4, NOW(), NOW()
         ;
+
         -- Add new Reasons
         INSERT INTO "Reasons"(
           name,
@@ -138,6 +141,11 @@ module.exports = {
         SELECT 'IST TTA/Visit', 1, NOW(), NOW()
         ;
 
+        ------------------------------------------------------------------------------------------------
+        ----- REPORTS ----------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------
+        
+        
         ------ Collect all reports that will generate report IDs
         DROP TABLE IF EXISTS interim_reports;
         CREATE TABLE interim_reports
@@ -264,7 +272,9 @@ module.exports = {
           AND ir_events."reportTypeId" = 1
         ;
 
-        ----- REPORT TABLE EXTENSIONS -----
+        ------------------------------------------------------------------------------------------------
+        ----- REPORT TABLE EXTENSIONS ------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------
         -- Populate ReportParticipation
         -- Note: "inpersonParticipantCount" & "virtualParticipantCount"
         -- are for future use and aren't populated in pilot TRs
@@ -350,7 +360,9 @@ module.exports = {
         WHERE imported IS NOT NULL
         ;
 
-        ----- REPORT LINK TABLES ------
+        ------------------------------------------------------------------------------------------------
+        ----- REPORT LINK TABLES -----------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------
 
         -- Skip ReportApprovals: no approvals for TRs
 
@@ -550,8 +562,111 @@ module.exports = {
         WHERE data->'recipients' IS NOT NULL
         ;
 
+        ------------------------------------------------------------------------------------------------
+        ----- OBJECTIVES -------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------
+        -- Find or insert Objectives for sessions
+        CREATE TEMP TABLE session_objectives
+        AS
+        WITH objstats AS (
+          SELECT
+            notstart.name notstartstat,
+            inprog.name inprogstat
+          FROM "ValidFor" vf
+          JOIN "Statuses" notstart
+            ON notstart.ordinal = 1
+            AND vf.id = notstart."validForId"
+          JOIN "Statuses" inprog
+            ON inprog.ordinal = 2
+            AND vf.id = inprog."validForId"
+          WHERE vf.name = 'objective'
+        )
+        SELECT
+          reports_id rid,
+          NULL::bigint AS oid,
+          data->>'objective' otitle,
+          data->>'ttaProvided' ttaprovided,
+          s.id sid,
+          s.ordinal,
+          CASE WHEN s."isTerminal" THEN os.inprogstat ELSE os.notstartstat END AS status,
+          ir."createdAt" created_at,
+          ir."updatedAt" updated_at,
+          BOOL_AND(o.id IS NULL) to_insert
+        FROM interim_reports ir
+        JOIN "Reports" r
+          ON ir.reports_id = r.id
+        JOIN "Statuses" s
+          ON r."statusId" = s.id
+        JOIN "ReportRecipients" rr
+          ON r.id = rr."reportId"
+        LEFT JOIN "Goals" g
+          ON g."grantId" = rr."grantId"
+        LEFT JOIN "Objectives" o
+          ON g.id = o."goalId"
+          AND TRIM(LOWER(data->>'objective')) = TRIM(LOWER(o.title))
+        CROSS JOIN objstats os
+        GROUP BY 1,2,3,4,5,6,7,8,9
+        ;
+        CREATE TEMP TABLE 
+        INSERT INTO "Objectives" (
+          title,
+          status,
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          otitle,
+          status,
+          created_at,
+          updated_at
+        FROM session_objectives
+        WHERE to_insert
+        ;
 
-        ----- GOALS ------
+        
+        /*
+        UPDATE session_objectives
+        SET oid = o.id
+        FROM "Objectives" o
+        JOIN "
+        WHERE TRIM(LOWER(title)) = TRIM(LOWER(otitle))
+
+
+        
+        -- Insert ReportObjectives TODO
+        INSERT INTO "ReportObjectives" (
+          reportId,
+          objectiveId,
+          title,
+          "statusId",
+          ordinal,
+          "ttaProvided"
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          otitle,
+          oid,
+          t
+          status,
+          created_at,
+          updated_at
+        FROM session_objectives
+        WHERE to_insert
+        */
+
+        
+        -- Insert ObjectiveTopics TODO
+        -- Insert ObjectiveFiles TODO
+        -- Insert ObjectiveResources TODO
+        -- Find or insert ObjectiveTemplates text for region on complete session TODO
+        -- Insert ObjectiveTemplateTopics TODO
+        -- Insert ObjectiveTemplateResources TODO
+
+
+        ------------------------------------------------------------------------------------------------
+        ----- GOALS ------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------------------
         -- Find or insert GoalTemplates text for region
         -- There's really only the one goal in recent data, so not getting real fancy on the deduping logic here
         INSERT INTO "GoalTemplates" (
@@ -595,7 +710,72 @@ module.exports = {
           AND n."regionId" = rte."regionId"
         ;
 
+        -- Insert ReportGoalTemplates TODO
+
         -- Create Goals for session Grants
+        CREATE TEMP TABLE goals_to_insert
+        AS
+        WITH goalstats AS (
+          SELECT
+            inprog.name inprogstat
+          FROM "ValidFor" vf
+          JOIN "Statuses" inprog
+            ON inprog.ordinal = 3
+            AND vf.id = inprog."validForId"
+          WHERE vf.name = 'goal'
+        )
+        SELECT
+          r.id rid
+          gt."templateName" gname,
+          gs.inprogstat status,
+          r."createdAt" created_at,
+          r."updatedAt" updated_at,
+          gt.id, gtid
+          rr."grantId" grid
+        FROM "ReportTrainingSessions" rts
+        JOIN interim_reports ir_event
+          ON rts."reportTrainingEventId" = ir_event.reports_id
+        JOIN "Reports" r
+          ON rts."reportId" = r.id
+        JOIN "Statuses" s
+          ON r."statusId" = s.id
+        JOIN "ReportRecipients" rr
+          ON rr."reportId" = r.id
+        JOIN "GoalTemplates" gt
+          ON TRIM(LOWER(gt."templateName")) = TRIM(LOWER(ir_event.data->>'goal'))
+          AND rts."regionId" = gt."regionId"
+        CROSS JOIN goalstats gs
+        WHERE s."isTerminal"
+        ;
+
+        INSERT INTO "Goals" (
+          name,
+          status,
+          "isFromSmartsheetTtaPlan",
+          "createdAt",
+          "updatedAt",
+          "goalTemplateId",
+          "grantId",
+          "firstInProgressAt"
+          -- ,"createdVia" -- TODO: should it import using 'imported'? (leaning toward yes)
+          -- ,"source" -- TODO: should we add and use 'Training event'? (leaning toward no)
+        )
+        SELECT
+          gname,
+          status,
+          FALSE,
+          created_at,
+          updated_at,
+          gtid,
+          grid,
+          created_at"
+        FROM goals_to_insert gti
+        ;
+
+        -- Insert ReportGoals TODO
+        -- Update Objectives with goalId TODO
+        -- Insert GoalTemplateObjectiveTemplates TODO
+
 
 
         /*
