@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 
+const USER_DATA_EVENT = 'userData';
+
 export default function useGaUserData(user) {
   useEffect(() => {
     try {
@@ -17,7 +19,7 @@ export default function useGaUserData(user) {
         }
 
         const event = {
-          event: 'userData',
+          event: USER_DATA_EVENT,
           user_id: user.id,
           user_roles: user.roles,
         };
