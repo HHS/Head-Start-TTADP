@@ -3,7 +3,7 @@ web_instances: 1
 web_memory: 2GB
 worker_instances: 1
 worker_memory: 512M
-similarity_api_instances: 1
+similarity_api_instances: 2
 similarity_api_memory: 1GB
 similarity_api_disk_quota: 5GB
 LOG_LEVEL: info
