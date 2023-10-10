@@ -744,7 +744,7 @@ module.exports = {
           AND rts."regionId" = gt."regionId"
         CROSS JOIN goalstats gs
         WHERE s."isTerminal"
-        ;*/
+        ;
 
         INSERT INTO "Goals" (
           name,
@@ -768,7 +768,7 @@ module.exports = {
           grid,
           created_at
         FROM goals_to_insert gti
-        ;
+        ;*/
 
         -- Insert ReportGoals TODO
         -- Update Objectives with goalId TODO
