@@ -3,16 +3,16 @@ import { useEffect } from 'react';
 export default function useGaUserData(user) {
   useEffect(() => {
     try {
-      if (!user) {
+      // we need a user to pass user data
+      if (!user || !user.id || !user.roles) {
         return;
       }
+
+      // check to see if we have dataLayer on the window object
       if (window.dataLayer && Array.isArray(window.dataLayer)) {
+        // or we've already passed the userData
         const eventNames = window.dataLayer.map((item) => item.event);
         if (eventNames.includes('userData')) {
-          return;
-        }
-
-        if (!user.id || !user.roles) {
           return;
         }
 
