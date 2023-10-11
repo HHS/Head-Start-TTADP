@@ -115,7 +115,7 @@ const Review = ({
         ) : <div className="margin-bottom-3" />}
         <ApproverStatusList approverStatus={approverStatusList} />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
-        <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Re-submit' : 'Submit'}</Button>
+        <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Update' : 'Submit'}</Button>
       </Form>
     </>
   );

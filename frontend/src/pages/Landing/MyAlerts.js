@@ -3,6 +3,7 @@
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
+import { APPROVER_STATUSES } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
 import Modal from '../../components/Modal';
@@ -17,6 +18,11 @@ import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
 import { cleanupLocalStorage } from '../ActivityReport';
 import UserContext from '../../UserContext';
+import {
+  PendingApprovalIcon,
+  Closed as ApprovedIcon,
+  NeedsActionIcon,
+} from '../../components/icons';
 
 const isCollaborator = (report, user) => {
   if (!report.activityReportCollaborators) return false;
@@ -24,6 +30,26 @@ const isCollaborator = (report, user) => {
 };
 
 const isCreator = (report, user) => report.userId === user.id;
+
+const ProperIcon = ({ approvalStatus }) => {
+  switch (approvalStatus) {
+    case APPROVER_STATUSES.APPROVED:
+      return <ApprovedIcon />;
+    case APPROVER_STATUSES.NEEDS_ACTION:
+      return <NeedsActionIcon />;
+    case APPROVER_STATUSES.PENDING:
+    default:
+      return <PendingApprovalIcon />;
+  }
+};
+
+ProperIcon.propTypes = {
+  approvalStatus: PropTypes.string,
+};
+
+ProperIcon.defaultProps = {
+  approvalStatus: APPROVER_STATUSES.PENDING,
+};
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -47,7 +73,6 @@ export function ReportsRow({ reports, removeAlert, message }) {
       activityRecipients,
       startDate,
       calculatedStatus,
-      pendingApprovals,
       approvers,
       createdAt,
       creatorName,
@@ -59,7 +84,15 @@ export function ReportsRow({ reports, removeAlert, message }) {
       ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
 
-    const approversToolTipText = approvers ? approvers.map((a) => a.user.fullName) : [];
+    const approverNames = approvers ? approvers.sort((a, b) => (
+      a.user.fullName.localeCompare(b.user.fullName)
+    )).map((a) => (
+      <span key={a.id}>
+        <ProperIcon approvalStatus={a.status} />
+        {a.user.fullName}
+      </span>
+    )) : [];
+
     const collaboratorNames = activityReportCollaborators
       ? activityReportCollaborators.map((collaborator) => (
         collaborator.fullName)) : [];
@@ -117,17 +150,12 @@ export function ReportsRow({ reports, removeAlert, message }) {
         <td>
           <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
-        <td>
-          {approversToolTipText.length > 0
-            ? (
-              <Tooltip
-                displayText={pendingApprovals}
-                tooltipText={approversToolTipText.join('\n')}
-                buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
-              />
-            )
-            : ''}
+        <td className="ttahub-approver-cell">
+          <div className="display-flex flex-column flex-justify">
+            {approverNames}
+          </div>
         </td>
+        <td />
         <td>
           <Tag
             className={statusClassName}
