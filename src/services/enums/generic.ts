@@ -308,7 +308,7 @@ const syncEntityGenericEnum = async (
         }
         return acc;
       }, []),
-      currentEnums.map((ce) => ce.id),
+      currentEnums.map((ce) => ce.enumId),
     ];
     // filter to the create, update, and destroy lists
     const [
