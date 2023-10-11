@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
-import { TRAINING_REPORT_STATUSES_URL_PARAMS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES_URL_PARAMS, TRAINING_REPORT_STATUSES,  } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
 import { currentUserId } from '../../services/currentUser';
@@ -18,6 +18,8 @@ import {
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
 import filtersToScopes from '../../scopes';
+import { getAll as getAllReports } from '../../services/reports';
+import { REPORT_TYPE } from '../../constants';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -36,7 +38,9 @@ export const getByStatus = async (req, res) => {
     const userId = await currentUserId(req, res);
     const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
+    console.log('src/routes/events/handlers.js:getByStatus', { query: req.query, updatedFilters });
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
+    console.log('src/routes/events/handlers.js:getByStatus', { scopes, x: scopes[0] });
 
     const events = await findEventsByStatus(
       status,
@@ -47,6 +51,14 @@ export const getByStatus = async (req, res) => {
       scopes,
       auth.isAdmin(),
     );
+
+    const newEvents = await getAllReports(
+      REPORT_TYPE.REPORT_TRAINING_EVENT,
+      undefined,
+      scopes.ReportTrainingEvent,
+    );
+
+    console.log('src/routes/events/handlers.js:getByStatus', { events: events.length, newEvents: newEvents.length });
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
