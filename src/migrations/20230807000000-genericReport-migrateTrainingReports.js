@@ -389,21 +389,15 @@ module.exports = {
         ;
 
         -- Insert ReportCollaborators
-        INSERT INTO "ReportCollaborators" (
-          "reportId",
-          "userId",
-          "statusId",
-          note,
-          "createdAt",
-          "updatedAt"
-        )
+        CREATE TEMP TABLE collaborators
+        AS
         SELECT
           reports_id,
-          u.id,
+          u.id uid,
           os.sid,
-          'EventReportPilots.data->creator',
-          ir."createdAt",
-          ir."updatedAt"
+          'EventReportPilots.data->creator' sourcepath,
+          ir."createdAt" created_at,
+          ir."updatedAt" updated_at
         FROM interim_reports ir
         JOIN "Users" u
           ON LOWER(ir.data->>'creator') = LOWER(u.email)
@@ -424,19 +418,59 @@ module.exports = {
         CROSS JOIN owner_status os
         ;
 
+        INSERT INTO "ReportCollaborators" (
+          "reportId",
+          "userId",
+          "statusId",
+          note,
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          uid,
+          sid,
+          'sources: ' || STRING_AGG(sourcepath,'+'),
+          created_at,
+          updated_at
+        FROM collaborators c
+        GROUP BY 1,2,3,5,6
+        ;
+
         -- Insert ReportCollaboratorTypes
-        -- TODO: add in the type links
-        /*
+        -- Note: creators just become owners on every report
+        -- so 'owner' and 'creator' aren't actually separate for TRs
         INSERT INTO "ReportCollaboratorTypes" (
           "reportCollaboratorId",
           "collaboratorTypeId",
           "createdAt",
           "updatedAt"
         )
+        WITH ctypes AS (
+          SELECT
+            ec.id event_ctypeid,
+            sc.id sess_ctypeid
+          FROM "CollaboratorTypes" ec
+          JOIN "CollaboratorTypes" sc
+            ON ec.name = 'owner'
+            AND ec."validForId" = 1
+            AND sc.name = 'instantiator'
+            AND sc."validForId" = 2
+        )
         SELECT
-          reports_id,
-          srpf."fileId",
-          srpf."createdAt", */
+          rc.id,
+          CASE sourcepath
+            WHEN 'SessionReportPilots.data->objectiveTrainers' THEN ct.sess_ctypeid
+            WHEN 'EventReportPilots.data->creator' THEN ct.event_ctypeid
+          END,
+          c.created_at,
+          c.updated_at
+        FROM collaborators c
+        JOIN "ReportCollaborators" rc
+          ON c.reports_id = rc."reportId"
+          AND c.uid = rc."userId"
+        CROSS JOIN ctypes ct
+        ;
 
         -- Insert ReportFiles from SessionReportPilotFiles
         INSERT INTO "ReportFiles" (
