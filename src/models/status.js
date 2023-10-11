@@ -65,6 +65,10 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
