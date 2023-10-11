@@ -308,6 +308,7 @@ const includeToFindAll = async (
   includeFunc,
   moreWhere,
   funcArgs = null,
+  attributes = null,
 ) => {
   const {
     as,
@@ -317,6 +318,7 @@ const includeToFindAll = async (
   } = includeFunc(...funcArgs);
   return model.findAll({
     where: merge(where, moreWhere),
+    ...(attributes && { attributes }),
     ...args,
   });
 };
