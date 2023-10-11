@@ -13,12 +13,12 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class ValidFor extends Model {
     static preloadScopes(models) {
-      ValidFor.belongsTo(models.ValidFor, {
+      ValidFor.belongsTo(models.ValidFor.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsToValidFor',
       });
 
-      ValidFor.hasMany(models.ValidFor, {
+      ValidFor.hasMany(models.ValidFor.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsFromValidFor',
       });
