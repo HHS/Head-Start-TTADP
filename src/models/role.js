@@ -12,11 +12,11 @@ const {
 export default (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
-      Role.belongsTo(models.Role, {
+      Role.belongsTo(models.Role.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsToRole',
       });
-      Role.hasMany(models.Role, {
+      Role.hasMany(models.Role.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsFromRoles',
       });
