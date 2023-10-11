@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import {
   render, screen,
 } from '@testing-library/react';
@@ -126,12 +127,149 @@ describe('My Alerts', () => {
     expect(truncated).toHaveTextContent('Orange, GS');
   });
 
-  test('displays the correct statuses', async () => {
-    renderMyAlerts();
-    const reviewed = await screen.findByText(/reviewed/i);
-    const needsAction = await screen.findByText(/needs action/i);
+  test('displays the reviewed status', async () => {
+    const report = {
+      startDate: '02/01/2021',
+      lastSaved: '02/04/2021',
+      id: 2,
+      displayId: 'R14-AR-2',
+      regionId: 14,
+      topics: [],
+      sortedTopics: [],
+      pendingApprovals: '2 of 2',
+      approvers: [
+        {
+          user: {
+            fullName: 'Approver Manager 4',
+          },
+          status: APPROVER_STATUSES.APPROVED,
+          id: 4,
+        },
+        {
+          status: null,
+          id: 5,
+          user: {
+            fullName: 'Approver Manager 5',
+          },
+        },
+      ],
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      activityRecipients: [
+        {
+          activityRecipientId: 3,
+          name: 'QRIS System',
+          id: 31,
+          grant: null,
+          otherEntity: {
+            id: 3,
+            name: 'QRIS System',
+            createdAt: '2021-02-03T21:00:57.149Z',
+            updatedAt: '2021-02-03T21:00:57.149Z',
+          },
+        },
+      ],
+      author: {
+        fullName: 'Kiwi, GS',
+        name: 'Kiwi',
+        role: 'Grants Specialist',
+        homeRegionId: 14,
+      },
+      activityReportCollaborators: [
+        {
+          fullName: 'Cucumber User, GS',
+          user: {
+            fullName: 'Cucumber User, GS',
+            name: 'Cucumber User',
+            role: 'Grantee Specialist',
+          },
+        },
+        {
+          fullName: 'Hermione Granger, SS',
+          user: {
+            fullName: 'Hermione Granger, SS',
+            name: 'Hermione Granger',
+            role: 'System Specialist',
+          },
+        },
+      ],
+    };
 
+    renderMyAlerts(report);
+
+    const reviewed = await screen.findByText(/reviewed/i);
     expect(reviewed).toBeVisible();
+  });
+
+  test('displays the needs action status', async () => {
+    const report = {
+      startDate: '02/01/2021',
+      lastSaved: '02/04/2021',
+      id: 2,
+      displayId: 'R14-AR-2',
+      regionId: 14,
+      topics: [],
+      sortedTopics: [],
+      pendingApprovals: '2 of 2',
+      approvers: [
+        {
+          user: {
+            fullName: 'Approver Manager 4',
+          },
+          status: APPROVER_STATUSES.APPROVED,
+          id: 4,
+        },
+        {
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+          id: 5,
+          user: {
+            fullName: 'Approver Manager 5',
+          },
+        },
+      ],
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      activityRecipients: [
+        {
+          activityRecipientId: 3,
+          name: 'QRIS System',
+          id: 31,
+          grant: null,
+          otherEntity: {
+            id: 3,
+            name: 'QRIS System',
+            createdAt: '2021-02-03T21:00:57.149Z',
+            updatedAt: '2021-02-03T21:00:57.149Z',
+          },
+        },
+      ],
+      author: {
+        fullName: 'Kiwi, GS',
+        name: 'Kiwi',
+        role: 'Grants Specialist',
+        homeRegionId: 14,
+      },
+      activityReportCollaborators: [
+        {
+          fullName: 'Cucumber User, GS',
+          user: {
+            fullName: 'Cucumber User, GS',
+            name: 'Cucumber User',
+            role: 'Grantee Specialist',
+          },
+        },
+        {
+          fullName: 'Hermione Granger, SS',
+          user: {
+            fullName: 'Hermione Granger, SS',
+            name: 'Hermione Granger',
+            role: 'System Specialist',
+          },
+        },
+      ],
+    };
+
+    renderMyAlerts(report);
+
+    const needsAction = await screen.findByText(/needs action/i);
     expect(needsAction).toBeVisible();
   });
 
