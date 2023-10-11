@@ -126,6 +126,8 @@ class ActivityReportObjectives{
  * updatedAt : timestamp with time zone : now()
  arOrder : integer : 1
  status : varchar(255)
+ suspendContext : text
+ suspendReason : enum
  title : text
  ttaProvided : text
 }
@@ -307,6 +309,7 @@ class Goals{
  closeSuspendContext : text
  closeSuspendReason : enum
  createdVia : enum
+ deletedAt : timestamp with time zone
  endDate : date
  firstCeasedSuspendedAt : timestamp with time zone
  firstClosedAt : timestamp with time zone
@@ -519,6 +522,7 @@ class Objectives{
  * onAR : boolean : false
  * updatedAt : timestamp with time zone : now()
  createdVia : enum
+ deletedAt : timestamp with time zone
  firstCompleteAt : timestamp with time zone
  firstInProgressAt : timestamp with time zone
  firstNotStartedAt : timestamp with time zone
@@ -529,6 +533,8 @@ class Objectives{
  lastSuspendedAt : timestamp with time zone
  rtrOrder : integer : 1
  status : varchar(255)
+ suspendContext : text
+ suspendReason : enum
  title : text
 }
 
@@ -550,6 +556,7 @@ class Permissions{
 
 class ProgramPersonnel{
  * id : integer : <generated>
+ mapsTo : integer : REFERENCES "ProgramPersonnel".id
  * active : boolean
  * createdAt : timestamp with time zone : now()
  * grantId : integer
@@ -560,7 +567,6 @@ class ProgramPersonnel{
  email : varchar(255)
  firstName : varchar(255)
  lastName : varchar(255)
- originalPersonnelId : integer
  prefix : varchar(255)
  suffix : varchar(255)
  title : varchar(255)
@@ -1692,6 +1698,7 @@ Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : object
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
+ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient

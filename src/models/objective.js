@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
@@ -125,8 +126,16 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
+    suspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(SUSPEND_REASONS),
+    },
+    suspendContext: {
+      type: DataTypes.TEXT,
+    },
   }, {
     sequelize,
+    paranoid: true,
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),

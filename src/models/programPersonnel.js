@@ -1,12 +1,23 @@
 const {
   Model, Op,
 } = require('sequelize');
+const {
+  afterBulkCreate,
+} = require('./hooks/programPersonnel');
 
 export default (sequelize, DataTypes) => {
   class ProgramPersonnel extends Model {
     static associate(models) {
       ProgramPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
       ProgramPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      ProgramPersonnel.hasMany(models.ProgramPersonnel, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromProgramPersonnel',
+      });
+      ProgramPersonnel.belongsTo(models.ProgramPersonnel, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToProgramPersonnel',
+      });
     }
   }
   ProgramPersonnel.init({
@@ -60,15 +71,64 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.BOOLEAN,
     },
-    originalPersonnelId: {
-      allowNull: true,
+    mapsTo: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'ProgramPersonnel',
+        },
+        key: 'id',
+      },
+    },
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${(this.firstName || '')} ${(this.lastName || '')}`;
+      },
+    },
+    fullRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { role, program } = this;
+        if (!role || !program) return role;
+
+        const { programType } = program;
+
+        if (role.toLowerCase() === 'cfo') {
+          return 'Chief Financial Officer';
+        }
+
+        if (role.toLowerCase() === 'director') {
+          if (programType && programType.toLowerCase() === 'ehs') {
+            return 'Director for Early Head Start';
+          }
+
+          if (programType.toLowerCase() === 'hs') {
+            return 'Director for Head Start';
+          }
+
+          return 'Director';
+        }
+
+        return role;
+      },
+    },
+    nameAndRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.fullName} - ${this.fullRole}`;
+      },
     },
   }, {
     sequelize,
     modelName: 'ProgramPersonnel',
     tableName: 'ProgramPersonnel',
     freezeTableName: true,
+    hooks: {
+      afterBulkCreate: async (instances, options) => afterBulkCreate(sequelize, instances, options),
+    },
   });
   return ProgramPersonnel;
 };

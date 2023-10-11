@@ -8,7 +8,6 @@ import {
   Button,
   Radio,
   TextInput,
-  Textarea,
 } from '@trussworks/react-uswds';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
@@ -61,7 +60,7 @@ const Participants = () => {
       <IndicatesRequiredField />
       <div className="margin-top-2">
         <FormItem
-          label="Recipients"
+          label="Recipients "
           name="recipients"
         >
           <MultiSelect
@@ -77,7 +76,7 @@ const Participants = () => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Recipient participants"
+          label="Recipient participants "
           name="participants"
         >
           <MultiSelect
@@ -131,7 +130,7 @@ const Participants = () => {
             <>
               <div>
                 <FormItem
-                  label="Number of participants attending in person"
+                  label="Number of participants attending in person "
                   name="numberOfParticipantsInPerson"
                   required
                 >
@@ -141,6 +140,7 @@ const Participants = () => {
                       name="numberOfParticipantsInPerson"
                       type="number"
                       min={1}
+                      required
                       inputRef={
                         register({
                           required: 'Enter number of participants attending in person',
@@ -157,12 +157,13 @@ const Participants = () => {
               </div>
               <div>
                 <FormItem
-                  label="Number of participants attending virtually"
+                  label="Number of participants attending virtually "
                   name="numberOfParticipantsVirtually"
                   required
                 >
                   <div className="maxw-card-lg">
                     <TextInput
+                      required
                       id="numberOfParticipantsVirtually"
                       name="numberOfParticipantsVirtually"
                       type="number"
@@ -185,11 +186,12 @@ const Participants = () => {
           ) : (
             <div>
               <FormItem
-                label="Number of participants"
+                label="Number of participants "
                 name="numberOfParticipants"
               >
                 <div className="maxw-card-lg">
                   <TextInput
+                    required
                     id="numberOfParticipants"
                     name="numberOfParticipants"
                     type="number"
@@ -211,20 +213,6 @@ const Participants = () => {
           )}
         </div>
       </div>
-
-      <FormItem
-        label="TTA provided"
-        name="ttaProvided"
-        required
-      >
-        <Textarea
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
-      </FormItem>
     </>
   );
 };

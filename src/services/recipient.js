@@ -7,11 +7,14 @@ import {
   Program,
   sequelize,
   Goal,
+  GoalFieldResponse,
+  GoalTemplate,
   ActivityReport,
   Objective,
   ActivityRecipient,
   Topic,
   Permission,
+  ProgramPersonnel,
   User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
@@ -19,6 +22,7 @@ import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
   GOAL_STATUS,
+  CREATION_METHOD,
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
@@ -428,6 +432,7 @@ export async function getGoalsByActivityRecipient(
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
       { createdVia: 'rtr' },
+      { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
     ],
     [Op.and]: scopes,
   };
@@ -452,10 +457,23 @@ export async function getGoalsByActivityRecipient(
       'onApprovedAR',
       'isRttapa',
       'source',
+      'goalTemplateId',
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
     ],
     where: goalWhere,
     include: [
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['creationMethod', 'id'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -551,10 +569,14 @@ export async function getGoalsByActivityRecipient(
   const allGoalIds = [];
 
   const r = sorted.reduce((previous, current) => {
+    const responsesForComparison = (current.responses || [])
+      .map((gfr) => gfr.response).sort().join();
+
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status
         && g.goalText.trim() === current.name.trim()
-        && g.source === current.source,
+        && g.source === current.source
+        && g.responsesForComparison === responsesForComparison,
     );
 
     allGoalIds.push(current.id);
@@ -589,6 +611,7 @@ export async function getGoalsByActivityRecipient(
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
+      responsesForComparison,
     };
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
@@ -626,4 +649,43 @@ export async function getGoalsByActivityRecipient(
     statuses,
     allGoalIds,
   };
+}
+
+export async function recipientLeadership(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      'grantId',
+      'firstName',
+      'lastName',
+      'email',
+      'effectiveDate',
+      'role',
+      // our virtual columns, which is why we fetch so much cruft above
+      'fullName',
+      'fullRole',
+      'nameAndRole',
+    ],
+    where: {
+      active: true,
+      role: ['director', 'cfo'],
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: ['recipientId', 'id', 'regionId'],
+        where: {
+          recipientId,
+          regionId,
+          status: 'Active',
+        },
+      },
+      {
+        required: true,
+        model: Program,
+        as: 'program',
+      },
+    ],
+  });
 }

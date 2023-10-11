@@ -8,13 +8,13 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByRole('link', { name: 'R01-PD-23-1037' }).click();
 
   // event summary
-  await page.getByText(/Event collaborators \*/i).click();
+  await page.getByText(/Event collaborators/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter'); 
 
-  await page.getByText('Event region point of contact*').click();
-  await page.getByLabel('Event region point of contact*').press('ArrowDown');
-  await page.getByLabel('Event region point of contact*').press('Enter');
+  await page.getByText(/Event region point of contact/i).click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter'); 
   await page.getByText('Recipients').click();
   await page.getByLabel('Event start date *mm/dd/yyyy').fill('01/02/2023');
   await page.getByLabel('Event end date *mm/dd/yyyy').fill('02/02/2023');
@@ -42,16 +42,20 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByLabel('Session context *').fill('Context');
   await page.getByLabel('Session objective *').fill('Objective');
 
-  await page.getByText(/Topics \*/i).click();
+  await page.getByText('Topics *Get help choosing topics').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
-  await page.getByText(/Who were the trainers for this session\? \*/i).click()
+  await page.getByText(/Who were the trainers for this session/i).click()
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
+
+  await page.locator('#ttaProvided').fill('TTA');
 
   await page.getByTestId('dropdown').selectOption('Introducing');
   await page.getByRole('button', { name: 'Save and continue' }).click();
+
+  await page.waitForTimeout(5000);
 
   // session participants
   await page.getByText(/Recipients/i).click();
@@ -67,7 +71,7 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByText('Hybrid').click();
   await page.getByLabel('Number of participants attending in person *').fill('5');
   await page.getByLabel('Number of participants attending virtually *').fill('5');
-  await page.getByTestId('textarea').fill('TTA');
+
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // next steps

@@ -32,10 +32,7 @@ import db, {
 } from '../../models';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
 import {
-  getClient,
   deleteIndex,
-  createIndex,
-  addIndexDocument,
 } from '../../lib/awsElasticSearch/index';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
@@ -1145,11 +1142,11 @@ describe('filtersToScopes', () => {
       // Reports.
       includedReport1 = await ActivityReport.create({
         ...draftReport,
-        topics: ['test', 'test 2'],
+        topics: ['Topic 1', 'Topic 2'],
       });
       includedReport2 = await ActivityReport.create({
         ...draftReport,
-        topics: ['a test', 'another topic'],
+        topics: ['Topic 1', 'Topic 3'],
       });
       excludedReport = await ActivityReport.create({ ...draftReport, topics: ['another topic'] });
       possibleIds = [
@@ -1205,11 +1202,11 @@ describe('filtersToScopes', () => {
 
       // Topic.
       topic1 = await Topic.create({
-        name: 'Library Books',
+        name: 'Topic 4',
       });
 
       topic2 = await Topic.create({
-        name: 'Construction Tools',
+        name: 'Topic 2',
       });
 
       // ARO topic.
@@ -1250,6 +1247,7 @@ describe('filtersToScopes', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
 
       // Delete goal.
@@ -1257,6 +1255,7 @@ describe('filtersToScopes', () => {
         where: {
           id: goal.id,
         },
+        force: true,
       });
 
       // Delete reports.
@@ -1279,19 +1278,19 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('includes topic with a partial match', async () => {
-      const filters = { 'topic.in': ['tes'] };
+    it('includes topics with a match', async () => {
+      const filters = { 'topic.in': ['Topic 3'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+        .toEqual(expect.arrayContaining([includedReport2.id]));
     });
 
-    it('includes aro topic with a partial match', async () => {
-      const filters = { 'topic.in': ['books'] };
+    it('includes aro topic with a match', async () => {
+      const filters = { 'topic.in': ['Topic 4'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1301,8 +1300,8 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id]));
     });
 
-    it('includes aro topic and topic with a partial match', async () => {
-      const filters = { 'topic.in': ['tes', 'a test'] };
+    it('includes aro topic and topic with a match', async () => {
+      const filters = { 'topic.in': ['Topic 2'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1312,8 +1311,8 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
-    it('excludes topics that do not partial match', async () => {
-      const filters = { 'topic.nin': ['tes'] };
+    it('excludes topics that do not match', async () => {
+      const filters = { 'topic.nin': ['Topic 1'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1323,8 +1322,8 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
     });
 
-    it('excludes aro topics that do not partial match', async () => {
-      const filters = { 'topic.nin': ['books'] };
+    it('excludes aro topics that do not match', async () => {
+      const filters = { 'topic.nin': ['Topic 4'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1337,8 +1336,8 @@ describe('filtersToScopes', () => {
           globallyExcludedReport.id]));
     });
 
-    it('excludes aro topic and topics that do not partial match', async () => {
-      const filters = { 'topic.nin': ['a test', 'books'] };
+    it('excludes aro topic and topics that do not match', async () => {
+      const filters = { 'topic.nin': ['Topic 3', 'Topic 4'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -2765,6 +2764,7 @@ describe('filtersToScopes', () => {
         await Objective.destroy({
           where: { id: objective.id },
           individualHooks: true,
+          force: true,
         });
       }
 
@@ -2772,6 +2772,7 @@ describe('filtersToScopes', () => {
         await Goal.destroy({
           where: { id: goal.id },
           individualHooks: true,
+          force: true,
         });
       }
 

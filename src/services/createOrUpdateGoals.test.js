@@ -1,6 +1,7 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../constants';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
@@ -24,6 +25,7 @@ describe('createOrUpdateGoals', () => {
   let objective;
   let recipient;
   let newGoals;
+  const fakeUrl = faker.internet.url();
   let grants = [
     {
       id: faker.datatype.number(),
@@ -69,19 +71,25 @@ describe('createOrUpdateGoals', () => {
       status: 'Not Started',
     });
 
-    await processObjectiveForResourcesById(objective.id, ['https://www.test.gov']);
+    await processObjectiveForResourcesById(objective.id, [fakeUrl]);
   });
 
   afterAll(async () => {
+    const urlResource = await Resource.findOne({
+      where: {
+        url: fakeUrl,
+      },
+    });
+
     await ObjectiveResource.destroy({
       where: {
-        objectiveId: objective.id,
+        resourceId: urlResource.id,
       },
       individualHooks: true,
     });
 
     await Resource.destroy({
-      where: { url: 'https://www.test.gov' },
+      where: { url: fakeUrl },
       individualHooks: true,
     });
 
@@ -105,6 +113,7 @@ describe('createOrUpdateGoals', () => {
         goalId: goalIds,
       },
       individualHooks: true,
+      force: true,
     });
 
     await Goal.destroy({
@@ -112,6 +121,7 @@ describe('createOrUpdateGoals', () => {
         id: goalIds,
       },
       individualHooks: true,
+      force: true,
     });
 
     await Grant.destroy({
@@ -154,7 +164,7 @@ describe('createOrUpdateGoals', () => {
             title: 'This is an objective',
             resources: [
               {
-                value: 'https://www.test.gov',
+                value: fakeUrl,
               },
             ],
             topics: [
@@ -267,7 +277,7 @@ describe('createOrUpdateGoals', () => {
     });
 
     expect(resource.length).toBe(1);
-    expect(resource[0].resource.dataValues.url).toBe('https://www.test.gov');
+    expect(resource[0].resource.dataValues.url).toBe(fakeUrl);
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
@@ -296,7 +306,7 @@ describe('createOrUpdateGoals', () => {
             title: 'This is an objective',
             resources: [
               {
-                value: 'https://www.test.gov',
+                value: fakeUrl,
               },
             ],
             topics: [
@@ -328,7 +338,7 @@ describe('createOrUpdateGoals', () => {
             status: 'Complete',
             resources: [
               {
-                value: 'https://www.test.gov',
+                value: fakeUrl,
               },
             ],
             topics: [
@@ -368,7 +378,7 @@ describe('createOrUpdateGoals', () => {
             title: 'This is a different objective ',
             resources: [
               {
-                value: 'https://www.test.gov',
+                value: fakeUrl,
               },
             ],
             topics: [
@@ -404,7 +414,7 @@ describe('createOrUpdateGoals', () => {
             status: 'In Progress',
             resources: [
               {
-                value: 'https://www.test.gov',
+                value: fakeUrl,
               },
             ],
             topics: [
@@ -442,7 +452,7 @@ describe('createOrUpdateGoals', () => {
             status: 'Complete',
             resources: [
               {
-                value: 'https://www.test.gov',
+                value: fakeUrl,
               },
             ],
             topics: [
@@ -460,5 +470,82 @@ describe('createOrUpdateGoals', () => {
     expect(updatedGoal3.objectives).toHaveLength(1);
     const [updatedObjective3] = updatedGoal3.objectives;
     expect(updatedObjective3.status).toBe('Complete');
+  });
+
+  it('you can change an objectives status to suspended and collect a reason', async () => {
+    const basicGoal = {
+      recipientId: recipient.id,
+      regionId: 1,
+      name: 'This is some serious goal text for an objective that will have its status updated, but different',
+      status: 'Draft',
+    };
+
+    const updatedGoals = await createOrUpdateGoals([
+      {
+        ...basicGoal,
+        isNew: true,
+        grantId: grants[1].id,
+        objectives: [
+          {
+            id: 'new-0',
+            status: 'Not Started',
+            title: 'This is a different objective ',
+            resources: [
+              {
+                value: fakeUrl,
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals).toHaveLength(1);
+    const [updatedGoal] = updatedGoals;
+    expect(updatedGoal.objectives).toHaveLength(1);
+    const [updatedObjective] = updatedGoal.objectives;
+    expect(updatedObjective.status).toBe('Not Started');
+
+    const updatedGoals2 = await createOrUpdateGoals([
+      {
+        ...updatedGoal.dataValues,
+        recipientId: recipient.id,
+        grantId: grants[1].id,
+        ids: [updatedGoal.id],
+        objectives: [
+          {
+            title: updatedObjective.title,
+            id: [updatedObjective.id],
+            status: OBJECTIVE_STATUS.SUSPENDED,
+            suspendReason: 'Recipient request',
+            suspendContext: 'Yeah, they just asked',
+            resources: [
+              {
+                value: fakeUrl,
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals2).toHaveLength(1);
+    const [updatedGoal2] = updatedGoals2;
+    expect(updatedGoal2.objectives).toHaveLength(1);
+    const [updatedObjective2] = updatedGoal2.objectives;
+    expect(updatedObjective2.id).toBe(updatedObjective.id);
+    expect(updatedObjective2.status).toBe(OBJECTIVE_STATUS.SUSPENDED);
+    expect(updatedObjective2.suspendReason).toBe('Recipient request');
+    expect(updatedObjective2.suspendContext).toBe('Yeah, they just asked');
   });
 });

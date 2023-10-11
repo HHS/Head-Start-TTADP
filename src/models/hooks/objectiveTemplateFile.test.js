@@ -35,7 +35,7 @@ describe('objectiveTemplateFile hooks', () => {
 
       // delete the id so that the objective is not found, but
       // is reserved so we don't sweat test collisions
-      await objective.destroy({ transaction });
+      await objective.destroy({ transaction, force: true });
 
       const file = await File.create(
         fileGenerator(),
