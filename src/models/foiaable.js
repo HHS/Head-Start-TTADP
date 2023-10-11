@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
   }
   Foiaable.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
     },
     column: {
-      allowNull: true,
+      allowNull: false,
       type: DataTypes.TEXT,
     },
   }, {
