@@ -128,11 +128,16 @@ const generateAssociation = (
     through,
     otherKey,
   )) {
-    from[type](to, {
-      foreignKey,
-      as,
-      ...(through && { through, otherKey }),
-    });
+    from[type](
+      (to === from) // Needed to prevent infinite recursion
+        ? to.scope()
+        : to,
+      {
+        foreignKey,
+        as,
+        ...(through && { through, otherKey }),
+      },
+    );
   }
 };
 
