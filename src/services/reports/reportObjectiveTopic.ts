@@ -21,6 +21,7 @@ const TopicEnumInfo:EnumInfo = {
   model: Topic,
   as: 'topic',
   keyName: 'Topic', // TODO: make sure this is right
+  entityTypeFiltered: false,
 };
 
 const syncReportObjectiveTopics = async (
@@ -33,7 +34,14 @@ const includeReportObjectiveTopics = () => includeEntityGenericEnums(
   { name: 'reportObjectiveId' },
 );
 
-const getReportObjectiveTopics = async () => {};
+const getReportObjectiveTopics = async (
+  topicIds: number[] | null = null,
+) => getEntityGenericEnum(
+  ReportObjectiveTopic,
+  TopicEnumInfo,
+  { name: 'reportObjectiveId' },
+  topicIds,
+);
 
 export {
   syncReportObjectiveTopics,
