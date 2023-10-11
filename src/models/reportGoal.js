@@ -82,6 +82,10 @@ export default (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: true,
     },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     currentStatus: {
       type: DataTypes.VIRTUAL,
       get() {
