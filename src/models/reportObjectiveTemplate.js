@@ -71,9 +71,27 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    ttaProvided: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      allowNull: true,
+    },
+    statusId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   }, {
