@@ -97,7 +97,8 @@ export const onCompletedNotification = async (job, result) => {
   if (result != null) {
     logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
     logEmailNotification(job, true, result);
-  } else {r.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set or marked as "no-send"`);
+  } else {
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set or marked as "no-send"`);
   }
 };
 
