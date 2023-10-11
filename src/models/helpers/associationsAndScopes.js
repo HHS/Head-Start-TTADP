@@ -303,7 +303,7 @@ const generateJunctionTableAssociations = (
 
     associatedModels.forEach((model, modelIndex) => {
       [
-        ...(!(additionalData?.models?.[modelIndex]?.skipNull) && [null]),
+        ...(!(additionalData?.models?.[modelIndex]?.skipNull) ? [null] : []),
         ...(additionalData?.models?.[modelIndex]?.suffixes
           ? additionalData.models[modelIndex].suffixes
           : []),
