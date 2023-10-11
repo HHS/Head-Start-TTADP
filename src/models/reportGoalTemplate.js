@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
     },
     templateName: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     timeframe: {
       type: DataTypes.TEXT,
@@ -60,6 +60,20 @@ export default (sequelize, DataTypes) => {
     isActivelyEdited: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      allowNull: true,
+    },
+    statusId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   }, {
