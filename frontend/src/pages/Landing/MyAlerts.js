@@ -112,6 +112,15 @@ export function ReportsRow({ reports, removeAlert, message }) {
       statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
     }
 
+    if (
+      calculatedStatus !== APPROVER_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
+    ) {
+      displayStatus = 'Needs action';
+      statusClassName = 'smart-hub--table-tag-status smart-hub--status-needs-action';
+    }
+
     if (justSubmitted && message.status !== calculatedStatus) {
       displayStatus = message.status === 'unlocked' ? 'Needs action' : message.status;
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? APPROVER_STATUSES.NEEDS_ACTION : message.status}`;
