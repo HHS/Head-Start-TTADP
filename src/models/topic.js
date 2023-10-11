@@ -11,11 +11,11 @@ const {
 export default (sequelize, DataTypes) => {
   class Topic extends Model {
     static associate(models) {
-      Topic.belongsTo(models.Topic, {
+      Topic.belongsTo(models.Topic.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsToTopic',
       });
-      Topic.hasMany(models.Topic, {
+      Topic.hasMany(models.Topic.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsFromTopics',
       });
