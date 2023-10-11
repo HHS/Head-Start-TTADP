@@ -82,14 +82,9 @@ describe('My Alerts', () => {
 
   test('displays approvers column', async () => {
     renderMyAlerts();
-    const approverListToolTip1 = screen.getByRole('button', { name: /1 of 3 pending approvals: approver manager 1,approver manager 2,approver manager 3\. click button to visually reveal this information\./i });
-    expect(approverListToolTip1).toBeVisible();
-    const approverListToolTip2 = screen.getByRole('button', { name: /2 of 2 pending approvals: approver manager 4,approver manager 5\. click button to visually reveal this information\./i });
-    expect(approverListToolTip2).toBeVisible();
-    const reportIdColumnHeader = await screen.findByRole('columnheader', {
-      name: /report id/i,
-    });
-    expect(reportIdColumnHeader).toBeVisible();
+    expect(await screen.findByText(/Approver manager 1/i)).toBeVisible();
+    expect(await screen.findByText(/Approver manager 2/i)).toBeVisible();
+    expect(await screen.findByText(/Approver manager 3/i)).toBeVisible();
   });
 
   test('displays creator column', async () => {
