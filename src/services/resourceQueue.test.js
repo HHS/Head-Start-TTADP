@@ -28,7 +28,8 @@ describe('Resource queue manager tests', () => {
       resource.id,
       resource.key,
     );
-    expect(Queue).toHaveBeenCalledWith('resource', 'redis://undefined:6379', { redis: { password: undefined } });
+    // expect(Queue).toHaveBeenCalledWith('resource', 'redis://undefined:6379', { redis: { password: undefined } });
+    expect(Queue).toHaveBeenCalledWith('resource', 'redis://undefined:6379', { defaultJobOptions: { attempts: 3, backoff: { type: 'exponential' }, removeOnComplete: true }, redis: { password: undefined } });
     expect(resourceQueue.add).toHaveBeenCalled();
   });
 });

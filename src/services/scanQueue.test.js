@@ -12,7 +12,8 @@ describe('queue tests', () => {
 
   it('calls scanQueue.add', async () => {
     await addToScanQueue('test.txt');
-    expect(Queue).toHaveBeenCalledWith('scan', 'redis://undefined:6379', { redis: { password: undefined } });
+    // expect(Queue).toHaveBeenCalledWith('scan', 'redis://undefined:6379', { redis: { password: undefined } });
+    expect(Queue).toHaveBeenCalledWith('scan', 'redis://undefined:6379', { defaultJobOptions: { attempts: 3, backoff: { type: 'exponential' }, removeOnComplete: true }, redis: { password: undefined } });
     expect(scanQueue.add).toHaveBeenCalled();
   });
 });
