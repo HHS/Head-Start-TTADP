@@ -45,7 +45,8 @@ const identifyAndSpreadReports = async () => maintenanceCommand(
        */
       const reportIds = await getAll(
         REPORT_TYPE.REPORT_TRAINING_SESSION,
-        undefined,
+        undefined, // Dont pass any ids so we get everything
+        // limit results to only those within the last 7 days
         {
           updatedAt: { [Op.gte]: new Date(new Date().setDate(new Date().getDate() - 7)) },
         },
