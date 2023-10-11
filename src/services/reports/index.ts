@@ -76,7 +76,7 @@ const actions:Actions = {
         func: syncReportTrainingEvent,
         remapDef: {
           'data."Event ID': 'eventId',
-          'regionId': 'regionId',
+          regionId: 'regionId',
           'data."Edit Title"': 'name',
           'data.eventOrganizer': 'organizer.name',
           'data."Audience"': 'audience.*',
@@ -84,19 +84,20 @@ const actions:Actions = {
         },
       },
       { func: syncReportAudiences, remapDef: { 'data.audience.*': '*.name' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': `0` } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id` } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id` } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id` } },
-      { func: syncReportGoalTemplates,
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': '0' } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { ownerId: '0.id' } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': '*.id' } },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': '*.id' } },
+      {
+        func: syncReportGoalTemplates,
         remapDef: {
           'data.goal': '0.templateName',
-          'regionId': '0.regionId',
+          regionId: '0.regionId',
           'data.timeframe': '0.timeframe',
           'data.endDate': '0.endDate',
         },
       },
-      { func: syncReportImport, remapDef: { 'imported': 'import' } },
+      { func: syncReportImport, remapDef: { imported: 'import' } },
       { func: syncReportNationalCenters, remapDef: { 'data."National Center(s) Requested".*': '*.name' } },
       { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
       { func: syncReportReasons, remapDef: { 'data.reasons.*': '*.name' } },
@@ -149,13 +150,13 @@ const actions:Actions = {
         func: syncReportTrainingSession,
         remapDef: {
           'data.eventDisplayId': 'id',
-          'regionId': 'regionId',
-          'eventId': 'reportTrainingEventId',
+          regionId: 'regionId',
+          eventId: 'reportTrainingEventId',
           'data.sessionName': 'name',
         },
       },
       { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ownerId': '0.id', 'data.eventOwner': '0.id' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { 'ownerId': `0.id`} },
+      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { ownerId: `0.id` } },
       // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
       // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
       { func: syncReportRecipients, remapDef: { 'data.recipients.*': '*' } },
@@ -246,8 +247,8 @@ const intersectObjects = (...objects: object[]): object => objects.reduce((resul
  */
 const getAllTypedReports = async (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-  reportIds: number[],
-  includes: object[],
+  reportIds?: number[],
+  includes?: object[],
   scope?: object,
 ) => Report.findAll({
   attributes: [], // Exclude all attributes from the result set
@@ -427,7 +428,7 @@ const getOne = async (
  */
 const getAll = async (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-  reportIds: number[],
+  reportIds?: number[],
   scope?: object,
   metaDataIncludeFilter?: object[],
   // Call the function `getAllTypedReports` with the provided arguments
