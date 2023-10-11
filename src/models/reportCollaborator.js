@@ -33,6 +33,7 @@ export default (sequelize, DataTypes) => {
         [
           models.Report,
           models.User,
+          models.Status,
         ],
         {
           suffixes: Object.values(COLLABORATOR_TYPES).map((collaboratorType) => collaboratorType),
