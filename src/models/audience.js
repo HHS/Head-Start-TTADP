@@ -34,7 +34,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     validForId: {
@@ -52,7 +52,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       references: {
         model: {
-          tableName: 'Audience',
+          tableName: 'Audiences',
         },
         key: 'id',
       },
