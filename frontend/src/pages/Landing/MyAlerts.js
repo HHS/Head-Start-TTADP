@@ -79,7 +79,6 @@ export function ReportsRow({ reports, removeAlert }) {
       activityReportCollaborators,
     } = report;
 
-    // const justSubmitted = message && message.reportId === id;
     const recipients = activityRecipients.map((ar) => (
       ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
@@ -233,21 +232,6 @@ ReportsRow.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
-  message: PropTypes.shape({
-    time: PropTypes.string,
-    reportId: PropTypes.string,
-    displayId: PropTypes.string,
-    status: PropTypes.string,
-  }),
-};
-
-ReportsRow.defaultProps = {
-  message: {
-    time: '',
-    reportId: '',
-    displayId: '',
-    status: '',
-  },
 };
 
 function MyAlerts(props) {
@@ -399,12 +383,6 @@ MyAlerts.propTypes = {
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
-  // message: PropTypes.shape({
-  //   time: PropTypes.string,
-  //   reportId: PropTypes.number,
-  //   displayId: PropTypes.string,
-  //   status: PropTypes.string,
-  // }),
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
   setDownloadAlertsError: PropTypes.func.isRequired,
@@ -425,12 +403,6 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
-  // message: {
-  //   time: '',
-  //   reportId: null,
-  //   displayId: '',
-  //   status: '',
-  // },
   isDownloadingAlerts: false,
   downloadAlertsError: false,
   downloadAllAlertsButtonRef: () => {},
