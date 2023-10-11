@@ -3,7 +3,7 @@
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
-import { APPROVER_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
 import Modal from '../../components/Modal';
@@ -51,7 +51,7 @@ ProperIcon.defaultProps = {
   approvalStatus: APPROVER_STATUSES.PENDING,
 };
 
-export function ReportsRow({ reports, removeAlert, message }) {
+export function ReportsRow({ reports, removeAlert }) {
   const history = useHistory();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
@@ -79,7 +79,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
       activityReportCollaborators,
     } = report;
 
-    const justSubmitted = message && message.reportId === id;
+    // const justSubmitted = message && message.reportId === id;
     const recipients = activityRecipients.map((ar) => (
       ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
@@ -100,11 +100,16 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
-    let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
-    let displayStatus = calculatedStatus === APPROVER_STATUSES.NEEDS_ACTION ? 'Needs action' : calculatedStatus;
+    let statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+    let displayStatus = 'Submitted';
+
+    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    }
 
     if (
-      calculatedStatus !== APPROVER_STATUSES.NEEDS_ACTION
+      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
       && approvers && approvers.length > 0
       && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
     ) {
@@ -113,18 +118,23 @@ export function ReportsRow({ reports, removeAlert, message }) {
     }
 
     if (
-      calculatedStatus !== APPROVER_STATUSES.NEEDS_ACTION
+      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
       && approvers && approvers.length > 0
       && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
     ) {
       displayStatus = 'Needs action';
-      statusClassName = 'smart-hub--table-tag-status smart-hub--status-needs-action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
     }
 
-    if (justSubmitted && message.status !== calculatedStatus) {
-      displayStatus = message.status === 'unlocked' ? 'Needs action' : message.status;
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? APPROVER_STATUSES.NEEDS_ACTION : message.status}`;
+    if (
+      calculatedStatus !== REPORT_STATUSES.APPROVED
+      && approvers && approvers.length > 0
+      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      displayStatus = REPORT_STATUSES.APPROVED;
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;
     }
+
     const menuItems = [
       {
         label: 'View',
@@ -255,7 +265,6 @@ function MyAlerts(props) {
     setAlertReportsCount,
     handleDownloadAllAlerts,
     loading,
-    message,
     isDownloadingAlerts,
     downloadAlertsError,
     setDownloadAlertsError,
@@ -365,7 +374,7 @@ function MyAlerts(props) {
                 </tr>
               </thead>
               <tbody>
-                <ReportsRow reports={reports} removeAlert={removeAlert} message={message} />
+                <ReportsRow reports={reports} removeAlert={removeAlert} />
               </tbody>
             </Table>
           </div>
@@ -390,12 +399,12 @@ MyAlerts.propTypes = {
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
-  message: PropTypes.shape({
-    time: PropTypes.string,
-    reportId: PropTypes.number,
-    displayId: PropTypes.string,
-    status: PropTypes.string,
-  }),
+  // message: PropTypes.shape({
+  //   time: PropTypes.string,
+  //   reportId: PropTypes.number,
+  //   displayId: PropTypes.string,
+  //   status: PropTypes.string,
+  // }),
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
   setDownloadAlertsError: PropTypes.func.isRequired,
@@ -416,12 +425,12 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
-  message: {
-    time: '',
-    reportId: null,
-    displayId: '',
-    status: '',
-  },
+  // message: {
+  //   time: '',
+  //   reportId: null,
+  //   displayId: '',
+  //   status: '',
+  // },
   isDownloadingAlerts: false,
   downloadAlertsError: false,
   downloadAllAlertsButtonRef: () => {},
