@@ -128,10 +128,10 @@ describe('My Alerts', () => {
 
   test('displays the correct statuses', async () => {
     renderMyAlerts();
-    const draft = await screen.findByText(/draft/i);
+    const reviewed = await screen.findByText(/reviewed/i);
     const needsAction = await screen.findByText(/needs action/i);
 
-    expect(draft).toBeVisible();
+    expect(reviewed).toBeVisible();
     expect(needsAction).toBeVisible();
   });
 

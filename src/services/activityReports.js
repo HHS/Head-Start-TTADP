@@ -858,8 +858,7 @@ export async function activityReportAlerts(userId, {
             },
             id: {
               [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara                
-                WHERE ara."userId" = ${userId}
-                AND ara."deletedAt" IS NULL)`),
+                WHERE ara."userId" = ${userId} AND ara."activityReportId" = "ActivityReport"."id" AND ara."deletedAt" IS NULL)`),
             },
           },
           {
@@ -872,7 +871,15 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$activityReportCollaborators->user.id$': userId }],
+                [Op.or]: [
+                  { userId },
+                  {
+                    id: {
+                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc                
+                      WHERE arc."userId" = ${userId} AND arc."activityReportId" = "ActivityReport"."id")`),
+                    },
+                  },
+                ],
               },
             ],
           },

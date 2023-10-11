@@ -122,7 +122,7 @@ const NeedsAction = ({
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <div className="margin-top-3">
         <ApproverStatusList approverStatus={approverStatusList} />
-        <Button className="margin-bottom-4" onClick={submit}>Update</Button>
+        <Button className="margin-bottom-4" onClick={submit}>Update report</Button>
       </div>
     </>
   );

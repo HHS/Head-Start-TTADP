@@ -101,11 +101,20 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
     let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
-    let displayStatus = calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus;
+    let displayStatus = calculatedStatus === APPROVER_STATUSES.NEEDS_ACTION ? 'Needs action' : calculatedStatus;
+
+    if (
+      calculatedStatus !== APPROVER_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      displayStatus = 'Reviewed';
+      statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
+    }
 
     if (justSubmitted && message.status !== calculatedStatus) {
       displayStatus = message.status === 'unlocked' ? 'Needs action' : message.status;
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? 'needs_action' : message.status}`;
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? APPROVER_STATUSES.NEEDS_ACTION : message.status}`;
     }
     const menuItems = [
       {
@@ -155,7 +164,6 @@ export function ReportsRow({ reports, removeAlert, message }) {
             {approverNames}
           </div>
         </td>
-        <td />
         <td>
           <Tag
             className={statusClassName}
