@@ -40,7 +40,7 @@ module.exports = {
         ----- REPORT LINK TABLES ------
         -- Skip ReportApprovals: no approvals for TRs
         -- Insert ReportCollaborators
-        -- Insert ReportCollaboratorRoles
+        -- REMOVE: Insert ReportCollaboratorRoles
         -- Insert ReportCollaboratorTypes
         -- Insert ReportFiles from SessionReportPilotFiles
         -- Insert ReportNationalCenters
@@ -62,6 +62,7 @@ module.exports = {
         -- REMOVE: Insert ReportGoals
         -- REMOVE: Update Objectives with goalId
         -- Insert GoalTemplateObjectiveTemplates
+        -- Update ReportObjectiveTemplates.reportGoalTemplateId
 
 
         ------------------------------------------------------------------------------------------------
@@ -423,11 +424,19 @@ module.exports = {
         CROSS JOIN owner_status os
         ;
 
-        -- Insert ReportCollaboratorRoles
-        -- TODO: confirm roles are not relevant in TR context
-
         -- Insert ReportCollaboratorTypes
         -- TODO: add in the type links
+        /*
+        INSERT INTO "ReportCollaboratorTypes" (
+          "reportCollaboratorId",
+          "collaboratorTypeId",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          reports_id,
+          srpf."fileId",
+          srpf."createdAt", */
 
         -- Insert ReportFiles from SessionReportPilotFiles
         INSERT INTO "ReportFiles" (
@@ -565,99 +574,112 @@ module.exports = {
         ------------------------------------------------------------------------------------------------
         ----- OBJECTIVES -------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------
-        -- Find or insert Objectives for sessions
-        CREATE TEMP TABLE session_objectives
+        -- Find or insert ObjectiveTemplates for sessions
+
+        CREATE TEMP TABLE obj_templates
         AS
-        WITH objstats AS (
-          SELECT
-            notstart.name notstartstat,
-            inprog.name inprogstat
-          FROM "ValidFor" vf
-          JOIN "Statuses" notstart
-            ON notstart.ordinal = 1
-            AND vf.id = notstart."validForId"
-          JOIN "Statuses" inprog
-            ON inprog.ordinal = 2
-            AND vf.id = inprog."validForId"
-          WHERE vf.name = 'objective'
+        WITH existing_objtemplates AS (
+          SELECT DISTINCT
+            id,
+            "regionId",
+            TRIM(LOWER("templateTitle")) ottitle
+          FROM "ObjectiveTemplates"
         )
         SELECT
-          reports_id rid,
-          NULL::bigint AS oid,
-          data->>'objective' otitle,
-          data->>'ttaProvided' ttaprovided,
-          s.id sid,
-          s.ordinal,
-          CASE WHEN s."isTerminal" THEN os.inprogstat ELSE os.notstartstat END AS status,
-          ir."createdAt" created_at,
-          ir."updatedAt" updated_at,
-          BOOL_AND(o.id IS NULL) to_insert
+          ir.reports_id,
+          eo.id::bigint otid,
+          MD5(data->>'objective') hash,
+          data->>'objective' ottitle,
+          rts."regionId",
+          ir."createdAt",
+          ir."updatedAt",
+          CASE WHEN eo.id IS NULL THEN TRUE ELSE FALSE END AS to_insert
         FROM interim_reports ir
-        JOIN "Reports" r
-          ON ir.reports_id = r.id
-        JOIN "Statuses" s
-          ON r."statusId" = s.id
-        JOIN "ReportRecipients" rr
-          ON r.id = rr."reportId"
-        LEFT JOIN "Goals" g
-          ON g."grantId" = rr."grantId"
-        LEFT JOIN "Objectives" o
-          ON g.id = o."goalId"
-          AND TRIM(LOWER(data->>'objective')) = TRIM(LOWER(o.title))
-        CROSS JOIN objstats os
-        GROUP BY 1,2,3,4,5,6,7,8,9
-        ;/*
-        CREATE TEMP TABLE 
-        INSERT INTO "Objectives" (
-          title,
-          status,
-          "createdAt",
-          "updatedAt"
-        )
-        SELECT
-          otitle,
-          status,
-          created_at,
-          updated_at
-        FROM session_objectives
-        WHERE to_insert
+        JOIN "ReportTrainingSessions" rts
+          ON ir.reports_id = rts."reportId"
+        LEFT JOIN existing_objtemplates eo
+          ON TRIM(LOWER(ir.data->>'objective')) = eo.ottitle
+          AND eo."regionId" = rts."regionId"
+        WHERE NULLIF(COALESCE(ir.data->>'objective',''),'') IS NOT NULL
         ;
 
-        UPDATE session_objectives
-        SET oid = o.id
-        FROM "Objectives" o
-        JOIN "
-        WHERE TRIM(LOWER(title)) = TRIM(LOWER(otitle))
-
-
+        INSERT INTO "ObjectiveTemplates" (
+          hash,
+          "templateTitle",
+          "regionId",
+          "creationMethod",
+          "createdAt",
+          "updatedAt",
+          "lastUsed",
+          "templateTitleModifiedAt"
+        )
+        SELECT
+          hash,
+          ottitle,
+          "regionId",
+          'Automatic', -- TODO: check if this should be considered a Curated objective
+          "createdAt",
+          "updatedAt",
+          "updatedAt",
+          "createdAt"
+        FROM obj_templates o_t
+        WHERE to_insert
+        ;
         
-        -- Insert ReportObjectives TODO
-        INSERT INTO "ReportObjectives" (
-          reportId,
-          objectiveId,
-          title,
+        -- Insert ReportObjectiveTemplates
+        INSERT INTO "ReportObjectiveTemplates" (
+          "reportId",
+          "objectiveTemplateId",
+          "templateTitle",
+          "supportTypeId",
           "statusId",
-          ordinal,
-          "ttaProvided"
           "createdAt",
           "updatedAt"
         )
         SELECT
-          otitle,
-          oid,
-          t
-          status,
-          created_at,
-          updated_at
-        FROM session_objectives
-        WHERE to_insert
+          r.id,
+          ot.id,
+          o_t.ottitle,
+          (SELECT id FROM "SupportTypes" WHERE name = 'Introducing'), -- TODO confirm this is correct
+          r."statusId",
+          r."createdAt",
+          r."updatedAt"
+        FROM obj_templates o_t
+        JOIN "Reports" r
+          ON o_t.reports_id = r.id
+        JOIN "ObjectiveTemplates" ot
+          ON TRIM(LOWER(o_t.ottitle)) = TRIM(LOWER(ot."templateTitle"))
+          AND o_t."regionId" = ot."regionId"
+        ;
 
-        */
-        -- Insert ObjectiveTopics TODO
-        -- Insert ObjectiveFiles TODO
-        -- Insert ObjectiveResources TODO
-        -- Find or insert ObjectiveTemplates text for region on complete session TODO
-        -- Insert ObjectiveTemplateTopics TODO
+        -- Insert ObjectiveTemplateTopics
+        INSERT INTO "ObjectiveTemplateTopics" (
+          "objectiveTemplateId",
+          "topicId",
+          "createdAt",
+          "updatedAt"
+        )
+        WITH topicnames AS (
+          SELECT
+            reports_id,
+            jsonb_array_elements(data->'objectiveTopics')->>0 tname
+          FROM interim_reports
+          WHERE data->>'objective' != ''
+        )
+        SELECT
+          ot.id,
+          t.id,
+          ot."createdAt",
+          ot."updatedAt"
+        FROM obj_templates o_t
+        JOIN topicnames tn
+          ON o_t.reports_id = tn.reports_id
+        JOIN "Topics" t
+          ON tn.tname = t.name
+        JOIN "ObjectiveTemplates" ot
+          ON TRIM(LOWER(o_t.ottitle)) = TRIM(LOWER(ot."templateTitle"))
+          AND o_t."regionId" = ot."regionId"
+        ;
         -- Insert ObjectiveTemplateResources TODO
 
 
@@ -666,6 +688,33 @@ module.exports = {
         ------------------------------------------------------------------------------------------------
         -- Find or insert GoalTemplates text for region
         -- There's really only the one goal in recent data, so not getting real fancy on the deduping logic here
+        CREATE TEMP TABLE goal_templates
+        AS
+        WITH existing_goaltemplates AS (
+          SELECT DISTINCT
+            id,
+            "regionId",
+            TRIM(LOWER("templateName")) gtname
+          FROM "GoalTemplates"
+        )
+        SELECT
+          ir.reports_id,
+          eg.id::bigint gtid,
+          MD5(data->>'goal') hash,
+          data->>'goal' gtname,
+          rte."regionId",
+          ir."createdAt",
+          ir."updatedAt",
+          CASE WHEN eg.id IS NULL THEN TRUE ELSE FALSE END AS to_insert
+        FROM interim_reports ir
+        JOIN "ReportTrainingEvents" rte
+          ON ir.reports_id = rte."reportId"
+        LEFT JOIN existing_goaltemplates eg
+          ON TRIM(LOWER(ir.data->>'goal')) = eg.gtname
+          AND eg."regionId" = rte."regionId"
+        WHERE NULLIF(COALESCE(ir.data->>'goal',''),'') IS NOT NULL
+        ;
+
         INSERT INTO "GoalTemplates" (
           hash,
           "templateName",
@@ -676,103 +725,63 @@ module.exports = {
           "lastUsed",
           "templateNameModifiedAt"
         )
-        WITH newgoaltexts AS (
-          SELECT
-            rte."regionId",
-            TRIM(LOWER(data->>'goal')) newgoaltext
-          FROM interim_reports ir
-          JOIN "ReportTrainingEvents" rte
-            ON ir.reports_id = rte."reportId"
-          WHERE NULLIF((data->>'goal'),'') IS NOT NULL
-          EXCEPT
-          SELECT
-            "regionId",
-            TRIM(LOWER("templateName"))
-          FROM "GoalTemplates"
-        )
         SELECT
-          MD5(data->>'goal'),
-          data->>'goal',
-          rte."regionId",
+          hash,
+          gtname,
+          "regionId",
           'Automatic', -- TODO: check if this should be considered a Curated goal
-          ir."createdAt",
-          ir."updatedAt",
-          ir."updatedAt",
-          ir."createdAt"
-        FROM interim_reports ir
-        JOIN "ReportTrainingEvents" rte
-          ON ir.reports_id = rte."reportId"
-        JOIN newgoaltexts n
-          ON TRIM(LOWER(ir.data->>'goal')) = newgoaltext
-          AND n."regionId" = rte."regionId"
-        ;/*
-
-        -- Insert ReportGoalTemplates TODO
-
-
-        -- Create Goals for session Grants
-        CREATE TEMP TABLE goals_to_insert
-        AS
-        WITH goalstats AS (
-          SELECT
-            inprog.name inprogstat
-          FROM "ValidFor" vf
-          JOIN "Statuses" inprog
-            ON inprog.ordinal = 3
-            AND vf.id = inprog."validForId"
-          WHERE vf.name = 'goal'
-        )
-        SELECT
-          r.id rid
-          gt."templateName" gname,
-          gs.inprogstat status,
-          r."createdAt" created_at,
-          r."updatedAt" updated_at,
-          gt.id, gtid
-          rr."grantId" grid
-        FROM "ReportTrainingSessions" rts
-        JOIN interim_reports ir_event
-          ON rts."reportTrainingEventId" = ir_event.reports_id
-        JOIN "Reports" r
-          ON rts."reportId" = r.id
-        JOIN "Statuses" s
-          ON r."statusId" = s.id
-        JOIN "ReportRecipients" rr
-          ON rr."reportId" = r.id
-        JOIN "GoalTemplates" gt
-          ON TRIM(LOWER(gt."templateName")) = TRIM(LOWER(ir_event.data->>'goal'))
-          AND rts."regionId" = gt."regionId"
-        CROSS JOIN goalstats gs
-        WHERE s."isTerminal"
-        ;
-
-        INSERT INTO "Goals" (
-          name,
-          status,
-          "isFromSmartsheetTtaPlan",
           "createdAt",
           "updatedAt",
+          "updatedAt",
+          "createdAt"
+        FROM goal_templates g_t
+        WHERE to_insert
+        ;
+        
+        -- Insert ReportGoalTemplates
+        INSERT INTO "ReportGoalTemplates" (
+          "reportId",
           "goalTemplateId",
-          "grantId",
-          "firstInProgressAt"
-          -- ,"createdVia" -- TODO: should it import using 'imported'? (leaning toward yes)
-          -- ,"source" -- TODO: should we add and use 'Training event'? (leaning toward no)
+          "templateName",
+          "statusId",
+          "createdAt",
+          "updatedAt"
         )
         SELECT
-          gname,
-          status,
-          FALSE,
-          created_at,
-          updated_at,
-          gtid,
-          grid,
-          created_at
-        FROM goals_to_insert gti
-        ;*/
+          r.id,
+          gt.id,
+          g_t.gtname,
+          r."statusId",
+          r."createdAt",
+          r."updatedAt"
+        FROM goal_templates g_t
+        JOIN "Reports" r
+          ON g_t.reports_id = r.id
+        JOIN "GoalTemplates" gt
+          ON TRIM(LOWER(g_t.gtname)) = TRIM(LOWER(gt."templateName"))
+          AND g_t."regionId" = gt."regionId"
+        ;
 
-        -- Insert ReportGoals TODO
-        -- Update Objectives with goalId TODO
-        -- Insert GoalTemplateObjectiveTemplates TODO
+        -- Insert GoalTemplateObjectiveTemplates 
+        INSERT INTO "GoalTemplateObjectiveTemplates" (
+          "goalTemplateId",
+          "objectiveTemplateId",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          rgt."goalTemplateId",
+          rot."objectiveTemplateId",
+          rts."createdAt",
+          rts."updatedAt"
+        FROM "ReportObjectiveTemplates" rot
+        JOIN "ReportTrainingSessions" rts
+          ON rot."reportId" = rts."reportId"
+        JOIN "ReportGoalTemplates" rgt
+          ON rts."reportTrainingEventId" = rgt."reportId"
+        ;
+
+        -- Update ReportObjectiveTemplates.reportGoalTemplateId TODO
 
 
 
