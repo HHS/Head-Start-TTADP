@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
+import { Op } from 'sequelize';
 import db from '../../models';
 import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../constants';
 import { syncReport } from './report';
@@ -21,6 +22,7 @@ import { syncReportTargetPopulations, includeReportTargetPopulations } from './r
 import { syncReportTrainingEvent, includeReportTrainingEvent } from './reportTrainingEvent';
 import { syncReportTrainingSession, includeReportTrainingSession } from './reportTrainingSession';
 import { RemappingDefinition, remap } from '../../lib/modelUtils';
+import validFor from '../../models/validFor';
 
 const {
   Report,
@@ -254,10 +256,18 @@ const getAllTypedReports = async (
   attributes: [], // Exclude all attributes from the result set
   where: {
     ...(reportIds && reportIds.length && { id: reportIds }), // Filter by report IDs if provided
-    reportType, // Filter by report type
-    scope, // Filter by scope if provided
+    ...(scope && { [Op.and]: scope }), // Filter by scope if provided
   },
-  includes,
+  includes: [
+    {
+      model: validFor,
+      as: 'reportType',
+      attributes: [],
+      required: true,
+      where: { name: reportType },
+    },
+    ...includes,
+  ],
 });
 
 /**
