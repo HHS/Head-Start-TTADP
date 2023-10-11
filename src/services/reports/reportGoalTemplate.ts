@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import db from '../../models';
 import { auditLogger } from '../../logger';
+import { CREATION_METHOD } from '../../constants';
 
 const {
   GoalTemplate,
@@ -15,7 +16,10 @@ const {
  */
 const getCurrentReportGoalTemplates = async (
   reportIds: number[],
-): Promise<object[]> => ReportGoalTemplate.findAll({ // Find all report goal templates
+): Promise<{
+  reportId: number,
+  goalTemplateId: number,
+}[]> => ReportGoalTemplate.findAll({ // Find all report goal templates
   attributes: [
     ['reportId'],
     ['goalTemplateId'],
@@ -29,6 +33,7 @@ const getCurrentReportGoalTemplates = async (
       as: 'goalTemplate',
     },
   ],
+  raw: true,
 });
 
 /**
@@ -118,7 +123,7 @@ const syncReportGoalTemplates = async (
         {
           templateName: goalTemplate.name, // Set the template name
           regionId: goalTemplate.regionId, // Set the region ID
-          creationMethod: null, // TODO: figure out what should go here
+          creationMethod: CREATION_METHOD.AUTOMATIC,
         },
         {
           attributes: [
@@ -181,7 +186,7 @@ const syncReportGoalTemplates = async (
               reportId: report.id,
               goalTemplateId: deltaLists.removeList.map((removeItem) => removeItem.goalTemplateId),
             },
-          }) // TODO: is destroy required
+          })
           : Promise.resolve()
       ),
     ]);
@@ -193,10 +198,10 @@ const syncReportGoalTemplates = async (
 
 const includeReportGoalTemplates = () => ({
   model: ReportGoalTemplate,
-  as: '',
+  as: 'reportGoalTemplates',
   required: false,
   attributes: [
-    'id',
+    ['id'],
   ],
   includes: [
     {
