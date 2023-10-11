@@ -24,8 +24,20 @@ const rolesEnumInfo:EnumInfo = {
 };
 
 const syncReportCollaboratorRoles = async (
-  entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  entity: { id: number, type?: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  data?: { reportCollaborators: { reportCollaboratorId?: number, userId?: number }[] },
 ) => {
+  const [
+    reportCollaboratorIds,
+    userIds,
+  ] = [
+    (data?.reportCollaborators || [])
+      .map((rc) => rc?.reportCollaboratorId)
+      .filter((rcId) => rcId),
+    (data?.reportCollaborators || [])
+      .map((rc) => rc?.userId)
+      .filter((userId) => userId),
+  ];
   const [
     currentCollaboratorRoles,
     currentRolesOfCollaborators,
@@ -41,7 +53,15 @@ const syncReportCollaboratorRoles = async (
         as: 'reportCollaborator',
         attributes: [],
         required: true,
-        where: { reportId: entity.id },
+        where: {
+          reportId: entity.id,
+          ...(reportCollaboratorIds
+            && reportCollaboratorIds.length > 0
+            && { id: reportCollaboratorIds }),
+          ...(userIds
+            && userIds.length > 0
+            && { id: userIds }),
+        },
       }],
     }),
     ReportCollaborator.findAll({
@@ -49,7 +69,15 @@ const syncReportCollaboratorRoles = async (
         ['id', 'reportCollaboratorId'],
         ['"userRoles"."roleId"', 'roleId'],
       ],
-      where: { reportId: entity.id },
+      where: {
+        reportId: entity.id,
+        ...(reportCollaboratorIds
+          && reportCollaboratorIds.length > 0
+          && { id: reportCollaboratorIds }),
+        ...(userIds
+          && userIds.length > 0
+          && { id: userIds }),
+      },
       include: [{
         model: User,
         as: 'user',
