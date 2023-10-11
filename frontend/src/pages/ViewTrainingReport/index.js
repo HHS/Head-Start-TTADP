@@ -28,6 +28,8 @@ const formatNextSteps = (nextSteps, heading, striped) => {
   };
 };
 
+const FORBIDDEN = 403;
+
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
   const [error, setError] = useState(null);
@@ -43,8 +45,14 @@ export default function ViewTrainingReport({ match }) {
         const e = await eventById(match.params.trainingReportId);
         setEvent(e);
       } catch (err) {
+        let message = 'Sorry, something went wrong';
         setEvent({});
-        setError('Sorry, something went wrong');
+
+        if (err && err.status === FORBIDDEN) {
+          message = 'You do not have permission to view this page';
+        }
+
+        setError(message);
       } finally {
         setIsAppLoading(false);
       }
