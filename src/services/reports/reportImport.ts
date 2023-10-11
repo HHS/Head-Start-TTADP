@@ -1,5 +1,4 @@
 import db from '../../models';
-import { REPORT_TYPE } from '../../constants';
 import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 
 const {
