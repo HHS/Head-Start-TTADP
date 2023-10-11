@@ -2,6 +2,7 @@ import { Model, Op } from 'sequelize';
 import { auditLogger } from '../../logger';
 import { ENTITY_TYPE } from '../../constants';
 import db from '../../models';
+import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 
 const { ValidFor } = db;
 
@@ -207,34 +208,62 @@ type EnumSyncResponse = {
   unmatched: { id?: number, name?: string }[] | null,
 };
 
+const includeEntityGenericEnums = (
+  model: EntityEnumModel,
+  enumInfo: EnumInfo,
+  entity: { name: string, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+) => ({
+  model,
+  as: '', // TODO: figure out how to get this
+  attributes: [
+    'id',
+    [entity.name],
+    [`"${enumInfo.as}".id`, 'enumId'],
+    [`"${enumInfo.as}".name`, 'name'],
+  ],
+  includes: [{
+    model: enumInfo.model,
+    as: enumInfo.as,
+    required: true,
+    attributes: [],
+    ...(enumInfo?.entityTypeFiltered && {
+      includes: [{
+        model: ValidFor,
+        as: 'validFor',
+        required: true,
+        attributes: [],
+        where: {
+          name: entity.type,
+          isReport: true,
+        },
+      }],
+    }),
+  }],
+});
+
 const getEntityGenericEnum = async (
   entityEnumModel: EntityEnumModel,
   enumInfo: EnumInfo,
   entity: { name: string, id: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
   genericEnumIds: number[] | null = null,
-): Promise<EntityGenericEnum[]> => entityEnumModel.findAll({
-  attributes: [
+): Promise<EntityGenericEnum[]> => includeToFindAll(
+  includeEntityGenericEnums,
+  {
+    [entity.name]: entity.id,
+    ...(genericEnumIds && { genericEnumIds }),
+  },
+  [
+    entityEnumModel,
+    enumInfo,
+    entity,
+  ],
+  [
     'id',
     entity.name,
     [`"${enumInfo.as}".id`, 'enumId'],
     [`"${enumInfo.as}".name`, 'name'],
   ],
-  where: {
-    [entity.name]: entity.id,
-    ...(genericEnumIds && { genericEnumIds }),
-  },
-  include: [
-    {
-      model: enumInfo.model,
-      as: enumInfo.as,
-      where: {
-        ...(enumInfo?.entityTypeFiltered && entity?.type && { validFor: entity.type }),
-      },
-      attributes: [],
-      required: true,
-    },
-  ],
-});
+);
 
 const syncEntityGenericEnum = async (
   entityEnumModel: EntityEnumModel,
@@ -336,39 +365,6 @@ const syncEntityGenericEnum = async (
     throw err;
   }
 };
-
-const includeEntityGenericEnums = (
-  model: EntityEnumModel,
-  enumInfo: EnumInfo,
-  entity: { name: string, type: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
-) => ({
-  model,
-  as: '', // TODO: figure out how to get this
-  attributes: [
-    'id',
-    [entity.name],
-    [`"${enumInfo.as}".id`, 'enumId'],
-    [`"${enumInfo.as}".name`, 'name'],
-  ],
-  includes: [{
-    model: enumInfo.model,
-    as: enumInfo.as,
-    required: true,
-    attributes: [],
-    ...(enumInfo?.entityTypeFiltered && {
-      includes: [{
-        model: ValidFor,
-        as: 'validFor',
-        required: true,
-        attributes: [],
-        where: {
-          name: entity.type,
-          isReport: true,
-        },
-      }],
-    }),
-  }],
-});
 
 export {
   type EnumInfo,
