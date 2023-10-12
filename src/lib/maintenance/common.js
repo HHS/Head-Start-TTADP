@@ -19,7 +19,7 @@ const maintenanceCronJobs = {};
 const onFailedMaintenance = async (job, error) => {
   // Log an error message with details about the failed job and error.
   auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
-  await job.retry();
+  // await job.retry();
 };
 
 /**
@@ -35,7 +35,7 @@ const onCompletedMaintenance = async (job, result) => {
   } else {
     // Log failed maintenance with job name, category and type
     logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.type}`);
-    await job.retry();
+    // await job.retry();
   }
 };
 

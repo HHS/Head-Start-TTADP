@@ -18,14 +18,14 @@ const addDeleteFileToQueue = (id, key) => {
 
 const onFailedS3Queue = async (job, error) => {
   auditLogger.error(`job ${job.data.key} failed with error ${error}`);
-  await job.retry();
+  // await job.retry();
 };
 const onCompletedS3Queue = async (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
     logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   } else {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
-    await job.retry();
+    // await job.retry();
   }
 };
 const processS3Queue = () => {
