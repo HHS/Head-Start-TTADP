@@ -295,7 +295,6 @@ module.exports = {
         ;
 
         -- Populate ReportNextSteps
-        -- TODO swap in interpolations
         INSERT INTO "ReportNextSteps" (
           "reportId",
           note,
@@ -307,8 +306,7 @@ module.exports = {
         SELECT
           reports_id,
           data->'recipientNextSteps'->0->>'note',
-          'RECIPIENT'::"enum_ReportNextSteps_noteType",
-          -- '${NEXTSTEP_NOTETYPE.RECIPIENT}'::"enum_ReportNextSteps_noteType",
+          '${NEXTSTEP_NOTETYPE.RECIPIENT}'::"enum_ReportNextSteps_noteType",
           TO_DATE(NULLIF((data->'recipientNextSteps'->0->>'completeDate'),''),'MM/DD/YYYY'),
           "createdAt",
           "updatedAt"
@@ -318,8 +316,7 @@ module.exports = {
         SELECT
           reports_id,
           data->'specialistNextSteps'->0->>'note',
-          'SPECIALIST'::"enum_ReportNextSteps_noteType",
-          -- '${NEXTSTEP_NOTETYPE.SPECIALIST}'::"enum_ReportNextSteps_noteType",
+          '${NEXTSTEP_NOTETYPE.SPECIALIST}'::"enum_ReportNextSteps_noteType",
           TO_DATE(NULLIF((data->'specialistNextSteps'->0->>'completeDate'),''),'MM/DD/YYYY'),
           "createdAt",
           "updatedAt"
@@ -752,7 +749,7 @@ module.exports = {
         JOIN interim_reports ir
           ON ir.reports_id = tr.reports_id
         WHERE to_insert
-        :
+        ;
 
         INSERT INTO "ObjectiveTemplateResources" (
           "objectiveTemplateId",
@@ -763,7 +760,8 @@ module.exports = {
         )
         SELECT
           ot.id,
-          t.id,
+          r.id,
+          '{resource}',
           ot."createdAt",
           ot."updatedAt"
         FROM obj_templates o_t
@@ -771,6 +769,9 @@ module.exports = {
           ON o_t.reports_id = tr.reports_id
         JOIN "Resources" r
           ON tr.url = r.url
+        JOIN "ObjectiveTemplates" ot
+          ON TRIM(LOWER(o_t.ottitle)) = TRIM(LOWER(ot."templateTitle"))
+          AND o_t."regionId" = ot."regionId"
         ;
 
 
@@ -880,147 +881,6 @@ module.exports = {
           ON gtot."goalTemplateId" = rgt."goalTemplateId"
         WHERE rot."objectiveTemplateId" = gtot."objectiveTemplateId"
         ;`, { transaction });
-      /* TODO: How to migrate from "EventReportPilots"
-      data.owner -> ReportCollaborator( type = owner)
-
-      {
-          data.creator,
-          data."IST Name",
-      } -> ReportCollaborator( type = instatiator )
-
-      colaboratorIds -> ReportCollaborator(type = editor)
-
-      data.goal -> ReportGoalTemplate
-      {
-          data.status
-          data.stateDate
-          data.endDate
-          createdAt,
-          updatedAt,
-      } -> report(
-          type = 'event',
-          statusId = (look up id),
-          startDate,
-          endDate,
-          createdAt,
-          updatedAt,
-          )
-
-      {
-          data.eventId, (not a number)
-          data.region,
-          data.eventName,
-          data.eventOrganizer,
-          data.audience,
-          data.trainingType
-          vision,
-          createdAt,
-          updatedAt,
-      } -> ReportTrainingEvent(
-          eventId, (not a number, needs to be added to the table and model)
-          regionId,
-          name,
-          organizerId = (look up id),
-          audience, // currently an enum, should this be changed to an id lookup
-          trainingType,
-          vision,
-          createdAt,
-          updatedAt,
-      )
-
-      data.reasons -> ReportReasons
-
-      data."National Center(s) Requested" -> ReportNationalCenter(
-          nationalCenterId = (look up each of the ids, 1 per record),
-      )
-
-      data.targetPopulations -> ReporttargetPopulation(
-          targetPopulationId = (look up each of the ids, 1 per record),
-      )
-
-      imported -> ReportImported() // this does not exist yet, but should be very simple
-
-      pageState -> ReportPageState
-
-      I dont have a method/plan/structure for saving the page state. This needs to be added. Perferibly to a new table.
-      */
-
-      /* TODO: How to migrate from "SessionReportPilots"
-        I have a few I dont know where I want to put them:
-          duration
-
-        {
-          data.ownerId,
-          data.eventOwner,
-        } -> ReportCollaborator( type = owner)
-
-        {
-          data.status,
-          data.context,
-          data.stateDate,
-          data.endDate,
-          createdAt,
-          updatedAt,
-        } -> Report(
-          type = 'session',
-          statusId = (look up id),
-          context
-          startDate,
-          endDate,
-          createdAt,
-          updatedAt,
-        )
-
-        {
-          data.regionId,
-          data.sessionName,
-        } -> ReportTrainingSession(
-          reportTrainingEventId // ID of linked event,
-          regionId,
-          name,
-        )
-
-        {
-          data.objective,
-          data.ttaProvided,
-          data.objectiveSupportType
-        } -> ReportObjectiveTemplate(
-          objectiveTitle
-          ttaProvided,
-          supportType
-        ) -> ObjectiveTemplate(
-          objectiveTitle
-        )
-
-        data.files -> ReportObjectiveTemplateFiles -> ObjectiveTemplateFiles
-
-        data.objectiveResources -> ReportObjectiveTemplateResources -> ObjectiveTemplateResources
-
-        data.objectiveTopics -> ReportObjectiveTemplateTopics -> ObjectiveTemplateTopics
-
-        data.objectiveTrainers -> ReportObjectiveTemplateTrainers
-
-        data.recipients -> ReportRecipients
-
-        data.recipientNextSteps -> reportNextSteps( type = recipient)
-
-        data.specialistNextSteps -> reportNextSteps( type = specialist)
-
-        {
-          data.deliveryMethod,
-          data.numberOfParticipants,
-          data.numberOfParticipantsInPerson,
-          data.numberOfParticipantsVirtually,
-          data.participants,
-        } -> reportParticipations(
-          deliveryMethod, // should/will be calculated from the distinct values if they are available, where either is null indicate the other type, both non-null it hybrid
-          numberOfParticipants, // should/will be calculated from the distinct values if they are available
-          inpersonParticipants,
-          virtualParticipants
-        ) -> reportParticipationParticipants (
-          participentid
-        ) -> Participants()
-      */
     },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
