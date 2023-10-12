@@ -149,7 +149,7 @@ module.exports = {
         
         ------ Collect all reports that will generate report IDs
         DROP TABLE IF EXISTS interim_reports;
-        CREATE TABLE interim_reports
+        CREATE TEMP TABLE interim_reports
         AS 
         SELECT
           erp.id pilot_record_id,
@@ -714,7 +714,64 @@ module.exports = {
           ON TRIM(LOWER(o_t.ottitle)) = TRIM(LOWER(ot."templateTitle"))
           AND o_t."regionId" = ot."regionId"
         ;
-        -- Insert ObjectiveTemplateResources TODO
+        -- Insert ObjectiveTemplateResources 
+        -- first need a list of resources and whether they need to be added
+        -- there is not expected to be any new resources, but this is due-diligence
+        CREATE TEMP TABLE tr_resources
+        AS
+        WITH separated_resources AS (
+          SELECT
+            ir.reports_id,
+            jsonb_array_elements(ir.data->'objectiveResources')->>'value' url,
+            SPLIT_PART((jsonb_array_elements(ir.data->'objectiveResources')->>'value'),'/',3) AS domain
+          FROM interim_reports ir
+          WHERE ir.data->>'objective' != ''
+        )
+        SELECT
+          sr.reports_id,
+          sr.url,
+          sr.domain,
+          CASE WHEN r.id IS NULL THEN TRUE ELSE FALSE END to_insert
+        FROM separated_resources sr
+        LEFT JOIN "Resources" r
+          ON sr.url = r.url
+        ;
+
+        INSERT INTO "Resources" (
+          url,
+          domain,
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT DISTINCT
+          url,
+          domain,
+          "createdAt",
+          "updatedAt"
+        FROM tr_resources tr
+        JOIN interim_reports ir
+          ON ir.reports_id = tr.reports_id
+        WHERE to_insert
+        :
+
+        INSERT INTO "ObjectiveTemplateResources" (
+          "objectiveTemplateId",
+          "resourceId",
+          "sourceFields",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          ot.id,
+          t.id,
+          ot."createdAt",
+          ot."updatedAt"
+        FROM obj_templates o_t
+        JOIN tr_resources tr
+          ON o_t.reports_id = tr.reports_id
+        JOIN "Resources" r
+          ON tr.url = r.url
+        ;
 
 
         ------------------------------------------------------------------------------------------------
@@ -815,21 +872,13 @@ module.exports = {
           ON rts."reportTrainingEventId" = rgt."reportId"
         ;
 
-        -- Update ReportObjectiveTemplates.reportGoalTemplateId TODO
-
-
-
-        /*
-        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        */
-
-
-
-
+        -- Update ReportObjectiveTemplates.reportGoalTemplateId
+        UPDATE "ReportObjectiveTemplates" AS rot
+        SET "reportGoalTemplateId" = rgt.id
+        FROM "GoalTemplateObjectiveTemplates" gtot
+        JOIN "ReportGoalTemplates" rgt
+          ON gtot."goalTemplateId" = rgt."goalTemplateId"
+        WHERE rot."objectiveTemplateId" = gtot."objectiveTemplateId"
         ;`, { transaction });
       /* TODO: How to migrate from "EventReportPilots"
       data.owner -> ReportCollaborator( type = owner)
