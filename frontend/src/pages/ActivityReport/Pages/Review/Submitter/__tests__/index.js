@@ -219,7 +219,7 @@ describe('Submitter review page', () => {
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
-      expect(await screen.findByText('Review and update report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('displays approvers requesting action', async () => {
@@ -229,7 +229,7 @@ describe('Submitter review page', () => {
         { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', user: { fullName: 'Needs Action 2' } },
       ];
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText('Review and update report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
       expect(screen.getByText(
         /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i,
       )).toBeVisible();

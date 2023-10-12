@@ -99,8 +99,8 @@ export function ReportsRow({ reports, removeAlert }) {
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
-    let statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
-    let displayStatus = 'Submitted';
+    let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
+    let displayStatus = calculatedStatus;
 
     if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
       displayStatus = 'Needs action';
