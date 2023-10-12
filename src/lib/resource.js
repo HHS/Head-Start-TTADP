@@ -418,7 +418,7 @@ const getResourceMetaDataJob = async (job) => {
     // Check if the status code indicates an error.
     if (statusCode !== httpCodes.OK) {
       auditLogger.error(`Resource Queue: Warning, unable to retrieve resource '${resourceUrl}', received status code '${statusCode}'.`);
-      return { status: statusCode, data: { url: resourceUrl } };
+      return { status: statusCode || 500, data: { url: resourceUrl } };
     }
 
     // If it is an ECLKC resource, get the metadata values.
