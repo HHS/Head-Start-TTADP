@@ -89,6 +89,7 @@ const createIndex = async (indexName, passedClient) => {
 };
 /*
   Assign a searchable document to an index.
+  NOTE: We add a param called 'preventRethrow' in CircleCi as we don't have access to AWS ES.
 */
 const addIndexDocument = async (job) => {
   const {
@@ -108,11 +109,11 @@ const addIndexDocument = async (job) => {
     });
     logger.info(`AWS OpenSearch: Successfully added document ${id} to index ${indexName}`);
 
-    return { data: job.data, status: 200, res: res || undefined };
+    return { data: job.data, status: 200, res };
   } catch (error) {
     if (preventRethrow) {
       // This path is for running in CI.
-      return { data: job.data, status: 500, res: res || undefined };
+      return { data: job.data, status: 500, res };
     }
     throw error;
   }
@@ -213,7 +214,7 @@ const updateIndexDocument = async (job) => {
   });
 
   logger.info(`AWS OpenSearch: Successfully updated document index ${indexName} for id ${id}`);
-  return { data: job.data, status: 200, res: res || undefined };
+  return { data: job.data, status: 200, res };
 };
 
 /*
@@ -239,11 +240,11 @@ const deleteIndexDocument = async (job) => {
     });
     logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
 
-    return { data: job.data, status: 200, res: res || undefined };
+    return { data: job.data, status: 200, res };
   } catch (error) {
     if (preventRethrow) {
       // This path is for running in CI.
-      return { data: job.data, status: 500, res: res || undefined };
+      return { data: job.data, status: 500, res };
     }
     throw error;
   }
