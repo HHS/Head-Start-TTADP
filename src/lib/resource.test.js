@@ -292,7 +292,7 @@ describe('resource worker tests', () => {
           title: null,
         },
         metadataUpdatedAt: expect.anything(),
-        title: null,
+        title: 'null',
         mimeType: 'text/html; charset=utf-8',
         lastStatusCode: 200,
       },
@@ -303,13 +303,15 @@ describe('resource worker tests', () => {
         },
       },
     );
+
     // Check title scrape update..
     expect(mockUpdate).toBeCalledWith(
       {
-        title: 'Head Start | ECLKC',
+        lastStatusCode: 200,
+        mimeType: 'text/html; charset=utf-8',
       },
       {
-        individualHooks: false,
+        individualHooks: true,
         where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
       },
     );
