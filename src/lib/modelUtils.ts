@@ -180,11 +180,14 @@ const remap = (
   Object.keys(remappingDefinition).forEach((key) => {
     // Determine the source and target paths based on the reverse flag
     // eslint-disable-next-line no-nested-ternary
-    const sourcePath:string = reverse
-      ? Array.isArray(remappingDefinition[key])
+    let sourcePath:string;
+    if (reverse) {
+      sourcePath = Array.isArray(remappingDefinition[key])
         ? remappingDefinition[key].slice(-1)
-        : remappingDefinition[key]
-      : key;
+        : remappingDefinition[key];
+    } else {
+      sourcePath = key;
+    }
     const targetDefinition = reverse
       ? key
       : remappingDefinition[key];
