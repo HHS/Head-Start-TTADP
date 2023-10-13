@@ -69,6 +69,7 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    // TODO: consider relocating statusId and note to a new table when needed to support approvals
     statusId: {
       type: DataTypes.INTEGER,
       allowNull: true,
