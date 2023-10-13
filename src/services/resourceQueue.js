@@ -1,4 +1,4 @@
-import newQueue from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { RESOURCE_ACTIONS } from '../constants';
 import { logger, auditLogger } from '../logger';
 import { getResourceMetaDataJob } from '../lib/resource';
@@ -30,21 +30,26 @@ const addGetResourceMetadataToQueue = async (id, url) => {
   );
 };
 
-const onFailedResourceQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
-const onCompletedResourceQueue = (job, result) => {
+const onFailedResourceQueue = async (job, error) => {
+  auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+  // await job.retry();
+};
+const onCompletedResourceQueue = async (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
     logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   } else {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    // await job.retry();
   }
 };
 const processResourceQueue = () => {
   // Resource Queue.
   resourceQueue.on('failed', onFailedResourceQueue);
   resourceQueue.on('completed', onCompletedResourceQueue);
+  increaseListeners(resourceQueue);
 
   // Get resource metadata.
-  resourceQueue.process(
+  return resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
     getResourceMetaDataJob,
   );

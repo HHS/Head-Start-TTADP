@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 const { CronJob } = require('cron');
-const { default: newQueue } = require('../queue');
+const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
@@ -16,9 +16,10 @@ const maintenanceCronJobs = {};
  * @param {Object} job - The maintenance job that failed.
  * @param {Error} error - The error that caused the job to fail.
  */
-const onFailedMaintenance = (job, error) => {
+const onFailedMaintenance = async (job, error) => {
   // Log an error message with details about the failed job and error.
   auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
+  // await job.retry();
 };
 
 /**
@@ -26,7 +27,7 @@ const onFailedMaintenance = (job, error) => {
  * @param {Object} job - The maintenance job object.
  * @param {any} result - The result of the maintenance job.
  */
-const onCompletedMaintenance = (job, result) => {
+const onCompletedMaintenance = async (job, result) => {
   // Check if the result is not null
   if (result != null) {
     // Log successful maintenance with job name, category and type
@@ -34,6 +35,7 @@ const onCompletedMaintenance = (job, result) => {
   } else {
     // Log failed maintenance with job name, category and type
     logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.type}`);
+    // await job.retry();
   }
 };
 
@@ -78,10 +80,13 @@ const processMaintenanceQueue = () => {
   maintenanceQueue.on('failed', onFailedMaintenance);
   // Attach event listener for completed tasks
   maintenanceQueue.on('completed', onCompletedMaintenance);
+  increaseListeners(maintenanceQueue, Object.entries(maintenanceQueueProcessors).length);
 
-  // Process each category in the queue using its corresponding processor
-  Object.entries(maintenanceQueueProcessors)
-    .map(([category, processor]) => maintenanceQueue.process(category, processor));
+  return Promise.race(
+    // Process each category in the queue using its corresponding processor
+    Object.entries(maintenanceQueueProcessors)
+      .map(async ([category, processor]) => maintenanceQueue.process(category, processor)),
+  );
 };
 
 /**

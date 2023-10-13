@@ -5,7 +5,7 @@ import Email from 'email-templates';
 import * as path from 'path';
 import { sequelize } from '../../models';
 import { auditLogger, logger } from '../../logger';
-import newQueue from '../queue';
+import newQueue, { increaseListeners } from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import {
@@ -93,7 +93,7 @@ export const onFailedNotification = (job, error) => {
   logEmailNotification(job, false, error);
 };
 
-export const onCompletedNotification = (job, result) => {
+export const onCompletedNotification = async (job, result) => {
   if (result != null) {
     logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
     logEmailNotification(job, true, result);
@@ -705,22 +705,29 @@ export const notifyDigest = (job, transport = defaultTransport) => {
   return null;
 };
 
-export const processNotificationQueue = () => {
+export const processNotificationQueue = async () => {
   // Notifications
   notificationQueue.on('failed', onFailedNotification);
   notificationQueue.on('completed', onCompletedNotification);
+  increaseListeners(notificationQueue, 10);
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
-
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+  return Promise.race([
+    // notify
+    notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested),
+    notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned),
+    notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved),
+    notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned),
+    notificationQueue.process(
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+      notifyRecipientReportApproved,
+    ),
+    // notifyDigest
+    notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest),
+    notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest),
+  ]);
 };
 
 /**

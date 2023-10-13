@@ -34,7 +34,8 @@ describe('s3 queue manager tests', () => {
       file.id,
       file.key,
     );
-    expect(Queue).toHaveBeenCalledWith('s3', 'redis://undefined:6379', { redis: { password: undefined } });
+    // expect(Queue).toHaveBeenCalledWith('s3', 'redis://undefined:6379', { redis: { password: undefined } });
+    expect(Queue).toHaveBeenCalledWith('s3', 'redis://undefined:6379', { defaultJobOptions: { attempts: 3, backoff: { type: 'exponential' }, removeOnComplete: true }, redis: { password: undefined } });
     expect(s3Queue.add).toHaveBeenCalled();
   });
 });

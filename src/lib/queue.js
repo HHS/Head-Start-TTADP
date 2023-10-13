@@ -49,6 +49,13 @@ const generateRedisConfig = (enableRateLimiter = false) => {
     tlsEnabled: false,
     redisOpts: {
       redis: { password },
+      defaultJobOptions: {
+        attempts: 3,
+        removeOnComplete: true,
+        backoff: {
+          type: 'exponential',
+        },
+      },
     },
   };
 };
@@ -61,6 +68,22 @@ const {
 
 export { generateRedisConfig };
 
+const queues = {};
+
 export default function newQueue(queName) {
-  return new Queue(queName, `redis://${host}:${port}`, redisOpts);
+  queues[queName] = new Queue(queName, `redis://${host}:${port}`, redisOpts);
+  return queues[queName];
+}
+
+export async function increaseListeners(queue, num = 1) {
+  const redisClient = queue.client;
+  const maxListeners = redisClient.getMaxListeners();
+  const currentCounts = queue.eventNames().reduce((counts, eventName) => ({
+    ...counts,
+    [eventName]: queue.listenerCount(eventName),
+  }), {});
+  const totalCount = Object.values(currentCounts).reduce((acc, count) => acc + count, 0);
+  if (totalCount + num > maxListeners) {
+    redisClient.setMaxListeners(Math.max(totalCount + num, maxListeners));
+  }
 }

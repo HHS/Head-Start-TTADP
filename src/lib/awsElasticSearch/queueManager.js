@@ -1,4 +1,4 @@
-import newQueue from '../queue';
+import newQueue, { increaseListeners } from '../queue';
 // import { getClient } from './index';
 import { logger, auditLogger } from '../../logger';
 import { AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
@@ -62,34 +62,41 @@ const scheduleDeleteIndexDocumentJob = async (id, type) => {
   awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT, data);
 };
 
-const onFailedAWSElasticsearchQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
-const onCompletedAWSElasticsearchQueue = (job, result) => {
+const onFailedAWSElasticsearchQueue = async (job, error) => {
+  auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+  // await job.retry();
+};
+const onCompletedAWSElasticsearchQueue = async (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
     logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   } else {
     auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    // await job.retry();
   }
 };
 const processAWSElasticsearchQueue = () => {
   // AWS Elasticsearch
   awsElasticsearchQueue.on('failed', onFailedAWSElasticsearchQueue);
   awsElasticsearchQueue.on('completed', onCompletedAWSElasticsearchQueue);
+  increaseListeners(awsElasticsearchQueue, 3);
   // Process AWS Elasticsearch Queue Items:
-  // Create Index Document
-  awsElasticsearchQueue.process(
-    AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
-    addIndexDocument,
-  );
-  // Update Index Document
-  awsElasticsearchQueue.process(
-    AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
-    updateIndexDocument,
-  );
-  // Delete Index Document
-  awsElasticsearchQueue.process(
-    AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
-    deleteIndexDocument,
-  );
+  return Promise.race([
+    // Create Index Document
+    awsElasticsearchQueue.process(
+      AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
+      addIndexDocument,
+    ),
+    // Update Index Document
+    awsElasticsearchQueue.process(
+      AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
+      updateIndexDocument,
+    ),
+    // Delete Index Document
+    awsElasticsearchQueue.process(
+      AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
+      deleteIndexDocument,
+    ),
+  ]);
 };
 
 export {
