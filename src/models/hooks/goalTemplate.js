@@ -3,7 +3,7 @@ import { AUTOMATIC_CREATION } from '../../constants';
 import {
   checkForAttemptToChangeFoiaableValue,
   checkForAttemptToRemoveFoiaableValue,
-  autoPopulateFlag,
+  autoPopulateIsFlagged,
 } from '../helpers/isFlagged';
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
@@ -80,8 +80,8 @@ const beforeValidate = (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
-  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
+  autoPopulateIsFlagged('isFoiaable', instance, options);
+  autoPopulateIsFlagged('isReferenced', instance, options);
   autoPopulateHash(sequelize, instance, options);
   autoPopulateTemplateNameModifiedAt(sequelize, instance, options);
   autoPopulateCreationMethod(sequelize, instance, options);

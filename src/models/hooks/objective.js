@@ -3,7 +3,7 @@ import { OBJECTIVE_STATUS } from '../../constants';
 import {
   checkForAttemptToChangeFoiaableValue,
   checkForAttemptToRemoveFoiaableValue,
-  autoPopulateFlag,
+  autoPopulateIsFlagged,
 } from '../helpers/isFlagged';
 
 const findOrCreateObjectiveTemplate = async (
@@ -256,10 +256,10 @@ const beforeValidate = async (sequelize, instance, options) => {
     options.fields = []; //eslint-disable-line
   }
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
-  autoPopulateFlag(sequelize, instance, options, 'onAR');
-  autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
-  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
-  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
+  autoPopulateIsFlagged('onAR', instance, options);
+  autoPopulateIsFlagged('onApprovedAR', instance, options);
+  autoPopulateIsFlagged('isFoiaable', instance, options);
+  autoPopulateIsFlagged('isReferenced', instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };

@@ -14,6 +14,9 @@ const autoPopulateIsFlagged = (
   instance,
   options,
 ): void => {
+  // Check if the 'autoPopulateIsFlagged' option is set to true, and skip if so
+  if (skipIf(options, 'autoPopulateIsFlagged')) return;
+
   // Check if flagName is undefined or null
   if (instance[flagName] === undefined || instance[flagName] === null) {
     // Set flagName to false
@@ -570,37 +573,6 @@ const checkForAttemptToRemoveFoiaableValue = async (
 
 //----------------------------------------------------
 
-/**
- * This function is responsible for auto-populating a flag in an instance of a Sequelize model.
- * It checks if the 'autoPopulateFlag' option is set to true, and if not, it sets the flag to
- * false and adds it to the list of fields to be saved.
- *
- * @param sequelize - The Sequelize instance.
- * @param instance - The instance of the Sequelize model.
- * @param options - The options object.
- * @param flagName - The name of the flag to be auto-populated.
- */
-const autoPopulateFlag = (
-  sequelize,
-  instance,
-  options,
-  flagName,
-) => {
-  // Check if the 'autoPopulateFlag' option is set to true, and skip if so
-  if (skipIf(options, 'autoPopulateFlag')) return;
-
-  // Check if the flag is undefined or null
-  // If so, set the flag to false and add it to the list of fields to be saved
-  if (instance[flagName] === undefined || instance[flagName] === null) {
-    instance.set(flagName, false);
-    if (!options.fields.includes(flagName)) {
-      options.fields.push(flagName);
-    }
-  }
-};
-
-//----------------------------------------------------
-
 export {
   autoPopulateIsFlagged,
   autoPopulateIsFoiaable,
@@ -615,5 +587,4 @@ export {
   getFoiaableColumnsForModel,
   checkForAttemptToChangeFoiaableValue,
   checkForAttemptToRemoveFoiaableValue,
-  autoPopulateFlag,
 };

@@ -2,7 +2,7 @@ import { GOAL_STATUS } from '../../constants';
 import {
   checkForAttemptToChangeFoiaableValue,
   checkForAttemptToRemoveFoiaableValue,
-  autoPopulateFlag,
+  autoPopulateIsFlagged,
 } from '../helpers/isFlagged';
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
@@ -133,10 +133,10 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  autoPopulateFlag(sequelize, instance, options, 'onAR');
-  autoPopulateFlag(sequelize, instance, options, 'onApprovedAR');
-  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
-  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
+  autoPopulateIsFlagged('onAR', instance, options);
+  autoPopulateIsFlagged('onApprovedAR', instance, options);
+  autoPopulateIsFlagged('isFoiaable', instance, options);
+  autoPopulateIsFlagged('isReferenced', instance, options);
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };

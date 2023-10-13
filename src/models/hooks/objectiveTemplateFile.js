@@ -4,7 +4,7 @@ import { skipIf } from '../helpers/flowControl';
 import {
   checkForAttemptToChangeFoiaableValue,
   checkForAttemptToRemoveFoiaableValue,
-  autoPopulateFlag,
+  autoPopulateIsFlagged,
 } from '../helpers/isFlagged';
 
 import { cleanupOrphanFiles } from '../helpers/orphanCleanupHelper';
@@ -125,8 +125,8 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  autoPopulateFlag(sequelize, instance, options, 'isFoiaable');
-  autoPopulateFlag(sequelize, instance, options, 'isReferenced');
+  autoPopulateIsFlagged('isFoiaable', instance, options);
+  autoPopulateIsFlagged('isReferenced', instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
