@@ -40,3 +40,6 @@ newrelic_agent.log
 # DB files
 *.sql
 .vscode/settings.json
+
+# Python cache
+__pycache__/

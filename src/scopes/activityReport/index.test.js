@@ -32,10 +32,7 @@ import db, {
 } from '../../models';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
 import {
-  getClient,
   deleteIndex,
-  createIndex,
-  addIndexDocument,
 } from '../../lib/awsElasticSearch/index';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
