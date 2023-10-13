@@ -320,7 +320,8 @@ const includeToFindAll = async (
   funcArgs = null,
   attributes = null,
 ) => {
-  // Destructure the properties 'as', 'model', 'where', and other arguments from the result of calling the include function
+  // Destructure the properties 'as', 'model', 'where', and other arguments from the result of
+  // calling the include function
   const {
     as,
     model,
@@ -328,7 +329,8 @@ const includeToFindAll = async (
     ...args
   } = includeFunc(...funcArgs);
 
-  // Find all records of the model, applying the merged 'where' condition and any additional conditions
+  // Find all records of the model, applying the merged 'where' condition and any additional
+  // conditions
   return model.findAll({
     where: merge(where, moreWhere),
     ...(attributes && { attributes }),
