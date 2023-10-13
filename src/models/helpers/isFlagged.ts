@@ -519,7 +519,8 @@ const getFoiaableColumnsForModel = async (
   model,
 ) => models.Foiaable.findAll({
   attributes: ['column'], // Selects only the 'column' attribute from the result set
-  where: { table: model.getTableName() }, // Filters the result set based on the 'table' attribute matching the model's table name
+  // Filters the result set based on the 'table' attribute matching the model's table name
+  where: { table: model.getTableName() },
   raw: true, // Returns raw data instead of Sequelize instances
 });
 
