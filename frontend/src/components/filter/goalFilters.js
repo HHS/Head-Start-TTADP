@@ -96,9 +96,15 @@ export const grantNumberFilter = (possibleGrants) => ({
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: (query) => {
-    const toDisplay = query.map(
-      (q) => possibleGrants.find((g) => g.number === q).numberWithProgramTypes,
-    );
+    const toDisplay = query.map((q) => {
+      const grant = possibleGrants.find((g) => g.number === q);
+      if (grant) {
+        return grant.numberWithProgramTypes;
+      }
+
+      return q;
+    });
+
     return handleArrayQuery(toDisplay);
   },
   renderInput: (id, condition, query, onApplyQuery) => (
