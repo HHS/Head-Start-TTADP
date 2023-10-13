@@ -132,7 +132,7 @@ function GoalDataController({
           <Graph data={data.statuses} loading={loading} />
         </Grid>
       </Grid>
-      <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+      <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
         <GoalsTable
           recipientId={recipientId}
           regionId={regionId}
