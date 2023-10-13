@@ -11,7 +11,6 @@ import { skipIf } from './flowControl';
  */
 const autoPopulateIsFlagged = (
   flagName: string,
-  sequelize,
   instance,
   options,
 ): void => {
@@ -31,20 +30,17 @@ const autoPopulateIsFlagged = (
 /**
  * This function auto-populates the 'isFoiaable' property in the given instance using the
  * provided sequelize ORM.
- * @param {Sequelize} sequelize - The sequelize instance.
  * @param {Object} instance - The instance to be populated.
  * @param {Object} options - Additional options for auto-population.
  * @returns {void}
  */
 const autoPopulateIsFoiaable = (
-  sequelize,
   instance,
   options,
 ): void => {
   // Call the autoPopulateIsFlagged function with the necessary arguments
   autoPopulateIsFlagged(
     'isFoiaable', // Flag name
-    sequelize, // Sequelize instance
     instance, // Instance to be populated
     options, // Additional options
   );
@@ -54,18 +50,15 @@ const autoPopulateIsFoiaable = (
  * This function is used to auto-populate the 'isReferenced' flag in a Sequelize model instance.
  * It calls the 'autoPopulateIsFlagged' function with the provided parameters.
  *
- * @param sequelize - The Sequelize instance.
  * @param instance - The Sequelize model instance.
  * @param options - Additional options for auto-population.
  */
 const autoPopulateIsReferenced = (
-  sequelize, // The Sequelize instance.
   instance, // The Sequelize model instance.
   options, // Additional options for auto-population.
 ): void => {
   autoPopulateIsFlagged( // Call the 'autoPopulateIsFlagged' function.
     'isReferenced', // The flag name.
-    sequelize, // The Sequelize instance.
     instance, // The Sequelize model instance.
     options, // Additional options for auto-population.
   );
