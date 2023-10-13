@@ -304,18 +304,31 @@ const collectChangedValues = (
   return changedValues;
 };
 
+/**
+ * This function includes a model and its associated data based on the provided include function.
+ * It retrieves all records that match the given conditions.
+ *
+ * @param includeFunc - The function that defines the model and its associations to be included.
+ * @param moreWhere - Additional conditions to filter the records.
+ * @param funcArgs - Arguments to be passed to the include function.
+ * @param attributes - Attributes to be selected from the records.
+ * @returns A promise that resolves to an array of matching records.
+ */
 const includeToFindAll = async (
   includeFunc,
   moreWhere,
   funcArgs = null,
   attributes = null,
 ) => {
+  // Destructure the properties 'as', 'model', 'where', and other arguments from the result of calling the include function
   const {
     as,
     model,
     where,
     ...args
   } = includeFunc(...funcArgs);
+
+  // Find all records of the model, applying the merged 'where' condition and any additional conditions
   return model.findAll({
     where: merge(where, moreWhere),
     ...(attributes && { attributes }),
