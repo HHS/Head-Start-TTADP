@@ -1,4 +1,4 @@
-import newQueue from '../queue';
+import newQueue, { increaseListeners } from '../queue';
 // import { getClient } from './index';
 import { logger, auditLogger } from '../../logger';
 import { AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
@@ -74,6 +74,7 @@ const processAWSElasticsearchQueue = () => {
   // AWS Elasticsearch
   awsElasticsearchQueue.on('failed', onFailedAWSElasticsearchQueue);
   awsElasticsearchQueue.on('completed', onCompletedAWSElasticsearchQueue);
+  increaseListeners(awsElasticsearchQueue, 3);
   // Process AWS Elasticsearch Queue Items:
   // Create Index Document
   awsElasticsearchQueue.process(

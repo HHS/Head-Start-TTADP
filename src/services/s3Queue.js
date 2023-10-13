@@ -1,4 +1,4 @@
-import newQueue from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { S3_ACTIONS } from '../constants';
 import { logger, auditLogger } from '../logger';
 import { deleteFileFromS3Job } from '../lib/s3';
@@ -28,6 +28,7 @@ const processS3Queue = () => {
   // S3 Queue.
   s3Queue.on('failed', onFailedS3Queue);
   s3Queue.on('completed', onCompletedS3Queue);
+  increaseListeners(s3Queue);
 
   // Delete S3 file.
   s3Queue.process(
