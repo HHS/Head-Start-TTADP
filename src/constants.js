@@ -29,8 +29,8 @@ const GOAL_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
-  SUSPENDED: 'Suspended',
   CLOSED: 'Closed',
+  SUSPENDED: 'Suspended',
 };
 
 const GRANT_PERSONNEL_ROLES = [
@@ -45,8 +45,8 @@ const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
-  SUSPENDED: 'Suspended',
   COMPLETE: 'Complete',
+  SUSPENDED: 'Suspended',
 };
 
 const NEXTSTEP_NOTETYPE = {
