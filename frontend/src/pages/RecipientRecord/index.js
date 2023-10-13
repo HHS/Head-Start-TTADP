@@ -196,7 +196,10 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 </Link>
               )}
             >
-              <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+              <FilterContext.Provider value={{
+                filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId),
+              }}
+              >
                 <PrintGoals
                   recipientId={recipientId}
                   regionId={regionId}

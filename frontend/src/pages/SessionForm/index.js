@@ -10,6 +10,7 @@ import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues } from './constants';
@@ -265,6 +266,12 @@ export default function SessionForm({ match }) {
 
   if (!reportFetched) {
     return null;
+  }
+
+  if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
+    return (
+      <Redirect to={`/training-report/view/${trainingReportId}`} />
+    );
   }
 
   return (
