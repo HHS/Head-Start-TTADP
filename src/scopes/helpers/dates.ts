@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 
 const beforeFieldDate = (
   field: string,
-  date: string,
+  date: string[],
 ):object => ({
   [Op.and]: {
     [`data.${field}`]: {
@@ -13,7 +13,7 @@ const beforeFieldDate = (
 
 const afterFieldDate = (
   field: string,
-  date: string,
+  date: string[],
 ):object => ({
   [Op.and]: {
     [`data.${field}`]: {
@@ -24,31 +24,31 @@ const afterFieldDate = (
 
 const withinFieldDates = (
   field: string,
-  dates: string,
+  dates: string[],
 ):object => {
-  const splitDates = dates[0].includes(' - ')
+  const [
+    start,
+    end,
+  ] = dates[0].includes(' - ')
     ? dates[0].split(' - ')
     : dates[0].split('-');
-    console.log(splitDates);
-  if (splitDates.length !== 2) {
-    return {};
-  }
-  const start = splitDates[0];
-  const end = splitDates[1];
-  return {
-    [Op.and]: {
-      [`data.${field}`]: {
-        [Op.between]: [start, end],
+
+  return (start && end)
+    ? {
+      [Op.and]: {
+        [`data.${field}`]: {
+          [Op.between]: [start, end],
+        },
       },
-    },
-  };
+    }
+    : {};
 };
 
 const filterFieldDates = (field: string) => ({
-  bef: (query) => beforeFieldDate(field, query),
-  aft: (query) => afterFieldDate(field, query),
-  win: (query) => withinFieldDates(field, query),
-  in: (query) => withinFieldDates(field, query),
+  bef: (query: string[]) => beforeFieldDate(field, query),
+  aft: (query: string[]) => afterFieldDate(field, query),
+  win: (query: string[]) => withinFieldDates(field, query),
+  in: (query: string[]) => withinFieldDates(field, query),
 });
 
 export {
