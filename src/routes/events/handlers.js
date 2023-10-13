@@ -97,7 +97,7 @@ export const getHandler = async (req, res) => {
     const auth = await getEventAuthorization(req, res, event);
 
     if (!auth.canRead() && !auth.isPoc()) {
-      return res.sendStatus(403);
+      return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
     return res.status(httpCodes.OK).send(event);

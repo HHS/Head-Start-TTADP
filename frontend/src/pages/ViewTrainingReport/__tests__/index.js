@@ -213,6 +213,14 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('Sorry, something went wrong')).toBeInTheDocument();
   });
 
+  it('handles a permissions error', async () => {
+    fetchMock.getOnce('/api/events/id/1', 403);
+
+    renderTrainingReport();
+
+    expect(await screen.findByText('You do not have permission to view this page')).toBeInTheDocument();
+  });
+
   it('handles an error fetching collaborators', async () => {
     fetchMock.getOnce('/api/events/id/1', mockEvent());
 
