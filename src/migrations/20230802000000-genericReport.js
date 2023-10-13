@@ -268,7 +268,7 @@ module.exports = {
         },
         {
           values: OBJECTIVE_STATUS,
-          validForName: ENTITY_TYPE.COMPLETE,
+          validForName: ENTITY_TYPE.OBJECTIVE,
           terminalStatus: OBJECTIVE_STATUS.CLOSED,
         },
         {
