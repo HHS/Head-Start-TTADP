@@ -389,6 +389,35 @@ describe('resource worker tests', () => {
     );
   });
 
+  it('tests error with a response from get metadata', async () => {
+    const axiosMetadataErrorResponse = new Error();
+    axiosMetadataErrorResponse.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosMetadataErrorResponse));
+
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    expect(got.status).toBe(500);
+    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+
+    expect(mockUpdate).toBeCalledTimes(2);
+  });
+
+  it('tests error without a response from get metadata', async () => {
+    const axiosMetadataErrorResponse = new Error();
+    axiosMetadataErrorResponse.response = { data: 'Error' };
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosMetadataErrorResponse));
+
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+
+    // Verfiy auditlogger.error was called with the message we expect.
+    expect(auditLogger.error).toBeCalledTimes(3);
+  });
+
   it('eclkc resource we get metadata but no title', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockAxios.mockImplementationOnce(() => Promise.resolve({

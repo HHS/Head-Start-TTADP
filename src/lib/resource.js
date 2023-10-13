@@ -111,7 +111,6 @@ const getMetadataValuesFormJson = async (url) => {
   try {
     // Attempt to get the resource metadata (if valid ECLKC resource).
     // Sample: https://eclkc.ohs.acf.hhs.gov/mental-health/article/head-start-heals-campaign?_format=json
-
     let metadataUrl;
 
     // Check if the URL already contains query parameters
