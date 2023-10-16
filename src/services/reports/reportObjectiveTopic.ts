@@ -24,9 +24,8 @@ const TopicEnumInfo:EnumInfo = {
   entityTypeFiltered: false,
 };
 
-const syncReportObjectiveTopics = async (
-  entity: {},
-) => {};
+// TODO: finish
+const syncReportObjectiveTopics = async () => {};
 
 const includeReportObjectiveTopics = () => includeEntityGenericEnums(
   ReportObjectiveTopic,
