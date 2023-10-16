@@ -65,6 +65,7 @@ const includeReportTrainingSession = async () => ({
     'createdAt',
     'updatedAt',
   ],
+  // TODO - include report for training event
 });
 
 const getReportTrainingSession = async (
