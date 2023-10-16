@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Pagination } from '@trussworks/react-uswds';
+import { Dropdown, Pagination } from '@trussworks/react-uswds';
 
 function PaginationCard({
   currentPage,
@@ -8,6 +8,7 @@ function PaginationCard({
   offset,
   perPage,
   handlePageChange,
+  perPageChange,
 }) {
   const getPageInfo = () => {
     const from = offset >= totalCount ? 0 : offset + 1;
@@ -28,7 +29,24 @@ function PaginationCard({
 
   return (
     <div className="smart-hub--pagination-card display-flex bg-white">
-      <div className="display-flex flex-1 flex-align-center margin-left-4">{getPageInfo()}</div>
+      <div className="display-flex flex-1 flex-align-center margin-left-4">
+        {perPageChange ? (
+          <Dropdown
+            className="margin-top-0 margin-right-1 width-auto"
+            id="perPage"
+            name="perPage"
+            data-testid="perPage"
+            onChange={perPageChange}
+            aria-label="Select per page"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value={totalCount}>all</option>
+          </Dropdown>
+        ) : null }
+        <span>{getPageInfo()}</span>
+      </div>
       <Pagination
         className="padding-1"
         currentPage={currentPage}
@@ -46,6 +64,7 @@ PaginationCard.propTypes = {
   offset: PropTypes.number,
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func.isRequired,
+  perPageChange: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
 };
 
 PaginationCard.defaultProps = {
@@ -53,5 +72,6 @@ PaginationCard.defaultProps = {
   currentPage: 0,
   offset: 0,
   perPage: 10,
+  perPageChange: false,
 };
 export default PaginationCard;
