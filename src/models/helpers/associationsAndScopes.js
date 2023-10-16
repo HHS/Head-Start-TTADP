@@ -209,7 +209,7 @@ const generateAssociationPair = (
  */
 const locateForeignKey = (sourceModelAttributes, targetModel) => {
   // Get the table name of the target model
-  const targetTable = targetModel.getTableName();
+  const targetTable = targetModel.tableName;
   const foreignKeys = [];
   // Iterate over the attributes of the source model
   sourceModelAttributes.forEach(([key, value]) => {
@@ -403,7 +403,7 @@ const automaticallyGenerateJunctionTableAssociations = (
     // Map each filtered attribute to its associated model by finding the model with the matching
     // table name
     .map(([key, value]) => Object.values(models)
-      .find((model) => model.getTableName() === value?.references?.model?.tableName))
+      .find((model) => model.tableName === value?.references?.model?.tableName))
     .filter((model) => model);
 
   if (!associatedModels || associatedModels.length === 0) {
