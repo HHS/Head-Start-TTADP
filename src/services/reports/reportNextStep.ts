@@ -1,6 +1,5 @@
 // TODO: everything
 import db from '../../models';
-import { includeReportNextStepResources } from './reportNextStepResource';
 import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../constants';
 import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 
@@ -37,7 +36,7 @@ const syncReportNextSteps = async (
   const [
     createList,
     updateList,
-    destroyList,
+    // destroyList, // TODO: finish
   ] = [
     data
       .filter((ns) => !(currentNextSteps.filter((cns) => (
@@ -50,7 +49,8 @@ const syncReportNextSteps = async (
         || (ns.note && ns.note === cns.note)
       )).length > 0))
       .map((ns) => {
-
+        const x = null;
+        return null; // TODO: finish
       }),
   ];
 
@@ -63,7 +63,7 @@ const includeReportNextSteps = (
   noteType: typeof NEXTSTEP_NOTETYPE[keyof typeof NEXTSTEP_NOTETYPE],
 ) => ({
   model: ReportNextStep,
-  as: '',
+  as: `reportNextStepAS${noteType[0] + noteType.slice(1).toLowerCase()}`,
   required: false,
   where: {
     noteType,
@@ -74,8 +74,8 @@ const includeReportNextSteps = (
     'noteType',
     'completedDate',
   ],
-  includes: [
-    includeReportNextStepResources(),
+  include: [
+    // TODO: need to fetch resources
   ],
 });
 
