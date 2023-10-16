@@ -66,9 +66,9 @@ const includeReportParticipation = (
   type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => ({
   model: ReportParticipation,
-  as: '', // TODO: look up as
+  as: 'reportParticipations',
   required: false,
-  attributes: [],
+  attributes: [], // TODO: fix
   include: [
     includeReportParticipationParticipants(type),
   ],
