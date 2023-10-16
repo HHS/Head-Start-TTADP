@@ -68,29 +68,6 @@ module.exports = {
         ------------------------------------------------------------------------------------------------
         ----- Populate dimensional tables --------------------------------------------------------------
         ------------------------------------------------------------------------------------------------
-        -- TODO: remove these status inserts once Objective statuses are populating in the generic migration
-        INSERT INTO "Statuses" (
-          name,
-          "isTerminal",
-          ordinal,
-          "validForId",
-          "createdAt",
-          "updatedAt"
-        )
-        SELECT
-          'Not Started',
-          FALSE,
-          1,
-          4,
-          NOW(),
-          NOW()
-        UNION
-        SELECT 'In Progress', FALSE, 2,4, NOW(), NOW()
-        UNION
-        SELECT 'Suspended', FALSE, 3,4, NOW(), NOW()
-        UNION
-        SELECT 'Complete', TRUE, 4,4, NOW(), NOW()
-        ;
 
         -- Add new Reasons
         INSERT INTO "Reasons"(
@@ -156,8 +133,8 @@ module.exports = {
           1 "reportTypeId", -- the 'report.trainingEvent' ID in ValidFor
           s.id "statusId",
           erp.data->>'Sheet Name' context,
-          NULL::date "startDate",
-          NULL::date "endDate",
+          to_date(NULLIF(erp.data->>'startDate',''),'MM/DD/YYYY') "startDate",
+          to_date(NULLIF(erp.data->>'endDate',''),'MM/DD/YYYY') "endDate",
           erp."createdAt",
           erp."updatedAt",
           erp.data
@@ -171,8 +148,8 @@ module.exports = {
           2 "reportTypeId", -- the 'report.trainingSession' ID in ValidFor
           s.id "statusId",
           srp.data->>'context' context,
-          to_date(srp.data->>'startDate','MM/DD/YYYY') "startDate",
-          to_date(srp.data->>'endDate','MM/DD/YYYY') "endDate",
+          to_date(NULLIF(srp.data->>'startDate',''),'MM/DD/YYYY') "startDate",
+          to_date(NULLIF(srp.data->>'endDate',''),'MM/DD/YYYY') "endDate",
           srp."createdAt",
           srp."updatedAt",
           srp.data
@@ -364,17 +341,7 @@ module.exports = {
 
         -- Skip ReportApprovals: no approvals for TRs
 
-        -- Reused Collaborator tables
-        DROP TABLE IF EXISTS owner_status;
-        CREATE TEMP TABLE owner_status
-        AS
-        SELECT s.id sid
-        FROM "Statuses" s
-        JOIN "ValidFor" v
-          ON s."validForId" = v.id
-          AND v.name = 'collaborator'
-        WHERE s.name = 'approved' -- TODO: this is terminal, which could lock editing, but the others statuses make even less sense for events
-        ;
+        -- Reused Collaborator table
         DROP TABLE IF EXISTS obj_trainers;
         CREATE TEMP TABLE obj_trainers
         AS
@@ -391,19 +358,16 @@ module.exports = {
         SELECT
           reports_id,
           u.id uid,
-          os.sid,
           'EventReportPilots.data->creator' sourcepath,
           ir."createdAt" created_at,
           ir."updatedAt" updated_at
         FROM interim_reports ir
         JOIN "Users" u
           ON LOWER(ir.data->>'creator') = LOWER(u.email)
-        CROSS JOIN owner_status os
         UNION
         SELECT
           reports_id,
           u.id,
-          os.sid,
           'SessionReportPilots.data->objectiveTrainers',
           ir."createdAt",
           ir."updatedAt"
@@ -412,13 +376,11 @@ module.exports = {
           ON ot.rs_id = ir.reports_id
         JOIN "Users" u
           ON LOWER(u.name) = LOWER(ot.trainername)
-        CROSS JOIN owner_status os
         ;
 
         INSERT INTO "ReportCollaborators" (
           "reportId",
           "userId",
-          "statusId",
           note,
           "createdAt",
           "updatedAt"
@@ -426,12 +388,11 @@ module.exports = {
         SELECT
           reports_id,
           uid,
-          sid,
           'sources: ' || STRING_AGG(sourcepath,'+'),
           created_at,
           updated_at
         FROM collaborators c
-        GROUP BY 1,2,3,5,6
+        GROUP BY 1,2,4,5
         ;
 
         -- Insert ReportCollaboratorTypes
@@ -648,7 +609,7 @@ module.exports = {
           hash,
           ottitle,
           "regionId",
-          'Automatic', -- TODO: check if this should be considered a Curated objective
+          'Automatic',
           "createdAt",
           "updatedAt",
           "updatedAt",
@@ -821,7 +782,7 @@ module.exports = {
           hash,
           gtname,
           "regionId",
-          'Automatic', -- TODO: check if this should be considered a Curated goal
+          'Automatic',
           "createdAt",
           "updatedAt",
           "updatedAt",
