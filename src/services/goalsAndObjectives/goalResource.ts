@@ -1,5 +1,6 @@
 import db from '../../models';
 import { RemappingDefinition, includeToFindAll, remap } from '../../lib/modelUtils';
+import { processGoalForResourcesById } from '../resource';
 
 const {
   GoalResource,
@@ -9,7 +10,7 @@ const {
 // TODO: finish
 const syncGoalResources = async (data) => {
   // TODO: call current implementation if posable
-  processGoalForResourcesById();
+  // processGoalForResourcesById();
 };
 
 const includeGoalResources = () => ({
@@ -23,7 +24,7 @@ const includeGoalResources = () => ({
     'isFoiaable',
     'isReferenced',
   ],
-  includes: [{
+  include: [{
     model: Resource,
     as: 'resource',
     required: true,
