@@ -172,7 +172,7 @@ const includeGoals = (
   as: 'goals',
   required: false,
   attributes: [],
-  includes: [
+  include: [
     includeGoalFieldResponses(),
     includeGoalResources(),
     ...((options?.includes?.objectives || true)
