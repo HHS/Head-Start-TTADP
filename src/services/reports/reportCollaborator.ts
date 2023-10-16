@@ -3,6 +3,7 @@ import db from '../../models';
 import { auditLogger } from '../../logger';
 import { REPORT_TYPE, COLLABORATOR_TYPES } from '../../constants';
 import { filterDataToModel, remap, collectChangedValues } from '../../lib/modelUtils';
+import { camelToPascalCase } from '../../models/helpers/associationsAndScopes';
 
 const semaphore = new Semaphore(1);
 
@@ -187,13 +188,14 @@ const includeReportCollaborator = (
   collaboratorType: typeof COLLABORATOR_TYPES[keyof typeof COLLABORATOR_TYPES],
 ) => ({
   model: ReportCollaborator,
-  as: '', // TODO: fix using the collaboratorType
+  as: `reportCollaboratorAs${camelToPascalCase(collaboratorType)}s`, // TODO: fix using the collaboratorType
+  required: false,
   attributes: [
     'reportId',
     'userId',
   ],
-  includes: [
-    {
+  include: [
+    { // TODO: replace with a call to the include function for reportCollaboratorTypes
       model: CollaboratorType,
       as: 'collaboratorTypes',
       required: true,
@@ -207,7 +209,7 @@ const includeReportCollaborator = (
         attributes: [],
       },
     },
-    {
+    { // TODO: replace with a call to the include function for reportCollaboratorRoles
       model: Role,
       as: 'roles',
       required: true,
