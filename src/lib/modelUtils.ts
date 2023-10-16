@@ -130,10 +130,10 @@ const remapPrune = (
 };
 
 type RemappingDefinition = Record<string, string | (
-  (
-    data: object | object[]
-  ) => object | object[]
-  |
+  // (
+  //   data: object | object[]
+  // ) => object | object[]
+  // |
   string
 )[]>;
 
@@ -183,8 +183,8 @@ const remap = (
     let sourcePath:string;
     if (reverse) {
       sourcePath = Array.isArray(remappingDefinition[key])
-        ? remappingDefinition[key].slice(-1)
-        : remappingDefinition[key];
+        ? remappingDefinition[key].slice(-1) as string
+        : remappingDefinition[key] as string;
     } else {
       sourcePath = key;
     }
@@ -195,7 +195,7 @@ const remap = (
       ? targetDefinition
       : [targetDefinition];
     // Get the value from the source path in the remapped data
-    let sourceValue = dotWild.get(
+    const sourceValue = dotWild.get(
       keepUnmappedValues
         ? remappedData
         : data,
@@ -205,10 +205,11 @@ const remap = (
     // If the source value exists
     if (sourceValue !== undefined) {
       targetActions.forEach((targetAction) => {
+        /* TODO: fix later
         if (targetAction instanceof Function) {
           sourceValue = targetAction(sourceValue);
           // Set the source value at the target path in the remapped data
-        } else if (Array.isArray(sourceValue) && targetAction.includes('*')) {
+        } else */ if (Array.isArray(sourceValue) && targetAction.includes('*')) {
           sourceValue.forEach((value, index) => {
             const updatedTargetAction = targetAction.replace('*', index.toString());
             remappedData = dotWild.set(remappedData, updatedTargetAction, value);
