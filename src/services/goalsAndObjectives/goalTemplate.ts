@@ -33,7 +33,7 @@ const includeGoalTemplates = () => ({
     'isFoiaable',
     'isReferenced',
   ],
-  includes: [
+  include: [
     includeGoalTemplateFieldPrompts(),
     includeGoalTemplateResources(),
   ],
