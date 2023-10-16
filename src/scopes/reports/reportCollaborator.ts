@@ -30,7 +30,9 @@ const collaboratorUsersByTypeFilter = (
     filterAssociation(
       collaboratorUsersByTypeSql(collaboratorType),
       userIds,
-      !includes,
+      {
+        exclude: !includes,
+      },
     ),
   ],
 });
