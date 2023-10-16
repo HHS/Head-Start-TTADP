@@ -105,7 +105,7 @@ const recalculateIsFlagged = async (
       attributes: [],
     },
     required: false,
-    includes: [
+    include: [
       {
         model: sequelize.models.Report,
         as: 'status',
@@ -141,14 +141,14 @@ const recalculateIsFlagged = async (
         flagName,
       ],
     ],
-    includes: [
+    include: [
       (reportIntermediateModel)
         ? {
           model: reportIntermediateModel,
           as: reportAs,
           attributes: [],
           required: false,
-          includes: [reportWhere],
+          include: [reportWhere],
         }
         : reportWhere,
       (activityReportIntermediateModel)
@@ -157,14 +157,14 @@ const recalculateIsFlagged = async (
           as: activityReportIntermediateAs,
           attributes: [],
           required: false,
-          includes: [activityReportWhere],
+          include: [activityReportWhere],
         }
         : activityReportWhere,
     ],
     where: {
       id: ids,
     },
-    group: [`${model.getTableName()}."id"`],
+    group: [`${model.tableName}."id"`],
     having: {
       [flagName]: {
         [Op.not]: sequelize.literal('COUNT(DISTINCT "Reports".id) + COUNT(DISTINCT "ActivityReports".id) > 0'),
@@ -516,7 +516,7 @@ const getFoiaableColumnsForModel = async (
 ) => models.Foiaable.findAll({
   attributes: ['column'], // Selects only the 'column' attribute from the result set
   // Filters the result set based on the 'table' attribute matching the model's table name
-  where: { table: model.getTableName() },
+  where: { table: model.tableName },
   raw: true, // Returns raw data instead of Sequelize instances
 });
 
@@ -548,7 +548,7 @@ const checkForAttemptToChangeFoiaableValue = async (
 
     // If there are updated foiaable columns, throw an error
     if (updatedFoiaableColumns && updatedFoiaableColumns.length > 0) {
-      throw new Error(`Cannot update foiaable columns (${updatedFoiaableColumns.join(',')}) on table ${instance.constructor.getTableName()}`);
+      throw new Error(`Cannot update foiaable columns (${updatedFoiaableColumns.join(',')}) on table ${instance.constructor.tableName}`);
     }
   }
 };
@@ -567,7 +567,7 @@ const checkForAttemptToRemoveFoiaableValue = async (
   // Check if the record is foiaable
   if (instance.get('isFoiaable')) {
     // Throw an error if the record is foiaable
-    throw new Error(`Cannot remove foiaable record in table ${instance.constructor.getTableName()}`);
+    throw new Error(`Cannot remove foiaable record in table ${instance.constructor.tableName}`);
   }
 };
 
