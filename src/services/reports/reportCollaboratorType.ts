@@ -20,14 +20,15 @@ const collaboratorTypesEnumInfo:EnumInfo = {
   keyName: 'CollaboratorTypes',
 };
 
-const syncReportParticipationParticipants = async (
+// TODO: confirm the sync working correctly for this use case
+const syncReportCollaboratorTypes = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  participantEnums: { id?: number, name?: string }[] | null = null,
+  collabortorTypes: { id?: number, name?: string }[] | null = null,
 ): Promise<EnumSyncResponse> => syncEntityGenericEnum(
   ReportCollaboratorType,
   collaboratorTypesEnumInfo,
   { name: 'reportParticipationId', ...entity },
-  participantEnums,
+  collabortorTypes,
 );
 
 const getReportCollaboratorTypes = async (
@@ -49,7 +50,7 @@ const includeReportCollaboratorTypes = (
 );
 
 export {
-  syncReportParticipationParticipants,
+  syncReportCollaboratorTypes,
   getReportCollaboratorTypes,
   includeReportCollaboratorTypes,
 };
