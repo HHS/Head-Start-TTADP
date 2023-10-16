@@ -13,6 +13,7 @@ import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
+import PaginationCard from '../PaginationCard';
 
 function ActivityReportsTable({
   filters,
@@ -253,7 +254,7 @@ function ActivityReportsTable({
         )}
       </Grid>
 
-      <Container className="landing inline-size-auto maxw-full" paddingX={0} paddingY={0} loading={loading} loadingLabel="Activity reports table loading">
+      <Container className="landing inline-size-auto maxw-full ttahub-activity-reports-table" paddingX={0} paddingY={0} loading={loading} loadingLabel="Activity reports table loading">
         <TableHeader
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
@@ -261,10 +262,6 @@ function ActivityReportsTable({
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
           count={reportsCount}
-          activePage={activePage}
-          offset={offset}
-          perPage={perPage}
-          handlePageChange={handlePageChange}
           downloadError={downloadError}
           setDownloadError={setDownloadError}
           isDownloading={isDownloading}
@@ -316,6 +313,13 @@ function ActivityReportsTable({
             </tbody>
           </Table>
         </div>
+        <PaginationCard
+          currentPage={activePage}
+          totalCount={reportsCount}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+        />
       </Container>
     </>
   );

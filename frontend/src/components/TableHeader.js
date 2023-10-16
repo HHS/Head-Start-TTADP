@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import Pagination from 'react-js-pagination';
 import ReportMenu from '../pages/Landing/ReportMenu';
 import colors from '../colors';
 
@@ -28,17 +27,11 @@ export default function TableHeader({
   handleDownloadAll,
   handleDownloadClick,
   count,
-  activePage,
-  offset,
-  perPage,
-  handlePageChange,
-  hidePagination,
   downloadError,
   setDownloadError,
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
-  paginationName,
   exportIdPrefix,
 }) {
   return (
@@ -86,37 +79,6 @@ export default function TableHeader({
           )}
         </span>
       </div>
-      {!hidePagination && (
-        <span className="smart-hub--table-nav">
-          <span aria-label={`Pagination for ${paginationName}`}>
-            <span
-              className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
-              aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                offset,
-                perPage,
-                activePage,
-                count,
-              )}`}
-            >
-              <span>{renderTotal(offset, perPage, activePage, count)}</span>
-              <Pagination
-                innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
-                hideFirstLastPages
-                prevPageText="<Prev"
-                nextPageText="Next>"
-                activePage={activePage}
-                itemsCountPerPage={perPage}
-                totalItemsCount={count}
-                pageRangeDisplayed={4}
-                onChange={handlePageChange}
-                linkClassPrev="smart-hub--link-prev"
-                linkClassNext="smart-hub--link-next"
-                tabIndex={0}
-              />
-            </span>
-          </span>
-        </span>
-      )}
     </div>
   );
 }
@@ -128,12 +90,8 @@ TableHeader.propTypes = {
   toggleSelectAll: PropTypes.func,
   handleDownloadAll: PropTypes.func,
   handleDownloadClick: PropTypes.func,
-  hidePagination: PropTypes.bool,
   count: PropTypes.number,
-  activePage: PropTypes.number,
-  offset: PropTypes.number,
-  perPage: PropTypes.number,
-  handlePageChange: PropTypes.func,
+
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   setDownloadError: PropTypes.func,
@@ -147,20 +105,15 @@ TableHeader.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
-  paginationName: PropTypes.string,
+
 };
 
 TableHeader.defaultProps = {
   numberOfSelected: 0,
   toggleSelectAll: null,
-  hidePagination: false,
   handleDownloadAll: null,
   handleDownloadClick: null,
   count: 0,
-  activePage: 0,
-  offset: 0,
-  perPage: 10,
-  handlePageChange: null,
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
@@ -168,5 +121,4 @@ TableHeader.defaultProps = {
   isDownloading: false,
   downloadAllButtonRef: null,
   downloadSelectedButtonRef: null,
-  paginationName: 'activity reports',
 };

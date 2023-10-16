@@ -461,24 +461,20 @@ describe('Table sorting', () => {
   });
 
   it('Pagination links are visible', async () => {
-    const prevLink = await screen.findByRole('link', {
-      name: /go to previous page/i,
+    const pageOne = await screen.findByRole('button', {
+      name: /page 1/i,
     });
-    const pageOne = await screen.findByRole('link', {
-      name: /go to page number 1/i,
-    });
-    const nextLink = await screen.findByRole('link', {
-      name: /go to next page/i,
+    const nextLink = await screen.findByRole('button', {
+      name: /next page/i,
     });
 
-    expect(prevLink).toBeVisible();
     expect(pageOne).toBeVisible();
     expect(nextLink).toBeVisible();
   });
 
   it('clicking on pagination page works', async () => {
-    const pageOne = await screen.findByRole('link', {
-      name: /go to page number 1/i,
+    const pageOne = await screen.findByRole('button', {
+      name: /page 1/i,
     });
     fetchMock.reset();
     fetchMock.get(
@@ -511,8 +507,8 @@ describe('Table sorting', () => {
 
     renderTable(user);
 
-    const pageTwo = await screen.findByRole('link', {
-      name: /go to page number 2/i,
+    const pageTwo = await screen.findByRole('button', {
+      name: /page 2/i,
     });
 
     fetchMock.get(
@@ -543,8 +539,8 @@ describe('Table sorting', () => {
 
     renderTable(user);
 
-    const pageTwo = await screen.findByRole('link', {
-      name: /go to page number 2/i,
+    const pageTwo = await screen.findByRole('button', {
+      name: /page 2/i,
     });
 
     fetchMock.get(
@@ -580,8 +576,8 @@ describe('Table sorting', () => {
     expect(pagination).toBeVisible();
 
     // check the active page is reset
-    const [activePage] = screen.getAllByRole('link', {
-      name: /go to page number 1/i,
+    const [activePage] = screen.getAllByRole('button', {
+      name: /page 1/i,
     });
 
     expect(activePage).toBeVisible();
