@@ -6,18 +6,6 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import ReportMenu from '../pages/Landing/ReportMenu';
 import colors from '../colors';
 
-export function renderTotal(offset, perPage, activePage, reportsCount) {
-  const from = offset >= reportsCount ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > reportsCount) {
-    to = reportsCount;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${reportsCount}`;
-}
-
 export default function TableHeader({
   title,
   numberOfSelected,
