@@ -204,10 +204,10 @@ const syncReportObjectiveTemplates = async (
 
 const includeReportObjectiveTemplates = () => ({
   model: ReportObjectiveTemplate,
-  as: '', // TODO: fix
+  as: 'reportObjectiveTemplates',
   required: false,
-  attributes: [],
-  includes: [
+  attributes: [], // TODO: fix
+  include: [
     includeReportObjectiveTemplateFiles(),
     includeReportObjectiveTemplateResources(),
     includeReportObjectiveTemplateTopics(),
