@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Dropdown, Pagination } from '@trussworks/react-uswds';
 
@@ -10,6 +11,41 @@ function PaginationCard({
   handlePageChange,
   perPageChange,
 }) {
+  const el = useRef();
+
+  /**
+   * there is an unlabeled svg that is used to render the chevron icons
+   * within the pagination component
+   *
+   * this layout effect adds an id to the link text and adds an aria-labelledby
+   * to the svg in order to clear up any confusion should the button text itself
+   * not be sufficient for some reason
+   */
+  useLayoutEffect(() => {
+    if (!el.current) {
+      return;
+    }
+
+    // at the end of the DOM parsing we will add a classlist to the link so that
+    // we do not need to traverse the DOM over and over again within this effect
+    const paginationLinks = el.current.querySelectorAll('.usa-pagination__link:not(.usa-pagination__link--assigned)');
+
+    Array.from(paginationLinks).forEach((link) => {
+      const linkText = link.querySelector('.usa-pagination__link-text');
+      const svg = link.querySelector('svg');
+
+      if (!linkText || !svg) {
+        return;
+      }
+
+      const id = uniqueId('pagination-link-');
+      linkText.setAttribute('id', id);
+      svg.setAttribute('aria-labelledby', id);
+
+      link.classList.add('usa-pagination__link--assigned');
+    });
+  });
+
   const getPageInfo = () => {
     const from = offset >= totalCount ? 0 : offset + 1;
     const offsetTo = perPage * currentPage;
@@ -28,7 +64,7 @@ function PaginationCard({
   };
 
   return (
-    <div className="smart-hub--pagination-card display-flex bg-white">
+    <div ref={el} className="smart-hub--pagination-card display-flex bg-white">
       <div className="display-flex flex-1 flex-align-center margin-left-4">
         {perPageChange ? (
           <Dropdown
