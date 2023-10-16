@@ -23,6 +23,10 @@ const rolesEnumInfo:EnumInfo = {
   keyName: 'roles',
 };
 
+// TODO: potential for race condition if the same user is attached to the same report
+// for multiple collaborator types at the same time. So address this there is the option
+// to use the /lib/semaphore. The current implementation of semaphore, does not allow for
+// bucketing by a value, like user.
 const syncReportCollaboratorRoles = async (
   entity: { id: number, type?: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   data?: { reportCollaborators: { reportCollaboratorId?: number, userId?: number }[] },
