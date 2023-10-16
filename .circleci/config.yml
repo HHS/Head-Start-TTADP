@@ -243,7 +243,7 @@ parameters:
     default: "al-ttahub-2146-queue-rate-limiter"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/similarity"
+    default: "al-1896-resource-cleanup-and-listeners"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
