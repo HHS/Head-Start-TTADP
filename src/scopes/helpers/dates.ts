@@ -1,29 +1,20 @@
 import { Op } from 'sequelize';
 
-const beforeFieldDate = (
-  field: string,
+const fieldDateFilter = (
+  isBefore: boolean,
+  column: string,
   date: string[],
 ):object => ({
   [Op.and]: {
-    [`data.${field}`]: {
-      [Op.lte]: date[0],
-    },
-  },
-});
-
-const afterFieldDate = (
-  field: string,
-  date: string[],
-):object => ({
-  [Op.and]: {
-    [`data.${field}`]: {
-      [Op.gte]: date[0],
-    },
+    [column]: ((isBefore)
+      ? { [Op.lte]: date[0] }
+      : { [Op.gte]: date[0] }
+    ),
   },
 });
 
 const withinFieldDates = (
-  field: string,
+  column: string,
   dates: string[],
 ):object => {
   const [
@@ -36,7 +27,7 @@ const withinFieldDates = (
   return (start && end)
     ? {
       [Op.and]: {
-        [`data.${field}`]: {
+        [column]: {
           [Op.between]: [start, end],
         },
       },
@@ -44,16 +35,15 @@ const withinFieldDates = (
     : {};
 };
 
-const filterFieldDates = (field: string) => ({
-  bef: (query: string[]) => beforeFieldDate(field, query),
-  aft: (query: string[]) => afterFieldDate(field, query),
-  win: (query: string[]) => withinFieldDates(field, query),
-  in: (query: string[]) => withinFieldDates(field, query),
+const filterFieldDates = (column: string) => ({
+  bef: (query: string[]) => fieldDateFilter(true, column, query),
+  aft: (query: string[]) => fieldDateFilter(false, column, query),
+  win: (query: string[]) => withinFieldDates(column, query),
+  in: (query: string[]) => withinFieldDates(column, query),
 });
 
 export {
-  beforeFieldDate,
-  afterFieldDate,
+  fieldDateFilter,
   withinFieldDates,
   filterFieldDates,
 };
