@@ -106,10 +106,11 @@ const syncReportRecipients = async (
 const includeReportRecipients = () => ({
   model: ReportRecipient,
   as: 'ReportRecipients',
+  required: false,
   attributes: [
     'id',
   ],
-  includes: [
+  include: [
     {
       model: Grant,
       as: 'grant',
