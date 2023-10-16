@@ -2,7 +2,7 @@
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
-import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
+import updateGrantsRecipients, { processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
 import db, {
   sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
@@ -913,5 +913,26 @@ describe('Update grants, program personnel, and recipients', () => {
     await processFiles();
     const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
     expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
+  });
+  
+  it('should update CDI grants based on oldGrantId', async () => {
+    // Create old grants
+    const oldGrant1 = await Grant.create({ recipientId: 'oldRecId1', regionId: 'oldRegId1' });
+    const oldGrant2 = await Grant.create({ recipientId: 'oldRecId2', regionId: 'oldRegId2' });
+
+    // Create CDI grants linked to old grants
+    const grant1 = await Grant.create({ cdi: true, oldGrantId: oldGrant1.id });
+    const grant2 = await Grant.create({ cdi: true, oldGrantId: oldGrant2.id });
+
+    await updateCDIGrantsWithOldGrantData([grant1, grant2]);
+
+    // Fetch the updated grants from the database
+    const updatedGrant1 = await Grant.findByPk(grant1.id);
+    const updatedGrant2 = await Grant.findByPk(grant2.id);
+
+    expect(updatedGrant1.recipientId).toEqual('oldRecId1');
+    expect(updatedGrant1.regionId).toEqual('oldRegId1');
+    expect(updatedGrant2.recipientId).toEqual('oldRecId2');
+    expect(updatedGrant2.regionId).toEqual('oldRegId2');
   });
 });
