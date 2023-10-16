@@ -203,11 +203,11 @@ const includeReportGoalTemplates = () => ({
   attributes: [
     ['id'],
   ],
-  includes: [
-    {
-      model: null, // TODO: finish
-    },
-  ],
+  // include: [
+  //   {
+  //     model: null, // TODO: finish
+  //   },
+  // ],
 });
 
 const getReportGoalTemplates = async (
