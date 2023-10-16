@@ -20,7 +20,7 @@ const includeGoalTemplateResources = () => ({
     'isFoiaable',
     'isReferenced',
   ],
-  includes: [{
+  include: [{
     model: Resource,
     as: 'resource',
     required: true,
