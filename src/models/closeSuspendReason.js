@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
       automaticallyGenerateJunctionTableAssociations(this, models);
 
       CloseSuspendReason.addScope('validFor', (name) => ({
-        includes: [{
+        include: [{
           model: models.ValidFor,
           as: 'validFor',
           required: true,
