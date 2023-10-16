@@ -914,7 +914,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
     expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
   });
-  
+
   it('should update CDI grants based on oldGrantId', async () => {
     // Create old grants
     const oldGrant1 = await Grant.create({ recipientId: 'oldRecId1', regionId: 'oldRegId1' });
