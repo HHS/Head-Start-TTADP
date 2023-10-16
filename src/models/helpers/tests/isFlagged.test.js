@@ -31,7 +31,7 @@ describe('autoPopulateIsFlagged', () => {
   it('should set flagName to false if it is undefined', () => {
     const flagName = 'isFlagged';
 
-    autoPopulateIsFlagged(flagName, null, instance, options);
+    autoPopulateIsFlagged(flagName, instance, options);
 
     expect(instance[flagName]).toBe(false);
   });
@@ -39,7 +39,7 @@ describe('autoPopulateIsFlagged', () => {
   it('should set flagName to false if it is null', () => {
     const flagName = 'isFlagged';
 
-    autoPopulateIsFlagged(flagName, null, instance, options);
+    autoPopulateIsFlagged(flagName, instance, options);
 
     expect(instance[flagName]).toBe(false);
   });
@@ -47,7 +47,7 @@ describe('autoPopulateIsFlagged', () => {
   it('should add flagName to the fields array if it is not included', () => {
     const flagName = 'isFlagged';
 
-    autoPopulateIsFlagged(flagName, null, instance, options);
+    autoPopulateIsFlagged(flagName, instance, options);
 
     expect(options.fields).toContain(flagName);
   });
@@ -56,7 +56,7 @@ describe('autoPopulateIsFlagged', () => {
     const flagName = 'isFlagged';
     options.fields.push(flagName);
 
-    autoPopulateIsFlagged(flagName, null, instance, options);
+    autoPopulateIsFlagged(flagName, instance, options);
 
     expect(options.fields.length).toBe(1);
   });
@@ -158,7 +158,7 @@ describe('findFlaggedModelsFromModel', () => {
         as: 'reportObjectiveFiles',
         attributes: [],
         required: false,
-        includes: [{
+        include: [{
           as: 'objectiveFile',
           attributes: [],
           model: ObjectiveFile,
@@ -170,7 +170,7 @@ describe('findFlaggedModelsFromModel', () => {
         as: 'reportObjectiveResources',
         attributes: [],
         required: false,
-        includes: [{
+        include: [{
           as: 'objectiveResource',
           attributes: [],
           model: ObjectiveResource,
@@ -182,7 +182,7 @@ describe('findFlaggedModelsFromModel', () => {
         as: 'reportObjectiveTopics',
         attributes: [],
         required: false,
-        includes: [{
+        include: [{
           as: 'objectiveTopic',
           attributes: [],
           model: ObjectiveTopic,
