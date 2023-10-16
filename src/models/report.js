@@ -61,6 +61,7 @@ export default (sequelize, DataTypes) => {
           model: models.Status,
           as: 'status',
           required: true,
+          attributes: [],
           where: {
             name: {
               [Op.ne]: 'deleted',
