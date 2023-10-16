@@ -56,12 +56,13 @@ const syncReportPageStates = async (
 
 const includeReportPageStates = () => ({
   model: ReportPageState,
-  as: '', // TODO: fix
+  as: 'reportPageStates',
   attributes: [
     'id',
     'pageState',
     'updatedAt',
   ],
+  required: false,
 });
 
 const getReportPageStates = async (
