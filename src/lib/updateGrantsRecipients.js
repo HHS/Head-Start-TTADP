@@ -137,6 +137,27 @@ async function getProgramPersonnel(grantId, programId, program) {
   return programPersonnelArray;
 }
 
+export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
+  try {
+    const updatePromises = grantsToUpdate.map(async (grant) => {
+      if (grant.oldGrantId) {
+        const oldGrant = await Grant.findByPk(grant.oldGrantId);
+        if (oldGrant) {
+          return grant.update({
+            recipientId: oldGrant.recipientId,
+            regionId: oldGrant.regionId,
+          });
+        }
+      }
+      return null;
+    });
+
+    await Promise.all(updatePromises);
+  } catch (error) {
+    logger.error('updateGrantsRecipients: Error updating grants:', error);
+  }
+};
+
 /**
  * Reads HSES data files that were previously extracted to the "temp" directory.
  * The files received from HSES are:
@@ -338,6 +359,14 @@ export async function processFiles(hashSumHex) {
       ));
 
       await Promise.all(grantUpdatePromises);
+
+      // Automate CDI linking to preceding recipients
+      const cdiGrantsToLink = await Grant.unscoped().findAll({
+        where: { regionId: 13, endDate: { [Op.gte]: '2021-03-17' } },
+        attributes: ['id', 'endDate', 'oldGrantId'],
+      });
+
+      await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
 
       await Program.bulkCreate(
         programsForDb,
