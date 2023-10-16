@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
       });
 
       models.Status.addScope('validFor', (name) => ({
-        includes: [{
+        include: [{
           model: models.ValidFor,
           as: 'validFor',
           attributes: [],
