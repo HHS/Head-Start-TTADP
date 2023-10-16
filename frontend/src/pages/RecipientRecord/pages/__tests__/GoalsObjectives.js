@@ -311,7 +311,7 @@ describe('Goals and Objectives', () => {
         goalRows: goalsToDisplay.slice(0, 25),
         statuses: defaultStatuses,
       });
-    const perPageDropDown = await screen.findByRole('combobox', { name: /select goals per page/i });
+    const perPageDropDown = await screen.findByRole('combobox', { name: /per page/i });
     userEvent.selectOptions(perPageDropDown, '25');
 
     // Assert per page change.

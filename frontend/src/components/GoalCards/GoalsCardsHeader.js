@@ -10,17 +10,11 @@ import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
-import SelectPagination from '../SelectPagination';
 import FeatureFlag from '../FeatureFlag';
 
 export default function GoalCardsHeader({
   title,
   count,
-  activePage,
-  offset,
-  perPage,
-  handlePageChange,
-  hidePagination,
   recipientId,
   regionId,
   hasActiveGrants,
@@ -31,7 +25,6 @@ export default function GoalCardsHeader({
   selectAllGoalCheckboxSelect,
   selectAllGoals,
   selectedGoalIds,
-  perPageChange,
   pageGoalIds,
   createRttapa,
   showRttapaValidation,
@@ -90,20 +83,6 @@ export default function GoalCardsHeader({
             <option value="goalStatus-desc">goal status (closed first) </option>
           </Dropdown>
         </div>
-        {!hidePagination && (
-        <div className="smart-hub--table-nav">
-          <SelectPagination
-            title="Goals"
-            offset={offset}
-            perPage={perPage}
-            activePage={activePage}
-            count={count}
-            handlePageChange={handlePageChange}
-            perPageChange={perPageChange}
-          />
-        </div>
-        )}
-
       </div>
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
@@ -195,12 +174,7 @@ export default function GoalCardsHeader({
 
 GoalCardsHeader.propTypes = {
   title: PropTypes.string.isRequired,
-  hidePagination: PropTypes.bool,
   count: PropTypes.number,
-  activePage: PropTypes.number,
-  offset: PropTypes.number,
-  perPage: PropTypes.number,
-  handlePageChange: PropTypes.func,
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
@@ -216,7 +190,6 @@ GoalCardsHeader.propTypes = {
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
-  perPageChange: PropTypes.func.isRequired,
   pageGoalIds: PropTypes.number.isRequired,
   createRttapa: PropTypes.func.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
@@ -224,13 +197,8 @@ GoalCardsHeader.propTypes = {
 };
 
 GoalCardsHeader.defaultProps = {
-  hidePagination: false,
   allGoalsChecked: false,
   count: 0,
-  activePage: 0,
-  offset: 0,
-  perPage: 10,
-  handlePageChange: () => { },
   selectAllGoalCheckboxSelect: () => { },
   selectAllGoals: () => { },
   numberOfSelectedGoals: 0,

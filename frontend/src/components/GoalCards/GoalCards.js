@@ -11,6 +11,7 @@ import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
+import PaginationCard from '../PaginationCard';
 
 function GoalCards({
   recipientId,
@@ -202,7 +203,7 @@ function GoalCards({
           createRttapa={createRttapa}
           draftSelectedRttapa={draftSelectedRttapa}
         />
-        <div className="padding-x-3 padding-y-2">
+        <div className="padding-x-3 padding-top-2 ttahub-goal-cards">
           {goals.map((goal, index) => (
             <GoalCard
               key={`goal-row-${goal.id}`}
@@ -221,6 +222,14 @@ function GoalCards({
           ))}
 
         </div>
+        <PaginationCard
+          totalCount={goalsCount}
+          currentPage={sortConfig.activePage}
+          offset={sortConfig.offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          perPageChange={perPageChange}
+        />
       </Container>
     </>
   );
