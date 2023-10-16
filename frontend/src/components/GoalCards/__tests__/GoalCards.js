@@ -493,8 +493,8 @@ describe('Goals Table', () => {
     });
 
     it('Clicking on pagination page works', async () => {
-      const pageOne = await screen.findByRole('link', {
-        name: /go to page number 1/i,
+      const pageOne = await screen.findByRole('button', {
+        name: /page 1/i,
       });
 
       fireEvent.click(pageOne);

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './RecipientResults.scss';
 import TableHeader from '../../../components/TableHeader';
+import PaginationCard from '../../../components/PaginationCard';
 
 export default function RecipientResults(
   {
@@ -73,10 +74,6 @@ export default function RecipientResults(
         hideMenu
         showFilter={false}
         count={count}
-        activePage={activePage}
-        offset={offset}
-        perPage={perPage}
-        handlePageChange={handlePageChange}
         exportIdPrefix="recipient-search"
       />
       <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-top-0">
@@ -94,6 +91,13 @@ export default function RecipientResults(
           {recipients.map((recipient) => renderRecipient(recipient))}
         </tbody>
       </table>
+      <PaginationCard
+        totalCount={count}
+        currentPage={activePage}
+        offset={offset}
+        perPage={perPage}
+        handlePageChange={handlePageChange}
+      />
     </Container>
   );
 }

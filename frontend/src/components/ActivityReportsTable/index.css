@@ -2,3 +2,9 @@
 .usa-checkbox__label {
   margin-top: 0px;
 }
+
+
+.usa-table:has(+.smart-hub--pagination-card),
+.usa-table-container--scrollable:has(+.smart-hub--pagination-card) {
+  margin-bottom: 0;
+}
