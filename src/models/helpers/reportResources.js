@@ -7,7 +7,7 @@ const processForResources = async (
   const { checkForSyncableReportResources } = require('../../services/reports/reportResource');
   checkForSyncableReportResources(
     {
-      id: (!instance.reportId && options.model.getTableName() === 'Reports')
+      id: (!instance.reportId && options.model.tableName === 'Reports')
         ? instance.id
         : instance.reportId,
     },
@@ -27,10 +27,10 @@ const cleanupResources = async (
   options,
 ) => sequelize.models.ReportResource.destroy({
   where: {
-    reportId: (!instance.reportId && options.model.getTableName() === 'Reports')
+    reportId: (!instance.reportId && options.model.tableName === 'Reports')
       ? instance.id
       : instance.reportId,
-    tableName: options.model.getTableName(),
+    tableName: options.model.tableName,
     tableId: instance.id,
   },
   individualHooks: true,
