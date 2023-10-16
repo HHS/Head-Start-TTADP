@@ -69,7 +69,7 @@ const syncReportTrainingEvent = async (
 
 const includeReportTrainingEvent = () => ({
   model: ReportTrainingEvent,
-  as: 'reportTrainingEvent',
+  as: 'reportTrainingEvents',
   required: true,
   attributes: [
     'id',
@@ -80,7 +80,7 @@ const includeReportTrainingEvent = () => ({
     'createdAt',
     'updatedAt',
   ],
-  includes: [
+  include: [
     {
       model: Organizer,
       as: 'organizer',
