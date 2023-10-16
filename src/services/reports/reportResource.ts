@@ -38,7 +38,7 @@ const syncReportResources = async (
         'id',
         'resourceId',
       ],
-      includes: [{
+      include: [{
         model: Resource,
         as: 'resource',
         required: true,
@@ -108,7 +108,7 @@ const checkForSyncableReportResources = async (
   id,
   data,
 ) => {
-  const tableName = model.getTableName();
+  const { tableName } = model;
   const columns = await getColumnNamesFromModelForType(model, DataTypes.TEXT);
   return Promise.all(
     Object.keys(data)
@@ -125,7 +125,12 @@ const checkForSyncableReportResources = async (
   );
 };
 
-const includeReportResources = () => ({
+
+const includeReportResources = (
+  tableName: string,
+  tableId: number,
+  columnName?: string, // undefined matches all
+) => ({
   model: ReportResource,
   as: 'reportResorces',
   required: false,
@@ -136,7 +141,12 @@ const includeReportResources = () => ({
     'columnName',
     'tableId',
   ],
-  includes: [{
+  where: {
+    tableName,
+    tableId,
+    ...(columnName !== undefined && { columnName }),
+  },
+  include: [{
     model: Resource,
     as: 'resource',
     required: true,
