@@ -34,14 +34,18 @@ function PaginationCard({
       const linkText = link.querySelector('.usa-pagination__link-text');
       const svg = link.querySelector('svg');
 
+      // we need both of these for going any further to make sense
       if (!linkText || !svg) {
         return;
       }
 
+      // generate a unique id
       const id = uniqueId('pagination-link-');
+      // add the id to the link text
       linkText.setAttribute('id', id);
+      // associate the svg with the link text
       svg.setAttribute('aria-labelledby', id);
-
+      // mark the parent link as already having been processed
       link.classList.add('usa-pagination__link--assigned');
     });
   });
