@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
 
       models.CollaboratorType.addScope('defaultScope', {
         include: [{
-          model: models.CollaboratorType,
+          model: models.CollaboratorType.scope(),
           as: 'mapsToCollaboratorType',
           required: false,
         }],
