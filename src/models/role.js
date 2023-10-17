@@ -44,7 +44,7 @@ export default (sequelize, DataTypes) => {
 
       models.Role.addScope('defaultScope', {
         include: [{
-          model: models.Role,
+          model: models.Role.scope(),
           as: 'mapsToRole',
           required: false,
         }],
