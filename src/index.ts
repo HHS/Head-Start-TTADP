@@ -1,9 +1,10 @@
 require('newrelic');
 
 /* eslint-disable import/first */
+import { type Express } from 'express';
 import { WebSocketServer } from 'ws';
 import { createClient } from 'redis';
-import app, { appIsReady } from './app';
+import appIsReady from './app';
 import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
 /* eslint-enable import/first */
@@ -12,7 +13,7 @@ const bypassSockets = !!process.env.BYPASS_SOCKETS;
 
 const port = process.env.PORT || 8080;
 
-appIsReady.then(() => {
+appIsReady.then((app: Express) => {
   const server = app.listen(port, () => {
     auditLogger.info(`Listening on port ${port}`);
   });

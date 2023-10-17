@@ -44,11 +44,11 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 let isDone;
-export const appIsReady = new Promise((resolve) => { isDone = resolve; });
+const appIsReady = new Promise((resolve) => { isDone = resolve; });
+export default appIsReady;
 
-let app = {};
 db.isReady.then(() => {
-  app = express();
+  const app = express();
   const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
   let index;
 
@@ -117,7 +117,5 @@ db.isReady.then(() => {
   }
 
   runCronJobs();
-  isDone(true);
+  isDone(app);
 });
-
-export default app;
