@@ -14,8 +14,8 @@ const {
  */
 export default (sequelize, DataTypes) => {
   class Status extends Model {
-    static preloadScopes(models) {
-      automaticallyGenerateJunctionTableAssociations(this, models);
+    static async preloadScopes(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.Status.addScope('defaultScope', {
         include: [{
@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
       }));
     }
 
-    static associate(models) {
+    static async associate(models) {
     }
   }
   Status.init({
