@@ -13,8 +13,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: true,
         default: null,
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
         references: {
           model: {
             tableName: 'Goals',
