@@ -5,10 +5,8 @@ import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../consta
 import { syncReport } from './report';
 import { RemappingDefinition, remap } from '../../lib/modelUtils';
 import {
-  actions,
-  reportDefinitions,
   reportIncludes,
-  reportSyncersRemapDefType,
+  reportSyncers,
 } from './definition';
 
 const {
@@ -127,7 +125,10 @@ const collectIncludes = (
   reportType,
   includeFilters: object[] = null,
 ) => {
-  const includes = reportIncludes(reportType);
+  const includes = reportIncludes(
+    reportType,
+    { models: [Report], exclude: true },
+  );
 
   // Check if 'includes' is defined and not an empty array
   return (includes || [])
@@ -140,15 +141,15 @@ const collectIncludes = (
       ))
     ))
     // Map each include to its corresponding function call
-    .map(({ func, model, type }) => func(reportType, type));
+    .map(({ include, model, type }) => include(reportType, type));
 };
 
 const syncMetaData = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  syncer: { syncer: Function, type?: string, remapDef?: RemappingDefinition },
+  syncerDef: { syncer: Function, type?: string, remapDef?: RemappingDefinition },
   data,
 ): Promise<{ promises: Promise<any>[], unmapped: object | object[] }> => {
-  const { func, type, remapDef } = syncer;
+  const { syncer, type, remapDef } = syncerDef;
   let dataToSync;
   let dataNotUsed;
   if (remapDef) {
@@ -165,7 +166,7 @@ const syncMetaData = async (
     dataNotUsed = null;
   }
 
-  const { promises, unmatched } = await func(report, dataToSync, type);
+  const { promises, unmatched } = await syncer(report, dataToSync, type);
 
   if (remapDef && unmatched && Object.keys(unmatched).length > 0) {
     const { mapped: reverseMapped } = remap(
@@ -195,12 +196,11 @@ const sync = async (
   data: object,
 ) => {
   // Retrieve the syncer and processorModels for the given reportType
-  // const { report: reportDef, syncers } = actions[reportType];
-  const [{ remapDef: reportDef }] = reportSyncersRemapDef(
+  const [{ remapDef: reportDef }] = reportSyncers(
     reportType,
     { models: [Report], exclude: false },
   );
-  const syncers = reportSyncersRemapDef(
+  const syncers = reportSyncers(
     reportType,
     { models: [Report], exclude: true },
   );
