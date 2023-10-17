@@ -101,6 +101,16 @@ export default (sequelize, DataTypes) => {
     previousStatus: {
       type: DataTypes.TEXT,
     },
+    mergedIntoId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'Goals',
+        },
+        key: 'id',
+      },
+    },
     onAR: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
