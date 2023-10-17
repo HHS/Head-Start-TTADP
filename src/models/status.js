@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
 
       models.Status.addScope('defaultScope', {
         include: [{
-          model: models.Status,
+          model: models.Status.scope(),
           as: 'mapsToStatus',
           required: false,
         }],
