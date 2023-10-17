@@ -13,7 +13,7 @@ export default (sequelize, DataTypes) => {
 
       models.Participant.addScope('defaultScope', {
         include: [{
-          model: models.Participant,
+          model: models.Participant.scope(),
           as: 'mapsToParticipant',
           required: false,
         }],
