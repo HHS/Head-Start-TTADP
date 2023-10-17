@@ -14,8 +14,8 @@ const {
  */
 export default (sequelize, DataTypes) => {
   class Audience extends Model {
-    static associate(models) {
-      automaticallyGenerateJunctionTableAssociations(this, models);
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.Audience.addScope('defaultScope', {
         include: [{
