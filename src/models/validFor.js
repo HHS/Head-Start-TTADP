@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
 
       models.ValidFor.addScope('defaultScope', {
         include: [{
-          model: models.ValidFor,
+          model: models.ValidFor.scope(),
           as: 'mapsToValidFor',
           required: false,
         }],
@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
           isReport: true,
         },
         include: [{
-          model: models.ValidFor,
+          model: models.ValidFor.scope(),
           as: 'mapsToValidFor',
           attributes: [],
           required: false,
