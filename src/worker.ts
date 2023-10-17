@@ -3,6 +3,7 @@ require('newrelic');
 
 import {} from 'dotenv/config';
 import throng from 'throng';
+import db from './models';
 import { logger, auditLogger } from './logger';
 import {
   processScanQueue,
@@ -28,6 +29,8 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 
 // Pull jobs off the redis queue and process them.
 async function start() {
+  await db.isReady;
+
   // File Scanning Queue
   processScanQueue();
 
