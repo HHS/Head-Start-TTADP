@@ -123,23 +123,33 @@ const generateAssociation = async (
   // and options such as `foreignKey`, `as`, `through`, and `otherKey`.
 ) => {
   await semaphore.acquire(from.tableName);
+  let dynamicAs = as;
+  if (from === to
+    && foreignKey === 'mapsTo') {
+    if (type === 'belongsTo') {
+      dynamicAs = `mapsTo${camelToPascalCase(as)}`;
+    } else if (type === 'hasMany') {
+      dynamicAs = `mapsFrom${camelToPascalCase(as)}`;
+    }
+  }
+
   if (!doesAssociationExist(
     from,
     to,
     type,
     foreignKey,
-    as,
+    dynamicAs,
     through,
     otherKey,
   )) {
-    console.log('generateAssociation', to, from, to === from, `'${as}'`);
+    console.log('generateAssociation', to, from, to === from, `'${dynamicAs}'`);
     from[type](
       (to === from) // Needed to prevent infinite recursion
         ? to.scope()
         : to,
       {
         foreignKey,
-        as,
+        as: dynamicAs,
         ...(through && { through, otherKey }),
       },
     );
@@ -429,6 +439,19 @@ const automaticallyGenerateJunctionTableAssociations = async (
     .map(([key, value]) => Object.values(models)
       .find((model) => model.tableName === value?.references?.model?.tableName))
     .filter((model) => model);
+
+  // TODO: the column name could be auto=incorporated to produce better "as" names
+  // const x = Object.entries(junctionModel.rawAttributes)
+  // .filter(([key, value]) => value?.references?.model?.tableName !== null)
+  // // Map each filtered attribute to its associated model by finding the model with the matching
+  // // table name
+  // .map(([key, value]) => ({
+  //   key,
+  //   value,
+  //   model: Object.values(models)
+  //     .find((model) => model.tableName === value?.references?.model?.tableName),
+  // }))
+  // .filter(({ model }) => model && !(model instanceof Promise));
 
   if (!associatedModels || associatedModels.length === 0) {
     throw new Error('no tables in models');
