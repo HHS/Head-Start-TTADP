@@ -4,6 +4,13 @@ import { auditLogger } from '../../logger';
 import { REPORT_TYPE, COLLABORATOR_TYPES } from '../../constants';
 import { filterDataToModel, remap, collectChangedValues } from '../../lib/modelUtils';
 import { camelToPascalCase } from '../../models/helpers/associationsAndScopes';
+import {
+  includeReportCollaboratorRoles,
+} from './reportCollaboratorRole';
+import {
+  syncReportCollaboratorTypes,
+  includeReportCollaboratorTypes,
+} from './reportCollaboratorType';
 
 const semaphore = new Semaphore(1);
 
@@ -195,20 +202,8 @@ const includeReportCollaborator = (
     'userId',
   ],
   include: [
-    { // TODO: replace with a call to the include function for reportCollaboratorTypes
-      model: CollaboratorType,
-      as: 'collaboratorTypes',
-      required: true,
-      where: {
-        validFor: reportType,
-        ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
-        ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
-      },
-      attributes: [],
-      through: {
-        attributes: [],
-      },
-    },
+    includeReportCollaboratorTypes(collaboratorType),
+    includeReportCollaboratorRoles(collaboratorType),
     { // TODO: replace with a call to the include function for reportCollaboratorRoles
       model: Role,
       as: 'roles',
