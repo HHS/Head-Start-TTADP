@@ -9,7 +9,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      return queryInterface.addColumn('Goals', 'mergedIntoId', {
+      return queryInterface.addColumn('Goals', 'mapsTo', {
         type: Sequelize.INTEGER,
         allowNull: true,
         default: null,
@@ -26,7 +26,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return queryInterface.removeColumn('Goals', 'mergedIntoId', { transaction });
+      return queryInterface.removeColumn('Goals', 'mapsTo', { transaction });
     });
   },
 };

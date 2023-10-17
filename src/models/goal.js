@@ -44,11 +44,11 @@ export default (sequelize, DataTypes) => {
         as: 'resources',
       });
       Goal.belongsTo(models.Goal, {
-        foreignKey: 'mergedIntoId',
+        foreignKey: 'mapsTo',
         as: 'parentGoal',
       });
       Goal.hasMany(models.Goal, {
-        foreignKey: 'mergedIntoId',
+        foreignKey: 'mapsTo',
         as: 'childGoals',
       });
     }
@@ -101,9 +101,10 @@ export default (sequelize, DataTypes) => {
     previousStatus: {
       type: DataTypes.TEXT,
     },
-    mergedIntoId: {
+    mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: null,
       references: {
         model: {
           tableName: 'Goals',
