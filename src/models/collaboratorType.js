@@ -15,8 +15,8 @@ const {
  */
 export default (sequelize, DataTypes) => {
   class CollaboratorType extends Model {
-    static associate(models) {
-      automaticallyGenerateJunctionTableAssociations(this, models);
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
 
       models.CollaboratorType.addScope('defaultScope', {
         include: [{
