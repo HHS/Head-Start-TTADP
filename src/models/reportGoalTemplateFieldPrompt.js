@@ -4,8 +4,8 @@ const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/as
 
 export default (sequelize, DataTypes) => {
   class ReportGoalTemplateFieldPrompt extends Model {
-    static associate(models) {
-      automaticallyGenerateJunctionTableAssociations(this, models);
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
 
       // TODO: think how to handle the related responses
       // ReportGoalTemplateFieldPrompt.hasMany(models.GoalFieldResponse, {
