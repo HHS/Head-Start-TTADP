@@ -14,10 +14,10 @@ const {
 
 export default (sequelize, DataTypes) => {
   class ReportNextStep extends Model {
-    static associate(models) {
+    static async associate(models) {
       this.addScope('noteType', (noteType) => ({ where: { noteType } }));
 
-      generateJunctionTableAssociations(
+      await generateJunctionTableAssociations(
         this,
         [
           models.Report,
