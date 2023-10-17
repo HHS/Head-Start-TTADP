@@ -433,6 +433,11 @@ export async function getGoalsByActivityRecipient(
       { isFromSmartsheetTtaPlan: true },
       { createdVia: 'rtr' },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
+      {
+        createdVia: {
+          [Op.not]: 'trainingReport',
+        },
+      },
     ],
     [Op.and]: scopes,
   };
