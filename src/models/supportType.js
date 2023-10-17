@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
 
       models.SupportType.addScope('defaultScope', {
         include: [{
-          model: models.SupportType,
+          model: models.SupportType.scope(),
           as: 'mapsToSupportType',
           required: false,
         }],
