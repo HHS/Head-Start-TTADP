@@ -301,6 +301,7 @@ class GoalTemplates{
 class Goals{
  * id : integer : <generated>
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
+!issue='column missing from model' <color:#d54309>mergedIntoId</color>: integer : REFERENCES "Goals".id
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
@@ -1764,5 +1765,8 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+Goals o--[#yellow,bold,thickness=2]--o Goals : <color:#2491FF>missing-from-model</color>
 
 @enduml
