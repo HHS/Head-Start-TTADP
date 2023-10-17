@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
 
       models.Reason.addScope('defaultScope', {
         include: [{
-          model: models.Reason,
+          model: models.Reason.scope(),
           as: 'mapsToReason',
           required: false,
         }],
