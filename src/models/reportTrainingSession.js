@@ -16,10 +16,10 @@ const { generateJunctionTableAssociations } = require('./helpers/associationsAnd
 
 export default (sequelize, DataTypes) => {
   class ReportTrainingSession extends Model {
-    static associate(models) {
+    static async associate(models) {
       // automaticallyGenerateJunctionTableAssociations(this, models);
 
-      generateJunctionTableAssociations(
+      await generateJunctionTableAssociations(
         this,
         [
           models.Report,
