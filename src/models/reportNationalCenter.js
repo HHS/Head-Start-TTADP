@@ -12,14 +12,14 @@ const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/as
  */
 export default (sequelize, DataTypes) => {
   class ReportNationalCenter extends Model {
-    static associate(models) {
+    static async associate(models) {
       ReportNationalCenter.addScope(NATIONAL_CENTER_ACTING_AS.TRAINER, {
         where: {
           actingAs: NATIONAL_CENTER_ACTING_AS.TRAINER,
         },
       });
 
-      automaticallyGenerateJunctionTableAssociations(this, models);
+      await automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportNationalCenter.init({
