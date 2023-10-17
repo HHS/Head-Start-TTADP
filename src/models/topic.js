@@ -50,7 +50,7 @@ export default (sequelize, DataTypes) => {
 
       models.Topic.addScope('defaultScope', {
         include: [{
-          model: models.Topic,
+          model: models.Topic.scope(),
           as: 'mapsToTopic',
           required: false,
         }],
