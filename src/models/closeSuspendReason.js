@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
 
       CloseSuspendReason.addScope('defaultScope', {
         include: [{
-          model: models.CloseSuspendReason,
+          model: models.CloseSuspendReason.scope(),
           as: 'mapsToCloseSuspendReason',
           required: false,
         }],
