@@ -3,215 +3,18 @@ import { Op } from 'sequelize';
 import db from '../../models';
 import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../constants';
 import { syncReport } from './report';
-import { syncReportApproval, includeReportApproval } from './reportApproval';
-import { syncReportAudiences, includeReportAudience } from './reportAudience';
-import { syncReportCollaboratorsForType, includeReportCollaborator } from './reportCollaborator';
-import { syncReportGoals, includeReportGoals } from './reportGoal';
-import { syncReportGoalTemplates, includeReportGoalTemplates } from './reportGoalTemplate';
-import { syncReportImport, includeReportImport } from './reportImport';
-import { syncReportNationalCenters, includeReportNationalCenters } from './reportNationalCenter';
-import { syncReportNextSteps, includeReportNextSteps } from './reportNextStep';
-import { syncReportObjectives, includeReportObjectives } from './reportObjective';
-import { syncReportObjectiveTemplates, includeReportObjectiveTemplates } from './reportObjectiveTemplate';
-import { syncReportPageStates, includeReportPageStates } from './reportPageState';
-import { syncReportParticipation, includeReportParticipation } from './reportParticipation';
-import { syncReportReasons, includeReportReasons } from './reportReason';
-import { syncReportRecipients, includeReportRecipients } from './reportRecipient';
-import { syncReportResources, includeReportResources } from './reportResource';
-import { syncReportTargetPopulations, includeReportTargetPopulations } from './reportTargetPopulation';
-import { syncReportTrainingEvent, includeReportTrainingEvent } from './reportTrainingEvent';
-import { syncReportTrainingSession, includeReportTrainingSession } from './reportTrainingSession';
 import { RemappingDefinition, remap } from '../../lib/modelUtils';
-import validFor from '../../models/validFor';
+import {
+  actions,
+  reportDefinitions,
+  reportIncludes,
+  reportSyncersRemapDefType,
+} from './definition';
 
 const {
   Report,
-  ReportApproval,
-  ReportAudience,
-  ReportCollaborator,
-  ReportGoal,
-  ReportGoalTemplate,
-  ReportImport,
-  ReportNationalCenter,
-  ReportNextStep,
-  ReportObjective,
-  ReportObjectiveTemplate,
-  ReportPageState,
-  ReportParticipation,
-  ReportReason,
-  ReportRecipient,
-  ReportTargetPopulation,
-  ReportTrainingEvent,
-  ReportTrainingSession,
+  ValidFor,
 } = db;
-
-type Actions = {
-  [key: string]: {
-    report: {
-      remapDef: RemappingDefinition,
-    },
-    syncers: {
-      func: Function,
-      type?: string,
-      remapDef: RemappingDefinition
-    }[],
-    includes: {
-      func: Function,
-      model: Object
-      type?: string,
-    }[],
-  },
-};
-
-const actions:Actions = {
-  [REPORT_TYPE.REPORT_TRAINING_EVENT]: {
-    report: {
-      remapDef: {
-        'data.id': 'id',
-        'data.status': 'status.name',
-        'data.startDate': 'startDate',
-        'data.endDate': 'endDate',
-      },
-    },
-    syncers: [
-      {
-        func: syncReportTrainingEvent,
-        remapDef: {
-          'data."Event ID': 'eventId',
-          regionId: 'regionId',
-          'data."Edit Title"': 'name',
-          'data.eventOrganizer': 'organizer.name',
-          'data."Audience"': 'audience.*',
-          'data.vision': 'vision',
-        },
-      },
-      { func: syncReportAudiences, remapDef: { 'data.audience.*': '*.name' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.owner': '0' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { ownerId: '0.id' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': '*.id' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': '*.id' } },
-      {
-        func: syncReportGoalTemplates,
-        remapDef: {
-          'data.goal': '0.templateName',
-          regionId: '0.regionId',
-          'data.timeframe': '0.timeframe',
-          'data.endDate': '0.endDate',
-        },
-      },
-      { func: syncReportImport, remapDef: { imported: 'import' } },
-      { func: syncReportNationalCenters, remapDef: { 'data."National Center(s) Requested".*': '*.name' } },
-      { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
-      { func: syncReportReasons, remapDef: { 'data.reasons.*': '*.name' } },
-      { func: syncReportResources, remapDef: { } },
-      { func: syncReportTargetPopulations, remapDef: { 'data."Target Population(s)".*': '*.name' } },
-    ],
-    includes: [
-      { func: includeReportTrainingEvent, model: ReportTrainingEvent },
-      { func: includeReportAudience, model: ReportAudience },
-      {
-        func: includeReportCollaborator,
-        model: ReportCollaborator,
-        type: COLLABORATOR_TYPES.OWNER,
-      },
-      {
-        func: includeReportCollaborator,
-        model: ReportCollaborator,
-        type: COLLABORATOR_TYPES.INSTANTIATOR,
-      },
-      {
-        func: includeReportCollaborator,
-        model: ReportCollaborator,
-        type: COLLABORATOR_TYPES.EDITOR,
-      },
-      {
-        func: includeReportCollaborator,
-        model: ReportCollaborator,
-        type: COLLABORATOR_TYPES.POC,
-      },
-      { func: includeReportGoalTemplates, model: ReportGoalTemplate },
-      { func: includeReportImport, model: ReportImport },
-      { func: includeReportNationalCenters, model: ReportNationalCenter },
-      { func: includeReportPageStates, model: ReportPageState },
-      { func: includeReportReasons, model: ReportReason },
-      { func: includeReportTargetPopulations, model: ReportTargetPopulation },
-    ],
-  },
-  [REPORT_TYPE.REPORT_TRAINING_SESSION]: {
-    report: {
-      remapDef: {
-        'data.id': 'id',
-        'data.status': 'status.name',
-        'data.context': 'context',
-        'data.startDate': 'startDate',
-        'data.endDate': 'endDate',
-      },
-    },
-    syncers: [
-      {
-        func: syncReportTrainingSession,
-        remapDef: {
-          'data.eventDisplayId': 'id',
-          regionId: 'regionId',
-          eventId: 'reportTrainingEventId',
-          'data.sessionName': 'name',
-        },
-      },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.INSTANTIATOR, remapDef: { 'data.ownerId': '0.id', 'data.eventOwner': '0.id' } },
-      { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.OWNER, remapDef: { ownerId: `0.id` } },
-      // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.EDITOR, remapDef: { 'collaboratorIds.*': `*.id`} },
-      // { func: syncReportCollaboratorsForType, type: COLLABORATOR_TYPES.POC, remapDef: { 'pocIds.*': `*.id`} },
-      { func: syncReportRecipients, remapDef: { 'data.recipients.*': '*' } },
-      {
-        func: syncReportObjectiveTemplates,
-        remapDef: {
-          'data.objective': '0.title',
-          'data.ttaProvided': '0.ttaProvided',
-          'data.supportType': '0.supportType',
-          'data.files': '0.files',
-          'data.objectiveResources': '0.resources',
-          'data.topics': '0.topics',
-          'data.objectiveTrainers': '0.trainers',
-        },
-      },
-      { func: syncReportNextSteps, type: NEXTSTEP_NOTETYPE.RECIPIENT, remapDef: { 'data.recipientNextSteps.*': '*' } },
-      { func: syncReportNextSteps, type: NEXTSTEP_NOTETYPE.SPECIALIST, remapDef: { 'data.specialistNextSteps.*': '*' } },
-      {
-        func: syncReportParticipation,
-        remapDef: {
-          'data.deliveryMethod': 'deliveryMethod',
-          'data.numberOfParticipants': 'numberOfParticipants',
-          'data.numberOfParticipantsInPerson': 'numberOfParticipantsInPerson',
-          'data.numberOfParticipantsVirtually': 'numberOfParticipantsVirtually',
-          'data.participants': 'participants',
-        },
-      },
-      { func: syncReportPageStates, remapDef: { 'data.pageState': 'pageState' } },
-    ],
-    includes: [
-      { func: includeReportTrainingSession, model: ReportTrainingSession },
-      {
-        func: includeReportCollaborator,
-        model: ReportCollaborator,
-        type: COLLABORATOR_TYPES.OWNER,
-      },
-      {
-        func: includeReportCollaborator,
-        model: ReportCollaborator,
-        type: COLLABORATOR_TYPES.INSTANTIATOR,
-      },
-      { func: includeReportGoals, model: ReportGoal },
-      { func: includeReportGoalTemplates, model: ReportGoalTemplate },
-      { func: includeReportNextSteps, model: ReportNextStep, type: NEXTSTEP_NOTETYPE.RECIPIENT },
-      { func: includeReportNextSteps, model: ReportNextStep, type: NEXTSTEP_NOTETYPE.SPECIALIST },
-      { func: includeReportObjectives, model: ReportObjective },
-      { func: includeReportObjectiveTemplates, model: ReportObjectiveTemplate },
-      { func: includeReportPageStates, model: ReportPageState },
-      { func: includeReportParticipation, model: ReportParticipation },
-      { func: includeReportRecipients, model: ReportRecipient },
-    ],
-  },
-};
 
 /**
  * This function takes in multiple objects and returns a new object that contains only the
@@ -252,23 +55,46 @@ const getAllTypedReports = async (
   reportIds?: number[],
   includes?: object[],
   scope?: object,
-) => Report.findAll({
-  attributes: [], // Exclude all attributes from the result set
-  where: {
-    ...(reportIds && reportIds.length && { id: reportIds }), // Filter by report IDs if provided
-    ...(scope && { [Op.and]: scope }), // Filter by scope if provided
-  },
-  includes: [
-    {
-      model: validFor,
-      as: 'reportType',
-      attributes: [],
-      required: true,
-      where: { name: reportType },
+) => {
+  console.log('getAllTypedReports', {reportType, reportIds, includes, scope},
+  {
+    // attributes: [], // Exclude all attributes from the result set
+    where: {
+      ...(reportIds?.length && { id: reportIds }), // Filter by report IDs if provided
+      ...(scope && { [Op.and]: scope }), // Filter by scope if provided
     },
-    ...includes,
-  ],
-});
+    include: [
+      {
+        model: ValidFor,
+        as: 'reportType',
+        attributes: [],
+        required: true,
+        where: { name: reportType },
+      },
+      ...includes,
+    ],
+    logger: console.log,
+  }
+  );
+  return Report.findAll({
+    // attributes: [], // Exclude all attributes from the result set
+    where: {
+      ...(reportIds?.length && { id: reportIds }), // Filter by report IDs if provided
+      ...(scope && { [Op.and]: scope }), // Filter by scope if provided
+    },
+    include: [
+      {
+        model: ValidFor,
+        as: 'reportType',
+        attributes: [],
+        required: true,
+        where: { name: reportType },
+      },
+      ...includes,
+    ],
+    logger: console.log,
+  });
+};
 
 /**
  * Retrieves a single typed report based on the specified report type, report ID, includes, and
@@ -284,7 +110,12 @@ const getOneTypedReport = async (
   reportId: number,
   includes: object[],
   scope?: object,
-) => getAllTypedReports(reportType, [reportId], includes, scope);
+) => getAllTypedReports(
+  reportType,
+  [reportId],
+  includes,
+  scope,
+);
 
 /**
  * This function collects includes based on the given report type.
@@ -296,28 +127,25 @@ const collectIncludes = (
   reportType,
   includeFilters: object[] = null,
 ) => {
-  // Destructure the 'includes' property from the actions object for the given report type
-  const { includes } = actions[reportType];
+  const includes = reportIncludes(reportType);
 
   // Check if 'includes' is defined and not an empty array
-  return (includes && includes.length)
-    ? includes
-      .filter(({ model, type }) => (
-        // Filter the includes based on the include filters
-        includeFilters === null
-        || includeFilters.includes((inf) => (
-          inf === model
-          || (inf.model === model && inf.type === type)
-        ))
+  return (includes || [])
+    .filter(({ model, type }) => (
+      // Filter the includes based on the include filters
+      includeFilters === null
+      || includeFilters.includes((inf) => (
+        inf === model
+        || (inf.model === model && inf.type === type)
       ))
-      // Map each include to its corresponding function call
-      .map(({ func, model, type }) => func(reportType, type))
-    : [];
+    ))
+    // Map each include to its corresponding function call
+    .map(({ func, model, type }) => func(reportType, type));
 };
 
 const syncMetaData = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  syncer: { func: Function, type?: string, remapDef?: RemappingDefinition },
+  syncer: { syncer: Function, type?: string, remapDef?: RemappingDefinition },
   data,
 ): Promise<{ promises: Promise<any>[], unmapped: object | object[] }> => {
   const { func, type, remapDef } = syncer;
@@ -367,14 +195,22 @@ const sync = async (
   data: object,
 ) => {
   // Retrieve the syncer and processorModels for the given reportType
-  const { report: reportDef, syncers } = actions[reportType];
+  // const { report: reportDef, syncers } = actions[reportType];
+  const [{ remapDef: reportDef }] = reportSyncersRemapDef(
+    reportType,
+    { models: [Report], exclude: false },
+  );
+  const syncers = reportSyncersRemapDef(
+    reportType,
+    { models: [Report], exclude: true },
+  );
 
   const {
     mapped: reportData,
     unmapped: reportUnmappedData,
   } = remap(
     data,
-    reportDef.remapDef,
+    reportDef,
     { keepUnmappedValues: false },
   );
 
