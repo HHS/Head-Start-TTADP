@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
 
       models.TargetPopulation.addScope('defaultScope', {
         include: [{
-          model: models.TargetPopulation,
+          model: models.TargetPopulation.scope(),
           as: 'mapsToTargetPopulation',
           required: false,
         }],
