@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
 
       models.NationalCenter.addScope('defaultScope', {
         include: [{
-          model: models.NationalCenter,
+          model: models.NationalCenter.scope(),
           as: 'mapsToNationalCenter',
           required: false,
         }],
