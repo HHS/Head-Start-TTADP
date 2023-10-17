@@ -3,6 +3,7 @@ import { auditLogger } from '../../logger';
 import { ENTITY_TYPE } from '../../constants';
 import db from '../../models';
 import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
+import { pascalToCamelCase } from '../../models/helpers/associationsAndScopes';
 
 const { ValidFor } = db;
 
@@ -30,7 +31,7 @@ interface EnumModel extends Model {
     options: { individualHooks?: boolean, returning?: boolean },
   ) => Promise<GenericEnumType>,
   update: (
-    args: { updatedAt: Date },
+    args: { updatedAt?: Date, mapsTo?: number },
     options: {
       where?: object,
       individualHooks?: boolean,
@@ -153,9 +154,12 @@ const updateById = async (
     name: data.name,
   }, { individualHooks: true });
 
-  await existing.update({
+  await model.update({
     mapsTo: newValue.id,
-  }, { individualHooks: true });
+  }, {
+    where: { id: existing.id },
+    individualHooks: true,
+  });
 
   return newValue;
 };
@@ -178,6 +182,7 @@ interface EntityGenericEnum {
 
 // @ts-ignore
 interface EntityEnumModel extends Model {
+  tableName: string,
   findAll: (args: {
     attributes: (object | string)[],
     where: object,
@@ -188,7 +193,7 @@ interface EntityEnumModel extends Model {
     options: { individualHooks: boolean },
   ) => Promise<EntityGenericEnum[]>,
   update: (
-    args: { updatedAt: Date },
+    args: { updatedAt?: Date, mapsTo?: number },
     options: {
       where?: object,
       individualHooks?: boolean,
@@ -214,27 +219,26 @@ const includeEntityGenericEnums = (
   entity: { name: string, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
 ) => ({
   model,
-  as: '', // TODO: figure out how to get this
+  as: pascalToCamelCase(model.tableName), // TODO: figure out how to get this
   attributes: [
     'id',
     [entity.name],
     [`"${enumInfo.as}".id`, 'enumId'],
     [`"${enumInfo.as}".name`, 'name'],
   ],
-  includes: [{
+  include: [{
     model: enumInfo.model,
     as: enumInfo.as,
     required: true,
     attributes: [],
     ...(enumInfo?.entityTypeFiltered && {
-      includes: [{
+      include: [{
         model: ValidFor,
         as: 'validFor',
         required: true,
         attributes: [],
         where: {
           name: entity.type,
-          isReport: true,
         },
       }],
     }),
