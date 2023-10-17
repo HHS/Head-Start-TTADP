@@ -11,7 +11,7 @@ export default (sequelize, DataTypes) => {
 
       models.Organizer.addScope('defaultScope', {
         include: [{
-          model: models.Organizer,
+          model: models.Organizer.scope(),
           as: 'mapsToOrganizer',
           required: false,
         }],
