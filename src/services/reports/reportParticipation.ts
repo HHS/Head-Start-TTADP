@@ -68,7 +68,11 @@ const includeReportParticipation = (
   model: ReportParticipation,
   as: 'reportParticipations',
   required: false,
-  attributes: [], // TODO: fix
+  attributes: [
+    'participantCount',
+    'inpersonParticipantCount',
+    'virtualParticipantCount',
+  ],
   include: [
     includeReportParticipationParticipants(type),
   ],
