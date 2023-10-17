@@ -81,7 +81,7 @@ Promise.all(Object.keys(db).sort()
       : Promise.resolve()
     ))))
   .then(async () => {
-    isDone(true);
+    isDone(db);
   });
 
 db.sequelize = sequelize;
