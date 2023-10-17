@@ -3,8 +3,8 @@ const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/as
 
 export default (sequelize, DataTypes) => {
   class ReportGoalFieldResponse extends Model {
-    static associate(models) {
-      automaticallyGenerateJunctionTableAssociations(this, models);
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportGoalFieldResponse.init({
