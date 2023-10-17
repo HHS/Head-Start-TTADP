@@ -2683,20 +2683,6 @@ class ZALZAFilter{
  session_sig : text
 }
 
-!issue='model missing for table'
-class interim_reports #pink;line:red;line.bold;text:red {
- context : text
- createdAt : timestamp with time zone
- data : jsonb
- endDate : date
- pilot_record_id : integer
- reports_id : integer
- reportTypeId : integer
- startDate : date
- statusId : integer
- updatedAt : timestamp with time zone
-}
-
 
 ' Associations
 
@@ -2966,7 +2952,7 @@ ReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" SupportTypes : supportType
 ReportObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topicForReportObjectiveTemplateTopics, reportObjectiveTemplateForReportObjectiveTemplateTopics
 ReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topicForReportObjectiveTopics, reportObjectiveForReportObjectiveTopics
 Reports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resourceForReportResources, reportForReportResources
-Reports "n" }--[#black,dotted,thickness=2]--{ "n" Statuses : statusForReportCollaborators, statusAsEditorForReportCollaborators, statusAsOwnerForReportCollaborators, statusAsInstantiatorForReportCollaborators, statusAsApproverForReportCollaborators, statusAsPocForReportCollaborators, statusForReportGoals, statusForReportGoalTemplates, statusForReportObjectives, statusForReportObjectiveTemplates, reportForReportCollaborators, reportAsEditorForReportCollaborators, reportAsOwnerForReportCollaborators, reportAsInstantiatorForReportCollaborators, reportAsApproverForReportCollaborators, reportAsPocForReportCollaborators, reportForReportGoals, reportForReportGoalTemplates, reportForReportObjectives, reportForReportObjectiveTemplates
+Reports "n" }--[#black,dotted,thickness=2]--{ "n" Statuses : statusForReportCollaborators, statusForReportGoals, statusForReportGoalTemplates, statusForReportObjectives, statusForReportObjectiveTemplates, statusAsEditorForReportCollaborators, statusAsOwnerForReportCollaborators, statusAsInstantiatorForReportCollaborators, statusAsApproverForReportCollaborators, statusAsPocForReportCollaborators, reportForReportCollaborators, reportForReportGoals, reportForReportGoalTemplates, reportForReportObjectives, reportForReportObjectiveTemplates, reportAsEditorForReportCollaborators, reportAsOwnerForReportCollaborators, reportAsInstantiatorForReportCollaborators, reportAsApproverForReportCollaborators, reportAsPocForReportCollaborators
 Reports "n" }--[#black,dotted,thickness=2]--{ "n" SupportTypes : supportTypeForReportObjectives, supportTypeForReportObjectiveTemplates, reportForReportObjectives, reportForReportObjectiveTemplates
 Reports "n" }--[#black,dotted,thickness=2]--{ "n" TargetPopulations : targetPopulationForReportTargetPopulations, reportForReportTargetPopulations
 Reports "n" }--[#black,dotted,thickness=2]--{ "n" Users : userForReportCollaborators, userAsEditorForReportCollaborators, userAsOwnerForReportCollaborators, userAsInstantiatorForReportCollaborators, userAsApproverForReportCollaborators, userAsPocForReportCollaborators, reportForReportCollaborators, reportAsEditorForReportCollaborators, reportAsOwnerForReportCollaborators, reportAsInstantiatorForReportCollaborators, reportAsApproverForReportCollaborators, reportAsPocForReportCollaborators
@@ -2975,7 +2961,7 @@ Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 Statuses "n" }--[#black,dotted,thickness=2]--{ "n" SupportTypes : supportTypeForReportObjectives, supportTypeForReportObjectiveTemplates, statusForReportObjectives, statusForReportObjectiveTemplates
 Statuses "n" }--[#black,dotted,thickness=2]--{ "n" Users : userForReportCollaborators, userAsEditorForReportCollaborators, userAsOwnerForReportCollaborators, userAsInstantiatorForReportCollaborators, userAsApproverForReportCollaborators, userAsPocForReportCollaborators, statusForReportCollaborators, statusAsEditorForReportCollaborators, statusAsOwnerForReportCollaborators, statusAsInstantiatorForReportCollaborators, statusAsApproverForReportCollaborators, statusAsPocForReportCollaborators
-Statuses "n" }--[#black,dotted,thickness=2]--{ "n" ValidFor : validForForStatuses, reportTypeForReports, statusForStatuses, statusForReports
+Statuses "n" }--[#black,dotted,thickness=2]--{ "n" ValidFor : reportTypeForReports, validForForStatuses, statusForStatuses, statusForReports
 SupportTypes "n" }--[#black,dotted,thickness=2]--{ "n" ValidFor : validForForSupportTypes, supportTypeForSupportTypes
 TargetPopulations "n" }--[#black,dotted,thickness=2]--{ "n" ValidFor : validForForTargetPopulations, targetPopulationForTargetPopulations
 
