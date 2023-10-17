@@ -14,6 +14,8 @@ const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
 const db = {};
+let isDone;
+db.isReady = new Promise((resolve) => { isDone = resolve; });
 
 let sequelize;
 if (config.use_env_variable) {
@@ -68,17 +70,19 @@ fs
   db[auditModel.name] = auditModel;
 }
 
-Object.keys(db).sort().forEach((modelName) => {
-  if (db[modelName].preloadScopes) {
-    db[modelName].preloadScopes(db);
-  }
-});
-
-Object.keys(db).sort().forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
-});
+Promise.all(Object.keys(db).sort()
+  .map(async (modelName) => ((db[modelName].preloadScopes)
+    ? db[modelName].preloadScopes(db)
+    : Promise.resolve()
+  )))
+  .then(async () => Promise.all(Object.keys(db).sort()
+    .map(async (modelName) => ((db[modelName].associate)
+      ? db[modelName].associate(db)
+      : Promise.resolve()
+    ))))
+  .then(async () => {
+    isDone(true);
+  });
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
