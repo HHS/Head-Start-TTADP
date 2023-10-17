@@ -80,7 +80,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportTrainingEvent,
       syncer: syncReportTrainingEvent,
       include: includeReportTrainingEvent,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data."Event ID': 'eventId',
         regionId: 'regionId',
@@ -94,7 +94,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportAudience,
       syncer: syncReportAudiences,
       include: includeReportAudience,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.audience.*': '*.name',
       },
@@ -103,7 +103,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportCollaborator,
       syncer: syncReportCollaboratorsForType,
       include: includeReportCollaborator,
-      get: () => null,
+      get: undefined,
       type: COLLABORATOR_TYPES.OWNER,
       remapDef: {
         ownerId: '0.id',
@@ -113,7 +113,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportCollaborator,
       syncer: syncReportCollaboratorsForType,
       include: includeReportCollaborator,
-      get: () => null,
+      get: undefined,
       type: COLLABORATOR_TYPES.INSTANTIATOR,
       remapDef: {
         'data.owner': '0',
@@ -123,7 +123,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportCollaborator,
       syncer: syncReportCollaboratorsForType,
       include: includeReportCollaborator,
-      get: () => null,
+      get: undefined,
       type: COLLABORATOR_TYPES.EDITOR,
       remapDef: {
         'collaboratorIds.*': '*.id',
@@ -133,7 +133,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportCollaborator,
       syncer: syncReportCollaboratorsForType,
       include: includeReportCollaborator,
-      get: () => null,
+      get: undefined,
       type: COLLABORATOR_TYPES.POC,
       remapDef: {
         'pocIds.*': '*.id',
@@ -143,7 +143,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportGoalTemplate,
       syncer: syncReportGoalTemplates,
       include: includeReportGoalTemplates,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.goal': '0.templateName',
         regionId: '0.regionId',
@@ -155,7 +155,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportImport,
       syncer: syncReportImport,
       include: includeReportImport,
-      get: () => null,
+      get: undefined,
       remapDef: {
         imported: 'import',
       },
@@ -164,7 +164,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportNationalCenter,
       syncer: syncReportNationalCenters,
       include: includeReportNationalCenters,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data."National Center(s) Requested".*': '*.name',
       },
@@ -173,7 +173,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportPageState,
       syncer: syncReportPageStates,
       include: includeReportPageStates,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.pageState': 'pageState',
       },
@@ -182,7 +182,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportReason,
       syncer: syncReportReasons,
       include: includeReportReasons,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.reasons.*': '*.name',
       },
@@ -191,7 +191,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportResource,
       syncer: syncReportResources,
       include: includeReportResources,
-      get: () => null,
+      get: undefined,
       remapDef: {
       },
     },
@@ -199,7 +199,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportTargetPopulation,
       syncer: syncReportTargetPopulations,
       include: includeReportTargetPopulations,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data."Target Population(s)".*': '*.name',
       },
@@ -209,8 +209,8 @@ const reportDefinitions:ReportDefinitions = {
     { // Report
       model: Report,
       syncer: syncReport,
-      include: () => null,
-      get: () => null,
+      include: undefined,
+      get: undefined,
       remapDef: {
         'data.id': 'id',
         'data.status': 'status.name',
@@ -223,7 +223,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportTrainingSession,
       syncer: syncReportTrainingSession,
       include: includeReportTrainingSession,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.eventDisplayId': 'id',
         regionId: 'regionId',
@@ -235,7 +235,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportCollaborator,
       syncer: syncReportCollaboratorsForType,
       include: includeReportCollaborator,
-      get: () => null,
+      get: undefined,
       type: COLLABORATOR_TYPES.INSTANTIATOR,
       remapDef: {
         'data.ownerId': '0.id',
@@ -243,9 +243,10 @@ const reportDefinitions:ReportDefinitions = {
       },
     },
     { // ReportCollaborator for COLLABORATOR_TYPES.OWNER
+      model: ReportCollaborator,
       syncer: syncReportCollaboratorsForType,
       include: includeReportCollaborator,
-      get: () => null,
+      get: undefined,
       type: COLLABORATOR_TYPES.OWNER,
       remapDef: {
         ownerId: '0.id',
@@ -255,7 +256,7 @@ const reportDefinitions:ReportDefinitions = {
     //   model: ReportCollaborator,
     //   syncer: syncReportCollaboratorsForType,
     //   include: includeReportCollaborator,
-    //   get: () => null,
+    //   get: undefined,
     //   type: COLLABORATOR_TYPES.EDITOR,
     //   remapDef: {
     //     'collaboratorIds.*': '*.id',
@@ -265,7 +266,7 @@ const reportDefinitions:ReportDefinitions = {
     //   model: ReportCollaborator,
     //   syncer: syncReportCollaboratorsForType,
     //   include: includeReportCollaborator,
-    //   get: () => null,
+    //   get: undefined,
     //   type: COLLABORATOR_TYPES.POC,
     //   remapDef: {
     //     'pocIds.*': '*.id',
@@ -275,7 +276,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportRecipient,
       syncer: syncReportRecipients,
       include: includeReportRecipients,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.recipients.*': '*',
       },
@@ -284,7 +285,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportObjectiveTemplate,
       syncer: syncReportObjectiveTemplates,
       include: includeReportObjectiveTemplates,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.objective': '0.title',
         'data.ttaProvided': '0.ttaProvided',
@@ -299,7 +300,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportNextStep,
       syncer: syncReportNextSteps,
       include: includeReportNextSteps,
-      get: () => null,
+      get: undefined,
       type: NEXTSTEP_NOTETYPE.RECIPIENT,
       remapDef: {
         'data.recipientNextSteps.*': '*',
@@ -309,7 +310,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportNextStep,
       syncer: syncReportNextSteps,
       include: includeReportNextSteps,
-      get: () => null,
+      get: undefined,
       type: NEXTSTEP_NOTETYPE.SPECIALIST,
       remapDef: {
         'data.specialistNextSteps.*': '*',
@@ -319,7 +320,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportParticipation,
       syncer: syncReportParticipation,
       include: includeReportParticipation,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.deliveryMethod': 'deliveryMethod',
         'data.numberOfParticipants': 'numberOfParticipants',
@@ -332,7 +333,7 @@ const reportDefinitions:ReportDefinitions = {
       model: ReportPageState,
       syncer: syncReportPageStates,
       include: includeReportPageStates,
-      get: () => null,
+      get: undefined,
       remapDef: {
         'data.pageState': 'pageState',
       },
