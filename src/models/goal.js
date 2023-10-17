@@ -43,6 +43,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'resourceId',
         as: 'resources',
       });
+      Goal.belongsTo(models.Goal, {
+        foreignKey: 'mergedIntoId',
+        as: 'parentGoal',
+      });
+      Goal.hasMany(models.Goal, {
+        foreignKey: 'mergedIntoId',
+        as: 'childGoals',
+      });
     }
   }
   Goal.init({
