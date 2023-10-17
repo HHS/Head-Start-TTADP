@@ -21,8 +21,8 @@ const {
 
 export default (sequelize, DataTypes) => {
   class Report extends Model {
-    static associate(models) {
-      generateJunctionTableAssociations(
+    static async associate(models) {
+      await generateJunctionTableAssociations(
         models.Report,
         [
           models.Status,
