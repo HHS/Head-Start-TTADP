@@ -4,14 +4,14 @@ export default class Semaphore {
     this.maxConcurrency = maxConcurrency;
 
     this.data = {
-      bucket: {
+      '': {
         currentConcurrency: 0,
         waiting: [],
       },
     };
   }
 
-  async acquire(bucket = 'bucket') {
+  async acquire(bucket = '') {
     let datum = this.data[bucket];
     if (!datum) {
       this.data[bucket] = {
@@ -35,7 +35,7 @@ export default class Semaphore {
     }
   }
 
-  release(bucket = 'bucket') {
+  release(bucket = '') {
     const datum = this.data[bucket];
     if (datum) {
       // When a promise is waiting, resolve the oldest one
