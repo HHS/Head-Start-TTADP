@@ -398,6 +398,7 @@ module.exports = {
         FROM goal_merges gm
         JOIN "Goals" dg
           ON gm.donor_gid = dg.id
+        WHERE gm.target_gid = g.id
         RETURNING
           g.id gid,
           donor_gid
@@ -461,6 +462,25 @@ module.exports = {
           donor_gid
       ) SELECT * FROM updater
       ;
+
+      SELECT
+        'corrected_goals' operation,
+        COUNT(*) cnt
+      FROM corrected_goals
+      UNION SELECT 'updated_target_objectives', COUNT(*) FROM updated_target_objectives
+      UNION SELECT 'relinked_objective_topics', COUNT(*) FROM relinked_objective_topics
+      UNION SELECT 'relinked_objective_resources', COUNT(*) FROM relinked_objective_resources
+      UNION SELECT 'relinked_objective_files', COUNT(*) FROM relinked_objective_files
+      UNION SELECT 'deleted_objective_topics', COUNT(*) FROM deleted_objective_topics
+      UNION SELECT 'deleted_objective_resources', COUNT(*) FROM deleted_objective_resources
+      UNION SELECT 'deleted_objective_files', COUNT(*) FROM deleted_objective_files
+      UNION SELECT 'relinked_objectives', COUNT(*) FROM relinked_objectives
+      UNION SELECT 'updated_target_goals', COUNT(*) FROM updated_target_goals
+      UNION SELECT 'relinked_args', COUNT(*) FROM relinked_args
+      UNION SELECT 'deleted_args', COUNT(*) FROM deleted_args
+      UNION SELECT 'deleted_goals', COUNT(*) FROM deleted_goals
+      ;
+        
 
       `, { transaction });
     });
