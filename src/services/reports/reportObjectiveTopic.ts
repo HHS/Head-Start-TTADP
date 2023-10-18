@@ -20,17 +20,29 @@ const {
 const TopicEnumInfo:EnumInfo = {
   model: Topic,
   as: 'topic',
-  keyName: 'Topic', // TODO: make sure this is right
+  keyName: 'Topic',
   entityTypeFiltered: false,
 };
 
-// TODO: finish
-const syncReportObjectiveTopics = async () => {};
+const syncReportObjectiveTopics = async (
+  entity: { id: number },
+  topics: { id?: number, name?: string }[] | null = null,
+): Promise<EnumSyncResponse> => syncEntityGenericEnum(
+  ReportObjectiveTopic,
+  TopicEnumInfo,
+  {
+    id: entity.id,
+    name: 'reportObjectiveId',
+  },
+  topics,
+);
 
 const includeReportObjectiveTopics = () => includeEntityGenericEnums(
   ReportObjectiveTopic,
   TopicEnumInfo,
-  { name: 'reportObjectiveId' },
+  {
+    name: 'reportObjectiveId',
+  },
 );
 
 const getReportObjectiveTopics = async (
@@ -38,7 +50,9 @@ const getReportObjectiveTopics = async (
 ) => getEntityGenericEnum(
   ReportObjectiveTopic,
   TopicEnumInfo,
-  { name: 'reportObjectiveId' },
+  {
+    name: 'reportObjectiveId',
+  },
   topicIds,
 );
 
