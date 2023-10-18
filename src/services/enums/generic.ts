@@ -248,7 +248,7 @@ const includeEntityGenericEnums = (
 const getEntityGenericEnum = async (
   entityEnumModel: EntityEnumModel,
   enumInfo: EnumInfo,
-  entity: { name: string, id: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+  entity: { name: string, id?: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
   genericEnumIds: number[] | null = null,
 ): Promise<EntityGenericEnum[]> => includeToFindAll(
   includeEntityGenericEnums,
@@ -272,7 +272,7 @@ const getEntityGenericEnum = async (
 const syncEntityGenericEnum = async (
   entityEnumModel: EntityEnumModel,
   enumInfo: EnumInfo,
-  entity: { name: string, id: number, type: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+  entity: { name: string, id: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
   genericEnums: { id?: number, name?: string }[] | null = null,
 ): Promise<EnumSyncResponse> => {
   try {
@@ -283,10 +283,20 @@ const syncEntityGenericEnum = async (
       findAll(
         enumInfo.model,
         {
-          ...(enumInfo?.entityTypeFiltered && { validFor: entity.type }),
+          ...(enumInfo?.entityTypeFiltered
+            && entity?.type
+            && { validFor: entity.type }),
           [Op.or]: [
-            { id: genericEnums.filter(({ id }) => id).map(({ id }) => id) },
-            { name: genericEnums.filter(({ name }) => name).map(({ name }) => name) },
+            {
+              id: genericEnums
+                .filter(({ id }) => id)
+                .map(({ id }) => id),
+            },
+            {
+              name: genericEnums
+                .filter(({ name }) => name)
+                .map(({ name }) => name),
+            },
           ],
         },
       ),
