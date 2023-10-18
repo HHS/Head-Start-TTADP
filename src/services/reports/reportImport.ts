@@ -10,7 +10,7 @@ const syncReportImport = async (
 
 const includeReportImport = () => ({
   model: ReportImport,
-  as: 'reportImport', // TODO: figure this out
+  as: 'reportImports',
   required: false,
   attributes: [
     'id',
