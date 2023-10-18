@@ -345,7 +345,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('these are my manager notes');
 
     // set status to approved
-    await page.getByTestId('dropdown').selectOption('approved');
+    await page.getByTestId('Select').selectOption('approved');
 
     // submit approval
     await page.getByTestId('form').getByTestId('button').click();
@@ -556,7 +556,7 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
-    await page.getByTestId('dropdown').selectOption('In Progress');
+    await page.getByTestId('Select').selectOption('In Progress');
 
     await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -590,7 +590,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // set status to approved
-    await page.getByTestId('dropdown').selectOption('approved');
+    await page.getByTestId('Select').selectOption('approved');
 
     // submit approval
     await page.getByTestId('form').getByTestId('button').click();
