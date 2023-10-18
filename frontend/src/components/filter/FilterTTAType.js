@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown } from '@trussworks/react-uswds';
+import { Select } from '@trussworks/react-uswds';
 
 export function displayTtaTypeQuery(q) {
   if (q === 'training') {
@@ -28,7 +28,7 @@ export default function FilterTTAType({ onApply, query, inputId }) {
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
       <label className="sr-only" htmlFor={inputId}>Select tta type to filter by</label>
-      <Dropdown name={inputId} id={inputId} value={query} onChange={onApplyTTAType}>
+      <Select name={inputId} id={inputId} value={query} onChange={onApplyTTAType}>
         <option value="training">
           Training
         </option>
@@ -38,7 +38,7 @@ export default function FilterTTAType({ onApply, query, inputId }) {
         <option value="training,technical-assistance">
           Training and technical assistance
         </option>
-      </Dropdown>
+      </Select>
     </>
   );
 }

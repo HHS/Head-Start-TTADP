@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Alert, Dropdown } from '@trussworks/react-uswds';
+import { Alert, Select } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Container from '../../../components/Container';
@@ -53,7 +53,7 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
             <div className="desktop:display-flex flex-align-center">
               {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
-              <Dropdown
+              <Select
                 onChange={setSortBy}
                 value={sortValue}
                 className="margin-top-0"
@@ -63,7 +63,7 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
               >
                 <option value="reviewDate-desc">review date (newest to oldest) </option>
                 <option value="reviewDate-asc">review date (oldest to newest) </option>
-              </Dropdown>
+              </Select>
             </div>
           </div>
         </div>

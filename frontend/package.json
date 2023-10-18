@@ -9,7 +9,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@hookform/error-message": "^0.0.5",
-    "@trussworks/react-uswds": "4.1.1",
+    "@trussworks/react-uswds": "5.4.0",
     "@ttahub/common": "1.5.0",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Pagination from 'react-js-pagination';
-import { Dropdown } from '@trussworks/react-uswds';
+import { Select } from '@trussworks/react-uswds';
 
 function SelectPagination({
   title,
@@ -36,7 +36,7 @@ function SelectPagination({
           count,
         )}`}
       >
-        <Dropdown
+        <Select
           className="margin-top-0 margin-right-1 width-auto"
           id="perPage"
           name="perPage"
@@ -48,7 +48,7 @@ function SelectPagination({
           <option value="25">25</option>
           <option value="50">50</option>
           <option value={count}>all</option>
-        </Dropdown>
+        </Select>
         <span>{renderTotal(title, offset, perPage, activePage, count)}</span>
         <Pagination
           innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"

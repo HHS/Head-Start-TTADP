@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
+  FormGroup, Button, Fieldset, Select, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router';
 import RichEditor from '../../../../../components/RichEditor';
@@ -76,7 +76,7 @@ const NeedsAction = ({
                   <Fieldset>
                     {showCreatorRoleError
                       ? <ErrorMessage>Please select a creator role.</ErrorMessage> : null}
-                    <Dropdown
+                    <Select
                       id="creatorRole"
                       name="creatorRole"
                       value={submitCR}
@@ -86,7 +86,7 @@ const NeedsAction = ({
                       {user.roles.map(({ fullName: role }) => (
                         <option key={role} value={role}>{role}</option>
                       ))}
-                    </Dropdown>
+                    </Select>
                   </Fieldset>
                 </FormGroup>
               </>

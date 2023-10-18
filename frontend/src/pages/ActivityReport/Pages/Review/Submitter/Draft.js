@@ -4,7 +4,7 @@ import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import {
-  Form, Fieldset, Button, Alert, Dropdown,
+  Form, Fieldset, Button, Alert, Select,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../IncompletePages';
@@ -110,7 +110,7 @@ const Draft = ({
                   name="creatorRole"
                   required
                 >
-                  <Dropdown
+                  <Select
                     id="creatorRole"
                     name="creatorRole"
                     inputRef={register({ required: 'Select one' })}
@@ -119,7 +119,7 @@ const Draft = ({
                     {completeUserRoles().map((role) => (
                       <option key={role} value={role}>{role}</option>
                     ))}
-                  </Dropdown>
+                  </Select>
                 </FormItem>
               </Fieldset>
             )

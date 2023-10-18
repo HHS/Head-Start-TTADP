@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Button, Dropdown, Alert,
+  Button, Select, Alert,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -87,7 +87,7 @@ const CompleteSession = ({
           name="status"
           required
         >
-          <Dropdown
+          <Select
             label="Session status "
             name="status"
             id="status"
@@ -96,7 +96,7 @@ const CompleteSession = ({
             required
           >
             {options}
-          </Dropdown>
+          </Select>
         </FormItem>
       </div>
 

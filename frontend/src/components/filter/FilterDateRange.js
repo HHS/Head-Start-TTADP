@@ -3,7 +3,7 @@ import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   DatePicker,
-  Dropdown,
+  Select,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import DateRangePicker from './DateRangePicker';
@@ -74,7 +74,7 @@ export default function FilterDateRange({
           <label htmlFor="filter-date-range" className="sr-only">
             date
           </label>
-          <Dropdown
+          <Select
             id="filter-date-range"
             name="filter-date-range"
             onChange={isOnChange}
@@ -89,7 +89,7 @@ export default function FilterDateRange({
                 </option>
               ),
             )}
-          </Dropdown>
+          </Select>
         </>
       );
 

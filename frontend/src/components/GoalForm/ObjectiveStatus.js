@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
+import { FormGroup, Label, Select } from '@trussworks/react-uswds';
 
 export default function ObjectiveStatus({
   status,
@@ -58,7 +58,7 @@ export default function ObjectiveStatus({
         <Label htmlFor={inputName}>
           Objective status
         </Label>
-        <Dropdown
+        <Select
           name={inputName}
           onChange={onChange}
           value={status}
@@ -66,7 +66,7 @@ export default function ObjectiveStatus({
           disabled={isLoading}
         >
           {options}
-        </Dropdown>
+        </Select>
       </FormGroup>
     );
   }
