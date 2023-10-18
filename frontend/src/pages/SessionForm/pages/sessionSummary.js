@@ -12,7 +12,7 @@ import {
   Fieldset,
   Label,
   Textarea,
-  Select,
+  Select as TrussSelect,
   Radio,
   Button,
   ErrorMessage,
@@ -583,7 +583,7 @@ const SessionSummary = ({ datePickerKey }) => {
             Get help choosing a support type
           </button>
         </div>
-        <Select
+        <TrussSelect
           id="objectiveSupportType"
           name="objectiveSupportType"
           inputRef={register({ required: 'Select a support type' })}
@@ -597,7 +597,7 @@ const SessionSummary = ({ datePickerKey }) => {
             'Implementing',
             'Maintaining',
           ].map((option) => (<option key={option}>{option}</option>))}
-        </Select>
+        </TrussSelect>
       </div>
 
     </>
