@@ -35,6 +35,7 @@ module.exports = {
       -- Delete donor goals
 
       -- Update goal templates for fei.
+      DROP TABLE IF EXISTS goal_merges;
       CREATE TEMP TABLE goal_merges
       AS
       WITH goalmap AS (
@@ -122,6 +123,7 @@ module.exports = {
       -- This returns empty on the current dataset because none of the
       -- pseudo-FEI goals have templates. This seems wrong, but it is
       -- the state of the data right now.
+      DROP TABLE IF EXISTS template_merges;
       CREATE TEMP TABLE template_merges
       AS
       SELECT DISTINCT
@@ -147,6 +149,7 @@ module.exports = {
 
 
       -- Update pseudo FEI goals to be valid FEI goals
+      DROP TABLE IF EXISTS corrected_goals;
       CREATE TEMP TABLE corrected_goals
       AS
       WITH updater AS (
@@ -166,6 +169,7 @@ module.exports = {
       ;
 
       -- Create objective_merges for objectives that match on donor and target goals
+      DROP TABLE IF EXISTS objective_merges;
       CREATE TEMP TABLE objective_merges
       AS
       SELECT
@@ -181,6 +185,7 @@ module.exports = {
       ;
 
       -- Update the merge target objectives
+      DROP TABLE IF EXISTS updated_target_objectives;
       CREATE TEMP TABLE updated_target_objectives
       AS
       WITH updater AS (
@@ -207,6 +212,7 @@ module.exports = {
 
       
       -- Merge objective topics
+      DROP TABLE IF EXISTS relinked_objective_topics;
       CREATE TEMP TABLE relinked_objective_topics
       AS
       WITH updater AS (
@@ -239,6 +245,7 @@ module.exports = {
       ;
 
       -- Merge objective resources
+      DROP TABLE IF EXISTS relinked_objective_resources;
       CREATE TEMP TABLE relinked_objective_resources
       AS
       WITH updater AS (
@@ -270,6 +277,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- Merge objective files
+      DROP TABLE IF EXISTS relinked_objective_files;
       CREATE TEMP TABLE relinked_objective_files
       AS
       WITH updater AS (
@@ -301,6 +309,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- Delete duplicate objective topics
+      DROP TABLE IF EXISTS deleted_objective_topics;
       CREATE TEMP TABLE deleted_objective_topics
       AS
       WITH updater AS (
@@ -313,6 +322,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- Delete duplicate objective resources
+      DROP TABLE IF EXISTS deleted_objective_resources;
       CREATE TEMP TABLE deleted_objective_resources
       AS
       WITH updater AS (
@@ -338,6 +348,7 @@ module.exports = {
       ;
 
       -- Link objectives on merged goals to the FEI goals
+      DROP TABLE IF EXISTS relinked_objectives;
       CREATE TEMP TABLE relinked_objectives
       AS
       WITH updater AS (
@@ -353,6 +364,7 @@ module.exports = {
       ;
 
       -- Update the merge target goals
+      DROP TABLE IF EXISTS updated_target_goals;
       CREATE TEMP TABLE updated_target_goals
       AS
       WITH updater AS (
@@ -378,6 +390,7 @@ module.exports = {
       ;
 
       -- relink non-duplicate ARGs
+      DROP TABLE IF EXISTS relinked_args;
       CREATE TEMP TABLE relinked_args
       AS
       WITH updater AS (
@@ -409,6 +422,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- Delete duplicate ARGs
+      DROP TABLE IF EXISTS deleted_args;
       CREATE TEMP TABLE deleted_args
       AS
       WITH updater AS (
@@ -422,6 +436,7 @@ module.exports = {
       ;
 
       -- Delete donor goals
+      DROP TABLE IF EXISTS deleted_goals;
       CREATE TEMP TABLE deleted_goals
       AS
       WITH updater AS (
