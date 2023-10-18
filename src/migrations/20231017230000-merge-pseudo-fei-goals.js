@@ -118,34 +118,6 @@ module.exports = {
       FROM goalmap
       CROSS JOIN target_template
       ;
-      
-      -- This will create a divide by zero error that will rollback the transaction
-      -- if any of the supplied grant, goal, and template ID tuples are wrong
-      WITH goal_merges_count AS (
-        SELECT COUNT(*) cnt FROM goal_merges
-      ),
-      successful_join_count AS (
-        SELECT COUNT(*) cnt
-        FROM goal_merges gm
-        JOIN "Goals" donor_goals
-          ON gm.donor_gid = donor_goals.id
-        JOIN "Grants" donor_goal_grants
-          ON donor_goal_grants.id = donor_goals."grantId"
-          AND donor_goal_grants.number = gm.grnum
-        JOIN "Goals" target_goals
-          ON gm.target_gid = target_goals.id
-        JOIN "Grants" target_goal_grants
-          ON target_goal_grants.id = target_goals."grantId"
-          AND target_goal_grants.number = gm.grnum
-        WHERE gm.target_gtid = target_goals."goalTemplateId"
-          OR gm.target_gid = gm.donor_gid
-      )
-      SELECT
-        1 /
-        (LEAST(gmc.cnt - sjc.cnt, 1) - 1)
-      FROM goal_merges_count gmc
-      CROSS JOIN successful_join_count sjc
-      ;
 
       -- This returns empty on the current dataset because none of the
       -- pseudo-FEI goals have templates. This seems wrong, but it is
