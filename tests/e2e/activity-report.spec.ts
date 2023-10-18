@@ -441,10 +441,10 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
     // verify the correct value is selected in the Objective status dropdown
-    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
+    expect(await extractSelectedDisplayedValue(page.getByTestId('Select'))).toBe('Not Started');
     // Change g1o1's status
-    await page.getByTestId('dropdown').click();
-    await page.getByTestId('dropdown').selectOption({ label: 'In Progress' });
+    await page.getByTestId('Select').click();
+    await page.getByTestId('Select').selectOption({ label: 'In Progress' });
     await page.getByRole('button', { name: 'Save' }).click();
 
     // expand the objective for g1
@@ -467,10 +467,10 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
-    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
+    expect(await extractSelectedDisplayedValue(page.getByTestId('Select'))).toBe('Not Started');
 
-    await page.getByTestId('dropdown').click();
-    await page.getByTestId('dropdown').selectOption({ label: 'Complete' });
+    await page.getByTestId('Select').click();
+    await page.getByTestId('Select').selectOption({ label: 'Complete' });
     // Instead of saving, cancel out of the 'Edit' form
     await page.getByRole('link', { name: 'Cancel' }).click();
 

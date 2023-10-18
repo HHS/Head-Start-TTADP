@@ -52,7 +52,7 @@ test('can fill out and complete a training and session report', async ({ page })
 
   await page.locator('#ttaProvided').fill('TTA');
 
-  await page.getByTestId('select').selectOption('Introducing');
+  await page.getByTestId('Select').selectOption('Introducing');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   await page.waitForTimeout(5000);
