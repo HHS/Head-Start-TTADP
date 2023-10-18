@@ -10,6 +10,14 @@ const {
   ReportRecipient,
 } = db;
 
+/**
+ * Synchronizes the recipients of a report with the provided list of recipients.
+ * @param reportId - The ID of the report.
+ * @param recipients - An array of recipient objects containing grantId and otherEntityId
+ * properties.
+ * @returns A promise that resolves to an array of promises representing the insert, update,
+ * and delete operations.
+ */
 const syncReportRecipients = async (
   reportId: number,
   recipients: ({ grantId?: number, otherEntityId?: number })[],
@@ -22,11 +30,12 @@ const syncReportRecipients = async (
         reportId,
       },
     });
+
     // filter to the create, update, and delete lists
     const [
-      insertList,
-      updateList,
-      deleteList,
+      insertList, // List of recipients to be inserted
+      updateList, // List of recipients to be updated
+      deleteList, // List of recipients to be deleted
     ] = [
       recipients.filter(({ grantId, otherEntityId }) => !(
         currentReportRecipients.filter((currentReportRecipient) => (
@@ -47,8 +56,9 @@ const syncReportRecipients = async (
         )).length
       )),
     ];
+
     // in parallel:
-    //    perform in insert/update/delete based on the sub lists
+    //    perform insert/update/delete based on the sub lists
     //        if a sub-list is empty, do not call the db at all for that sub-list
     return await Promise.all([
       (insertList && insertList.length)
@@ -103,6 +113,15 @@ const syncReportRecipients = async (
   }
 };
 
+/**
+ * Returns an object that includes the necessary information for including report recipients.
+ * @returns {Object} - Object with the following properties:
+ *   - model: The model to include (ReportRecipient)
+ *   - as: The alias for the included model ('ReportRecipients')
+ *   - required: Whether the inclusion is required or not (false)
+ *   - attributes: The attributes to include for the model (['id'])
+ *   - include: An array of additional models to include
+ */
 const includeReportRecipients = () => ({
   model: ReportRecipient,
   as: 'ReportRecipients',
@@ -144,6 +163,11 @@ const includeReportRecipients = () => ({
   ],
 });
 
+/**
+ * Retrieves the report recipients for a given report ID.
+ * @param reportId - The ID of the report.
+ * @returns A promise that resolves to the report recipients.
+ */
 const getReportRecipients = async (
   reportId: number,
 ) => includeToFindAll(
