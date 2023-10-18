@@ -464,21 +464,23 @@ module.exports = {
       ;
 
       SELECT
+        1 op_order,
         'corrected_goals' operation,
         COUNT(*) cnt
       FROM corrected_goals
-      UNION SELECT 'updated_target_objectives', COUNT(*) FROM updated_target_objectives
-      UNION SELECT 'relinked_objective_topics', COUNT(*) FROM relinked_objective_topics
-      UNION SELECT 'relinked_objective_resources', COUNT(*) FROM relinked_objective_resources
-      UNION SELECT 'relinked_objective_files', COUNT(*) FROM relinked_objective_files
-      UNION SELECT 'deleted_objective_topics', COUNT(*) FROM deleted_objective_topics
-      UNION SELECT 'deleted_objective_resources', COUNT(*) FROM deleted_objective_resources
-      UNION SELECT 'deleted_objective_files', COUNT(*) FROM deleted_objective_files
-      UNION SELECT 'relinked_objectives', COUNT(*) FROM relinked_objectives
-      UNION SELECT 'updated_target_goals', COUNT(*) FROM updated_target_goals
-      UNION SELECT 'relinked_args', COUNT(*) FROM relinked_args
-      UNION SELECT 'deleted_args', COUNT(*) FROM deleted_args
-      UNION SELECT 'deleted_goals', COUNT(*) FROM deleted_goals
+      UNION SELECT 2,'updated_target_objectives', COUNT(*) FROM updated_target_objectives
+      UNION SELECT 3,'relinked_objective_topics', COUNT(*) FROM relinked_objective_topics
+      UNION SELECT 4,'relinked_objective_resources', COUNT(*) FROM relinked_objective_resources
+      UNION SELECT 5,'relinked_objective_files', COUNT(*) FROM relinked_objective_files
+      UNION SELECT 6,'deleted_objective_topics', COUNT(*) FROM deleted_objective_topics
+      UNION SELECT 7,'deleted_objective_resources', COUNT(*) FROM deleted_objective_resources
+      UNION SELECT 8,'deleted_objective_files', COUNT(*) FROM deleted_objective_files
+      UNION SELECT 9,'relinked_objectives', COUNT(*) FROM relinked_objectives
+      UNION SELECT 10,'updated_target_goals', COUNT(*) FROM updated_target_goals
+      UNION SELECT 11,'relinked_args', COUNT(*) FROM relinked_args
+      UNION SELECT 12,'deleted_args', COUNT(*) FROM deleted_args
+      UNION SELECT 13,'deleted_goals', COUNT(*) FROM deleted_goals
+      ORDER BY 1
       ;
         
 
