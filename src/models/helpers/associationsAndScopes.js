@@ -122,39 +122,43 @@ const generateAssociation = async (
   // Create the association between the `from` and `to` objects using the specified `type`
   // and options such as `foreignKey`, `as`, `through`, and `otherKey`.
 ) => {
-  await semaphore.acquire(from.tableName);
   let dynamicAs = as;
-  if (from === to
-    && foreignKey === 'mapsTo') {
-    if (type === 'belongsTo') {
-      dynamicAs = `mapsTo${camelToPascalCase(as)}`;
-    } else if (type === 'hasMany') {
-      dynamicAs = `mapsFrom${camelToPascalCase(as)}`;
+  try {
+    await semaphore.acquire(from.tableName);
+    if (from === to
+      && foreignKey === 'mapsTo') {
+      if (type === 'belongsTo') {
+        dynamicAs = `mapsTo${camelToPascalCase(as)}`;
+      } else if (type === 'hasMany') {
+        dynamicAs = `mapsFrom${camelToPascalCase(as)}`;
+      }
     }
-  }
 
-  if (!doesAssociationExist(
-    from,
-    to,
-    type,
-    foreignKey,
-    dynamicAs,
-    through,
-    otherKey,
-  )) {
-    console.log('generateAssociation', to, from, to === from, `'${dynamicAs}'`);
-    from[type](
-      (to === from) // Needed to prevent infinite recursion
-        ? to.scope()
-        : to,
-      {
-        foreignKey,
-        as: dynamicAs,
-        ...(through && { through, otherKey }),
-      },
-    );
+    if (!doesAssociationExist(
+      from,
+      to,
+      type,
+      foreignKey,
+      dynamicAs,
+      through,
+      otherKey,
+    )) {
+      from[type](
+        (to === from) // Needed to prevent infinite recursion
+          ? to.scope()
+          : to,
+        {
+          foreignKey,
+          as: dynamicAs,
+          ...(through && { through, otherKey }),
+        },
+      );
+    }
+    semaphore.release(from.tableName);
+  } catch (err) {
+    semaphore.release(from.tableName);
+    throw err;
   }
-  semaphore.release(from.tableName);
 };
 
 /**
@@ -182,23 +186,15 @@ const generateAssociationPair = async (
   through,
   otherKey,
 ) => {
+  // TODO: need to figure out an alternate naming convention that works for all cases
   const asSuffix = through
     ? `For${through.name}`
     : '';
 
-  const [
-    resolvedFrom,
-    resolvedTo,
-  ] = await Promise.all([
-    from,
-    to,
-  ]);
-  console.log('generateAssociationPair a', { resolvedFrom, resolvedTo });
-
   // Generate association from source model to target model
   await generateAssociation(
-    resolvedFrom,
-    resolvedTo,
+    from,
+    to,
     type1,
     foreignKey,
     // Use singular or plural alias based on association type
@@ -211,8 +207,8 @@ const generateAssociationPair = async (
 
   // Generate association from target model to source model
   await generateAssociation(
-    resolvedTo,
-    resolvedFrom,
+    to,
+    from,
     type2,
     // Use foreign key or other key if provided
     otherKey || foreignKey,
@@ -311,13 +307,8 @@ const generateJunctionTableAssociations = async (
   associatedModels,
   additionalData = null,
 ) => {
-  // const associatedModelsReady = await Promise.all(associatedModels);
-  // console.log('generateJunctionTableAssociations 0', { junctionModel, associatedModelsReady });
   const junctionModelAttributes = Object.entries(junctionModel.rawAttributes)
     .map(([key, value]) => ([key, value?.references?.model?.tableName]));
-
-  const filteredAssociatedModels = associatedModels
-    .filter((am) => !(am instanceof Promise));
 
   [
     null,
@@ -336,86 +327,85 @@ const generateJunctionTableAssociations = async (
       additionalData,
       'As',
     );
-    console.log('generateJunctionTableAssociations 1', centerModel, filteredAssociatedModels);
-    filteredAssociatedModels
+
+    associatedModels
       .forEach(async (model, modelIndex) => {
-      [
-        ...(!(additionalData?.models?.[modelIndex]?.skipNull) ? [null] : []),
-        ...(additionalData?.models?.[modelIndex]?.suffixes
-          ? additionalData.models[modelIndex].suffixes
-          : []),
-      ].forEach(async (modelSuffix, modelSuffixIndex) => {
-        const {
-          model: associatedModel,
-          as: associatedModelAs,
-          suffix: associatedModelSuffix,
-        } = getAssociationSettings(
-          filteredAssociatedModels[modelIndex],
-          camelToPascalCase(modelSuffix),
-          modelSuffixIndex,
-          additionalData?.models?.[modelIndex],
-          'For',
-        );
-        console.log('generateJunctionTableAssociations', centerModel, associatedModel, associatedModel instanceof Promise);
-        const associatedModelForeignKey = locateForeignKey(junctionModelAttributes, model);
-
-        if (associatedModelForeignKey !== null) {
-          console.log('generateJunctionTableAssociations:351', {centerModel, associatedModel});
-          await generateAssociationPair(
-            centerModel,
-            associatedModel,
-            'belongsTo',
-            'hasMany',
-            associatedModelForeignKey,
-            `${associatedModelAs}${associatedModelSuffix || ''}${centerSuffix || ''}`,
-            `${centerAs}${associatedModelSuffix || ''}${centerSuffix || ''}`,
+        [
+          ...(!(additionalData?.models?.[modelIndex]?.skipNull) ? [null] : []),
+          ...(additionalData?.models?.[modelIndex]?.suffixes
+            ? additionalData.models[modelIndex].suffixes
+            : []),
+        ].forEach(async (modelSuffix, modelSuffixIndex) => {
+          const {
+            model: associatedModel,
+            as: associatedModelAs,
+            suffix: associatedModelSuffix,
+          } = getAssociationSettings(
+            associatedModels[modelIndex],
+            camelToPascalCase(modelSuffix),
+            modelSuffixIndex,
+            additionalData?.models?.[modelIndex],
+            'For',
           );
+          const associatedModelForeignKey = locateForeignKey(junctionModelAttributes, model);
 
-          filteredAssociatedModels
-            .slice(modelIndex)
-            .forEach((otherModel, otherModelIndex) => {
-              if (model === otherModel) return;
+          if (associatedModelForeignKey !== null) {
+            await generateAssociationPair(
+              centerModel,
+              associatedModel,
+              'belongsTo',
+              'hasMany',
+              associatedModelForeignKey,
+              `${associatedModelAs}${associatedModelSuffix || ''}${centerSuffix || ''}`,
+              `${centerAs}${associatedModelSuffix || ''}${centerSuffix || ''}`,
+            );
 
-              [
-                ...(!(additionalData?.models?.[modelIndex + otherModelIndex]?.skipNull) && [null]),
-                ...(additionalData?.models?.[modelIndex + otherModelIndex]?.suffixes !== undefined
-                  ? additionalData.models[modelIndex + otherModelIndex].suffixes
-                  : []),
-              ].forEach(async (otherModelSuffix, otherModelSuffixIndex) => {
-                const {
-                  model: otherAssociatedModel,
-                  as: otherAssociatedModelAs,
-                  suffix: otherAssociatedModelSuffix,
-                } = getAssociationSettings(
-                  filteredAssociatedModels[modelIndex + otherModelIndex],
-                  otherModelSuffix,
-                  otherModelSuffixIndex,
-                  additionalData?.models?.[modelIndex + otherModelIndex],
-                  'For',
-                );
-                const otherAssociatedModelForeignKey = locateForeignKey(
-                  junctionModelAttributes,
-                  otherModel,
-                );
+            associatedModels
+              .slice(modelIndex)
+              .forEach((otherModel, otherModelIndex) => {
+                if (model === otherModel) return;
 
-                if (otherAssociatedModelForeignKey !== null) {
-                  await generateAssociationPair(
-                    associatedModel,
-                    otherAssociatedModel,
-                    'belongsToMany',
-                    'belongsToMany',
-                    associatedModelForeignKey,
-                    `${otherAssociatedModelAs}${otherAssociatedModelSuffix || ''}${associatedModelSuffix || ''}${centerSuffix || ''}`,
-                    `${associatedModelAs}${associatedModelSuffix || ''}${otherAssociatedModelSuffix || ''}${centerSuffix || ''}`,
-                    centerModel,
-                    otherAssociatedModelForeignKey,
+                [
+                  ...(!(additionalData?.models?.[modelIndex + otherModelIndex]?.skipNull)
+                  && [null]),
+                  ...(additionalData?.models?.[modelIndex + otherModelIndex]?.suffixes !== undefined
+                    ? additionalData.models[modelIndex + otherModelIndex].suffixes
+                    : []),
+                ].forEach(async (otherModelSuffix, otherModelSuffixIndex) => {
+                  const {
+                    model: otherAssociatedModel,
+                    as: otherAssociatedModelAs,
+                    suffix: otherAssociatedModelSuffix,
+                  } = getAssociationSettings(
+                    associatedModels[modelIndex + otherModelIndex],
+                    otherModelSuffix,
+                    otherModelSuffixIndex,
+                    additionalData?.models?.[modelIndex + otherModelIndex],
+                    'For',
                   );
-                }
+                  const otherAssociatedModelForeignKey = locateForeignKey(
+                    junctionModelAttributes,
+                    otherModel,
+                  );
+
+                  if (otherAssociatedModelForeignKey !== null) {
+                    await generateAssociationPair(
+                      associatedModel,
+                      otherAssociatedModel,
+                      'belongsToMany',
+                      'belongsToMany',
+                      associatedModelForeignKey,
+                      `${otherAssociatedModelAs}${otherAssociatedModelSuffix || ''}${associatedModelSuffix || ''}${centerSuffix || ''}`,
+                      `${associatedModelAs}${associatedModelSuffix || ''}${otherAssociatedModelSuffix || ''}${centerSuffix || ''}`,
+                      centerModel,
+                      otherAssociatedModelForeignKey,
+                    );
+                  }
+                });
               });
-            });
-        }
+          }
+        });
       });
-    });
   });
 };
 
@@ -438,7 +428,8 @@ const automaticallyGenerateJunctionTableAssociations = async (
     // table name
     .map(([key, value]) => Object.values(models)
       .find((model) => model.tableName === value?.references?.model?.tableName))
-    .filter((model) => model);
+    .filter((model) => model)
+    .filter((model) => !(model instanceof Promise));
 
   // TODO: the column name could be auto=incorporated to produce better "as" names
   // const x = Object.entries(junctionModel.rawAttributes)
