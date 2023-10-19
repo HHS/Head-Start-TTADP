@@ -13,18 +13,18 @@ const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/as
 export default (sequelize, DataTypes) => {
   class ReportReason extends Model {
     static async associate(models) {
-      await  automaticallyGenerateJunctionTableAssociations(this, models);
+      await automaticallyGenerateJunctionTableAssociations(this, models);
     }
   }
   ReportReason.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       allowNull: false,
     },
     reportId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
