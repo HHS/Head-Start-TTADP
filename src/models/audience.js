@@ -21,6 +21,7 @@ export default (sequelize, DataTypes) => {
         include: [{
           model: models.Audience.scope(),
           as: 'mapsToAudience',
+          attributes: [],
           required: false,
         }],
       });
