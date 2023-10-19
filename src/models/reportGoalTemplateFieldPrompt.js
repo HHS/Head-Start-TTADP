@@ -26,13 +26,13 @@ export default (sequelize, DataTypes) => {
   }
   ReportGoalTemplateFieldPrompt.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
     reportGoalTemplateId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
