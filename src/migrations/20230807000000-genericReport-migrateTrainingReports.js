@@ -47,6 +47,7 @@ module.exports = {
         -- Insert ReportReasons
         -- Insert ReportTargetPopulations
         -- Insert ReportRecipients
+        -- Insert ReportAudiences
         ----- OBJECTIVES ------
         -- REMOVE: Find or insert Objectives for sessions
         -- REMOVE: Insert ObjectiveTopics
@@ -563,6 +564,24 @@ module.exports = {
         WHERE data->'recipients' IS NOT NULL
         ;
 
+        -- Insert ReportAudiences
+        INSERT INTO "ReportAudiences" (
+          "reportId",
+          "audienceId",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          ir.reports_id,
+          a.id,
+          ir."createdAt",
+          ir."updatedAt"
+        FROM interim_reports ir
+        JOIN "Audiences" a
+          ON ir.data->>'audience' = a.name
+          AND a."validForId" = 1
+        ;
+
         ------------------------------------------------------------------------------------------------
         ----- OBJECTIVES -------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------
@@ -582,6 +601,7 @@ module.exports = {
           eo.id::bigint otid,
           MD5(data->>'objective') hash,
           data->>'objective' ottitle,
+          data->>'objectiveSupportType' support_type,
           rts."regionId",
           ir."createdAt",
           ir."updatedAt",
@@ -632,7 +652,7 @@ module.exports = {
           r.id,
           ot.id,
           o_t.ottitle,
-          (SELECT id FROM "SupportTypes" WHERE name = 'Introducing'), -- TODO confirm this is correct
+          st.id,
           r."statusId",
           r."createdAt",
           r."updatedAt"
@@ -642,6 +662,8 @@ module.exports = {
         JOIN "ObjectiveTemplates" ot
           ON TRIM(LOWER(o_t.ottitle)) = TRIM(LOWER(ot."templateTitle"))
           AND o_t."regionId" = ot."regionId"
+        JOIN "SupportTypes" st
+          ON COALESCE(o_t.support_type,'Introducing') = st.name
         ;
 
         -- Insert ObjectiveTemplateTopics
