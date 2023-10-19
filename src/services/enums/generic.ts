@@ -5,7 +5,10 @@ import db from '../../models';
 import { filterDataToModel, collectChangedValues, includeToFindAll } from '../../lib/modelUtils';
 import { pascalToCamelCase } from '../../models/helpers/associationsAndScopes';
 
-const { ValidFor } = db;
+const {
+  ValidFor,
+  sequelize,
+} = db;
 
 // @ts-ignore ts(2430)
 interface EnumModel extends Model {
@@ -45,11 +48,16 @@ interface EnumModel extends Model {
   ) => Promise<GenericEnumType[]>,
 }
 
+interface EntityInfo {
+  name: string,
+  id?: number,
+  type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE];
+}
+
 interface EnumInfo {
-  model: EnumModel,
-  as: string,
+  model: EntityEnumModel,
+  alias: string,
   entityTypeFiltered?: boolean,
-  keyName: string,
 }
 
 interface GenericEnumType {
@@ -176,13 +184,14 @@ const deleteById = async (
 interface EntityGenericEnum {
   id: number,
   [key: string]: number | string,
-  enumId: number,
   name: string,
 }
 
 // @ts-ignore
 interface EntityEnumModel extends Model {
+  name: string,
   tableName: string,
+  associations: object[],
   findAll: (args: {
     attributes: (object | string)[],
     where: object,
@@ -213,174 +222,173 @@ type EnumSyncResponse = {
   unmatched: { id?: number, name?: string }[] | null,
 };
 
-const includeEntityGenericEnums = (
-  model: EntityEnumModel,
-  enumInfo: EnumInfo,
-  entity: { name: string, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
-) => ({
-  model,
-  as: pascalToCamelCase(model.tableName), // TODO: figure out how to get this
-  attributes: [
-    'id',
-    [entity.name],
-    [`"${enumInfo.as}".id`, 'enumId'],
-    [`"${enumInfo.as}".name`, 'name'],
-  ],
-  include: [{
-    model: enumInfo.model,
-    as: enumInfo.as,
-    required: true,
-    attributes: [],
-    ...(enumInfo?.entityTypeFiltered && {
-      include: [{
-        model: ValidFor,
-        as: 'validFor',
-        required: true,
-        attributes: [],
-        where: {
-          name: entity.type,
-        },
-      }],
-    }),
-  }],
-});
+const includeGenericEnums = (
+  entity: EntityInfo,
+  entityEnum: EnumInfo,
+) => {
+  const {
+    model,
+    alias,
+    entityTypeFiltered = false,
+  } = entityEnum;
+  const association = model?.associations?.[alias];
+  if (!association) throw new Error(`Association:'${alias}' not found on Model:'${model.name}'`);
+  const {
+    target,
+    as,
+    foreignKey,
+  } = association;
 
-const getEntityGenericEnum = async (
-  entityEnumModel: EntityEnumModel,
-  enumInfo: EnumInfo,
-  entity: { name: string, id?: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
-  genericEnumIds: number[] | null = null,
-): Promise<EntityGenericEnum[]> => includeToFindAll(
-  includeEntityGenericEnums,
+  return {
+    model,
+    as: pascalToCamelCase(model.tableName),
+    attributes: [
+      'id',
+      entity.name,
+      foreignKey,
+      [sequelize.literal(`"${as}".name`), 'name'],
+    ],
+    include: [{
+      model: target,
+      as,
+      required: true,
+      attributes: [],
+      ...(entityTypeFiltered && {
+        include: [{
+          model: ValidFor,
+          as: 'validFor',
+          required: true,
+          attributes: [],
+          where: {
+            name: entity.type,
+          },
+        }],
+      }),
+    }],
+  };
+};
+
+const getGenericEnums = (
+  entity: EntityInfo,
+  entityEnum: EnumInfo,
+  genericEnums: (number | string)[] | null = null,
+):Promise<EntityGenericEnum[]> => includeToFindAll(
+  includeGenericEnums,
   {
-    [entity.name]: entity.id,
-    ...(genericEnumIds && { genericEnumIds }),
+    ...(entity.id && { [entity.name]: entity.id }),
+    ...(genericEnums?.every((ge) => typeof ge === 'number')
+      // Note that the pre/post-fix $ are required to utilize a column from an included table
+      // in the top most where
+      && { [`$"${entityEnum.alias}".id$`]: genericEnums }),
+    ...(genericEnums?.every((ge) => typeof ge === 'string')
+      // Note that the pre/post-fix $ are required to utilize a column from an included table
+      // in the top most where
+      && { [`$"${entityEnum.alias}".name$`]: genericEnums }),
   },
   [
-    entityEnumModel,
-    enumInfo,
     entity,
-  ],
-  [
-    'id',
-    entity.name,
-    [`"${enumInfo.as}".id`, 'enumId'],
-    [`"${enumInfo.as}".name`, 'name'],
+    entityEnum,
   ],
 );
 
-const syncEntityGenericEnum = async (
-  entityEnumModel: EntityEnumModel,
-  enumInfo: EnumInfo,
-  entity: { name: string, id: number, type?: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
+const syncGenericEnums = async (
+  entity: EntityInfo,
+  entityEnum: EnumInfo,
   genericEnums: { id?: number, name?: string }[] | null = null,
-): Promise<EnumSyncResponse> => {
-  try {
-    // in parallel:
-    //    validate that the type is valid for the report type
-    //    get current collaborators for this report having this type
-    const [incomingValidEnums, currentEnums] = await Promise.all([
-      findAll(
-        enumInfo.model,
-        {
-          ...(enumInfo?.entityTypeFiltered
-            && entity?.type
-            && { validFor: entity.type }),
-          [Op.or]: [
-            {
-              id: genericEnums
-                .filter(({ id }) => id)
-                .map(({ id }) => id),
-            },
-            {
-              name: genericEnums
-                .filter(({ name }) => name)
-                .map(({ name }) => name),
-            },
-          ],
-        },
-      ),
-      getEntityGenericEnum(
-        entityEnumModel,
-        enumInfo,
-        entity,
-      ),
-    ]);
+) => {
+  const [incomingValidEnums, currentEnums] = await Promise.all([
+    findAll(
+      entityEnum.model.associations[entityEnum.alias].target,
+      {
+        ...(entityEnum?.entityTypeFiltered
+          && entity?.type
+          && { validFor: entity.type }),
+        [Op.or]: [
+          {
+            id: genericEnums
+              .filter(({ id }) => id)
+              .map(({ id }) => id),
+          },
+          {
+            name: genericEnums
+              .filter(({ name }) => name)
+              .map(({ name }) => name),
+          },
+        ],
+      },
+    ),
+    getGenericEnums(
+      entity,
+      entityEnum,
+    ),
+  ]);
+  const [
+    incomingValidEnumIds,
+    incomingInvalidEnum,
+    currentEnumIds,
+  ] = [
+    incomingValidEnums.map((ive) => ive.id),
+    genericEnums.reduce((acc, ge) => {
+      const matched = incomingValidEnums
+        .find(({ id, name }) => ge.id === id || ge.name === name);
+      if (!matched) {
+        acc.push(ge);
+      }
+      return acc;
+    }, []),
+    currentEnums.map((ce) => ce[`${entityEnum.alias}Id`]),
+  ];
+  const [
+    createList,
+    updateList,
+    destroyList,
+  ] = [
+    incomingValidEnumIds.filter((iveId) => !currentEnumIds.includes(iveId)),
+    incomingValidEnumIds.filter((iveId) => currentEnumIds.includes(iveId)),
+    currentEnumIds.filter((ceId: number) => incomingValidEnumIds.includes(ceId)),
+  ];
 
-    // collect the valid ids, the invalid enums, and the current enum ids
-    const [
-      incomingValidEnumIds,
-      incomingInvalidEnum,
-      currentEnumIds,
-    ] = [
-      incomingValidEnums.map((ive) => ive.id),
-      genericEnums.reduce((acc, ge) => {
-        const matched = incomingValidEnums
-          .find(({ id, name }) => ge.id === id || ge.name === name);
-        if (!matched) {
-          acc.push(ge);
-        }
-        return acc;
-      }, []),
-      currentEnums.map((ce) => ce.enumId),
-    ];
-    // filter to the create, update, and destroy lists
-    const [
-      createList,
-      updateList,
-      destroyList,
-    ] = [
-      incomingValidEnumIds.filter((iveId) => !currentEnumIds.includes(iveId)),
-      incomingValidEnumIds.filter((iveId) => currentEnumIds.includes(iveId)),
-      currentEnumIds.filter((ceId) => incomingValidEnumIds.includes(ceId)),
-    ];
-    // in parallel:
-    //    perform in insert/update/delete based on the sub lists
-    //        if a sublist is empty, do not call the db at all for that sublist
-    return {
-      promises: Promise.all([
-        (createList && createList.length)
-          ? entityEnumModel.bulkCreate(
-            createList.map((id) => ({
-              [enumInfo.keyName]: id,
-              [entity.name]: entity.id,
-            })),
-            { individualHooks: true },
-          )
-          : Promise.resolve(),
-        (updateList && updateList.length)
-          ? entityEnumModel.update(
-            {
-              updatedAt: new Date(),
-            },
-            {
-              where: {
-                [enumInfo.keyName]: updateList,
-                [entity.name]: entity.id,
-              },
-              individualHooks: true,
-            },
-          )
-          : Promise.resolve(),
-        (destroyList && destroyList.length)
-          ? entityEnumModel.destroy({
+  return {
+    promises: Promise.all([
+      (createList && createList.length)
+        ? entityEnum.model.bulkCreate(
+          createList.map((id) => ({
+            [`${entityEnum.alias}Id`]: id,
+            [entity.name]: entity.id,
+          })),
+          { individualHooks: true },
+        )
+        : Promise.resolve(),
+      (updateList && updateList.length)
+        ? entityEnum.model.update(
+          {
+            updatedAt: new Date(),
+          },
+          {
             where: {
+              [`${entityEnum.alias}Id`]: updateList,
               [entity.name]: entity.id,
-              [enumInfo.keyName]: destroyList,
             },
             individualHooks: true,
-          })
-          : Promise.resolve(),
-      ]),
-      unmatched: incomingInvalidEnum,
-    };
-  } catch (err) {
-    auditLogger.error(err);
-    throw err;
-  }
+          },
+        )
+        : Promise.resolve(),
+      (destroyList && destroyList.length)
+        ? entityEnum.model.destroy({
+          where: {
+            [entity.name]: entity.id,
+            [`${entityEnum.alias}Id`]: destroyList,
+          },
+          individualHooks: true,
+        })
+        : Promise.resolve(),
+    ]),
+    unmatched: incomingInvalidEnum,
+  };
 };
 
 export {
+  type EntityInfo,
   type EnumInfo,
   type GenericEnumType,
   findAll,
@@ -392,7 +400,7 @@ export {
   type EntityEnumModel,
   type EntityGenericEnum,
   type EnumSyncResponse,
-  getEntityGenericEnum,
-  syncEntityGenericEnum,
-  includeEntityGenericEnums,
+  includeGenericEnums,
+  getGenericEnums,
+  syncGenericEnums,
 };
