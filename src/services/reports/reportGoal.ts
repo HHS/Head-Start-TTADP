@@ -1,6 +1,7 @@
 import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
 import { auditLogger } from '../../logger';
+import { includeReportGoalTemplate } from './reportGoalTemplate';
 
 const {
   Goal,
@@ -38,16 +39,20 @@ const includeReportGoals = () => ({
   model: ReportGoal,
   as: 'reportGoals',
   required: false,
-  attributes: [], // TODO: fill this out
+  attributes: [
+    'name',
+    'statusId',
+    'timeframe',
+    'endDate',
+    'ordinal',
+  ],
   include: [
+    includeReportGoalTemplate(),
     {
-      model: ReportGoalTemplate,
+      model: GoalTemplate, // TODO: fill out
     },
     {
-      model: GoalTemplate,
-    },
-    {
-      model: Goal,
+      model: Goal, // TODO: fill out
     },
   ],
 });
