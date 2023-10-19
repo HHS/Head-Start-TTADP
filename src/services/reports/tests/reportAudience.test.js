@@ -1,0 +1,129 @@
+import db from '../../../models';
+import { REPORT_TYPE, AUDIENCE } from '../../../constants';
+import {
+  audienceEnumInfo,
+  syncReportAudiences,
+  getReportAudiences,
+  includeReportAudience,
+} from '../reportAudience';
+
+const {
+  Audience,
+  ReportAudience,
+  sequelize,
+} = db;
+
+describe('ReportAudience', () => {
+  describe('syncReportAudiences', () => {
+    it('should sync report audiences when audienceEnums are provided', async () => {
+      const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
+      const audienceEnums = [
+        { id: 1, name: AUDIENCE.RECIPIENTS },
+        { id: 2, name: AUDIENCE.FEDERAL_STAFF },
+      ];
+
+      await syncReportAudiences(report, audienceEnums);
+
+      expect(syncGenericEnums).toHaveBeenCalledWith(
+        ReportAudience,
+        audienceEnumInfo,
+        report,
+        audienceEnums,
+      );
+    });
+
+    it('should sync report audiences with null audienceEnums', async () => {
+      const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
+
+      const result = await syncReportAudiences(report);
+
+      expect(result.length > 0).toBe(true);
+      expect(Object.keys(result)).toEqual([]);
+    });
+  });
+
+  describe('getReportAudiences', () => {
+    it('should retrieve report audiences when audienceIds are provided as number', async () => {
+      const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
+      let audiences = [2];
+
+      let result = await getReportAudiences(report, audiences);
+      console.log(result);
+
+      expect(result.length === 0).toBe(true);
+      expect(Object.keys(result)).toEqual([]);
+
+      audiences = [1];
+
+      result = await getReportAudiences(report, audiences);
+      console.log(result);
+      expect(result.length).toBe(1);
+      expect(result?.[0]?.dataValues).toEqual({
+        id: 25,
+        reportId: 1,
+        audienceId: 1,
+        name: AUDIENCE.RECIPIENTS,
+      });
+    });
+
+    it('should retrieve report audiences when audiences are provided as text', async () => {
+      const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
+      let audiences = [AUDIENCE.FEDERAL_STAFF];
+      let result = await getReportAudiences(report, audiences);
+      console.log(result);
+      expect(result.length).toBe(0);
+
+      audiences = [AUDIENCE.RECIPIENTS];
+      result = await getReportAudiences(report, audiences);
+      console.log(result);
+      expect(result.length).toBe(1);
+      expect(result?.[0]?.dataValues).toEqual({
+        id: 25,
+        reportId: 1,
+        audienceId: 1,
+        name: AUDIENCE.RECIPIENTS,
+      });
+    });
+
+    it('should retrieve report audiences with all audiences when null provided', async () => {
+      const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
+
+      const result = await getReportAudiences(report);
+
+      console.log(result);
+
+      expect(result.length).toBe(1);
+      expect(result?.[0]?.dataValues).toEqual({
+        id: 25,
+        reportId: 1,
+        audienceId: 1,
+        name: AUDIENCE.RECIPIENTS,
+      });
+    });
+  });
+
+  describe('includeReportAudience', () => {
+    it('should include report audience enums for the provided report type', () => {
+      const reportType = REPORT_TYPE.REPORT_TRAINING_EVENT;
+
+      const include = includeReportAudience(reportType);
+
+      expect(include).toEqual({
+        model: ReportAudience,
+        as: 'reportAudiences',
+        attributes: [
+          'id',
+          'reportId',
+          'audienceId',
+          [sequelize.literal('"audience".name'), 'name'],
+        ],
+        include: [{
+          model: Audience,
+          as: 'audience',
+          attributes: [],
+          required: true,
+        }],
+      });
+    });
+  });
+});
