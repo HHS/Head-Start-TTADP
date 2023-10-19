@@ -12,7 +12,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
       -- fixing the desired goal status
       DROP TABLE IF EXISTS status_update_goals;
-      CREATE TABLE status_update_goals
+      CREATE TEMP TABLE status_update_goals
       AS
       WITH goalset AS (
         SELECT * FROM (
