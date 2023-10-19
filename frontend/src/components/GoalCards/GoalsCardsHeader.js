@@ -53,6 +53,9 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
+  const fiveGoalIds = [...pageGoalIds.slice(0, 3), 50954].map((g) => `goalId[]=${g}`).join('&');
+  const twoGoalIds = [20597, 52286].map((g) => `goalId[]=${g}`).join('&');
+
   return (
     <div className="padding-x-3 position-relative">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
@@ -103,8 +106,20 @@ export default function GoalCardsHeader({
           />
         </div>
         )}
-
       </div>
+      <FeatureFlag flag="merge_goals">
+        <div className="usa-alert usa-alert--info" data-testid="alert">
+          <div className="usa-alert__body">
+            <div className="usa-alert__text">
+              <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
+              <ul className="usa-list">
+                <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${fiveGoalIds}`}>Review 5 similar goals</Link></li>
+                <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${twoGoalIds}`}>Review 2 similar goals</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </FeatureFlag>
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox

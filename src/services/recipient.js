@@ -581,6 +581,9 @@ export async function getGoalsByActivityRecipient(
 
     allGoalIds.push(current.id);
 
+    const isCurated = current.goalTemplate
+      && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
+
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
@@ -591,6 +594,7 @@ export async function getGoalsByActivityRecipient(
         existingGoal.grantNumbers,
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.isCurated = isCurated || existingGoal.isCurated;
       return {
         goalRows: previous.goalRows,
       };
@@ -612,6 +616,7 @@ export async function getGoalsByActivityRecipient(
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
       responsesForComparison,
+      isCurated,
     };
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
