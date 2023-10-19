@@ -19,6 +19,7 @@ import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import RTTAPA from './pages/RTTAPA';
 import RTTAPAHistory from './pages/RTTAPAHistory';
 import FeatureFlag from '../../components/FeatureFlag';
+import MergeGoals from './pages/MergeGoals';
 
 function PageWithHeading({
   children,
@@ -228,6 +229,26 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientName={recipientName}
               />
             </PageWithHeading>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge"
+          render={({ location }) => (
+            <>
+              <Helmet>
+                <title>
+                  Merge goals for
+                  {' '}
+                  {recipientName}
+                </title>
+              </Helmet>
+              <MergeGoals
+                regionId={regionId}
+                recipientId={recipientId}
+                location={location}
+                recipientNameWithRegion={recipientNameWithRegion}
+              />
+            </>
           )}
         />
         <Route
