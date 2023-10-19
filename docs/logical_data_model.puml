@@ -449,7 +449,7 @@ class MaintenanceLogs{
 }
 
 class NationalCenters{
- * id : bigint : <generated>
+ * id : integer : <generated>
  mapsTo : integer : REFERENCES "NationalCenters".id
  * createdAt : timestamp with time zone
  * name : text
@@ -700,8 +700,8 @@ class Regions{
 }
 
 class ReportApprovals{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * calculatedStatus : enum
  * createdAt : timestamp with time zone : now()
  * submissionStatus : enum
@@ -713,33 +713,33 @@ class ReportApprovals{
 }
 
 class ReportAudiences{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * audienceId : integer : REFERENCES "Audiences".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportCollaboratorRoles{
- * id : bigint : <generated>
- * reportCollaboratorId : bigint : REFERENCES "ReportCollaborators".id
+ * id : integer : <generated>
+ * reportCollaboratorId : integer : REFERENCES "ReportCollaborators".id
  * roleId : integer : REFERENCES "Roles".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportCollaboratorTypes{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
- * reportCollaboratorId : bigint : REFERENCES "ReportCollaborators".id
+ * reportCollaboratorId : integer : REFERENCES "ReportCollaborators".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportCollaborators{
- * id : bigint : <generated>
+ * id : integer : <generated>
  statusId : integer : REFERENCES "Statuses".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
@@ -748,26 +748,26 @@ class ReportCollaborators{
 }
 
 class ReportFiles{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportGoalFieldResponses{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
- * reportGoalId : bigint : REFERENCES "ReportGoals".id
+ * reportGoalId : integer : REFERENCES "ReportGoals".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  response : text[]
 }
 
 class ReportGoalTemplateFieldPrompts{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
- * reportGoalTemplateId : bigint : REFERENCES "ReportGoalTemplates".id
+ * reportGoalTemplateId : integer : REFERENCES "ReportGoalTemplates".id
  * createdAt : timestamp with time zone
  * ordinal : integer
  * prompt : text
@@ -781,9 +781,9 @@ class ReportGoalTemplateFieldPrompts{
 }
 
 class ReportGoalTemplates{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * goalTemplateId : integer : REFERENCES "GoalTemplates".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * statusId : integer : REFERENCES "Statuses".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -795,10 +795,10 @@ class ReportGoalTemplates{
 }
 
 class ReportGoals{
- * id : bigint : <generated>
+ * id : integer : <generated>
  closeSuspendReasonId : integer : REFERENCES "CloseSuspendReasons".id
  * goalId : integer : REFERENCES "Goals".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * statusId : integer : REFERENCES "Statuses".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -810,25 +810,25 @@ class ReportGoals{
 }
 
 class ReportImports{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * data : jsonb
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportNationalCenters{
- * id : bigint : <generated>
-!issue='column type does not match model: integer != bigint' * nationalCenterId : <color:#d54309>integer</color> : REFERENCES "NationalCenters".id
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * reportId : integer : REFERENCES "Reports".id
  * actingAs : enum
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportNextSteps{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone
  * note : text
  * noteType : enum
@@ -837,45 +837,45 @@ class ReportNextSteps{
 }
 
 class ReportObjectiveFiles{
- * id : bigint : <generated>
+ * id : integer : <generated>
  objectiveFileId : integer : REFERENCES "ObjectiveFiles".id
  * fileId : integer : REFERENCES "Files".id
- * reportObjectiveId : bigint : REFERENCES "ReportObjectives".id
+ * reportObjectiveId : integer : REFERENCES "ReportObjectives".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportObjectiveTemplateFiles{
- * id : bigint : <generated>
+ * id : integer : <generated>
  objectiveTemplateFileId : integer : REFERENCES "ObjectiveTemplateFiles".id
  * fileId : integer : REFERENCES "Files".id
- * reportObjectiveTemplateId : bigint : REFERENCES "ReportObjectiveTemplates".id
+ * reportObjectiveTemplateId : integer : REFERENCES "ReportObjectiveTemplates".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportObjectiveTemplateTopics{
- * id : bigint : <generated>
+ * id : integer : <generated>
  objectiveTemplateTopicId : integer : REFERENCES "ObjectiveTemplateTopics".id
- * reportObjectiveTemplateId : bigint : REFERENCES "ReportObjectiveTemplates".id
+ * reportObjectiveTemplateId : integer : REFERENCES "ReportObjectiveTemplates".id
  * topicId : integer : REFERENCES "Topics".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportObjectiveTemplateTrainers{
- * id : bigint : <generated>
-!issue='column type does not match model: integer != bigint' * nationalCenterId : <color:#d54309>integer</color> : REFERENCES "NationalCenters".id
- * reportObjectiveTemplateId : bigint : REFERENCES "ReportObjectiveTemplates".id
+ * id : integer : <generated>
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * reportObjectiveTemplateId : integer : REFERENCES "ReportObjectiveTemplates".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportObjectiveTemplates{
- * id : bigint : <generated>
- reportGoalTemplateId : bigint : REFERENCES "ReportGoalTemplates".id
+ * id : integer : <generated>
+ reportGoalTemplateId : integer : REFERENCES "ReportGoalTemplates".id
  * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * statusId : integer : REFERENCES "Statuses".id
  * supportTypeId : integer : REFERENCES "SupportTypes".id
  * createdAt : timestamp with time zone
@@ -886,27 +886,27 @@ class ReportObjectiveTemplates{
 }
 
 class ReportObjectiveTopics{
- * id : bigint : <generated>
+ * id : integer : <generated>
  objectiveTopicId : integer : REFERENCES "ObjectiveTopics".id
- * reportObjectiveId : bigint : REFERENCES "ReportObjectives".id
+ * reportObjectiveId : integer : REFERENCES "ReportObjectives".id
  * topicId : integer : REFERENCES "Topics".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportObjectiveTrainers{
- * id : bigint : <generated>
-!issue='column type does not match model: integer != bigint' * nationalCenterId : <color:#d54309>integer</color> : REFERENCES "NationalCenters".id
- * reportObjectiveId : bigint : REFERENCES "ReportObjectives".id
+ * id : integer : <generated>
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * reportObjectiveId : integer : REFERENCES "ReportObjectives".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class ReportObjectives{
- * id : bigint : <generated>
- reportGoalId : bigint : REFERENCES "ReportGoals".id
+ * id : integer : <generated>
+ reportGoalId : integer : REFERENCES "ReportGoals".id
  * objectiveId : integer : REFERENCES "Objectives".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * statusId : integer : REFERENCES "Statuses".id
  * supportTypeId : integer : REFERENCES "SupportTypes".id
  * createdAt : timestamp with time zone
@@ -917,16 +917,16 @@ class ReportObjectives{
 }
 
 class ReportPageStates{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * pageState : jsonb
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportParticipation{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  inpersonParticipantCount : integer
@@ -935,54 +935,54 @@ class ReportParticipation{
 }
 
 class ReportParticipationParticipants{
- * id : bigint : <generated>
-!issue='column type does not match model: bigint != integer' * participantId : <color:#d54309>bigint</color> : REFERENCES "Participants".id
- * reportParticipationId : bigint : REFERENCES "ReportParticipation".id
+ * id : integer : <generated>
+ * participantId : integer : REFERENCES "Participants".id
+ * reportParticipationId : integer : REFERENCES "ReportParticipation".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportReasons{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * reasonId : integer : REFERENCES "Reasons".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportRecipients{
- * id : bigint : <generated>
+ * id : integer : <generated>
  grantId : integer : REFERENCES "Grants".id
  otherEntityId : integer : REFERENCES "OtherEntities".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportResources{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * resourceId : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
- * tableId : bigint
+ * tableId : integer
  * tableName : text
  * updatedAt : timestamp with time zone
  columnName : text
 }
 
 class ReportTargetPopulations{
- * id : bigint : <generated>
- * reportId : bigint : REFERENCES "Reports".id
+ * id : integer : <generated>
+ * reportId : integer : REFERENCES "Reports".id
  * targetPopulationId : integer : REFERENCES "TargetPopulations".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ReportTrainingEvents{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * organizerId : integer : REFERENCES "Organizers".id
  * regionId : integer : REFERENCES "Regions".id
- * reportId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * eventId : text
  * trainingType : enum : 'Series'::"enum_ReportTrainingEvents_trainingType"
@@ -992,17 +992,17 @@ class ReportTrainingEvents{
 }
 
 class ReportTrainingSessions{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * regionId : integer : REFERENCES "Regions".id
- * reportId : bigint : REFERENCES "Reports".id
- * reportTrainingEventId : bigint : REFERENCES "Reports".id
+ * reportId : integer : REFERENCES "Reports".id
+ * reportTrainingEventId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  name : text
 }
 
 class Reports{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * reportTypeId : integer : REFERENCES "ValidFor".id
  * statusId : integer : REFERENCES "Statuses".id
  * createdAt : timestamp with time zone : now()
