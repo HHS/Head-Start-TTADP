@@ -548,7 +548,7 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('Reports', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -602,6 +602,14 @@ module.exports = {
       }, { transaction });
 
       //---------------------------------------------------------------------------------
+      // This must be done as raw sql do to "column "id" is in a primary key" when trying
+      // to use sequelize helpers.
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "NationalCenters"
+        ALTER COLUMN "id"
+        SET DATA TYPE integer`,
+        { transaction },
+      );
       await queryInterface.addColumn('NationalCenters', 'deletedAt', {
         type: Sequelize.DATE,
         allowNull: true,
@@ -611,13 +619,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportNationalCenters', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -723,13 +731,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportReasons', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -828,13 +836,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportTargetPopulations', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -879,13 +887,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportAudiences', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -931,13 +939,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportTrainingEvents', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1011,13 +1019,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportTrainingSessions', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1029,7 +1037,7 @@ module.exports = {
           },
         },
         reportTrainingEventId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1089,11 +1097,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1153,11 +1161,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1315,11 +1323,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1383,13 +1391,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportCollaboratorTypes', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportCollaboratorId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1434,13 +1442,13 @@ module.exports = {
       //---------------------------------------------------------------------------------
       await queryInterface.createTable('ReportCollaboratorRoles', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportCollaboratorId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1484,13 +1492,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportNextSteps', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1530,10 +1538,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1566,7 +1574,7 @@ module.exports = {
         },
         tableId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         createdAt: {
           allowNull: false,
@@ -1591,11 +1599,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1640,11 +1648,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1727,10 +1735,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportGoalTemplateId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -1890,11 +1898,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -1982,10 +1990,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportGoalId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2035,11 +2043,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -2063,7 +2071,7 @@ module.exports = {
         },
         reportGoalTemplateId: {
           allowNull: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -2133,11 +2141,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportObjectiveTemplateId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -2195,10 +2203,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportObjectiveTemplateId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2257,10 +2265,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportObjectiveTemplateId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2306,11 +2314,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -2334,7 +2342,7 @@ module.exports = {
         },
         reportGoalId: {
           allowNull: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -2403,11 +2411,11 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportObjectiveId: {
           allowNull: false,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
@@ -2466,10 +2474,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportObjectiveId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2528,10 +2536,10 @@ module.exports = {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
         },
         reportObjectiveId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2575,13 +2583,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportParticipation', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2620,13 +2628,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportParticipationParticipants', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportParticipationId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2638,7 +2646,7 @@ module.exports = {
           },
         },
         participantId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2673,13 +2681,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportImports', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
@@ -2710,13 +2718,13 @@ module.exports = {
 
       await queryInterface.createTable('ReportPageStates', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
         reportId: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
