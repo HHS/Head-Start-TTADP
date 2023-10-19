@@ -10,13 +10,13 @@ export default (sequelize, DataTypes) => {
   }
   ReportResource.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
     reportId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
@@ -45,7 +45,7 @@ export default (sequelize, DataTypes) => {
     },
     tableId: {
       allowNull: false,
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
     },
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
