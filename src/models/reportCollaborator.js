@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
         include: [{
           attributes: [],
           model: models.CollaboratorType,
-          as: 'collaboratorTypes',
+          as: 'collaboratorTypeForReportCollaboratorTypes',
           required: true,
           where: {
             name: collaboratorType,
@@ -44,13 +44,13 @@ export default (sequelize, DataTypes) => {
   }
   ReportCollaborator.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       allowNull: false,
     },
     reportId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
