@@ -47,13 +47,13 @@ export default (sequelize, DataTypes) => {
   }
   ReportTrainingSession.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       allowNull: false,
     },
     reportId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
@@ -63,7 +63,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     reportTrainingEventId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
