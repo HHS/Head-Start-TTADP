@@ -21,43 +21,49 @@ interface ReportDescriptor {
   regionId?: number,
 }
 
+/**
+ * Synchronizes a report with the given data.
+ * @param data - The data to synchronize the report with.
+ * @returns An object containing the synchronized report and unmatched data.
+ */
 const syncReport = async (
   data: ReportDataType,
-):Promise<{ report: ReportDataType, unmatched: ReportDataType }> => {
+): Promise<{ report: ReportDataType, unmatched: ReportDataType }> => {
   let report;
   const [
     { matched: filteredData, unmatched },
     status,
   ] = await Promise.all([
-    filterDataToModel(data, Report),
+    filterDataToModel(data, Report), // Filter the data to match the Report model
     (data?.status?.name)
-      ? findByName(data?.status.name, data.reportType)
+      ? findByName(data?.status.name, data.reportType) // Find status by name if provided
       : Promise.resolve({
-        ...(data.statusId && { id: data.statusId }),
+        ...(data.statusId && { id: data.statusId }), // Use statusId if provided
       }),
   ]);
+
   // TODO: check status, map status name to id if needed
 
-  if (filteredData.id) { // sync/update report path
-    report = Report.findById(filteredData.id);
+  if (filteredData.id) { // Check if filteredData has an id (existing report)
+    report = Report.findById(filteredData.id); // Find the existing report
     const changedData = collectChangedValues(
       {
         ...filteredData,
-        ...(status && { statusId: status.id }),
+        ...(status && { statusId: status.id }), // Update statusId if status is found
       },
       report,
     );
-    if (changedData && Object.keys(changedData).length > 0) {
+    if (changedData && Object.keys(changedData).length > 0) { // Check if any data has changed
       report = await Report.update(
         changedData,
         {
-          where: { id: filteredData.id },
+          where: { id: filteredData.id }, // Update the existing report
           individualHooks: true,
         },
       );
     }
-  } else { // new report Path
-    report = await Report.create(data); // TODO: have create return the object
+  } else { // Create a new report
+    report = await Report.create(filteredData); // TODO: have create return the object
   }
 
   return { report, unmatched };
