@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
   }
   ReportParticipationParticipant.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       allowNull: false,
@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     participantId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: {
