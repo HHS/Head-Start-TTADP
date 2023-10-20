@@ -838,6 +838,7 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
           data: {
             indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
             id: instance.id,
+            preventRethrow: true,
           },
         };
         await deleteIndexDocument(job);
@@ -861,6 +862,7 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
             indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
             id: instance.id,
             document,
+            preventRethrow: true,
           },
         };
         await addIndexDocument(job);

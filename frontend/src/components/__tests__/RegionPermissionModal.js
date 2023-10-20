@@ -239,12 +239,12 @@ describe('Region Permission Modal', () => {
         id: uuidv4(),
         topic: 'region',
         condition: 'is',
-        query: 4,
+        query: 10,
       },
     ];
 
     render(<PermissionModal filters={filtersToPass} />);
 
-    expect(await screen.findByRole('heading', { name: /you need permission to access regions 3, 4/i, hidden: true })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /you need permission to access regions 3, 10/i, hidden: true })).toBeVisible();
   });
 });

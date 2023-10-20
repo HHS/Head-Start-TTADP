@@ -67,7 +67,10 @@ const CompleteEvent = ({
     async function getSessions() {
       try {
         setIsAppLoading(true);
-        const res = await sessionsByEventId(formData.id);
+        // get sessions by event ID fragment
+        // a bit obtuse as is but waiting for generic refactor to
+        // clean a lot of these up
+        const res = await sessionsByEventId(formData.eventId.substring(formData.eventId.lastIndexOf('-') + 1));
         setSessions(res);
       } catch (e) {
         updateError('Unable to load sessions');
@@ -77,10 +80,10 @@ const CompleteEvent = ({
       }
     }
 
-    if (!sessions && formData.id) {
+    if (!sessions && formData.eventId) {
       getSessions();
     }
-  }, [formData.id, sessions, setIsAppLoading]);
+  }, [formData.eventId, sessions, setIsAppLoading]);
 
   useEffect(() => {
     if (errors.status && !showError && ((sessions && sessions.length === 0) || !isOwner)) {
@@ -218,6 +221,7 @@ const CompleteEvent = ({
           </Table>
         </>
       )}
+
       { isOwner && (
       <div className="margin-top-4">
         <FormItem
@@ -230,7 +234,10 @@ const CompleteEvent = ({
             name="status"
             id="status"
             value={updatedStatus}
-            onChange={(e) => setUpdatedStatus(e.target.value)}
+            onChange={(e) => {
+              clearErrors('status');
+              setUpdatedStatus(e.target.value);
+            }}
           >
             {options}
           </Dropdown>
@@ -239,10 +246,10 @@ const CompleteEvent = ({
       )}
 
       {showSubmissionError && (
-        <div className="margin-top-4">
-          <Alert type="error" noIcon>
-            <p className="usa-prose text-bold margin-y-0">Incomplete report</p>
-            {
+      <div className="margin-top-4">
+        <Alert type="error" noIcon>
+          <p className="usa-prose text-bold margin-y-0">Incomplete report</p>
+          {
               !areAllPagesComplete && (
                 <>
                   <p className="usa-prose margin-y-0">This report cannot be submitted until all sections are complete. Please review the following sections:</p>
@@ -256,7 +263,7 @@ const CompleteEvent = ({
                 </>
               )
             }
-            {
+          {
               !areAllSessionsComplete && (
                 <>
                   <p className="usa-prose margin-y-0">This report cannot be submitted until all sessions are complete.</p>
@@ -270,8 +277,8 @@ const CompleteEvent = ({
                 </>
               )
             }
-          </Alert>
-        </div>
+        </Alert>
+      </div>
       )}
 
       <DraftAlert />
@@ -288,6 +295,7 @@ const CompleteEvent = ({
 CompleteEvent.propTypes = {
   formData: PropTypes.shape({
     id: PropTypes.number,
+    eventId: PropTypes.string,
     status: PropTypes.string,
     pageState: PropTypes.shape({
       1: PropTypes.string,

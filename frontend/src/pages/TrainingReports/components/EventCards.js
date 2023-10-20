@@ -9,7 +9,7 @@ function EventCards({
   onDeleteEvent,
 }) {
   return (
-    <div className="padding-x-3 padding-y-2">
+    <div className="padding-x-3 padding-y-2 position-relative z-0">
       {
         events && events.length > 0
           ? events.map((event, index, arr) => (
