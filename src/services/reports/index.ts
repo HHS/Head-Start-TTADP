@@ -155,7 +155,11 @@ const syncMetaData = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   syncerDef: { syncer: Function, type?: string, remapDef?: RemappingDefinition },
   data,
-): Promise<{ promises: Promise<any>[], unmapped: object | object[] }> => {
+): Promise<{
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  promises: Promise<any>[],
+  unmapped: object | object[],
+}> => {
   const { syncer, type, remapDef } = syncerDef;
   let dataToSync;
   let dataNotUsed;
