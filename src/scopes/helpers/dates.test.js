@@ -1,7 +1,6 @@
 import { Op } from 'sequelize';
 import {
-  beforeFieldDate,
-  afterFieldDate,
+  fieldDateFilter,
   withinFieldDates,
   filterFieldDates,
 } from './dates';
@@ -12,7 +11,7 @@ describe('dates', () => {
       const field = 'exampleField';
       const date = ['2021-01-01'];
 
-      const result = beforeFieldDate(field, date);
+      const result = fieldDateFilter(true, field, date);
 
       expect(result).toEqual({
         [Op.and]: {
@@ -29,7 +28,7 @@ describe('dates', () => {
       const field = 'exampleField';
       const date = ['2021-01-01'];
 
-      const result = afterFieldDate(field, date);
+      const result = fieldDateFilter(false, field, date);
 
       expect(result).toEqual({
         [Op.and]: {
