@@ -1,59 +1,54 @@
-// TODO: everything
 import db from '../../models';
-
 import {
   type EnumInfo,
-  findAll,
-  type EntityEnumModel,
-  type EntityGenericEnum,
   type EnumSyncResponse,
-  getEntityGenericEnum,
-  syncEntityGenericEnum,
-  includeEntityGenericEnums,
+  includeGenericEnums,
+  getGenericEnums,
+  syncGenericEnums,
 } from '../enums/generic';
 
 const {
   ReportObjectiveTopic,
-  Topic,
 } = db;
 
-const TopicEnumInfo:EnumInfo = {
-  model: Topic,
-  as: 'topic',
-  keyName: 'Topic',
+const ReportObjectiveTopicEnumInfo:EnumInfo = {
+  model: ReportObjectiveTopic,
+  alias: 'topic',
   entityTypeFiltered: false,
 };
 
 const syncReportObjectiveTopics = async (
   entity: { id: number },
   topics: { id?: number, name?: string }[] | null = null,
-): Promise<EnumSyncResponse> => syncEntityGenericEnum(
-  ReportObjectiveTopic,
-  TopicEnumInfo,
+): Promise<EnumSyncResponse> => syncGenericEnums(
   {
-    id: entity.id,
     name: 'reportObjectiveId',
+    ...entity,
   },
+  ReportObjectiveTopic,
   topics,
 );
 
-const includeReportObjectiveTopics = () => includeEntityGenericEnums(
-  ReportObjectiveTopic,
-  TopicEnumInfo,
+const includeReportObjectiveTopics = (
+  entity: { id: number },
+) => includeGenericEnums(
   {
     name: 'reportObjectiveId',
+    ...entity,
   },
+  ReportObjectiveTopic,
 );
 
 const getReportObjectiveTopics = async (
-  topicIds: number[] | null = null,
-) => getEntityGenericEnum(
-  ReportObjectiveTopic,
-  TopicEnumInfo,
+  entity: { id: number },
+  topics: (number | string)[] | null = null,
+) => getGenericEnums(
   {
     name: 'reportObjectiveId',
+    ...entity,
   },
-  topicIds,
+  ReportObjectiveTopicEnumInfo,
+  topics,
 );
 
 export {
