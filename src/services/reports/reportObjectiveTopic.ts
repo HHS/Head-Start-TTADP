@@ -29,12 +29,9 @@ const syncReportObjectiveTopics = async (
   topics,
 );
 
-const includeReportObjectiveTopics = (
-  entity: { id: number },
-) => includeGenericEnums(
+const includeReportObjectiveTopics = () => includeGenericEnums(
   {
     name: 'reportObjectiveId',
-    ...entity,
   },
   ReportObjectiveTopic,
 );
