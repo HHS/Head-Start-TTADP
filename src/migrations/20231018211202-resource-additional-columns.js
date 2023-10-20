@@ -21,7 +21,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
 
-      // Remove grantee name field to grants.
+      // Remove mime type and last status code columns.
       await queryInterface.removeColumn('Resources', 'mimeType', { transaction });
       await queryInterface.removeColumn('Resources', 'lastStatusCode', { transaction });
     });
