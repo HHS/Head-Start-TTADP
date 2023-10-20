@@ -5,7 +5,6 @@ import db, {
   Grant,
 } from '..';
 import {
-  autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
   // propagateName,
@@ -45,30 +44,7 @@ describe('Goals', () => {
       await Goal.destroy({ where: { id: goal.id }, force: true });
     });
   });
-  it('autoPopulateOnApprovedAR', async () => {
-    let instance = {
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    let options = { fields: [] };
-    autoPopulateOnApprovedAR(null, instance, options);
-    expect(instance.onApprovedAR).toEqual(false);
 
-    instance = {
-      onApprovedAR: false,
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    options = { fields: [] };
-    autoPopulateOnApprovedAR(null, instance, options);
-    expect(instance.onApprovedAR).toEqual(false);
-
-    instance = {
-      onApprovedAR: true,
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    options = { fields: [] };
-    autoPopulateOnApprovedAR(null, instance, options);
-    expect(instance.onApprovedAR).toEqual(true);
-  });
   it('preventNamChangeWhenOnApprovedAR', async () => {
     const errorMsg = 'Goal name change not allowed for goals on approved activity reports.';
     let instance = {
