@@ -8,7 +8,8 @@ import { filterCollaboratorUsersByType } from './reportCollaborator';
 const topicToQueryForReportType = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
 ) => {
-  // TODO: this hard mapping here should just be temporary, add scopes to the report definition structure in src/services/reports/definition.ts
+  // TODO: this hard mapping here should just be temporary, add scopes to the report
+  // definition structure in src/services/reports/definition.ts
   switch (reportType) {
     case REPORT_TYPE.REPORT_TRAINING_EVENT:
       return {
