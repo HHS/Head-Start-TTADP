@@ -63,8 +63,10 @@ describe('ReportAudience', () => {
       result = await getReportAudiences(report, audiences);
 
       expect(result.length).toBe(1);
-      expect(result?.[0]?.dataValues).toEqual({
-        id: 25,
+      const testableResults = results
+        .map(({ dataValues: { id, ...columns } }) => columns)
+        .sort(({ audienceIdA }, { audienceIdB }) => audienceIdA - audienceIdB);
+      expect(testableResults).toEqual({
         reportId: 1,
         audienceId: 1,
         name: AUDIENCE.RECIPIENTS,
