@@ -1,7 +1,6 @@
 import db from '../../../models';
 import { REPORT_TYPE, AUDIENCE } from '../../../constants';
 import {
-  audienceEnumInfo,
   syncReportAudiences,
   getReportAudiences,
   includeReportAudience,
