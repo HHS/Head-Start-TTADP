@@ -2,22 +2,19 @@ import db from '../../models';
 import {
   EnumInfo,
   EnumSyncResponse,
-  ReportGenericEnumType,
-  syncGenericEnums,
-  getReportGenericEnums,
-  includeGenericEnums,
+  getGenericReportEnums,
+  includeGenericReportEnums,
+  syncGenericReportEnums,
 } from './reportGenericEnum';
 import { REPORT_TYPE } from '../../constants';
 
 const {
-  Reason,
   ReportReason,
 } = db;
 
 const reasonEnumInfo:EnumInfo = {
-  model: Reason,
-  as: 'reason',
-  keyName: 'Reasons',
+  model: ReportReason,
+  alias: 'reason',
 };
 
 /**
@@ -31,10 +28,9 @@ const syncReportReasons = async (
   reasonEnums: { id?: number, name?: string }[] | null = null,
   // Call the syncGenericEnums function passing in the ReportReason enum,
   // reasonEnumInfo, report, and reasonEnums.
-): Promise<EnumSyncResponse> => syncGenericEnums(
-  ReportReason,
-  reasonEnumInfo,
+): Promise<EnumSyncResponse> => syncGenericReportEnums(
   report,
+  reasonEnumInfo,
   reasonEnums,
 );
 
@@ -46,12 +42,11 @@ const syncReportReasons = async (
  */
 const getReportReasons = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  reasonIds: number[] | null = null,
-): Promise<ReportGenericEnumType[]> => getReportGenericEnums(
-  ReportReason,
-  reasonEnumInfo,
+  reasons: (number | string)[] | null = null,
+) => getGenericReportEnums(
   report,
-  reasonIds,
+  reasonEnumInfo,
+  reasons,
 );
 
 /**
@@ -61,13 +56,15 @@ const getReportReasons = async (
  */
 const includeReportReasons = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-) => includeGenericEnums(
-  ReportReason, // The enum containing all possible report reasons.
-  reasonEnumInfo, // Additional information about the report reasons.
-  reportType, // The specific report type to include reasons for.
+) => includeGenericReportEnums(
+  {
+    ...(reportType && { type: reportType }),
+  },
+  reasonEnumInfo,
 );
 
 export {
+  reasonEnumInfo,
   syncReportReasons,
   includeReportReasons,
   getReportReasons,
