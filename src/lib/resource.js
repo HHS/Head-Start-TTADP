@@ -106,7 +106,7 @@ const getMimeType = async (url) => {
  * @returns {Promise<Object>} - A promise that resolves to an object containing the metadata,
  * status code, and MIME type of the resource.
  */
-const getMetadataValuesFormJson = async (url) => {
+const getMetadataValuesFrommJson = async (url) => {
   let result;
   try {
     // Attempt to get the resource metadata (if valid ECLKC resource).
@@ -169,7 +169,7 @@ const metadataPatterns = [
  * @param {string} url - The URL of the HTML page.
  * @returns {Promise<object>} - An object containing the metadata, status code, and MIME type.
  */
-const getMetadataValuesFormHtml = async (url) => {
+const getMetadataValuesFromHtml = async (url) => {
   let result;
   try {
     // Make a GET request to the specified URL
@@ -253,8 +253,8 @@ const getMetadataValues = async (url) => {
       fromJson,
       fromHtml,
     ] = await Promise.allSettled([
-      await getMetadataValuesFormJson(url), // Retrieve metadata values from JSON format.
-      await getMetadataValuesFormHtml(url), // Retrieve metadata values from HTML format.
+      await getMetadataValuesFrommJson(url), // Retrieve metadata values from JSON format.
+      await getMetadataValuesFromHtml(url), // Retrieve metadata values from HTML format.
     ]);
 
     // Destructure metadata and status code from JSON result.
@@ -332,8 +332,8 @@ const getPageScrapeValues = async (url) => {
   let title = null; // Variable to store the extracted title from the metadata
 
   try {
-    // Call the getMetadataValuesFormHtml function and destructure the returned values
-    ({ metadata, statusCode, mimeType } = await getMetadataValuesFormHtml(url));
+    // Call the getMetadataValuesFromHtml function and destructure the returned values
+    ({ metadata, statusCode, mimeType } = await getMetadataValuesFromHtml(url));
 
     if (metadata) {
       if (metadata?.title) {
