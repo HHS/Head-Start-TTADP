@@ -334,7 +334,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
-    viaReport: null,
+    // viaReport: null,
     viaSpecialistNextSteps: null,
     viaRecipientNextSteps: null,
     viaObjectives: null,
@@ -342,7 +342,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   };
   [
     dbData.allReports,
-    dbData.viaReport,
+    // dbData.viaReport,
     dbData.viaSpecialistNextSteps,
     dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
@@ -383,6 +383,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: '2022-12-01' },
           },
         ],
       },
@@ -404,6 +405,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    /*
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -496,6 +498,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    */
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -558,6 +561,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: '2022-12-01' },
           },
         ],
       },
@@ -656,6 +660,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: '2022-12-01' },
           },
         ],
       },
@@ -763,6 +768,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: '2022-12-01' },
           },
           {
             [Op.or]: [
@@ -900,6 +906,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: '2022-12-01' },
           },
           {
             [Op.or]: [
@@ -980,8 +987,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
 
   let reportsMap = mergeInResources(new Map(), dbData.allReports);
   delete dbData.allReports;
-  reportsMap = mergeInResources(reportsMap, dbData.viaReport);
+  /*
+  let reportsMap = mergeInResources(new Map(), dbData.viaReport);
   delete dbData.viaReport;
+  */
   reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
   delete dbData.viaSpecialistNextSteps;
   reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
