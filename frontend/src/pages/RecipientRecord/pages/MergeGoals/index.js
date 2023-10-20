@@ -211,11 +211,11 @@ export default function MergeGoals({
     navigate(newPage);
   };
 
-  const noneAreDuplicates = (e) => {
-    e.preventDefault();
+  // const noneAreDuplicates = (e) => {
+  //   e.preventDefault();
 
-    // mark none as duplicates
-  };
+  //   // mark none as duplicates
+  // };
 
   const goBack = (e) => {
     e.preventDefault();
@@ -225,11 +225,16 @@ export default function MergeGoals({
 
   const MiddleButton = () => {
     if (activePage === SELECT_GOALS_TO_MERGE) {
-      return (
-        <Button outline onClick={noneAreDuplicates} type="button">
-          None are duplicates
-        </Button>
-      );
+      return null;
+      /**
+       * commenting this (and the method above) out for now
+       * it will not do anything until we have scoring in the database
+       */
+      // return (
+      //   <Button outline onClick={noneAreDuplicates} type="button">
+      //     None are duplicates
+      //   </Button>
+      // );
     }
 
     return (
