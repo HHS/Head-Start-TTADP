@@ -218,6 +218,7 @@ interface EntityEnumModel extends Model {
 // @ts-check
 
 type EnumSyncResponse = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   promises: Promise<any[]>,
   unmatched: { id?: number, name?: string }[] | null,
 };
@@ -235,7 +236,17 @@ const includeGenericEnums = (
   console.log('includeGenericEnums', association);
 
   if (association === undefined || association === null) {
-    // throw new Error(`Association:'${alias}' not found on Model:'${model.name}', available  association[${model?.associations.length}]: ${Object.keys(model?.associations).join(', ')}.`);
+    throw new Error(
+      `Association:'${
+        alias
+      }' not found on Model:'${
+        model.name
+      }', available  association[${
+        model?.associations?.length || 0
+      }]: ${
+        Object.keys(model?.associations || []).join(', ')
+      }.`,
+    );
     return null;
   }
   const {
