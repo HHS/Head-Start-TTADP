@@ -172,7 +172,9 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const beforeDestroy = async (sequelize, instance, options) => {
   if (skipIf(options, 'beforeDestroy')) return;
-  await checkForUseOnApprovedReport(sequelize, instance, options); // TODO: check to see if this can be removed
+
+  // TODO: check to see if this can be removed
+  await checkForUseOnApprovedReport(sequelize, instance, options);
   await checkForAttemptToRemoveFoiaableValue(sequelize, instance, options);
 };
 
