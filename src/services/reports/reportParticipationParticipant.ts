@@ -1,23 +1,21 @@
 import db from '../../models';
 import {
   type EnumInfo,
-  type EntityGenericEnum,
   type EnumSyncResponse,
-  getEntityGenericEnum,
-  syncEntityGenericEnum,
-  includeEntityGenericEnums,
+  includeGenericEnums,
+  getGenericEnums,
+  syncGenericEnums,
 } from '../enums/generic';
 import { REPORT_TYPE } from '../../constants';
 
 const {
-  Participant,
   ReportParticipationParticipant,
 } = db;
 
-const participantsEnumInfo:EnumInfo = {
-  model: Participant,
-  as: 'participants',
-  keyName: 'Participants',
+const ReportParticipantsEnumInfo:EnumInfo = {
+  model: ReportParticipationParticipant,
+  alias: 'participant',
+  entityTypeFiltered: false,
 };
 
 /**
@@ -29,29 +27,27 @@ const participantsEnumInfo:EnumInfo = {
 const syncReportParticipationParticipants = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   participantEnums: { id?: number, name?: string }[] | null = null,
-): Promise<EnumSyncResponse> => syncEntityGenericEnum(
-  ReportParticipationParticipant, // The enum type for report participation participants
-  participantsEnumInfo, // The enum info for report participation participants
+): Promise<EnumSyncResponse> => syncGenericEnums(
   { name: 'reportParticipationId', ...entity }, // The filter object to find the report participation
+  ReportParticipantsEnumInfo, // The enum info for report participation participants
   participantEnums, // The array of participant enums to be synchronized
 );
 
 /**
  * Retrieves the participants of a report participation entity.
  * @param entity - The report participation entity containing an id and type.
- * @param participantIds - Optional array of participant ids to filter the results.
+ * @param participants - Optional array of participant ids to filter the results.
  * @returns A promise that resolves to an array of EntityGenericEnum objects representing
  * the participants.
  */
 const getReportParticipationParticipants = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  participantIds: number[] | null = null,
+  participants: (number | string)[] | null = null,
   // Call the getEntityGenericEnum function with the necessary parameters
-): Promise<EntityGenericEnum[]> => getEntityGenericEnum(
-  ReportParticipationParticipant,
-  participantsEnumInfo,
+) => getGenericEnums(
   { name: 'reportParticipationId', ...entity },
-  participantIds,
+  ReportParticipantsEnumInfo,
+  participants,
 );
 
 /**
@@ -61,10 +57,9 @@ const getReportParticipationParticipants = async (
  */
 const includeReportParticipationParticipants = (
   type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-) => includeEntityGenericEnums(
-  ReportParticipationParticipant,
-  participantsEnumInfo,
+) => includeGenericEnums(
   { name: 'reportParticipationId', type },
+  ReportParticipantsEnumInfo,
 );
 
 export {
