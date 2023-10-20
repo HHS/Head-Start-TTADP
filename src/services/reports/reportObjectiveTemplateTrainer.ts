@@ -1,11 +1,55 @@
-// TODO: everything
+import db from '../../models';
+import {
+  type EnumInfo,
+  type EnumSyncResponse,
+  includeGenericEnums,
+  getGenericEnums,
+  syncGenericEnums,
+} from '../enums/generic';
+
+const {
+  ReportObjectiveTemplateTrainer,
+} = db;
+
+const ReportObjectiveTemplateTrainerEnumInfo:EnumInfo = {
+  model: ReportObjectiveTemplateTrainer,
+  alias: 'nationalCenter',
+  entityTypeFiltered: false,
+};
+
 const syncReportObjectiveTemplateTrainers = async (
-  entity: {},
-) => {};
+  entity: { id: number },
+  trainers: { id?: number, name?: string }[] | null = null,
+): Promise<EnumSyncResponse> => syncGenericEnums(
+  {
+    name: 'reportObjectiveTemplateId',
+    ...entity,
+  },
+  ReportObjectiveTemplateTrainer,
+  trainers,
+);
 
-const includeReportObjectiveTemplateTrainers = () => ({});
+const includeReportObjectiveTemplateTrainers = (
+  entity: { id: number },
+) => includeGenericEnums(
+  {
+    name: 'reportObjectiveTemplateId',
+    ...entity,
+  },
+  ReportObjectiveTemplateTrainer,
+);
 
-const getReportObjectiveTemplateTrainers = async () => {};
+const getReportObjectiveTemplateTrainers = async (
+  entity: { id: number },
+  trainers: (number | string)[] | null = null,
+) => getGenericEnums(
+  {
+    name: 'reportObjectiveTemplateId',
+    ...entity,
+  },
+  ReportObjectiveTemplateTrainerEnumInfo,
+  trainers,
+);
 
 export {
   syncReportObjectiveTemplateTrainers,
