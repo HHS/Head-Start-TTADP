@@ -14,19 +14,28 @@ const {
 } = db;
 
 describe('ReportAudience', () => {
+  beforeAll(async () => {
+    await db.isReady;
+  });
   describe('syncReportAudiences', () => {
     it('should sync report audiences when audienceEnums are provided', async () => {
       const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
       const audienceEnums = [
         { id: 1, name: AUDIENCE.RECIPIENTS },
-        { id: 2, name: AUDIENCE.FEDERAL_STAFF },
+        { id: 3, name: AUDIENCE.FEDERAL_STAFF },
       ];
 
-      const resultA = await getReportAudiences(report);
       await syncReportAudiences(report, audienceEnums);
-      const resultB = await getReportAudiences(report);
+      const results = await getReportAudiences(report);
 
-      expect(resultA).not.toEqual(resultB);
+      expect(results.length).toEqual(2);
+      const testableResults = results
+        .map(({ dataValues: { id, ...columns } }) => columns)
+        .sort(({ audienceIdA }, { audienceIdB }) => audienceIdA - audienceIdB);
+      expect(testableResults[0])
+        .toEqual({ audienceId: 1, name: AUDIENCE.RECIPIENTS, reportId: 1 });
+      expect(testableResults[1])
+        .toEqual({ audienceId: 3, name: AUDIENCE.FEDERAL_STAFF, reportId: 1 });
     });
 
     it('should sync report audiences with null audienceEnums', async () => {
@@ -45,7 +54,6 @@ describe('ReportAudience', () => {
       let audiences = [2];
 
       let result = await getReportAudiences(report, audiences);
-      console.log(result);
 
       expect(result.length === 0).toBe(true);
       expect(Object.keys(result)).toEqual([]);
@@ -53,7 +61,7 @@ describe('ReportAudience', () => {
       audiences = [1];
 
       result = await getReportAudiences(report, audiences);
-      console.log(result);
+
       expect(result.length).toBe(1);
       expect(result?.[0]?.dataValues).toEqual({
         id: 25,
@@ -67,12 +75,12 @@ describe('ReportAudience', () => {
       const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
       let audiences = [AUDIENCE.FEDERAL_STAFF];
       let result = await getReportAudiences(report, audiences);
-      console.log(result);
+
       expect(result.length).toBe(0);
 
       audiences = [AUDIENCE.RECIPIENTS];
       result = await getReportAudiences(report, audiences);
-      console.log(result);
+
       expect(result.length).toBe(1);
       expect(result?.[0]?.dataValues).toEqual({
         id: 25,
@@ -86,8 +94,6 @@ describe('ReportAudience', () => {
       const report = { id: 1, type: REPORT_TYPE.REPORT_TRAINING_EVENT };
 
       const result = await getReportAudiences(report);
-
-      console.log(result);
 
       expect(result.length).toBe(1);
       expect(result?.[0]?.dataValues).toEqual({
