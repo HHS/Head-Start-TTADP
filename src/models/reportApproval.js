@@ -1,0 +1,62 @@
+const {
+  Model,
+} = require('sequelize');
+const { REPORT_STATUSES } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+
+/**
+ * Status table. Stores topics used in activity reports and tta plans.
+ *
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
+export default (sequelize, DataTypes) => {
+  class ReportApproval extends Model {
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
+    }
+  }
+  ReportApproval.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
+    reportId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
+    },
+    submissionStatus: {
+      type: DataTypes.ENUM(Object.values(REPORT_STATUSES)),
+      allowNull: false,
+    },
+    calculatedStatus: {
+      type: DataTypes.ENUM(Object.values(REPORT_STATUSES)),
+      allowNull: false,
+    },
+    firstSubmittedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    submittedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    approvedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+  }, {
+    sequelize,
+    modelName: 'ReportApproval',
+    paranoid: true,
+  });
+  return ReportApproval;
+};

@@ -18,6 +18,9 @@ import {
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
 import filtersToScopes from '../../scopes';
+import { reportsFiltersToScopes } from '../../scopes/reports';
+import { getAll as getAllReports } from '../../services/reports';
+import { REPORT_TYPE } from '../../constants';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -35,8 +38,21 @@ export const getByStatus = async (req, res) => {
     const auth = await getEventAuthorization(req, res, {});
     const userId = await currentUserId(req, res);
     const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
-    const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
+    const query = {
+      ...req.query,
+      'status.in': [status],
+      'type.in': [REPORT_TYPE.REPORT_TRAINING_EVENT],
+    };
+    const updatedFilters = await setTrainingAndActivityReportReadRegions(query, userId);
+    console.log('src/routes/events/handlers.js:getByStatus', { query, updatedFilters });
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
+    const genScopes = await reportsFiltersToScopes(
+      query,
+      undefined,
+      userId,
+      REPORT_TYPE.REPORT_TRAINING_EVENT,
+    );
+    console.log('src/routes/events/handlers.js:getByStatus', { query: JSON.stringify(query), scopes: JSON.stringify(genScopes) });
 
     const events = await findEventsByStatus(
       status,
@@ -47,6 +63,14 @@ export const getByStatus = async (req, res) => {
       scopes,
       auth.isAdmin(),
     );
+
+    const newEvents = await getAllReports(
+      REPORT_TYPE.REPORT_TRAINING_EVENT,
+      undefined,
+      genScopes,
+    );
+
+    console.log('src/routes/events/handlers.js:getByStatus', { events: JSON.stringify(events), newEvents: newEvents[1] });
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {

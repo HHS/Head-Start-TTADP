@@ -1,22 +1,32 @@
-const { Model } = require('sequelize');
+const {
+  Model,
+} = require('sequelize');
 const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
 
+/**
+ * Status table. Stores topics used in activity reports and tta plans.
+ *
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {
-    static associate(models) {
-      NationalCenter.belongsTo(models.NationalCenter, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToNationalCenter',
-      });
-      NationalCenter.hasMany(models.NationalCenter, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromNationalCenters',
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
+
+      models.NationalCenter.addScope('defaultScope', {
+        include: [{
+          model: models.NationalCenter.scope(),
+          as: 'mapsToNationalCenter',
+          required: false,
+        }],
       });
     }
   }
   NationalCenter.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       allowNull: false,
@@ -41,21 +51,30 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToNationalCenter').get('name')
+          : this.get('name');
+      },
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToNationalCenter').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,
+    modelName: 'NationalCenter',
     hooks: {
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
-    modelName: 'NationalCenter',
+    paranoid: true,
   });
   return NationalCenter;
 };

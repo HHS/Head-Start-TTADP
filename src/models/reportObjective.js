@@ -1,0 +1,112 @@
+const {
+  Model,
+  Op,
+} = require('sequelize');
+const { REPORT_TYPE, ENTITY_TYPE } = require('../constants');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+  beforeDestroy,
+} = require('./hooks/reportObjective');
+
+export default (sequelize, DataTypes) => {
+  class ReportObjective extends Model {
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
+    }
+  }
+  ReportObjective.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
+    reportId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Reports',
+        },
+        key: 'id',
+      },
+    },
+    objectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
+    },
+    reportGoalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'ReportGoals',
+        },
+        key: 'id',
+      },
+    },
+    supportTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'SupportTypes',
+        },
+        key: 'id',
+      },
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    title: DataTypes.TEXT,
+    statusId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Statuses',
+        },
+        key: 'id',
+      },
+    },
+    ttaProvided: DataTypes.TEXT,
+    currentStatus: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.status ? this.status.name : null;
+      },
+      async set(value) {
+        const status = await sequelize.models.Status
+          .scope({ method: ['validFor', ENTITY_TYPE.OBJECTIVE] })
+          .findOne({ where: { name: value } });
+        if (status) {
+          this.setDataValue('statusId', status.id);
+        } else {
+          throw new Error(`Invalid status name of ${value} for Objective`);
+        }
+      },
+    },
+  }, {
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
+    sequelize,
+    modelName: 'ReportObjective',
+  });
+  return ReportObjective;
+};

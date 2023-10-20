@@ -777,10 +777,20 @@ describe('Recipient DB service', () => {
         status: goal.status,
         grantId: grant.id,
         onApprovedAR: true,
+        createdVia: 'trainingReport',
         source: null,
       });
 
-      goals = [goal1, goal2, goal3, goal4];
+      const goal5 = await Goal.create({
+        name: faker.datatype.string(20),
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: false,
+        source: null,
+        createdVia: 'trainingReport',
+      });
+
+      goals = [goal1, goal2, goal3, goal4, goal5];
 
       await GoalFieldResponse.create({
         goalId: goal1.id,

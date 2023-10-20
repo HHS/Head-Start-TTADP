@@ -1,0 +1,47 @@
+const { Model } = require('sequelize');
+const { automaticallyGenerateJunctionTableAssociations } = require('./helpers/associationsAndScopes');
+
+export default (sequelize, DataTypes) => {
+  class ReportGoalFieldResponse extends Model {
+    static async associate(models) {
+      await automaticallyGenerateJunctionTableAssociations(this, models);
+    }
+  }
+  ReportGoalFieldResponse.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    reportGoalId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'ReportGoals',
+        },
+        key: 'id',
+      },
+    },
+    goalTemplateFieldPromptId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'GoalTemplateFieldPrompts',
+        },
+        key: 'id',
+      },
+    },
+    // TODO: link with GoalFieldResponse
+    response: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      allowNull: true,
+    },
+  }, {
+    sequelize,
+    modelName: 'ReportGoalFieldResponse',
+  });
+  return ReportGoalFieldResponse;
+};

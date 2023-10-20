@@ -47,7 +47,7 @@ const getFileById = async (id) => File.findOne({
   include: [
     {
       model: ActivityReport,
-      as: 'reports',
+      as: 'activityReports',
       required: false,
     },
     {
@@ -68,7 +68,7 @@ const getFileById = async (id) => File.findOne({
     },
     {
       model: ActivityReportObjectiveFile,
-      as: 'reportObjectiveFiles',
+      as: 'activityReportObjectiveFiles',
       required: false,
       attributes: ['id', 'activityReportObjectiveId'],
     },

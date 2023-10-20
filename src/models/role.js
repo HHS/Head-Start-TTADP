@@ -12,6 +12,14 @@ const {
 export default (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
+      Role.belongsTo(models.Role.scope(), {
+        foreignKey: 'mapsTo',
+        as: 'mapsToRole',
+      });
+      Role.hasMany(models.Role.scope(), {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromRoles',
+      });
       Role.hasMany(models.RoleTopic, { foreignKey: 'roleId', as: 'roleTopics' });
       Role.belongsToMany(models.Topic, {
         through: models.RoleTopic,
@@ -32,6 +40,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportCollaboratorId',
         foreignKey: 'roleId',
         as: 'collaborators',
+      });
+
+      models.Role.addScope('defaultScope', {
+        include: [{
+          model: models.Role.scope(),
+          as: 'mapsToRole',
+          required: false,
+        }],
       });
     }
   }
@@ -62,6 +78,23 @@ export default (sequelize, DataTypes) => {
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: { model: { tableName: 'Roles' }, key: 'id' },
+    },
+    latestName: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToRole').get('name')
+          : this.get('name');
+      },
+    },
+    latestId: {
+      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
+      get() {
+        return this.get('mapsTo')
+          ? this.get('mapsToRole').get('id')
+          : this.get('id');
+      },
     },
   }, {
     sequelize,

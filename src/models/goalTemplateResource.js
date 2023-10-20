@@ -1,6 +1,11 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { afterDestroy } = require('./hooks/goalTemplateResource');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+  afterDestroy,
+} = require('./hooks/goalTemplateResource');
 
 export default (sequelize, DataTypes) => {
   class GoalTemplateResource extends Model {
@@ -24,14 +29,16 @@ export default (sequelize, DataTypes) => {
     goalTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'GoalTemplates' }, key: 'id' },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Resources' }, key: 'id' },
     },
     sourceFields: {
       allowNull: true,
-      default: null,
+      defaultValue: null,
       type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE)))),
     },
     isAutoDetected: {
@@ -42,10 +49,21 @@ export default (sequelize, DataTypes) => {
         return calculateIsAutoDetectedForGoalTemplate(this.get('sourceFields'));
       },
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplateResource',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });

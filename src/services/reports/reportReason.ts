@@ -1,0 +1,71 @@
+import db from '../../models';
+import {
+  EnumInfo,
+  EnumSyncResponse,
+  getGenericReportEnums,
+  includeGenericReportEnums,
+  syncGenericReportEnums,
+} from './reportGenericEnum';
+import { REPORT_TYPE } from '../../constants';
+
+const {
+  ReportReason,
+} = db;
+
+const reasonEnumInfo:EnumInfo = {
+  model: ReportReason,
+  alias: 'reason',
+};
+
+/**
+ * Synchronizes the report reasons with the server.
+ * @param report - The report object containing the id and type.
+ * @param reasonEnums - An array of reason enums or null if not provided.
+ * @returns A promise that resolves to an EnumSyncResponse.
+ */
+const syncReportReasons = async (
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  reasonEnums: { id?: number, name?: string }[] | null = null,
+  // Call the syncGenericEnums function passing in the ReportReason enum,
+  // reasonEnumInfo, report, and reasonEnums.
+): Promise<EnumSyncResponse> => syncGenericReportEnums(
+  report,
+  reasonEnumInfo,
+  reasonEnums,
+);
+
+/**
+ * Retrieves the report reasons for a given report.
+ * @param report - The report object containing the ID and type.
+ * @param reasonIds - Optional array of reason IDs to filter the results.
+ * @returns A promise that resolves to an array of report reasons.
+ */
+const getReportReasons = async (
+  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  reasons: (number | string)[] | null = null,
+) => getGenericReportEnums(
+  report,
+  reasonEnumInfo,
+  reasons,
+);
+
+/**
+ * Includes report reasons based on the given report type.
+ * @param reportType - The report type to include reasons for.
+ * @returns An array of included report reasons.
+ */
+const includeReportReasons = (
+  reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
+) => includeGenericReportEnums(
+  {
+    ...(reportType && { type: reportType }),
+  },
+  reasonEnumInfo,
+);
+
+export {
+  reasonEnumInfo,
+  syncReportReasons,
+  includeReportReasons,
+  getReportReasons,
+};

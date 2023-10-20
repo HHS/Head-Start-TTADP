@@ -28,10 +28,12 @@ export default (sequelize, DataTypes) => {
     activityReportObjectiveId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: { model: { tableName: 'ActivityReportObjectives' }, key: 'id' },
     },
     topicId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: { model: { tableName: 'Topics' }, key: 'id' },
     },
   }, {
     sequelize,

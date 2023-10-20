@@ -29,8 +29,8 @@ const GOAL_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
-  SUSPENDED: 'Suspended',
   CLOSED: 'Closed',
+  SUSPENDED: 'Suspended',
 };
 
 const GRANT_PERSONNEL_ROLES = [
@@ -45,8 +45,8 @@ const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
-  SUSPENDED: 'Suspended',
   COMPLETE: 'Complete',
+  SUSPENDED: 'Suspended',
 };
 
 const NEXTSTEP_NOTETYPE = {
@@ -181,6 +181,64 @@ const GRANT_INACTIVATION_REASONS = {
   UNKNOWN: 'Unknown',
 };
 
+const REPORT_TYPE = {
+  REPORT_TRAINING_EVENT: 'report.trainingEvent',
+  REPORT_TRAINING_SESSION: 'report.trainingSession',
+};
+
+const ENTITY_TYPE = {
+  ...REPORT_TYPE,
+  GOAL: 'goal',
+  OBJECTIVE: 'objective',
+  COLLABORATOR: 'collaborator',
+};
+
+const NATIONAL_CENTER_ACTING_AS = {
+  TRAINER: 'trainer',
+};
+
+const RECIPIENT_TYPE = {
+  GRANT: 'grant',
+  OTHER_ENTITY: 'otherEntity',
+};
+
+const COLLABORATOR_APPROVAL_STATUSES = {
+  APPROVAL_REQUESTED: 'approval_requested',
+  NEEDS_ACTION: 'needs_action',
+  APPROVED: 'approved',
+};
+
+const TRAINING_TYPE = {
+  SERIES: 'Series',
+};
+
+const AUDIENCE = {
+  RECIPIENTS: 'Recipients',
+  TTA_SPECIALISTS: 'TTA specialists',
+  FEDERAL_STAFF: 'Federal staff',
+};
+
+const ORGANIZER = {
+  REGIONAL_W_NC: 'Regional w/NC',
+  REGIONAL_WO_NC: 'Regional w/o NC',
+  IST: 'IST',
+};
+
+const REPORT_STATUSES = {
+  DRAFT: 'draft',
+  DELETED: 'deleted',
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
+  NEEDS_ACTION: 'needs_action',
+};
+
+const COLLABORATOR_TYPES = {
+  EDITOR: 'editor',
+  OWNER: 'owner',
+  INSTANTIATOR: 'instantiator',
+  APPROVER: 'approver',
+  POC: 'poc',
+};
 const MAINTENANCE_TYPE = {
   VACUUM_ANALYZE: 'VACUUM ANALYZE',
   REINDEX: 'REINDEX',
@@ -188,11 +246,15 @@ const MAINTENANCE_TYPE = {
   REINDEX_TABLES: 'REINDEX TABLES',
   DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
+  IDENTIFY_SPREAD_COMPLETED_REPORTS: 'IDENTIFY & SPREAD COMPLETED REPORTS',
+  IDENTIFY_COMPLETED_REPORTS: 'IDENTIFY COMPLETED REPORTS',
+  SPREAD_COMPLETED_REPORTS: 'SPREAD COMPLETED REPORTS',
 };
 
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',
   MAINTENANCE: 'MAINTENANCE',
+  REPORT: 'REPORT',
 };
 
 module.exports = {
@@ -221,6 +283,16 @@ module.exports = {
   RESOURCE_DOMAIN,
   AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
+  REPORT_TYPE,
+  ENTITY_TYPE,
+  NATIONAL_CENTER_ACTING_AS,
+  RECIPIENT_TYPE,
+  COLLABORATOR_APPROVAL_STATUSES,
+  TRAINING_TYPE,
+  AUDIENCE,
+  ORGANIZER,
+  REPORT_STATUSES,
+  COLLABORATOR_TYPES,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
 };

@@ -17,6 +17,7 @@ export default (sequelize, DataTypes) => {
     ownerId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Users' }, key: 'id' },
     },
     pocIds: {
       type: DataTypes.ARRAY(DataTypes.INTEGER),
@@ -29,6 +30,7 @@ export default (sequelize, DataTypes) => {
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Regions' }, key: 'id' },
     },
     data: {
       type: DataTypes.JSONB,

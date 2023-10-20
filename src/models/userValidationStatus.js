@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: { model: { tableName: 'users' }, key: 'id' },
+        references: { model: { tableName: 'Users' }, key: 'id' },
         onUpdate: 'CASCADE',
       },
       token: { type: DataTypes.STRING, allowNull: false },

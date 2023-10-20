@@ -1,6 +1,8 @@
 const { Model } = require('sequelize');
 const {
   beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
   afterUpdate,
 } = require('./hooks/goalFieldResponse');
 
@@ -26,10 +28,12 @@ export default (sequelize, DataTypes) => {
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Goals' }, key: 'id' },
     },
     goalTemplateFieldPromptId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'GoalTemplateFieldPrompts' }, key: 'id' },
     },
     response: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
@@ -37,19 +41,29 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      // defaultValue: false, // TODO: needs to be fixed in migration
       allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      // defaultValue: false, // TODO: needs to be fixed in migration
       allowNull: false,
+    },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   }, {
     sequelize,
     modelName: 'GoalFieldResponse',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

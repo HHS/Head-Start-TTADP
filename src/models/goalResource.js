@@ -1,6 +1,11 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { afterDestroy } = require('./hooks/goalResource');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+  afterDestroy,
+} = require('./hooks/goalResource');
 
 export default (sequelize, DataTypes) => {
   class GoalResource extends Model {
@@ -24,10 +29,12 @@ export default (sequelize, DataTypes) => {
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Goals' }, key: 'id' },
     },
     resourceId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Resources' }, key: 'id' },
     },
     sourceFields: {
       allowNull: true,
@@ -52,10 +59,21 @@ export default (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: false,
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     sequelize,
     modelName: 'GoalResource',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });

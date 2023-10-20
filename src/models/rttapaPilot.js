@@ -31,14 +31,17 @@ export default (sequelize, DataTypes) => {
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Users' }, key: 'id' },
     },
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Recipients' }, key: 'id' },
     },
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'Regions' }, key: 'id' },
     },
     notes: {
       type: DataTypes.TEXT,

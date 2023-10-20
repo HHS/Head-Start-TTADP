@@ -31,6 +31,7 @@ export default (sequelize, DataTypes) => {
     eventId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: { tableName: 'EventReportPilots' }, key: 'id' },
     },
     data: {
       type: DataTypes.JSONB,

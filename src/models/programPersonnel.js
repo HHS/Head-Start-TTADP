@@ -10,11 +10,11 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ProgramPersonnel.belongsTo(models.Program, { foreignKey: 'programId', as: 'program' });
       ProgramPersonnel.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
-      ProgramPersonnel.hasMany(models.ProgramPersonnel, {
+      ProgramPersonnel.hasMany(models.ProgramPersonnel.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsFromProgramPersonnel',
       });
-      ProgramPersonnel.belongsTo(models.ProgramPersonnel, {
+      ProgramPersonnel.belongsTo(models.ProgramPersonnel.scope(), {
         foreignKey: 'mapsTo',
         as: 'mapsToProgramPersonnel',
       });

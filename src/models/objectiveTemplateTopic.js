@@ -1,5 +1,9 @@
 const { Model } = require('sequelize');
-// const { auditLogger } = require('../logger');
+const {
+  beforeValidate,
+  beforeUpdate,
+  beforeDestroy,
+} = require('./hooks/objectiveTemplateTopic');
 
 /**
    * ObjectiveTopic table. Junction table
@@ -29,9 +33,22 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    isFoiaable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isReferenced: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateTopic',
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    },
   });
   return ObjectiveTemplateTopic;
 };

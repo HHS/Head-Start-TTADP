@@ -25,10 +25,12 @@ export default (sequelize, DataTypes) => {
     roleId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: { model: { tableName: 'Roles' }, key: 'id' },
     },
     topicId: {
       type: DataTypes.STRING,
       allowNull: false,
+      references: { model: { tableName: 'Topics' }, key: 'id' },
     },
   }, {
     sequelize,
