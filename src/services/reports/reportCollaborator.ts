@@ -2,7 +2,12 @@ import Semaphore from '../../lib/semaphore';
 import db from '../../models';
 import { auditLogger } from '../../logger';
 import { REPORT_TYPE, COLLABORATOR_TYPES } from '../../constants';
-import { filterDataToModel, remap, collectChangedValues } from '../../lib/modelUtils';
+import {
+  filterDataToModel,
+  remap,
+  collectChangedValues,
+  includeToFindAll,
+} from '../../lib/modelUtils';
 import { camelToPascalCase } from '../../models/helpers/associationsAndScopes';
 import {
   includeReportCollaboratorRoles,
@@ -74,7 +79,7 @@ const syncReportCollaboratorsForType = async (
         include: [
           {
             model: CollaboratorType,
-            as: 'collaboratorTypes',
+            as: 'collaboratorTypeForReportCollaboratorTypes',
             required: false,
             where: {
               validFor: report.type,
@@ -204,18 +209,6 @@ const includeReportCollaborator = (
   include: [
     includeReportCollaboratorTypes(collaboratorType),
     includeReportCollaboratorRoles(collaboratorType),
-    { // TODO: replace with a call to the include function for reportCollaboratorRoles
-      model: Role,
-      as: 'roles',
-      required: true,
-      attributes: [
-        'name',
-        'isSpecialist',
-      ],
-      through: {
-        attributes: [],
-      },
-    },
     {
       model: User,
       as: 'user',
@@ -232,53 +225,16 @@ const includeReportCollaborator = (
 const getCollaboratorsForType = async (
   report: { id: number, type: string, regionId: number },
   collaboratorType: number | string,
-):Promise<object[]> => ReportCollaborator.findAll({
-  attributes: [
-    'reportId',
-    'userId',
-  ],
-  where: {
+):Promise<object[]> => includeToFindAll(
+  includeReportCollaborator,
+  {
     reportId: report.id,
   },
-  include: [
-    {
-      model: CollaboratorType,
-      as: 'collaboratorTypes',
-      required: true,
-      where: {
-        validFor: report.type,
-        ...(typeof collaboratorType === 'number' && { id: collaboratorType }),
-        ...(typeof collaboratorType !== 'number' && { name: collaboratorType }),
-      },
-      attributes: [],
-      through: {
-        attributes: [],
-      },
-    },
-    {
-      model: Role,
-      as: 'roles',
-      required: true,
-      attributes: [
-        'name',
-        'isSpecialist',
-      ],
-      through: {
-        attributes: [],
-      },
-    },
-    {
-      model: User,
-      as: 'user',
-      required: true,
-      attributes: [
-        'name',
-        'email',
-        'homeRegionId',
-      ],
-    },
+  [
+    report.type,
+    collaboratorType,
   ],
-});
+);
 
 export {
   syncReportCollaboratorsForType,
