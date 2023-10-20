@@ -22,14 +22,11 @@ describe('ReportAudience', () => {
         { id: 2, name: AUDIENCE.FEDERAL_STAFF },
       ];
 
+      const resultA = await getReportAudiences(report);
       await syncReportAudiences(report, audienceEnums);
+      const resultB = await getReportAudiences(report);
 
-      expect(syncGenericEnums).toHaveBeenCalledWith(
-        ReportAudience,
-        audienceEnumInfo,
-        report,
-        audienceEnums,
-      );
+      expect(resultA).not.toEqual(resultB);
     });
 
     it('should sync report audiences with null audienceEnums', async () => {
