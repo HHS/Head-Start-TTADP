@@ -2,50 +2,46 @@ import db from '../../models';
 import {
   EnumInfo,
   EnumSyncResponse,
-  ReportGenericEnumType,
-  syncGenericEnums,
-  getReportGenericEnums,
-  includeGenericEnums,
+  getGenericReportEnums,
+  includeGenericReportEnums,
+  syncGenericReportEnums,
 } from './reportGenericEnum';
 import { REPORT_TYPE } from '../../constants';
 
 const {
-  NationalCenter,
   ReportNationalCenter,
 } = db;
 
 const nationalCenterEnumInfo:EnumInfo = {
-  model: NationalCenter,
-  as: 'nationalCenter',
-  keyName: 'NationalCenters',
+  model: ReportNationalCenter,
+  alias: 'nationalCenter',
 };
 
 const syncReportNationalCenters = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   nationalCenterEnums: { id?: number, name?: string }[] | null = null,
-): Promise<EnumSyncResponse> => syncGenericEnums(
-  ReportNationalCenter,
-  nationalCenterEnumInfo,
+): Promise<EnumSyncResponse> => syncGenericReportEnums(
   report,
+  nationalCenterEnumInfo,
   nationalCenterEnums,
 );
 
 const getReportNationalCenters = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  nationalCenterIds: number[] | null = null,
-):Promise<ReportGenericEnumType[]> => getReportGenericEnums(
-  ReportNationalCenter,
-  nationalCenterEnumInfo,
+  nationalCenterIds: (number | string)[] | null = null,
+) => getGenericReportEnums(
   report,
+  nationalCenterEnumInfo,
   nationalCenterIds,
 );
 
 const includeReportNationalCenters = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-) => includeGenericEnums(
-  ReportNationalCenter,
+) => includeGenericReportEnums(
+  {
+    ...(reportType && { type: reportType }),
+  },
   nationalCenterEnumInfo,
-  reportType,
 );
 
 export {
