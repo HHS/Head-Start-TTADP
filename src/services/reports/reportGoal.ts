@@ -1,7 +1,7 @@
 import { filterDataToModel, collectChangedValues } from '../../lib/modelUtils';
 import db from '../../models';
 import { auditLogger } from '../../logger';
-import { includeReportGoalTemplate } from './reportGoalTemplate';
+import { includeReportGoalTemplates } from './reportGoalTemplate';
 
 const {
   Goal,
@@ -47,7 +47,7 @@ const includeReportGoals = () => ({
     'ordinal',
   ],
   include: [
-    includeReportGoalTemplate(),
+    includeReportGoalTemplates(), // TODO: this might not work
     {
       model: GoalTemplate, // TODO: fill out
     },
