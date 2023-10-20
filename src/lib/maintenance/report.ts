@@ -29,9 +29,11 @@ const spreadCompletedReports = async (reportId) => maintenanceCommand(
      *  1. for the report Id in parallel:
      *    find all recipient/grants on report
      *    find all objectiveTemplates and corresponding goalTemplates grouped by goalTemplate
-     *  2. call distributeGoalFromGoalTemplate for each distinct goalTemplate passing the list of recipient/grants
+     *  2. call distributeGoalFromGoalTemplate for each distinct goalTemplate passing the list
+     *    of recipient/grants
      *  3. in parallel:
-     *    call distributeObjectiveFromGoalTemplate each distinct objectiveTemplate passing the list of goals created in step 2
+     *    call distributeObjectiveFromGoalTemplate each distinct objectiveTemplate passing the
+     *    list of goals created in step 2
      *    call <some function to link the generated goals to the reportId>
      *  4. call <some function to link the generated objectives to the reportId and reportGoals>
      */
