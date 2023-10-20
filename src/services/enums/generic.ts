@@ -232,7 +232,12 @@ const includeGenericEnums = (
     entityTypeFiltered = false,
   } = entityEnum;
   const association = model?.associations?.[alias];
-  if (!association) throw new Error(`Association:'${alias}' not found on Model:'${model.name}'`);
+  console.log('includeGenericEnums', association);
+
+  if (association === undefined || association === null) {
+    // throw new Error(`Association:'${alias}' not found on Model:'${model.name}', available  association[${model?.associations.length}]: ${Object.keys(model?.associations).join(', ')}.`);
+    return null;
+  }
   const {
     target,
     as,
@@ -291,11 +296,19 @@ const getGenericEnums = (
   ],
 );
 
+/**
+ * Synchronizes generic enums for a given entity.
+ * @param entity - The entity information.
+ * @param entityEnum - The enum information.
+ * @param genericEnums - The list of generic enums to synchronize (optional).
+ * @returns An object with promises and unmatched enums.
+ */
 const syncGenericEnums = async (
   entity: EntityInfo,
   entityEnum: EnumInfo,
   genericEnums: { id?: number, name?: string }[] | null = null,
 ) => {
+  // Fetch incoming valid enums and current enums in parallel
   const [incomingValidEnums, currentEnums] = await Promise.all([
     findAll(
       entityEnum.model.associations[entityEnum.alias].target,
@@ -322,6 +335,8 @@ const syncGenericEnums = async (
       entityEnum,
     ),
   ]);
+
+  // Extract ids of incoming valid enums, unmatched enums, and current enums
   const [
     incomingValidEnumIds,
     incomingInvalidEnum,
@@ -338,6 +353,8 @@ const syncGenericEnums = async (
     }, []),
     currentEnums.map((ce) => ce[`${entityEnum.alias}Id`]),
   ];
+
+  // Determine the lists of enums to create, update, and destroy
   const [
     createList,
     updateList,
@@ -350,6 +367,7 @@ const syncGenericEnums = async (
 
   return {
     promises: Promise.all([
+      // Create new enums if needed
       (createList && createList.length)
         ? entityEnum.model.bulkCreate(
           createList.map((id) => ({
@@ -359,6 +377,7 @@ const syncGenericEnums = async (
           { individualHooks: true },
         )
         : Promise.resolve(),
+      // Update existing enums if needed
       (updateList && updateList.length)
         ? entityEnum.model.update(
           {
@@ -373,6 +392,7 @@ const syncGenericEnums = async (
           },
         )
         : Promise.resolve(),
+      // Destroy unused enums if needed
       (destroyList && destroyList.length)
         ? entityEnum.model.destroy({
           where: {
