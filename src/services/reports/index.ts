@@ -54,25 +54,32 @@ const getAllTypedReports = async (
   includes?: object[],
   scope?: object,
 ) => {
-  console.log('getAllTypedReports', {reportType, reportIds, includes, scope},
-  {
-    // attributes: [], // Exclude all attributes from the result set
-    where: {
-      ...(reportIds?.length && { id: reportIds }), // Filter by report IDs if provided
-      ...(scope && { [Op.and]: scope }), // Filter by scope if provided
+  console.log(
+    'getAllTypedReports',
+    {
+      reportType,
+      reportIds,
+      includes,
+      scope,
     },
-    include: [
-      {
-        model: ValidFor,
-        as: 'reportType',
-        attributes: [],
-        required: true,
-        where: { name: reportType },
+    {
+      // attributes: [], // Exclude all attributes from the result set
+      where: {
+        ...(reportIds?.length && { id: reportIds }), // Filter by report IDs if provided
+        ...(scope && { [Op.and]: scope }), // Filter by scope if provided
       },
-      ...includes,
-    ],
-    logger: console.log,
-  }
+      include: [
+        {
+          model: ValidFor,
+          as: 'reportType',
+          attributes: [],
+          required: true,
+          where: { name: reportType },
+        },
+        ...includes,
+      ],
+      logger: console.log,
+    },
   );
   return Report.findAll({
     // attributes: [], // Exclude all attributes from the result set
