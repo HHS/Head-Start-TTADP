@@ -5,6 +5,7 @@ import { auditLogger } from './logger';
 import db from './models';
 import testingRouter from './routes/testingOnly';
 
+// eslint-disable-next-line import/no-mutable-exports
 let app;
 
 db.isReady.then(() => {
