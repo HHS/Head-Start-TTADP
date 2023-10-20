@@ -29,12 +29,9 @@ const syncReportObjectiveTrainers = async (
   trainers,
 );
 
-const includeReportObjectiveTrainers = (
-  entity: { id: number },
-) => includeGenericEnums(
+const includeReportObjectiveTrainers = () => includeGenericEnums(
   {
     name: 'reportObjectiveId',
-    ...entity,
   },
   ReportObjectiveTrainer,
 );
