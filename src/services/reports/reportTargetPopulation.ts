@@ -2,23 +2,20 @@ import db from '../../models';
 import {
   EnumInfo,
   EnumSyncResponse,
-  ReportGenericEnumType,
-  syncGenericEnums,
-  getReportGenericEnums,
-  includeGenericEnums,
+  getGenericReportEnums,
+  includeGenericReportEnums,
+  syncGenericReportEnums,
 } from './reportGenericEnum';
 import { REPORT_TYPE } from '../../constants';
 
 const {
-  TargetPopulation,
   ReportTargetPopulation,
 } = db;
 
 // Define an EnumInfo object for the target population enum
 const targetPopulationEnumInfo: EnumInfo = {
-  model: TargetPopulation,
-  as: 'targetPopulation',
-  keyName: 'TargetPopulations',
+  model: ReportTargetPopulation,
+  alias: 'targetPopulation',
 };
 
 /**
@@ -30,10 +27,9 @@ const targetPopulationEnumInfo: EnumInfo = {
 const syncReportTargetPopulations = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   targetPopulationEnums: { id?: number, name?: string }[] | null = null,
-): Promise<EnumSyncResponse> => syncGenericEnums(
-  ReportTargetPopulation,
-  targetPopulationEnumInfo,
+): Promise<EnumSyncResponse> => syncGenericReportEnums(
   report,
+  targetPopulationEnumInfo,
   targetPopulationEnums,
 );
 
@@ -45,12 +41,11 @@ const syncReportTargetPopulations = async (
  */
 const getReportTargetPopulations = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  targetPopulationIds: number[] | null = null,
-): Promise<ReportGenericEnumType[]> => getReportGenericEnums(
-  ReportTargetPopulation,
-  targetPopulationEnumInfo,
+  targetPopulations: (number | string)[] | null = null,
+) => getGenericReportEnums(
   report,
-  targetPopulationIds,
+  targetPopulationEnumInfo,
+  targetPopulations,
 );
 
 /**
@@ -60,10 +55,11 @@ const getReportTargetPopulations = async (
  */
 const includeReportTargetPopulations = (
   reportType: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-) => includeGenericEnums(
-  ReportTargetPopulation,
+) => includeGenericReportEnums(
+  {
+    ...(reportType && { type: reportType }),
+  },
   targetPopulationEnumInfo,
-  reportType,
 );
 
 export {
