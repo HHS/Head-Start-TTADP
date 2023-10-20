@@ -44,11 +44,11 @@ export default (sequelize, DataTypes) => {
         as: 'resources',
       });
       Goal.belongsTo(models.Goal, {
-        foreignKey: 'mapsToParentGoal',
+        foreignKey: 'mapsToParentGoalId',
         as: 'parentGoal',
       });
       Goal.hasMany(models.Goal, {
-        foreignKey: 'mapsToParentGoal',
+        foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
       });
     }
@@ -101,7 +101,7 @@ export default (sequelize, DataTypes) => {
     previousStatus: {
       type: DataTypes.TEXT,
     },
-    mapsToParentGoal: {
+    mapsToParentGoalId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
