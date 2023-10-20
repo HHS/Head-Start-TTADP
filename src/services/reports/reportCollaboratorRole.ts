@@ -1,11 +1,12 @@
+import { Op } from 'sequelize';
 import db from '../../models';
 import {
   type EnumInfo,
-  type EntityGenericEnum,
+  type EntityEnumModel,
   type EnumSyncResponse,
-  getEntityGenericEnum,
-  syncEntityGenericEnum,
-  includeEntityGenericEnums,
+  includeGenericEnums,
+  getGenericEnums,
+  syncGenericEnums,
 } from '../enums/generic';
 import { REPORT_TYPE } from '../../constants';
 
@@ -15,16 +16,16 @@ const {
   Role,
   User,
   UserRole,
+  sequelize,
 } = db;
 
-const rolesEnumInfo:EnumInfo = {
-  model: Role,
-  as: 'roles',
-  keyName: 'roles',
+const collaboratorRolesEnumInfo:EnumInfo = {
+  model: ReportCollaboratorRole,
+  alias: 'role',
 };
 
 // TODO: potential for race condition if the same user is attached to the same report
-// for multiple collaborator types at the same time. So address this there is the option
+// for multiple collaborator types at the same time. To address this there is the option
 // to use the /lib/semaphore. The current implementation of semaphore, does not allow for
 // bucketing by a value, like user.
 const syncReportCollaboratorRoles = async (
@@ -59,28 +60,40 @@ const syncReportCollaboratorRoles = async (
         required: true,
         where: {
           reportId: entity.id,
-          ...(reportCollaboratorIds
-            && reportCollaboratorIds.length > 0
-            && { id: reportCollaboratorIds }),
-          ...(userIds
-            && userIds.length > 0
-            && { id: userIds }),
+          [Op.or]: [
+            {
+              ...(reportCollaboratorIds
+              && reportCollaboratorIds.length > 0
+              && { id: reportCollaboratorIds }),
+            },
+            {
+              ...(userIds
+              && userIds.length > 0
+              && { id: userIds }),
+            },
+          ],
         },
       }],
     }),
     ReportCollaborator.findAll({
       attributes: [
         ['id', 'reportCollaboratorId'],
-        ['"userRoles"."roleId"', 'roleId'],
+        [sequelize.literal('"userRoles"."roleId"'), 'roleId'],
       ],
       where: {
         reportId: entity.id,
-        ...(reportCollaboratorIds
-          && reportCollaboratorIds.length > 0
-          && { id: reportCollaboratorIds }),
-        ...(userIds
-          && userIds.length > 0
-          && { id: userIds }),
+        [Op.or]: [
+          {
+            ...(reportCollaboratorIds
+            && reportCollaboratorIds.length > 0
+            && { id: reportCollaboratorIds }),
+          },
+          {
+            ...(userIds
+            && userIds.length > 0
+            && { id: userIds }),
+          },
+        ],
       },
       include: [{
         model: User,
@@ -130,7 +143,7 @@ const syncReportCollaboratorRoles = async (
         : Promise.resolve(),
       updateList && updateList.length > 0
         ? ReportCollaboratorRole.update(
-          { updatedAt: 'now' }, // TODO: fix
+          { updatedAt: sequelize.fn('NOW') },
           {
             where: { id: updateList },
             individualHooks: true,
@@ -150,20 +163,18 @@ const syncReportCollaboratorRoles = async (
 
 const includeReportCollaboratorRoles = (
   type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE],
-) => includeEntityGenericEnums(
-  ReportCollaboratorRole,
-  rolesEnumInfo,
+) => includeGenericEnums(
   { name: 'reportCollaboratorId', type },
+  collaboratorRolesEnumInfo,
 );
 
 const getReportCollaboratorRoles = async (
   entity: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  participantIds: number[] | null = null,
-):Promise<EntityGenericEnum[]> => getEntityGenericEnum(
-  ReportCollaboratorRole,
-  rolesEnumInfo,
+  roles: (number | string)[] | null = null,
+) => getGenericEnums(
   { name: 'reportCollaboratorId', ...entity },
-  participantIds,
+  collaboratorRolesEnumInfo,
+  roles,
 );
 
 export {
