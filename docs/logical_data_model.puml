@@ -301,7 +301,7 @@ class GoalTemplates{
 class Goals{
  * id : integer : <generated>
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
- mapsTo : integer : REFERENCES "Goals".id
+ mapsToParentGoalId : integer : REFERENCES "Goals".id
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
