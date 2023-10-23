@@ -51,7 +51,7 @@ ProperIcon.defaultProps = {
   approvalStatus: APPROVER_STATUSES.PENDING,
 };
 
-export function ReportsRow({ reports, removeAlert }) {
+export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
@@ -101,6 +101,12 @@ export function ReportsRow({ reports, removeAlert }) {
     const contextMenuLabel = `View activity report ${id}`;
     let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
     let displayStatus = calculatedStatus;
+
+    const justSubmitted = message && Number(message.reportId) === id;
+    if (justSubmitted) {
+      displayStatus = 'Submitted';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+    }
 
     if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
       displayStatus = 'Needs action';
@@ -232,6 +238,21 @@ ReportsRow.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
+};
+
+ReportsRow.defaultProps = {
+  message: {
+    time: '',
+    reportId: '',
+    displayId: '',
+    status: '',
+  },
 };
 
 function MyAlerts(props) {
@@ -254,6 +275,7 @@ function MyAlerts(props) {
     setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
+    message,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -358,7 +380,7 @@ function MyAlerts(props) {
                 </tr>
               </thead>
               <tbody>
-                <ReportsRow reports={reports} removeAlert={removeAlert} />
+                <ReportsRow reports={reports} removeAlert={removeAlert} message={message} />
               </tbody>
             </Table>
           </div>
@@ -394,6 +416,12 @@ MyAlerts.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
 };
 
 MyAlerts.defaultProps = {
@@ -407,6 +435,12 @@ MyAlerts.defaultProps = {
   downloadAlertsError: false,
   downloadAllAlertsButtonRef: () => {},
   downloadSelectedAlertsButtonRef: () => {},
+  message: {
+    time: '',
+    reportId: '',
+    displayId: '',
+    status: '',
+  },
 };
 
 export default MyAlerts;
