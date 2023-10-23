@@ -16,6 +16,8 @@ import {
   Permission,
   ProgramPersonnel,
   User,
+  ActivityReportCollaborator,
+  ActivityReportApprover,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -27,6 +29,50 @@ import {
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+
+export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
+  const reports = await ActivityReport.findAll({
+    include: [
+      {
+        model: User,
+        as: 'author',
+      },
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+      },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+      },
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId,
+          status: 'Active',
+        },
+        required: true,
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            where: {
+              id: recipientId,
+            },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
+
+  return uniq([
+    ...reports.map((r) => r.author.id),
+    ...reports.map((r) => r.activityReportCollaborators.map((c) => c.userId)).flat(),
+    ...reports.map((r) => r.approvers.map((a) => a.userId)).flat(),
+  ]);
+}
 
 /**
  *
