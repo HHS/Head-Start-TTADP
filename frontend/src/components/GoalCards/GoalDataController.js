@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useRef,
   memo,
+  useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
@@ -15,7 +16,7 @@ import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
-
+import AppLoadingContext from '../../AppLoadingContext';
 import useSessionSort from '../../hooks/useSessionSort';
 import FilterContext from '../../FilterContext';
 
@@ -44,10 +45,10 @@ function GoalDataController({
   });
 
   const queryString = useRef(filtersToQueryString(filters));
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   // Page Behavior.
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
 
   const defaultSort = showNewGoals
@@ -69,8 +70,8 @@ function GoalDataController({
 
   useEffect(() => {
     async function fetchGoals(query) {
-      setLoading(true);
       try {
+        setIsAppLoading(true);
         const response = await getRecipientGoals(
           recipientId,
           regionId,
@@ -85,7 +86,7 @@ function GoalDataController({
       } catch (e) {
         setError('Unable to fetch goals');
       } finally {
-        setLoading(false);
+        setIsAppLoading(false);
       }
     }
     const filterQuery = filtersToQueryString(filters);
@@ -95,7 +96,16 @@ function GoalDataController({
       return;
     }
     fetchGoals(filterQuery);
-  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig, goalsPerPage]);
+  }, [
+    sortConfig,
+    filters,
+    recipientId,
+    regionId,
+    showNewGoals,
+    setSortConfig,
+    goalsPerPage,
+    setIsAppLoading,
+  ]);
 
   const handlePageChange = (pageNumber) => {
     setSortConfig({
@@ -129,7 +139,7 @@ function GoalDataController({
     <div>
       <Grid row>
         <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
-          <Graph data={data.statuses} loading={loading} />
+          <Graph data={data.statuses} />
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
@@ -147,7 +157,6 @@ function GoalDataController({
           requestSort={requestSort}
           sortConfig={sortConfig}
           setGoals={setGoals}
-          loading={loading}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
         />
