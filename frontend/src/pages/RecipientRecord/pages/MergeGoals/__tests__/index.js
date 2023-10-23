@@ -24,6 +24,7 @@ const urlBase = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy
 const idsToUrl = (ids) => `${urlBase}${ids.map((i) => `goalIds=${i}`).join('&')}`;
 
 describe('Merge goals', () => {
+  const setIsAppLoading = jest.fn();
   const goals = [{
     id: 4598,
     goalStatus: 'In Progress',
@@ -69,10 +70,10 @@ describe('Merge goals', () => {
     ],
   };
 
-  const renderTest = (ids = GOAL_IDS) => {
+  const renderTest = (ids = GOAL_IDS, canMergeGoals = true) => {
     render(
       <Router history={memoryHistory}>
-        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
+        <AppLoadingContext.Provider value={{ setIsAppLoading }}>
           <UserContext.Provider value={{ user }}>
             <FilterContext.Provider value={{ filterKey: 'test' }}>
               <MergeGoals
@@ -83,6 +84,7 @@ describe('Merge goals', () => {
                   state: {}, hash: '', pathname: '', search: `${ids.map((i) => `goalId[]=${i}`).join('&')}`,
                 }}
                 recipientNameWithRegion="test"
+                canMergeGoals={canMergeGoals}
               />
             </FilterContext.Provider>
           </UserContext.Provider>
@@ -95,6 +97,7 @@ describe('Merge goals', () => {
 
   afterEach(() => {
     fetchMock.restore();
+    jest.clearAllMocks();
   });
 
   it('renders and fetches', async () => {
@@ -111,6 +114,13 @@ describe('Merge goals', () => {
     renderTest([]);
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('No goal ids provided')).toBeInTheDocument());
+  });
+
+  it('needs to be able to merge goals to proceed', async () => {
+    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    act(() => renderTest(GOAL_IDS, false));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('You do not have permission to merge goals for this recipient')).toBeInTheDocument());
   });
 
   it('handles a fetch error', async () => {

@@ -37,6 +37,7 @@ export default function GoalCardsHeader({
   createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
+  canMergeGoals,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -108,19 +109,21 @@ export default function GoalCardsHeader({
         </div>
         )}
       </div>
-      <FeatureFlag flag="merge_goals">
-        <div className="usa-alert usa-alert--info" data-testid="alert">
-          <div className="usa-alert__body">
-            <div className="usa-alert__text">
-              <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
-              <ul className="usa-list">
-                <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${fiveGoalIds}`}>Review 5 similar goals</Link></li>
-                <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${twoGoalIds}`}>Review 2 similar goals</Link></li>
-              </ul>
+      {canMergeGoals && (
+        <FeatureFlag flag="merge_goals">
+          <div className="usa-alert usa-alert--info" data-testid="alert">
+            <div className="usa-alert__body">
+              <div className="usa-alert__text">
+                <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
+                <ul className="usa-list">
+                  <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${fiveGoalIds}`}>Review 5 similar goals</Link></li>
+                  <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${twoGoalIds}`}>Review 2 similar goals</Link></li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </FeatureFlag>
+        </FeatureFlag>
+      )}
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
@@ -237,6 +240,7 @@ GoalCardsHeader.propTypes = {
   createRttapa: PropTypes.func.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

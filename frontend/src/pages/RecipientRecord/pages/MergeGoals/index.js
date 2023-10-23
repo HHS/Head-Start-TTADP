@@ -98,6 +98,7 @@ export default function MergeGoals({
   recipientId,
   regionId,
   recipientNameWithRegion,
+  canMergeGoals,
 }) {
   const [error, setError] = useState('');
   const [validation, setValidation] = useState('');
@@ -128,7 +129,16 @@ export default function MergeGoals({
       }
 
       try {
+        setError('');
         setIsAppLoading(true);
+        // this might seem a weird place for this but I've found that
+        // putting it in its own useEffect or even outside of this function
+        // causes this message to briefly be displayed
+        // we put it here so that it gets swept up in the rendering passes
+        // without ever being visible
+        if (!canMergeGoals) {
+          setError('You do not have permission to merge goals for this recipient');
+        }
         const { goalRows } = await getRecipientGoals(
           recipientId,
           regionId,
@@ -140,7 +150,6 @@ export default function MergeGoals({
           goalIds,
         );
         setGoals(goalRows);
-        setError('');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
@@ -152,7 +161,7 @@ export default function MergeGoals({
     }
 
     fetchGoals();
-  }, [location.search, recipientId, regionId, setIsAppLoading]);
+  }, [location.search, recipientId, regionId, setIsAppLoading, canMergeGoals]);
 
   const selectedGoals = goals.filter((g) => (
     selectedGoalIds.includes(g.id.toString())
@@ -372,4 +381,5 @@ MergeGoals.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   recipientNameWithRegion: PropTypes.string.isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
 };

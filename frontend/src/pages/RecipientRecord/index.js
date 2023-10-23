@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { getRecipient } from '../../fetchers/recipient';
+import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import { HTTPError } from '../../fetchers';
 import './index.scss';
@@ -90,6 +90,25 @@ export default function RecipientRecord({ match, hasAlerts }) {
   });
 
   const [error, setError] = useState();
+  const [canMergeGoals, setCanMergeGoals] = useState(false);
+
+  useEffect(() => {
+    async function fetchMergePermissions() {
+      try {
+        const { canMergeGoalsForRecipient } = await getMergeGoalPermissions(
+          String(recipientId),
+          String(regionId),
+        );
+        setCanMergeGoals(canMergeGoalsForRecipient);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+        setCanMergeGoals(false);
+      }
+    }
+
+    fetchMergePermissions();
+  }, [recipientId, regionId]);
 
   useEffect(() => {
     async function fetchRecipient() {
@@ -227,6 +246,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 regionId={regionId}
                 recipient={recipientData}
                 recipientName={recipientName}
+                canMergeGoals={canMergeGoals}
               />
             </PageWithHeading>
           )}
@@ -247,6 +267,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientId={recipientId}
                 location={location}
                 recipientNameWithRegion={recipientNameWithRegion}
+                canMergeGoals={canMergeGoals}
               />
             </>
           )}
