@@ -34,10 +34,6 @@ export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
     include: [
       {
-        model: User,
-        as: 'author',
-      },
-      {
         model: ActivityReportCollaborator,
         as: 'activityReportCollaborators',
       },
@@ -68,7 +64,7 @@ export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   });
 
   return uniq([
-    ...reports.map((r) => r.author.id),
+    ...reports.map((r) => r.userId),
     ...reports.map((r) => r.activityReportCollaborators.map((c) => c.userId)).flat(),
     ...reports.map((r) => r.approvers.map((a) => a.userId)).flat(),
   ]);
