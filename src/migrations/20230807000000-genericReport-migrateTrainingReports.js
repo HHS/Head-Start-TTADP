@@ -231,6 +231,7 @@ module.exports = {
           "reportId",
           "reportTrainingEventId",
           "regionId",
+          duration,
           name,
           "createdAt",
           "updatedAt"
@@ -239,6 +240,7 @@ module.exports = {
           ir.reports_id,
           ir_events.reports_id,
           (srp.data->>'regionId')::int,
+          (srp.data->>'duration')"::int,
           srp.data->>'eventName',
           srp."createdAt",
           srp."updatedAt"
@@ -260,12 +262,14 @@ module.exports = {
         INSERT INTO "ReportParticipation" (
           "reportId",
           "participantCount",
+          "deliveryMethod"
           "createdAt",
           "updatedAt"
         )
         SELECT
           reports_id,
           (data->>'numberOfParticipants')::int,
+          (data->>'deliveryMethod')::"enum_ReportParticipation_deliveryMethod",
           "createdAt",
           "updatedAt"
         FROM interim_reports

@@ -1064,6 +1064,10 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
+        duration: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -2611,6 +2615,14 @@ module.exports = {
         virtualParticipantCount: {
           type: Sequelize.INTEGER,
           allowNull: true,
+        },
+        deliveryMethod: {
+          type: Sequelize.ENUM([
+            'virtual',
+            'in-person',
+            'hybrid'
+          ]),
+          allowNull: false,
         },
         createdAt: {
           allowNull: false,
