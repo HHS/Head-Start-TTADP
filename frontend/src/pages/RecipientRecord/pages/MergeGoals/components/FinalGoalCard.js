@@ -73,8 +73,12 @@ function FinalGoalCard({
 FinalGoalCard.propTypes = {
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   goals: PropTypes.arrayOf(goalPropTypes).isRequired,
-  finalGoalId: PropTypes.string.isRequired,
+  finalGoalId: PropTypes.string,
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+};
+
+FinalGoalCard.defaultProps = {
+  finalGoalId: null,
 };
 
 export default FinalGoalCard;
