@@ -157,7 +157,7 @@ function GoalCard({
 GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   register: PropTypes.func,
-  isRadio: PropTypes.bool.isRequired,
+  isRadio: PropTypes.bool,
   selectedGoalsIncludeCurated: PropTypes.bool,
   final: PropTypes.bool,
 };
@@ -166,6 +166,7 @@ GoalCard.defaultProps = {
   register: null,
   selectedGoalsIncludeCurated: false,
   final: false,
+  isRadio: false,
 };
 
 export default GoalCard;
