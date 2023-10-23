@@ -84,7 +84,7 @@ const stepIndicatorStatus = (position, activePage) => {
   return 'incomplete';
 };
 
-const navigate = (newPage, setActivePage) => {
+export const navigate = (newPage, setActivePage) => {
   if (!pages.includes(newPage)) {
     return;
   }
