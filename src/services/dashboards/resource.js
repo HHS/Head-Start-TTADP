@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Sequelize, Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
@@ -335,16 +336,16 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   const dbData = {
     allReports: null,
     // viaReport: null,
-    viaSpecialistNextSteps: null,
-    viaRecipientNextSteps: null,
+    // viaSpecialistNextSteps: null,
+    // viaRecipientNextSteps: null,
     viaObjectives: null,
     viaGoals: null,
   };
   [
     dbData.allReports,
     // dbData.viaReport,
-    dbData.viaSpecialistNextSteps,
-    dbData.viaRecipientNextSteps,
+    // dbData.viaSpecialistNextSteps,
+    // dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
     dbData.viaGoals,
   ] = await Promise.all([
@@ -499,6 +500,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       raw: true,
     }),
     */
+    /*
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -697,6 +699,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    */
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -991,10 +994,12 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   let reportsMap = mergeInResources(new Map(), dbData.viaReport);
   delete dbData.viaReport;
   */
+  /*
   reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
   delete dbData.viaSpecialistNextSteps;
   reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
   delete dbData.viaRecipientNextSteps;
+  */
   reportsMap = mergeInResources(reportsMap, dbData.viaObjectives);
   delete dbData.viaObjectives;
   reportsMap = mergeInResources(reportsMap, dbData.viaGoals);
