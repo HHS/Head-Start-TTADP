@@ -3,21 +3,21 @@ import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Radio } from '@trussworks/react-uswds';
 import moment from 'moment';
-import StatusDropdown from '../../../../../components/GoalCards/components/StatusDropdown';
 import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import ObjectiveCard from '../../../../../components/GoalCards/ObjectiveCard';
 import ExpanderButton from '../../../../../components/ExpanderButton';
 import '../../../../../components/GoalCards/GoalCard.scss';
 import { goalPropTypes } from '../../../../../components/GoalCards/constants';
 import FlagStatus from '../../../../../components/GoalCards/FlagStatus';
+import { STATUSES } from '../../../../../components/GoalCards/components/StatusDropdown';
 import './GoalCard.css';
 
 function GoalCard({
   goal,
-  regionId,
   register,
   isRadio,
   selectedGoalsIncludeCurated,
+  final,
 }) {
   const {
     id, // for keys and such, from the api
@@ -27,8 +27,10 @@ function GoalCard({
     objectiveCount,
     reasons,
     objectives,
-    previousStatus,
   } = goal;
+
+  const key = goalStatus || 'Needs Status';
+  const { icon, display } = STATUSES[key];
 
   const lastTTA = (() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''))();
   const goalNumbers = goal.goalNumbers.join(', ');
@@ -59,6 +61,21 @@ function GoalCard({
 
   const internalLeftMargin = 'margin-left-5';
 
+  const goalStatusClassNames = (() => {
+    const classNames = [];
+    classNames.push('ttahub-goal-card--status');
+
+    if (!showFormControl) {
+      classNames.push('margin-left-5');
+    }
+
+    if (final) {
+      classNames.push('ttahub-final-goal--status');
+    }
+
+    return classNames.join(' ');
+  })();
+
   return (
     <article
       className={`ttahub-goal-card--merge-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
@@ -76,15 +93,12 @@ function GoalCard({
               inputRef={register(registration)}
             />
           ) : null }
-          <StatusDropdown
-            showReadOnlyStatus
-            goalId={id}
-            status={goalStatus}
-            previousStatus={previousStatus || 'Not Started'} // Open the escape hatch!
-            regionId={regionId}
-            onUpdateGoalStatus={() => {}}
-            className={showFormControl ? '' : 'margin-left-5'}
-          />
+          <div className={goalStatusClassNames}>
+            {icon}
+            <span className="ttahub-final-goal--status-label">
+              {display}
+            </span>
+          </div>
         </div>
       </div>
       <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
@@ -142,15 +156,16 @@ function GoalCard({
 
 GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
-  regionId: PropTypes.string.isRequired,
   register: PropTypes.func,
   isRadio: PropTypes.bool.isRequired,
   selectedGoalsIncludeCurated: PropTypes.bool,
+  final: PropTypes.bool,
 };
 
 GoalCard.defaultProps = {
   register: null,
   selectedGoalsIncludeCurated: false,
+  final: false,
 };
 
 export default GoalCard;
