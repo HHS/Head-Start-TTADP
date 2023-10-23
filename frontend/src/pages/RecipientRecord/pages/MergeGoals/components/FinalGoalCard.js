@@ -7,7 +7,6 @@ function FinalGoalCard({
   selectedGoalIds,
   goals,
   finalGoalId,
-  regionId,
 }) {
   const final = goals.find((g) => g.id.toString() === finalGoalId);
 
@@ -64,7 +63,7 @@ function FinalGoalCard({
           objectiveCount: combinedObjectives.length,
           goalStatus: status,
         }}
-        regionId={regionId}
+        final
       />
     </>
   );
@@ -74,7 +73,6 @@ FinalGoalCard.propTypes = {
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   goals: PropTypes.arrayOf(goalPropTypes).isRequired,
   finalGoalId: PropTypes.string,
-  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 FinalGoalCard.defaultProps = {
