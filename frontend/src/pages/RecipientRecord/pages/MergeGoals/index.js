@@ -315,8 +315,8 @@ export default function MergeGoals({
           be selected as the goal to keep, and other goals can&apos;t be selected.
         </Alert>
         )}
+        {/* eslint-disable-next-line no-console */}
         <form onSubmit={hookForm.handleSubmit((data) => console.log(data))}>
-
           <fieldset className="margin-right-2 padding-0 border-0" hidden={activePage !== SELECT_GOALS_TO_MERGE}>
             {goals.map((goal) => (
               <GoalCard
@@ -328,7 +328,6 @@ export default function MergeGoals({
               />
             ))}
           </fieldset>
-
           <fieldset className="margin-right-2 padding-0 border-0" hidden={activePage !== SELECT_GOALS_TO_KEEP}>
             {selectedGoals.map((goal) => (
               <GoalCard
@@ -341,7 +340,6 @@ export default function MergeGoals({
               />
             ))}
           </fieldset>
-
           <div hidden={activePage !== REVIEW_AND_MERGE}>
             <FinalGoalCard
               selectedGoalIds={selectedGoalIds}
@@ -351,7 +349,6 @@ export default function MergeGoals({
               register={register}
             />
           </div>
-
           {validation ? (
             <Alert type="error" className="margin-top-0 margin-bottom-2">
               {validation}
