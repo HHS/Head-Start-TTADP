@@ -233,7 +233,6 @@ const includeGenericEnums = (
     entityTypeFiltered = false,
   } = entityEnum;
   const association = model?.associations?.[alias];
-  console.log('includeGenericEnums', association);
 
   if (association === undefined || association === null) {
     throw new Error(
@@ -319,28 +318,32 @@ const syncGenericEnums = async (
   entityEnum: EnumInfo,
   genericEnums: { id?: number, name?: string }[] | null = null,
 ) => {
+  if (!entity?.id) throw new Error(`id of ${entity.name} must be valid.`);
+
   // Fetch incoming valid enums and current enums in parallel
   const [incomingValidEnums, currentEnums] = await Promise.all([
-    findAll(
-      entityEnum.model.associations[entityEnum.alias].target,
-      {
-        ...(entityEnum?.entityTypeFiltered
-          && entity?.type
-          && { validFor: entity.type }),
-        [Op.or]: [
-          {
-            id: genericEnums
-              .filter(({ id }) => id)
-              .map(({ id }) => id),
-          },
-          {
-            name: genericEnums
-              .filter(({ name }) => name)
-              .map(({ name }) => name),
-          },
-        ],
-      },
-    ),
+    genericEnums
+      ? findAll(
+        entityEnum.model.associations[entityEnum.alias].target,
+        {
+          ...(entityEnum?.entityTypeFiltered
+            && entity?.type
+            && { validFor: entity.type }),
+          [Op.or]: [
+            {
+              id: genericEnums
+                .filter(({ id }) => id)
+                .map(({ id }) => id),
+            },
+            {
+              name: genericEnums
+                .filter(({ name }) => name)
+                .map(({ name }) => name),
+            },
+          ],
+        },
+      )
+      : Promise.resolve([]),
     getGenericEnums(
       entity,
       entityEnum,
@@ -354,7 +357,7 @@ const syncGenericEnums = async (
     currentEnumIds,
   ] = [
     incomingValidEnums.map((ive) => ive.id),
-    genericEnums.reduce((acc, ge) => {
+    (genericEnums || []).reduce((acc, ge) => {
       const matched = incomingValidEnums
         .find(({ id, name }) => ge.id === id || ge.name === name);
       if (!matched) {
@@ -362,7 +365,7 @@ const syncGenericEnums = async (
       }
       return acc;
     }, []),
-    currentEnums.map((ce) => ce[`${entityEnum.alias}Id`]),
+    currentEnums.map((ce) => ce.dataValues[`${entityEnum.alias}Id`]),
   ];
 
   // Determine the lists of enums to create, update, and destroy
@@ -373,13 +376,13 @@ const syncGenericEnums = async (
   ] = [
     incomingValidEnumIds.filter((iveId) => !currentEnumIds.includes(iveId)),
     incomingValidEnumIds.filter((iveId) => currentEnumIds.includes(iveId)),
-    currentEnumIds.filter((ceId: number) => incomingValidEnumIds.includes(ceId)),
+    currentEnumIds.filter((ceId: number) => !incomingValidEnumIds.includes(ceId)),
   ];
 
   return {
     promises: Promise.all([
       // Create new enums if needed
-      (createList && createList.length)
+      (createList?.length)
         ? entityEnum.model.bulkCreate(
           createList.map((id) => ({
             [`${entityEnum.alias}Id`]: id,
@@ -389,7 +392,7 @@ const syncGenericEnums = async (
         )
         : Promise.resolve(),
       // Update existing enums if needed
-      (updateList && updateList.length)
+      (updateList?.length)
         ? entityEnum.model.update(
           {
             updatedAt: new Date(),
@@ -404,7 +407,7 @@ const syncGenericEnums = async (
         )
         : Promise.resolve(),
       // Destroy unused enums if needed
-      (destroyList && destroyList.length)
+      (destroyList?.length)
         ? entityEnum.model.destroy({
           where: {
             [entity.name]: entity.id,
