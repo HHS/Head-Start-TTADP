@@ -84,6 +84,15 @@ const stepIndicatorStatus = (position, activePage) => {
   return 'incomplete';
 };
 
+const navigate = (newPage, setActivePage) => {
+  if (!pages.includes(newPage)) {
+    return;
+  }
+
+  setActivePage(newPage);
+  window.scrollTo(0, 0);
+};
+
 export default function MergeGoals({
   location,
   recipientId,
@@ -185,15 +194,6 @@ export default function MergeGoals({
     hookForm.setValue('selectedGoalIds', newSelectedGoalIds);
   };
 
-  const navigate = (newPage) => {
-    if (!pages.includes(newPage)) {
-      return;
-    }
-
-    setActivePage(newPage);
-    window.scrollTo(0, 0);
-  };
-
   const onContinue = (e) => {
     e.preventDefault();
 
@@ -208,7 +208,7 @@ export default function MergeGoals({
     }
 
     const newPage = activePage + 1;
-    navigate(newPage);
+    navigate(newPage, setActivePage);
   };
 
   // const noneAreDuplicates = (e) => {
@@ -220,7 +220,7 @@ export default function MergeGoals({
   const goBack = (e) => {
     e.preventDefault();
     const newPage = activePage - 1;
-    navigate(newPage);
+    navigate(newPage, setActivePage);
   };
 
   const MiddleButton = () => {
