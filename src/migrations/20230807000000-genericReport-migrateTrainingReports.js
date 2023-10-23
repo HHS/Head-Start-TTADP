@@ -22,7 +22,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
         ----- Populate dimensional tables -----
         -- Add Reasons
         -- Add TargetPopulations
@@ -123,12 +123,12 @@ module.exports = {
         ------------------------------------------------------------------------------------------------
         ----- REPORTS ----------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------
-        
-        
+
+
         ------ Collect all reports that will generate report IDs
         DROP TABLE IF EXISTS interim_reports;
         CREATE TEMP TABLE interim_reports
-        AS 
+        AS
         SELECT
           erp.id pilot_record_id,
           1 "reportTypeId", -- the 'report.trainingEvent' ID in ValidFor
@@ -188,7 +188,7 @@ module.exports = {
         SET reports_id = id
         FROM "Reports" r
         WHERE (string_to_array(r.context, 'XYX'))[2]::integer = pilot_record_id
-          AND r."reportTypeId" = interim_reports."reportTypeId" 
+          AND r."reportTypeId" = interim_reports."reportTypeId"
         ;
 
         -- Set Reports.context back to its normal values
@@ -196,7 +196,7 @@ module.exports = {
         SET context = NULLIF((string_to_array(context, 'XYX'))[1], 'null')
         ;
 
-      
+
         INSERT INTO "ReportTrainingEvents"
         (
           "reportId",
@@ -240,7 +240,7 @@ module.exports = {
           ir.reports_id,
           ir_events.reports_id,
           (srp.data->>'regionId')::int,
-          (srp.data->>'duration')"::int,
+          (srp.data->>'duration')::int,
           srp.data->>'eventName',
           srp."createdAt",
           srp."updatedAt"
@@ -511,7 +511,7 @@ module.exports = {
               WHEN 'New Program/Option' THEN 'New Program Option'
               ELSE rr
             END AS reason
-          FROM reclipped_reasons 
+          FROM reclipped_reasons
         )
         SELECT
           reports_id,
@@ -551,7 +551,7 @@ module.exports = {
         JOIN unnested_target_populations utp
           ON tp.name = utp.target_population_name
         ;
-        
+
         -- Insert ReportRecipients
         INSERT INTO "ReportRecipients" (
           "reportId",
@@ -641,7 +641,7 @@ module.exports = {
         FROM obj_templates o_t
         WHERE to_insert
         ;
-        
+
         -- Insert ReportObjectiveTemplates
         INSERT INTO "ReportObjectiveTemplates" (
           "reportId",
@@ -698,7 +698,7 @@ module.exports = {
           ON TRIM(LOWER(o_t.ottitle)) = TRIM(LOWER(ot."templateTitle"))
           AND o_t."regionId" = ot."regionId"
         ;
-        -- Insert ObjectiveTemplateResources 
+        -- Insert ObjectiveTemplateResources
         -- first need a list of resources and whether they need to be added
         -- there is not expected to be any new resources, but this is due-diligence
         CREATE TEMP TABLE tr_resources
@@ -816,7 +816,7 @@ module.exports = {
         FROM goal_templates g_t
         WHERE to_insert
         ;
-        
+
         -- Insert ReportGoalTemplates
         INSERT INTO "ReportGoalTemplates" (
           "reportId",
@@ -841,7 +841,7 @@ module.exports = {
           AND g_t."regionId" = gt."regionId"
         ;
 
-        -- Insert GoalTemplateObjectiveTemplates 
+        -- Insert GoalTemplateObjectiveTemplates
         INSERT INTO "GoalTemplateObjectiveTemplates" (
           "goalTemplateId",
           "objectiveTemplateId",
@@ -886,7 +886,7 @@ module.exports = {
       WHERE name IN ('Not started', 'In progress')
       ;
 
-      DELETE FROM "Statuses" 
+      DELETE FROM "Statuses"
       WHERE id IN (SELECT id FROM status_ids_for_removal)
       ;
 
