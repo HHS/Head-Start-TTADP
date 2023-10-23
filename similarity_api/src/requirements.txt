@@ -39,7 +39,7 @@ threadpoolctl==3.2.0
 tqdm==4.66.0
 typer==0.9.0
 typing_extensions==4.7.1
-urllib3==2.0.4
+urllib3==2.0.7
 wasabi==1.1.2
 Werkzeug==2.3.6
 zipp==3.16.2
