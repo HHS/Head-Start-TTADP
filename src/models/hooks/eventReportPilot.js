@@ -20,7 +20,7 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
         return;
       }
 
-      // eslint-disable-next-line global-require
+      // imported inside function to prevent circular ref
       const { trCollaboratorAdded } = require('../../lib/mailer');
 
       // process notifications for new collaborators
@@ -47,7 +47,7 @@ const notifyNewPoc = async (_sequelize, instance) => {
         return;
       }
 
-      // eslint-disable-next-line global-require
+      // imported inside function to prevent circular ref
       const { trPocAdded } = require('../../lib/mailer');
 
       await Promise.all(
@@ -69,6 +69,7 @@ const notifyPocEventComplete = async (_sequelize, instance) => {
       if (
         current.status === TRAINING_REPORT_STATUSES.COMPLETE
         && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
+        // imported inside function to prevent circular ref
         const { trPocEventComplete } = require('../../lib/mailer');
         await trPocEventComplete(instance.dataValues);
       }
@@ -87,7 +88,9 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
 
       if (
         current.pocComplete && !previous.pocComplete) {
+        // imported inside function to prevent circular ref
         const { trVisionAndGoalComplete } = require('../../lib/mailer');
+        console.log(instance.dataValues);
         await trVisionAndGoalComplete(instance.dataValues);
       }
     }

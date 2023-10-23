@@ -461,17 +461,19 @@ export const trVisionAndGoalComplete = async (event) => {
       ...event.collaboratorIds,
     ]);
 
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(event.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
     await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
       const user = await userById(id);
-
-      const { eventId } = event.data;
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
-
       const data = {
         displayId: eventId,
         reportPath,
         emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
+        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
         templatePath: 'tr_poc_vision_goal_complete',
       };
 
@@ -496,7 +498,8 @@ export const trPocSessionComplete = async (event) => {
     await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
       const user = await userById(id);
       const { eventId } = event.data;
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
       const data = {
         displayId: eventId,
@@ -527,7 +530,8 @@ export const trSessionCreated = async (event) => {
       const user = await userById(id);
 
       const { eventId } = event.data;
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
       const data = {
         displayId: eventId,
@@ -562,8 +566,8 @@ export const trSessionCompleted = async (event) => {
       const user = await userById(id);
 
       const { eventId } = event.data;
-
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`;
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
       const data = {
         displayId: eventId,
@@ -598,11 +602,13 @@ export const trCollaboratorAdded = async (
     // due to the way sequelize sends the JSON column :(
     const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
     const data = {
       displayId: eventId,
       user: collaborator,
-      reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`,
+      reportPath,
       emailTo: [collaborator.email],
       templatePath: 'tr_collaborator_added',
       debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
@@ -630,7 +636,8 @@ export const trPocAdded = async (
     // due to the way sequelize sends the JSON column :(
     const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${report.id}`;
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
     const data = {
       displayId: eventId,
       reportPath,
@@ -663,11 +670,13 @@ export const trPocEventComplete = async (
       const user = await userById(id);
       const parsedData = JSON.parse(event.data.val); // parse the JSON string
       const { eventId } = parsedData; // extract the pretty url
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
       const data = {
         displayId: eventId,
         emailTo: [user.email],
-        reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${event.id}`,
+        reportPath,
         debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
         templatePath: 'tr_event_complete',
       };
