@@ -90,7 +90,6 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
         current.pocComplete && !previous.pocComplete) {
         // imported inside function to prevent circular ref
         const { trVisionAndGoalComplete } = require('../../lib/mailer');
-        console.log(instance.dataValues);
         await trVisionAndGoalComplete(instance.dataValues);
       }
     }
