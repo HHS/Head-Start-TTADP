@@ -14,6 +14,7 @@ import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
 import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -103,17 +104,19 @@ describe('Goals and Objectives', () => {
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
-          <FilterContext.Provider value={{ filterKey: 'test' }}>
-            <GoalsObjectives
-              recipientId="401"
-              regionId="1"
-              recipient={recipient}
-              location={{
-                state: { ids }, hash: '', pathname: '', search: '',
-              }}
-              recipientName="test"
-            />
-          </FilterContext.Provider>
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+            <FilterContext.Provider value={{ filterKey: 'test' }}>
+              <GoalsObjectives
+                recipientId="401"
+                regionId="1"
+                recipient={recipient}
+                location={{
+                  state: { ids }, hash: '', pathname: '', search: '',
+                }}
+                recipientName="test"
+              />
+            </FilterContext.Provider>
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
       </Router>,
     );
