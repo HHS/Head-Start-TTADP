@@ -928,6 +928,7 @@ class ReportParticipation{
  * id : integer : <generated>
  * reportId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
+ * deliveryMethod : enum
  * updatedAt : timestamp with time zone : now()
  inpersonParticipantCount : integer
  participantCount : integer
@@ -998,6 +999,7 @@ class ReportTrainingSessions{
  * reportTrainingEventId : integer : REFERENCES "Reports".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ duration : decimal(4,2)
  name : text
 }
 

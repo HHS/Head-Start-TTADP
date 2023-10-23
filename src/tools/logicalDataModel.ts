@@ -135,6 +135,7 @@ function processClassDefinition(schema, key) {
 
     // highlight type when not matched in model
     if (modelField && field.type !== modelField.type.toString().toLowerCase()) {
+      console.log(Object.entries(field), Object.entries(modelField));
       issues.push(`!issue='column type does not match model: ${field.type} != ${modelField.type.toString().toLowerCase()}'`); //eslint-disable-line
       column += `<color:${colors.error}>${field.type}</color>`;
     } else {
@@ -443,7 +444,7 @@ export default async function generateUMLFromDB() {
                       WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
                       ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
                     END || '[]'
-                  WHEN data_type = 'numeric' THEN 'decimal(3,1)'
+                  WHEN data_type = 'numeric' THEN CONCAT('decimal(', numeric_precision, ',', numeric_scale, ')')
                   WHEN data_type = 'int4' THEN 'integer'
                   ELSE data_type
                 END,

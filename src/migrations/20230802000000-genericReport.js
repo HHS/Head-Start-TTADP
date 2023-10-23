@@ -22,7 +22,7 @@ const {
   AUDIENCE,
   TRAINING_TYPE,
   NEXTSTEP_NOTETYPE,
-  SOURCE_FIELD,
+  DELIVERY_METHOD,
 } = require('../constants');
 
 module.exports = {
@@ -1065,7 +1065,7 @@ module.exports = {
           allowNull: true,
         },
         duration: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DECIMAL(4, 2),
           allowNull: true,
         },
         createdAt: {
@@ -2617,11 +2617,7 @@ module.exports = {
           allowNull: true,
         },
         deliveryMethod: {
-          type: Sequelize.ENUM([
-            'virtual',
-            'in-person',
-            'hybrid',
-          ]),
+          type: Sequelize.ENUM(Object.values(DELIVERY_METHOD)),
           allowNull: false,
         },
         createdAt: {

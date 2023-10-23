@@ -257,6 +257,12 @@ const MAINTENANCE_CATEGORY = {
   REPORT: 'REPORT',
 };
 
+const DELIVERY_METHOD = {
+  VITRUAL: 'virtual',
+  INPERSON: 'in-person',
+  HYBRID: 'hybrid',
+};
+
 module.exports = {
   FILE_STATUSES,
   DATE_FORMAT,
@@ -295,4 +301,5 @@ module.exports = {
   COLLABORATOR_TYPES,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
+  DELIVERY_METHOD,
 };

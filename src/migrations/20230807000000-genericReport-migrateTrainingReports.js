@@ -240,7 +240,7 @@ module.exports = {
           ir.reports_id,
           ir_events.reports_id,
           (srp.data->>'regionId')::int,
-          (srp.data->>'duration')::int,
+          (srp.data->>'duration')::DECIMAL,
           srp.data->>'eventName',
           srp."createdAt",
           srp."updatedAt"
@@ -262,7 +262,7 @@ module.exports = {
         INSERT INTO "ReportParticipation" (
           "reportId",
           "participantCount",
-          "deliveryMethod"
+          "deliveryMethod",
           "createdAt",
           "updatedAt"
         )

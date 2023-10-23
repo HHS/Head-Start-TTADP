@@ -86,6 +86,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    duration: {
+      type: DataTypes.DECIMAL(4, 2),
+    },
   }, {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),

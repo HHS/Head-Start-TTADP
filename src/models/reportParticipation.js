@@ -4,6 +4,7 @@ const {
 const {
   automaticallyGenerateJunctionTableAssociations,
 } = require('./helpers/associationsAndScopes');
+const { DELIVERY_METHOD } = require('../constants');
 
 /**
  * @param {} sequelize
@@ -46,25 +47,8 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     deliveryMethod: {
-      type: new DataTypes.VIRTUAL(DataTypes.STRING, [
-        'inpersonParticipantCount',
-        'virtualParticipantCount',
-      ]),
-      get() {
-        const inperson = !Number.isNaN(this.get('inpersonParticipantCount'));
-        const virtual = !Number.isNaN(this.get('virtualParticipantCount'));
-
-        switch (true) {
-          case inperson && virtual:
-            return 'hybrid';
-          case inperson:
-            return 'in-person';
-          case virtual:
-            return 'virtual';
-          default:
-            return null;
-        }
-      },
+      type: new DataTypes.ENUM(Object.values(DELIVERY_METHOD)),
+      allowNull: false,
     },
   }, {
     sequelize,
