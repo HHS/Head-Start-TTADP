@@ -39,16 +39,16 @@ function FinalGoalCard({
   const mergedGoalStatuses = [...mergedGoals.map((g) => g.goalStatus), final.goalStatus];
 
   const status = (() => {
-    if (mergedGoalStatuses.includes('Suspended')) {
-      return 'Suspended';
+    if (mergedGoalStatuses.includes('In Progress')) {
+      return 'In Progress';
     }
 
     if (mergedGoalStatuses.includes('Closed')) {
       return 'Closed';
     }
 
-    if (mergedGoalStatuses.includes('In Progress')) {
-      return 'In Progress';
+    if (mergedGoalStatuses.includes('Suspended')) {
+      return 'Suspended';
     }
 
     return 'Not Started';
