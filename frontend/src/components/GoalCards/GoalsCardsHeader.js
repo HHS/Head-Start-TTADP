@@ -7,6 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
+import { sampleSize } from 'lodash';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
@@ -53,8 +54,8 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
-  const fiveGoalIds = [...pageGoalIds.slice(0, 3), 50954].map((g) => `goalId[]=${g}`).join('&');
-  const twoGoalIds = [20597, 52286].map((g) => `goalId[]=${g}`).join('&');
+  const fiveGoalIds = sampleSize(pageGoalIds, 5).map((g) => `goalId[]=${g}`).join('&');
+  const twoGoalIds = sampleSize(pageGoalIds, 2).map((g) => `goalId[]=${g}`).join('&');
 
   return (
     <div className="padding-x-3 position-relative">
