@@ -8,7 +8,7 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import MergeGoals from '..';
+import MergeGoals, { navigate } from '..';
 import UserContext from '../../../../../UserContext';
 import FilterContext from '../../../../../FilterContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
@@ -189,5 +189,121 @@ describe('Merge goals', () => {
 
     const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
     expect(label.textContent).toBe('In progress');
+  });
+
+  it('you can go back', async () => {
+    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const selectAll = await screen.findByLabelText('Select all');
+    act(() => userEvent.click(selectAll));
+
+    let continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    let newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const [radioButton] = await screen.findAllByRole('radio');
+    userEvent.click(radioButton);
+
+    continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const backButton = await screen.findByRole('button', { name: 'Back' });
+    act(() => userEvent.click(backButton));
+
+    newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
+    expect(newPageHeadings.length).toBeTruthy();
+  });
+
+  it('you can click the submit button', async () => {
+    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const selectAll = await screen.findByLabelText('Select all');
+    act(() => userEvent.click(selectAll));
+
+    let continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    let newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const [radioButton] = await screen.findAllByRole('radio');
+    userEvent.click(radioButton);
+
+    continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
+    expect(label.textContent).toBe('In progress');
+
+    const submitButton = await screen.findByRole('button', { name: 'Merge goals' });
+    act(() => userEvent.click(submitButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+  });
+
+  it('handles special baby curated goals', async () => {
+    const gs = [
+      goals[0],
+      {
+        ...goals[1],
+        isCurated: true,
+      },
+    ];
+    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: gs });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const selectAll = await screen.findByLabelText('Select all');
+    act(() => userEvent.click(selectAll));
+
+    let continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    let newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    expect(await screen.findByText(/If a goal uses text associated with an OHS initiative, it will automatically/i)).toBeInTheDocument();
+
+    const radioButtons = await screen.findAllByRole('radio');
+    expect(radioButtons.length).toBe(1);
+    const [radioButton] = radioButtons;
+    expect(radioButton).toBeChecked();
+
+    continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
+    expect(label.textContent).toBe('In progress');
+
+    const submitButton = await screen.findByRole('button', { name: 'Merge goals' });
+    act(() => userEvent.click(submitButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+  });
+});
+
+describe('navigate', () => {
+  const scrollTo = jest.fn();
+  mockWindowProperty('scrollTo', scrollTo);
+  it('you cannot navigate to a page that doesn\'t exist', () => {
+    navigate(10);
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });
