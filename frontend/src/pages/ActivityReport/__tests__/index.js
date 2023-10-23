@@ -22,6 +22,7 @@ import {
   recipients,
   mockGoalsAndObjectives,
 } from '../testHelpers';
+import { formatReportWithSaveBeforeConversion } from '..';
 import { HTTPError } from '../../../fetchers';
 
 describe('ActivityReport', () => {
@@ -1126,5 +1127,28 @@ describe('ActivityReport', () => {
 
     radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
     expect(radios).not.toBeNull();
+  });
+});
+
+describe('formatReportWithSaveBeforeConversion', () => {
+  it('properly formats dates', async () => {
+    const reportData = await formatReportWithSaveBeforeConversion(
+      {
+        creatorRole: 'Tiny Lizard',
+        startDate: '10/04/2020',
+        endDate: '10/04/2020',
+      },
+      {
+        creatorRole: 'Tiny Lizard',
+        startDate: '10/04/2020',
+        endDate: '10/04/2020',
+      },
+      {},
+      false,
+      1,
+      [],
+    );
+    expect(reportData.startDate).toBe('10/04/2020');
+    expect(reportData.endDate).toBe('10/04/2020');
   });
 });
