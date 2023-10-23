@@ -2620,7 +2620,7 @@ module.exports = {
           type: Sequelize.ENUM([
             'virtual',
             'in-person',
-            'hybrid'
+            'hybrid',
           ]),
           allowNull: false,
         },
