@@ -95,6 +95,7 @@ const SessionSummary = ({ datePickerKey }) => {
     async function fetchTopics() {
       try {
         const topics = await getTopics();
+        topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
