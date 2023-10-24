@@ -11,6 +11,8 @@ import { includeReportObjectiveTemplateTrainers } from './reportObjectiveTemplat
 const {
   ReportObjectiveTemplate,
   ObjectiveTemplate,
+  SupportTypes,
+  Statuses,
 } = db;
 
 const getCurrentReportObjectiveTemplates = async (
@@ -206,12 +208,40 @@ const includeReportObjectiveTemplates = () => ({
   model: ReportObjectiveTemplate,
   as: 'reportObjectiveTemplates',
   required: false,
-  attributes: [], // TODO: fix
+  attributes: [
+    'reportId',
+    'objectiveTemplateId',
+    'reportGoalTemplateId',
+    'supportTypeId',
+    'templateTitle',
+    'ttdProvided',
+    'isActivelyEdited',
+    'statusId',
+    'ordinal',
+  ],
   include: [
     includeReportObjectiveTemplateFiles(),
     includeReportObjectiveTemplateResources(),
     includeReportObjectiveTemplateTopics(),
     includeReportObjectiveTemplateTrainers(),
+    {
+      model: SupportTypes,
+      as: 'supportType',
+      required: true,
+      attributes: [
+        'id',
+        'name',
+      ],
+    },
+    {
+      model: Statuses,
+      as: 'status',
+      required: true,
+      attributes: [
+        'id',
+        'name',
+      ],
+    },
   ],
 });
 
