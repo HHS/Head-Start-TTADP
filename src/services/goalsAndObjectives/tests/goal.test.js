@@ -28,6 +28,10 @@ describe('syncGoals', () => {
     jest.clearAllMocks();
   });
 
+  beforeAll(async () => {
+    await db.isReady;
+  });
+
   it('should call filterDataToModel for each datum in data', async () => {
     const data = [{ grantId: 1 }, { grantId: 2 }];
     await syncGoals(data);

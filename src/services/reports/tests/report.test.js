@@ -12,6 +12,10 @@ describe('syncReport', () => {
     jest.clearAllMocks();
   });
 
+  beforeAll(async () => {
+    await db.isReady;
+  });
+
   it('should synchronize an existing report with the given data if the filteredData has an id', async () => {
     const data = {
       id: 123,
