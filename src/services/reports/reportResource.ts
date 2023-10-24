@@ -1,4 +1,3 @@
-// TODO: how to handle this, check how to pipe everything through the other resource system.
 import { DataTypes } from 'sequelize';
 import { collectURLsFromField, findOrCreateResources } from '../resource';
 import { REPORT_TYPE } from '../../constants';
@@ -164,8 +163,8 @@ const checkForSyncableReportResources = async (
  * @returns An object with properties and values used for including report resources in a query.
  */
 const includeReportResources = (
-  tableName: string,
-  tableId: number,
+  tableName?: string,
+  tableId?: number,
   columnName?: string,
 ) => ({
   model: ReportResource, // The model to include in the query
@@ -179,8 +178,8 @@ const includeReportResources = (
     'tableId',
   ], // The attributes to include from the model
   where: {
-    tableName, // Filter by tableName
-    tableId, // Filter by tableId
+    ...(tableName && { tableName }), // Filter by tableName
+    ...(tableId && { tableId }), // Filter by tableId
     // Optional filter by columnName if it is defined
     ...(columnName !== undefined && { columnName }),
   },
@@ -204,15 +203,15 @@ const includeReportResources = (
  * @returns A promise that resolves to the report resources.
  */
 const getReportResources = async (
-  report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
-  table: { name: string, id: number, column?: string },
+  report: { id: number, type?: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
+  table?: { name?: string, id?: number, column?: string },
 ) => includeToFindAll(
   includeReportResources, // Include the report resources in the findAll function
   {
     reportId: report.id, // Pass the report ID
-    tableName: table.name, // Pass the table name
-    columnName: table.column, // Pass the column name if available
-    tableId: table.id, // Pass the table ID
+    tableName: table?.name, // Pass the table name
+    columnName: table?.column, // Pass the column name if available
+    tableId: table?.id, // Pass the table ID
   },
 );
 
