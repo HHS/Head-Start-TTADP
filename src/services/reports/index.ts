@@ -3,7 +3,7 @@ import { Op } from 'sequelize';
 import db from '../../models';
 import { REPORT_TYPE, COLLABORATOR_TYPES, NEXTSTEP_NOTETYPE } from '../../constants';
 import { syncReport } from './report';
-import { RemappingDefinition, remap } from '../../lib/modelUtils';
+import { RemappingDefinition, remap, removeUndefined } from '../../lib/modelUtils';
 import {
   reportIncludes,
   reportSyncers,
@@ -151,6 +151,12 @@ const collectIncludes = (
     .map(({ include, model, type }) => include(reportType, type));
 };
 
+/** TODO:
+ * This function as written does not fully take into account the partial update model.
+ * Where the form might send back only the delta. In someways it does, either confirmation
+ * of or implementation to treat non-existing data as undefined and not null. Then filter out
+ * all the undefined values before passing the data to the syncer.
+ * */
 const syncMetaData = async (
   report: { id: number, type: typeof REPORT_TYPE[keyof typeof REPORT_TYPE] },
   syncerDef: { syncer: Function, type?: string, remapDef?: RemappingDefinition },
@@ -172,12 +178,15 @@ const syncMetaData = async (
       remapDef,
       { keepUnmappedValues: false },
     ));
+    dataToSync = removeUndefined(dataToSync);
   } else {
     dataToSync = data;
     dataNotUsed = null;
   }
 
-  const { promises, unmatched } = await syncer(report, dataToSync, type);
+  const { promises, unmatched } = (dataToSync !== undefined)
+    ? await syncer(report, dataToSync, type)
+    : { promises: Promise.resolve(), unmatched: null };
 
   if (remapDef && unmatched && Object.keys(unmatched).length > 0) {
     const { mapped: reverseMapped } = remap(
