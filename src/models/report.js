@@ -61,7 +61,9 @@ export default (sequelize, DataTypes) => {
           model: models.Status,
           as: 'status',
           required: true,
-          attributes: [],
+          attributes: [
+            'name',
+          ],
           where: {
             name: {
               [Op.ne]: 'deleted',
@@ -70,15 +72,30 @@ export default (sequelize, DataTypes) => {
         }],
       });
       Report.addScope('reportType', (reportType) => ({
-        include: [{
-          attributes: [],
-          model: models.ValidFor,
-          as: 'reportType',
-          required: true,
-          where: {
-            name: reportType,
+        include: [
+          {
+            model: models.Status,
+            as: 'status',
+            required: true,
+            attributes: [
+              'name',
+            ],
+            where: {
+              name: {
+                [Op.ne]: 'deleted',
+              },
+            },
           },
-        }],
+          {
+            attributes: [],
+            model: models.ValidFor,
+            as: 'reportType',
+            required: true,
+            where: {
+              name: reportType,
+            },
+          },
+        ],
       }));
     }
   }
