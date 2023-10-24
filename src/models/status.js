@@ -26,13 +26,22 @@ export default (sequelize, DataTypes) => {
       });
 
       models.Status.addScope('validFor', (name) => ({
-        include: [{
-          model: models.ValidFor,
-          as: 'validFor',
-          attributes: [],
-          required: true,
-          where: { name },
-        }],
+        include: [
+          {
+            model: models.Status.scope(),
+            as: 'mapsToStatus',
+            required: false,
+          },
+          {
+            model: models.ValidFor,
+            as: 'validFor',
+            attributes: [],
+            required: true,
+            where: {
+              ...(name && { name }),
+            },
+          },
+        ],
       }));
     }
 
