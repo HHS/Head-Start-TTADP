@@ -261,24 +261,26 @@ const includeGenericEnums = (
       'id',
       entity.name,
       foreignKey,
-      [sequelize.literal(`"${as}".name`), 'name'],
+      [sequelize.literal(`"${pascalToCamelCase(model.tableName)}->${as}".name`), 'name'],
     ],
     include: [{
       model: target,
       as,
       required: true,
       attributes: [],
-      ...(entityTypeFiltered && {
-        include: [{
-          model: ValidFor,
-          as: 'validFor',
-          required: true,
-          attributes: [],
-          where: {
-            name: entity.type,
-          },
-        }],
-      }),
+      ...(entityTypeFiltered
+        && entity.type
+        && {
+          include: [{
+            model: ValidFor,
+            as: 'validFor',
+            required: true,
+            attributes: [],
+            where: {
+              name: entity.type,
+            },
+          }],
+        }),
     }],
   };
 };
