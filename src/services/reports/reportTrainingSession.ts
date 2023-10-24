@@ -43,7 +43,7 @@ const createOrUpdateReportTrainingSession = async (
   } else {
     // If no id is present, it's a new report, so create it
     return ReportTrainingSession
-      .create(data); // TODO: have create return the object
+      .create(data);
   }
 
   // Return a resolved promise if no action is taken
@@ -97,6 +97,7 @@ const includeReportTrainingSession = async () => ({
     'id',
     'regionId',
     'name',
+    'duration',
     'reportTrainingEventId',
     'createdAt',
     'updatedAt',
