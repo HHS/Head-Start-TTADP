@@ -1,4 +1,5 @@
 import React, { useRef, useLayoutEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Dropdown, Pagination } from '@trussworks/react-uswds';
@@ -10,9 +11,10 @@ function PaginationCard({
   perPage,
   handlePageChange,
   perPageChange,
+  hideInfo,
 }) {
   const el = useRef();
-
+  const isMobile = useMediaQuery({ maxWidth: 900 });
   /**
    * there is an unlabeled svg that is used to render the chevron icons
    * within the pagination component
@@ -67,8 +69,11 @@ function PaginationCard({
     return totalCount % perPage > 0 ? totalPages + 1 : totalPages;
   };
 
+  const totalPages = getTotalPages();
+
   return (
     <div ref={el} className="smart-hub--pagination-card display-flex bg-white">
+      {!(hideInfo) && (
       <div className="display-flex flex-1 flex-align-center margin-left-4">
         {perPageChange ? (
           <Dropdown
@@ -87,13 +92,15 @@ function PaginationCard({
         ) : null }
         <span>{getPageInfo()}</span>
       </div>
+      )}
       <Pagination
         className="padding-1"
         currentPage={currentPage}
-        totalPages={getTotalPages()}
+        totalPages={totalPages}
         onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
         onClickPageNumber={(_e, page) => handlePageChange(page)}
+        maxSlots={isMobile ? 2 : 5}
       />
     </div>
   );
@@ -105,6 +112,7 @@ PaginationCard.propTypes = {
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func.isRequired,
   perPageChange: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
+  hideInfo: PropTypes.bool,
 };
 
 PaginationCard.defaultProps = {
@@ -113,5 +121,6 @@ PaginationCard.defaultProps = {
   offset: 0,
   perPage: 10,
   perPageChange: false,
+  hideInfo: false,
 };
 export default PaginationCard;

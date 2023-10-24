@@ -461,10 +461,10 @@ describe('Table sorting', () => {
   });
 
   it('Pagination links are visible', async () => {
-    const pageOne = await screen.findByRole('button', {
+    const [pageOne] = await screen.findAllByRole('button', {
       name: /page 1/i,
     });
-    const nextLink = await screen.findByRole('button', {
+    const [nextLink] = await screen.findAllByRole('button', {
       name: /next page/i,
     });
 
@@ -473,7 +473,7 @@ describe('Table sorting', () => {
   });
 
   it('clicking on pagination page works', async () => {
-    const pageOne = await screen.findByRole('button', {
+    const [pageOne] = await screen.findAllByRole('button', {
       name: /page 1/i,
     });
     fetchMock.reset();
@@ -507,7 +507,7 @@ describe('Table sorting', () => {
 
     renderTable(user);
 
-    const pageTwo = await screen.findByRole('button', {
+    const [pageTwo] = await screen.findAllByRole('button', {
       name: /page 2/i,
     });
 
@@ -539,7 +539,7 @@ describe('Table sorting', () => {
 
     renderTable(user);
 
-    const pageTwo = await screen.findByRole('button', {
+    const [pageTwo] = await screen.findAllByRole('button', {
       name: /page 2/i,
     });
 

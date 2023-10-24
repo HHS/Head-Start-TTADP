@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import ReportMenu from '../pages/Landing/ReportMenu';
 import colors from '../colors';
+import PaginationCard from './PaginationCard';
 
 export default function TableHeader({
   title,
@@ -21,13 +22,18 @@ export default function TableHeader({
   downloadAllButtonRef,
   downloadSelectedButtonRef,
   exportIdPrefix,
+  activePage,
+  offset,
+  perPage,
+  handlePageChange,
 }) {
   return (
     <div className="desktop:display-flex">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
-        <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row flex-align-center">
-          {numberOfSelected > 0
+      <div className="desktop-lg:display-flex flex-1 flex-align-center desktop:padding-top-0 padding-top-2 flex-justify">
+        <div className="desktop:display-flex flex-align-center">
+          <h2 className="font-body-lg desktop-lg:margin-y-0 margin-left-2 margin-right-1">{title}</h2>
+          <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row">
+            {numberOfSelected > 0
             && (
               <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
                 {numberOfSelected}
@@ -50,7 +56,7 @@ export default function TableHeader({
                 </Button>
               </span>
             )}
-          {!hideMenu && (
+            {!hideMenu && (
             <ReportMenu
               label={menuAriaLabel}
               hasSelectedReports={numberOfSelected > 0}
@@ -64,8 +70,17 @@ export default function TableHeader({
               downloadSelectedButtonRef={downloadSelectedButtonRef}
               exportIdPrefix={exportIdPrefix}
             />
-          )}
-        </span>
+            )}
+          </span>
+        </div>
+        <PaginationCard
+          currentPage={activePage}
+          totalCount={count}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          hideInfo
+        />
       </div>
     </div>
   );
@@ -79,7 +94,10 @@ TableHeader.propTypes = {
   handleDownloadAll: PropTypes.func,
   handleDownloadClick: PropTypes.func,
   count: PropTypes.number,
-
+  activePage: PropTypes.number.isRequired,
+  offset: PropTypes.number.isRequired,
+  perPage: PropTypes.number.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   setDownloadError: PropTypes.func,

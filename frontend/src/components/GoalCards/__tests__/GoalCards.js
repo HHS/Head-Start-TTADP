@@ -477,10 +477,10 @@ describe('Goals Table', () => {
     });
 
     it('Pagination links are visible', async () => {
-      const pageOne = await screen.findByRole('button', {
+      const [pageOne] = await screen.findAllByRole('button', {
         name: /page 1/i,
       });
-      const nextLink = await screen.findByRole('button', {
+      const [nextLink] = await screen.findAllByRole('button', {
         name: /next page/i,
       });
 
@@ -489,7 +489,7 @@ describe('Goals Table', () => {
     });
 
     it('Clicking on pagination page works', async () => {
-      const pageOne = await screen.findByRole('button', {
+      const [pageOne] = await screen.findAllByRole('button', {
         name: /page 1/i,
       });
 

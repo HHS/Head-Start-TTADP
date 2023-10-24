@@ -268,6 +268,10 @@ function ActivityReportsTable({
           downloadAllButtonRef={downloadAllButtonRef}
           downloadSelectedButtonRef={downloadSelectedButtonRef}
           exportIdPrefix={exportIdPrefix}
+          activePage={activePage}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>

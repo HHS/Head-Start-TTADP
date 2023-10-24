@@ -11,6 +11,7 @@ import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import FeatureFlag from '../FeatureFlag';
+import PaginationCard from '../PaginationCard';
 
 export default function GoalCardsHeader({
   title,
@@ -29,6 +30,10 @@ export default function GoalCardsHeader({
   createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
+  activePage,
+  offset,
+  perPage,
+  handlePageChange,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -82,6 +87,16 @@ export default function GoalCardsHeader({
             <option value="goalStatus-asc">goal status (drafts first)</option>
             <option value="goalStatus-desc">goal status (closed first) </option>
           </Dropdown>
+        </div>
+        <div>
+          <PaginationCard
+            totalCount={count}
+            currentPage={activePage}
+            offset={offset}
+            perPage={perPage}
+            handlePageChange={handlePageChange}
+            hideInfo
+          />
         </div>
       </div>
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
@@ -194,6 +209,10 @@ GoalCardsHeader.propTypes = {
   createRttapa: PropTypes.func.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  activePage: PropTypes.number.isRequired,
+  offset: PropTypes.number.isRequired,
+  perPage: PropTypes.number.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

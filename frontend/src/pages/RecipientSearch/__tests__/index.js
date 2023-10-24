@@ -363,7 +363,7 @@ describe('the recipient search page', () => {
       fireEvent.click(button);
     });
 
-    const next = await screen.findByRole('button', { name: /page 2/i });
+    const [next] = await screen.findAllByRole('button', { name: /page 2/i });
     const nextUrl = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&sortBy=name&direction=asc&offset=12');
 
     fetchMock.get(nextUrl,
