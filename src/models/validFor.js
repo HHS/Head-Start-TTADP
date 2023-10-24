@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
         include: [{
           model: models.ValidFor.scope(),
           as: 'mapsToValidFor',
+          attributes: [],
           required: false,
         }],
       });
