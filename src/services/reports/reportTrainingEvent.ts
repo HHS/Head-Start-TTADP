@@ -57,7 +57,7 @@ const createOrUpdateReportTrainingEvent = async (
   } else {
     // If it's a new report, create a new report training event
     return ReportTrainingEvent
-      .create(data); // TODO: have create return the object
+      .create(data);
   }
 
   // Return a resolved promise if no action is taken
