@@ -38,22 +38,8 @@ export const getByStatus = async (req, res) => {
     const auth = await getEventAuthorization(req, res, {});
     const userId = await currentUserId(req, res);
     const status = TRAINING_REPORT_STATUSES_URL_PARAMS[statusParam];
-    const query = {
-      ...req.query,
-      'status.in': [status],
-      'type.in': [REPORT_TYPE.REPORT_TRAINING_EVENT],
-    };
-    const updatedFilters = await setTrainingAndActivityReportReadRegions(query, userId);
-    console.log('src/routes/events/handlers.js:getByStatus', { query, updatedFilters });
+    const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
-    const genScopes = await reportsFiltersToScopes(
-      query,
-      undefined,
-      userId,
-      REPORT_TYPE.REPORT_TRAINING_EVENT,
-    );
-    console.log('src/routes/events/handlers.js:getByStatus', { query: JSON.stringify(query), scopes: JSON.stringify(genScopes) });
-
     const events = await findEventsByStatus(
       status,
       auth.readableRegions,
@@ -63,6 +49,20 @@ export const getByStatus = async (req, res) => {
       scopes,
       auth.isAdmin(),
     );
+
+    const query = {
+      ...req.query,
+      'status.in': [status],
+      'type.in': [REPORT_TYPE.REPORT_TRAINING_EVENT],
+    };
+    console.log('src/routes/events/handlers.js:getByStatus', { query, updatedFilters });
+    const genScopes = await reportsFiltersToScopes(
+      query,
+      undefined,
+      userId,
+      REPORT_TYPE.REPORT_TRAINING_EVENT,
+    );
+    console.log('src/routes/events/handlers.js:getByStatus', { query: JSON.stringify(query), scopes: JSON.stringify(genScopes) });
 
     const newEvents = await getAllReports(
       REPORT_TYPE.REPORT_TRAINING_EVENT,
