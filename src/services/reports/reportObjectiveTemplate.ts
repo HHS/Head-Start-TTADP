@@ -148,8 +148,26 @@ const syncReportObjectiveTemplates = async (
         reportId: report.id,
         objectiveTemplateId,
         templateTitle,
+        ...filteredData.find((fd) => fd.templateTitle === templateTitle),
       })),
       // From matched text from existing objective templates
+      ...matchingObjectiveTemplates
+        .filter(({ title, regionId }) => filteredData.find((fd) => (
+          title === fd.title
+          && (regionId === fd.regionId || regionId === null)
+        )))
+        .map(({
+          objectiveTemplateId,
+          title,
+          regionId,
+        }) => ({
+          reportId: report.id,
+          objectiveTemplateId,
+          ...filteredData
+            .find((fd) => fd.templateTitle === title),
+          templateTitle: title,
+          regionId,
+        })),
       // TODO: fix
       // From existing objective templates
       ...filteredData
@@ -161,16 +179,20 @@ const syncReportObjectiveTemplates = async (
           .includes(objectiveTemplateId)),
     ],
     updateList: filteredData
-      .filter(({ objectiveTemplateId }) => objectiveTemplateId
-      && currentReportObjectiveTemplates
-        .map((
-          currentReportObjectiveTemplate,
-        ) => currentReportObjectiveTemplate.objectiveTemplateId)
-        .includes(objectiveTemplateId)),
+      .map((fd) => {
+        const currentReportObjectiveTemplate = currentReportObjectiveTemplates
+          .filter((crot) => crot.objectiveTemplateId === fd.objectiveTemplateId);
+        return ({
+          id: currentReportObjectiveTemplate?.[0].id,
+          ...collectChangedValues(fd, currentReportObjectiveTemplate?.[0]),
+        });
+      })
+      .filter(({ id }) => id),
     removeList: currentReportObjectiveTemplates
       .filter((currentReportObjectiveTemplate) => !filteredData
         .map(({ objectiveTemplateId }) => objectiveTemplateId)
-        .includes(currentReportObjectiveTemplate.objectiveTemplateId)),
+        .includes(currentReportObjectiveTemplate.objectiveTemplateId))
+      .map(({ id }) => id),
   };
 
   return {
