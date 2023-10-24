@@ -1151,12 +1151,18 @@ describe('mailer tests', () => {
       collaboratorIds: [2, 3],
       pocIds: [4, 5],
       data: {
-        eventId: '1234',
+        eventId: 'tr-1234',
       },
     };
     it('trVisionAndGoalComplete success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trVisionAndGoalComplete(mockEvent);
+      await trVisionAndGoalComplete({
+        id: 1,
+        ownerId: 1,
+        collaboratorIds: [2, 3],
+        pocIds: [4, 5],
+        data: { val: JSON.stringify(mockEvent.data) },
+      });
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(3);
       expect(notificationQueueMock.add)
         .toHaveBeenCalledWith(
@@ -1249,7 +1255,7 @@ describe('mailer tests', () => {
     it('trCollaboratorAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded({
-        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent) } },
+        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
       }, 1);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add)
@@ -1274,7 +1280,7 @@ describe('mailer tests', () => {
     it('trPocAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trPocAdded({
-        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent) } },
+        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
       }, 1);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add)
@@ -1299,7 +1305,7 @@ describe('mailer tests', () => {
     it('trPocEventComplete success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trPocEventComplete({
-        id: 1, data: { val: JSON.stringify(mockEvent) }, pocIds: [4, 5],
+        id: 1, data: { val: JSON.stringify(mockEvent.data) }, pocIds: [4, 5],
       });
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
       expect(notificationQueueMock.add)
