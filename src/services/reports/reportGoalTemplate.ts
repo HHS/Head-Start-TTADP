@@ -201,7 +201,15 @@ const includeReportGoalTemplates = () => ({
   as: 'reportGoalTemplates',
   required: false,
   attributes: [
-    ['id'],
+    'id',
+    'reportId',
+    'goalTemplateId',
+    'templateName',
+    'timeframe',
+    'endDate',
+    'isActivelyEdited',
+    'statusId',
+    'ordinal',
   ],
   // include: [
   //   {
