@@ -15,6 +15,7 @@ const {
 const audienceEnumInfo:EnumInfo = {
   model: ReportAudience,
   alias: 'audience',
+  entityTypeFiltered: true,
 };
 
 // This function syncs report audiences with the provided report and audience enums.
