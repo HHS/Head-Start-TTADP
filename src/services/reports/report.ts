@@ -45,7 +45,7 @@ const syncReport = async (
   // TODO: check status, map status name to id if needed
 
   if (filteredData.id) { // Check if filteredData has an id (existing report)
-    report = Report.findByPk(filteredData.id); // Find the existing report
+    report = await Report.findByPk(filteredData.id); // Find the existing report
     const changedData = collectChangedValues(
       {
         ...filteredData,
