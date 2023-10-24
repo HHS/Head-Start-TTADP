@@ -43,6 +43,7 @@ const syncGoals = async (
     updateList,
   ] = [
     filteredData
+      .filter(Boolean)
       .filter(({ mapped }) => !existingGoals.includes((eg) => (
         mapped?.id === eg.id
         || (mapped.grantId === eg.grantId
@@ -51,6 +52,7 @@ const syncGoals = async (
       )))
       .map(({ mapped }) => mapped),
     filteredData
+      .filter(Boolean)
       .reduce((acc, { mapped }) => {
         const match = existingGoals.find((eg) => (
           mapped?.id === eg.id
