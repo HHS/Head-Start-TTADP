@@ -84,7 +84,7 @@ const syncGoals = async (
         returning: [
           'id',
           'name',
-          'grant',
+          'grantId',
           'goalTemplateId',
         ],
       },
@@ -97,7 +97,7 @@ const syncGoals = async (
         returning: [
           'id',
           'name',
-          'grant',
+          'grantId',
           'goalTemplateId',
         ],
       },
