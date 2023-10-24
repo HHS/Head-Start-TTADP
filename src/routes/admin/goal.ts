@@ -3,7 +3,7 @@ import express, { Response, Request } from 'express';
 import httpCodes from 'http-codes';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
-import { groupsByRegion } from '../../services/groups';
+import { getCuratedTemplates } from '../../services/goalTemplates';
 
 const namespace = 'ADMIN:GROUPS';
 const logContext = { namespace };
@@ -13,16 +13,11 @@ const logContext = { namespace };
    * @param {Request} req - request
    * @param {Response} res - response
    */
-export async function getGroupsByRegion(req: Request, res: Response) {
+export async function getCuratedGoalOptions(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {
-    const { regionId } = req.params;
-    if (!regionId) {
-      res.status(httpCodes.BAD_REQUEST).json({ error: 'regionId is required' });
-    }
-
-    const groups = await groupsByRegion(Number(regionId));
-    res.status(httpCodes.OK).json(groups);
+    const templates = await getCuratedTemplates(null);
+    res.status(httpCodes.OK).json(templates);
   } catch (err) {
     await handleError(req, res, err, logContext);
   }
@@ -30,6 +25,6 @@ export async function getGroupsByRegion(req: Request, res: Response) {
 
 const router = express.Router();
 
-router.get('/:regionId', transactionWrapper(getGroupsByRegion));
+router.get('/curated-templates', transactionWrapper(getCuratedGoalOptions));
 
 export default router;
