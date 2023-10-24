@@ -332,6 +332,8 @@ const switchToTopicCentric = (input) => {
 
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
@@ -384,7 +386,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: '2022-12-01' },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -563,7 +565,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: '2022-12-01' },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -662,7 +664,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: '2022-12-01' },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -771,7 +773,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: '2022-12-01' },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
           {
             [Op.or]: [
@@ -909,7 +911,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: '2022-12-01' },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
           {
             [Op.or]: [
