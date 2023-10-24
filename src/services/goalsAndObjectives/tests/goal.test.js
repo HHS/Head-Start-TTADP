@@ -5,12 +5,12 @@ import { syncGoalFieldResponses } from '../goalFieldResponse';
 import { syncGoalResources } from '../goalResource';
 import { syncObjectives } from '../objective';
 
-jest.mock('./goalResource');
-jest.mock('./goalFieldResponse');
-jest.mock('./objective');
-jest.mock('../../lib/modelUtils');
-jest.mock('../../models', () => {
-  const originalModule = jest.requireActual('../../models');
+jest.mock('../goalResource');
+jest.mock('../goalFieldResponse');
+jest.mock('../objective');
+jest.mock('../../../lib/modelUtils');
+jest.mock('../../../models', () => {
+  const originalModule = jest.requireActual('../../../models');
   return {
     ...originalModule,
     db: {
