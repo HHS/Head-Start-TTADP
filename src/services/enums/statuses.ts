@@ -8,9 +8,9 @@ const findAll = async (
   data: { validFor: typeof ENTITY_TYPE[keyof typeof ENTITY_TYPE] },
 ) => genericEnum.findAll(Status, data);
 
-const findById = async (
+const findByPk = async (
   id: number,
-) => genericEnum.findById(Status, id);
+) => genericEnum.findByPk(Status, id);
 
 const findByName = async (
   name: string,
@@ -42,7 +42,7 @@ const deleteById = async (
 
 export {
   findAll,
-  findById,
+  findByPk,
   findByName,
   create,
   updateById,

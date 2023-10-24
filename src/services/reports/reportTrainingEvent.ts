@@ -42,7 +42,7 @@ const createOrUpdateReportTrainingEvent = async (
   // Check if data has an id to determine if it's a new report or an update
   if (data.id) {
     // If it's an update, find the existing report training event by id
-    reportTrainingEvent = await ReportTrainingEvent.findById(data.id);
+    reportTrainingEvent = await ReportTrainingEvent.findByPk(data.id);
 
     // Collect the changed values between the new data and the existing report training event
     const changedData = collectChangedValues(data, reportTrainingEvent);

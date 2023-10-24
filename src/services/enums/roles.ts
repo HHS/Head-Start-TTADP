@@ -12,9 +12,9 @@ const findAll = async (
   },
 );
 
-const findById = async (
+const findByPk = async (
   id: number,
-) => genericEnum.findById(Roles, id);
+) => genericEnum.findByPk(Roles, id);
 
 const create = async (
   data: { name: string, fullName: string, mapsTo?: number },
@@ -31,7 +31,7 @@ const deleteById = async (
 
 export {
   findAll,
-  findById,
+  findByPk,
   create,
   updateById,
   deleteById,

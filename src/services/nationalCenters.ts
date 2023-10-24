@@ -24,7 +24,7 @@ export async function findAll(): Promise<NationalCenterType[]> {
   });
 }
 
-export async function findById(id: number): Promise<NCModel> {
+export async function findByPk(id: number): Promise<NCModel> {
   return NationalCenter.findByPk(id);
 }
 
@@ -35,7 +35,7 @@ export async function create(nationalCenter
 
 export async function updateById(id: number, data: { name: string })
   : Promise<NationalCenterType> {
-  const existing = await findById(id);
+  const existing = await findByPk(id);
 
   if (existing.name === data.name) {
     auditLogger.info(`Name ${data.name} has not changed`);

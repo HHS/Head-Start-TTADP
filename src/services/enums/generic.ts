@@ -85,7 +85,7 @@ const findAll = async (
   order: [['name', 'ASC']],
 });
 
-const findById = async (
+const findByPk = async (
   model: EnumModel,
   id: number,
 ): Promise<GenericEnumType> => model.findByPk(id);
@@ -151,7 +151,7 @@ const updateById = async (
   id: number,
   data: { name?: string, mapsTo?: number },
 ): Promise<GenericEnumType> => {
-  const existing = await findById(model, id);
+  const existing = await findByPk(model, id);
 
   if (existing.name === data.name) {
     auditLogger.info(`Name ${data.name} has not changed`);
@@ -426,7 +426,7 @@ export {
   type EnumInfo,
   type GenericEnumType,
   findAll,
-  findById,
+  findByPk,
   findByName,
   create,
   updateById,

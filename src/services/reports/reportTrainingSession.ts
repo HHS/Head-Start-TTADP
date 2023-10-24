@@ -28,7 +28,7 @@ const createOrUpdateReportTrainingSession = async (
 
   // Check if data has an id to determine if it's a new report or an update
   if (data.id) {
-    reportTrainingSession = await ReportTrainingSession.findById(data.id);
+    reportTrainingSession = await ReportTrainingSession.findByPk(data.id);
 
     // Collect the changed values between the existing report and the updated data
     const changedData = collectChangedValues(data, reportTrainingSession);

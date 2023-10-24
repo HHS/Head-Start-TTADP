@@ -5,9 +5,9 @@ const { Topic } = db;
 
 const findAll = async () => genericEnum.findAll(Topic);
 
-const findById = async (
+const findByPk = async (
   id: number,
-) => genericEnum.findById(Topic, id);
+) => genericEnum.findByPk(Topic, id);
 
 const create = async (
   data: { name: string, mapsTo?: number },
@@ -24,7 +24,7 @@ const deleteById = async (
 
 export {
   findAll,
-  findById,
+  findByPk,
   create,
   updateById,
   deleteById,
