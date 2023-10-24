@@ -1,9 +1,9 @@
-import { filterDataToModel } from '../../lib/modelUtils';
-import db from '../../models';
-import { syncGoals } from './goal';
-import { syncGoalFieldResponses } from './goalFieldResponse';
-import { syncGoalResources } from './goalResource';
-import { syncObjectives } from './objective';
+import { filterDataToModel } from '../../../lib/modelUtils';
+import db from '../../../models';
+import { syncGoals } from '../goal';
+import { syncGoalFieldResponses } from '../goalFieldResponse';
+import { syncGoalResources } from '../goalResource';
+import { syncObjectives } from '../objective';
 
 jest.mock('./goalResource');
 jest.mock('./goalFieldResponse');
