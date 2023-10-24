@@ -9,6 +9,7 @@ import redisRouter from './redis';
 import nationalCenterRouter from './nationalCenter';
 import emailRouter from './email';
 import groupRouter from './group';
+import goalRouter from './goal';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -22,6 +23,7 @@ router.use('/users', userRouter);
 router.use('/recipients', recipientRouter);
 router.use('/grants', grantRouter);
 router.use('/groups', groupRouter);
+router.use('/goals', goalRouter);
 router.use('/roles', roleRouter);
 router.use('/alerts', siteAlertRouter);
 router.use('/redis', redisRouter);

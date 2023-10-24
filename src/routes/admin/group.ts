@@ -9,12 +9,8 @@ const namespace = 'ADMIN:GROUPS';
 const logContext = { namespace };
 
 /**
-   * Gets the redis info from the client, as if you'd run "info"
-   * redis cli
    *
-   * https://redis.io/commands/info/
-   *
-   * @param {Request} _req - request
+   * @param {Request} req - request
    * @param {Response} res - response
    */
 export async function getGroupsByRegion(req: Request, res: Response) {
