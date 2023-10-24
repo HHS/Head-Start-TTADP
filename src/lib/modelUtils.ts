@@ -242,6 +242,64 @@ const isObject = (value: any): boolean => (
   && !Array.isArray(value) // Check if the value is not an array
 );
 
+const switchKeysAndValues = (
+  obj: Record<string, string>,
+): Record<string, string> => {
+  const switchedObj: Record<string, string> = {};
+
+  // Iterate over each key-value pair in the object
+  Object.entries(obj).forEach(([key, value]) => {
+    // Switch the key and value in the new object
+    switchedObj[value] = key;
+  });
+
+  return switchedObj;
+};
+
+/**
+ * Removes undefined values from an object or array recursively.
+ * @param obj - The object or array to remove undefined values from.
+ * @returns A new object or array with undefined values removed, or
+ * undefined if all values are undefined.
+ */
+const removeUndefined = (obj: any): any => {
+  // Check if the input is an object
+  if (isObject(obj)) {
+    return obj;
+  }
+
+  // Check if the input is an array
+  if (Array.isArray(obj)) {
+    // Map over each element in the array and recursively remove undefined values
+    // Filter out any elements that are undefined
+    return obj
+      .map(removeUndefined)
+      .filter((value: any) => value !== undefined);
+  }
+
+  // Create a new empty object
+  const result: any = {};
+
+  // Iterate over each key in the object
+  Object.keys(obj).forEach((key: string) => {
+    // Recursively remove undefined values from the value associated with the current key
+    const value = removeUndefined(obj[key]);
+
+    // If the value is not undefined, add it to the result object
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  });
+
+  // Check if the result object is empty
+  if (Object.keys(result).length === 0) {
+    return undefined;
+  }
+
+  // Return the result object
+  return result;
+};
+
 /**
  * Checks if two values are deeply equal.
  * @param value1 - The first value to compare.
@@ -348,6 +406,8 @@ export {
   filterDataToModel,
   type RemappingDefinition,
   remap,
+  switchKeysAndValues,
+  removeUndefined,
   isDeepEqual,
   collectChangedValues,
   includeToFindAll,
