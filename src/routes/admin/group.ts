@@ -30,6 +30,6 @@ export async function getGroupsByRegion(req: Request, res: Response) {
 
 const router = express.Router();
 
-router.get('/:regionId', transactionWrapper(getGroupsByRegion));
+router.get('/region/:regionId', transactionWrapper(getGroupsByRegion));
 
 export default router;
