@@ -195,6 +195,8 @@ const MAINTENANCE_CATEGORY = {
   MAINTENANCE: 'MAINTENANCE',
 };
 
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin'];
+
 module.exports = {
   FILE_STATUSES,
   DATE_FORMAT,
@@ -223,4 +225,5 @@ module.exports = {
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
+  GOAL_CREATED_VIA,
 };
