@@ -55,8 +55,10 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
-  const fiveGoalIds = sampleSize(pageGoalIds, 5).map((g) => `goalId[]=${g}`).join('&');
-  const twoGoalIds = sampleSize(pageGoalIds, 2).map((g) => `goalId[]=${g}`).join('&');
+  const goalMergeGroups = [
+    sampleSize(pageGoalIds, 5),
+    sampleSize(pageGoalIds, 2),
+  ];
 
   return (
     <div className="padding-x-3 position-relative">
@@ -116,8 +118,17 @@ export default function GoalCardsHeader({
               <div className="usa-alert__text">
                 <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
                 <ul className="usa-list">
-                  <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${fiveGoalIds}`}>Review 5 similar goals</Link></li>
-                  <li><Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${twoGoalIds}`}>Review 2 similar goals</Link></li>
+                  {goalMergeGroups.map((group) => (
+                    <li key={group.join('-')}>
+                      <Link
+                        to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${group.map((g) => `goalId[]=${g}`).join('&')}`}
+                      >
+                        Review
+                        {group.length}
+                        similar goals
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
