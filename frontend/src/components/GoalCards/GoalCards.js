@@ -229,6 +229,7 @@ function GoalCards({
           perPage={perPage}
           handlePageChange={handlePageChange}
           perPageChange={perPageChange}
+          accessibleLandmarkName="Goals pagination, bottom"
         />
       </Container>
     </>

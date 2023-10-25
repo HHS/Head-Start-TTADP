@@ -323,6 +323,7 @@ function ActivityReportsTable({
           offset={offset}
           perPage={perPage}
           handlePageChange={handlePageChange}
+          accessibleLandmarkName="Reports pagination, bottom"
         />
       </Container>
     </>

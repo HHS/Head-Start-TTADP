@@ -79,6 +79,7 @@ export default function TableHeader({
           offset={offset}
           perPage={perPage}
           handlePageChange={handlePageChange}
+          accessibleLandmarkName="Pagination, top"
           hideInfo
         />
       </div>
