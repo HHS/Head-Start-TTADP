@@ -11,6 +11,7 @@ import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
+import { mockFetchTargetPopulationsAndReasons } from '../mocks';
 
 describe('TrainingReportForm', () => {
   const history = createMemoryHistory();
@@ -43,6 +44,8 @@ describe('TrainingReportForm', () => {
       collaborators: [],
       creators: [],
     });
+
+    mockFetchTargetPopulationsAndReasons();
   });
 
   it('renders training report form', async () => {

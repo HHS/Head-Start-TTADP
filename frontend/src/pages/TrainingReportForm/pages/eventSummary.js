@@ -1,16 +1,12 @@
 import React, {
   useState,
   useContext,
+  useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Select from 'react-select';
-import {
-  TARGET_POPULATIONS,
-  EVENT_TARGET_POPULATIONS,
-  REASONS,
-  TRAINING_REPORT_STATUSES,
-} from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext, Controller } from 'react-hook-form';
 import {
   Label,
@@ -33,17 +29,9 @@ import {
 } from '../constants';
 import UserContext from '../../../UserContext';
 import isAdmin from '../../../permissions';
+import { findAllofEnum } from '../../../fetchers/enum';
 
 const placeholderText = '- Select -';
-
-// we need to add three additional target populations to the AR target populations list
-const targetPopulations = [
-  ...TARGET_POPULATIONS,
-  ...EVENT_TARGET_POPULATIONS,
-];
-
-// sort the reasons alphabetically
-targetPopulations.sort();
 
 const eventOrganizerOptions = [
   'Regional PD Event (with National Centers)',
@@ -75,6 +63,37 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
     setEndDateKey(`endDate-${newEnd}`);
   };
 
+  const [populationsAndReasons, setPopulationsAndReasons] = useState({
+    targetPopulations: [],
+    reasons: [],
+  });
+  useEffect(() => {
+    async function fetchTargetPopulations() {
+      try {
+        const populations = await findAllofEnum('TargetPopulation', 'report.trainingEvent');
+
+        const formattedPopulations = populations.map((p) => p.name);
+        formattedPopulations.sort();
+
+        const reasonsFromApi = await findAllofEnum('Reason', 'report.trainingEvent');
+        const formattedReasons = reasonsFromApi.map((r) => r.name);
+        formattedReasons.sort();
+
+        setPopulationsAndReasons({
+          targetPopulations: formattedPopulations,
+          reasons: formattedReasons,
+        });
+      } catch (err) {
+        setPopulationsAndReasons({
+          targetPopulations: [],
+          reasons: [],
+        });
+      }
+    }
+
+    fetchTargetPopulations();
+  }, []);
+
   const {
     eventId,
     eventName,
@@ -92,6 +111,9 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   const eventCreatorOptions = !creators
     ? []
     : creators.map((o) => ({ value: o.id, label: o.name }));
+
+  const { targetPopulations, reasons } = populationsAndReasons;
+
   return (
     <div className="padding-x-1">
       <Helmet>
@@ -391,7 +413,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           <MultiSelect
             name="reasons"
             control={control}
-            options={REASONS.map((reason) => ({ value: reason, label: reason }))}
+            options={reasons.map((reason) => ({ value: reason, label: reason }))}
             required="Select at least on reason"
             placeholderText={placeholderText}
           />

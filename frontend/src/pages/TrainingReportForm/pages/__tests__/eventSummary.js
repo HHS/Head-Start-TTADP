@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import fetchMock from 'fetch-mock';
 import {
   render,
   screen,
@@ -13,6 +14,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import eventSummary, { isPageComplete } from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
+import { mockFetchTargetPopulationsAndReasons } from '../../mocks';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS } = SCOPE_IDS;
 
@@ -104,15 +106,22 @@ describe('eventSummary', () => {
       );
     };
 
+    beforeAll(() => {
+      fetchMock.restore();
+      mockFetchTargetPopulationsAndReasons();
+    });
+
     it('renders event summary', async () => {
       act(() => {
         render(<RenderEventSummary />);
       });
 
-      const selections = document.querySelectorAll('button, input, textarea, select, a');
-      Array.from(selections).forEach((selection) => {
-        fireEvent.focus(selection);
-        fireEvent.blur(selection);
+      act(() => {
+        const selections = document.querySelectorAll('button, input, textarea, select, a');
+        Array.from(selections).forEach((selection) => {
+          fireEvent.focus(selection);
+          fireEvent.blur(selection);
+        });
       });
 
       const startDate = await screen.findByLabelText(/Event start Date/i, { selector: '#startDate' });
@@ -126,10 +135,9 @@ describe('eventSummary', () => {
 
       await selectEvent.select(screen.getByLabelText(/Event region point of contact/i), 'Ted User');
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
-      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women']);
       await selectEvent.select(screen.getByLabelText(/reasons/i), ['Complaint']);
       await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
-
+      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women']);
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
@@ -174,6 +182,25 @@ describe('eventSummary', () => {
       });
       expect(screen.queryAllByRole('textbox', { name: /event name required/i }).length).toBe(0);
       expect(screen.queryAllByTestId('creator-select').length).toBe(0);
+    });
+
+    it('handles error fetching reasons or target populations', async () => {
+      fetchMock.restore();
+      const throwErrorsOnFetch = true;
+      mockFetchTargetPopulationsAndReasons(throwErrorsOnFetch);
+      act(() => {
+        render(<RenderEventSummary />);
+      });
+
+      act(() => {
+        const selections = document.querySelectorAll('button, input, textarea, select, a');
+        Array.from(selections).forEach((selection) => {
+          fireEvent.focus(selection);
+          fireEvent.blur(selection);
+        });
+      });
+
+      expect(await screen.findByLabelText(/target populations/i)).toBeInTheDocument();
     });
   });
 });
