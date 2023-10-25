@@ -4,6 +4,7 @@ import httpCodes from 'http-codes';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { getCuratedTemplates } from '../../services/goalTemplates';
+import { createMultiRecipientGoalsFromAdmin } from '../../services/goals';
 
 const namespace = 'ADMIN:GROUPS';
 const logContext = { namespace };
@@ -23,8 +24,25 @@ export async function getCuratedGoalOptions(req: Request, res: Response) {
   }
 }
 
+/**
+   *
+   * @param {Request} req - request
+   * @param {Response} res - response
+   */
+export async function createGoalsFromAdmin(req: Request, res: Response) {
+  // admin access is already checked in the middleware
+  try {
+    const { body } = req;
+    const data = await createMultiRecipientGoalsFromAdmin(body);
+    res.status(httpCodes.OK).json(data);
+  } catch (err) {
+    await handleError(req, res, err, logContext);
+  }
+}
+
 const router = express.Router();
 
 router.get('/curated-templates', transactionWrapper(getCuratedGoalOptions));
+router.post('/', transactionWrapper(createGoalsFromAdmin));
 
 export default router;

@@ -1,9 +1,14 @@
 import httpCodes from 'http-codes';
-import { getCuratedGoalOptions } from './goal';
+import { getCuratedGoalOptions, createGoalsFromAdmin } from './goal';
 import { getCuratedTemplates } from '../../services/goalTemplates';
+import { createMultiRecipientGoalsFromAdmin } from '../../services/goals';
 
 jest.mock('../../services/goalTemplates', () => ({
   getCuratedTemplates: jest.fn(),
+}));
+
+jest.mock('../../services/goals', () => ({
+  createMultiRecipientGoalsFromAdmin: jest.fn(),
 }));
 
 describe('goal router', () => {
@@ -41,6 +46,23 @@ describe('goal router', () => {
     it('handles errors', async () => {
       getCuratedTemplates.mockRejectedValueOnce(new Error('Failed to get curated goals'));
       await getCuratedGoalOptions(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('createGoalsFromAdmin', () => {
+    it('returns the created goal goal data', async () => {
+      const goals = [{ id: 1 }, { id: 2 }];
+      createMultiRecipientGoalsFromAdmin.mockResolvedValueOnce(goals);
+
+      await createGoalsFromAdmin(mockRequest, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.OK);
+      expect(json).toHaveBeenCalledWith(goals);
+    });
+
+    it('handles errors', async () => {
+      createMultiRecipientGoalsFromAdmin.mockRejectedValueOnce(new Error('Failed to create goals'));
+      await createGoalsFromAdmin(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });
