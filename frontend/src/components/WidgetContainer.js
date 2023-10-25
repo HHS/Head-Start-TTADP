@@ -55,6 +55,7 @@ export default function WidgetContainer(
                 offset={offset}
                 perPage={perPage}
                 handlePageChange={handlePageChange}
+                accessibleLandmarkName={`${title} pagination`}
               />
             )
             : null

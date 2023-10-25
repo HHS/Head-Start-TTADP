@@ -11,6 +11,7 @@ function PaginationCard({
   handlePageChange,
   perPageChange,
   hideInfo,
+  accessibleLandmarkName,
 }) {
   const el = useRef();
   const isMobile = useMediaQuery({ maxWidth: 900 });
@@ -33,13 +34,9 @@ function PaginationCard({
 
     Array.from(paginationLinks).forEach((link) => {
       const svg = link.querySelector('svg');
-
-      // we need both of these for going any further to make sense
-      if (!svg) {
-        return;
+      if (svg) {
+        svg.setAttribute('aria-hidden', 'true');
       }
-
-      svg.setAttribute('aria-hidden', 'true');
     });
   });
 
@@ -92,6 +89,7 @@ function PaginationCard({
         onClickPrevious={() => handlePageChange(currentPage - 1)}
         onClickPageNumber={(_e, page) => handlePageChange(page)}
         maxSlots={isMobile ? 2 : 5}
+        aria-label={accessibleLandmarkName}
       />
     </div>
   );
@@ -104,6 +102,7 @@ PaginationCard.propTypes = {
   handlePageChange: PropTypes.func.isRequired,
   perPageChange: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
   hideInfo: PropTypes.bool,
+  accessibleLandmarkName: PropTypes.string,
 };
 
 PaginationCard.defaultProps = {
@@ -113,5 +112,6 @@ PaginationCard.defaultProps = {
   perPage: 10,
   perPageChange: false,
   hideInfo: false,
+  accessibleLandmarkName: 'Pagination',
 };
 export default PaginationCard;

@@ -102,6 +102,7 @@ export default function RecipientResults(
         offset={offset}
         perPage={perPage}
         handlePageChange={handlePageChange}
+        accessibleLandmarkName="Recipients pagination, bottom"
       />
     </Container>
   );

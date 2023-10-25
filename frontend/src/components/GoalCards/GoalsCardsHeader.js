@@ -95,6 +95,7 @@ export default function GoalCardsHeader({
             offset={offset}
             perPage={perPage}
             handlePageChange={handlePageChange}
+            accessibleLandmarkName="Goals pagination, top"
             hideInfo
           />
         </div>
