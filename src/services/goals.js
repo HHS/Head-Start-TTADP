@@ -22,6 +22,7 @@ import {
   Resource,
   ActivityReport,
   ActivityReportGoal,
+  ActivityRecipient,
   ActivityReportGoalFieldResponse,
   Topic,
   Program,
@@ -2388,4 +2389,163 @@ export async function destroyGoal(goalIds) {
     );
     return 0;
   }
+}
+
+export async function createMultiRecipientGoalsFromAdmin(data) {
+  // const {
+  //   region, // string
+  //   group, // string, group ID
+  //   createReport, // bool
+  //   useCuratedGoal, // bool
+  //   creator, // string, user ID
+  //   templateId, // string, template ID
+  //   goalPrompts, // array, as follows
+  // [
+  //   {
+  //     promptId: 1,
+  //     title: 'FEI root cause',
+  //     fieldName: 'fei-root-cause'
+  //   }
+  // ],
+  // 'fei-root-cause': [ 'Community Partnerships', 'Family Circumstances' ],
+  // goalSource, // string
+  // goalDate, // string
+  // selectedGrants, // stringified JSON grant data
+  // } = data;
+
+  const grantIds = JSON.parse(data.selectedGrants).map((g) => g.id);
+
+  let templateId = null;
+  let isError = false;
+  let message = '';
+
+  if (data.useCuratedGoal && data.templateId) {
+    templateId = Number(data.templateId);
+  }
+
+  const template = await GoalTemplate.findByPk(templateId);
+
+  let name = data.goalText;
+
+  if (template) {
+    name = template.templateName;
+  }
+
+  if (!name) {
+    isError = true;
+    message = 'Goal name is required';
+  }
+
+  let goalsForNameCheck = [];
+
+  if (!isError && grantIds.length > 0) {
+    goalsForNameCheck = await Goal.findAll({
+      attributes: ['id', 'grantId'],
+      where: {
+        grantId: grantIds,
+        name,
+      },
+    });
+  }
+
+  if (goalsForNameCheck.length) {
+    isError = true;
+    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grantId).join(', ')}`;
+  }
+
+  if (isError) {
+    return {
+      isError,
+      message,
+    };
+  }
+
+  let endDate = null;
+
+  if (data.goalDate) {
+    endDate = data.goalDate;
+  }
+
+  const goals = await Promise.all(grantIds.map(async (grantId) => {
+    const goal = await Goal.create({
+      name,
+      grantId,
+      source: data.goalSource || null,
+      endDate,
+      status: GOAL_STATUS.NOT_STARTED,
+      createdVia: 'admin',
+    }, { individualHooks: true });
+    return goal;
+  }));
+
+  const goalIds = goals.map((g) => g.id);
+
+  if (data.useCuratedGoal && data.goalPrompts) {
+    await setFieldPromptsForCuratedTemplate(goalIds, data.goalPrompts);
+  }
+
+  let activityReport = null;
+
+  if (data.createReport && data.creator) {
+    const reportData = {
+      activityType: [],
+      additionalNotes: null,
+      collaborators: [],
+      context: '',
+      deliveryMethod: null,
+      endDate: null,
+      recipients: [],
+      numberOfParticipants: null,
+      otherResources: [],
+      participantCategory: '',
+      participants: [],
+      reason: [],
+      requester: '',
+      startDate: null,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      targetPopulations: [],
+      topics: [],
+      regionId: Number(data.region),
+      userId: Number(data.creator),
+      activityRecipientType: 'recipient',
+      pageState: {
+        1: 'Not started',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
+      },
+    };
+
+    activityReport = await ActivityReport.create(reportData);
+
+    // create activity recipients
+    await Promise.all(grantIds.map(async (grantId) => {
+      await ActivityRecipient.create({
+        activityReportId: activityReport.id,
+        grantId,
+      });
+    }));
+
+    // create goals
+    await Promise.all(goals.map(async (goal) => {
+      await ActivityReportGoal.create({
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+        endDate: goal.endDate,
+        isActivelyEdited: true,
+        status: goal.status,
+        name: goal.name,
+        source: goal.source,
+      });
+    }));
+  }
+
+  return {
+    goals,
+    data,
+    activityReport,
+    isError,
+    message,
+  };
 }
