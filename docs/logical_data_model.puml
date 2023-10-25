@@ -301,6 +301,7 @@ class GoalTemplates{
 class Goals{
  * id : integer : <generated>
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ mapsToParentGoalId : integer : REFERENCES "Goals".id
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
@@ -1674,6 +1675,7 @@ GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTempl
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, activityReportGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
+Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
