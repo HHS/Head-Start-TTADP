@@ -24,6 +24,7 @@ import { fetchResourceData } from '../../fetchers/Resources';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -41,6 +42,7 @@ export default function ResourcesDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [resourcesData, setResourcesData] = useState({});
   const [error, updateError] = useState();
+  const [resetPagination, setResetPagination] = useState(false);
   const hasCentralOffice = useMemo(() => (
     user && user.homeRegionId && user.homeRegionId === 14
   ), [user]);
@@ -85,6 +87,7 @@ export default function ResourcesDashboard() {
 
   const setFilters = useCallback((newFilters) => {
     setFiltersInHook(newFilters);
+    setResetPagination(true);
   }, [setFiltersInHook]);
 
   // Remove Filters.
@@ -190,6 +193,12 @@ export default function ResourcesDashboard() {
         <ResourceUse
           data={resourcesData.resourcesUse}
           loading={isLoading}
+        />
+        <ResourcesAssociatedWithTopics
+          data={resourcesData.topicUse}
+          loading={isLoading}
+          resetPagination={resetPagination}
+          setResetPagination={setResetPagination}
         />
       </>
     </div>
