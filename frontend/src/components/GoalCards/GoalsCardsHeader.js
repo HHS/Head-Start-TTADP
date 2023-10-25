@@ -111,7 +111,7 @@ export default function GoalCardsHeader({
         </div>
         )}
       </div>
-      {canMergeGoals && (
+      {(canMergeGoals && goalMergeGroups.length) && (
         <FeatureFlag flag="merge_goals">
           <div className="usa-alert usa-alert--info" data-testid="alert">
             <div className="usa-alert__body">
