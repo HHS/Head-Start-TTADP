@@ -155,7 +155,6 @@ export default function Goals() {
       setIsAppLoading(true);
       const created = await createMultiRecipientGoalsFromAdmin(data);
       setResponse(created);
-      console.log(created);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
