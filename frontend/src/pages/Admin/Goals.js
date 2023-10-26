@@ -294,7 +294,7 @@ export default function Goals() {
               ) : (
                 <>
                   <Label htmlFor="goalText">
-                    Goal text
+                    Goal
                     {' '}
                     <Req />
                   </Label>
