@@ -35,17 +35,17 @@ const reportTrainingEventRemapping: Record<string, string> = {
  * @returns A promise that resolves when the operation is complete.
  */
 const createOrUpdateReportTrainingEvent = async (
-  data: ReportTrainingEventDataType,
+  data: ReportTrainingEventDataType[],
 ) => {
   let reportTrainingEvent;
 
   // Check if data has an id to determine if it's a new report or an update
-  if (data.id) {
+  if (data[0].id) {
     // If it's an update, find the existing report training event by id
-    reportTrainingEvent = await ReportTrainingEvent.findByPk(data.id);
+    reportTrainingEvent = await ReportTrainingEvent.findByPk(data[0].id);
 
     // Collect the changed values between the new data and the existing report training event
-    const changedData = collectChangedValues(data, reportTrainingEvent);
+    const changedData = collectChangedValues(data[0], reportTrainingEvent);
 
     // If there are changed values, update the report training event
     if (changedData.length) {
@@ -57,7 +57,7 @@ const createOrUpdateReportTrainingEvent = async (
   } else {
     // If it's a new report, create a new report training event
     return ReportTrainingEvent
-      .create(data);
+      .create(data[0]);
   }
 
   // Return a resolved promise if no action is taken
@@ -117,6 +117,7 @@ const includeReportTrainingEvent = () => ({
   attributes: [
     'id',
     'regionId',
+    'eventId',
     'name',
     'trainingType',
     'vision',
