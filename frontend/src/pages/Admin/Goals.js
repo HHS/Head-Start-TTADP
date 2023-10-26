@@ -158,6 +158,10 @@ export default function Goals() {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
+      setResponse({
+        isError: true,
+        message: 'An error occurred while creating the goals.',
+      });
     } finally {
       setIsAppLoading(false);
     }
