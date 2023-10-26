@@ -260,7 +260,7 @@ export default function Goals() {
             {createReport && (
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="creator">
-                Actvity report creator
+                Activity report creator
                 {' '}
                 <Req />
               </Label>
