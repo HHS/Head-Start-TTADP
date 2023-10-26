@@ -19,11 +19,13 @@ import {
   participantsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  feiRootCauseFilter,
 } from '../../components/filter/activityReportFilters';
 
 const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  feiRootCauseFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   participantsFilter,
