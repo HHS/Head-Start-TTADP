@@ -1,5 +1,10 @@
 import { DataTypes, Model } from 'sequelize';
-import { getColumnInformation, filterDataToModel, remap } from './modelUtils';
+import {
+  getColumnInformation,
+  filterDataToModel,
+  remap,
+  switchKeysAndValues,
+} from './modelUtils';
 
 describe('getColumnInformation', () => {
   it('should return the column information of a model', async () => {
@@ -328,10 +333,15 @@ describe('remap', () => {
         { name: 'NV', cities: ['Las Vegas', 'Henderson', 'Reno'] },
         { name: 'CA', cities: ['Los Angeles', 'San Diego ', 'San Jose', 'San Francisco'] },
       ],
+      fruit: [
+        { name: 'apple' },
+        { name: 'banana' },
+      ],
     };
 
     const remappingDefinition4 = {
       'states.*.cities.*': 'cities.*',
+      'fruit.*.name': 'food.*',
     };
 
     const options = {
@@ -351,8 +361,67 @@ describe('remap', () => {
         'San Jose',
         'San Francisco',
       ],
+      food: [
+        'apple',
+        'banana',
+      ],
     };
 
     expect(remap(jsonData4, remappingDefinition4, options).mapped).toEqual(expectedRemappedData);
+  });
+
+  it('xshould map multiple arrays of values to an array', () => {
+    const sampleData = [
+      {
+        id: 6,
+        regionId: 8,
+        eventId: 'R08-TR-23-8030',
+        name: 'Baseline Grant Application Nuts and Bolts',
+        trainingType: 'Series',
+        /* eslint-disable prefer-template */
+        /* eslint-disable space-unary-ops */
+        vision: 'The goal is that recipients have well written, fundable grant applications that reflect their community needs, includes data, and data informed decisions. The Regional Office and TTA have identified that 75% of our recipients will be completing a baseline application within the next 18 months. Staggering the supports and training for the grant application where the applications do sooner have different supports vs. programs who have 12-18 months to implement best practices when it comes to the grant application.\n' +
+          + '\n'
+          + 'The series will have the following five sessions for recipients who have 6-12 months to complete their application.\n'
+          + '1. Grant Application Process & Nuts and Bolts of Strategic Planning  \n'
+          + '2. Development of the Community & Self-Assessment\n'
+          + '3. Program and School Readiness Goals\n'
+          + '4. Education & Health Services\n'
+          + '5. Financial Essentials to Create a Fundable Application\n'
+          + '\n'
+          + 'We selected the target population as all below since they all will be discussed throughout the grant application process; programs should take that all into consideration when writing a baseline grant application.',
+        /* eslint-enable prefer-template */
+        /* eslint-enable space-unary-ops */
+        createdAt: '2023-08-17T15:33:53.555Z',
+        updatedAt: '2023-08-21T17:31:32.650Z',
+        // organizer: [Object],
+      },
+    ];
+
+    const remapDef = {
+      'data."Event ID"': '0.eventId',
+      regionId: '0.regionId',
+      'data."Edit Title"': '0.name',
+      'data.eventOrganizer': '0.organizer.name',
+      'data.vision': '0.vision',
+    };
+
+    console.log(remapDef, switchKeysAndValues(remapDef));
+
+    const options = { keepUnmappedValues: false };
+
+    const expectedRemappedData = {
+      cities: [
+        'Las Vegas',
+        'Henderson',
+        'Reno',
+        'Los Angeles',
+        'San Diego ',
+        'San Jose',
+        'San Francisco',
+      ],
+    };
+
+    expect(remap(sampleData, switchKeysAndValues(remapDef), options).mapped).toEqual(expectedRemappedData);
   });
 });
