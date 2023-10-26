@@ -207,16 +207,18 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     reportIds: new Set(),
   }));
 
-  topicsAndParticipants.forEach((goalData) => {
-    goalData
-      .get('topics')
-      .forEach(({ topic, reportIds }) => {
-        const topicResponce = topicsResponse
-          .find((t) => t.topic === lookUpTopic.get(topic));
+  if (topicsAndParticipants.topics) {
+    topicsAndParticipants.forEach((goalData) => {
+      goalData
+        .get('topics')
+        .forEach(({ topic, reportIds }) => {
+          const topicResponce = topicsResponse
+            .find((t) => t.topic === lookUpTopic.get(topic));
 
-        reportIds.forEach((id) => topicResponce.reportIds.add(id));
-      });
-  });
+          reportIds.forEach((id) => topicResponce.reportIds.add(id));
+        });
+    });
+  }
 
   return topicsResponse
     .map(({ topic, reportIds }) => ({ topic, count: reportIds.size }));
