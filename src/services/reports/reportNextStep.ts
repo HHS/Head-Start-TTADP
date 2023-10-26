@@ -12,8 +12,6 @@ const syncReportNextSteps = async (
   noteType: typeof NEXTSTEP_NOTETYPE[keyof typeof NEXTSTEP_NOTETYPE],
   data,
 ) => {
-  const promises:Promise<any>[] = [];
-
   const [
     currentNextSteps,
     ...filteredData
@@ -21,6 +19,7 @@ const syncReportNextSteps = async (
     ReportNextStep.findAll({
       where: {
         reportId: report.id,
+        noteType,
       },
       raw: true,
     }),
@@ -36,25 +35,57 @@ const syncReportNextSteps = async (
   const [
     createList,
     updateList,
-    // destroyList, // TODO: finish
+    destroyList,
   ] = [
-    data
+    filteredData
       .filter((ns) => !(currentNextSteps.filter((cns) => (
         (ns.id && ns.id === cns.id)
         || (ns.note && ns.note === cns.note)
       )).length > 0)),
-    data
+    filteredData
       .filter((ns) => (currentNextSteps.filter((cns) => (
         (ns.id && ns.id === cns.id)
         || (ns.note && ns.note === cns.note)
       )).length > 0))
       .map((ns) => {
-        const x = null;
-        return null; // TODO: finish
-      }),
+        const currentNS = currentNextSteps.find((cns) => (
+          (ns.id && ns.id === cns.id)
+          || (ns.note && ns.note === cns.note)
+        ));
+        return collectChangedValues(ns, currentNS);
+      })
+      .filter((ns) => Object.keys(ns).length > 1),
+    currentNextSteps
+      .filter((cns) => !filteredData.includes((fd) => fd?.id === cns.id))
+      .map((cns) => cns.id),
   ];
 
   return {
+    promises: [
+      ...(createList?.length
+        ? ReportNextStep.bulkCreate(
+          createList,
+          {
+            individualHooks: true,
+          },
+        )
+        : [Promise.resolve()]),
+      ...(updateList?.length
+        ? updateList.map(async (ul) => ReportNextStep.update(
+          ul,
+          {
+            where: { id: ul.id },
+            individualHooks: true,
+          },
+        ))
+        : [Promise.resolve()]),
+      (destroyList?.length
+        ? ReportNextStep.destroy({
+          where: { id: destroyList },
+          individualHooks: true,
+        })
+        : Promise.resolve()),
+    ],
     unmatched: filteredData.map(({ unmatched }) => unmatched),
   };
 };
