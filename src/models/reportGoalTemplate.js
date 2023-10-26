@@ -16,6 +16,22 @@ export default (sequelize, DataTypes) => {
   class ReportGoalTemplate extends Model {
     static async associate(models) {
       await automaticallyGenerateJunctionTableAssociations(this, models);
+
+      ReportGoalTemplate.addScope('defaultScope', {
+        include: [{
+          model: models.Status,
+          as: 'status',
+          required: true,
+          attributes: [
+            'name',
+          ],
+          where: {
+            name: {
+              [Op.ne]: 'deleted',
+            },
+          },
+        }],
+      });
     }
   }
   ReportGoalTemplate.init({
