@@ -155,6 +155,7 @@ const syncReportObjectiveTemplates = async (
         .filter(({ title, regionId }) => filteredData.find((fd) => (
           title === fd.title
           && (regionId === fd.regionId || regionId === null)
+          && fd.objectiveTemplateId === undefined
         )))
         .map(({
           objectiveTemplateId,
@@ -168,8 +169,23 @@ const syncReportObjectiveTemplates = async (
           templateTitle: title,
           regionId,
         })),
-      // TODO: fix
       // From existing objective templates
+      ...matchingObjectiveTemplates
+        .filter(({ objectiveTemplateId }) => filteredData.find((fd) => (
+          objectiveTemplateId === fd.objectiveTemplateId
+        )))
+        .map(({
+          objectiveTemplateId,
+          title,
+          regionId,
+        }) => ({
+          reportId: report.id,
+          objectiveTemplateId,
+          ...filteredData
+            .find((fd) => fd.templateTitle === title),
+          templateTitle: title,
+          regionId,
+        })),
       ...filteredData
         .filter(({ objectiveTemplateId }) => objectiveTemplateId
         && !currentReportObjectiveTemplates
