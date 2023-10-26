@@ -2423,7 +2423,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     templateId = Number(data.templateId);
   }
 
-  const template = await GoalTemplate.findByPk(templateId);
+  let template;
+
+  if (templateId) {
+    template = await GoalTemplate.findByPk(templateId);
+  }
 
   let name = data.goalText;
 
