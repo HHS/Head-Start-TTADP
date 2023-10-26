@@ -23,6 +23,7 @@ import {
   myReportsFilter,
   reportTextFilter,
   endDateFilter,
+  feiRootCauseFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -395,6 +396,7 @@ describe('Filter Menu', () => {
       reportTextFilter,
       singleOrMultiRecipientsFilter,
       endDateFilter,
+      feiRootCauseFilter,
     ];
 
     const filters = [];

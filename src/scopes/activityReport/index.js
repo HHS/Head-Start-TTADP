@@ -30,7 +30,7 @@ import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
-import { withFeiResponse, withoutFeiResponse } from './feiRootCause';
+import { withFeiRootCause, withoutFeiRootCause } from './feiRootCause';
 
 export const topicToQuery = {
   reportId: {
@@ -157,12 +157,13 @@ export const topicToQuery = {
     creator: (query) => onlyCreators(query),
     both: (query) => bothCollaboratorsAndCreators(query),
   },
-  feiResponse: {
-    ctn: (query) => withFeiResponse(query),
-    nctn: (query) => withoutFeiResponse(query),
+  feiRootCause: {
+    in: (query) => withFeiRootCause(query),
+    nin: (query) => withoutFeiRootCause(query),
   },
 };
 
 export function activityReportsFiltersToScopes(filters, options, userId) {
+  console.log('\n\n\n-----Fitlerz: ', filters);
   return createFiltersToScopes(filters, topicToQuery, options, userId);
 }
