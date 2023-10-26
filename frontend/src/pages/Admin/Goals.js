@@ -206,7 +206,7 @@ export default function Goals() {
         <FormProvider {...hookForm}>
           <form className="usa-form" onSubmit={hookForm.handleSubmit(onSubmit)}>
             <FormGroup className="usa-form-group" required>
-              <Label for="region">
+              <Label htmlFor="region">
                 Region
                 {' '}
                 <Req />
@@ -223,7 +223,7 @@ export default function Goals() {
               </Dropdown>
             </FormGroup>
             <FormGroup className="usa-form-group" required>
-              <Label for="group">
+              <Label htmlFor="group">
                 Recipient group
                 {' '}
                 <Req />
@@ -259,7 +259,7 @@ export default function Goals() {
             </FormGroup>
             {createReport && (
             <FormGroup className="usa-form-group" required>
-              <Label for="creator">
+              <Label htmlFor="creator">
                 Actvity report creator
                 {' '}
                 <Req />
@@ -278,7 +278,7 @@ export default function Goals() {
             <FormGroup className="usa-form-group" required>
               {useCuratedGoal ? (
                 <>
-                  <Label for="templateId">
+                  <Label htmlFor="templateId">
                     OHS standard goal
                     {' '}
                     <Req />
@@ -293,7 +293,7 @@ export default function Goals() {
                 </>
               ) : (
                 <>
-                  <Label for="goalText">
+                  <Label htmlFor="goalText">
                     Goal text
                     {' '}
                     <Req />
