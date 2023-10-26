@@ -66,11 +66,19 @@ export const getByStatus = async (req, res) => {
 
     const newEvents = await getAllReports(
       REPORT_TYPE.REPORT_TRAINING_EVENT,
+      'blob',
       undefined,
       genScopes,
     );
 
-    console.log('src/routes/events/handlers.js:getByStatus', { events: JSON.stringify(events), newEvents: newEvents[1] });
+    const sortedOldEvents = events.sort((a, b) => a.data.eventId.localeCompare(b.data.eventId));
+    const sortedNewEvents = newEvents.sort((a, b) => {
+      if (a.reportTrainingEvents[0].eventId < b.reportTrainingEvents[0].eventId) { return -1; }
+      if (a.reportTrainingEvents[0].eventId > b.reportTrainingEvents[0].eventId) { return 1; }
+      return 0;
+    });
+
+    console.log('src/routes/events/handlers.js:getByStatus', { events: JSON.stringify(sortedOldEvents[0]), newEvents: JSON.stringify(sortedNewEvents[0]) });
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
