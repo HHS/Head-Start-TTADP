@@ -138,99 +138,6 @@ type RemappingDefinition = Record<string, string | (
 )[]>;
 
 /**
- * Remaps the data based on the provided remapping definition.
- * @param data - The JSON data to be remapped.
- * @param remappingDefinition - The remapping definition object.
- * @param reverse - Flag indicating whether to perform reverse remapping. Default is false.
- * @returns The remapped data.
- */
-const remap = (
-  data: object | object[],
-  remappingDefinition: RemappingDefinition,
-  options:{
-    reverse?: boolean,
-    keepUnmappedValues?: boolean,
-    deleteMappedValues?: boolean,
-    deleteEmptyParents?: boolean,
-  } = {},
-): {
-  mapped: object | object[],
-  unmapped: object | object[],
-} => {
-  // If jsonData is null or undefined, return null
-  if (data === null || data === undefined) return null;
-  const {
-    reverse = false,
-    deleteMappedValues = true,
-    deleteEmptyParents = true,
-    keepUnmappedValues = true,
-  } = options;
-
-  let remappedData;
-  let unmappedData = data;
-  if (keepUnmappedValues) {
-    remappedData = data;
-  } else if (Array.isArray(data)) {
-    remappedData = [];
-  } else {
-    remappedData = {};
-  }
-
-  // Iterate over each key in the remapping definition
-  Object.keys(remappingDefinition).forEach((key) => {
-    // Determine the source and target paths based on the reverse flag
-    // eslint-disable-next-line no-nested-ternary
-    let sourcePath:string;
-    if (reverse) {
-      sourcePath = Array.isArray(remappingDefinition[key])
-        ? remappingDefinition[key].slice(-1) as string
-        : remappingDefinition[key] as string;
-    } else {
-      sourcePath = key;
-    }
-    const targetDefinition = reverse
-      ? key
-      : remappingDefinition[key];
-    const targetActions = Array.isArray(targetDefinition)
-      ? targetDefinition
-      : [targetDefinition];
-    // Get the value from the source path in the remapped data
-    const sourceValue = dotWild.get(
-      keepUnmappedValues
-        ? remappedData
-        : data,
-      sourcePath,
-    );
-
-    // If the source value exists
-    if (sourceValue !== undefined) {
-      targetActions.forEach((targetAction) => {
-        /* TODO: fix later
-        if (targetAction instanceof Function) {
-          sourceValue = targetAction(sourceValue);
-          // Set the source value at the target path in the remapped data
-        } else */ if (Array.isArray(sourceValue) && targetAction.includes('*')) {
-          sourceValue.forEach((value, index) => {
-            const updatedTargetAction = targetAction.replace('*', index.toString());
-            remappedData = dotWild.set(remappedData, updatedTargetAction, value);
-          });
-        } else {
-          remappedData = dotWild.set(remappedData, targetAction, sourceValue);
-        }
-      });
-
-      // if keepUnmappedValues && deleteMappedValues, remove sourcePath and empty parent structures
-      if (keepUnmappedValues && deleteMappedValues) {
-        remappedData = remapPrune(remappedData, sourcePath, { deleteEmptyParents });
-      }
-      unmappedData = remapPrune(unmappedData, sourcePath, { deleteEmptyParents });
-    }
-  });
-
-  return { mapped: remappedData, unmapped: unmappedData };
-};
-
-/**
  * Checks if a value is an object.
  *
  * @param value - The value to be checked.
@@ -264,7 +171,7 @@ const switchKeysAndValues = (
  */
 const removeUndefined = (obj: any): any => {
   // Check if the input is an object
-  if (isObject(obj)) {
+  if (!isObject(obj)) {
     return obj;
   }
 
@@ -301,6 +208,122 @@ const removeUndefined = (obj: any): any => {
 };
 
 /**
+ * Remaps the data based on the provided remapping definition.
+ * @param data - The JSON data to be remapped.
+ * @param remappingDefinition - The remapping definition object.
+ * @param reverse - Flag indicating whether to perform reverse remapping. Default is false.
+ * @returns The remapped data.
+ */
+const remap = (
+  data: object | object[],
+  remappingDefinition: RemappingDefinition,
+  options:{
+    reverse?: boolean,
+    keepUnmappedValues?: boolean,
+    deleteMappedValues?: boolean,
+    deleteEmptyParents?: boolean,
+  } = {},
+): {
+  mapped: object | object[],
+  unmapped: object | object[],
+} => {
+  // If jsonData is null or undefined, return null
+  if (data === null || data === undefined) return null;
+  const {
+    reverse = false,
+    deleteMappedValues = true,
+    deleteEmptyParents = true,
+    keepUnmappedValues = true,
+  } = options;
+
+  let remappedData;
+  let unmappedData = data;
+  if (keepUnmappedValues) {
+    remappedData = data;
+  } else {
+    const targets = reverse
+      ? Object.keys(remappingDefinition)
+      : Object.values(remappingDefinition);
+    const targetStructureIsArray = targets
+      .every((target) => {
+        if (Array.isArray(target)) return false;
+        const prefix = target.split('.')[0];
+        return (prefix === '*'
+        || (Number.isInteger(Number(prefix))
+        && Number(prefix) > 0));
+      });
+    if (targetStructureIsArray) {
+      remappedData = [];
+    } else {
+      remappedData = {};
+    }
+  }
+
+  // Iterate over each key in the remapping definition
+  Object.keys(remappingDefinition).forEach((key) => {
+    // Determine the source and target paths based on the reverse flag
+    // eslint-disable-next-line no-nested-ternary
+    let sourcePath:string;
+    if (reverse) {
+      sourcePath = Array.isArray(remappingDefinition[key])
+        ? remappingDefinition[key].slice(-1) as string
+        : remappingDefinition[key] as string;
+    } else {
+      sourcePath = key;
+    }
+    const targetDefinition = reverse
+      ? key
+      : remappingDefinition[key];
+    const targetActions = Array.isArray(targetDefinition)
+      ? targetDefinition
+      : [targetDefinition];
+    // Get the value from the source path in the remapped data
+    const sourceValue = dotWild.get(
+      keepUnmappedValues
+        ? remappedData
+        : data,
+      sourcePath,
+    );
+
+    console.log(sourceValue, targetActions );
+
+    // If the source value exists
+    if (sourceValue !== undefined || sourceValue !== null) {
+      targetActions.forEach((targetAction) => {
+        /* TODO: fix later
+        if (targetAction instanceof Function) {
+          sourceValue = targetAction(sourceValue);
+          // Set the source value at the target path in the remapped data
+        } else */ if (Array.isArray(sourceValue) && targetAction.includes('*')) {
+          sourceValue.forEach((value, index) => {
+            const updatedTargetAction = targetAction.replace('*', index.toString());
+            console.log(remappedData);
+            remappedData = dotWild.set(remappedData, updatedTargetAction, value);
+            console.log(remappedData);
+          });
+        } else {
+          console.log(remappedData);
+          remappedData = dotWild.set(remappedData, targetAction, sourceValue);
+          console.log(remappedData);
+        }
+      });
+
+      console.log(remappedData);
+
+      // if keepUnmappedValues && deleteMappedValues, remove sourcePath and empty parent structures
+      if (keepUnmappedValues && deleteMappedValues) {
+        remappedData = remapPrune(remappedData, sourcePath, { deleteEmptyParents });
+      }
+      unmappedData = remapPrune(unmappedData, sourcePath, { deleteEmptyParents });
+    }
+  });
+  remappedData = removeUndefined(remappedData);
+  console.log(remappedData);
+
+  return { mapped: remappedData, unmapped: unmappedData };
+};
+
+/**
  * Checks if two values are deeply equal.
  * @param value1 - The first value to compare.
  * @param value2 - The second value to compare.
@@ -333,6 +356,25 @@ const isDeepEqual = (value1: any, value2: any): boolean => {
   return value1 === value2;
 };
 
+const mergeDeep = (...sources) => {
+  if (sources.length < 2) return sources.shift();
+  const target = sources.shift();
+  const source = sources.shift();
+
+  if (isObject(target) && isObject(source)) {
+    source.forEach((key) => {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} });
+        mergeDeep(target[key], source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    });
+  }
+
+  return mergeDeep(target, ...sources);
+};
+
 /**
  * Collects the values from incomingValues that have changed compared to currentValues.
  * @param incomingValues - The new values to compare.
@@ -356,7 +398,9 @@ const collectChangedValues = (
   Object.entries(incomingValues)
     .forEach(([key, value]) => {
       // Check if the value has changed compared to the corresponding value in currentValues
-      if (!isDeepEqual(value, currentValues[key])) {
+      if (!isDeepEqual(value, currentValues[key])
+      || (key === 'id'
+      && value === currentValues[key])) {
         // Add the changed value to the changedValues object
         changedValues[key] = value;
       }
@@ -400,6 +444,39 @@ const includeToFindAll = async (
   });
 };
 
+const nestedRawish = (
+  data: { [key: string]: any } | { [key: string]: any }[],
+): { [key: string]: any } | { [key: string]: any }[] => {
+  if (Array.isArray(data)) {
+    return data.map((datum) => nestedRawish(datum));
+  }
+
+  if (isObject(data) && data?.dataValues) {
+    const {
+      dataValues,
+      _previousDataValues: previousDataValues,
+      uniqno,
+      _changed: changed,
+      _options: options,
+      isNewRecord,
+      ...includes
+    } = data;
+
+    const result = {
+      ...dataValues,
+    };
+
+    Object.keys(includes)
+      .forEach((key) => {
+        result[key] = nestedRawish(includes[key]);
+      });
+
+    return result;
+  }
+
+  return data;
+};
+
 export {
   getColumnNamesFromModelForType,
   getColumnInformation,
@@ -409,6 +486,8 @@ export {
   switchKeysAndValues,
   removeUndefined,
   isDeepEqual,
+  mergeDeep,
   collectChangedValues,
   includeToFindAll,
+  nestedRawish,
 };
