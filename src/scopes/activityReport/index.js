@@ -30,6 +30,7 @@ import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
+import { withFeiResponse, withoutFeiResponse } from './feiRootCause';
 
 export const topicToQuery = {
   reportId: {
@@ -155,6 +156,10 @@ export const topicToQuery = {
     collaborator: (query) => onlyCollaborators(query),
     creator: (query) => onlyCreators(query),
     both: (query) => bothCollaboratorsAndCreators(query),
+  },
+  feiResponse: {
+    ctn: (query) => withFeiResponse(query),
+    nctn: (query) => withoutFeiResponse(query),
   },
 };
 
