@@ -84,136 +84,151 @@ const reportDefinitions:ReportDefinitions = {
       include: includeReportTrainingEvent,
       remapDefs: {
         blob: {
-          'data."eventId': '0.eventId',
+          'data.eventId': '0.eventId',
           regionId: '0.regionId',
-          'data."Edit Title"': '0.name',
+          'data.eventName': '0.name',
           'data.eventOrganizer': '0.organizer.name',
           'data.vision': '0.vision',
+          'data.trainingType': '0.trainingType',
         },
       },
     },
-    // { // ReportAudience
-    //   model: ReportAudience,
-    //   syncer: syncReportAudiences,
-    //   include: includeReportAudience,
-    //   remapDefs: {
-    //     blob: {
-    //       'data.audience.*': '*.name',
-    //     },
-    //   },
-    // },
-    // { // ReportCollaborator for COLLABORATOR_TYPES.OWNER
-    //   model: ReportCollaborator,
-    //   syncer: syncReportCollaboratorsForType,
-    //   include: includeReportCollaborator,
-    //   get: undefined,
-    //   type: COLLABORATOR_TYPES.OWNER,
-    //   remapDef: {
-    //     ownerId: '0.id',
-    //   },
-    // },
-    // { // ReportCollaborator for COLLABORATOR_TYPES.INSTANTIATOR
-    //   model: ReportCollaborator,
-    //   syncer: syncReportCollaboratorsForType,
-    //   include: includeReportCollaborator,
-    //   get: undefined,
-    //   type: COLLABORATOR_TYPES.INSTANTIATOR,
-    //   remapDef: {
-    //     'data.owner': '0',
-    //   },
-    // },
-    // { // ReportCollaborator for COLLABORATOR_TYPES.EDITOR
-    //   model: ReportCollaborator,
-    //   syncer: syncReportCollaboratorsForType,
-    //   include: includeReportCollaborator,
-    //   get: undefined,
-    //   type: COLLABORATOR_TYPES.EDITOR,
-    //   remapDef: {
-    //     'collaboratorIds.*': '*.id',
-    //   },
-    // },
-    // { // ReportCollaborator for COLLABORATOR_TYPES.POC
-    //   model: ReportCollaborator,
-    //   syncer: syncReportCollaboratorsForType,
-    //   include: includeReportCollaborator,
-    //   get: undefined,
-    //   type: COLLABORATOR_TYPES.POC,
-    //   remapDef: {
-    //     'pocIds.*': '*.id',
-    //   },
-    // },
-    // { // ReportGoalTemplate
-    //   model: ReportGoalTemplate,
-    //   syncer: syncReportGoalTemplates,
-    //   include: includeReportGoalTemplates,
-    //   remapDefs: {
-    //     blob: {
-    //       'data.goal': '0.templateName',
-    //       regionId: '0.regionId',
-    //       'data.timeframe': '0.timeframe',
-    //       'data.endDate': '0.endDate',
-    //     },
-    //   },
-    // },
-    // { // ReportImport
-    //   model: ReportImport,
-    //   syncer: syncReportImport,
-    //   include: includeReportImport,
-    //   remapDefs: {
-    //     blob: {
-    //       imported: '0.data',
-    //     },
-    //   },
-    // },
-    // { // ReportNationalCenter
-    //   model: ReportNationalCenter,
-    //   syncer: syncReportNationalCenters,
-    //   include: includeReportNationalCenters,
-    //   remapDefs: {
-    //     blob: {
-    //       'data."National Center(s) Requested".*': '*.name',
-    //     },
-    //   },
-    // },
-    // { // ReportPageState
-    //   model: ReportPageState,
-    //   syncer: syncReportPageStates,
-    //   include: includeReportPageStates,
-    //   remapDefs: {
-    //     blob: {
-    //       'data.pageState': '0.pageState',
-    //     },
-    //   },
-    // },
-    // { // ReportReason
-    //   model: ReportReason,
-    //   syncer: syncReportReasons,
-    //   include: includeReportReasons,
-    //   remapDefs: {
-    //     blob: {
-    //       'data.reasons.*': '*.name',
-    //     },
-    //   },
-    // },
-    // { // ReportResource
-    //   model: ReportResource,
-    //   syncer: syncReportResources,
-    //   include: includeReportResources,
-    //   remapDefs: {
-    //     blob: {
-    //     },
-    //   },
-    // },
-    // { // ReportTargetPopulation
-    //   model: ReportTargetPopulation,
-    //   syncer: syncReportTargetPopulations,
-    //   include: includeReportTargetPopulations,
-    //   remapDefs: {
-    //     blob: {
-    //       'data."Target Population(s)".*': '*.name',
-    //     },
-    //   },
-    // },
+    { // ReportAudience
+      model: ReportAudience,
+      syncer: syncReportAudiences,
+      include: includeReportAudience,
+      remapDefs: {
+        blob: {
+          'data.audience': '*.name',
+        },
+      },
+    },
+    { // ReportCollaborator for COLLABORATOR_TYPES.OWNER
+      model: ReportCollaborator,
+      syncer: syncReportCollaboratorsForType,
+      include: includeReportCollaborator,
+      get: undefined,
+      type: COLLABORATOR_TYPES.OWNER,
+      remapDefs: {
+        blob: {
+          ownerId: '0.userId',
+          'data.owner.id': '0.userId',
+          'data.owner.email': '0.user.email',
+          'data.owner.name': '0.user.name',
+        },
+      },
+    },
+    { // ReportCollaborator for COLLABORATOR_TYPES.INSTANTIATOR
+      model: ReportCollaborator,
+      syncer: syncReportCollaboratorsForType,
+      include: includeReportCollaborator,
+      get: undefined,
+      type: COLLABORATOR_TYPES.INSTANTIATOR,
+      remapDefs: {
+        blob: {
+          ownerId: '0.userId',
+          'data.owner.id': '0.userId',
+          'data.owner.email': '0.user.email',
+          'data.owner.name': '0.user.name',
+        },
+      },
+    },
+    { // ReportCollaborator for COLLABORATOR_TYPES.EDITOR
+      model: ReportCollaborator,
+      syncer: syncReportCollaboratorsForType,
+      include: includeReportCollaborator,
+      get: undefined,
+      type: COLLABORATOR_TYPES.EDITOR,
+      remapDefs: {
+        blob: {
+          'collaboratorIds.*': '*.userId',
+        },
+      },
+    },
+    { // ReportCollaborator for COLLABORATOR_TYPES.POC
+      model: ReportCollaborator,
+      syncer: syncReportCollaboratorsForType,
+      include: includeReportCollaborator,
+      get: undefined,
+      type: COLLABORATOR_TYPES.POC,
+      remapDefs: {
+        blob: {
+          'pocIds.*': '*.userId',
+        },
+      },
+    },
+    { // ReportGoalTemplate
+      model: ReportGoalTemplate,
+      syncer: syncReportGoalTemplates,
+      include: includeReportGoalTemplates,
+      remapDefs: {
+        blob: {
+          'data.goal': '0.templateName',
+          regionId: '0.regionId',
+          'data.timeframe': '0.timeframe',
+          'data.endDate': '0.endDate',
+        },
+      },
+    },
+    { // ReportImport
+      model: ReportImport,
+      syncer: syncReportImport,
+      include: includeReportImport,
+      remapDefs: {
+        blob: {
+          imported: '0.data',
+        },
+      },
+    },
+    { // ReportNationalCenter
+      model: ReportNationalCenter,
+      syncer: syncReportNationalCenters,
+      include: includeReportNationalCenters,
+      remapDefs: {
+        blob: {
+          'data."National Center(s) Requested".*': '*.name',
+        },
+      },
+    },
+    { // ReportPageState
+      model: ReportPageState,
+      syncer: syncReportPageStates,
+      include: includeReportPageStates,
+      remapDefs: {
+        blob: {
+          'data.pageState': '0.pageState',
+        },
+      },
+    },
+    { // ReportReason
+      model: ReportReason,
+      syncer: syncReportReasons,
+      include: includeReportReasons,
+      remapDefs: {
+        blob: {
+          'data.reasons.*': '*.name',
+        },
+      },
+    },
+    { // ReportResource
+      model: ReportResource,
+      syncer: syncReportResources,
+      include: includeReportResources,
+      remapDefs: {
+        blob: {
+        },
+      },
+    },
+    { // ReportTargetPopulation
+      model: ReportTargetPopulation,
+      syncer: syncReportTargetPopulations,
+      include: includeReportTargetPopulations,
+      remapDefs: {
+        blob: {
+          'data.targetPopulations.*': '*.name',
+        },
+      },
+    },
   ],
   [REPORT_TYPE.REPORT_TRAINING_SESSION]: [
     { // Report
@@ -360,7 +375,7 @@ const reportDefinitions:ReportDefinitions = {
   ],
 };
 
-const reportSyncers = (
+const getSyncersForReportType = (
   reportType: ReportType,
   remapSet: string,
   options?: {
@@ -373,8 +388,8 @@ const reportSyncers = (
     syncer,
   }) => (options === undefined
     || (options.exclude && !options.models.includes(model))
-    || (!options.exclude && options.models.includes(model))
-  ) && syncer)
+    || (!options.exclude && options.models.includes(model)))
+    && syncer)
   .map(({
     syncer,
     remapDefs,
@@ -385,7 +400,7 @@ const reportSyncers = (
     type,
   }));
 
-const reportIncludes = (
+const getIncludesForReportType = (
   reportType: ReportType,
   remapSet: string,
   options?: {
@@ -398,8 +413,8 @@ const reportIncludes = (
     include,
   }) => (options === undefined
     || (options.exclude && !options.models.includes(model))
-    || (!options.exclude && options.models.includes(model))
-  ) && include)
+    || (!options.exclude && options.models.includes(model)))
+    && include)
   .map(({
     model,
     include,
@@ -410,7 +425,7 @@ const reportIncludes = (
     type,
   }));
 
-const reportGets = (
+const getGetsForReportType = (
   reportType: ReportType,
   remapSet: string,
   options?: {
@@ -423,8 +438,8 @@ const reportGets = (
     get,
   }) => (options === undefined
     || (options.exclude && !options.models.includes(model))
-    || (!options.exclude && options.models.includes(model))
-  ) && get)
+    || (!options.exclude && options.models.includes(model)))
+    && get)
   .map(({
     get,
     remapDefs,
@@ -435,29 +450,32 @@ const reportGets = (
     type,
   }));
 
-const reportRemapDefs = (
+const getRemapDefsForReportType = (
   reportType: ReportType,
   remapSet: string,
   options?: {
     models: object[],
     exclude: boolean,
   },
-) => reportDefinitions[reportType]
+): {
+  model: object,
+  remapDef: RemappingDefinition,
+  type?: string,
+}[] => reportDefinitions[reportType]
   .filter(({
     model,
     include,
   }) => (options === undefined
-    || (options.exclude && !options.models.includes(model))
-    || (!options.exclude && options.models.includes(model))
-  ) && (include
-    || model === Report))
+    || (options?.exclude && !options.models.includes(model))
+    || (!options?.exclude && options.models.includes(model)))
+    && (include || model === Report))
   .map(({
     model,
     remapDefs,
     type,
   }) => ({
     model,
-    remapDef: remapDefs?.[remapSet],
+    remapDef: remapDefs?.[remapSet] ?? {},
     ...(type && { type }),
   }));
 
@@ -466,8 +484,8 @@ export {
   type ReportDefinition,
   type ReportDefinitions,
   reportDefinitions,
-  reportSyncers,
-  reportIncludes,
-  reportGets,
-  reportRemapDefs,
+  getSyncersForReportType,
+  getIncludesForReportType,
+  getGetsForReportType,
+  getRemapDefsForReportType,
 };
