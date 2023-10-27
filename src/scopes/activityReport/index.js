@@ -164,6 +164,5 @@ export const topicToQuery = {
 };
 
 export function activityReportsFiltersToScopes(filters, options, userId) {
-  console.log('\n\n\n-----Fitlerz: ', filters);
   return createFiltersToScopes(filters, topicToQuery, options, userId);
 }
