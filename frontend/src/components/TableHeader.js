@@ -6,6 +6,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import ReportMenu from '../pages/Landing/ReportMenu';
 import colors from '../colors';
 import PaginationCard from './PaginationCard';
+import './TableHeader.css';
 
 export default function TableHeader({
   title,
@@ -27,12 +28,22 @@ export default function TableHeader({
   perPage,
   handlePageChange,
 }) {
+  const tableHeaderClassNames = [
+    'ttahub-table-header',
+    'desktop:display-flex',
+  ];
+
+  if (hideMenu) {
+    tableHeaderClassNames.push('ttahub-table-header--hide-menu');
+  }
+
+  const controlsWrapDisplay = hideMenu ? 'display-none' : 'display-flex';
   return (
-    <div className="desktop:display-flex">
-      <div className="desktop-lg:display-flex flex-1 flex-align-center desktop:padding-top-0 padding-top-2 flex-justify">
-        <div className="desktop:display-flex flex-align-center">
-          <h2 className="font-body-lg desktop-lg:margin-y-0 margin-left-2 margin-right-1">{title}</h2>
-          <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row">
+    <div className={tableHeaderClassNames.join(' ')}>
+      <div className="ttahub-table-header--contents padding-y-2">
+        <div className="ttahub-table-header--contents-heading-section display-flex">
+          <h2 className="font-body-lg margin-y-0 margin-left-2 margin-right-1">{title}</h2>
+          <span className={`smart-hub--table-controls margin-x-0 ${controlsWrapDisplay} flex-row`}>
             {numberOfSelected > 0
             && (
               <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
@@ -80,6 +91,7 @@ export default function TableHeader({
           perPage={perPage}
           handlePageChange={handlePageChange}
           accessibleLandmarkName="Pagination, top"
+          paginationClassName="padding-x-1 margin-0"
           hideInfo
         />
       </div>

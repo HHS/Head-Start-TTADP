@@ -1,0 +1,20 @@
+.smart-hub--pagination-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.smart-hub--pagination-card--contents--info {
+    margin-left: 1rem;
+    margin-top: 1rem;
+}
+
+@media (min-width: 800px) {
+    .smart-hub--pagination-card {
+        flex-direction: row;
+    }
+    .smart-hub--pagination-card--contents--info {
+        margin-left: 2rem;
+        margin-top: 0;
+    }
+}

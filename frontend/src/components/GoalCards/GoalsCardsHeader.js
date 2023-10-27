@@ -12,6 +12,7 @@ import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import FeatureFlag from '../FeatureFlag';
 import PaginationCard from '../PaginationCard';
+import './GoalsCardsHeader.css';
 
 export default function GoalCardsHeader({
   title,
@@ -52,11 +53,11 @@ export default function GoalCardsHeader({
   };
 
   return (
-    <div className="padding-x-3 position-relative">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
-        <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
+    <div className="ttahub-goal-cards-header padding-x-3 position-relative">
+      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white margin-y-1 desktop:margin-0">
+        <h2 className="font-body-lg desktop:margin-left-2 margin-right-1 desktop:margin-y-3">{title}</h2>
         { showAddNewButton ? (
-          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
+          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 display-flex flex-row flex-align-center">
             <Link
               to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
               className="display-flex flex-justify usa-button"
@@ -70,7 +71,7 @@ export default function GoalCardsHeader({
           </span>
         ) : null }
       </div>
-      <div className="desktop:display-flex flex-justify bg-white">
+      <div className="ttahub-goal-cards-header--sort-and-pagination">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
@@ -88,17 +89,17 @@ export default function GoalCardsHeader({
             <option value="goalStatus-desc">goal status (closed first) </option>
           </Dropdown>
         </div>
-        <div>
-          <PaginationCard
-            totalCount={count}
-            currentPage={activePage}
-            offset={offset}
-            perPage={perPage}
-            handlePageChange={handlePageChange}
-            accessibleLandmarkName="Goals pagination, top"
-            hideInfo
-          />
-        </div>
+        <PaginationCard
+          totalCount={count}
+          currentPage={activePage}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          accessibleLandmarkName="Goals pagination, top"
+          paginationClassName="padding-x-1 margin-0"
+          hideInfo
+        />
+
       </div>
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>

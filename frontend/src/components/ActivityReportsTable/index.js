@@ -273,14 +273,14 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
         />
-        <div className="usa-table-container--scrollable">
+        <div className="usa-table-container--scrollable margin-bottom-0">
           <Table fullWidth striped>
             <caption className="usa-sr-only">
               {tableCaption}
               with sorting and pagination
             </caption>
             <thead>
-              <tr>
+              <tr className="ttahub-activity-report-table--heading-row">
                 <th className="width-8" aria-label="Select">
                   <Checkbox
                     id="all-reports"
