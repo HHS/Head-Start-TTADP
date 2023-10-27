@@ -21,6 +21,7 @@ import filtersToScopes from '../../scopes';
 import { reportsFiltersToScopes } from '../../scopes/reports';
 import { getAll as getAllReports } from '../../services/reports';
 import { REPORT_TYPE } from '../../constants';
+import reportImport from '../../models/reportImport';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -69,15 +70,14 @@ export const getByStatus = async (req, res) => {
       'blob',
       undefined,
       genScopes,
+      {
+        models: [reportImport],
+        exclude: true,
+      },
     );
 
     const sortedOldEvents = events.sort((a, b) => a.data.eventId.localeCompare(b.data.eventId));
-    const sortedNewEvents = newEvents.sort((a, b) => {
-      if (a.reportTrainingEvents[0].eventId < b.reportTrainingEvents[0].eventId) { return -1; }
-      if (a.reportTrainingEvents[0].eventId > b.reportTrainingEvents[0].eventId) { return 1; }
-      return 0;
-    });
-
+    const sortedNewEvents = newEvents.sort((a, b) => a.data.eventId.localeCompare(b.data.eventId));
     console.log('src/routes/events/handlers.js:getByStatus', { events: JSON.stringify(sortedOldEvents[0]), newEvents: JSON.stringify(sortedNewEvents[0]) });
 
     return res.status(httpCodes.OK).send(events);
