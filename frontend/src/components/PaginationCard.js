@@ -2,6 +2,7 @@ import React, { useRef, useLayoutEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import PropTypes from 'prop-types';
 import { Dropdown, Pagination } from '@trussworks/react-uswds';
+import './PaginationCard.css';
 
 function PaginationCard({
   currentPage,
@@ -12,9 +13,10 @@ function PaginationCard({
   perPageChange,
   hideInfo,
   accessibleLandmarkName,
+  paginationClassName,
 }) {
   const el = useRef();
-  const isMobile = useMediaQuery({ maxWidth: 900 });
+  const isDesktopOrTablet = useMediaQuery({ minWidth: 800 });
   /**
    * there is an unlabeled svg that is used to render the chevron icons
    * within the pagination component
@@ -59,38 +61,43 @@ function PaginationCard({
 
   const totalPages = getTotalPages();
 
+  if (totalPages < 2) {
+    return null;
+  }
+
   return (
-    <div ref={el} className="smart-hub--pagination-card display-flex bg-white">
+    <div ref={el} className="smart-hub--pagination-card flex-align-self-end display-block">
       {!(hideInfo) && (
-      <div className="display-flex flex-1 flex-align-center margin-left-4">
-        {perPageChange ? (
-          <Dropdown
-            className="margin-top-0 margin-right-1 width-auto"
-            id="perPage"
-            name="perPage"
-            data-testid="perPage"
-            onChange={perPageChange}
-            aria-label="Select per page"
-          >
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value={totalCount}>all</option>
-          </Dropdown>
-        ) : null }
-        <span>{getPageInfo()}</span>
-      </div>
+        <div className="smart-hub--pagination-card--contents--info display-flex flex-1 flex-align-center">
+          {perPageChange ? (
+            <Dropdown
+              className="margin-top-0 margin-right-1 width-auto"
+              id="perPage"
+              name="perPage"
+              data-testid="perPage"
+              onChange={perPageChange}
+              aria-label="Select per page"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value={totalCount}>all</option>
+            </Dropdown>
+          ) : null }
+          <span>{getPageInfo()}</span>
+        </div>
       )}
       <Pagination
-        className="padding-1"
+        className={paginationClassName}
         currentPage={currentPage}
         totalPages={totalPages}
         onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
         onClickPageNumber={(_e, page) => handlePageChange(page)}
-        maxSlots={isMobile ? 2 : 5}
+        maxSlots={isDesktopOrTablet ? 5 : 2}
         aria-label={accessibleLandmarkName}
       />
+
     </div>
   );
 }
@@ -103,6 +110,7 @@ PaginationCard.propTypes = {
   perPageChange: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
   hideInfo: PropTypes.bool,
   accessibleLandmarkName: PropTypes.string,
+  paginationClassName: PropTypes.string,
 };
 
 PaginationCard.defaultProps = {
@@ -113,5 +121,6 @@ PaginationCard.defaultProps = {
   perPageChange: false,
   hideInfo: false,
   accessibleLandmarkName: 'Pagination',
+  paginationClassName: 'padding-1',
 };
 export default PaginationCard;

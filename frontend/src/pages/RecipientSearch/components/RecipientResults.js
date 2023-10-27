@@ -81,7 +81,7 @@ export default function RecipientResults(
         perPage={perPage}
         handlePageChange={handlePageChange}
       />
-      <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-top-0">
+      <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-y-0">
         <caption className="usa-sr-only">
           Recipient search results with sorting and pagination
         </caption>
