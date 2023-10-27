@@ -12,9 +12,9 @@ import {
   nestedRawish,
 } from '../../lib/modelUtils';
 import {
-  reportIncludes,
-  reportSyncers,
-  reportRemapDefs,
+  getIncludesForReportType,
+  getSyncersForReportType,
+  getRemapDefsForReportType,
 } from './definition';
 
 const {
@@ -86,7 +86,7 @@ const getAllTypedReports = async (
 
   let formattedData;
   if (remapSet) {
-    const remapDefs = reportRemapDefs(
+    const remapDefs = getRemapDefsForReportType(
       reportType,
       remapSet,
       undefined,
@@ -96,11 +96,6 @@ const getAllTypedReports = async (
 
     const remapDefForReport = remapDefs.find(({ model }) => model === Report);
     console.log('getAllTypedReports - 6', remapDefForReport);
-    const { mapped: reportProcessedData } = remap(
-      dbData,
-      remapDefForReport.remapDef,
-      { reverse: true, keepUnmappedValues: false },
-    );
 
     const processedData: object[] = dbData
       .filter((data) => data)
@@ -114,10 +109,10 @@ const getAllTypedReports = async (
             const { as } = includes.find((include) => (include.model === model
               && (type === undefined
                 || type === null
-                || include.as.includes(type))));
+                || include.as.includes(type)))) || { as: undefined };
 
             const { mapped } = remap(
-              data?.[as],
+              as ? data?.[as] : data,
               remapDef,
               { reverse: true, keepUnmappedValues: false },
             ) || { mapped: null };
@@ -125,7 +120,7 @@ const getAllTypedReports = async (
             if (mapped) {
               console.log('getAllTypedReports - 7', {
                 as,
-                data: data?.[as],
+                data: as ? data?.[as] : data,
                 remapDef,
                 mapped,
               });
@@ -137,12 +132,12 @@ const getAllTypedReports = async (
         }
         return null;
       })
-      .filter((data) => data !== undefined);
+      .filter((data) => data !== undefined)
+      .map((data) => mergeDeep(...removeUndefined(data)));
 
-    processedData.push(reportProcessedData);
-
-    console.log('getAllTypedReports - 8', JSON.stringify(removeUndefined(processedData)));
-    formattedData = mergeDeep(removeUndefined(processedData));
+    console.log('getAllTypedReports - 8', JSON.stringify(processedData));
+    formattedData = processedData;
+    console.log('getAllTypedReports - 9', formattedData);
   } else {
     formattedData = dbData;
   }
@@ -176,18 +171,27 @@ const getOneTypedReport = async (
 /**
  * This function collects includes based on the given report type.
  * @param {string} reportType - The type of report.
- * @param {object[]} includeFilters - Optional array of include filters.
+ * @param {object[]} options - Optional array of include filters.
  * @returns {Array} - An array of includes generated based on the report type.
  */
 const collectIncludes = (
   reportType,
   remapSet: string,
-  includeFilters: object[] = null,
+  options?: {
+    models: object[],
+    exclude: boolean,
+  },
 ) => {
-  const includes = reportIncludes(
+  const includes = getIncludesForReportType(
     reportType,
     remapSet,
-    { models: [Report], exclude: true },
+    {
+      models: [
+        Report,
+        ...(options?.exclude ? options?.models || [] : []),
+      ],
+      exclude: true,
+    },
   );
 
   console.log('collectIncludes', reportType);
@@ -196,11 +200,9 @@ const collectIncludes = (
   return (includes || [])
     .filter(({ model, type }) => (
       // Filter the includes based on the include filters
-      includeFilters === null
-      || includeFilters.includes((inf) => (
-        inf === model
-        || (inf.model === model && inf.type === type)
-      ))
+      (options === undefined
+        || (options?.exclude && !options.models.includes(model))
+        || (!options?.exclude && options.models.includes(model)))
     ))
     // Map each include to its corresponding function call
     .map(({ include, model, type }) => include(reportType, type));
@@ -272,12 +274,12 @@ const sync = async (
   data: object,
 ) => {
   // Retrieve the syncer and processorModels for the given reportType
-  const [{ remapDef: reportDef }] = reportSyncers(
+  const [{ remapDef: reportDef }] = getSyncersForReportType(
     reportType,
     remapSet,
     { models: [Report], exclude: false },
   );
-  const syncers = reportSyncers(
+  const syncers = getSyncersForReportType(
     reportType,
     remapSet,
     { models: [Report], exclude: true },
@@ -335,13 +337,16 @@ const getOne = async (
   remapSet: string,
   reportId: number,
   scope?: object,
-  metaDataIncludeFilter?: object[],
+  options?: {
+    models: object[],
+    exclude: boolean,
+  },
   // Call the getOneTypedReport function with the provided parameters
 ) => getOneTypedReport(
   reportType,
   remapSet,
   reportId,
-  collectIncludes(reportType, remapSet, metaDataIncludeFilter),
+  collectIncludes(reportType, remapSet, options),
   scope,
 );
 
@@ -357,14 +362,17 @@ const getAll = async (
   remapSet: string,
   reportIds?: number[],
   scope?: object,
-  metaDataIncludeFilter?: object[],
+  options?: {
+    models: object[],
+    exclude: boolean,
+  },
   // Call the function `getAllTypedReports` with the provided arguments
   // and return the result.
 ) => getAllTypedReports(
   reportType,
   remapSet,
   reportIds,
-  collectIncludes(reportType, remapSet, metaDataIncludeFilter),
+  collectIncludes(reportType, remapSet, options),
   scope,
 );
 
