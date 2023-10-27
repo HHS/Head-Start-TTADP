@@ -16,7 +16,7 @@ function PaginationCard({
   paginationClassName,
 }) {
   const el = useRef();
-  const isDesktopOrTablet = useMediaQuery({ minWidth: 800 });
+  const isMobile = useMediaQuery({ maxWidth: 500 });
   /**
    * there is an unlabeled svg that is used to render the chevron icons
    * within the pagination component
@@ -61,7 +61,7 @@ function PaginationCard({
 
   const totalPages = getTotalPages();
 
-  if (totalPages < 2) {
+  if (hideInfo && totalPages < 2) {
     return null;
   }
 
@@ -94,8 +94,8 @@ function PaginationCard({
         onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
         onClickPageNumber={(_e, page) => handlePageChange(page)}
-        maxSlots={isDesktopOrTablet ? 5 : 2}
         aria-label={accessibleLandmarkName}
+        maxSlots={isMobile ? 5 : 7}
       />
 
     </div>
