@@ -22,6 +22,37 @@ const camelToPascalCase = (input) => (input
   : input);
 
 /**
+ * Abbreviates a given input string by taking the first letter of each word, except for the
+ * last word.
+ *
+ * @param {string} input - The input string to be abbreviated.
+ * @returns {string} The abbreviated string.
+ */
+const abbreviate = (input) => {
+  // Convert the input string to PascalCase
+  const asPascal = camelToPascalCase(input);
+
+  // Split the PascalCase string into an array of words
+  const words = asPascal.split(/(?=[A-Z])/);
+
+  // Map each word to its first letter
+  const abbreviatedWords = words.map((word) => word[0]);
+
+  // Join all abbreviated words, except for the last word, with commas
+  const abbreviation = (words.includes('As') || words.includes('For'))
+    ? `abbr.${words.map((word, index) => {
+      if (word === 'As' || word === 'For') return word;
+      if (index > 0 && (words[index - 1] === 'As')) return word;
+      return abbreviatedWords[index];
+    }).join('')}`
+    : input;
+
+  // Return the final abbreviation
+  console.log(input, abbreviation);
+  return abbreviation;
+};
+
+/**
  * Function to make a word plural based on specific rules.
  * @param {string} word - The word to be made plural.
  * @returns {string} - The plural form of the word.
@@ -149,7 +180,7 @@ const generateAssociation = async (
           : to,
         {
           foreignKey,
-          as: dynamicAs,
+          as: abbreviate(dynamicAs),
           ...(through && { through, otherKey }),
         },
       );
