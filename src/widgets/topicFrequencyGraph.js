@@ -207,9 +207,6 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     reportIds: new Set(),
   }));
 
-  console.log('\n\n\n-------topicsAndParticipants.topics: ', topicsAndParticipants.topics);
-  console.log('\n\n\n-------topicsAndParticipants: ', topicsAndParticipants);
-
   topicsAndParticipants.forEach((goalData) => {
     goalData
       .get('topics')?.forEach(({ topic, reportIds }) => {

@@ -13,11 +13,9 @@ INNER JOIN unnested_responses arr
 WHERE arr."res"`;
 
 export function withFeiRootCause(responses) {
-  console.log('\n\n\n----------------HERE123');
   return filterAssociation(feiResponseSql, responses, false);
 }
 
 export function withoutFeiRootCause(responses) {
-  console.log('\n\n\n----------------HERE456');
   return filterAssociation(feiResponseSql, responses, true);
 }

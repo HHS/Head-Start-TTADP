@@ -1581,7 +1581,6 @@ describe('filtersToScopes', () => {
       const filters = { 'feiRootCause.nin': ['Community Partnerships'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
-        logging: console.log,
         where: { [Op.and]: [scope, { id: possibleReportIds }] },
       });
       expect(found.length).toBe(1);
