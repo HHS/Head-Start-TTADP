@@ -361,12 +361,15 @@ const mergeDeep = (...sources) => {
   const target = sources.shift();
   const source = sources.shift();
 
+  console.log('mergeDeep', target, source);
+
   if (isObject(target) && isObject(source)) {
-    source.forEach((key) => {
+    Object.keys(source).forEach((key) => {
       if (isObject(source[key])) {
         if (!target[key]) Object.assign(target, { [key]: {} });
         mergeDeep(target[key], source[key]);
       } else {
+        console.log('mergeDeep', target, key, source[key]);
         Object.assign(target, { [key]: source[key] });
       }
     });
