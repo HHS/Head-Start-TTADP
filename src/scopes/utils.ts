@@ -62,8 +62,14 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId) {
     return condition in topicToQuery[topic];
   });
 
+  console.log('@@@@@@', validFilters);
+
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
+
+  console.log('+++', topicToQuery[topic][condition].toString(), topicToQuery[topic][condition]([query].flat(), options, userId));
+
+    console.log('$$$$$ -> ', topic, condition, JSON.stringify(topicToQuery[topic][condition]([query].flat(), options, userId)));
     return topicToQuery[topic][condition]([query].flat(), options, userId);
   });
 }
