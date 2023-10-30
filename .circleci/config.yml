@@ -312,11 +312,11 @@ jobs:
             cd similarity_api/src
             python3 -m venv venv
             source venv/bin/activate
-            pip install -U pip setuptools virtualenv wheel
+            pip install -U pip setuptools wheel
             pip install -U -r requirements.txt
       - save_cache:
           paths:
-            - similarity_api
+            - similarity_api/src/venv
           key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
       - store_artifacts:  # store backend lint reports
           path: reports
