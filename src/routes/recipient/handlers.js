@@ -47,12 +47,6 @@ export async function getGoalsByIdandRecipient(req, res) {
     const { recipientId } = req.params;
     const { goalIds } = req.query;
 
-    // Check if recipientId is not an integer or any of the goalIds are not integers
-    if (!Number.isInteger(recipientId) || !goalIds.every(Number.isInteger)) {
-      // If either condition is true, send a status code of 400 (Bad Request)
-      res.sendStatus(400);
-    }
-
     const goals = await goalsByIdAndRecipient(goalIds, recipientId);
 
     if (!goals.length) {

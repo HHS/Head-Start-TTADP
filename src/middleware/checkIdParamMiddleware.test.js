@@ -7,6 +7,7 @@ import {
   checkGroupIdParam,
   checkAlertIdParam,
   checkIdParam,
+  checkIdArrayParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
@@ -350,6 +351,47 @@ describe('checkIdParamMiddleware', () => {
       };
 
       checkIdParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkIdArrayParam', () => {
+    it('calls next if objective id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          arbitraryId: ['2'],
+        },
+      };
+
+      checkIdArrayParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          arbitraryId: ['2D'],
+        },
+      };
+
+      checkIdArrayParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkIdArrayParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
