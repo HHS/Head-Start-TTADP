@@ -30,11 +30,11 @@ const orderGoalsBy = (sortBy, sortDir) => {
       ];
       break;
     case 'id':
+    default:
       result = [
         [sequelize.col('id'), sortDir],
+        [sequelize.col(STATUS_SORT), sortDir],
       ];
-      break;
-    default:
       break;
   }
   return result;
