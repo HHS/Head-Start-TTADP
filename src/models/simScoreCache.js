@@ -11,8 +11,8 @@ const {
 export default (sequelize, DataTypes) => {
   class SimScoreCache extends Model {
     static associate(models) {
-      SimScoreCache.belongsTo(models.Goal, { foreignKey: 'goal1', as: 'goalOne' });
-      SimScoreCache.belongsTo(models.Goal, { foreignKey: 'goal2', as: 'goalTwo' });
+      SimScoreCache.belongsTo(models.Goal, { foreignKey: 'id', as: 'goalOne' });
+      SimScoreCache.belongsTo(models.Goal, { foreignKey: 'id', as: 'goalTwo' });
     }
   }
   SimScoreCache.init({
