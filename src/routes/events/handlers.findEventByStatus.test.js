@@ -10,6 +10,8 @@ import {
 } from '../../services/event';
 import { createSession } from '../../services/sessionReports';
 
+jest.mock('bull');
+
 const { User, Permission } = db;
 
 const newEvent = ({
