@@ -60,10 +60,10 @@ const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
 const invalidateSimilarityScores = async (sequelize, instance, options) => {
   const changed = Array.from(instance.changed());
 
-  if (changed.includes('goal1') || changed.includes('goal2')) {
+  if (changed.includes('name')) {
     await sequelize.models.SimScoreCache.destroy({
       where: {
-        [sequelize.Op.and]: [
+        [sequelize.Op.or]: [
           { goal1: instance.id },
           { goal2: instance.id },
         ],
