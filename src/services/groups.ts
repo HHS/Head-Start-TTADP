@@ -56,6 +56,7 @@ export async function groupsByRegion(region: number): Promise<GroupResponse[]> {
           'number',
           'id',
           'granteeName',
+          'recipientInfo',
         ],
         model: Grant,
         as: 'grants',
