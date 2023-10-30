@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     goal2: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     score: {
