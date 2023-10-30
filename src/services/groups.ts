@@ -40,15 +40,31 @@ interface GroupResponse {
 
 export async function groupsByRegion(region: number): Promise<GroupResponse[]> {
   return Group.findAll({
+    attributes: [
+      'id',
+      'name',
+      'userId',
+    ],
     where: {
       '$grants.regionId$': { [Op.eq]: region },
     },
     include: [
       {
+        attributes: [
+          'regionId',
+          'recipientId',
+          'number',
+          'id',
+          'granteeName',
+        ],
         model: Grant,
         as: 'grants',
         include: [
           {
+            attributes: [
+              'name',
+              'id',
+            ],
             model: Recipient,
             as: 'recipient',
           },
