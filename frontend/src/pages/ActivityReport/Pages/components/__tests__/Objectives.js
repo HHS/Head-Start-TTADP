@@ -40,11 +40,11 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   const topicOptions = [
     {
       value: 1,
-      label: 'Fencing',
+      name: 'Fencing',
     },
     {
       value: 2,
-      label: 'Boating',
+      name: 'Boating',
     },
   ];
 
