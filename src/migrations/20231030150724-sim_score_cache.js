@@ -17,6 +17,7 @@ module.exports = {
             primaryKey: true,
             autoIncrement: true,
           },
+          recipient_id: { allowNull: false, type: Sequelize.INTEGER },
           goal1: { allowNull: false, type: Sequelize.INTEGER },
           goal2: { allowNull: false, type: Sequelize.INTEGER },
           score: { allowNull: false, type: Sequelize.FLOAT },

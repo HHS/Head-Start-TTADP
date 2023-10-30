@@ -1,10 +1,13 @@
+import logging
+from datetime import datetime
+from typing import Dict, List
+
 import numpy as np
 import spacy
+from db.db import query, query_many
+from flask import jsonify
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
-from flask import jsonify
-from typing import List, Dict
-from db.db import query_many
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -33,6 +36,57 @@ def compute_goal_similarities(recipient_id, alpha):
   ids = [r['id'] for r in recipients]
   matched = calculate_goal_similarity(names, ids, alpha)
   return jsonify({"result": matched})
+
+def cache_scores():
+  recipients = query_many(
+    """
+    SELECT g."id", g."name"
+    FROM "Goals" g
+    JOIN "Grants" gr ON g."grantId" = gr."id"
+    JOIN "Recipients" r ON gr."recipientId" = r."id"
+    WHERE g."name" IS NOT NULL;
+    """,
+    {}
+  )
+
+  logging.info("compute_batch_similarities")
+  if recipients:
+    logging.info(f"Found {len(recipients)} goals")
+  else:
+    logging.info(f"No goals found")
+
+  if recipients is None:
+    return jsonify({"error": "recipient_id not found"}), 400
+
+  for i in range(len(recipients)):
+    names = [r['name'] for r in recipients[i:]]
+    ids = [r['id'] for r in recipients[i:]]
+    matched = calculate_goal_similarity(names, ids, 0.0)
+
+    if len(matched) > 0:
+      for match in matched:
+        goal1 = match['goal1']['id']
+        goal2 = match['goal2']['id']
+        score = match['similarity']
+        insert_score(goal1, goal2, score, recipients[i]['id'])
+
+  return jsonify({"result": "Scores inserted into database"})
+
+def insert_score(goal1, goal2, score, recipient_id):
+  """
+  Inserts the similarity score into the SimScoreCache table.
+  """
+  query(
+    """
+    INSERT INTO "SimScoreCache" (recipient_id, goal1, goal2, score, "createdAt", "updatedAt")
+    SELECT :recipient_id, :goal1, :goal2, :score, :createdAt, :updatedAt
+    WHERE NOT EXISTS (
+      SELECT 1 FROM "SimScoreCache"
+      WHERE recipient_id = :recipient_id AND goal1 = :goal1 AND goal2 = :goal2
+    );
+    """,
+    { 'recipient_id': recipient_id, 'goal1': goal1, 'goal2': goal2, 'score': score, 'createdAt': datetime.now().isoformat(), 'updatedAt': datetime.now().isoformat() }
+  )
 
 def calculate_batch_similarity(batch, nlp):
     """

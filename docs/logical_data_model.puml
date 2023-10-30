@@ -679,6 +679,17 @@ class SessionReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
 }
 
+!issue='model missing for table'
+class SimScoreCache #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : integer : <generated>
+!issue='column should not allow null' * createdAt : timestamp with time zone
+!issue='column should not allow null' * goal1 : integer
+!issue='column should not allow null' * goal2 : integer
+!issue='column should not allow null' * recipient_id : integer
+!issue='column should not allow null' * score : double precision
+!issue='column should not allow null' * updatedAt : timestamp with time zone
+}
+
 class SiteAlerts{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
@@ -1510,6 +1521,21 @@ class ZALSessionReportPilots{
  * dml_timestamp : timestamp with time zone
  * dml_txid : uuid
  * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+!issue='model missing for table'
+class ZALSimScoreCache #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : bigint : <generated>
+!issue='column should not allow null' * data_id : bigint
+!issue='column should not allow null' * dml_as : bigint
+!issue='column should not allow null' * dml_by : bigint
+!issue='column should not allow null' * dml_timestamp : timestamp with time zone
+!issue='column should not allow null' * dml_txid : uuid
+!issue='column should not allow null' * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
