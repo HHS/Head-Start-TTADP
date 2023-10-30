@@ -116,6 +116,13 @@ describe('Merge goals', () => {
     await waitFor(() => expect(screen.getByText('No goal ids provided')).toBeInTheDocument());
   });
 
+  it('needs at least 2 goal ids to proceed', async () => {
+    fetchMock.get(idsToUrl([1]), { goalRows: goals[0] });
+    renderTest([1]);
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('No goal ids provided')).toBeInTheDocument());
+  });
+
   it('needs to be able to merge goals to proceed', async () => {
     fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
     act(() => renderTest(GOAL_IDS, false));

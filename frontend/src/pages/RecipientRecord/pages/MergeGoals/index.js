@@ -123,7 +123,7 @@ export default function MergeGoals({
     async function fetchGoals() {
       const goalIds = new URLSearchParams(location.search).getAll('goalId[]');
 
-      if (!goalIds.length) {
+      if (!goalIds.length || goalIds.length < 2) {
         setError('No goal ids provided');
         return;
       }
