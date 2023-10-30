@@ -2390,9 +2390,11 @@ export async function destroyGoal(goalIds) {
     return 0;
   }
 }
-
-export async function createMultiRecipientGoalsFromAdmin(data) {
-  // const {
+/**
+ *
+ * The shape of the data object is as follows:
+ *
+  // {
   //   region, // string
   //   group, // string, group ID
   //   createReport, // bool
@@ -2411,8 +2413,17 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   // goalSource, // string
   // goalDate, // string
   // selectedGrants, // stringified JSON grant data
-  // } = data;
-
+  // }
+ * @param {FormData} data
+ * @returns {
+ *  goals: Goal[],
+ *  data: FormData,
+ *  activityReport: ActivityReport,
+ *  isError: boolean,
+ *  message: string,
+ * }
+ */
+export async function createMultiRecipientGoalsFromAdmin(data) {
   const grantIds = JSON.parse(data.selectedGrants).map((g) => g.id);
 
   let templateId = null;
@@ -2470,17 +2481,14 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     endDate = data.goalDate;
   }
 
-  const goals = await Promise.all(grantIds.map(async (grantId) => {
-    const goal = await Goal.create({
-      name,
-      grantId,
-      source: data.goalSource || null,
-      endDate,
-      status: GOAL_STATUS.NOT_STARTED,
-      createdVia: 'admin',
-    }, { individualHooks: true });
-    return goal;
-  }));
+  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+    name,
+    grantId,
+    source: data.goalSource || null,
+    endDate,
+    status: GOAL_STATUS.NOT_STARTED,
+    createdVia: 'admin',
+  })), { individualHooks: true });
 
   const goalIds = goals.map((g) => g.id);
 
@@ -2523,26 +2531,20 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
 
     activityReport = await ActivityReport.create(reportData);
 
-    // create activity recipients
-    await Promise.all(grantIds.map(async (grantId) => {
-      await ActivityRecipient.create({
+    await Promise.all([
+      ActivityReportGoal.bulkCreate(goalIds.map((goalId) => ({
+        activityReportId: activityReport.id,
+        goalId,
+        isActivelyEdited: true,
+        status: GOAL_STATUS.NOT_STARTED,
+        name,
+        source: data.goalSource || null,
+      })), { individualHooks: true }),
+      ActivityRecipient.bulkCreate(grantIds.map((grantId) => ({
         activityReportId: activityReport.id,
         grantId,
-      });
-    }));
-
-    // create goals
-    await Promise.all(goals.map(async (goal) => {
-      await ActivityReportGoal.create({
-        activityReportId: activityReport.id,
-        goalId: goal.id,
-        endDate: goal.endDate,
-        isActivelyEdited: true,
-        status: goal.status,
-        name: goal.name,
-        source: goal.source,
-      });
-    }));
+      })), { individualHooks: true }),
+    ]);
   }
 
   return {
