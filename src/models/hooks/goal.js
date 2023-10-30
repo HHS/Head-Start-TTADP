@@ -57,6 +57,22 @@ const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
   }
 };
 
+const invalidateSimilarityScores = async (sequelize, instance, options) => {
+  const changed = Array.from(instance.changed());
+
+  if (changed.includes('goal1') || changed.includes('goal2')) {
+    await sequelize.models.SimScoreCache.destroy({
+      where: {
+        [sequelize.Op.and]: [
+          { goal1: instance.id },
+          { goal2: instance.id },
+        ],
+      },
+      transaction: options.transaction,
+    });
+  }
+};
+
 const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -166,6 +182,7 @@ const afterCreate = async (sequelize, instance, options) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
+  await invalidateSimilarityScores(sequelize, instance, options);
 };
 
 export {
