@@ -23,12 +23,6 @@ def compute_goal_similarities(recipient_id, alpha):
     { 'recipient_id': recipient_id }
   )
 
-  print("compute_goal_similarities")
-  if recipients:
-    print(f"Found {len(recipients)} goals for recipient {recipient_id}")
-  else:
-    print(f"No goals found for recipient {recipient_id}")
-
   if recipients is None:
     return jsonify({"error": "recipient_id not found"}), 400
 
@@ -48,12 +42,6 @@ def cache_scores():
     """,
     {}
   )
-
-  logging.info("compute_batch_similarities")
-  if recipients:
-    logging.info(f"Found {len(recipients)} goals")
-  else:
-    logging.info(f"No goals found")
 
   if recipients is None:
     return jsonify({"error": "recipient_id not found"}), 400
@@ -159,12 +147,6 @@ def find_similar_goals(recipient_id, goal_name, alpha):
         """,
         {'recipient_id': recipient_id}
     )
-
-    print("find_similar_goals")
-    if recipients:
-      print(f"Found {len(recipients)} goals for recipient {recipient_id}")
-    else:
-      print(f"No goals found for recipient {recipient_id}")
 
     if recipients is None:
         return {"error": "recipient_id not found"}
