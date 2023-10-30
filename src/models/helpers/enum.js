@@ -13,8 +13,12 @@ const getValidValues = (columnDef) => [
   ...(columnDef?.allowNull ? [null] : []),
 ];
 
-const isEnumColumn = (enumColumns) => (change) => Object.keys(enumColumns).includes(change);
+// This function checks if a given column is an enum column
+const isEnumColumn = (enumColumns) => (change) => Object
+  .keys(enumColumns)
+  .includes(change);
 
+// This function sets a valid value for a given column or throws an error if the value is invalid
 const setValidValueOrThrowError = (instance, enumColumns) => (change) => {
   const columnDef = enumColumns[change];
   const validValues = getValidValues(columnDef);
@@ -29,11 +33,18 @@ const setValidValueOrThrowError = (instance, enumColumns) => (change) => {
   }
 };
 
+/**
+ * This function validates changed or sets enums for a Sequelize instance.
+ * @param {Object} sequelize - The Sequelize instance.
+ * @param {Object} instance - The Sequelize model instance.
+ */
 const validateChangedOrSetEnums = (sequelize, instance) => {
   const model = instance.constructor;
   const enumColumns = getEnumColumnDefinitions(sequelize, model);
   const changed = instance.changed();
 
+  // Filter the changed columns to only include enum columns and perform validation or
+  // setting of valid values
   changed
     .filter(isEnumColumn(enumColumns))
     .forEach(setValidValueOrThrowError(instance, enumColumns));
@@ -42,5 +53,7 @@ const validateChangedOrSetEnums = (sequelize, instance) => {
 export {
   getEnumColumnDefinitions,
   getValidValues,
+  isEnumColumn,
+  setValidValueOrThrowError,
   validateChangedOrSetEnums,
 };
