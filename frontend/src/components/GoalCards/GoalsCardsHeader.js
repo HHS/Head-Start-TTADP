@@ -118,13 +118,15 @@ export default function GoalCardsHeader({
               <div className="usa-alert__text">
                 <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
                 <ul className="usa-list">
-                  {goalMergeGroups.map((group) => (
+                  {goalMergeGroups.filter((g) => g.length).map((group) => (
                     <li key={group.join('-')}>
                       <Link
                         to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${group.map((g) => `goalId[]=${g}`).join('&')}`}
                       >
                         Review
+                        {' '}
                         {group.length}
+                        {' '}
                         similar goals
                       </Link>
                     </li>
