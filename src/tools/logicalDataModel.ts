@@ -135,7 +135,6 @@ function processClassDefinition(schema, key) {
 
     // highlight type when not matched in model
     if (modelField && field.type !== modelField.type.toString().toLowerCase()) {
-      console.log(Object.entries(field), Object.entries(modelField));
       issues.push(`!issue='column type does not match model: ${field.type} != ${modelField.type.toString().toLowerCase()}'`); //eslint-disable-line
       column += `<color:${colors.error}>${field.type}</color>`;
     } else {
