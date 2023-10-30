@@ -22,7 +22,8 @@ def create_app():
 
     scheduler.init_app(app)
     scheduler.start()
-    scheduler.add_job(func=cache_scores, id='cache', trigger='interval', seconds=10, timezone='EST')
+    # scheduler.add_job(func=cache_scores, id='cache', trigger='interval', seconds=10, timezone='EST')
+    scheduler.add_job(func=cache_scores, trigger='cron', minute='0', hour='2', timezone='EST')
 
     # By default, APScheduler logs are a bit noisy.
     logging.getLogger("apscheduler.scheduler").setLevel(logging.DEBUG)
