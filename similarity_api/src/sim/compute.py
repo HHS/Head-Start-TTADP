@@ -62,14 +62,14 @@ def cache_scores():
 
 def insert_score(goal1, goal2, score, recipient_id):
   """
-  Inserts the similarity score into the SimScoreCache table.
+  Inserts the similarity score into the SimScoreCaches table.
   """
   query(
     """
-    INSERT INTO "SimScoreCache" (recipient_id, goal1, goal2, score, "createdAt", "updatedAt")
+    INSERT INTO "SimScoreCaches" (recipient_id, goal1, goal2, score, "createdAt", "updatedAt")
     SELECT :recipient_id, :goal1, :goal2, :score, :createdAt, :updatedAt
     WHERE NOT EXISTS (
-      SELECT 1 FROM "SimScoreCache"
+      SELECT 1 FROM "SimScoreCaches"
       WHERE recipient_id = :recipient_id AND goal1 = :goal1 AND goal2 = :goal2
     );
     """,
