@@ -1,3 +1,5 @@
+import { APPROVER_STATUSES } from '@ttahub/common';
+
 const activityReports = [
   {
     userId: 999,
@@ -10,7 +12,29 @@ const activityReports = [
     sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
     pendingApprovals: '1 of 3',
-    approvers: [{ user: { fullName: 'Approver Manager 1' } }, { user: { fullName: 'Approver Manager 2' } }, { user: { fullName: 'Approver Manager 3' } }],
+    approvers: [
+      {
+        user: {
+          fullName: 'Approver Manager 1',
+        },
+        id: 1,
+        status: null,
+      },
+      {
+        user: {
+          fullName: 'Approver Manager 2',
+        },
+        id: 2,
+        status: APPROVER_STATUSES.NEEDS_ACTION,
+      },
+      {
+        user: {
+          fullName: 'Approver Manager 3',
+        },
+        id: 3,
+        status: APPROVER_STATUSES.APPROVED,
+      },
+    ],
     activityRecipients: [
       {
         activityRecipientId: 5,
@@ -86,7 +110,22 @@ const activityReports = [
     topics: [],
     sortedTopics: [],
     pendingApprovals: '2 of 2',
-    approvers: [{ user: { fullName: 'Approver Manager 4' } }, { user: { fullName: 'Approver Manager 5' } }],
+    approvers: [
+      {
+        user: {
+          fullName: 'Approver Manager 4',
+        },
+        status: APPROVER_STATUSES.APPROVED,
+        id: 4,
+      },
+      {
+        status: APPROVER_STATUSES.APPROVED,
+        id: 5,
+        user: {
+          fullName: 'Approver Manager 5',
+        },
+      },
+    ],
     calculatedStatus: 'needs_action',
     activityRecipients: [
       {

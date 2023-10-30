@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor,
+  render, screen, waitFor, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -68,8 +68,13 @@ describe('ReportsRow', () => {
   });
 
   it('reports row shows the correct status', async () => {
-    renderReportsRow();
+    act(() => {
+      renderReportsRow();
+    });
     const needsAction = await screen.findAllByText(/needs action/i);
-    expect(needsAction.length).toBe(2);
+    expect(needsAction.length).toBe(1);
+
+    const approved = await screen.findAllByText(/approved/i);
+    expect(approved.length).toBe(1);
   });
 });
