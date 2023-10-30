@@ -138,8 +138,8 @@ exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
+  'Preschool Children (ages 3-5)',
+  'Pregnant Women / Pregnant Persons',
   'Affected by Child Welfare Involvement',
   'Affected by Disaster',
   'Affected by Substance Use',
@@ -152,9 +152,10 @@ const TARGET_POPULATIONS = [
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
 const EVENT_TARGET_POPULATIONS = [
+  'Children in Migrant and Seasonal Families',
   'Children/Families affected by systemic discrimination/bias/exclusion',
   'Children/Families affected by traumatic events',
-  'Parents/Families impacted by health disparities'
+  'Parents/Families impacted by health disparities',
 ];
 
 exports.EVENT_TARGET_POPULATIONS = EVENT_TARGET_POPULATIONS;
