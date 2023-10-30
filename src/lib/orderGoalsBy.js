@@ -29,6 +29,11 @@ const orderGoalsBy = (sortBy, sortDir) => {
         [sequelize.col(STATUS_SORT), 'ASC'],
       ];
       break;
+    case 'id':
+      result = [
+        [sequelize.col('id'), sortDir],
+      ];
+      break;
     default:
       break;
   }
