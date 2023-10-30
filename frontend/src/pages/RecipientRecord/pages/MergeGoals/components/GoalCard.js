@@ -35,7 +35,7 @@ function GoalCard({
   const lastTTA = (() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''))();
   const goalNumbers = goal.goalNumbers.join(', ');
 
-  const [objectivesExpanded, setObjectivesExpanded] = useState(false);
+  const [objectivesExpanded, setObjectivesExpanded] = useState(!!final);
 
   const closeOrOpenObjectives = () => {
     setObjectivesExpanded(!objectivesExpanded);
