@@ -2430,6 +2430,9 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   let isError = false;
   let message = '';
 
+  let grantsForWhomGoalAlreadyExists = [];
+  let grantsForWhichGoalWillBeCreated = [];
+
   if (data.useCuratedGoal && data.templateId) {
     templateId = Number(data.templateId);
   }
@@ -2461,6 +2464,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
         name,
       },
     });
+
+    grantsForWhomGoalAlreadyExists = goalsForNameCheck.map((g) => g.grantId);
+    grantsForWhichGoalWillBeCreated = grantIds.filter(
+      (g) => !grantsForWhomGoalAlreadyExists.includes(g),
+    );
   }
 
   if (goalsForNameCheck.length) {
@@ -2472,6 +2480,8 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     return {
       isError,
       message,
+      grantsForWhomGoalAlreadyExists,
+      grantsForWhichGoalWillBeCreated,
     };
   }
 
@@ -2488,12 +2498,22 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     endDate,
     status: GOAL_STATUS.NOT_STARTED,
     createdVia: 'admin',
+    goalTemplateId: template ? template.id : null,
   })), { individualHooks: true });
 
   const goalIds = goals.map((g) => g.id);
 
-  if (data.useCuratedGoal && data.goalPrompts) {
-    await setFieldPromptsForCuratedTemplate(goalIds, data.goalPrompts);
+  const promptResponses = data.goalPrompts.map((goalPrompt) => {
+    const response = data[goalPrompt.fieldName];
+
+    return {
+      promptId: goalPrompt.promptId,
+      response,
+    };
+  }).filter((pr) => pr.response);
+
+  if (data.useCuratedGoal && promptResponses && promptResponses.length) {
+    await setFieldPromptsForCuratedTemplate(goalIds, promptResponses);
   }
 
   let activityReport = null;
@@ -2553,5 +2573,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport,
     isError,
     message,
+    grantsForWhomGoalAlreadyExists: [],
+    grantsForWhichGoalWillBeCreated: [],
   };
 }
