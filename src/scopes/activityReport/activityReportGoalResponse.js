@@ -1,6 +1,6 @@
 import { filterAssociation } from './utils';
 
-const feiResponseSql = `
+const activityReportGoalResponseSql = `
 WITH unnested_responses AS (
     SELECT "activityReportGoalId", unnest("response") AS res
     FROM "ActivityReportGoalFieldResponses"
@@ -12,10 +12,10 @@ INNER JOIN unnested_responses arr
     ON arr."activityReportGoalId" = "ActivityReportGoals"."id"
 WHERE arr."res"`;
 
-export function withFeiRootCause(responses) {
-  return filterAssociation(feiResponseSql, responses, false);
+export function withActivityReportGoalResponse(responses) {
+  return filterAssociation(activityReportGoalResponseSql, responses, false);
 }
 
-export function withoutFeiRootCause(responses) {
-  return filterAssociation(feiResponseSql, responses, true);
+export function withoutActivityReportGoalResponse(responses) {
+  return filterAssociation(activityReportGoalResponseSql, responses, true);
 }

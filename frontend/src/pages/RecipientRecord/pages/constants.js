@@ -1,5 +1,9 @@
 import {
-  specialistRoleFilter, endDateFilter, startDateFilter, myReportsFilter, feiRootCauseFilter,
+  specialistRoleFilter,
+  endDateFilter,
+  startDateFilter,
+  myReportsFilter,
+  activityReportGoalResponseFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
   statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter,
@@ -16,7 +20,7 @@ export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
 const TTAHISTORY_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
-  feiRootCauseFilter,
+  activityReportGoalResponseFilter,
   myReportsFilter,
   specialistRoleFilter,
 ];

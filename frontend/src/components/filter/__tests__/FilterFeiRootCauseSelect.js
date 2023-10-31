@@ -6,17 +6,18 @@ import {
   screen,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
-import FilterFeiRootCauseSelect from '../FilterFeiRootCauseSelect';
+import FilterActivityReportGoalResponseSelect from '../FilterActivityReportGoalResponseSelect';
 
 const { findByText } = screen;
 
-describe('FilterFeiRootCauseSelect', () => {
+describe('FilterActivityReportGoalResponseSelect', () => {
   const renderFeiRootCauseSelect = async (onApply) => (
     render(
-      <FilterFeiRootCauseSelect
+      <FilterActivityReportGoalResponseSelect
         onApply={onApply}
         inputId="curly"
         query={[]}
+        title="FEI root cause"
       />,
     ));
 

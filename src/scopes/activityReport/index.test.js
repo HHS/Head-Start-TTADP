@@ -1422,7 +1422,7 @@ describe('filtersToScopes', () => {
     });
   });
 
-  describe('feiRootCause', () => {
+  describe('activityReportGoalResponse', () => {
     let recipient;
     let grant;
     let includedReport1;
@@ -1566,8 +1566,8 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('find reports with fei root cause', async () => {
-      const filters = { 'feiRootCause.in': ['Community Partnerships'] };
+    it('find reports with fei root cause response', async () => {
+      const filters = { 'activityReportGoalResponse.in': ['Community Partnerships'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleReportIds }] },
@@ -1577,8 +1577,8 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
-    it('find reports without fei root cause', async () => {
-      const filters = { 'feiRootCause.nin': ['Community Partnerships'] };
+    it('find reports without fei root cause response', async () => {
+      const filters = { 'activityReportGoalResponse.nin': ['Community Partnerships'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleReportIds }] },
