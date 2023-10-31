@@ -3,7 +3,6 @@ require('newrelic');
 
 import {} from 'dotenv/config';
 import throng from 'throng';
-import { logger, auditLogger } from './logger';
 import {
   processScanQueue,
 } from './services/scanQueue';

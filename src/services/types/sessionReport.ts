@@ -4,4 +4,5 @@ export type SessionReportShape = {
   data: unknown;
   files: unknown[];
   updatedAt: string;
+  event: unknown;
 };
