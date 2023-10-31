@@ -194,6 +194,18 @@ export default function Goals() {
               .
             </p>
           )}
+          <p>
+            <Button
+              type="button"
+              unstyled
+              onClick={() => {
+                hookForm.reset();
+                setResponse(null);
+              }}
+            >
+              Create another goal
+            </Button>
+          </p>
         </Container>
       </>
     );
@@ -350,6 +362,29 @@ export default function Goals() {
             {(response && response.isError) && (
               <Alert type="error">
                 {response.message}
+
+                {(response.grantsForWhichGoalWillBeCreated.length > 0) && (
+                  <>
+                    <br />
+                    <span style={{ display: 'inline-block' }} className="margin-top-1">
+                      Create goals just for grants
+                      {' '}
+                      {response.grantsForWhichGoalWillBeCreated.join(', ')}
+                      {' '}
+                      instead?
+                    </span>
+                    <br />
+                    <Button
+                      className="margin-top-0"
+                      onClick={() => {}}
+                      type="button"
+                      unstyled
+                    >
+                      Create goals for missing grants
+                    </Button>
+                  </>
+                )}
+
               </Alert>
             )}
 
