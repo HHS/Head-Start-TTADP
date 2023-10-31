@@ -155,15 +155,15 @@ describe('Goals DB service', () => {
         },
       });
 
-      await GoalTemplate.destroy({
-        where: {
-          id: template.id,
-        },
-      });
-
       await Goal.destroy({
         where: {
           id: goalIds,
+        },
+      });
+
+      await GoalTemplate.destroy({
+        where: {
+          id: template.id,
         },
       });
 
@@ -194,6 +194,7 @@ describe('Goals DB service', () => {
       expect(response).toEqual({
         isError: true,
         message: `Goal name already exists for grants ${grant.id}`,
+        grantsForWhomGoalAlreadyExists: [grant.id],
       });
     });
 
@@ -205,6 +206,7 @@ describe('Goals DB service', () => {
       expect(response).toEqual({
         isError: true,
         message: 'Goal name is required',
+        grantsForWhomGoalAlreadyExists: [],
       });
     });
 
@@ -214,14 +216,15 @@ describe('Goals DB service', () => {
         goalText: '',
         useCuratedGoal: true,
         templateId: template.id,
-        goalPrompts: [],
+        goalPrompts: [{ promptId: 1, fieldName: 'fei-root-cause' }],
+        'fei-root-cause': ['Workforce'],
       };
       const response = await createMultiRecipientGoalsFromAdmin(data);
       expect(response.activityReport).toBe(null);
       expect(response.data).toEqual(data);
       expect(response.goals.length).toBe(1);
       expect(response.goals[0].name).toBe(template.templateName);
-      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalled();
+      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(expect.anything(), [{ promptId: 1, response: ['Workforce'] }]);
     });
 
     it('creates a new goal', async () => {
