@@ -219,7 +219,7 @@ describe('Submitter review page', () => {
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
-      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('displays approvers requesting action', async () => {
@@ -229,7 +229,7 @@ describe('Submitter review page', () => {
         { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', user: { fullName: 'Needs Action 2' } },
       ];
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
       expect(screen.getByText(
         /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i,
       )).toBeVisible();
@@ -265,7 +265,7 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }] });
 
       // Resubmit.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
@@ -279,7 +279,7 @@ describe('Submitter review page', () => {
       const roleSelector = await screen.findByRole('combobox');
 
       // Resubmit without selecting creator roles shows validation error.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /update/i });
       userEvent.click(reSubmit);
 
       // Verify validation message.
@@ -314,7 +314,7 @@ describe('Submitter review page', () => {
       expect(screen.queryByRole('combobox')).toBeNull();
 
       // Resubmit without validation error.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /Update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });

@@ -756,6 +756,7 @@ class Users{
 enum enum_Users_flags {
  anv_statistics
  goal_source
+ merge_goals
  regional_goal_dashboard
  resources_dashboard
  rttapa_form

@@ -26,6 +26,7 @@ export const participantsFields = {
 export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
+  pocComplete: false,
 };
 
 export const defaultFormValues = {
