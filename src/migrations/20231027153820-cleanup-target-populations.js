@@ -22,7 +22,7 @@ module.exports = {
           "targetPopulations" = array_replace("targetPopulations", 'Pregnant Women', 'Pregnant Women / Pregnant Persons')
             WHERE "targetPopulations" @> ARRAY['Pregnant Women']::varchar[];
 
-       -- Cleanup JSON 'Target Populations' for TR.
+       -- Cleanup JSON 'Target Populations' for TR (create proper array).
        WITH "goodTgt" as (
         SELECT erp.id, ARRAY_AGG(erptp.tp) AS good
         FROM "EventReportPilots" erp
@@ -39,7 +39,7 @@ module.exports = {
       FROM "goodTgt" gt
       WHERE e."id" = gt."id";
 
-      -- Cleanup JSON 'Reasons' for TR.
+      -- Cleanup JSON 'Reasons' for TR (create proper array).
       WITH "goodTgt" as (
       SELECT erp.id, ARRAY_AGG(erpr.r) AS good
       FROM "EventReportPilots" erp
@@ -56,21 +56,41 @@ module.exports = {
       FROM "goodTgt" gt
       WHERE e."id" = gt."id";
 
-        -- Update TR 'Preschool (ages 3-5)'.
+       -- Update JSON array property 'targetPopulations' for TR 'Preschool (ages 3-5)'.
         UPDATE "EventReportPilots"
-        SET data = JSONB_SET(
-              data,
-              ARRAY['targetPopulations'],
-              TO_JSONB(REPLACE(data->>'targetPopulations', 'Preschool (ages 3-5)', 'Preschool Children (ages 3-5)'))
-              );
+            SET data = (
+          SELECT JSONB_SET(
+                  data,
+                  '{targetPopulations}',
+                  (
+            SELECT jsonb_agg(
+              CASE
+              WHEN value::text = '"Preschool (ages 3-5)"' THEN '"Preschool Children (ages 3-5)"'::jsonb
+              ELSE value
+              END
+            )
+            FROM jsonb_array_elements(data->'targetPopulations') AS value
+            )::jsonb
+                  ))
+        WHERE data->'targetPopulations' @> '["Preschool (ages 3-5)"]'::jsonb;
 
-        -- Update TR 'Pregnant Women/Pregnant People'.
+        -- Update JSON array property 'targetPopulations' for TR 'Pregnant Women/Pregnant People'.
         UPDATE "EventReportPilots"
-        SET data = JSONB_SET(
-            data,
-            ARRAY['targetPopulations'],
-            TO_JSONB(REPLACE(data->>'targetPopulations', 'Pregnant Women/Pregnant People', 'Pregnant Women / Pregnant Persons'))
-            );
+            SET data = (
+          SELECT JSONB_SET(
+                  data,
+                  '{targetPopulations}',
+                  (
+            SELECT jsonb_agg(
+              CASE
+              WHEN value::text = '"Pregnant Women/Pregnant People"' THEN '"Pregnant Women / Pregnant Persons"'::jsonb
+              ELSE value
+              END
+            )
+            FROM jsonb_array_elements(data->'targetPopulations') AS value
+            )::jsonb
+                  ))
+        WHERE data->'targetPopulations' @> '["Pregnant Women/Pregnant People"]'::jsonb;
      `, { transaction });
     });
   },
