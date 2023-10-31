@@ -29,6 +29,7 @@ function GoalDataController({
   regionId,
   hasActiveGrants,
   showNewGoals,
+  canMergeGoals,
 }) {
   // Goal Data.
   const [data, setData] = useState({
@@ -150,6 +151,7 @@ function GoalDataController({
           loading={loading}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
+          canMergeGoals={canMergeGoals}
         />
       </FilterContext.Provider>
     </div>
@@ -169,6 +171,7 @@ GoalDataController.propTypes = {
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
   showNewGoals: PropTypes.bool.isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 export default GoalDataController;
