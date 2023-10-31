@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     score: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(3, 1),
       allowNull: false,
     },
   }, {

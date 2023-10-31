@@ -685,7 +685,7 @@ class SimScoreCaches{
  * goal1 : integer
  * goal2 : integer
  * recipient_id : integer
-!issue='column type does not match model' * score : <color:#d54309>decimal(3,1)</color>
+ * score : decimal(3,1)
  * updatedAt : timestamp with time zone
 }
 
