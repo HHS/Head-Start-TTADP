@@ -363,7 +363,8 @@ export default function Goals() {
               <Alert type="error">
                 {response.message}
 
-                {(response.grantsForWhichGoalWillBeCreated.length > 0) && (
+                {(response.grantsForWhichGoalWillBeCreated
+                  && response.grantsForWhichGoalWillBeCreated.length > 0) && (
                   <>
                     <br />
                     <span style={{ display: 'inline-block' }} className="margin-top-1">
@@ -376,7 +377,18 @@ export default function Goals() {
                     <br />
                     <Button
                       className="margin-top-0"
-                      onClick={() => {}}
+                      onClick={async () => {
+                        const values = hookForm.getValues();
+
+                        const newValues = {
+                          ...values,
+                          selectedGrants: JSON.stringify(response
+                            .grantsForWhichGoalWillBeCreated
+                            .map((g) => ({ id: g }))),
+                        };
+
+                        await onSubmit(newValues);
+                      }}
                       type="button"
                       unstyled
                     >
