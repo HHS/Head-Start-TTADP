@@ -11,7 +11,12 @@ import { getUserRegions } from '../../../permissions';
 import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
-  recipientId, regionId, recipient, location, recipientName,
+  recipientId,
+  regionId,
+  recipient,
+  location,
+  recipientName,
+  canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
@@ -64,6 +69,7 @@ export default function GoalsObjectives({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
           showNewGoals={showNewGoals || false}
+          canMergeGoals={canMergeGoals}
         />
       </div>
     </>
@@ -81,6 +87,7 @@ GoalsObjectives.propTypes = {
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
   recipientName: PropTypes.string,
+  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 GoalsObjectives.defaultProps = {
