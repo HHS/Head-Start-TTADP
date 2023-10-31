@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const singleLineLogger = (
   queryString,
-  queryObject,
 ) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
 module.exports = {
