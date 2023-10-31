@@ -9,7 +9,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
         -- Update AR 'Preschool (ages 3-5)'.
         UPDATE "ActivityReports"
         SET
