@@ -8,8 +8,6 @@ from flask_apscheduler import APScheduler
 
 scheduler = APScheduler()
 
-atexit.register(lambda: scheduler.shutdown(wait=False))
-
 def create_app():
     app = Flask(__name__, static_folder='static')
 
@@ -23,7 +21,9 @@ def create_app():
     scheduler.init_app(app)
     scheduler.start()
     # scheduler.add_job(func=cache_scores, id='cache', trigger='interval', seconds=10, timezone='EST')
-    scheduler.add_job(func=cache_scores, id='cache', trigger='cron', minute='0', hour='2', timezone='EST')
+    scheduler.add_job(func=cache_scores, id='cache', trigger='cron', minute='0', hour='2', timezone='EST', replace_existing=True)
+
+    atexit.register(lambda: scheduler.shutdown(wait=False))
 
     # By default, APScheduler logs are a bit noisy.
     logging.getLogger("apscheduler.scheduler").setLevel(logging.DEBUG)
