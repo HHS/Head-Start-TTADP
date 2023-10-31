@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { getGoalTemplatePromptOptionsByName } from '../../fetchers/goalTemplates';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-export default function FilterRootCauseSelect({
+export default function FilterActivityReportGoalResponseSelect({
   onApply,
   inputId,
   query,
+  title,
 }) {
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
 
   useEffect(() => {
     async function fetchGoalTemplatePrompts() {
-      const gtPrompts = await getGoalTemplatePromptOptionsByName('FEI root cause');
+      const gtPrompts = await getGoalTemplatePromptOptionsByName(title);
       setGoalTemplatePrompts(gtPrompts.options.map((label, value) => ({ value, label })));
     }
 
     fetchGoalTemplatePrompts();
-  }, [setGoalTemplatePrompts]);
+  }, [setGoalTemplatePrompts, title]);
 
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -33,4 +35,7 @@ export default function FilterRootCauseSelect({
   );
 }
 
-FilterRootCauseSelect.propTypes = filterSelectProps;
+FilterActivityReportGoalResponseSelect.propTypes = {
+  ...filterSelectProps,
+  title: PropTypes.string.isRequired,
+};

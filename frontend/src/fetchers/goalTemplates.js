@@ -21,6 +21,7 @@ export async function getGoalTemplatePrompts(templateId, goalIds = []) {
 }
 
 export async function getGoalTemplatePromptOptionsByName(name) {
-  const response = await get(join('/', 'api', 'goal-templates', 'options', `?name=${name}`));
+  const url = join('/', 'api', 'goal-templates', 'options', `?name=${name}`);
+  const response = await get(url);
   return response.json();
 }

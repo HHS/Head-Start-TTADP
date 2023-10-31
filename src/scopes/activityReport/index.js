@@ -30,7 +30,7 @@ import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
-import { withFeiRootCause, withoutFeiRootCause } from './feiRootCause';
+import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
 
 export const topicToQuery = {
   reportId: {
@@ -157,9 +157,9 @@ export const topicToQuery = {
     creator: (query) => onlyCreators(query),
     both: (query) => bothCollaboratorsAndCreators(query),
   },
-  feiRootCause: {
-    in: (query) => withFeiRootCause(query),
-    nin: (query) => withoutFeiRootCause(query),
+  activityReportGoalResponse: {
+    in: (query) => withActivityReportGoalResponse(query),
+    nin: (query) => withoutActivityReportGoalResponse(query),
   },
 };
 
