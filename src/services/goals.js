@@ -2471,14 +2471,12 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
 /**
  *
  * @param {*} childGoalWithObjectivesAndRelated
- * @param {*} parentGoalDictionary
+ * @param {number} parentGoalId
  */
 export async function mergeObjectivesFromGoal(
   childGoalWithObjectivesAndRelated,
-  parentGoalDictionary,
+  parentGoalId,
 ) {
-  const parentGoalId = parentGoalDictionary[childGoalWithObjectivesAndRelated.grantId];
-
   return Promise.all(
     childGoalWithObjectivesAndRelated.objectives
       .map((objective) => mergeObjectiveFromGoal(objective, parentGoalId)),
@@ -2586,10 +2584,8 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
 
   // we will need these in a moment
   const grantToGoalDictionary = {};
-  const goalToGrantDictionary = {};
   newGoals.forEach((goal) => {
     grantToGoalDictionary[goal.grantId] = goal.id;
-    goalToGrantDictionary[goal.id] = goal.grantId;
   });
 
   // update associated models
@@ -2602,7 +2598,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   // - objective files, ETC
 
   await Promise.all(selectedGoals.map((g) => (
-    mergeObjectivesFromGoal(g.objectives, grantToGoalDictionary))));
+    mergeObjectivesFromGoal(g.objectives, grantToGoalDictionary[g.grantId]))));
 
   const updatesToRelatedModels = [];
   selectedGoals.forEach((g) => {
