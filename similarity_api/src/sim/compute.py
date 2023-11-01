@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import numpy as np
 import spacy
@@ -11,7 +11,7 @@ from sklearn.preprocessing import normalize
 
 nlp = spacy.load("en_core_web_sm")
 
-def compute_goal_similarities(recipient_id, alpha):
+def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
   recipients = query_many(
     """
     SELECT g."id", g."name"
@@ -28,7 +28,7 @@ def compute_goal_similarities(recipient_id, alpha):
 
   names = [r['name'] for r in recipients]
   ids = [r['id'] for r in recipients]
-  matched = calculate_goal_similarity(names, ids, alpha)
+  matched = calculate_goal_similarity(names, ids, alpha, cluster)
   return jsonify({"result": matched})
 
 def cache_scores():
@@ -93,18 +93,10 @@ def calculate_batch_similarity(batch, nlp):
     return sim_scores
 
 
-def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], alpha: float, batch_size: int = 500) -> List[Dict[str, str]]:
-    """
-    Calculates the similarity between a list of goals.
-    Args:
-        goals_list (list): A list of goals.
-        goal_ids_list (list): A list of goal IDs.
-        batch_size (int, optional): The batch size to use for calculating similarity. Defaults to 500.
-    Returns:
-        list: A list of matched goals.
-    """
+def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], alpha: float, cluster: bool = False, batch_size: int = 500) -> List[Dict[str, Union[int, List[Dict[str, Union[int, str]]]]]]:
     num_goals = len(goals_list)
     matched_goals = []
+    matched_ids = []
 
     for i in range(0, num_goals, batch_size):
         end = min(i + batch_size, num_goals)
@@ -118,20 +110,39 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], a
             cur_sim_scores[j] = 0
             cur_potential_idx = [k for k, v in enumerate(cur_sim_scores) if v > alpha]
 
-            for k in cur_potential_idx:
-                if i + j > i + k:
-                    continue
-                matched_goals.append({
-                    "goal1": {
-                        "id": goal_id,
-                        "name": goal,
-                    },
-                    "goal2": {
+            if cluster:
+                matches = []
+                for k in cur_potential_idx:
+                    if i + j > i + k or current_ids[k] in matched_ids:
+                        continue
+                    matches.append({
                         "id": current_ids[k],
                         "name": current_batch[k],
-                    },
-                    "similarity": float(cur_sim_scores[k]),
-                })
+                        "similarity": float(cur_sim_scores[k]),
+                    })
+                    matched_ids.append(current_ids[k])
+                if matches:
+                    matched_goals.append({
+                        "id": goal_id,
+                        "name": current_batch[j],
+                        "matches": matches
+                    })
+            else:
+                for k in cur_potential_idx:
+                    if i + j > i + k or current_ids[k] in matched_ids:
+                        continue
+                    matched_goals.append({
+                        "goal1": {
+                            "id": goal_id,
+                            "name": goal,
+                        },
+                        "goal2": {
+                            "id": current_ids[k],
+                            "name": current_batch[k],
+                        },
+                        "similarity": float(cur_sim_scores[k]),
+                    })
+                    matched_ids.append(current_ids[k])
 
     return matched_goals
 
