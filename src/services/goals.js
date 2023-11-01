@@ -2496,7 +2496,7 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
     goalTemplateId: finalGoal.goalTemplateId,
     createdAt: finalCreatedAt,
     endDate: finalGoal.endDate,
-    createdVia: 'goalMerge',
+    createdVia: 'merge',
     onAR,
     rtrOrder: finalGoal.rtrOrder,
     source: finalGoal.source,
