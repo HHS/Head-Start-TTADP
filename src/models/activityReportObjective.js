@@ -10,6 +10,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
+
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'activityReportObjectiveId',
@@ -27,6 +28,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+      ActivityReportObjective.belongsTo(models.Objective, {
+        foreignKey: 'originalObjectiveId',
+        as: 'originalObjective',
       });
     }
   }
@@ -60,6 +65,17 @@ export default (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    originalObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',

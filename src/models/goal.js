@@ -7,6 +7,7 @@ const {
   afterCreate,
   afterUpdate,
 } = require('./hooks/goal');
+const { GOAL_CREATED_VIA } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -20,6 +21,7 @@ export default (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
       Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'originalGoalId', as: 'reassignedActivityReportGoals' });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
@@ -50,6 +52,11 @@ export default (sequelize, DataTypes) => {
       Goal.hasMany(models.Goal, {
         foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
+      });
+      Goal.addScope('defaultScope', {
+        where: {
+          mapsToParentGoalId: null,
+        },
       });
     }
   }
@@ -167,7 +174,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     createdVia: {
-      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
+      type: DataTypes.ENUM(GOAL_CREATED_VIA),
       allowNull: true,
     },
     rtrOrder: {
@@ -179,6 +186,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
   }, {
+
     sequelize,
     modelName: 'Goal',
     paranoid: true,
