@@ -2397,7 +2397,7 @@ export async function destroyGoal(goalIds) {
  * to be used for merge goals
  *
  * Note that this should be kept in sync with the status predicted by
- * the React component the user sees (FinalGoalStatus.js)
+ * the React component the user sees (FinalGoalCard)
  *
  * @param {string[]} statuses
  * @returns string one of Object.values(GOAL_STATUS)

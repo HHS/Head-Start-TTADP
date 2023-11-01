@@ -21,6 +21,7 @@ import {
   mergeGoals,
   reduceObjectives,
   reduceObjectivesForActivityReport,
+  determineMergeGoalStatus,
 } from './goals';
 import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
@@ -53,6 +54,40 @@ describe('Goals DB service', () => {
     await db.sequelize.close();
   });
 
+  describe('determineMergeGoalStatus', () => {
+    it('at least one in progress', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.IN_PROGRESS,
+        GOAL_STATUS.CLOSED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.IN_PROGRESS);
+    });
+
+    it('at least one closed', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.CLOSED,
+        GOAL_STATUS.SUSPENDED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.CLOSED);
+    });
+
+    it('at least one suspended', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.NOT_STARTED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.SUSPENDED);
+    });
+
+    it('otherwise, not started', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.NOT_STARTED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.NOT_STARTED);
+    });
+  });
+
   describe('mergeGoals', () => {
     let recipient;
     let grantOne;
@@ -63,6 +98,8 @@ describe('Goals DB service', () => {
     let goalOne;
     let goalTwo;
     let goalThree;
+
+    let objectiveOneForGoalOne;
 
     const fileName = faker.system.fileName();
     const resourceUrl = faker.internet.url();
@@ -87,7 +124,7 @@ describe('Goals DB service', () => {
       });
 
       grantTwo = await Grant.create({
-        id: faker.datatype.number(),
+        id: faker.datatype.number({ min: grantOne.id + 1 }),
         number: faker.datatype.string(),
         recipientId: recipient.id,
         regionId: 1,
@@ -179,7 +216,7 @@ describe('Goals DB service', () => {
         goalId: goalOne.id,
       });
 
-      const objectiveOneForGoalOne = await Objective.create({
+      objectiveOneForGoalOne = await Objective.create({
         goalId: goalOne.id,
         title: faker.datatype.string(100),
         status: OBJECTIVE_STATUS.NOT_STARTED,
@@ -344,7 +381,113 @@ describe('Goals DB service', () => {
       const mergedGoals = await mergeGoals(goalOne.id, [goalTwo.id, goalThree.id]);
       expect(mergedGoals.length).toBe(2);
 
-      // TODO: verify goal & associated data with a length query here
+      const mergedGoalIds = mergedGoals.map((goal) => goal.id);
+
+      // verify that new goals were created
+      expect(mergedGoalIds).not.toContain(goalOne.id);
+      expect(mergedGoalIds).not.toContain(goalTwo.id);
+      expect(mergedGoalIds).not.toContain(goalThree.id);
+
+      // verify goal & associated data with a length query
+      // Let's get everything and just go through it all
+      const goalsWithData = await Goal.findAll({
+        where: {
+          id: mergedGoalIds,
+        },
+        include: [
+          {
+            model: ActivityReportGoal,
+            as: 'activityReportGoals',
+          },
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+          },
+          {
+            model: GoalResource,
+            as: 'goalResources',
+          },
+          {
+            model: Objective,
+            as: 'objectives',
+            include: [
+              {
+                model: ObjectiveFile,
+                as: 'objectiveFiles',
+              },
+              {
+                model: ObjectiveResource,
+                as: 'objectiveResources',
+              },
+              {
+                model: ObjectiveTopic,
+                as: 'objectiveTopics',
+              },
+              {
+                model: ActivityReportObjective,
+                as: 'activityReportObjectives',
+              },
+            ],
+          },
+        ],
+        order: [['grantId', 'asc']],
+      });
+
+      expect(goalsWithData.length).toBe(2);
+      expect(goalsWithData[0].grantId).toBe(grantOne.id);
+      expect(goalsWithData[1].grantId).toBe(grantTwo.id);
+
+      const goalForGrantOne = goalsWithData[0];
+      expect(goalForGrantOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
+      expect(goalForGrantOne.objectives.length).toBe(3);
+      expect(goalForGrantOne.responses.length).toBe(0);
+      expect(goalForGrantOne.goalResources.length).toBe(1);
+      expect(goalForGrantOne.activityReportGoals.length).toBe(1);
+
+      const [arGoal] = goalForGrantOne.activityReportGoals;
+      expect(arGoal.activityReportId).toBe(report.id);
+      expect(arGoal.originalGoalId).toBe(goalOne.id);
+
+      const aroForGoalForGrantOne = goalForGrantOne.objectives
+        .map((o) => o.activityReportObjectives).flat();
+      expect(aroForGoalForGrantOne.length).toBe(1);
+      expect(aroForGoalForGrantOne[0].activityReportId).toBe(report.id);
+      expect(aroForGoalForGrantOne[0].originalObjectiveId).toBe(objectiveOneForGoalOne.id);
+
+      const objectiveResourcesForGoalForGrantOne = goalForGrantOne.objectives
+        .map((o) => o.objectiveResources).flat();
+      expect(objectiveResourcesForGoalForGrantOne.length).toBe(1);
+
+      const objectiveTopicsForGoalForGrantOne = goalForGrantOne.objectives
+        .map((o) => o.objectiveTopics).flat();
+      expect(objectiveTopicsForGoalForGrantOne.length).toBe(1);
+
+      const objectiveFilesForGoalForGrantOne = goalForGrantOne.objectives
+        .map((o) => o.objectiveFiles).flat();
+      expect(objectiveFilesForGoalForGrantOne.length).toBe(0);
+
+      const goalForGrantTwo = goalsWithData[1];
+      expect(goalForGrantTwo.status).toBe(GOAL_STATUS.IN_PROGRESS);
+      expect(goalForGrantTwo.objectives.length).toBe(1);
+      expect(goalForGrantTwo.responses.length).toBe(1);
+      expect(goalForGrantTwo.goalResources.length).toBe(0);
+      expect(goalForGrantTwo.activityReportGoals.length).toBe(0);
+
+      const aroForGoalForGrantTwo = goalForGrantTwo.objectives
+        .map((o) => o.activityReportObjectives).flat();
+      expect(aroForGoalForGrantTwo.length).toBe(0);
+
+      const objectiveResourcesForGoalForGrantTwo = goalForGrantTwo.objectives
+        .map((o) => o.objectiveResources).flat();
+      expect(objectiveResourcesForGoalForGrantTwo.length).toBe(0);
+
+      const objectiveTopicsForGoalForGrantTwo = goalForGrantTwo.objectives
+        .map((o) => o.objectiveTopics).flat();
+      expect(objectiveTopicsForGoalForGrantTwo.length).toBe(0);
+
+      const objectiveFilesForGoalForGrantTwo = goalForGrantTwo.objectives
+        .map((o) => o.objectiveFiles).flat();
+      expect(objectiveFilesForGoalForGrantTwo.length).toBe(1);
     });
   });
 
