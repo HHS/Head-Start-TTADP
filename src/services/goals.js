@@ -2429,6 +2429,7 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   const newObjective = await Objective.create({
     ...data,
     goalId: parentGoalId,
+    mapsToParentObjectiveId: id,
   }, { individualHooks: true });
 
   const updatesToRelatedModels = [];
@@ -2635,7 +2636,13 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
 
   return newGoals;
   // TODO:
-  // add a default scope to goals
-  // - { mapsToParentGoalId: null }
-  // display original goal id where exists on approved ARs
+  // - migration:
+  //    - "mapsToParentObjectiveId" for objectives
+  //    - "originalGoalId" for ARG
+  //    - "originalObjectiveId" for ARO
+  //    - "merge" to createdVia enum
+  // - add a default scope to goals
+  //    - { mapsToParentGoalId: null }
+  // - display original goal id where exists on approved ARs
+  // - test everywhere that might need to be tested
 }
