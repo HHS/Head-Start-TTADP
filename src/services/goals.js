@@ -2532,11 +2532,11 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       },
       {
         model: GoalFieldResponse,
-        as: 'goalFieldResponses',
+        as: 'responses',
       },
       {
         model: GoalResource,
-        as: 'resources',
+        as: 'goalResources',
       },
       {
         model: Objective,
@@ -2576,12 +2576,15 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
    * in this sordid business
    */
 
-  const grantIds = selectedGoals.map((goal) => goal.grantId);
+  // unique list of grant IDs
+  const grantIds = uniq(selectedGoals.map((goal) => goal.grantId));
 
-  const newGoals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+  const goalsToBulkCreate = grantIds.map((grantId) => ({
     ...finalGoalValues,
     grantId,
-  })));
+  }));
+
+  const newGoals = await Goal.bulkCreate(goalsToBulkCreate, { individualHooks: true });
 
   // we will need these in a moment
   const grantToGoalDictionary = {};
@@ -2599,18 +2602,23 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   // - objective files, ETC
 
   await Promise.all(selectedGoals.map((g) => (
-    mergeObjectivesFromGoal(g.objectives, grantToGoalDictionary[g.grantId]))));
+    mergeObjectivesFromGoal(g, grantToGoalDictionary[g.grantId]))));
 
   const updatesToRelatedModels = [];
   selectedGoals.forEach((g) => {
     // update the activity report goal
-    updatesToRelatedModels.push(g.activityReportGoals[0].update({
-      originalGoalId: g.id,
-      goalId: grantToGoalDictionary[g.grantId],
-    }, { individualHooks: true }));
+    if (g.activityReportGoals.length) {
+      updatesToRelatedModels.push(ActivityReportGoal.update(
+        {
+          originalGoalId: g.id,
+          goalId: grantToGoalDictionary[g.grantId],
+        },
+        { where: { id: g.activityReportGoals.map((arg) => arg.id) } },
+      ));
+    }
 
     // copy the goal resources
-    g.resources.forEach((gr) => {
+    g.goalResources.forEach((gr) => {
       updatesToRelatedModels.push(GoalResource.create({
         goalId: grantToGoalDictionary[g.grantId],
         resourceId: gr.resourceId,
@@ -2618,7 +2626,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     });
 
     // copy the goal field responses
-    g.goalFieldResponses.forEach((gfr) => {
+    g.responses.forEach((gfr) => {
       updatesToRelatedModels.push(GoalFieldResponse.create({
         goalId: grantToGoalDictionary[g.grantId],
         goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
@@ -2636,6 +2644,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
 
   return newGoals;
   // TODO:
-  // - display original goal id where exists on approved ARs
+  // - display original goal id where exists on approved AR
   // - test everywhere that might need to be tested
 }
