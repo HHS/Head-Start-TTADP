@@ -58,6 +58,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsToParentObjectiveId',
         as: 'parentObjective',
       });
+      Objective.hasMany(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'childObjectives',
+      });
     }
   }
   Objective.init({
