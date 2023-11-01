@@ -1650,9 +1650,6 @@ class ZALZAFilter{
 ' Associations
 
 
-!issue='associations need to be defined both directions'
-Objectives "1" --[#d54309,plain,thickness=2]-- "1" Objectives : parentObjective
-
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -1703,6 +1700,7 @@ Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : 
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
+Objectives "1" --[#black,dashed,thickness=2]--{  "n" Objectives : parentObjective, childObjectives
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
