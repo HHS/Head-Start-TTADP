@@ -458,7 +458,7 @@ export const topicsFilter = {
 
 export const activityReportGoalResponseFilter = {
   id: 'activityReportGoalResponse',
-  display: 'FEI Root Cause',
+  display: 'FEI root cause',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
