@@ -7,6 +7,7 @@ import {
   Goal,
   GoalFieldResponse,
   GoalTemplate,
+  GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
@@ -2388,4 +2389,257 @@ export async function destroyGoal(goalIds) {
     );
     return 0;
   }
+}
+
+/**
+ * Given a list of goal statuses, determine the final status
+ * based on the criteria provided by OHS. Intended only
+ * to be used for merge goals
+ *
+ * Note that this should be kept in sync with the status predicted by
+ * the React component the user sees (FinalGoalStatus.js)
+ *
+ * @param {string[]} statuses
+ * @returns string one of Object.values(GOAL_STATUS)
+ */
+export function determineMergeGoalStatus(statuses) {
+  if (statuses.includes(GOAL_STATUS.IN_PROGRESS)) {
+    return GOAL_STATUS.IN_PROGRESS;
+  }
+
+  if (statuses.includes(GOAL_STATUS.CLOSED)) {
+    return GOAL_STATUS.CLOSED;
+  }
+
+  if (statuses.includes(GOAL_STATUS.SUSPENDED)) {
+    return GOAL_STATUS.SUSPENDED;
+  }
+
+  return GOAL_STATUS.NOT_STARTED;
+}
+
+/**
+ *
+ * @param {*} objective
+ * @param {*} parentGoalId
+ */
+export async function mergeObjectiveFromGoal(objective, parentGoalId) {
+  const { dataValues } = objective;
+  const { id, goalId, ...data } = dataValues;
+  const newObjective = await Objective.create({
+    ...data,
+    goalId: parentGoalId,
+  }, { individualHooks: true });
+
+  const updatesToRelatedModels = [];
+
+  // for activity report objectives, simply update
+  // existing objectives to point to the new objective
+  objective.activityReportObjectives.forEach((aro) => {
+    updatesToRelatedModels.push(aro.update({
+      originalObjectiveId: id,
+      objectiveId: newObjective.id,
+    }, { individualHooks: true }));
+  });
+
+  // for topics, resources, and files, we need to create new ones
+  // that copy the old
+  objective.objectiveTopics.forEach((ot) => {
+    updatesToRelatedModels.push(ObjectiveTopic.create({
+      objectiveId: newObjective.id,
+      topicId: ot.topicId,
+    }, { individualHooks: true }));
+  });
+
+  objective.objectiveResources.forEach((or) => {
+    updatesToRelatedModels.push(ObjectiveResource.create({
+      objectiveId: newObjective.id,
+      resourceId: or.resourceId,
+    }, { individualHooks: true }));
+  });
+
+  objective.objectiveFiles.forEach((of) => {
+    updatesToRelatedModels.push(ObjectiveFile.create({
+      objectiveId: newObjective.id,
+      fileId: of.fileId,
+    }, { individualHooks: true }));
+  });
+
+  return Promise.all(updatesToRelatedModels);
+}
+
+/**
+ *
+ * @param {*} childGoalWithObjectivesAndRelated
+ * @param {*} parentGoalDictionary
+ */
+export async function mergeObjectivesFromGoal(
+  childGoalWithObjectivesAndRelated,
+  parentGoalDictionary,
+) {
+  const parentGoalId = parentGoalDictionary[childGoalWithObjectivesAndRelated.grantId];
+
+  return Promise.all(
+    childGoalWithObjectivesAndRelated.objectives
+      .map((objective) => mergeObjectiveFromGoal(objective, parentGoalId)),
+  );
+}
+
+export function determineFinalGoalValues(selectedGoals, finalGoal) {
+  // determine the final value of these fields
+  const statuses = selectedGoals.map((goal) => goal.status);
+  const finalStatus = determineMergeGoalStatus(statuses);
+  const createdAtDates = selectedGoals.map((goal) => goal.createdAt);
+  const finalCreatedAt = new Date(Math.min(...createdAtDates));
+  const onAR = selectedGoals.map((goal) => goal.onAR).includes(true);
+
+  return {
+    name: finalGoal.name,
+    goalTemplateId: finalGoal.goalTemplateId,
+    createdAt: finalCreatedAt,
+    endDate: finalGoal.endDate,
+    createdVia: 'goalMerge',
+    onAR,
+    rtrOrder: finalGoal.rtrOrder,
+    source: finalGoal.source,
+    isFromSmartsheetTtaPlan: finalGoal.isFromSmartsheetTtaPlan,
+    status: finalStatus,
+    closeSuspendReason: finalGoal.closeSuspendReason,
+    closeSuspendContext: finalGoal.closeSuspendContext,
+  };
+}
+
+/**
+ *
+ * @param {number} finalGoalId
+ * @param {number[]} selectedGoalIds
+ */
+export async function mergeGoals(finalGoalId, selectedGoalIds) {
+  // create a new goal from "finalGoalId"
+  // - update selectedGoalIds to point to newGoalId
+  // - i.e. { parentGoalId: newGoalId }
+  // - update goal template id
+  // createdAt should be min date of all goals
+  // update all the other goals to point to the new goal
+  // - derive status from chart in AC
+  const selectedGoals = await Goal.findAll({
+    where: {
+      id: [finalGoalId, ...selectedGoalIds],
+    },
+    include: [
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'goalFieldResponses',
+      },
+      {
+        model: GoalResource,
+        as: 'resources',
+      },
+      {
+        model: Objective,
+        as: 'objectives',
+        include: [
+          {
+            model: ObjectiveFile,
+            as: 'objectiveFiles',
+          },
+          {
+            model: ObjectiveResource,
+            as: 'objectiveResources',
+          },
+          {
+            model: ObjectiveTopic,
+            as: 'objectiveTopics',
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+          },
+        ],
+      },
+    ],
+  });
+
+  const finalGoal = selectedGoals.find((goal) => goal.id === finalGoalId);
+
+  if (!finalGoal) {
+    throw new Error(`Goal with id ${finalGoalId} not found in merge goals`);
+  }
+
+  const finalGoalValues = determineFinalGoalValues(selectedGoals, finalGoal);
+
+  /**
+   * we will need to create a "new" final goal for each grant involved
+   * in this sordid business
+   */
+
+  const grantIds = selectedGoals.map((goal) => goal.grantId);
+
+  const newGoals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+    ...finalGoalValues,
+    grantId,
+  })));
+
+  // we will need these in a moment
+  const grantToGoalDictionary = {};
+  const goalToGrantDictionary = {};
+  newGoals.forEach((goal) => {
+    grantToGoalDictionary[goal.grantId] = goal.id;
+    goalToGrantDictionary[goal.id] = goal.grantId;
+  });
+
+  // update associated models
+  // - update AR goals with originalGoalId and goalId with the new goalId
+  // - update goalId on objectives
+  // - copy existing objective, set mapsTo on existingObjective with new objectiveId
+  // - update ARO with originalObjectiveId and objectiveId with the new objectiveId
+  // - goalResources, copy
+  // - goalFieldResponses, copy
+  // - objective files, ETC
+
+  await Promise.all(selectedGoals.map((g) => (
+    mergeObjectivesFromGoal(g.objectives, grantToGoalDictionary))));
+
+  const updatesToRelatedModels = [];
+  selectedGoals.forEach((g) => {
+    // update the activity report goal
+    updatesToRelatedModels.push(g.activityReportGoals[0].update({
+      originalGoalId: g.id,
+      goalId: grantToGoalDictionary[g.grantId],
+    }, { individualHooks: true }));
+
+    // copy the goal resources
+    g.resources.forEach((gr) => {
+      updatesToRelatedModels.push(GoalResource.create({
+        goalId: grantToGoalDictionary[g.grantId],
+        resourceId: gr.resourceId,
+      }, { individualHooks: true }));
+    });
+
+    // copy the goal field responses
+    g.goalFieldResponses.forEach((gfr) => {
+      updatesToRelatedModels.push(GoalFieldResponse.create({
+        goalId: grantToGoalDictionary[g.grantId],
+        goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+        response: gfr.response,
+      }, { individualHooks: true }));
+    });
+  });
+
+  await Promise.all(updatesToRelatedModels);
+
+  // update old goals
+  await Promise.all(selectedGoals.map((g) => g.update({
+    mapsToParentGoalId: grantToGoalDictionary[g.grantId],
+  }, { individualHooks: true })));
+
+  return newGoals;
+  // TODO:
+  // add a default scope to goals
+  // - { mapsToParentGoalId: null }
+  // display original goal id where exists on approved ARs
 }
