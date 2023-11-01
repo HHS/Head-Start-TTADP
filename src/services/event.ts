@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import { auditLogger } from '../logger';
-import db from '../models';
+import db, { sequelize } from '../models';
 import {
   EventShape,
   CreateEventRequest,
@@ -191,7 +191,16 @@ async function findEventHelperBlob({
       {
         model: SessionReportPilot,
         as: 'sessionReports',
-        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+        separate: true, // This is required to order the joined table results.
+        attributes: [
+          'id',
+          'eventId',
+          'data',
+          'createdAt',
+          'updatedAt',
+          [sequelize.fn('COALESCE', 'data.startDate', 'data.sessionName', 'createdAt'), 'sortByValue'],
+        ],
+        order: [['sortByValue', 'ASC']],
       },
     ],
     where,
