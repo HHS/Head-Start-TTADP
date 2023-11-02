@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { GOAL_STATUS } = require('../../constants');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
@@ -63,7 +64,7 @@ const invalidateSimilarityScores = async (sequelize, instance, options) => {
   if (changed.includes('name')) {
     await sequelize.models.SimScoreCache.destroy({
       where: {
-        [sequelize.Op.or]: [
+        [Op.or]: [
           { goal1: instance.id },
           { goal2: instance.id },
         ],
