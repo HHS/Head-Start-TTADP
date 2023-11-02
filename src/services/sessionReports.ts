@@ -28,7 +28,7 @@ type WhereOptions = {
 };
 
 // eslint-disable-next-line max-len
-async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
+export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
   let session;
 
   const query = {
