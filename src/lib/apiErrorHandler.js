@@ -3,43 +3,52 @@ import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
 
-/**
- * Handles sequelize errors
- *
- * @param {*} req - request
- * @param {*} res - response
- * @param {*} error - error
- * @param {*} logContext - useful data for logging
- */
-async function handleSequelizeError(req, res, error, logContext) {
+async function logRequestError(req, operation, error, logContext) {
+  if (operation !== 'SequelizeError'
+  && process.env.SUPPRESS_ERROR_LOGGING
+  && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true') {
+    return 0;
+  }
   try {
     const responseBody = typeof error === 'object' && error !== null ? { ...error, errorStack: error?.stack } : error;
     const requestBody = typeof req.body === 'object' ? { ...req.body } : {};
     const requestErrorId = await createRequestError({
-      operation: 'SequelizeError',
+      operation,
       uri: req.originalUrl,
       method: req.method,
       requestBody,
       responseBody,
       responseCode: INTERNAL_SERVER_ERROR,
     });
-    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${error}`);
+    return requestErrorId;
   } catch (e) {
     logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
   }
-  res.status(INTERNAL_SERVER_ERROR).end();
+  return null;
 }
 
 export const handleError = async (req, res, error, logContext) => {
   if (process.env.NODE_ENV === 'development') {
     logger.error(error);
   }
+  let operation;
+  let label;
+
   if (error instanceof Sequelize.Error) {
-    await handleSequelizeError(req, res, error, logContext);
+    operation = 'SequelizeError';
+    label = 'Sequelize error';
   } else {
-    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${error}`);
-    res.status(INTERNAL_SERVER_ERROR).end();
+    operation = 'UNEXPECTED_ERROR';
+    label = 'UNEXPECTED ERROR';
   }
+
+  const requestErrorId = await logRequestError(req, operation, error, logContext);
+  if (requestErrorId) {
+    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${error}`);
+  } else {
+    logger.error(`${logContext.namespace} - ${label} - ${error}`);
+  }
+  res.status(INTERNAL_SERVER_ERROR).end();
 };
 
 /**
