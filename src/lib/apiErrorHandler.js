@@ -43,10 +43,16 @@ export const handleError = async (req, res, error, logContext) => {
   }
 
   const requestErrorId = await logRequestError(req, operation, error, logContext);
-  if (requestErrorId) {
-    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${error}`);
+  let errorMessage;
+  if (error?.stack) {
+    errorMessage = error.stack;
   } else {
-    logger.error(`${logContext.namespace} - ${label} - ${error}`);
+    errorMessage = error;
+  }
+  if (requestErrorId) {
+    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+  } else {
+    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
   }
   res.status(INTERNAL_SERVER_ERROR).end();
 };
