@@ -94,15 +94,6 @@ def calculate_batch_similarity(batch, nlp):
 
 
 def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], alpha: float, batch_size: int = 500) -> List[Dict[str, str]]:
-    """
-    Calculates the similarity between a list of goals.
-    Args:
-        goals_list (list): A list of goals.
-        goal_ids_list (list): A list of goal IDs.
-        batch_size (int, optional): The batch size to use for calculating similarity. Defaults to 500.
-    Returns:
-        list: A list of matched goals.
-    """
     num_goals = len(goals_list)
     matched_goals = []
 
