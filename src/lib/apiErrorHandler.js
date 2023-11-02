@@ -11,7 +11,20 @@ async function logRequestError(req, operation, error, logContext) {
   }
   try {
     const responseBody = typeof error === 'object' && error !== null ? { ...error, errorStack: error?.stack } : error;
-    const requestBody = typeof req.body === 'object' ? { ...req.body } : {};
+    const requestBody = {
+      ...(req.body
+        && typeof req.body === 'object'
+        && Object.keys(req.body).length > 0
+        && { body: req.body }),
+      ...(req.params
+        && typeof req.params === 'object'
+        && Object.keys(req.params).length > 0
+        && { params: req.params }),
+      ...(req.query
+        && typeof req.query === 'object'
+        && Object.keys(req.query).length > 0
+        && { query: req.query }),
+    };
     const requestErrorId = await createRequestError({
       operation,
       uri: req.originalUrl,
