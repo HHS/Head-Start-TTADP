@@ -1,5 +1,5 @@
 import { cast } from 'sequelize';
-import db from '../models';
+import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
@@ -37,8 +37,10 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'eventId',
       'data',
       'updatedAt',
+      [sequelize.literal('Date(CASE WHEN "SessionReportPilot".data->>\'startDate\' = \'\' THEN NULL ELSE "SessionReportPilot".data->>\'startDate\' END)'), 'startDate'],
     ],
     where,
+    order: [['startDate', 'ASC']],
     include: [
       {
         model: db.File,
