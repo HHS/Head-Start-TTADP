@@ -1983,7 +1983,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           createdVia: 'activityReport',
-          name: goal.name.trim(),
+          name: goal.name ? goal.name.trim() : '',
           grantId,
           ...fields,
           status,
