@@ -18,8 +18,26 @@ module.exports = {
             autoIncrement: true,
           },
           recipient_id: { allowNull: false, type: Sequelize.INTEGER },
-          goal1: { allowNull: false, type: Sequelize.INTEGER },
-          goal2: { allowNull: false, type: Sequelize.INTEGER },
+          goal1: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            default: null,
+            references: {
+              model: {
+                tableName: 'Goals',
+              },
+            },
+          },
+          goal2: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            default: null,
+            references: {
+              model: {
+                tableName: 'Goals',
+              },
+            },
+          },
           score: { allowNull: false, type: Sequelize.DECIMAL(3, 1) },
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
