@@ -98,8 +98,17 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     include: [
       {
         model: SessionReportPilot,
+        attributes: [
+          'id',
+          'eventId',
+          'data',
+          'createdAt',
+          'updatedAt',
+          [sequelize.literal('Date(CASE WHEN "SessionReportPilot".data->>\'startDate\' = \'\' THEN NULL ELSE "SessionReportPilot".data->>\'startDate\' END)'), 'startDate'],
+        ],
         as: 'sessionReports',
-        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+        separate: true, // This is required to order the joined table results.
+        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
   };
@@ -198,9 +207,9 @@ async function findEventHelperBlob({
           'data',
           'createdAt',
           'updatedAt',
-          [sequelize.fn('COALESCE', 'data.startDate', 'data.sessionName', 'createdAt'), 'sortByValue'],
+          [sequelize.literal('Date(CASE WHEN "SessionReportPilot".data->>\'startDate\' = \'\' THEN NULL ELSE "SessionReportPilot".data->>\'startDate\' END)'), 'startDate'],
         ],
-        order: [['sortByValue', 'ASC']],
+        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
     where,
