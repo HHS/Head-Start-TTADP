@@ -75,6 +75,6 @@ describe('apiErrorHandler', () => {
 
     const requestErrors = await RequestErrors.findAll();
 
-    expect(requestErrors.length).not.toBe(0);
+    expect(requestErrors.length).toBe(0);
   });
 });
