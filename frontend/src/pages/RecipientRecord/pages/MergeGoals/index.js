@@ -17,6 +17,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../../../../components/Container';
 import StepIndicator from '../../../../components/StepIndicator';
 import { getRecipientGoals } from '../../../../fetchers/recipient';
+import { mergeGoals } from '../../../../fetchers/goals';
 import './index.css';
 import GoalCard from './components/GoalCard';
 import FinalGoalCard from './components/FinalGoalCard';
@@ -281,6 +282,20 @@ export default function MergeGoals({
     </button>
   );
 
+  const onSubmit = async (data) => {
+    try {
+      setIsAppLoading(true);
+      const mergedGoals = await mergeGoals(data.selectedGoalIds, data.finalGoalId);
+      // eslint-disable-next-line no-console
+      console.log(mergedGoals);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
   return (
     <div className="padding-top-5">
       <Link
@@ -325,7 +340,7 @@ export default function MergeGoals({
         </Alert>
         )}
         {/* eslint-disable-next-line no-console */}
-        <form onSubmit={hookForm.handleSubmit((data) => console.log(data))}>
+        <form onSubmit={hookForm.handleSubmit((data) => onSubmit(data))}>
           <fieldset className="margin-right-2 padding-0 border-0" hidden={activePage !== SELECT_GOALS_TO_MERGE}>
             {goals.map((goal) => (
               <GoalCard
