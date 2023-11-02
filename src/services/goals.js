@@ -2523,7 +2523,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   // - derive status from chart in AC
   const selectedGoals = await Goal.findAll({
     where: {
-      id: [finalGoalId, ...selectedGoalIds],
+      id: uniq([finalGoalId, ...selectedGoalIds]),
     },
     include: [
       {
@@ -2563,7 +2563,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     ],
   });
 
-  const finalGoal = selectedGoals.find((goal) => goal.id === finalGoalId);
+  const finalGoal = selectedGoals.find((goal) => goal.id === parseInt(finalGoalId, DECIMAL_BASE));
 
   if (!finalGoal) {
     throw new Error(`Goal with id ${finalGoalId} not found in merge goals`);
@@ -2646,4 +2646,21 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   // TODO:
   // - display original goal id where exists on approved AR
   // - test everywhere that might need to be tested
+}
+
+export async function goalRegionsById(goalIds) {
+  const grants = await Grant.findAll({
+    attributes: ['regionId', 'id'],
+    include: [{
+      attributes: ['id', 'grantId'],
+      model: Goal,
+      as: 'goals',
+      required: true,
+      where: {
+        id: goalIds,
+      },
+    }],
+  });
+
+  return uniq(grants.map((g) => g.regionId));
 }
