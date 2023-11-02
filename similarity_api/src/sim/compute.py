@@ -18,7 +18,7 @@ def compute_goal_similarities(recipient_id, alpha):
     FROM "Goals" g
     JOIN "Grants" gr ON g."grantId" = gr."id"
     JOIN "Recipients" r ON gr."recipientId" = r."id"
-    WHERE r."id" = :recipient_id AND g."name" IS NOT NULL;
+    WHERE r."id" = :recipient_id AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
     """,
     { 'recipient_id': recipient_id }
   )
@@ -38,7 +38,7 @@ def cache_scores():
     FROM "Goals" g
     JOIN "Grants" gr ON g."grantId" = gr."id"
     JOIN "Recipients" r ON gr."recipientId" = r."id"
-    WHERE g."name" IS NOT NULL;
+    WHERE NULLIF(TRIM(g."name"), '') IS NOT NULL;
     """,
     {}
   )
@@ -143,7 +143,7 @@ def find_similar_goals(recipient_id, goal_name, alpha):
         FROM "Goals" g
         JOIN "Grants" gr ON g."grantId" = gr."id"
         JOIN "Recipients" r ON gr."recipientId" = r."id"
-        WHERE r."id" = :recipient_id AND g."name" IS NOT NULL;
+        WHERE r."id" = :recipient_id AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
         """,
         {'recipient_id': recipient_id}
     )
