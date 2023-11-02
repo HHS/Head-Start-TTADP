@@ -461,7 +461,7 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     const goalIdsToDestroy = goalsToDestroy.map((g) => g.id);
-;
+
     await Objective.destroy({
       where: {
         goalId: goalIdsToDestroy,
