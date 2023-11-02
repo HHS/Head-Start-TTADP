@@ -104,6 +104,54 @@ class FtpClient {
       });
     });
   }
+
+  /**
+   * Retrieves the latest file from a given path and returns it as a stream.
+   * @param path - The path to retrieve the latest file from.
+   * @returns A Promise that resolves to an object containing the path, fileInfo, and stream of the latest file, or null if no files are found.
+   */
+  async getLatest(path: string): Promise<{
+    path: string,
+    fileInfo: FileInfo,
+    stream: fs.ReadStream
+  } | null> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // List all files
+        const files: FileInfo[] = await this.listFiles(path);
+        console.log('Files:', files);
+
+        // Get the latest file
+        const latestFile: FileInfo | undefined = files.reduce((
+          prev,
+          current,
+        ) => (prev.date > current.date
+          ? prev
+          : current));
+        console.log('Latest File:', latestFile);
+
+        if (latestFile) {
+          // Download the latest file as a stream
+          const stream: fs.ReadStream = await this.downloadAsStream(`${path}/${latestFile.name}`);
+          console.log('Downloaded Stream:', stream);
+
+          // Wait for the stream to close before disconnecting from FTP server
+          stream.on('close', this.disconnect);
+
+          // Return the stream
+          resolve({
+            path,
+            fileInfo: latestFile,
+            stream,
+          });
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        reject(err);
+      }
+      reject();
+    });
+  }
 }
 
 export default FtpClient; // Export the FtpClient class as the default export
