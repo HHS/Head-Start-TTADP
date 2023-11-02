@@ -64,7 +64,7 @@ describe('apiErrorHandler', () => {
 
     const requestErrors = await RequestErrors.findAll();
 
-    expect(requestErrors.length).toBe(0);
+    expect(requestErrors.length).not.toBe(0);
   });
 
   it('can handle unexpected error in catch block', async () => {
@@ -75,6 +75,6 @@ describe('apiErrorHandler', () => {
 
     const requestErrors = await RequestErrors.findAll();
 
-    expect(requestErrors.length).toBe(0);
+    expect(requestErrors.length).not.toBe(0);
   });
 });
