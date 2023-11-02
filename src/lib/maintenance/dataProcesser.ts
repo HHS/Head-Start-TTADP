@@ -1,88 +1,101 @@
 import * as fs from 'fs';
-import FtpClient, { FileInfo } from '../stream/ftp';
-import ZipStream from '../stream/zip';
+import { Readable } from 'stream';
+import FtpClient, { FileInfo as ftpFileInfo } from '../stream/ftp';
+import ZipStream, { FileInfo as zipFileInfo } from '../stream/zip';
 import EncodingConverter from '../stream/encoding';
 import XMLStream from '../stream/xml';
 
-/**
- * 1) Stream file from FTP to S3
- * 2) Stream extract zip file on S3 to an array of file streams
- * 3) Transcode each file stream from utf-16 to utf-8 stream
- * 4)
- */
-
-/**
- * EXAMPLE CODE:
- ftpClient.on('ready', () => {
-  ftpClient.get('PATH_TO_FILE_ON_FTP_SERVER', (err, stream) => {
-    if (err) throw err;
-
-    const s3 = new AWS.S3();
-    const params = {
-      Bucket: 'YOUR_S3_BUCKET_NAME',
-      Key: 'DESTINATION_FILE_NAME',
-      Body: stream
-    };
-
-    s3.upload(params, (err, data) => {
-      if (err) throw err;
-      console.log('File uploaded successfully:', data.Location);
-      ftpClient.end(); // Close the FTP connection
-    });
-  });
-});
- */
-
-const getLatestFileStreamFromFTP = async (
-  ftpSettings: {
-    host: string,
-    port: number,
-    username: string,
-    password: string,
+const processRecords = async (
+  processDefinition,
+  xmlClient,
+  recordActions = {
+    inserts: [],
+    updated: [],
+    deletes: [],
   },
 ) => {
-  const ftpClient = new FtpClient(ftpSettings);
-
-  try {
-    // Connect to FTP server
-    await ftpClient.connect();
-
-    // List all files
-    const files: FileInfo[] = await ftpClient.listFiles('/path/to/files');
-    console.log('Files:', files);
-
-    // Get the latest file
-    const latestFile: FileInfo | undefined = files.reduce((
-      prev,
-      current,
-    ) => (prev.date > current.date
-      ? prev
-      : current));
-    console.log('Latest File:', latestFile);
-
-    if (latestFile) {
-      // Download the latest file as a stream
-      const stream: fs.ReadStream = await ftpClient.downloadAsStream(`/path/to/files/${latestFile.name}`);
-      console.log('Downloaded Stream:', stream);
-
-      // Wait for the stream to close before disconnecting from FTP server
-      stream.on('close', () => {
-        console.log('Stream closed');
-        ftpClient.disconnect();
-      });
-
-      // Return the stream
-      return stream;
-    }
-  } catch (error) {
-    console.error('Error:', error);
+  const record = await xmlClient.getNextRecord();
+  if (record) {
+    /** TODO
+     * 1: use the mapsTo method to format data to structure needed
+     * 2. use the filterDataToModel to match what is expected
+     * 3. check for existing record
+     * 4a. if new
+     *  1. insert
+     *  2. recordActions.inserts.push(uuid)
+     * 4b. if found
+     *  1. use the collectChangedValues to find the values to update
+     *  2. update
+     *  2. recordActions.update.push(uuid)
+     */
+  } else {
+    /** TODO
+     * 1. Find all records not in recordActions.inserts and recordActions.update
+     * 2. delete
+     * 3. recordActions.delete.push(uuid)
+     * 4. save data - recordActions
+     */
+    return Promise.resolve();
   }
-
-  // If no latest file or error occurred, return undefined
-  return undefined;
+  return processRecords(
+    processDefinition,
+    xmlClient,
+    recordActions,
+  );
 };
 
+const processFile = async (
+  processDefinition,
+  fileInfo: zipFileInfo,
+  fileStream: Readable,
+) => {
+  const usableStream = await EncodingConverter.forceStreamEncoding(fileStream, 'utf8');
+  const xmlClient = new XMLStream(usableStream);
+  return processRecords(processDefinition, xmlClient);
+};
 
-const processFTP = () => {
-  const stream: fs.ReadStream | undefined = await getLatestFileStreamFromFTP();
+const processFiles = async (
+  zipClient: ZipStream,
+  filesToProcess: (zipFileInfo | null)[],
+  processDefinitions: string[],
+) => {
+  if (processDefinitions.length === 0) return;
+  const nextToProcess = processDefinitions.pop();
+
+  try {
+    const fileInfoToProcess = filesToProcess
+      .find(({ name }) => name === nextToProcess);
+    if (fileInfoToProcess) {
+      const fileStream = await zipClient.getFileStream(fileInfoToProcess.name);
+      await processFile(nextToProcess, fileInfoToProcess, fileStream);
+    } else {
+      // TODO - save/log that file to process was not found
+    }
+  } catch (err) {
+    // TODO: error handler
+  }
+  await processFiles(zipClient, filesToProcess, processDefinitions);
+};
+
+const processFTP = async (processDefinitions) => {
+  const ftpClient = new FtpClient(ftpSettings);
+  const latestFtpFile = await ftpClient.getLatest('/');
+
+  // TODO - save data
+
+  const s3Client = new S3Client();
+  const s3LoadedFile = await s3Client.streamUpload(latestFtpFile.stream);
+
+  // TODO - save data
+
+  const s3FileStream = await s3Client.streamUDownload(s3LoadedFile.key);
+
+  const zipClient = new ZipStream(s3FileStream);
+  const fileDetails = await zipClient.getAllFileDetails();
+
+  // TODO - save data
+
+  await processFiles(zipClient, fileDetails, processDefinitions);
+
+
 };
