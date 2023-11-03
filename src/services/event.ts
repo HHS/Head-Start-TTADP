@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import { auditLogger } from '../logger';
-import db from '../models';
+import db, { sequelize } from '../models';
 import {
   EventShape,
   CreateEventRequest,
@@ -98,8 +98,18 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     include: [
       {
         model: SessionReportPilot,
+        attributes: [
+          'id',
+          'eventId',
+          'data',
+          'createdAt',
+          'updatedAt',
+          // eslint-disable-next-line @typescript-eslint/quotes
+          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+        ],
         as: 'sessionReports',
-        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+        separate: true, // This is required to order the joined table results.
+        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
   };
@@ -191,7 +201,17 @@ async function findEventHelperBlob({
       {
         model: SessionReportPilot,
         as: 'sessionReports',
-        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+        separate: true, // This is required to order the joined table results.
+        attributes: [
+          'id',
+          'eventId',
+          'data',
+          'createdAt',
+          'updatedAt',
+          // eslint-disable-next-line @typescript-eslint/quotes
+          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+        ],
+        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
     where,

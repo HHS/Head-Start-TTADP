@@ -1,5 +1,5 @@
 import { cast } from 'sequelize';
-import db from '../models';
+import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
@@ -28,7 +28,7 @@ type WhereOptions = {
 };
 
 // eslint-disable-next-line max-len
-async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
+export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
   let session;
 
   const query = {
@@ -37,8 +37,11 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'eventId',
       'data',
       'updatedAt',
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
     where,
+    order: [['startDate', 'ASC']],
     include: [
       {
         model: db.File,
