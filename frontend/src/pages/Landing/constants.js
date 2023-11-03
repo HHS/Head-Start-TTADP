@@ -18,6 +18,7 @@ import {
   myReportsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -25,6 +26,7 @@ import { groupsFilter } from '../../components/filter/grantFilters';
 const LANDING_BASE_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   grantNumberFilter,
   groupsFilter,
   myReportsFilter,
@@ -47,6 +49,7 @@ const LANDING_BASE_FILTER_CONFIG = [
 const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   grantNumberFilter,
   groupsFilter,
   myReportsFilter,

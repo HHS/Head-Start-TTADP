@@ -11,7 +11,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import goalsObjectives, { validatePrompts } from '../goalsObjectives';
+import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
 import GoalFormContext from '../../../../GoalFormContext';
 
@@ -478,36 +478,6 @@ describe('goals objectives', () => {
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
-    });
-  });
-
-  describe('validatePrompts', () => {
-    it('returns true if no prompts', async () => {
-      const trigger = jest.fn(() => true);
-      const prompts = [];
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeTruthy();
-    });
-
-    it('returns true if prompts are undefined', async () => {
-      const trigger = jest.fn(() => true);
-      const prompts = undefined;
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeTruthy();
-    });
-
-    it('returns the result of trigger when true', async () => {
-      const trigger = jest.fn(() => true);
-      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeTruthy();
-    });
-
-    it('returns the result of trigger when false', async () => {
-      const trigger = jest.fn(() => false);
-      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeFalsy();
     });
   });
 });
