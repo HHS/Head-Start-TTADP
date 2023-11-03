@@ -32,8 +32,8 @@ module.exports = {
           SELECT
           UNNEST(
             CASE
-              WHEN value::text like '%\\n%'
-              THEN STRING_TO_ARRAY(trim(value::text,'"'),'\n')
+              WHEN value::text like '%' || chr(92) || chr(92) || 'n' || '%'
+              THEN STRING_TO_ARRAY(trim(value::text,'"'), chr(92) || 'n') -- Char(10) is a new line.
               ELSE ARRAY[trim(value::TEXT,'"')]::TEXT[]
             END
             ) tp
@@ -55,7 +55,7 @@ module.exports = {
       WITH "goodTgt" as (
       SELECT erp.id, ARRAY_AGG(erpr.r) AS good
       FROM "EventReportPilots" erp
-      CROSS JOIN UNNEST(STRING_TO_ARRAY(TRIM(REPLACE(data ->> 'reasons', '", "', ' '),'["] '), '\n')) erpr(r)
+      CROSS JOIN UNNEST(STRING_TO_ARRAY(TRIM(REPLACE(data ->> 'reasons', '", "', ' '),'["] '), chr(92) || 'n')) erpr(r)
       GROUP BY 1
       ORDER BY 1
       )
