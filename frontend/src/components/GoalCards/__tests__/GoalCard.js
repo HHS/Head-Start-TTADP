@@ -155,5 +155,6 @@ describe('GoalCard', () => {
     const tags = document.querySelectorAll('.usa-tag');
     expect(tags.length).toBe(1);
     expect(tags[0].textContent).toBe('Merged');
+    expect(tags[0]).toBeVisible();
   });
 });
