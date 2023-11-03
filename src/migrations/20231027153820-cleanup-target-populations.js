@@ -95,7 +95,7 @@ module.exports = {
                   (
             SELECT jsonb_agg(
               CASE
-              WHEN value::text = '"Pregnant Women/Pregnant People"' THEN '"Pregnant Women / Pregnant Persons"'::jsonb
+              WHEN value::text = '"Pregnant Women/Pregnant People"' OR value::text = '"Pregnant Women"' THEN '"Pregnant Women / Pregnant Persons"'::jsonb
               ELSE value
               END
             )
@@ -103,6 +103,19 @@ module.exports = {
             )::jsonb
                   ))
         WHERE data->'targetPopulations' @> '["Pregnant Women/Pregnant People"]'::jsonb;
+
+        -- Remove all duplicates from JSON array property 'targetPopulations' for TR.
+        UPDATE "EventReportPilots"
+            SET data = (
+          SELECT JSONB_SET(
+                  data,
+                  '{targetPopulations}',
+                  (
+            SELECT jsonb_agg(DISTINCT value)
+            FROM jsonb_array_elements(data->'targetPopulations') AS value
+            )::jsonb
+                  ))
+        WHERE data->'targetPopulations' IS NOT NULL;
      `, { transaction });
     });
   },
