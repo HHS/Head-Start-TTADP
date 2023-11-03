@@ -24,9 +24,21 @@ module.exports = {
 
        -- Cleanup JSON 'Target Populations' for TR (create proper array).
        WITH "goodTgt" as (
-        SELECT erp.id, ARRAY_AGG(erptp.tp) AS good
+        SELECT
+          erp.id,
+          ARRAY_AGG(DISTINCT erptp.tp) "targetPopulations"
         FROM "EventReportPilots" erp
-        CROSS JOIN UNNEST(STRING_TO_ARRAY(trim(data -> 'targetPopulations' ->> 0,'"'),E'\n')) erptp(tp)
+        CROSS JOIN LATERAL (
+          SELECT
+          UNNEST(
+            CASE
+              WHEN value::text like '%\\n%'
+              THEN STRING_TO_ARRAY(trim(value::text,'"'),'\n')
+              ELSE ARRAY[trim(value::TEXT,'"')]::TEXT[]
+            END
+            ) tp
+          FROM jsonb_array_elements(erp.data -> 'targetPopulations') WITH ORDINALITY
+        ) erptp
         GROUP BY 1
         ORDER BY 1
       )
