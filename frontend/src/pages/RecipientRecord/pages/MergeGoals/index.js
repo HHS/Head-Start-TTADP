@@ -110,7 +110,6 @@ export default function MergeGoals({
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const drawerTriggerRef = useRef(null);
   const modalRef = useRef();
-  const form = useRef(null);
 
   const hookForm = useForm({
     mode: 'onSubmit',
@@ -343,8 +342,7 @@ export default function MergeGoals({
           be selected as the goal to keep, and other goals can&apos;t be selected.
         </Alert>
         )}
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-        <form ref={form} onSubmit={hookForm.handleSubmit((data) => onSubmit(data))}>
+        <form onSubmit={hookForm.handleSubmit((data) => onSubmit(data))}>
           <Modal
             modalRef={modalRef}
             heading="Permanently merge goals?"
