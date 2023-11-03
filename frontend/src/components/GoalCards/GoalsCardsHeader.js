@@ -233,23 +233,25 @@ export default function GoalCardsHeader({
         {
           (shouldDisplayMergeSuccess && mergedGoals)
             ? (
-              <Alert className="margin-top-3" type="success">
-                Goal
-                {mergedGoals.length === 1 ? ' ' : 's '}
-                {' '}
-                {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
-                {' '}
-                {mergedGoals.length === 1 ? 'has' : 'have'}
-                {' '}
-                been merged.
-                <button
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-left-1"
-                  onClick={() => dismissMergeSuccess()}
-                >
-                  Reset goal sort order
-                </button>
-              </Alert>
+              <FeatureFlag flag="merge_goals">
+                <Alert className="margin-top-3" type="success">
+                  Goal
+                  {mergedGoals.length === 1 ? ' ' : 's '}
+                  {' '}
+                  {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
+                  {' '}
+                  {mergedGoals.length === 1 ? 'has' : 'have'}
+                  {' '}
+                  been merged.
+                  <button
+                    type="button"
+                    className="usa-button usa-button--unstyled margin-left-1"
+                    onClick={() => dismissMergeSuccess()}
+                  >
+                    Reset goal sort order
+                  </button>
+                </Alert>
+              </FeatureFlag>
             )
             : null
             }
