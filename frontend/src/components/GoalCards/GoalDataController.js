@@ -51,7 +51,7 @@ function GoalDataController({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
-  const [shouldDisplayMergeSuccess, setShouldDisplayMergedSuccess] = useState();
+  const [shouldDisplayMergeSuccess, setShouldDisplayMergedSuccess] = useState(false);
 
   const history = useHistory();
 
