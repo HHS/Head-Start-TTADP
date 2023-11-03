@@ -345,3 +345,17 @@ export async function setFieldPromptsForCuratedTemplate(
       }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
   );
 }
+
+/**
+Retrieves field prompts for template name.
+@param name - Name of the goal field template prompt to retrieve templates.
+@returns An array of Field Prompts for the named goal template prompt.
+*/
+export async function getOptionsByGoalTemplateFieldPromptName(
+  name: string,
+): Promise<FieldPrompts[]> {
+  return GoalTemplateFieldPromptModel.findOne({
+    attributes: ['options'],
+    where: { title: name },
+  });
+}

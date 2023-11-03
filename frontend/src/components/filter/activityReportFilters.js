@@ -16,6 +16,7 @@ import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
+import FilterActivityReportGoalResponseSelect from './FilterActivityReportGoalResponseSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
 import FilterProgramType from './FilterProgramType';
@@ -451,6 +452,22 @@ export const topicsFilter = {
       inputId={`topic-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
+    />
+  ),
+};
+
+export const activityReportGoalResponseFilter = {
+  id: 'activityReportGoalResponse',
+  display: 'FEI root cause',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterActivityReportGoalResponseSelect
+      inputId={`fei-root-cause-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      title="FEI root cause"
     />
   ),
 };
