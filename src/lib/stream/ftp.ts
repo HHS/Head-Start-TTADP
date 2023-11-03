@@ -94,14 +94,18 @@ class FtpClient {
   downloadAsStream(remoteFilePath: string): Promise<fs.ReadStream> {
     return new Promise((resolve, reject) => {
       // Get a readable stream for the specified file on the FTP server
-      this.client.get(remoteFilePath, (err, stream) => {
-        if (err) {
-          reject(err);
-          return;
-        }
+      this.client.get(
+        remoteFilePath,
+        true, // use compression
+        (err, stream) => {
+          if (err) {
+            reject(err);
+            return;
+          }
 
-        resolve(stream);
-      });
+          resolve(stream);
+        },
+      );
     });
   }
 
@@ -155,4 +159,4 @@ class FtpClient {
 }
 
 export default FtpClient; // Export the FtpClient class as the default export
-export { FileInfo }; // Export the FileInfo interface
+export { FileInfo, FTPSettings }; // Export the FileInfo interface
