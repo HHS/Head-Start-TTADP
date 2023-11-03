@@ -37,7 +37,8 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'eventId',
       'data',
       'updatedAt',
-      [sequelize.literal('Date(CASE WHEN "SessionReportPilot".data->>\'startDate\' = \'\' THEN NULL ELSE "SessionReportPilot".data->>\'startDate\' END)'), 'startDate'],
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
     where,
     order: [['startDate', 'ASC']],
