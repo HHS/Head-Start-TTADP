@@ -3,14 +3,30 @@ import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
 
+/**
+ * Logs a request error and stores it in the database.
+ * @param {Object} req - The request object.
+ * @param {string} operation - The operation name.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The logging context.
+ * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
+ */
 async function logRequestError(req, operation, error, logContext) {
-  if (operation !== 'SequelizeError'
-  && process.env.SUPPRESS_ERROR_LOGGING
-  && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true') {
+  // Check if error logging should be suppressed
+  if (
+    operation !== 'SequelizeError'
+    && process.env.SUPPRESS_ERROR_LOGGING
+    && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
+  ) {
     return 0;
   }
+
   try {
-    const responseBody = typeof error === 'object' && error !== null ? { ...error, errorStack: error?.stack } : error;
+    // Prepare the response body for storage
+    const responseBody = typeof error === 'object'
+      && error !== null ? { ...error, errorStack: error?.stack } : error;
+
+    // Prepare the request body for storage
     const requestBody = {
       ...(req.body
         && typeof req.body === 'object'
@@ -25,6 +41,8 @@ async function logRequestError(req, operation, error, logContext) {
         && Object.keys(req.query).length > 0
         && { query: req.query }),
     };
+
+    // Create a request error in the database and get its ID
     const requestErrorId = await createRequestError({
       operation,
       uri: req.originalUrl,
@@ -33,20 +51,32 @@ async function logRequestError(req, operation, error, logContext) {
       responseBody,
       responseCode: INTERNAL_SERVER_ERROR,
     });
+
     return requestErrorId;
   } catch (e) {
     logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
   }
+
   return null;
 }
 
+/**
+ * Handles errors in an asynchronous request.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The context for logging.
+ */
 export const handleError = async (req, res, error, logContext) => {
+  // Check if the environment is development
   if (process.env.NODE_ENV === 'development') {
     logger.error(error);
   }
+
   let operation;
   let label;
 
+  // Check if the error is an instance of Sequelize.Error
   if (error instanceof Sequelize.Error) {
     operation = 'SequelizeError';
     label = 'Sequelize error';
@@ -55,18 +85,25 @@ export const handleError = async (req, res, error, logContext) => {
     label = 'UNEXPECTED ERROR';
   }
 
+  // Log the request error and get the error ID
   const requestErrorId = await logRequestError(req, operation, error, logContext);
+
   let errorMessage;
+
+  // Check if the error has a stack property
   if (error?.stack) {
     errorMessage = error.stack;
   } else {
     errorMessage = error;
   }
+
+  // Log the error message with the error ID if available
   if (requestErrorId) {
     logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
   } else {
     logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
   }
+
   res.status(INTERNAL_SERVER_ERROR).end();
 };
 
