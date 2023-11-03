@@ -292,10 +292,9 @@ export default function MergeGoals({
       const mergedGoals = await mergeGoals(data.selectedGoalIds, data.finalGoalId);
       const goalIds = mergedGoals.map((g) => g.id);
       setIsAppLoading(false);
-      history.push(`${backPath}?${goalIds}`, { mergedGoals: goalIds });
+      history.push(`${backPath}`, { mergedGoals: goalIds });
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
+      setValidation('Unable to merge goals');
       setIsAppLoading(false);
       modalRef.current.toggleModal(false);
     }
