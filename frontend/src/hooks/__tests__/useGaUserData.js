@@ -29,7 +29,7 @@ describe('useGaUserData', () => {
   });
 
   test('should not push event to dataLayer if user id or roles are missing', () => {
-    const user = { id: '123' };
+    const user = { homeRegionId: '123' };
 
     renderHook(() => useGaUserData(user));
 
@@ -37,17 +37,17 @@ describe('useGaUserData', () => {
   });
 
   test('should push event to dataLayer with correct user data', () => {
-    const user = { id: '123', roles: ['admin'] };
+    const user = { homeRegionId: '123', roles: ['admin'] };
 
     renderHook(() => useGaUserData(user));
     expect(window.dataLayer).toHaveLength(1);
     expect(window.dataLayer[0].event).toBe('userData');
-    expect(window.dataLayer[0].user_id).toBe('123');
+    expect(window.dataLayer[0].region_id).toBe('123');
     expect(window.dataLayer[0].user_roles).toEqual(['admin']);
   });
 
   test('handles an error in the pushing', () => {
-    const user = { id: '123', roles: ['admin'] };
+    const user = { homeRegionId: '123', roles: ['admin'] };
     window.dataLayer.push = jest.fn(() => {
       throw new Error('error');
     });
