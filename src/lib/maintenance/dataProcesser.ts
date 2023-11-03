@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { Readable } from 'stream';
-import FtpClient, { FileInfo as ftpFileInfo } from '../stream/ftp';
+import FtpClient, { FileInfo as ftpFileInfo, FTPSettings } from '../stream/ftp';
+import S3Client from '../stream/s3';
 import ZipStream, { FileInfo as zipFileInfo } from '../stream/zip';
 import EncodingConverter from '../stream/encoding';
 import XMLStream from '../stream/xml';
@@ -78,17 +79,18 @@ const processFiles = async (
 };
 
 const processFTP = async (processDefinitions) => {
+  const { ftpSettings }: { ftpSettings: FTPSettings } = processDefinitions;
   const ftpClient = new FtpClient(ftpSettings);
   const latestFtpFile = await ftpClient.getLatest('/');
 
   // TODO - save data
 
   const s3Client = new S3Client();
-  const s3LoadedFile = await s3Client.streamUpload(latestFtpFile.stream);
+  const s3LoadedFile = await s3Client.uploadFileAsStream(key, latestFtpFile.stream);
 
   // TODO - save data
 
-  const s3FileStream = await s3Client.streamUDownload(s3LoadedFile.key);
+  const s3FileStream = await s3Client.downloadFileAsStream(key);
 
   const zipClient = new ZipStream(s3FileStream);
   const fileDetails = await zipClient.getAllFileDetails();
@@ -96,6 +98,4 @@ const processFTP = async (processDefinitions) => {
   // TODO - save data
 
   await processFiles(zipClient, fileDetails, processDefinitions);
-
-
 };
