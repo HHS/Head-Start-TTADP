@@ -30,6 +30,7 @@ import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
+import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
 
 export const topicToQuery = {
   reportId: {
@@ -155,6 +156,10 @@ export const topicToQuery = {
     collaborator: (query) => onlyCollaborators(query),
     creator: (query) => onlyCreators(query),
     both: (query) => bothCollaboratorsAndCreators(query),
+  },
+  activityReportGoalResponse: {
+    in: (query) => withActivityReportGoalResponse(query),
+    nin: (query) => withoutActivityReportGoalResponse(query),
   },
 };
 
