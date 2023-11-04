@@ -20,7 +20,6 @@ def create_app():
 
     scheduler.init_app(app)
     scheduler.start()
-    # scheduler.add_job(func=cache_scores, id='cache', trigger='interval', seconds=10, timezone='EST')
     scheduler.add_job(func=cache_scores, id='cache', trigger='cron', minute='0', hour='3', timezone='GMT', replace_existing=True, max_instances=1)
 
     atexit.register(lambda: scheduler.shutdown(wait=False))
