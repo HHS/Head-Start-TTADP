@@ -1,5 +1,6 @@
 import atexit
 import logging
+import os
 
 from flask import Flask
 from flask_apscheduler import APScheduler
@@ -26,7 +27,8 @@ def create_app():
     atexit.register(lambda: scheduler.shutdown(wait=False))
 
     # By default, APScheduler logs are a bit noisy.
-    logging.getLogger("apscheduler.scheduler").setLevel(logging.DEBUG)
+    log_level = os.environ.get("SIMILARITY_SCHEDULER_LOG_LEVEL", "DEBUG")
+    logging.getLogger("apscheduler.scheduler").setLevel(logging.getLevelName(log_level))
     logging.getLogger('apscheduler.executors.default').propagate = False
 
     return app
