@@ -17,7 +17,15 @@ module.exports = {
             primaryKey: true,
             autoIncrement: true,
           },
-          recipient_id: { allowNull: false, type: Sequelize.INTEGER },
+          recipient_id: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Recipients',
+              },
+            },
+          },
           goal1: {
             allowNull: false,
             type: Sequelize.INTEGER,
