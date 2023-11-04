@@ -23,9 +23,12 @@ def compute_goal_similarities(recipient_id, alpha):
     """
     SELECT g."id", g."name"
     FROM "Goals" g
-    JOIN "Grants" gr ON g."grantId" = gr."id"
-    JOIN "Recipients" r ON gr."recipientId" = r."id"
-    WHERE r."id" = :recipient_id AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
+    JOIN "Grants" gr
+      ON g."grantId" = gr."id"
+    JOIN "Recipients" r
+      ON gr."recipientId" = r."id"
+    WHERE r."id" = :recipient_id
+      AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
     """,
     { 'recipient_id': recipient_id }
   )
@@ -43,8 +46,10 @@ def cache_scores():
     """
     SELECT g."id", g."name"
     FROM "Goals" g
-    JOIN "Grants" gr ON g."grantId" = gr."id"
-    JOIN "Recipients" r ON gr."recipientId" = r."id"
+    JOIN "Grants" gr
+      ON g."grantId" = gr."id"
+    JOIN "Recipients" r
+      ON gr."recipientId" = r."id"
     WHERE NULLIF(TRIM(g."name"), '') IS NOT NULL;
     """,
     {}
@@ -77,7 +82,9 @@ def insert_score(goal1, goal2, score, recipient_id):
     SELECT :recipient_id, :goal1, :goal2, :score, :createdAt, :updatedAt
     WHERE NOT EXISTS (
       SELECT 1 FROM "SimScoreCaches"
-      WHERE recipient_id = :recipient_id AND goal1 = :goal1 AND goal2 = :goal2
+      WHERE recipient_id = :recipient_id
+        AND goal1 = :goal1
+        AND goal2 = :goal2
     );
     """,
     { 'recipient_id': recipient_id, 'goal1': goal1, 'goal2': goal2, 'score': score, 'createdAt': datetime.now().isoformat(), 'updatedAt': datetime.now().isoformat() }
@@ -139,9 +146,12 @@ def find_similar_goals(recipient_id, goal_name, alpha):
         """
         SELECT g."id", g."name"
         FROM "Goals" g
-        JOIN "Grants" gr ON g."grantId" = gr."id"
-        JOIN "Recipients" r ON gr."recipientId" = r."id"
-        WHERE r."id" = :recipient_id AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
+        JOIN "Grants" gr
+          ON g."grantId" = gr."id"
+        JOIN "Recipients" r
+          ON gr."recipientId" = r."id"
+        WHERE r."id" = :recipient_id
+          AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
         """,
         {'recipient_id': recipient_id}
     )
