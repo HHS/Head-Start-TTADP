@@ -1,13 +1,20 @@
 import logging
 from datetime import datetime
-from typing import Dict, List
+from typing import (
+    Dict,
+    List,
+)
 
 import numpy as np
 import spacy
-from db.db import query, query_many
 from flask import jsonify
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
+
+from db.db import (
+    query,
+    query_many,
+)
 
 nlp = spacy.load("en_core_web_sm")
 
