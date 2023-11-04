@@ -1,10 +1,11 @@
-import logging
 import atexit
+import logging
 
 from flask import Flask
+from flask_apscheduler import APScheduler
+
 from db.db import db
 from sim.compute import cache_scores as cache
-from flask_apscheduler import APScheduler
 
 scheduler = APScheduler()
 
