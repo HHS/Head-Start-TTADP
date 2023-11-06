@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       allowNull: false,
     },
-    eventId: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },

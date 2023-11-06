@@ -60,7 +60,7 @@ function defaultUser() {
   };
 }
 
-async function createUser(user) {
+export async function createUser(user) {
   return User.create({ ...defaultUser(), ...user });
 }
 
