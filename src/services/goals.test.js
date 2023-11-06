@@ -100,6 +100,7 @@ describe('Goals DB service', () => {
     let recipient;
     let grantOne;
     let grantTwo;
+    let grantThree;
     let report;
     let template;
     let topic;
@@ -129,6 +130,7 @@ describe('Goals DB service', () => {
         regionId: 1,
         startDate: new Date(),
         endDate: new Date(),
+        status: 'Active',
       });
 
       grantTwo = await Grant.create({
@@ -138,6 +140,18 @@ describe('Goals DB service', () => {
         regionId: 1,
         startDate: new Date(),
         endDate: new Date(),
+        status: 'Inactive',
+      });
+
+      grantThree = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+        oldGrantId: grantTwo.id,
       });
 
       template = await createGoalTemplate();
@@ -156,7 +170,7 @@ describe('Goals DB service', () => {
       });
 
       goalOne = await Goal.create({
-        name: `Selected goal ${faker.animal.dog()}`,
+        name: `Selected goal 1${faker.animal.dog()}`,
         status: GOAL_STATUS.IN_PROGRESS,
         endDate: null,
         isFromSmartsheetTtaPlan: false,
@@ -166,7 +180,7 @@ describe('Goals DB service', () => {
       });
 
       goalTwo = await Goal.create({
-        name: `Selected goal ${faker.animal.dog()}`,
+        name: `Selected goal 2${faker.animal.dog()}`,
         status: GOAL_STATUS.NOT_STARTED,
         endDate: null,
         isFromSmartsheetTtaPlan: false,
@@ -177,7 +191,7 @@ describe('Goals DB service', () => {
       });
 
       goalThree = await Goal.create({
-        name: `Selected goal ${faker.animal.dog()}`,
+        name: `Selected goal 3${faker.animal.dog()}`,
         status: GOAL_STATUS.SUSPENDED,
         endDate: null,
         isFromSmartsheetTtaPlan: false,
@@ -272,7 +286,7 @@ describe('Goals DB service', () => {
     afterEach(async () => {
       const allGoals = await Goal.unscoped().findAll({
         where: {
-          grantId: [grantOne.id, grantTwo.id],
+          grantId: [grantOne.id, grantTwo.id, grantThree.id],
         },
         include: {
           model: Objective,
@@ -374,7 +388,7 @@ describe('Goals DB service', () => {
 
       await Grant.destroy({
         where: {
-          id: [grantOne.id, grantTwo.id],
+          id: [grantOne.id, grantTwo.id, grantThree.id],
         },
         force: true,
       });
@@ -442,8 +456,9 @@ describe('Goals DB service', () => {
       });
 
       expect(goalsWithData.length).toBe(2);
-      expect(goalsWithData[0].grantId).toBe(grantOne.id);
-      expect(goalsWithData[1].grantId).toBe(grantTwo.id);
+      const grantIds = goalsWithData.map((goal) => goal.grantId);
+      expect(grantIds).toContain(grantOne.id);
+      expect(grantIds).toContain(grantThree.id);
 
       const goalForGrantOne = goalsWithData[0];
       expect(goalForGrantOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
