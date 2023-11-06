@@ -240,7 +240,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-2146-queue-rate-limiter"
+    default: "mb/TTAHUB-2147/ga-userdata"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "jp/similarity"
