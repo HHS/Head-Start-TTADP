@@ -2,7 +2,7 @@ import express from 'express';
 import {
   User, Permission, Role, UserRole, sequelize,
 } from '../../models';
-import { featureFlags } from '../../models/user';
+import { FEATURE_FLAGS } from '../../constants';
 import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
@@ -169,7 +169,7 @@ export async function deleteUser(req, res) {
 
 export async function getFeatures(req, res) {
   try {
-    res.json(featureFlags);
+    res.json(FEATURE_FLAGS);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
