@@ -34,6 +34,7 @@ applications:
       SMTP_IGNORE_TLS: ((SMTP_IGNORE_TLS))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
       NODE_MODULES_CACHE: false
+      SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))

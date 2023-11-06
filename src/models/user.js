@@ -9,6 +9,7 @@ const featureFlags = [
   'regional_goal_dashboard',
   'goal_source',
   'training_reports',
+  'merge_goals',
 ];
 
 export default (sequelize, DataTypes) => {
