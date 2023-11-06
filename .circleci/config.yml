@@ -170,6 +170,9 @@ commands:
       smtp_password:
         description: "SMTP password"
         type: env_var_name
+      suppress_error_logging:
+        description: "Stop logging of non-sequelize errors to the db"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -201,6 +204,7 @@ commands:
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -650,6 +654,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Migrate database
                 command: |
@@ -698,6 +703,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Migrate database
                 command: |
@@ -746,6 +752,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Run database migrations
                 command: |
@@ -792,6 +799,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Run database migrations
                 command: |
