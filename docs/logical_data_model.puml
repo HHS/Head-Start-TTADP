@@ -679,7 +679,7 @@ class SessionReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
 }
 
-class SimScoreCaches{
+class SimScoreGoalCaches{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * goal1 : integer
@@ -1527,7 +1527,7 @@ class ZALSessionReportPilots{
  session_sig : text
 }
 
-class ZALSimScoreCaches{
+class ZALSimScoreGoalCaches{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1747,8 +1747,8 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
-SimScoreCaches "1" --[#black,dashed,thickness=2]--{  "n" Goals : similarityScoreOne, similarityScoreTwo, goalOne, goalTwo
-SimScoreCaches "1" --[#black,dashed,thickness=2]--{  "n" Recipients : similarityRecipient, recipient
+SimScoreGoalCaches "1" --[#black,dashed,thickness=2]--{  "n" Goals : scoreOne, scoreTwo, goalOne, goalTwo
+SimScoreGoalCaches "1" --[#black,dashed,thickness=2]--{  "n" Recipients : recipient
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics

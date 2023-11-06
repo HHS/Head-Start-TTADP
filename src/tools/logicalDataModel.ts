@@ -300,6 +300,7 @@ function processAssociations(associations, tables, schemas) {
           const isDistinct = relationKey.split(',').filter((v) => (v === r)).length === 1;
           if (isCamel && isDistinct) return cleanR;
           if (isCamel && !isDistinct) {
+            console.log('relationKey', relationKey);
             issues.push(`!issue='associations need to be distinct'`); //eslint-disable-line
             return `<color:${colors.errorLighter}>${cleanR}</color>`;
           }

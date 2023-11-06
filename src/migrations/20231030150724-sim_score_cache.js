@@ -9,7 +9,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.createTable(
-        'SimScoreCaches',
+        'SimScoreGoalCaches',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -57,7 +57,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.dropTable('SimScoreCaches', { transaction });
+      await queryInterface.dropTable('SimScoreGoalCaches', { transaction });
     });
   },
 };
