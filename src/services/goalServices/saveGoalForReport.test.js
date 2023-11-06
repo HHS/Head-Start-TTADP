@@ -1347,7 +1347,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const defaultGoals = [
       {
-        name: '',
+        name: undefined,
         isActivelyBeingEditing: true,
         endDate: '',
         objectives: [],
@@ -1366,7 +1366,7 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     expect(afterReportGoals.length).toBe(1);
-    expect(afterReportGoals[0].name).toBe('');
+    expect(afterReportGoals[0].name).toBe(null);
 
     const afterGoals = await Goal.findAll({
       where: {
@@ -1375,6 +1375,6 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     expect(afterGoals.length).toBe(1);
-    expect(afterGoals[0].name).toBe('');
+    expect(afterGoals[0].name).toBe(null);
   });
 });
