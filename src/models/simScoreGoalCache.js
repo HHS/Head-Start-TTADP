@@ -9,13 +9,14 @@ const {
    * @param {*} DataTypes
    */
 export default (sequelize, DataTypes) => {
-  class SimScoreCache extends Model {
+  class SimScoreGoalCache extends Model {
     static associate(models) {
-      SimScoreCache.belongsTo(models.Goal, { foreignKey: 'id', as: 'goalOne' });
-      SimScoreCache.belongsTo(models.Goal, { foreignKey: 'id', as: 'goalTwo' });
+      SimScoreGoalCache.belongsTo(models.Goal, { foreignKey: 'goal1', as: 'goalOne' });
+      SimScoreGoalCache.belongsTo(models.Goal, { foreignKey: 'goal2', as: 'goalTwo' });
+      SimScoreGoalCache.belongsTo(models.Recipient, { foreignKey: 'recipient_id', as: 'recipient' });
     }
   }
-  SimScoreCache.init({
+  SimScoreGoalCache.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -25,14 +26,32 @@ export default (sequelize, DataTypes) => {
     recipient_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Recipients',
+          key: 'id',
+        },
+      },
     },
     goal1: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          key: 'id',
+          tableName: 'Goals',
+        },
+      },
     },
     goal2: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Goals',
+          key: 'id',
+        },
+      },
     },
     score: {
       type: DataTypes.DECIMAL(3, 1),
@@ -40,7 +59,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'SimScoreCache',
+    modelName: 'SimScoreGoalCache',
   });
-  return SimScoreCache;
+  return SimScoreGoalCache;
 };

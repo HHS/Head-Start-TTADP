@@ -1,10 +1,12 @@
-import logging
 import atexit
+import logging
+import os
 
 from flask import Flask
+from flask_apscheduler import APScheduler
+
 from db.db import db
 from sim.compute import cache_scores as cache
-from flask_apscheduler import APScheduler
 
 scheduler = APScheduler()
 
@@ -20,13 +22,13 @@ def create_app():
 
     scheduler.init_app(app)
     scheduler.start()
-    # scheduler.add_job(func=cache_scores, id='cache', trigger='interval', seconds=10, timezone='EST')
     scheduler.add_job(func=cache_scores, id='cache', trigger='cron', minute='0', hour='3', timezone='GMT', replace_existing=True, max_instances=1)
 
     atexit.register(lambda: scheduler.shutdown(wait=False))
 
     # By default, APScheduler logs are a bit noisy.
-    logging.getLogger("apscheduler.scheduler").setLevel(logging.DEBUG)
+    log_level = os.environ.get("SIMILARITY_SCHEDULER_LOG_LEVEL", "DEBUG")
+    logging.getLogger("apscheduler.scheduler").setLevel(logging.getLevelName(log_level))
     logging.getLogger('apscheduler.executors.default').propagate = False
 
     return app

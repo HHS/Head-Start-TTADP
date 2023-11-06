@@ -1,7 +1,16 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import (
+    Flask,
+    jsonify,
+    request,
+    send_from_directory,
+)
+
 from routes.middleware import api_key_header
-from sim.compute import (calculate_string_similarity,
-                         compute_goal_similarities, find_similar_goals)
+from sim.compute import (
+    calculate_string_similarity,
+    compute_goal_similarities,
+    find_similar_goals,
+)
 
 
 def create_routes(app: Flask):
