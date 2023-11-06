@@ -22,19 +22,19 @@ export default async function getSimilarGoalsForRecipient(recipient_id) {
    * result: [
    *  {
    *    goal1: {
-   *      id: 1, name: "Identify strategies",
+   *      id: 1, name: "Identify strategies", grantId: 1,
    *    },
    *    goal2: {
-   *      id: 2, name: "Identify strategies",
+   *      id: 2, name: "Identify strategies", grantId: 1,
    *    },
    *    similarity: 0.921823748234,
    *  },
    *  {
    *    goal1: {
-   *      id: 1, name: "Identify strategies",
+   *      id: 1, name: "Identify strategies", grantId: 2,
    *    },
    *    goal2: {
-   *      id: 2, name: "Identify strategies",
+   *      id: 2, name: "Identify strategies", grantId: 2,
    *    },
    *    similarity: 0.921823748234,
    *  },
