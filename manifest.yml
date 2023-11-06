@@ -64,6 +64,6 @@ applications:
     processes:
       - type: web
         instances: ((similarity_api_instances))
-        command: gunicorn -w 4 -b 0.0.0.0:8080 app:app
+        command: gunicorn -w 4 -b 0.0.0.0:8080 app:app --preload
         memory: ((similarity_api_memory))
         disk_quota: ((similarity_api_disk_quota))

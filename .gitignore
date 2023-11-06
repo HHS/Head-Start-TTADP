@@ -40,5 +40,8 @@ newrelic_agent.log
 # DB files
 .vscode/settings.json
 
+# Similarity job scheduler DB
+*.sqlite
+
 # Python cache
 __pycache__/
