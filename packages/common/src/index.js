@@ -144,6 +144,7 @@ const TARGET_POPULATIONS = [
   'Affected by Disaster',
   'Affected by Substance Use',
   'Children Experiencing Homelessness',
+  'Children in Migrant and Seasonal Families',
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
@@ -152,7 +153,6 @@ const TARGET_POPULATIONS = [
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
 const EVENT_TARGET_POPULATIONS = [
-  'Children in Migrant and Seasonal Families',
   'Children/Families affected by systemic discrimination/bias/exclusion',
   'Children/Families affected by traumatic events',
   'Parents/Families impacted by health disparities',
