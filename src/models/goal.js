@@ -51,8 +51,8 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
       });
-      Goal.belongsTo(models.SimScoreCache, { foreignKey: 'id', as: 'similarityScoreOne' });
-      Goal.belongsTo(models.SimScoreCache, { foreignKey: 'id', as: 'similarityScoreTwo' });
+      Goal.belongsTo(models.SimScoreGoalCache, { foreignKey: 'goal1', as: 'scoreOne' });
+      Goal.belongsTo(models.SimScoreGoalCache, { foreignKey: 'goal2', as: 'scoreTwo' });
     }
   }
   Goal.init({

@@ -9,14 +9,14 @@ const {
    * @param {*} DataTypes
    */
 export default (sequelize, DataTypes) => {
-  class SimScoreCache extends Model {
+  class SimScoreGoalCache extends Model {
     static associate(models) {
-      SimScoreCache.hasMany(models.Goal, { foreignKey: 'goal1', as: 'goalOne' });
-      SimScoreCache.hasMany(models.Goal, { foreignKey: 'goal2', as: 'goalTwo' });
-      SimScoreCache.hasMany(models.Recipient, { foreignKey: 'recipient_id', as: 'recipient' });
+      SimScoreGoalCache.hasMany(models.Goal, { foreignKey: 'goal1', as: 'goalOne' });
+      SimScoreGoalCache.hasMany(models.Goal, { foreignKey: 'goal2', as: 'goalTwo' });
+      SimScoreGoalCache.hasMany(models.Recipient, { foreignKey: 'recipient_id', as: 'recipient' });
     }
   }
-  SimScoreCache.init({
+  SimScoreGoalCache.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -59,7 +59,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'SimScoreCache',
+    modelName: 'SimScoreGoalCache',
   });
-  return SimScoreCache;
+  return SimScoreGoalCache;
 };
