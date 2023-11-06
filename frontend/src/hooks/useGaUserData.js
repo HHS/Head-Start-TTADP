@@ -10,12 +10,14 @@ export default function useGaUserData(user) {
         return;
       }
 
+      const roles = user.roles.map((role) => role.fullName);
+
       // check to see if we have dataLayer on the window object
       if (window.dataLayer && Array.isArray(window.dataLayer)) {
         const event = {
           event: USER_DATA_EVENT,
           region_id: user.homeRegionId,
-          user_roles: user.roles,
+          user_roles: roles,
         };
 
         window.dataLayer.push(event);
