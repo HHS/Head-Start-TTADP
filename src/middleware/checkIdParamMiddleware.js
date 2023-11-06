@@ -172,3 +172,16 @@ export function checkIdParam(req, res, next, paramName) {
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
+
+export function checkIdArrayParam(req, res, next, paramName) {
+  if (req.params
+    && req.params[paramName]
+    && Array.isArray(req.params[paramName])
+    && req.params[paramName].every(canBeInt)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: ${paramName} ${req.params ? (req.params[paramName] || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
