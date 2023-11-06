@@ -1,6 +1,11 @@
 import os
 from functools import wraps
-from flask import request, jsonify
+
+from flask import (
+    jsonify,
+    request,
+)
+
 
 # Decorator function to validate API key in request headers
 def api_key_header(f):
