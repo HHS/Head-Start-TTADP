@@ -1995,8 +1995,8 @@ export async function saveGoalsForReport(goals, report) {
           newOrUpdatedGoal.set({ source });
         }
 
-        if (fields.name !== newOrUpdatedGoal.name) {
-          newOrUpdatedGoal.set({ name: fields.name ? fields.name.trim() : '' });
+        if (fields.name !== newOrUpdatedGoal.name && fields.name) {
+          newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
 
         if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {

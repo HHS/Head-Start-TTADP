@@ -172,9 +172,9 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
     // create the first goal
-    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
-      .click();
-    await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
+
+    await page.getByLabel(/Select recipient's goal/i).click();
+    await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -721,9 +721,8 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
     // create the goal
-    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
-      .click();
-    await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
+    await page.getByLabel(/Select recipient's goal/i).click();
+    await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByRole('button', { name: 'Save goal' }).click();
