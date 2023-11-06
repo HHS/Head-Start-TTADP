@@ -11,9 +11,9 @@ const {
 export default (sequelize, DataTypes) => {
   class SimScoreCache extends Model {
     static associate(models) {
-      SimScoreCache.hasMany(models.Goal, { foreignKey: 'id', as: 'goalOne' });
-      SimScoreCache.hasMany(models.Goal, { foreignKey: 'id', as: 'goalTwo' });
-      SimScoreCache.hasMany(models.Recipient, { foreignKey: 'id', as: 'recipient' });
+      SimScoreCache.hasMany(models.Goal, { foreignKey: 'goal1', as: 'goalOne' });
+      SimScoreCache.hasMany(models.Goal, { foreignKey: 'goal2', as: 'goalTwo' });
+      SimScoreCache.hasMany(models.Recipient, { foreignKey: 'recipient_id', as: 'recipient' });
     }
   }
   SimScoreCache.init({

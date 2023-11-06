@@ -13,7 +13,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
       Recipient.hasMany(models.RttapaPilot, { as: 'rttapaPilots', foreignKey: 'recipientId' });
-      Recipient.belongsTo(models.SimScoreCache, { foreignKey: 'recipient_id', as: 'similarityRecipient' });
+      Recipient.belongsTo(models.SimScoreCache, { foreignKey: 'id', as: 'similarityRecipient' });
     }
   }
   Recipient.init({
