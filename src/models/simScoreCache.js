@@ -26,14 +26,32 @@ export default (sequelize, DataTypes) => {
     recipient_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Recipients',
+          key: 'id',
+        },
+      },
     },
     goal1: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          key: 'id',
+          tableName: 'Goals',
+        },
+      },
     },
     goal2: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'Goals',
+          key: 'id',
+        },
+      },
     },
     score: {
       type: DataTypes.DECIMAL(3, 1),
