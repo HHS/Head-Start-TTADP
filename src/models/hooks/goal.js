@@ -62,7 +62,7 @@ const invalidateSimilarityScores = async (sequelize, instance, options) => {
   const changed = Array.from(instance.changed());
 
   if (changed.includes('name')) {
-    await sequelize.models.SimScoreCache.destroy({
+    await sequelize.models.SimScoreGoalCache.destroy({
       where: {
         [Op.or]: [
           { goal1: instance.id },
