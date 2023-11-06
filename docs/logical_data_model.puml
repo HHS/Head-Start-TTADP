@@ -198,7 +198,7 @@ class CollaboratorRoles{
 class CommunicationLogs{
  * id : integer : <generated>
  * recipientId : integer : REFERENCES "Recipients".id
-!issue='column should not allow null' * userId : integer : REFERENCES "Users".id
+ * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * data : jsonb
  * updatedAt : timestamp with time zone
