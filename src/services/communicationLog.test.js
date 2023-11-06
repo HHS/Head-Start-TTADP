@@ -1,7 +1,7 @@
 import db, { User, Recipient, CommunicationLog } from '../models';
 import {
   logById,
-  logsByRecipientId,
+  logsByRecipientAndScopes,
   deleteLog,
   updateLog,
   createLog,
@@ -35,7 +35,7 @@ describe('communicationLog services', () => {
   });
 
   it('gets logs by recipient Id', async () => {
-    const result = await logsByRecipientId(recipient.id);
+    const result = await logsByRecipientAndScopes(recipient.id);
     expect(result.length).toEqual(1);
     expect(result[0].id).toEqual(log.id);
   });
