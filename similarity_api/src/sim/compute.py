@@ -1,24 +1,34 @@
 import logging
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import (
+    Dict,
+    List,
+)
 
 import numpy as np
 import spacy
-from db.db import query, query_many
 from flask import jsonify
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
+
+from db.db import (
+    query,
+    query_many,
+)
 
 nlp = spacy.load("en_core_web_sm")
 
 def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
   recipients = query_many(
     """
-    SELECT g."id", g."name"
+    SELECT g."id", g."name", gr."id" AS "grantId"
     FROM "Goals" g
-    JOIN "Grants" gr ON g."grantId" = gr."id"
-    JOIN "Recipients" r ON gr."recipientId" = r."id"
-    WHERE r."id" = :recipient_id AND g."name" IS NOT NULL;
+    JOIN "Grants" gr
+      ON g."grantId" = gr."id"
+    JOIN "Recipients" r
+      ON gr."recipientId" = r."id"
+    WHERE r."id" = :recipient_id
+      AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
     """,
     { 'recipient_id': recipient_id }
   )
@@ -28,7 +38,8 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
 
   names = [r['name'] for r in recipients]
   ids = [r['id'] for r in recipients]
-  matched = calculate_goal_similarity(names, ids, alpha, cluster)
+  grants = [r['grantId'] for r in recipients]
+  matched = calculate_goal_similarity(names, ids, grants, alpha, cluster)
   return jsonify({"result": matched})
 
 def cache_scores():
@@ -36,9 +47,11 @@ def cache_scores():
     """
     SELECT g."id", g."name"
     FROM "Goals" g
-    JOIN "Grants" gr ON g."grantId" = gr."id"
-    JOIN "Recipients" r ON gr."recipientId" = r."id"
-    WHERE g."name" IS NOT NULL;
+    JOIN "Grants" gr
+      ON g."grantId" = gr."id"
+    JOIN "Recipients" r
+      ON gr."recipientId" = r."id"
+    WHERE NULLIF(TRIM(g."name"), '') IS NOT NULL;
     """,
     {}
   )
@@ -62,15 +75,17 @@ def cache_scores():
 
 def insert_score(goal1, goal2, score, recipient_id):
   """
-  Inserts the similarity score into the SimScoreCaches table.
+  Inserts the similarity score into the SimScoreGoalCaches table.
   """
   query(
     """
-    INSERT INTO "SimScoreCaches" (recipient_id, goal1, goal2, score, "createdAt", "updatedAt")
+    INSERT INTO "SimScoreGoalCaches" (recipient_id, goal1, goal2, score, "createdAt", "updatedAt")
     SELECT :recipient_id, :goal1, :goal2, :score, :createdAt, :updatedAt
     WHERE NOT EXISTS (
-      SELECT 1 FROM "SimScoreCaches"
-      WHERE recipient_id = :recipient_id AND goal1 = :goal1 AND goal2 = :goal2
+      SELECT 1 FROM "SimScoreGoalCaches"
+      WHERE recipient_id = :recipient_id
+        AND goal1 = :goal1
+        AND goal2 = :goal2
     );
     """,
     { 'recipient_id': recipient_id, 'goal1': goal1, 'goal2': goal2, 'score': score, 'createdAt': datetime.now().isoformat(), 'updatedAt': datetime.now().isoformat() }
@@ -93,7 +108,7 @@ def calculate_batch_similarity(batch, nlp):
     return sim_scores
 
 
-def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], alpha: float, cluster: bool = False, batch_size: int = 500) -> List[Dict[str, Union[int, List[Dict[str, Union[int, str]]]]]]:
+def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], grants_list: List[int], alpha: float, cluster: bool = False, batch_size: int = 500) -> List[Dict[str, str]]:
     num_goals = len(goals_list)
     matched_goals = []
     matched_ids = []
@@ -102,10 +117,11 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], a
         end = min(i + batch_size, num_goals)
         current_batch = goals_list[i:end]
         current_ids = goal_ids_list[i:end]
+        current_grants = grants_list[i:end]
 
         batch_sim_scores = calculate_batch_similarity(current_batch, nlp)
 
-        for j, (goal, goal_id) in enumerate(zip(current_batch, current_ids)):
+        for j, (goal, goal_id, grant_id) in enumerate(zip(current_batch, current_ids, current_grants)):
             cur_sim_scores = batch_sim_scores[j]
             cur_sim_scores[j] = 0
             cur_potential_idx = [k for k, v in enumerate(cur_sim_scores) if v > alpha]
@@ -118,6 +134,7 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], a
                     matches.append({
                         "id": current_ids[k],
                         "name": current_batch[k],
+                        "grantId": current_grants[k],
                         "similarity": float(cur_sim_scores[k]),
                     })
                     matched_ids.append(current_ids[k])
@@ -135,10 +152,12 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], a
                         "goal1": {
                             "id": goal_id,
                             "name": goal,
+                            "grantId": grant_id,
                         },
                         "goal2": {
                             "id": current_ids[k],
                             "name": current_batch[k],
+                            "grantId": grant_id,
                         },
                         "similarity": float(cur_sim_scores[k]),
                     })
@@ -150,11 +169,14 @@ def find_similar_goals(recipient_id, goal_name, alpha):
     # Fetch goals for the given recipient_id
     recipients = query_many(
         """
-        SELECT g."id", g."name"
+        SELECT g."id", g."name", gr."id" AS "grantId"
         FROM "Goals" g
-        JOIN "Grants" gr ON g."grantId" = gr."id"
-        JOIN "Recipients" r ON gr."recipientId" = r."id"
-        WHERE r."id" = :recipient_id AND g."name" IS NOT NULL;
+        JOIN "Grants" gr
+          ON g."grantId" = gr."id"
+        JOIN "Recipients" r
+          ON gr."recipientId" = r."id"
+        WHERE r."id" = :recipient_id
+          AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
         """,
         {'recipient_id': recipient_id}
     )
@@ -177,6 +199,7 @@ def find_similar_goals(recipient_id, goal_name, alpha):
             "goal": {
                 "id": recipients[i]['id'],
                 "name": recipients[i]['name'],
+                "grantId": recipients[i]['grantId'],
             },
             "similarity": sim_scores[i]
         }
