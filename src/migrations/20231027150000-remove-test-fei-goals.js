@@ -45,7 +45,7 @@ module.exports = {
     });
   },
 
-  down: async (queryInterface) => {
+  async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
