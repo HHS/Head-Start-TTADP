@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { afterUpdate } = require('./hooks/eventReportPilot');
 
 export default (sequelize, DataTypes) => {
   class EventReportPilot extends Model {
@@ -41,6 +42,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'EventReportPilot',
+    hooks: {
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
   });
 
   return EventReportPilot;

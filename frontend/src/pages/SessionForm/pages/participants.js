@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useContext,
 } from 'react';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
@@ -9,6 +10,7 @@ import {
   Radio,
   TextInput,
 } from '@trussworks/react-uswds';
+import { capitalize } from 'lodash';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -18,15 +20,24 @@ import {
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import FormItem from '../../../components/FormItem';
 import { getPossibleSessionParticipants } from '../../../fetchers/session';
+import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
+import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
+import UserContext from '../../../UserContext';
+import PocCompleteView from '../../../components/PocCompleteView';
+import ReadOnlyField from '../../../components/ReadOnlyField';
 
 const placeholderText = '- Select -';
 
-const Participants = () => {
+const Participants = ({ formData }) => {
   const {
     control,
     register,
     watch,
   } = useFormContext();
+
+  const { user } = useContext(UserContext);
+  const { isPoc } = useTrainingReportRole(formData.event, user.id);
+  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
 
   const regionId = watch('regionId');
 
@@ -51,6 +62,39 @@ const Participants = () => {
   }));
 
   const isHybrid = watch('deliveryMethod') === 'hybrid';
+
+  if (showReadOnlyView) {
+    return (
+      <PocCompleteView formData={formData} userId={user.id}>
+        <Helmet>
+          <title>Session participants</title>
+        </Helmet>
+        <ReadOnlyField label="Recipients">
+          {formData.recipients.map((r) => r.label).join('\n')}
+        </ReadOnlyField>
+        <ReadOnlyField label="Recipient participants">
+          {formData.participants.join('\n')}
+        </ReadOnlyField>
+        <ReadOnlyField label="Delivery method">
+          {capitalize(formData.deliveryMethod)}
+        </ReadOnlyField>
+        {isHybrid ? (
+          <>
+            <ReadOnlyField label="Number of participants attending in person">
+              {formData.numberOfParticipantsInPerson}
+            </ReadOnlyField>
+            <ReadOnlyField label="Number of participants attending virtually">
+              {formData.numberOfParticipantsVirtually}
+            </ReadOnlyField>
+          </>
+        ) : (
+          <ReadOnlyField label="Number of participants">
+            {formData.numberOfParticipants}
+          </ReadOnlyField>
+        )}
+      </PocCompleteView>
+    );
+  }
 
   return (
     <>
@@ -217,6 +261,10 @@ const Participants = () => {
   );
 };
 
+Participants.propTypes = {
+  formData: participantsFields.isRequired,
+};
+
 const fields = Object.keys(participantsFields);
 const path = 'participants';
 const position = 2;
@@ -240,7 +288,7 @@ export default {
   fields,
   render: (
     _additionalData,
-    _formData,
+    formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -252,7 +300,7 @@ export default {
     Alert,
   ) => (
     <div className="padding-x-1">
-      <Participants />
+      <Participants formData={formData} />
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>

@@ -456,7 +456,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
     }
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 };
 
@@ -493,7 +493,7 @@ async function deleteActivityReportObjectiveFile(req, res) {
 
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 
