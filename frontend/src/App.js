@@ -55,6 +55,7 @@ import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import useGaUserData from './hooks/useGaUserData';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -73,6 +74,8 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useGaUserData(user);
 
   useEffect(() => {
     try {

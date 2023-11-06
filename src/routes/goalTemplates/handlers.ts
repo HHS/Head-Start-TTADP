@@ -5,6 +5,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
   getFieldPromptsForCuratedTemplate,
+  getOptionsByGoalTemplateFieldPromptName,
 } from '../../services/goalTemplates';
 
 export async function getGoalTemplates(req: Request, res: Response) {
@@ -43,5 +44,15 @@ export async function getPrompts(req: Request, res: Response) {
     res.json(prompts);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getPrompts');
+  }
+}
+
+export async function getOptionsByPromptName(req: Request, res: Response) {
+  try {
+    const { name } = req.query;
+    const prompts = await getOptionsByGoalTemplateFieldPromptName((name.toString()));
+    res.json(prompts);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.getOptionsByPromptName');
   }
 }

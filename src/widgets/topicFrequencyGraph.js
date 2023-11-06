@@ -209,8 +209,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
 
   topicsAndParticipants.forEach((goalData) => {
     goalData
-      .get('topics')
-      .forEach(({ topic, reportIds }) => {
+      .get('topics')?.forEach(({ topic, reportIds }) => {
         const topicResponce = topicsResponse
           .find((t) => t.topic === lookUpTopic.get(topic));
 
