@@ -133,6 +133,49 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('findEventHelper session sort order', async () => {
+      const created = await createAnEvent(98_989);
+      const sessionReport1 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          sessionName: 'Session Name 2',
+        },
+      });
+
+      const sessionReport2 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+        },
+      });
+
+      const sessionReport3 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          startDate: '01/01/2023',
+          sessionName: 'Session Name 1',
+        },
+      });
+
+      const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
+
+      const found = await findEventByDbId(created.id);
+      expect(found).toHaveProperty('id');
+      expect(found).toHaveProperty('ownerId', 98_989);
+
+      expect(found.sessionReports.length).toBe(3);
+      expect(found.sessionReports[0].id).toBe(sessionReport3.id);
+      expect(found.sessionReports[1].id).toBe(sessionReport1.id);
+      expect(found.sessionReports[2].id).toBe(sessionReport2.id);
+
+      await db.SessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+
+      await destroyEvent(created.id);
+    });
+
     it('findEventsByOwnerId', async () => {
       const created = await createAnEvent(98_989);
       const found = await findEventsByOwnerId(created.ownerId);
@@ -227,6 +270,58 @@ describe('event service', () => {
 
       // await destroyEvent(created3.id);
       await destroyEvent(created4.id);
+    });
+
+    it('findEventHelperBlob session sort order', async () => {
+      const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
+
+      const sessionReport1 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          sessionName: 'Session Name 2',
+        },
+      });
+
+      const sessionReport2 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+        },
+      });
+
+      const sessionReport3 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          startDate: '01/01/2023',
+          sessionName: 'Session Name 1',
+        },
+      });
+
+      const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
+
+      const found = await findEventsByStatus(
+        TRS.IN_PROGRESS,
+        [],
+        98_989,
+        null,
+        false,
+        { ownerId: 98_989 },
+      );
+
+      expect(found.length).toBe(1);
+      expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
+
+      expect(found[0].sessionReports.length).toBe(3);
+      expect(found[0].sessionReports[0].id).toBe(sessionReport3.id);
+      expect(found[0].sessionReports[1].id).toBe(sessionReport1.id);
+      expect(found[0].sessionReports[2].id).toBe(sessionReport2.id);
+
+      await db.SessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+
+      await destroyEvent(created.id);
     });
 
     it('shows all if user is admin', async () => {
