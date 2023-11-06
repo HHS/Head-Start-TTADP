@@ -519,7 +519,16 @@ export async function getGoalsByActivityRecipient(
       'isRttapa',
       'source',
       'goalTemplateId',
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
+      [sequelize.literal(`
+        CASE 
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1 
+          WHEN "Goal"."status" = 'Draft' THEN 2 
+          WHEN "Goal"."status" = 'Not Started' THEN 3 
+          WHEN "Goal"."status" = 'In Progress' THEN 4 
+          WHEN "Goal"."status" = 'Closed' THEN 5 
+          WHEN "Goal"."status" = 'Suspended' THEN 6 
+          ELSE 7 END`),
+      'status_sort'],
       [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
     ],
     where: goalWhere,
