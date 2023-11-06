@@ -679,7 +679,7 @@ class SessionReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
 }
 
-class SimScoreCaches{
+class SimScoreGoalCaches{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * goal1 : integer
@@ -1527,7 +1527,7 @@ class ZALSessionReportPilots{
  session_sig : text
 }
 
-class ZALSimScoreCaches{
+class ZALSimScoreGoalCaches{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1671,8 +1671,6 @@ class ZALZAFilter{
 ' Associations
 
 
-Goals "1" --[#black,plain,thickness=2]-- "1" SimScoreCaches : goalOne, goalTwo
-
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -1704,6 +1702,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, respo
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
+Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
@@ -1729,6 +1728,7 @@ ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : ma
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
