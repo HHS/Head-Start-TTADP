@@ -51,8 +51,8 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
       });
-      Goal.hasMany(models.SimScoreCache, { foreignKey: 'goal1', as: 'similarityScoreOne' });
-      Goal.hasMany(models.SimScoreCache, { foreignKey: 'goal2', as: 'similarityScoreTwo' });
+      Goal.hasMany(models.SimScoreCache, { foreignKey: 'id', as: 'similarityScoreOne' });
+      Goal.hasMany(models.SimScoreCache, { foreignKey: 'id', as: 'similarityScoreTwo' });
     }
   }
   Goal.init({
