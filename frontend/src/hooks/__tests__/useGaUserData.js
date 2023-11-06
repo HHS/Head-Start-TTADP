@@ -19,7 +19,7 @@ describe('useGaUserData', () => {
   });
 
   test('should not push event to dataLayer if userData event already exists', () => {
-    const user = { id: '123', roles: ['admin'] };
+    const user = { id: '123', roles: [{ fullName: 'admin' }] };
     window.dataLayer.push({ event: 'userData' });
 
     renderHook(() => useGaUserData(user));
@@ -37,7 +37,7 @@ describe('useGaUserData', () => {
   });
 
   test('should push event to dataLayer with correct user data', () => {
-    const user = { homeRegionId: '123', roles: ['admin'] };
+    const user = { homeRegionId: '123', roles: [{ fullName: 'admin' }] };
 
     renderHook(() => useGaUserData(user));
     expect(window.dataLayer).toHaveLength(1);
@@ -47,7 +47,7 @@ describe('useGaUserData', () => {
   });
 
   test('handles an error in the pushing', () => {
-    const user = { homeRegionId: '123', roles: ['admin'] };
+    const user = { homeRegionId: '123', roles: [{ fullName: 'admin' }] };
     window.dataLayer.push = jest.fn(() => {
       throw new Error('error');
     });
