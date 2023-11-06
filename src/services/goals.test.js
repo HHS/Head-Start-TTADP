@@ -79,12 +79,20 @@ describe('Goals DB service', () => {
       expect(status).toBe(GOAL_STATUS.SUSPENDED);
     });
 
-    it('otherwise, not started', async () => {
+    it('not started', async () => {
       const status = determineMergeGoalStatus([
         GOAL_STATUS.NOT_STARTED,
-        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.DRAFT,
       ]);
       expect(status).toBe(GOAL_STATUS.NOT_STARTED);
+    });
+
+    it('DRAFT', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.DRAFT,
+        GOAL_STATUS.DRAFT,
+      ]);
+      expect(status).toBe(GOAL_STATUS.DRAFT);
     });
   });
 
