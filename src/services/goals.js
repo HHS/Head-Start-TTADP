@@ -2415,7 +2415,10 @@ export function determineMergeGoalStatus(statuses) {
     return GOAL_STATUS.SUSPENDED;
   }
 
-  return GOAL_STATUS.NOT_STARTED;
+  if (statuses.includes(GOAL_STATUS.NOT_STARTED)) {
+    return GOAL_STATUS.NOT_STARTED;
+  }
+  return GOAL_STATUS.DRAFT;
 }
 
 /**
