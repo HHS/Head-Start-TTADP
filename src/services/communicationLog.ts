@@ -1,3 +1,4 @@
+import { WhereOptions, Op } from 'sequelize';
 import db from '../models';
 
 const { CommunicationLog } = db;
@@ -16,10 +17,13 @@ const logById = async (id: number) => {
   return log;
 };
 
-const logsByRecipientId = async (recipientId: number) => {
+const logsByRecipientAndScopes = async (recipientId: number, scopes: WhereOptions[] = []) => {
   const logs = await CommunicationLog.findAll({
     where: {
       recipientId,
+      [Op.and]: [
+        ...scopes,
+      ],
     },
   });
   return logs;
@@ -38,7 +42,7 @@ const updateLog = async (id: number, data: unknown) => {
 
 export {
   logById,
-  logsByRecipientId,
+  logsByRecipientAndScopes,
   deleteLog,
   updateLog,
   createLog,
