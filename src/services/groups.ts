@@ -5,6 +5,7 @@ const {
   Group,
   Grant,
   GroupGrant,
+  Recipient,
   User,
 } = db;
 
@@ -35,6 +36,43 @@ interface GroupResponse {
   grants: GrantsResponse[];
   userId: number;
   isPublic: boolean;
+}
+
+export async function groupsByRegion(region: number): Promise<GroupResponse[]> {
+  return Group.findAll({
+    attributes: [
+      'id',
+      'name',
+      'userId',
+    ],
+    where: {
+      '$grants.regionId$': { [Op.eq]: region },
+    },
+    include: [
+      {
+        attributes: [
+          'regionId',
+          'recipientId',
+          'number',
+          'id',
+          'granteeName',
+          'recipientInfo',
+        ],
+        model: Grant,
+        as: 'grants',
+        include: [
+          {
+            attributes: [
+              'name',
+              'id',
+            ],
+            model: Recipient,
+            as: 'recipient',
+          },
+        ],
+      },
+    ],
+  });
 }
 
 export async function groups(userId: number, regions: number[] = []): Promise<GroupResponse[]> {

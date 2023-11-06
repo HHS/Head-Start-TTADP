@@ -246,7 +246,7 @@ export async function updateLegacyFields(req, res) {
     const savedReport = await createOrUpdate({ imported }, report);
     res.json(savedReport);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 
@@ -268,7 +268,7 @@ export async function getLegacyReport(req, res) {
     }
     res.json(report);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 
