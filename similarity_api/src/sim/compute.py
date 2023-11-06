@@ -21,7 +21,7 @@ nlp = spacy.load("en_core_web_sm")
 def compute_goal_similarities(recipient_id, alpha):
   recipients = query_many(
     """
-    SELECT g."id", g."name"
+    SELECT g."id", g."name", gr."id" AS "grantId"
     FROM "Goals" g
     JOIN "Grants" gr
       ON g."grantId" = gr."id"
@@ -38,7 +38,8 @@ def compute_goal_similarities(recipient_id, alpha):
 
   names = [r['name'] for r in recipients]
   ids = [r['id'] for r in recipients]
-  matched = calculate_goal_similarity(names, ids, alpha)
+  grants = [r['grantId'] for r in recipients]
+  matched = calculate_goal_similarity(names, ids, grants, alpha)
   return jsonify({"result": matched})
 
 def cache_scores():
@@ -107,7 +108,7 @@ def calculate_batch_similarity(batch, nlp):
     return sim_scores
 
 
-def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], alpha: float, batch_size: int = 500) -> List[Dict[str, str]]:
+def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], grants_list: List[int], alpha: float, batch_size: int = 500) -> List[Dict[str, str]]:
     num_goals = len(goals_list)
     matched_goals = []
 
@@ -115,10 +116,11 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], a
         end = min(i + batch_size, num_goals)
         current_batch = goals_list[i:end]
         current_ids = goal_ids_list[i:end]
+        current_recipients = grants_list[i:end]
 
         batch_sim_scores = calculate_batch_similarity(current_batch, nlp)
 
-        for j, (goal, goal_id) in enumerate(zip(current_batch, current_ids)):
+        for j, (goal, goal_id, recipient_id) in enumerate(zip(current_batch, current_ids, current_recipients)):
             cur_sim_scores = batch_sim_scores[j]
             cur_sim_scores[j] = 0
             cur_potential_idx = [k for k, v in enumerate(cur_sim_scores) if v > alpha]
@@ -130,10 +132,12 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], a
                     "goal1": {
                         "id": goal_id,
                         "name": goal,
+                        "grantId": recipient_id,
                     },
                     "goal2": {
                         "id": current_ids[k],
                         "name": current_batch[k],
+                        "grantId": recipient_id,
                     },
                     "similarity": float(cur_sim_scores[k]),
                 })
@@ -144,7 +148,7 @@ def find_similar_goals(recipient_id, goal_name, alpha):
     # Fetch goals for the given recipient_id
     recipients = query_many(
         """
-        SELECT g."id", g."name"
+        SELECT g."id", g."name", gr."id" AS "grantId"
         FROM "Goals" g
         JOIN "Grants" gr
           ON g."grantId" = gr."id"
@@ -174,6 +178,7 @@ def find_similar_goals(recipient_id, goal_name, alpha):
             "goal": {
                 "id": recipients[i]['id'],
                 "name": recipients[i]['name'],
+                "grantId": recipients[i]['grantId'],
             },
             "similarity": sim_scores[i]
         }
