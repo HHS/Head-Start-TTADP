@@ -41,7 +41,7 @@ const setValidValueOrThrowError = (instance, enumColumns) => (change) => {
 const validateChangedOrSetEnums = (sequelize, instance) => {
   const model = instance.constructor;
   const enumColumns = getEnumColumnDefinitions(sequelize, model);
-  const changed = instance.changed();
+  const changed = instance?.changed() || [];
 
   // Filter the changed columns to only include enum columns and perform validation or
   // setting of valid values
