@@ -2532,14 +2532,20 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
+        attributes: [
+          'id',
+          'goalId',
+        ],
       },
       {
         model: GoalFieldResponse,
         as: 'responses',
+        attributes: ['id', 'goalTemplateFieldPromptId', 'response'],
       },
       {
         model: GoalResource,
         as: 'goalResources',
+        attributes: ['id', 'resourceId'],
       },
       {
         model: Objective,
@@ -2548,18 +2554,22 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
           {
             model: ObjectiveFile,
             as: 'objectiveFiles',
+            attributes: ['id', 'fileId', 'objectiveId'],
           },
           {
             model: ObjectiveResource,
             as: 'objectiveResources',
+            attributes: ['id', 'resourceId', 'objectiveId'],
           },
           {
             model: ObjectiveTopic,
             as: 'objectiveTopics',
+            attributes: ['id', 'topicId', 'objectiveId'],
           },
           {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
+            attributes: ['id', 'objectiveId'],
           },
         ],
       },
@@ -2579,8 +2589,25 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
    * in this sordid business
    */
 
+  const grantsWithReplacements = await Grant.findAll({
+    attributes: ['id', 'status', 'oldGrantId'],
+    where: {
+      [Op.or]: [
+        { id: uniq(selectedGoals.map((goal) => goal.grantId)) },
+        { oldGrantId: uniq(selectedGoals.map((goal) => goal.grantId)) },
+      ],
+      status: 'Active',
+    },
+  });
+
+  const grantsWithReplacementsDictionary = {};
+
+  grantsWithReplacements.forEach((grant) => {
+    grantsWithReplacementsDictionary[grant.oldGrantId || grant.id] = grant.id;
+  });
+
   // unique list of grant IDs
-  const grantIds = uniq(selectedGoals.map((goal) => goal.grantId));
+  const grantIds = uniq(grantsWithReplacements.map((grant) => grant.id));
 
   const goalsToBulkCreate = grantIds.map((grantId) => ({
     ...finalGoalValues,
@@ -2605,7 +2632,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   // - objective files, ETC
 
   await Promise.all(selectedGoals.map((g) => (
-    mergeObjectivesFromGoal(g, grantToGoalDictionary[g.grantId]))));
+    mergeObjectivesFromGoal(g, grantToGoalDictionary[
+      grantsWithReplacementsDictionary[g.grantId]
+    ]))));
 
   const updatesToRelatedModels = [];
   selectedGoals.forEach((g) => {
@@ -2614,7 +2643,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
           originalGoalId: g.id,
-          goalId: grantToGoalDictionary[g.grantId],
+          goalId: grantToGoalDictionary[
+            grantsWithReplacementsDictionary[g.grantId]
+          ],
         },
         { where: { id: g.activityReportGoals.map((arg) => arg.id) } },
       ));
@@ -2623,7 +2654,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     // copy the goal resources
     g.goalResources.forEach((gr) => {
       updatesToRelatedModels.push(GoalResource.create({
-        goalId: grantToGoalDictionary[g.grantId],
+        goalId: grantToGoalDictionary[
+          grantsWithReplacementsDictionary[g.grantId]
+        ],
         resourceId: gr.resourceId,
       }, { individualHooks: true }));
     });
@@ -2631,7 +2664,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     // copy the goal field responses
     g.responses.forEach((gfr) => {
       updatesToRelatedModels.push(GoalFieldResponse.create({
-        goalId: grantToGoalDictionary[g.grantId],
+        goalId: grantToGoalDictionary[
+          grantsWithReplacementsDictionary[g.grantId]
+        ],
         goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
         response: gfr.response,
       }, { individualHooks: true }));
@@ -2642,13 +2677,12 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
 
   // update old goals
   await Promise.all(selectedGoals.map((g) => g.update({
-    mapsToParentGoalId: grantToGoalDictionary[g.grantId],
+    mapsToParentGoalId: grantToGoalDictionary[
+      grantsWithReplacementsDictionary[g.grantId]
+    ],
   }, { individualHooks: true })));
 
   return newGoals;
-  // TODO:
-  // - display original goal id where exists on approved AR
-  // - test everywhere that might need to be tested
 }
 
 export async function goalRegionsById(goalIds) {
