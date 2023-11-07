@@ -1973,7 +1973,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.findOne({
           where: {
-            name: goal.name.trim(),
+            name: goal.name ? goal.name.trim() : '',
             grantId,
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
@@ -1984,7 +1984,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           createdVia: 'activityReport',
-          name: goal.name.trim(),
+          name: goal.name ? goal.name.trim() : '',
           grantId,
           ...fields,
           status,
@@ -1996,7 +1996,7 @@ export async function saveGoalsForReport(goals, report) {
           newOrUpdatedGoal.set({ source });
         }
 
-        if (fields.name !== newOrUpdatedGoal.name) {
+        if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
 
