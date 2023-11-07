@@ -14,7 +14,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
-import getSimilarGoalsForRecipient from '../../services/similarity';
+import similarGoalsForRecipient from '../../services/similarity';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -230,13 +230,18 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
   }
 }
 
-export async function postSimilarGoalsForRecipient(req, res) {
-  const { recipientId, cluster } = req.body;
+export async function getSimilarGoalsForRecipient(req, res) {
+  const recipientId = parseInt(req.params.recipient_id, 10);
 
+  if (Number.isNaN(recipientId)) {
+    return res.status(400).send('Recipient ID must be an integer');
+  }
+
+  const cluster = Object.prototype.hasOwnProperty.call(req.query, 'cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
-  const similarGoalIds = await getSimilarGoalsForRecipient(recipientId, cluster);
+  const similarGoalIds = await similarGoalsForRecipient(recipientId, cluster);
 
   // for each goal id, create a policy and ensure canView.
   const permissions = await Promise.all(similarGoalIds.map(async (id) => {
@@ -250,10 +255,9 @@ export async function postSimilarGoalsForRecipient(req, res) {
   const canView = permissions.every((permission) => permission);
 
   if (!canView) {
-    res.sendStatus(401);
-    return;
+    return res.sendStatus(401);
   }
 
   // Otherwise, return the array of goal IDs.
-  res.json(await getGoalIdsBySimilarity(similarGoalIds));
+  return res.json(await getGoalIdsBySimilarity(similarGoalIds));
 }
