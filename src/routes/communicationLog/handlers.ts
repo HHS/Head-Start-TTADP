@@ -20,6 +20,8 @@ const getAuthorizationByRegion = async (req: Request, res: Response) => {
   const { regionId } = req.params;
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
+
+  console.log(user);
   return new Policy(user, Number(regionId));
 };
 
