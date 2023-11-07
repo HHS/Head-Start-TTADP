@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock';
-import { updateGoalStatus } from '../goals';
+import { updateGoalStatus, similarity } from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
@@ -16,6 +16,12 @@ describe('goals fetcher', () => {
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     }]);
     await updateGoalStatus([4598], 'In Progress');
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('retrieves similarity', async () => {
+    fetchMock.post('/api/goals/similar', { res: 'ok' });
+    await similarity(123);
     expect(fetchMock.called()).toBeTruthy();
   });
 });
