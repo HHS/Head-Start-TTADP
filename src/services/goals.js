@@ -41,6 +41,7 @@ import {
 } from './reportCache';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { auditLogger } from '../logger';
+import { findOrFailExistingGoal, responsesForComparison } from './goalServices/helpers';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2570,4 +2571,90 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     grantsForWhomGoalAlreadyExists: [],
     grantsForWhichGoalWillBeCreated: [],
   };
+}
+
+const fieldMappingForDeduplication = {
+  name: 'name',
+  source: 'source',
+  status: 'status',
+  responsesForComparison: 'responsesForComparison',
+};
+
+/**
+ *
+ * similarity response is an array of objects with the following structure:
+ * {
+      "id": number,
+      "name": string,
+      "matches": [{
+        "id": number,
+        "name": string,
+        "grantId": number,
+        "similarity": float,
+      }]
+   }
+ *
+ * @param {[]} similarityResponse
+ * @returns {
+ *  goals: [{
+ *    name: string,
+ *    source: string,
+ *    status: string,
+ *    responsesForComparison: string,
+ *    ids: number[],
+ *  }],
+ *  ids: number[]
+ * }[]
+ */
+export async function getGoalIdsBySimilarity(similarityResponse) {
+  // convert the response to a group of IDs
+  const goalIdGroups = similarityResponse.map((matchedGoals) => {
+    const { id, matches } = matchedGoals;
+    return uniq([id, ...matches.map((match) => match.id)]);
+  });
+
+  // convert the ids to a big old database query
+  const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
+    attributes: ['id', 'status', 'name', 'source'],
+    where: {
+      id: group,
+    },
+    include: [
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+    ],
+  })));
+
+  const goalGroupsDeduplicated = goalGroups.map((group) => group
+    .reduce((previous, current) => {
+      // see if we can find an existing goal
+      const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
+      // if we found an existing goal,
+      // we'll add the current goal's ID to the existing goal's ID array
+      if (existingGoal) {
+        existingGoal.ids.push(current.id);
+        return previous;
+      }
+
+      return [
+        ...previous,
+        {
+          name: current.name,
+          source: current.source,
+          status: current.status,
+          responsesForComparison: responsesForComparison(current),
+          ids: [current.id],
+        },
+      ];
+    }, []));
+
+  const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
+  return groupsWithMoreThanOneGoal.map((gg) => ({
+    ids: uniq(gg.map((g) => g.ids).flat()),
+    goals: gg,
+  }));
 }

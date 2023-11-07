@@ -29,6 +29,10 @@ import {
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+import {
+  findOrFailExistingGoal,
+  responsesForComparison,
+} from './goalServices/helpers';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -611,15 +615,7 @@ export async function getGoalsByActivityRecipient(
   const allGoalIds = [];
 
   const r = sorted.reduce((previous, current) => {
-    const responsesForComparison = (current.responses || [])
-      .map((gfr) => gfr.response).sort().join();
-
-    const existingGoal = previous.goalRows.find(
-      (g) => g.goalStatus === current.status
-        && g.goalText.trim() === current.name.trim()
-        && g.source === current.source
-        && g.responsesForComparison === responsesForComparison,
-    );
+    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
     allGoalIds.push(current.id);
 
@@ -657,7 +653,7 @@ export async function getGoalsByActivityRecipient(
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
-      responsesForComparison,
+      responsesForComparison: responsesForComparison(current),
       isCurated,
     };
 
