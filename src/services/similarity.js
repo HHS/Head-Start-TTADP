@@ -4,24 +4,7 @@
  * @param {boolean} [cluster] - Specifies whether to cluster the results. Default value is false.
  * @returns {Promise<Array>} A promise that resolves to an array of similar goals.
  */
-export default async function getSimilarGoalsForRecipient(recipient_id, cluster) {
-  const { SIMILARITY_ENDPOINT } = process.env;
-
-  const response = await fetch(
-    SIMILARITY_ENDPOINT,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        recipient_id,
-        cluster,
-        alpha: 0.9,
-      }),
-    },
-  );
-
+export default async function similarGoalsForRecipient(recipient_id, cluster) {
   /**
     * response without clustering looks like:
     * result: [
@@ -46,6 +29,21 @@ export default async function getSimilarGoalsForRecipient(recipient_id, cluster)
       * ]
     */
   try {
+    const { SIMILARITY_ENDPOINT } = process.env;
+    const response = await fetch(
+      SIMILARITY_ENDPOINT,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient_id,
+          cluster,
+          alpha: 0.9,
+        }),
+      },
+    );
     return await response.json();
   } catch (error) {
     throw new Error(error);
