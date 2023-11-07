@@ -8,6 +8,7 @@ import {
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
   destroyGoal,
+  getGoalIdsBySimilarity,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -254,5 +255,5 @@ export async function postSimilarGoalsForRecipient(req, res) {
   }
 
   // Otherwise, return the array of goal IDs.
-  res.json(similarGoalIds);
+  res.json(await getGoalIdsBySimilarity(similarGoalIds));
 }
