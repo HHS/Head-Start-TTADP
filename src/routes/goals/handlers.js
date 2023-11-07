@@ -232,7 +232,7 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 export async function getSimilarGoalsForRecipient(req, res) {
   const recipientId = parseInt(req.params.recipient_id, 10);
 
-  if (isNaN(recipientId)) {
+  if (Number.isNaN(recipientId)) {
     return res.status(400).send('Recipient ID must be an integer');
   }
 
@@ -259,5 +259,5 @@ export async function getSimilarGoalsForRecipient(req, res) {
   }
 
   // Otherwise, return the array of goal IDs.
-  res.json(similarGoalIds);
+  return res.json(similarGoalIds);
 }
