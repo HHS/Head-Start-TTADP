@@ -30,21 +30,31 @@ export default class CommunicationLog {
     return this.user.permissions.some((permission) => (
       permission.regionId === this.regionId
       && permission.scopeId === SCOPES.READ_WRITE_REPORTS
-    ));
+    )) || this.isAdmin();
   }
 
   canReadLog() {
+    console.log(this.user.permissions);
+
+    console.log([SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS]);
+
     return this.user.permissions.some((permission) => (
       permission.regionId === this.regionId
-        && permission.scopeId === SCOPES.READ_WRITE_REPORTS
-    ));
+        && ([SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS].includes(permission.scopeId))
+    )) || this.isAdmin();
   }
 
   canUpdateLog() {
-    return this.user.id === this.log.userId;
+    return this.user.id === this.log.userId || this.isAdmin();
   }
 
   canDeleteLog() {
     return this.canUpdateLog();
+  }
+
+  isAdmin() {
+    return this.user.permissions.some((permission) => (
+      permission.scopeId === SCOPES.ADMIN
+    ));
   }
 }
