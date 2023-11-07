@@ -203,7 +203,8 @@ commands:
               --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
-              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
+              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
