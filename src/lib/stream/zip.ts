@@ -4,8 +4,17 @@ import * as unzipper from 'unzipper';
 class ZipStream {
   private readonly zipStream: Readable;
 
-  constructor(zipStream: Readable) {
+  constructor(
+    zipStream: Readable,
+    private password?: string,
+  ) {
     this.zipStream = zipStream;
+
+    // Set the password if provided
+    if (password) {
+      this.zipStream = this.zipStream
+        .pipe(unzipper.Parse({ password }));
+    }
   }
 
   /**
