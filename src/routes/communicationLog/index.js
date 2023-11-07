@@ -13,16 +13,16 @@ const router = express.Router();
 const context = 'communicationLog';
 
 router.get(
-  '/regionId/:regionId/log/:id',
+  '/region/:regionId/log/:id',
   (req, res, next) => checkIdParam(req, res, next, 'regionId'),
   (req, res, next) => checkIdParam(req, res, next, 'id'),
   transactionWrapper(communicationLogById, `${context} /id/:id`),
 );
 router.get(
-  '/regionId/:regionId/recipientId/:recipientId',
+  '/region/:regionId/recipient/:recipientId',
   (req, res, next) => checkIdParam(req, res, next, 'regionId'),
   (req, res, next) => checkIdParam(req, res, next, 'recipientId'),
-  transactionWrapper(communicationLogsByRecipientId, `${context} /recipientId/:recipientId`),
+  transactionWrapper(communicationLogsByRecipientId, `${context} /recipient/:recipientId`),
 );
 router.put(
   '/log/:id',
@@ -35,10 +35,10 @@ router.delete(
   transactionWrapper(deleteLogById, `${context} /id/:id`),
 );
 router.post(
-  '/regionId/:regionId/recipientId/:recipientId',
+  '/region/:regionId/recipient/:recipientId',
   (req, res, next) => checkIdParam(req, res, next, 'regionId'),
   (req, res, next) => checkIdParam(req, res, next, 'recipientId'),
-  transactionWrapper(createLogByRecipientId, `${context} /recipientId/:recipientId`),
+  transactionWrapper(createLogByRecipientId, `${context} /recipient/:recipientId`),
 );
 
 export default router;
