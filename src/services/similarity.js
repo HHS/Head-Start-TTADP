@@ -1,4 +1,10 @@
-export default async function getSimilarGoalsForRecipient(recipient_id) {
+/**
+ * @async
+ * @param {number} recipient_id - The ID of the recipient.
+ * @param {boolean} [cluster] - Specifies whether to cluster the results. Default value is false.
+ * @returns {Promise<Array>} A promise that resolves to an array of similar goals.
+ */
+export default async function getSimilarGoalsForRecipient(recipient_id, cluster) {
   const { SIMILARITY_ENDPOINT } = process.env;
 
   const response = await fetch(
@@ -10,6 +16,7 @@ export default async function getSimilarGoalsForRecipient(recipient_id) {
       },
       body: JSON.stringify({
         recipient_id,
+        cluster,
         alpha: 0.9,
       }),
     },

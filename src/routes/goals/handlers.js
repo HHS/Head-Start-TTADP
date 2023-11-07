@@ -230,12 +230,12 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 }
 
 export async function postSimilarGoalsForRecipient(req, res) {
-  const { recipientId } = req.body;
+  const { recipientId, cluster } = req.body;
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
-  const similarGoalIds = await getSimilarGoalsForRecipient(recipientId);
+  const similarGoalIds = await getSimilarGoalsForRecipient(recipientId, cluster);
 
   // for each goal id, create a policy and ensure canView.
   const permissions = await Promise.all(similarGoalIds.map(async (id) => {
