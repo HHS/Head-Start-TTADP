@@ -13,7 +13,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
-import getSimilarGoalsForRecipient from '../../services/similarity';
+import similarGoalsForRecipient from '../../services/similarity';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -229,9 +229,14 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
   }
 }
 
-export async function postSimilarGoalsForRecipient(req, res) {
-  const { recipientId, cluster } = req.body;
+export async function getSimilarGoalsForRecipient(req, res) {
+  const recipientId = parseInt(req.params.recipient_id, 10);
 
+  if (isNaN(recipientId)) {
+    return res.status(400).send('Recipient ID must be an integer');
+  }
+
+  const cluster = req.query.hasOwnProperty('cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 

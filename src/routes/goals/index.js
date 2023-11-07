@@ -5,7 +5,7 @@ import {
   retrieveGoalsByIds,
   retrieveGoalByIdAndRecipient,
   deleteGoal,
-  postSimilarGoalsForRecipient,
+  getSimilarGoalsForRecipient,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 
@@ -15,6 +15,6 @@ router.get('/', transactionWrapper(retrieveGoalsByIds));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.delete('/', transactionWrapper(deleteGoal));
-router.post('/similar', transactionWrapper(postSimilarGoalsForRecipient));
+router.get('/similar/:recipient_id', transactionWrapper(getSimilarGoalsForRecipient));
 
 export default router;
