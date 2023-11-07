@@ -236,11 +236,11 @@ export async function getSimilarGoalsForRecipient(req, res) {
     return res.status(400).send('Recipient ID must be an integer');
   }
 
-  const cluster = req.query.hasOwnProperty('cluster');
+  const cluster = Object.prototype.hasOwnProperty.call(req.query, 'cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
-  const similarGoalIds = await getSimilarGoalsForRecipient(recipientId, cluster);
+  const similarGoalIds = await similarGoalsForRecipient(recipientId, cluster);
 
   // for each goal id, create a policy and ensure canView.
   const permissions = await Promise.all(similarGoalIds.map(async (id) => {
@@ -254,8 +254,7 @@ export async function getSimilarGoalsForRecipient(req, res) {
   const canView = permissions.every((permission) => permission);
 
   if (!canView) {
-    res.sendStatus(401);
-    return;
+    return res.sendStatus(401);
   }
 
   // Otherwise, return the array of goal IDs.
