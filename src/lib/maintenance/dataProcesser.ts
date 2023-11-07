@@ -9,6 +9,14 @@ import XMLStream from '../stream/xml';
 import { remap, collectChangedValues } from '../dataObjectUtils';
 import { filterDataToModel } from '../modelUtils';
 
+/**
+ * Process records according to the given process definition and XML client.
+ * @param processDefinition - The process definition object.
+ * @param xmlClient - The XML client object.
+ * @param recordActions - The record actions object containing arrays of promises for
+ * inserts, updates, and deletes.
+ * @returns A promise that resolves to the updated recordActions object.
+ */
 const processRecords = async (
   processDefinition,
   xmlClient,
@@ -28,20 +36,24 @@ const processRecords = async (
 }> => {
   const record = await xmlClient.getNextRecord();
   if (record) {
-    /**
-     * 1: use the remap method to format data to structure needed
-     * 2. use the filterDataToModel to match what is expected
-     * 3. check for existing record
-     * 4a. if new
-     *  1. insert
-     *  2. recordActions.inserts.push(uuid)
-     * 4b. if found
-     *  1. use the collectChangedValues to find the values to update
-     *  2. update
-     *  2. recordActions.update.push(uuid)
-     */
+    // 1. use the remap method to format data to structure needed
+    // 2. use the filterDataToModel to match what is expected
+    // 3. check for existing record
+    // 4a. if new
+    //   1. insert
+    //   2. recordActions.inserts.push(uuid)
+    // 4b. if found
+    //   1. use the collectChangedValues to find the values to update
+    //   2. update
+    //   2. recordActions.update.push(uuid)
+
+    // Format the record data using the remap method
     const data = remap(record, processDefinition.remapDefs);
+
+    // Filter the data to match the expected model
     const filteredData = await filterDataToModel(data, processDefinition.model);
+
+    // Check if there is an existing record with the same key value
     const currentData = await processDefinition.model.FindOne({
       where: {
         data: {
@@ -51,7 +63,9 @@ const processRecords = async (
         },
       },
     });
+
     if (currentData) {
+      // If the record already exists, insert it
       const insert = processDefinition.model.create(
         filteredData,
         {
@@ -62,6 +76,7 @@ const processRecords = async (
       );
       recordActions.inserts.push(insert);
     } else {
+      // If the record is new, update it
       const delta = collectChangedValues(filteredData, currentData);
       const update = processDefinition.model.update(
         delta,
@@ -75,17 +90,18 @@ const processRecords = async (
       recordActions.updates.push(update);
     }
   } else {
-    /**
-     * 1. Find all records not in recordActions.inserts and recordActions.update
-     * 2. delete
-     * 3. recordActions.delete.push(uuid)
-     * 4. save data - recordActions
-     */
+    // 1. Find all records not in recordActions.inserts and recordActions.update
+    // 2. delete
+    // 3. recordActions.delete.push(uuid)
+    // 4. save data - recordActions
+
+    // Get all the affected data from inserts and updates
     const affectedData = await Promise.all([
       ...recordActions.inserts,
       ...recordActions.updates,
     ]);
 
+    // Delete all records that are not in the affectedData array
     const destroys = processDefinition.model.destroy({
       where: { id: { [Op.not]: affectedData.map(({ id }) => id) } },
       independentHooks: true,
@@ -96,6 +112,7 @@ const processRecords = async (
     return Promise.resolve(recordActions);
   }
 
+  // Recursively call the processRecords function to process the next record
   return processRecords(
     processDefinition,
     xmlClient,
