@@ -48,7 +48,6 @@ export default async function getSimilarGoalsForRecipient(recipient_id, cluster)
   try {
     return await response.json();
   } catch (error) {
-    res.sendStatus(500);
-    return;
+    throw new Error(error);
   }
 }
