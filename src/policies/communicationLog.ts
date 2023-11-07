@@ -34,10 +34,6 @@ export default class CommunicationLog {
   }
 
   canReadLog() {
-    console.log(this.user.permissions);
-
-    console.log([SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS]);
-
     return this.user.permissions.some((permission) => (
       permission.regionId === this.regionId
         && ([SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS].includes(permission.scopeId))

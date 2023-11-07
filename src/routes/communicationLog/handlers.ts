@@ -21,7 +21,6 @@ const getAuthorizationByRegion = async (req: Request, res: Response) => {
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
-  console.log(user);
   return new Policy(user, Number(regionId));
 };
 
@@ -33,20 +32,21 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
   return new Policy(user, Number(regionId), log);
 };
 
-const communicationLogById = async (req: Request, res: Response) => {
+async function communicationLogById(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const policy = await getAuthorizationByRegion(req, res);
     if (!policy.canReadLog()) {
-      return res.status(httpCodes.FORBIDDEN).send();
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
     }
 
     const log = await logById(Number(id));
-    return res.status(httpCodes.OK).json(log);
+    res.status(httpCodes.OK).json(log);
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
-};
+}
 
 const communicationLogsByRecipientId = async (req: Request, res: Response) => {
   try {
@@ -54,13 +54,14 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
     const policy = await getAuthorizationByRegion(req, res);
 
     if (!policy.canReadLog()) {
-      return res.status(httpCodes.FORBIDDEN).send();
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
     }
 
     const logs = await logsByRecipientAndScopes(Number(recipientId));
-    return res.status(httpCodes.OK).json(logs);
+    res.status(httpCodes.OK).json(logs);
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 };
 
@@ -68,16 +69,16 @@ const updateLogById = async (req: Request, res: Response) => {
   try {
     const policy = await getAuthorizationByLogId(req, res);
     if (!policy.canUpdateLog()) {
-      return res.status(httpCodes.FORBIDDEN).send();
+      res.status(httpCodes.FORBIDDEN).send();
     }
 
     const { id } = req.params;
     const { data } = req.body;
 
     const log = await updateLog(Number(id), data);
-    return res.status(httpCodes.OK).json(log);
+    res.status(httpCodes.OK).json(log);
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 };
 
@@ -85,7 +86,8 @@ const deleteLogById = async (req: Request, res: Response) => {
   try {
     const policy = await getAuthorizationByLogId(req, res);
     if (!policy.canDeleteLog()) {
-      return res.status(httpCodes.FORBIDDEN).send();
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
     }
 
     const { id } = req.params;
@@ -93,9 +95,9 @@ const deleteLogById = async (req: Request, res: Response) => {
     if (!operation) {
       throw new Error('Failure to delete log');
     }
-    return res.status(httpCodes.NO_CONTENT).send();
+    res.status(httpCodes.NO_CONTENT).send();
   } catch (err) {
-    return handleErrors(req, res, err, logContext);
+    await handleErrors(req, res, err, logContext);
   }
 };
 
@@ -103,15 +105,16 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
   try {
     const policy = await getAuthorizationByRegion(req, res);
     if (!policy.canCreateLog()) {
-      return res.status(httpCodes.FORBIDDEN).send();
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
     }
 
     const { recipientId } = req.params;
     const { data } = req.body;
     const log = await createLog(Number(recipientId), 0, data);
-    return res.status(httpCodes.CREATED).json(log);
+    res.status(httpCodes.CREATED).json(log);
   } catch (error) {
-    return handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 };
 
