@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Op } from 'sequelize';
+import { Model, Op } from 'sequelize';
 import { Readable } from 'stream';
 import FtpClient, { FileInfo as ftpFileInfo, FTPSettings } from '../stream/ftp';
 import S3Client from '../stream/s3';
@@ -8,6 +8,74 @@ import EncodingConverter from '../stream/encoding';
 import XMLStream from '../stream/xml';
 import { remap, collectChangedValues } from '../dataObjectUtils';
 import { filterDataToModel } from '../modelUtils';
+import db from '../../models';
+
+const {
+  File,
+  Import,
+  ImportFile,
+} = db;
+
+// TODO: split this into multiple files
+/**
+ * 1: Imports accessor functions
+ *  a: find
+ *    i: find - schedule
+ *    i: find - processDefinitions
+ *  b: insert
+ *  c: update
+ * 2: ImportFiles accessor and management functions
+ *  a: find
+ *    i: find - ftpFileInfos
+ *    i: find - zipFileInfos
+ *  b: insert
+ *  c: update
+ *    i: update - ftpFileInfo
+ *    ii: update - zipFileInfos
+ */
+
+const getImportSchedules = async () => Import.findAll({
+  attributes: [
+    'id',
+    'url',
+    'scehdule',
+  ],
+  where: {
+    enabled: true,
+  },
+});
+
+const getImportProcessDefinitions = async (
+  id: number,
+) => Import.findAll({
+  attributes: [
+    'id',
+    'remapDefs',
+  ],
+  where: {
+    id,
+    enabled: true,
+  },
+});
+
+const insertImport = async () => Import.create(); // TODO
+
+const updateImport = async () => Import.update(); // TODO
+
+const getImportFilesZipInfo = async (
+  importId: number,
+) => ImportFile.findOne({
+  attributes: [
+    'id',
+    'importId',
+    'fileId',
+    'ftpFileInfo',
+  ],
+  where: {
+    importId,
+  },
+  order: [['createdAt', 'desc']],
+});
 
 /**
  * Process records according to the given process definition and XML client.
@@ -54,7 +122,7 @@ const processRecords = async (
     const filteredData = await filterDataToModel(data, processDefinition.model);
 
     // Check if there is an existing record with the same key value
-    const currentData = await processDefinition.model.FindOne({
+    const currentData = await processDefinition.model.findOne({
       where: {
         data: {
           [Op.contains]: {
@@ -64,7 +132,7 @@ const processRecords = async (
       },
     });
 
-    if (currentData) {
+    if (currentData === null || currentData === undefined) {
       // If the record already exists, insert it
       const insert = processDefinition.model.create(
         filteredData,
@@ -152,6 +220,7 @@ const processFiles = async (
       .find(({ name }) => name === nextToProcess);
     if (fileInfoToProcess) {
       const fileStream = await zipClient.getFileStream(fileInfoToProcess.name);
+      if (!fileStream) throw new Error(`Failed to get stream from ${fileInfoToProcess.name}`);
       const processingData = await processFile(
         nextToProcess,
         fileInfoToProcess,
@@ -167,24 +236,53 @@ const processFiles = async (
   await processFiles(zipClient, filesToProcess, processDefinitions);
 };
 
-const processFTP = async (processDefinitions) => {
+const processFTP = async (
+  processDefinitions: {
+    ftpSettings: FTPSettings,
+    zipPassword?: string,
+    fileProcessDefinitions: {
+      remapDefs,
+      model,
+      key,
+    }[],
+  },
+) => {
   const { ftpSettings }: { ftpSettings: FTPSettings } = processDefinitions;
   const ftpClient = new FtpClient(ftpSettings);
   const latestFtpFile = await ftpClient.getLatest('/');
 
   // TODO - save/log data
+  const file = await File.create(
+    {
+      originalFileName: latestFtpFile?.fileInfo.name,
+      key,
+      status: 'UPLOADING',
+      fileSize: latestFtpFile?.fileInfo.size,
+    },
+    { independentHooks: true },
+  );
 
   const s3Client = new S3Client();
   const s3LoadedFile = await s3Client.uploadFileAsStream(key, latestFtpFile.stream);
 
+  file.status = 'UPLOADED';
+  await file.save();
   // TODO - save/log data
 
   const s3FileStream = await s3Client.downloadFileAsStream(key);
 
-  const zipClient = new ZipStream(s3FileStream);
+  const { zipPassword }: { zipPassword: string | undefined } = processDefinitions;
+  const zipClient = new ZipStream(s3FileStream, zipPassword);
   const fileDetails = await zipClient.getAllFileDetails();
+  const filteredFileDetails = fileDetails
+    // remove nulls
+    .filter((fileDetail) => fileDetail) as zipFileInfo[];
 
   // TODO - save/log data
 
-  await processFiles(zipClient, fileDetails, processDefinitions);
+  await processFiles(
+    zipClient,
+    filteredFileDetails,
+    processDefinitions,
+  );
 };
