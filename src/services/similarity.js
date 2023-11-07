@@ -22,39 +22,33 @@ export default async function getSimilarGoalsForRecipient(recipient_id, cluster)
     },
   );
 
-  const similarGoals = await response.json();
-
   /**
-   * similarGoals looks like:
-   * result: [
-   *  {
-   *    goal1: {
-   *      id: 1, name: "Identify strategies", grantId: 1,
-   *    },
-   *    goal2: {
-   *      id: 2, name: "Identify strategies", grantId: 1,
-   *    },
-   *    similarity: 0.921823748234,
-   *  },
-   *  {
-   *    goal1: {
-   *      id: 1, name: "Identify strategies", grantId: 2,
-   *    },
-   *    goal2: {
-   *      id: 2, name: "Identify strategies", grantId: 2,
-   *    },
-   *    similarity: 0.921823748234,
-   *  },
-   * ]
-   */
-
-  // Create a set of all unique goal IDs from this result.
-  const uniqueGoalIds = new Set();
-  similarGoals.result.forEach((result) => {
-    uniqueGoalIds.add(result.goal1.id);
-    uniqueGoalIds.add(result.goal2.id);
-  });
-
-  // Return this set as an array to the client.
-  return Array.from(uniqueGoalIds);
+    * response without clustering looks like:
+    * result: [
+      *  {
+        *    goal1: {
+          *      id: 1, name: "Identify strategies", grantId: 1,
+          *    },
+        *    goal2: {
+          *      id: 2, name: "Identify strategies", grantId: 1,
+          *    },
+        *    similarity: 0.921823748234,
+        *  },
+      *  {
+        *    goal1: {
+          *      id: 1, name: "Identify strategies", grantId: 2,
+          *    },
+        *    goal2: {
+          *      id: 2, name: "Identify strategies", grantId: 2,
+          *    },
+        *    similarity: 0.921823748234,
+        *  },
+      * ]
+    */
+  try {
+    return await response.json();
+  } catch (error) {
+    res.sendStatus(500);
+    return;
+  }
 }
