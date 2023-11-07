@@ -20,7 +20,7 @@ describe('goals fetcher', () => {
   });
 
   it('retrieves similarity', async () => {
-    fetchMock.post('/api/goals/similar', { res: 'ok' });
+    fetchMock.get('/api/goals/similar/123?cluster=true', { res: 'ok' });
     await similarity(123);
     expect(fetchMock.called()).toBeTruthy();
   });
