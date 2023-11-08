@@ -259,7 +259,7 @@ describe('Goals by Recipient Test', () => {
     const savedGrant2 = await Grant.create(grant2);
     const savedGrant3 = await Grant.create(grant3);
     const savedGrant4 = await Grant.create(grant4);
-    const savedGrant5 = await Grant.create(grant5);
+    await Grant.create(grant5);
 
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
@@ -802,6 +802,8 @@ describe('Goals by Recipient Test', () => {
       expect(countx).toBe(3);
       expect(goalRowsx.length).toBe(3);
       expect(goalRowsx[0].id).toBe(goalIds[9]);
+      expect(goalRowsx[1].id).toBe(goalIds[11]);
+      expect(goalRowsx[2].id).toBe(goalIds[10]);
     });
 
     it('Retrieves and sorts for merged goals by Recipient with garbage parameters', async () => {
