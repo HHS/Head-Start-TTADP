@@ -37,6 +37,7 @@ export async function similarGoalsForRecipient(recipient_id, cluster) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-API-KEY': SIMILARITY_API_KEY,
         },
         body: JSON.stringify({
           recipient_id,
