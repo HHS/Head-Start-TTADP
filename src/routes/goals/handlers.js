@@ -13,7 +13,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
-import similarGoalsForRecipient from '../../services/similarity';
+import { similarGoalsForRecipient } from '../../services/similarity';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -240,23 +240,28 @@ export async function getSimilarGoalsForRecipient(req, res) {
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
-  const similarGoalIds = await similarGoalsForRecipient(recipientId, cluster);
+  try {
+    const similarGoalIds = await similarGoalsForRecipient(recipientId, cluster);
 
-  // for each goal id, create a policy and ensure canView.
-  const permissions = await Promise.all(similarGoalIds.map(async (id) => {
-    const goal = await goalByIdWithActivityReportsAndRegions(id);
+    const ids = Array.from(similarGoalIds.reduce((acc, resp) => {
+      const id1 = parseInt(resp.goal1.id, 10);
+      const id2 = parseInt(resp.goal2.id, 10);
+      acc.add(id1);
+      acc.add(id2);
+      return acc;
+    }, new Set()));
 
-    const policy = new Goal(user, goal);
-    return policy.canView();
-  }));
+    const canView = await Promise.all(ids.map(async (id) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(id);
+      return new Goal(user, goal).canView();
+    }));
 
-  // If any of the permissions are false, return 401.
-  const canView = permissions.every((permission) => permission);
+    if (!canView.every((permission) => permission)) {
+      return res.sendStatus(401);
+    }
 
-  if (!canView) {
-    return res.sendStatus(401);
+    return res.json(similarGoalIds);
+  } catch (error) {
+    return res.status(500);
   }
-
-  // Otherwise, return the array of goal IDs.
-  return res.json(similarGoalIds);
 }
