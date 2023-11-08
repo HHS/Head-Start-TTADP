@@ -47,7 +47,19 @@ export default function GoalCardsHeader({
   useEffect(() => {
     async function getSimilarGoals() {
       const data = await similarity(recipientId);
-
+      /*
+      * expecting a response in the below format
+      * @returns {
+      *  goals: [{
+      *    name: string,
+      *    source: string,
+      *    status: string,
+      *    responsesForComparison: string,
+      *    ids: number[],
+      *  }],
+      *  ids: number[]
+      * }[]
+      */
       setGoalMergeGroups(data);
     }
 
@@ -127,13 +139,13 @@ export default function GoalCardsHeader({
                 <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
                 <ul className="usa-list">
                   {goalMergeGroups.filter((g) => g.length).map((group) => (
-                    <li key={group.join('-')}>
+                    <li key={`mergeGroup${group.ids.join('-')}`}>
                       <Link
-                        to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${group.map((g) => `goalId[]=${g}`).join('&')}`}
+                        to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${group.ids.map((g) => `goalId[]=${g}`).join('&')}`}
                       >
                         Review
                         {' '}
-                        {group.length}
+                        {group.goals.length}
                         {' '}
                         similar goals
                       </Link>
