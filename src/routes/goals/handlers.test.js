@@ -1,5 +1,6 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST } from 'http-codes';
 import { userById } from '../../services/users';
+import { similarGoalsForRecipient } from '../../services/similarity';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   changeGoalStatus,
@@ -8,6 +9,7 @@ import {
   retrieveGoalsByIds,
   deleteGoal,
   createGoalsForReport,
+  getSimilarGoalsForRecipient,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -43,6 +45,10 @@ jest.mock('../../services/users', () => ({
 }));
 
 jest.mock('../../services/accessValidation');
+
+jest.mock('../../services/similarity', () => ({
+  similarGoalsForRecipient: jest.fn(),
+}));
 
 const mockResponse = {
   attachment: jest.fn(),
@@ -900,6 +906,118 @@ describe('retrieveGoalsByIds', () => {
     });
 
     await retrieveGoalsByIds(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('similarGoalsForRecipient', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+    similarGoalsForRecipient.mockReset();
+    goalByIdWithActivityReportsAndRegions.mockReset();
+    currentUserId.mockReset();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.resetModules();
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        recipient_id: 1,
+      },
+      query: {
+        cluster: false,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    currentUserId.mockResolvedValueOnce(1);
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    similarGoalsForRecipient.mockResolvedValueOnce([
+      {
+        goal1: { id: 1, name: 'Goal 1', grantId: 1 },
+        goal2: { id: 2, name: 'Goal 2', grantId: 1 },
+        similarity: 0.9,
+      },
+      {
+        goal1: { id: 1, name: 'Goal 1', grantId: 2 },
+        goal2: { id: 2, name: 'Goal 2', grantId: 2 },
+        similarity: 0.9,
+      },
+    ]);
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+      objectives: [],
+      grant: { regionId: 2 },
+    });
+
+    await getSimilarGoalsForRecipient(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith([
+      {
+        goal1: { id: 1, name: 'Goal 1', grantId: 1 },
+        goal2: { id: 2, name: 'Goal 2', grantId: 1 },
+        similarity: 0.9,
+      },
+      {
+        goal1: { id: 1, name: 'Goal 1', grantId: 2 },
+        goal2: { id: 2, name: 'Goal 2', grantId: 2 },
+        similarity: 0.9,
+      },
+    ]);
+  });
+
+  it('handlers error', async () => {
+    const req = {
+      params: {
+        recipient_id: 1,
+      },
+      query: {
+        cluster: false,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    currentUserId.mockResolvedValueOnce(1);
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    similarGoalsForRecipient.mockImplementationOnce(() => {
+      throw new Error('');
+    });
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+      objectives: [],
+      grant: { regionId: 2 },
+    });
+
+    await getSimilarGoalsForRecipient(req, mockResponse);
+
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
