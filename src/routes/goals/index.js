@@ -8,6 +8,7 @@ import {
   getSimilarGoalsForRecipient,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
+import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
@@ -15,6 +16,10 @@ router.get('/', transactionWrapper(retrieveGoalsByIds));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.delete('/', transactionWrapper(deleteGoal));
-router.get('/similar/:recipient_id', transactionWrapper(getSimilarGoalsForRecipient));
+router.get(
+  '/similar/:recipientId',
+  (req, res, next) => checkIdParam(req, res, next, 'recipientId'),
+  transactionWrapper(getSimilarGoalsForRecipient),
+);
 
 export default router;
