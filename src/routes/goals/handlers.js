@@ -231,11 +231,6 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 
 export async function getSimilarGoalsForRecipient(req, res) {
   const recipientId = parseInt(req.params.recipient_id, 10);
-
-  if (Number.isNaN(recipientId)) {
-    return res.status(400).send('Recipient ID must be an integer');
-  }
-
   const cluster = Object.prototype.hasOwnProperty.call(req.query, 'cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
