@@ -19,23 +19,13 @@ module.exports = {
         DROP COLUMN "mapsTo";
       `, { transaction });
 
-      // Create table 'UserNationalCenters'.
-      await queryInterface.createTable('UserNationalCenters', {
+      // Create table 'NationalCenterUsers'.
+      await queryInterface.createTable('NationalCenterUsers', {
         id: {
           allowNull: false,
           autoIncrement: true,
           primaryKey: true,
           type: Sequelize.INTEGER,
-        },
-        userId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'Users',
-            },
-            key: 'id',
-          },
         },
         nationalCenterId: {
           type: Sequelize.INTEGER,
@@ -43,6 +33,16 @@ module.exports = {
           references: {
             model: {
               tableName: 'NationalCenters',
+            },
+            key: 'id',
+          },
+        },
+        userId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Users',
             },
             key: 'id',
           },
