@@ -55,10 +55,10 @@ module.exports = {
           )
           UPDATE "ActivityReportGoalFieldResponses" argfr
           SET
-            response = COALESCE(r.last_valid_response, r.current_response)
+            response = COALESCE(r.last_valid_response, ARRAY[]::text[])
           FROM responses r
           WHERE argfr."id" = r."activityReportGoalFieldResponseId"
-          AND r.current_response != COALESCE(r.last_valid_response, r.current_response);
+          AND r.current_response != COALESCE(r.last_valid_response, ARRAY[]::text[]);
      `, { transaction });
     });
   },
