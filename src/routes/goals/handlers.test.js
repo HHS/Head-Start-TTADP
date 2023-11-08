@@ -57,6 +57,7 @@ const mockResponse = {
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
+    send: jest.fn(),
   })),
 };
 
