@@ -2,12 +2,12 @@
 import React, {
   useState,
   useMemo,
-  useEffect,
   useRef,
   memo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
@@ -68,7 +68,7 @@ function GoalDataController({
     offset: 0,
   }, `goalsTable/${recipientId}/${regionId}`);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchGoals(query) {
       setLoading(true);
       try {
