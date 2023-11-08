@@ -262,6 +262,7 @@ export async function getSimilarGoalsForRecipient(req, res) {
 
     return res.json(similarGoalIds);
   } catch (error) {
-    return res.status(500);
+    await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
+    return null;
   }
 }
