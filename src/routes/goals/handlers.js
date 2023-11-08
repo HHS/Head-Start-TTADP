@@ -14,6 +14,7 @@ import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import { similarGoalsForRecipient } from '../../services/similarity';
+import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const namespace = 'SERVICE:GOALS';
 
