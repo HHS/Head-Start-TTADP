@@ -15,6 +15,7 @@ import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import { similarGoalsForRecipient } from '../../services/similarity';
+import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -231,12 +232,7 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 }
 
 export async function getSimilarGoalsForRecipient(req, res) {
-  const recipientId = parseInt(req.params.recipient_id, 10);
-
-  if (Number.isNaN(recipientId)) {
-    return res.status(400).send('Recipient ID must be an integer');
-  }
-
+  const recipientId = checkIdParam(req, res, 'recipient_id');
   const cluster = Object.prototype.hasOwnProperty.call(req.query, 'cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
@@ -262,6 +258,7 @@ export async function getSimilarGoalsForRecipient(req, res) {
     }
     return res.json(await getGoalIdsBySimilarity(similarGoalIds));
   } catch (error) {
-    return handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
+    await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
+    return null;
   }
 }
