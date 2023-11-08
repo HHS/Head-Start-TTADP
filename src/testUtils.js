@@ -273,16 +273,16 @@ export async function destroyGoal(goal) {
  */
 export async function createGoalTemplate(name = null) {
   const n = faker.lorem.sentence(5);
-
+  const varForNameOrN = name || n;
   const secret = 'secret';
   const hash = crypto
     .createHmac('md5', secret)
-    .update(name || n)
+    .update(varForNameOrN)
     .digest('hex');
 
   return GoalTemplate.create({
     hash,
-    templateName: name || n,
+    templateName: varForNameOrN,
     creationMethod: AUTOMATIC_CREATION,
   });
 }

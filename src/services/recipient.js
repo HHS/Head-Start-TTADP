@@ -488,6 +488,10 @@ export async function getGoalsByActivityRecipient(
     };
   }
 
+  // goal IDS can be a string or an array of strings
+  // or undefined
+  // we also want at least one value here
+  // so SQL doesn't have one of it's little meltdowns
   const sanitizedIds = [
     0,
     ...(() => {

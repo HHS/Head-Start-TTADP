@@ -2589,12 +2589,14 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
    * in this sordid business
    */
 
+  const uniqueGrantIds = uniq(selectedGoals.map((goal) => goal.grantId));
+
   const grantsWithReplacements = await Grant.findAll({
     attributes: ['id', 'status', 'oldGrantId'],
     where: {
       [Op.or]: [
-        { id: uniq(selectedGoals.map((goal) => goal.grantId)) },
-        { oldGrantId: uniq(selectedGoals.map((goal) => goal.grantId)) },
+        { id: uniqueGrantIds },
+        { oldGrantId: uniqueGrantIds },
       ],
       status: 'Active',
     },
@@ -2632,6 +2634,8 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   // - objective files, ETC
 
   await Promise.all(selectedGoals.map((g) => (
+    // comment block above explains what this is doing
+    // will use the most up-to-date grant ID as well
     mergeObjectivesFromGoal(g, grantToGoalDictionary[
       grantsWithReplacementsDictionary[g.grantId]
     ]))));
