@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
@@ -7,12 +7,12 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
-import { sampleSize } from 'lodash';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 import FeatureFlag from '../FeatureFlag';
+import { similarity } from '../../fetchers/goals';
 
 export default function GoalCardsHeader({
   title,
@@ -39,9 +39,22 @@ export default function GoalCardsHeader({
   draftSelectedRttapa,
   canMergeGoals,
 }) {
+  const [goalMergeGroups, setGoalMergeGroups] = useState([]);
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+
+  useEffect(() => {
+    async function getSimilarGoals() {
+      const data = await similarity(recipientId);
+
+      setGoalMergeGroups(data);
+    }
+
+    if (canMergeGoals) {
+      getSimilarGoals();
+    }
+  }, [canMergeGoals, recipientId]);
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
@@ -54,11 +67,6 @@ export default function GoalCardsHeader({
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
-
-  const goalMergeGroups = [
-    sampleSize(pageGoalIds, 5),
-    sampleSize(pageGoalIds, 2),
-  ];
 
   return (
     <div className="padding-x-3 position-relative">
@@ -111,7 +119,7 @@ export default function GoalCardsHeader({
         </div>
         )}
       </div>
-      {(canMergeGoals && goalMergeGroups.length) && (
+      {(canMergeGoals && goalMergeGroups.length > 0) && (
         <FeatureFlag flag="merge_goals">
           <div className="usa-alert usa-alert--info" data-testid="alert">
             <div className="usa-alert__body">

@@ -258,11 +258,10 @@ export async function getSimilarGoalsForRecipient(req, res) {
     }));
 
     if (!canView.every((permission) => permission)) {
-      return res.sendStatus(401);
+      return res.sendStatus(401).send();
     }
-
     return res.json(await getGoalIdsBySimilarity(similarGoalIds));
   } catch (error) {
-    return res.status(500);
+    return handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
   }
 }
