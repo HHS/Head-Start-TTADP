@@ -231,7 +231,7 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 }
 
 export async function getSimilarGoalsForRecipient(req, res) {
-  const recipientId = checkIdParam(req, res, 'recipient_id');
+  const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
   const cluster = Object.prototype.hasOwnProperty.call(req.query, 'cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
