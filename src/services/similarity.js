@@ -45,7 +45,7 @@ export async function similarGoalsForRecipient(recipient_id, cluster) {
         }),
       },
     );
-    return await response.json();
+    return response.json();
   } catch (error) {
     throw new Error(error);
   }
