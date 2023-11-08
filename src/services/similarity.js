@@ -4,7 +4,8 @@
  * @param {boolean} [cluster] - Specifies whether to cluster the results. Default value is false.
  * @returns {Promise<Array>} A promise that resolves to an array of similar goals.
  */
-export default async function similarGoalsForRecipient(recipient_id, cluster) {
+// eslint-disable-next-line import/prefer-default-export
+export async function similarGoalsForRecipient(recipient_id, cluster) {
   /**
     * response without clustering looks like:
     * result: [
