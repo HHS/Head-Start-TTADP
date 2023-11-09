@@ -64,7 +64,7 @@ class FtpClient {
    * @param path - The path to list files from.
    * @returns A promise that resolves with an array of file information, or rejects with an error.
    */
-  listFiles(path: string): Promise<FileInfo[]> {
+  listFiles(path = '/'): Promise<FileInfo[]> {
     return new Promise((resolve, reject) => {
       this.client.list(path, (err, files) => { // List files in the specified path on the FTP server
         if (err) {
