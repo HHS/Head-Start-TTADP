@@ -23,6 +23,7 @@ import {
   Resource,
   ActivityReport,
   ActivityReportGoal,
+  ActivityRecipient,
   ActivityReportGoalFieldResponse,
   Topic,
   Program,
@@ -1973,7 +1974,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.findOne({
           where: {
-            name: goal.name.trim(),
+            name: goal.name ? goal.name.trim() : '',
             grantId,
             status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
@@ -1984,7 +1985,7 @@ export async function saveGoalsForReport(goals, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           createdVia: 'activityReport',
-          name: goal.name.trim(),
+          name: goal.name ? goal.name.trim() : '',
           grantId,
           ...fields,
           status,
@@ -1996,7 +1997,7 @@ export async function saveGoalsForReport(goals, report) {
           newOrUpdatedGoal.set({ source });
         }
 
-        if (fields.name !== newOrUpdatedGoal.name) {
+        if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
 
@@ -2715,4 +2716,185 @@ export async function goalRegionsById(goalIds) {
   });
 
   return uniq(grants.map((g) => g.regionId));
+}
+/**
+ *
+ * The shape of the data object is as follows:
+ *
+  // {
+  //   region, // string
+  //   group, // string, group ID
+  //   createReport, // bool
+  //   useCuratedGoal, // bool
+  //   creator, // string, user ID
+  //   templateId, // string, template ID
+  //   goalPrompts, // array, as follows
+  // [
+  //   {
+  //     promptId: 1,
+  //     title: 'FEI root cause',
+  //     fieldName: 'fei-root-cause'
+  //   }
+  // ],
+  // 'fei-root-cause': [ 'Community Partnerships', 'Family Circumstances' ],
+  // goalSource, // string
+  // goalDate, // string
+  // selectedGrants, // stringified JSON grant data
+  // }
+ * @param {FormData} data
+ * @returns {
+ *  goals: Goal[],
+ *  data: FormData,
+ *  activityReport: ActivityReport,
+ *  isError: boolean,
+ *  message: string,
+ * }
+ */
+export async function createMultiRecipientGoalsFromAdmin(data) {
+  const grantIds = JSON.parse(data.selectedGrants).map((g) => g.id);
+
+  let templateId = null;
+  let isError = false;
+  let message = '';
+
+  let grantsForWhomGoalAlreadyExists = [];
+  if (data.useCuratedGoal && data.templateId) {
+    templateId = Number(data.templateId);
+  }
+
+  let template;
+
+  if (templateId) {
+    template = await GoalTemplate.findByPk(templateId);
+  }
+
+  let name = data.goalText;
+
+  if (template) {
+    name = template.templateName;
+  }
+
+  if (!name) {
+    isError = true;
+    message = 'Goal name is required';
+  }
+
+  let goalsForNameCheck = [];
+
+  if (!isError && grantIds.length > 0) {
+    goalsForNameCheck = await Goal.findAll({
+      attributes: ['id', 'grantId'],
+      where: {
+        grantId: grantIds,
+        name,
+      },
+    });
+
+    grantsForWhomGoalAlreadyExists = goalsForNameCheck.map((g) => g.grantId);
+  }
+
+  if (goalsForNameCheck.length) {
+    isError = true;
+    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grantId).join(', ')}`;
+  }
+
+  if (isError) {
+    return {
+      isError,
+      message,
+      grantsForWhomGoalAlreadyExists,
+    };
+  }
+
+  let endDate = null;
+
+  if (data.goalDate) {
+    endDate = data.goalDate;
+  }
+
+  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+    name,
+    grantId,
+    source: data.goalSource || null,
+    endDate,
+    status: GOAL_STATUS.NOT_STARTED,
+    createdVia: 'admin',
+    goalTemplateId: template ? template.id : null,
+  })), { individualHooks: true });
+
+  const goalIds = goals.map((g) => g.id);
+
+  const promptResponses = (data.goalPrompts || []).map((goalPrompt) => {
+    const response = data[goalPrompt.fieldName];
+
+    return {
+      promptId: goalPrompt.promptId,
+      response,
+    };
+  }).filter((pr) => pr.response);
+
+  if (data.useCuratedGoal && promptResponses && promptResponses.length) {
+    await setFieldPromptsForCuratedTemplate(goalIds, promptResponses);
+  }
+
+  let activityReport = null;
+
+  if (data.createReport && data.creator) {
+    const reportData = {
+      activityType: [],
+      additionalNotes: null,
+      collaborators: [],
+      context: '',
+      deliveryMethod: null,
+      endDate: null,
+      recipients: [],
+      numberOfParticipants: null,
+      otherResources: [],
+      participantCategory: '',
+      participants: [],
+      reason: [],
+      requester: '',
+      startDate: null,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      targetPopulations: [],
+      topics: [],
+      regionId: Number(data.region),
+      userId: Number(data.creator),
+      activityRecipientType: 'recipient',
+      pageState: {
+        1: 'Not started',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
+      },
+    };
+
+    activityReport = await ActivityReport.create(reportData);
+
+    await Promise.all([
+      ActivityReportGoal.bulkCreate(goalIds.map((goalId) => ({
+        activityReportId: activityReport.id,
+        goalId,
+        isActivelyEdited: true,
+        status: GOAL_STATUS.NOT_STARTED,
+        name,
+        source: data.goalSource || null,
+      })), { individualHooks: true }),
+      ActivityRecipient.bulkCreate(grantIds.map((grantId) => ({
+        activityReportId: activityReport.id,
+        grantId,
+      })), { individualHooks: true }),
+    ]);
+  }
+
+  return {
+    goals,
+    data,
+    activityReport,
+    isError,
+    message,
+    grantsForWhomGoalAlreadyExists: [],
+    grantsForWhichGoalWillBeCreated: [],
+  };
 }

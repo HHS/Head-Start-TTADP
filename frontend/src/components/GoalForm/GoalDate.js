@@ -46,7 +46,6 @@ export default function GoalDate({
         defaultValue={moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
         onBlur={validateEndDate}
         disabled={isLoading}
-        required
       />
     </FormGroup>
   );
