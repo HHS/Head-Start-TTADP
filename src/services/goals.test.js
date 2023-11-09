@@ -544,7 +544,7 @@ describe('Goals DB service', () => {
         fileId: file.id,
       });
 
-      mergedGoals = await mergeGoals(goalOne.id, [goalTwo.id, goalThree.id]);
+      mergedGoals = await mergeGoals(goalOne.id, [goalOne.id, goalTwo.id, goalThree.id]);
       mergedGoalIds = mergedGoals.map((goal) => goal.id);
     });
 
@@ -701,7 +701,9 @@ describe('Goals DB service', () => {
 
       expect(objectivesThatAreMergedAway.length).toBe(4);
       objectivesThatAreMergedAway.forEach((objective) => {
+        expect([goalOne.id, goalTwo.id, goalThree.id]).toContain(objective.goalId);
         expect(objective.mapsToParentObjectiveId).not.toBeNull();
+        expect(objective.mapsToParentObjectiveId).not.toBe(objective.id);
       });
     });
 
