@@ -213,6 +213,8 @@ const MAINTENANCE_CATEGORY = {
   MAINTENANCE: 'MAINTENANCE',
 };
 
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin'];
+
 module.exports = {
   FILE_STATUSES,
   DATE_FORMAT,
@@ -242,4 +244,5 @@ module.exports = {
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
+  GOAL_CREATED_VIA,
 };
