@@ -30,7 +30,7 @@ export async function similarGoalsForRecipient(recipient_id, cluster) {
       * ]
     */
   try {
-    const { SIMILARITY_ENDPOINT } = process.env;
+    const { SIMILARITY_ENDPOINT, SIMILARITY_API_KEY } = process.env;
     const response = await fetch(
       SIMILARITY_ENDPOINT,
       {
