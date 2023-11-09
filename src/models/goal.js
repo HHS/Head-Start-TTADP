@@ -7,6 +7,7 @@ const {
   afterCreate,
   afterUpdate,
 } = require('./hooks/goal');
+const { GOAL_CREATED_VIA } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -51,6 +52,8 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
       });
+      Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal1', as: 'scoreOne' });
+      Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal2', as: 'scoreTwo' });
     }
   }
   Goal.init({
@@ -167,7 +170,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     createdVia: {
-      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
+      type: DataTypes.ENUM(GOAL_CREATED_VIA),
       allowNull: true,
     },
     rtrOrder: {

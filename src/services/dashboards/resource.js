@@ -826,14 +826,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 },
               ],
             },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
-            },
           ],
           required: true,
         },
@@ -973,14 +965,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               as: 'objective',
               attributes: [],
               required: true,
-            },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
             },
           ],
           required: true,
