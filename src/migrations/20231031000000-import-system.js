@@ -15,9 +15,17 @@ module.exports = {
           primaryKey: true,
           autoIncrement: true,
         },
+        name: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
         ftpSettings: {
           allowNull: false,
           type: Sequelize.JSONB,
+        },
+        path: {
+          allowNull: true,
+          type: Sequelize.TEXT,
         },
         file: {
           allowNull: true,
@@ -81,7 +89,56 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
-        zipFileInfos: {
+        hash: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ImportDataFiles', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        importFileId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Imports',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        zipFileInfo: {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        },
+        hash: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        processed: {
+          type: Sequelize.BOOLEAN,
+          allowNull: true,
+        },
+        schema: {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        },
+        recordCounts: {
           type: Sequelize.JSONB,
           allowNull: true,
         },
@@ -104,6 +161,7 @@ module.exports = {
       await removeTables(queryInterface, transaction, [
         'Imports',
         'ImportFiles',
+        'ImportDataFiles',
       ]);
     });
   },
