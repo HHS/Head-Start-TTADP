@@ -221,6 +221,69 @@ module.exports = {
         ],
         transaction,
       });
+      await queryInterface.createTable('MonitoringClassSummaries', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        review_id: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        grantNumber: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        emotionalSupport: {
+          type: Sequelize.DECIMAL(5, 4),
+          allowNull: true,
+        },
+        classroomOrganization: {
+          type: Sequelize.DECIMAL(5, 4),
+          allowNull: true,
+        },
+        instructionalSupport: {
+          type: Sequelize.DECIMAL(5, 4),
+          allowNull: true,
+        },
+        reportDeliveryDate: {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
+        hash: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, {
+        indexes: [
+          {
+            fields: ['review_id'],
+          },
+          {
+            fields: ['grantNumber'],
+          },
+          {
+            fields: ['review_id', 'grantNumber'],
+          },
+        ],
+        transaction,
+      });
+
+      //-----------------------------------------------------------------------------------------
 
       const ftpSettings = {
         host: '', // TODO: need host
@@ -284,14 +347,29 @@ module.exports = {
           '*': 'toHash.*',
         },
       });
+      definitions.push({
+        fileName: 'AMS_CLASS_SUMMARYGrants.xml',
+        tableName: 'MonitoringClassSummaries',
+        remapDef: {
+          ReviewId: 'reviewId',
+          GrantNumber: 'grantNumber',
+          Domain_ES: 'emotionalSupport',
+          Domain_CO: 'classroomOrganization',
+          Domain_IS: 'instructionalSupport',
+          ReportDeliveryDate: 'reportDeliveryDate',
+          '*': 'toHash.*',
+        },
+      });
 
       await queryInterface.sequelize.query(/* sql */`
       INSERT INTO "Imports" (
+        "name",
         "ftpSettings",
         "schedule",
         "enabled",
         "definitions",
       ) values (
+        'ITAMS Monitoring Data'
         '${JSON.stringify(ftpSettings)}',
         '${schedule}',
         true,
