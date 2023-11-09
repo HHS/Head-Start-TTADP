@@ -273,7 +273,7 @@ export default function MergeGoals({
     );
   };
 
-  const backPath = `/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`;
+  const backPath = `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`;
 
   const helpLink = (
     <button

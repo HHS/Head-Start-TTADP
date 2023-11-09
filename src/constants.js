@@ -197,6 +197,17 @@ const MAINTENANCE_TYPE = {
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
 };
 
+const FEATURE_FLAGS = [
+  'resources_dashboard',
+  'rttapa_form',
+  'anv_statistics',
+  'regional_goal_dashboard',
+  'goal_source',
+  'training_reports',
+  'merge_goals',
+  'communication_log',
+];
+
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',
   MAINTENANCE: 'MAINTENANCE',
@@ -233,4 +244,5 @@ module.exports = {
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
+  FEATURE_FLAGS,
 };
