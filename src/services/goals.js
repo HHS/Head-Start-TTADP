@@ -2439,7 +2439,7 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   const updatesToRelatedModels = [];
 
   updatesToRelatedModels.push(Objective.update({
-    mapsToParentObjectiveId: id,
+    mapsToParentObjectiveId: newObjective.id,
   }, {
     where: {
       id,
