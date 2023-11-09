@@ -688,8 +688,12 @@ describe('Goals DB service', () => {
       expect(goalsThatAreMergedAway.length).toBe(3);
       const mapsToParentGoalIds = goalsThatAreMergedAway.map((goal) => goal.mapsToParentGoalId)
         .sort();
+
+      const mergedGoalFromGrantOne = mergedGoals.find((g) => g.grantId === grantOne.id);
+      const otherMergedGoal = mergedGoals.find((g) => g.id !== mergedGoalFromGrantOne.id);
+
       expect(
-        [mergedGoals[0].id, mergedGoals[0].id, mergedGoals[1].id].sort(),
+        [mergedGoalFromGrantOne.id, mergedGoalFromGrantOne.id, otherMergedGoal.id].sort(),
       ).toEqual(mapsToParentGoalIds);
 
       const objectivesThatAreMergedAway = goalsThatAreMergedAway
