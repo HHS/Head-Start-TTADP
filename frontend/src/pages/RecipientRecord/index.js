@@ -199,7 +199,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives/print"
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/print"
           render={({ location }) => (
             <PageWithHeading
               regionId={regionId}
@@ -211,7 +211,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
               backLink={(
                 <Link
                   className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-2 display-inline-block"
-                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives${window.location.search}`}
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa${window.location.search}`}
                 >
                   Back to goals table
                 </Link>
@@ -232,7 +232,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives"
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
           render={({ location }) => (
             <PageWithHeading
               regionId={regionId}

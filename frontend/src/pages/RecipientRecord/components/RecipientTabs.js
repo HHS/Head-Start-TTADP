@@ -19,7 +19,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/profile`}>Profile</NavLink>
           </li>
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>RTTAPA</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/rttapa`}>RTTAPA</NavLink>
           </li>
           <FeatureFlag flag="communication_log">
             <li className={liClass}>
