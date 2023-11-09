@@ -2429,13 +2429,22 @@ export function determineMergeGoalStatus(statuses) {
 export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   const { dataValues } = objective;
   const { id, goalId, ...data } = dataValues;
+
   const newObjective = await Objective.create({
     ...data,
     goalId: parentGoalId,
-    mapsToParentObjectiveId: id,
   }, { individualHooks: true });
 
   const updatesToRelatedModels = [];
+
+  updatesToRelatedModels.push(Objective.update({
+    mapsToParentObjectiveId: id,
+  }, {
+    where: {
+      id,
+    },
+    individualHooks: true,
+  }));
 
   // for activity report objectives, simply update
   // existing objectives to point to the new objective
@@ -2605,7 +2614,11 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   const grantsWithReplacementsDictionary = {};
 
   grantsWithReplacements.forEach((grant) => {
-    grantsWithReplacementsDictionary[grant.oldGrantId || grant.id] = grant.id;
+    if (grant.oldGrantId) {
+      grantsWithReplacementsDictionary[grant.oldGrantId] = grant.id;
+    }
+
+    grantsWithReplacementsDictionary[grant.id] = grant.id;
   });
 
   // unique list of grant IDs
@@ -2678,8 +2691,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   });
 
   await Promise.all(updatesToRelatedModels);
-
-  // update old goals
   await Promise.all(selectedGoals.map((g) => g.update({
     mapsToParentGoalId: grantToGoalDictionary[
       grantsWithReplacementsDictionary[g.grantId]

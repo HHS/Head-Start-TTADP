@@ -22,6 +22,7 @@ import {
   reduceObjectives,
   reduceObjectivesForActivityReport,
   determineMergeGoalStatus,
+  getGoalsForReport,
 } from './goals';
 import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
@@ -113,7 +114,13 @@ describe('Goals DB service', () => {
     const fileName = faker.system.fileName();
     const resourceUrl = faker.internet.url();
 
-    beforeEach(async () => {
+    let mergedGoals;
+    let mergedGoalIds;
+
+    let dummyGoal;
+    const dummyGoalName = `dummy goal ${faker.animal.cetacean()} ${faker.datatype.string()}`;
+
+    beforeAll(async () => {
       // Recipient.
       recipient = await Recipient.create({
         id: faker.datatype.number(),
@@ -201,6 +208,16 @@ describe('Goals DB service', () => {
         goalTemplateId: template.id,
       });
 
+      dummyGoal = await Goal.create({
+        name: dummyGoalName,
+        status: GOAL_STATUS.CLOSED,
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grantTwo.id,
+        createdVia: 'rtr',
+      });
+
       await GoalFieldResponse.create({
         goalTemplateFieldPromptId: prompt.id,
         response: ['option 1', 'option 2'],
@@ -238,6 +255,11 @@ describe('Goals DB service', () => {
         goalId: goalOne.id,
       });
 
+      await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: dummyGoal.id,
+      });
+
       objectiveOneForGoalOne = await Objective.create({
         goalId: goalOne.id,
         title: faker.datatype.string(100),
@@ -247,6 +269,17 @@ describe('Goals DB service', () => {
       await ActivityReportObjective.create({
         activityReportId: report.id,
         objectiveId: objectiveOneForGoalOne.id,
+      });
+
+      const dummyGoalObjective = await Objective.create({
+        goalId: dummyGoal.id,
+        title: faker.datatype.string(100),
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+
+      await ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: dummyGoalObjective.id,
       });
 
       const objectiveTwoForGoalOne = await Objective.create({
@@ -271,6 +304,11 @@ describe('Goals DB service', () => {
         topicId: topic.id,
       });
 
+      await ObjectiveTopic.create({
+        objectiveId: dummyGoalObjective.id,
+        topicId: topic.id,
+      });
+
       const objectiveOneForGoalThree = await Objective.create({
         goalId: goalThree.id,
         title: faker.datatype.string(100),
@@ -281,9 +319,12 @@ describe('Goals DB service', () => {
         objectiveId: objectiveOneForGoalThree.id,
         fileId: file.id,
       });
+
+      mergedGoals = await mergeGoals(goalOne.id, [goalTwo.id, goalThree.id]);
+      mergedGoalIds = mergedGoals.map((goal) => goal.id);
     });
 
-    afterEach(async () => {
+    afterAll(async () => {
       const allGoals = await Goal.unscoped().findAll({
         where: {
           grantId: [grantOne.id, grantTwo.id, grantThree.id],
@@ -399,17 +440,44 @@ describe('Goals DB service', () => {
         },
       });
     });
-    it('merges goals and goal data', async () => {
-      const mergedGoals = await mergeGoals(goalOne.id, [goalTwo.id, goalThree.id]);
-      expect(mergedGoals.length).toBe(2);
 
-      const mergedGoalIds = mergedGoals.map((goal) => goal.id);
+    it('old goals are merged away', async () => {
+      expect(mergedGoals.length).toBe(2);
 
       // verify that new goals were created
       expect(mergedGoalIds).not.toContain(goalOne.id);
       expect(mergedGoalIds).not.toContain(goalTwo.id);
       expect(mergedGoalIds).not.toContain(goalThree.id);
 
+      const goalsThatAreMergedAway = await Goal.unscoped().findAll({
+        where: {
+          id: [goalOne.id, goalTwo.id, goalThree.id],
+        },
+        attributes: ['id', 'mapsToParentGoalId'],
+        include: [{
+          model: Objective,
+          as: 'objectives',
+          attributes: ['id', 'mapsToParentObjectiveId', 'goalId'],
+        }],
+      });
+
+      expect(goalsThatAreMergedAway.length).toBe(3);
+      const mapsToParentGoalIds = goalsThatAreMergedAway.map((goal) => goal.mapsToParentGoalId)
+        .sort();
+      expect(
+        [mergedGoals[0].id, mergedGoals[0].id, mergedGoals[1].id].sort(),
+      ).toEqual(mapsToParentGoalIds);
+
+      const objectivesThatAreMergedAway = goalsThatAreMergedAway
+        .map((g) => g.objectives).flat();
+
+      expect(objectivesThatAreMergedAway.length).toBe(4);
+      objectivesThatAreMergedAway.forEach((objective) => {
+        expect(objective.mapsToParentObjectiveId).not.toBeNull();
+      });
+    });
+
+    it('data is merged into new goals', async () => {
       // verify goal & associated data with a length query
       // Let's get everything and just go through it all
       const goalsWithData = await Goal.findAll({
@@ -460,7 +528,7 @@ describe('Goals DB service', () => {
       expect(grantIds).toContain(grantOne.id);
       expect(grantIds).toContain(grantThree.id);
 
-      const goalForGrantOne = goalsWithData[0];
+      const goalForGrantOne = goalsWithData.find((g) => g.grantId === grantOne.id);
       expect(goalForGrantOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
       expect(goalForGrantOne.objectives.length).toBe(3);
       expect(goalForGrantOne.responses.length).toBe(0);
@@ -489,7 +557,7 @@ describe('Goals DB service', () => {
         .map((o) => o.objectiveFiles).flat();
       expect(objectiveFilesForGoalForGrantOne.length).toBe(0);
 
-      const goalForGrantTwo = goalsWithData[1];
+      const goalForGrantTwo = goalsWithData.find((g) => g.grantId === grantThree.id);
       expect(goalForGrantTwo.status).toBe(GOAL_STATUS.IN_PROGRESS);
       expect(goalForGrantTwo.objectives.length).toBe(1);
       expect(goalForGrantTwo.responses.length).toBe(1);
@@ -511,6 +579,47 @@ describe('Goals DB service', () => {
       const objectiveFilesForGoalForGrantTwo = goalForGrantTwo.objectives
         .map((o) => o.objectiveFiles).flat();
       expect(objectiveFilesForGoalForGrantTwo.length).toBe(1);
+    });
+
+    it('leaves random goals and objectives alone', async () => {
+      const dummyGoalValidation = await Goal.findOne({
+        where: {
+          id: dummyGoal.id,
+        },
+        include: [
+          {
+            model: ActivityReportGoal,
+            as: 'activityReportGoals',
+          },
+          {
+            model: Objective,
+            as: 'objectives',
+            include: [
+              {
+                model: ActivityReportObjective,
+                as: 'activityReportObjectives',
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(dummyGoalValidation.grantId).toBe(grantTwo.id);
+      expect(dummyGoalValidation.status).toBe(GOAL_STATUS.CLOSED);
+      expect(dummyGoalValidation.activityReportGoals.length).toBe(1);
+      expect(dummyGoalValidation.objectives.length).toBe(1);
+      expect(dummyGoalValidation.objectives[0].activityReportObjectives.length).toBe(1);
+    });
+
+    it('updates what is returned for an AR', async () => {
+      const goals = await getGoalsForReport(report.id);
+
+      expect(goals.length).toBe(2);
+
+      const goalForGrantOne = mergedGoals.find((g) => g.grantId === grantOne.id);
+      const expectedGoalIds = [goalForGrantOne.id, dummyGoal.id].sort();
+      const actualGoalIds = goals.map((goal) => goal.id).sort();
+      expect(actualGoalIds).toEqual(expectedGoalIds);
     });
   });
 

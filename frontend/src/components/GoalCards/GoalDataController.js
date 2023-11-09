@@ -102,7 +102,8 @@ function GoalDataController({
         );
         setData(response);
         setError('');
-        setShouldDisplayMergedSuccess(sortBy === 'mergedGoals' && mergedGoals && mergedGoals.length > 0);
+        // display success message if we have merged goals
+        setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
       } catch (e) {
         setError('Unable to fetch goals');
       } finally {
