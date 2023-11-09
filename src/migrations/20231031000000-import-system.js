@@ -1,0 +1,110 @@
+const { EMAIL_ACTIONS } = require('../constants');
+const { prepMigration, removeTables } = require('../lib/migration');
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      const sessionSig = __filename;
+      await prepMigration(queryInterface, transaction, sessionSig);
+
+      await queryInterface.createTable('Imports', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        ftpSettings: {
+          allowNull: false,
+          type: Sequelize.JSONB,
+        },
+        file: {
+          allowNull: true,
+          type: Sequelize.TEXT,
+        },
+        schedule: {
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        enabled: {
+          allowNull: false,
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        definitions: {
+          type: Sequelize.JSONB,
+          allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ImportFiles', {
+        id: {
+          type: Sequelize.BIGINT,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        importId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Imports',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        fileId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        ftpFileInfo: {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        },
+        zipFileInfos: {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+    });
+  },
+
+  async down(queryInterface, Sequelize) {
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      const sessionSig = __filename;
+      await prepMigration(queryInterface, transaction, sessionSig);
+      await removeTables(queryInterface, transaction, [
+        'Imports',
+        'ImportFiles',
+      ]);
+    });
+  },
+};
