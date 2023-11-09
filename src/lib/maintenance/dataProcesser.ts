@@ -104,6 +104,7 @@ const processRecords = async (
 }> => {
   const record = await xmlClient.getNextRecord();
   if (record) {
+    // TODO: column/key alpha sort to retain order
     // 1. use the remap method to format data to structure needed
     // 2. use the filterDataToModel to match what is expected
     // 3. check for existing record
