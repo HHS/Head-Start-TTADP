@@ -47,7 +47,7 @@ export default function GoalCardsHeader({
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
       sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
     });
   };
