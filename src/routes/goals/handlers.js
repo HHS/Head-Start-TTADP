@@ -233,18 +233,16 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 
 export async function getSimilarGoalsForRecipient(req, res) {
   const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
-  const cluster = Object.prototype.hasOwnProperty.call(req.query, 'cluster');
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
   try {
-    const similarGoalIds = await similarGoalsForRecipient(recipientId, cluster);
+    const { result } = await similarGoalsForRecipient(recipientId, true);
 
-    const ids = Array.from(similarGoalIds.reduce((acc, resp) => {
-      const id1 = parseInt(resp.goal1.id, 10);
-      const id2 = parseInt(resp.goal2.id, 10);
-      acc.add(id1);
-      acc.add(id2);
+    const ids = Array.from(result.reduce((acc, resp) => {
+      const goals = resp.matches.map((match) => match.id);
+      goals.forEach((goal) => acc.add(goal));
+
       return acc;
     }, new Set()));
 
@@ -256,7 +254,7 @@ export async function getSimilarGoalsForRecipient(req, res) {
     if (!canView.every((permission) => permission)) {
       return res.sendStatus(401).send();
     }
-    return res.json(await getGoalIdsBySimilarity(similarGoalIds));
+    return res.json(await getGoalIdsBySimilarity(result));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
     return null;
