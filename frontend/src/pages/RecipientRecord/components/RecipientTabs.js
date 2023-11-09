@@ -29,11 +29,6 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/tta-history`}>TTA History</NavLink>
           </li>
-          <FeatureFlag flag="rttapa_form">
-            <li className={liClass}>
-              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/rttapa-history`}>RTTAPA History</NavLink>
-            </li>
-          </FeatureFlag>
         </ul>
       </nav>
       { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
