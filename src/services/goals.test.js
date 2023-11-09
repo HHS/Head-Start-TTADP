@@ -19,9 +19,7 @@ import db, {
   Topic,
   File,
   ActivityReport,
-  ActivityReportGoal,
   ActivityRecipient,
-  GoalTemplate,
   User,
 } from '../models';
 import {
@@ -32,9 +30,13 @@ import {
   getGoalsForReport,
   createMultiRecipientGoalsFromAdmin,
 } from './goals';
-import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
-import { OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
+import {
+  OBJECTIVE_STATUS,
+  AUTOMATIC_CREATION,
+  FILE_STATUSES,
+  GOAL_STATUS,
+} from '../constants';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 
 jest.mock('./goalTemplates', () => ({
