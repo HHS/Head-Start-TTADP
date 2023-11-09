@@ -279,7 +279,7 @@ describe('Merge goals', () => {
     await waitFor(() => expect(fetchMock.called(goalsUrl, { method: 'POST' })).toBeTruthy());
 
     expect(memoryHistory.push).toHaveBeenCalledWith(
-      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/goals-objectives`,
+      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/rttapa`,
       {
         mergedGoals: [1, 2],
       },
