@@ -2,7 +2,6 @@
 import React, {
   useState,
   useMemo,
-  useRef,
   memo,
 } from 'react';
 import PropTypes from 'prop-types';
@@ -43,8 +42,6 @@ function GoalDataController({
     rows: [],
     count: 0,
   });
-
-  const queryString = useRef(filtersToQueryString(filters));
 
   // Page Behavior.
   const [error, setError] = useState('');
@@ -90,11 +87,6 @@ function GoalDataController({
       }
     }
     const filterQuery = filtersToQueryString(filters);
-    if (filterQuery !== queryString.current) {
-      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
-      queryString.current = filterQuery;
-      return;
-    }
     fetchGoals(filterQuery);
   }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig, goalsPerPage]);
 
