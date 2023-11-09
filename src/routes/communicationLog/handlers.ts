@@ -70,6 +70,7 @@ const updateLogById = async (req: Request, res: Response) => {
     const policy = await getAuthorizationByLogId(req, res);
     if (!policy.canUpdateLog()) {
       res.status(httpCodes.FORBIDDEN).send();
+      return;
     }
 
     const { id } = req.params;
