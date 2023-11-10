@@ -2,7 +2,12 @@ import faker from '@faker-js/faker';
 import {
   Grant, Recipient, Goal, GoalTemplate, sequelize,
 } from '../../models';
-import { createGoal, createGoalTemplate } from '../../testUtils';
+import {
+  createGoal,
+  createGoalTemplate,
+  createRecipient,
+  createGrant,
+} from '../../testUtils';
 import { CREATION_METHOD, GOAL_STATUS } from '../../constants';
 import { getGoalIdsBySimilarity } from '../goals';
 
@@ -15,14 +20,64 @@ describe('getGoalIdsBySimilarity', () => {
   const goalTitleTwo = faker.lorem.sentence();
   const goalTitleThree = faker.lorem.sentence();
 
+  let recipient;
+  let activeGrant;
+  let inactiveGrantWithReplacement;
+  let inactiveGrantWithoutReplacement;
+  let replacementGrant;
+
   let template;
 
   beforeAll(async () => {
+    recipient = createRecipient();
+
+    activeGrant = await createGrant({
+      recipientId: recipient.id,
+      status: 'Active',
+    });
+
+    inactiveGrantWithReplacement = await createGrant({
+      recipientId: recipient.id,
+      status: 'Inactive',
+    });
+
+    inactiveGrantWithoutReplacement = await createGrant({
+      recipientId: recipient.id,
+      status: 'Inactive',
+    });
+
+    replacementGrant = await createGrant({
+      recipientId: recipient.id,
+      status: 'Active',
+      oldGrantId: inactiveGrantWithReplacement.id,
+    });
+
     goalGroupOne = await Promise.all([
-      createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleOne }),
-      createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleOne }),
-      createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleOne }),
-      createGoal({ status: GOAL_STATUS.NOT_STARTED, name: goalTitleOne }),
+      createGoal({
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: goalTitleOne,
+        grantId: activeGrant.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: goalTitleOne,
+        grantId: replacementGrant.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: goalTitleOne,
+        grantId: inactiveGrantWithoutReplacement.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.NOT_STARTED,
+        name: goalTitleOne,
+        grantId: activeGrant.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.NOT_STARTED,
+        name: goalTitleOne,
+        grantId: inactiveGrantWithReplacement.id,
+      }),
     ]);
 
     template = await createGoalTemplate({
@@ -31,24 +86,46 @@ describe('getGoalIdsBySimilarity', () => {
     });
 
     goalGroupTwo = await Promise.all([
-      createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleTwo }),
-      createGoal({ status: GOAL_STATUS.DRAFT, name: goalTitleTwo }),
-      createGoal({ status: GOAL_STATUS.CLOSED, name: goalTitleTwo }),
+      createGoal({
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: goalTitleTwo,
+        grantId: activeGrant.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.DRAFT,
+        name: goalTitleTwo,
+        grantId: activeGrant.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.CLOSED,
+        name: goalTitleTwo,
+        grantId: activeGrant.id,
+      }),
       createGoal({
         status: GOAL_STATUS.NOT_STARTED,
         name: goalTitleTwo,
         goalTemplateId: template.id,
+        grantId: activeGrant.id,
       }),
       createGoal({
         status: GOAL_STATUS.CLOSED,
         name: goalTitleTwo,
         goalTemplateId: template.id,
+        grantId: activeGrant.id,
       }),
     ]);
 
     goalGroupThree = await Promise.all([
-      createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleThree }),
-      createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleThree }),
+      createGoal({
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: goalTitleThree,
+        grantId: activeGrant.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: goalTitleThree,
+        grantId: activeGrant.id,
+      }),
     ]);
   });
 
