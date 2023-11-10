@@ -2673,7 +2673,9 @@ export async function getGoalIdsBySimilarity(similarityResponse) {
   const grantLookup = {};
   grants.forEach((grant) => {
     grantLookup[grant.id] = grant.id;
-    grantLookup[grant.oldGrantId] = grant.id;
+    if (grant.oldGrantId) {
+      grantLookup[grant.oldGrantId] = grant.id;
+    }
   });
 
   const goalGroupsDeduplicated = goalGroups.map((group) => group
