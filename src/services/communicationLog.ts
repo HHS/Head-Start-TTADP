@@ -17,8 +17,11 @@ const logById = async (id: number) => {
   return log;
 };
 
-const logsByRecipientAndScopes = async (recipientId: number, scopes: WhereOptions[] = []) => {
-  const logs = await CommunicationLog.findAll({
+const logsByRecipientAndScopes = async (
+  recipientId: number,
+  scopes: WhereOptions[] = [],
+) => CommunicationLog
+  .findAll({
     where: {
       recipientId,
       [Op.and]: [
@@ -26,8 +29,6 @@ const logsByRecipientAndScopes = async (recipientId: number, scopes: WhereOption
       ],
     },
   });
-  return logs;
-};
 
 const deleteLog = async (id: number) => CommunicationLog.destroy({
   where: {
