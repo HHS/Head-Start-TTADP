@@ -2615,7 +2615,7 @@ export async function getGoalIdsBySimilarity(similarityResponse) {
 
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
-    attributes: ['id', 'status', 'name', 'source', 'goalTemplateId'],
+    attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
     where: {
       [Op.or]: [
         {
@@ -2637,6 +2637,12 @@ export async function getGoalIdsBySimilarity(similarityResponse) {
     },
     include: [
       {
+        model: Grant,
+        as: 'grant',
+        required: true,
+        attributes: ['id', 'status'],
+      },
+      {
         model: GoalFieldResponse,
         as: 'responses',
         required: false,
@@ -2651,8 +2657,31 @@ export async function getGoalIdsBySimilarity(similarityResponse) {
     ],
   })));
 
+  const uniqueGrantIds = uniq(goalGroups.map((group) => group.map((goal) => goal.grantId)).flat());
+
+  const grants = await Grant.findAll({
+    where: {
+      [Op.or]: [
+        { id: uniqueGrantIds },
+        { oldGrantId: uniqueGrantIds },
+      ],
+      status: 'Active',
+    },
+    attributes: ['id', 'oldGrantId', 'status'],
+  });
+
+  const grantLookup = {};
+  grants.forEach((grant) => {
+    grantLookup[grant.id] = grant.id;
+    grantLookup[grant.oldGrantId] = grant.id;
+  });
+
   const goalGroupsDeduplicated = goalGroups.map((group) => group
     .reduce((previous, current) => {
+      if (!grantLookup[current.grantId]) {
+        return previous;
+      }
+
       // see if we can find an existing goal
       const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
       // if we found an existing goal,
