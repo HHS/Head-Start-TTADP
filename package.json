@@ -108,7 +108,6 @@
   },
   "resolutions": {
     "axe-core": "4.6.3",
-    "axios": "^1.6.1",
     "@axe-core/webdriverjs": "4.6.0",
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
