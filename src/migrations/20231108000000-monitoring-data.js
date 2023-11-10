@@ -286,9 +286,9 @@ module.exports = {
       //-----------------------------------------------------------------------------------------
 
       const ftpSettings = {
-        host: '', // TODO: need host
-        port: 0, // TODO: need port
-        username: '', // TODO: need username
+        host: 'sftp.ams20.com', // TODO: need host
+        port: 22, // TODO: need port
+        username: 'tta_ro', // TODO: need username
         password: '', // THE name of the ENV that holds the password
       };
 
@@ -365,12 +365,16 @@ module.exports = {
       INSERT INTO "Imports" (
         "name",
         "ftpSettings",
+        "path",
+        "file",
         "schedule",
         "enabled",
         "definitions",
       ) values (
         'ITAMS Monitoring Data'
         '${JSON.stringify(ftpSettings)}',
+        '/ProdTTAHome',
+        '[0-9]{4}_[0-9]{2}_[0-9]{2}_XML[.]zip',
         '${schedule}',
         true,
         '${JSON.stringify(definitions)}'
