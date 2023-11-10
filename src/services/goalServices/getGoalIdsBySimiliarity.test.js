@@ -1,9 +1,9 @@
 import faker from '@faker-js/faker';
 import {
-  Grant, Recipient, Goal, sequelize,
+  Grant, Recipient, Goal, GoalTemplate, sequelize,
 } from '../../models';
-import { createGoal } from '../../testUtils';
-import { GOAL_STATUS } from '../../constants';
+import { createGoal, createGoalTemplate } from '../../testUtils';
+import { CREATION_METHOD, GOAL_STATUS } from '../../constants';
 import { getGoalIdsBySimilarity } from '../goals';
 
 describe('getGoalIdsBySimilarity', () => {
@@ -15,6 +15,8 @@ describe('getGoalIdsBySimilarity', () => {
   const goalTitleTwo = faker.lorem.sentence();
   const goalTitleThree = faker.lorem.sentence();
 
+  let template;
+
   beforeAll(async () => {
     goalGroupOne = await Promise.all([
       createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleOne }),
@@ -23,11 +25,25 @@ describe('getGoalIdsBySimilarity', () => {
       createGoal({ status: GOAL_STATUS.NOT_STARTED, name: goalTitleOne }),
     ]);
 
+    template = await createGoalTemplate({
+      name: goalTitleTwo,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
+
     goalGroupTwo = await Promise.all([
       createGoal({ status: GOAL_STATUS.IN_PROGRESS, name: goalTitleTwo }),
       createGoal({ status: GOAL_STATUS.DRAFT, name: goalTitleTwo }),
       createGoal({ status: GOAL_STATUS.CLOSED, name: goalTitleTwo }),
-      createGoal({ status: GOAL_STATUS.NOT_STARTED, name: goalTitleTwo }),
+      createGoal({
+        status: GOAL_STATUS.NOT_STARTED,
+        name: goalTitleTwo,
+        goalTemplateId: template.id,
+      }),
+      createGoal({
+        status: GOAL_STATUS.CLOSED,
+        name: goalTitleTwo,
+        goalTemplateId: template.id,
+      }),
     ]);
 
     goalGroupThree = await Promise.all([
@@ -59,6 +75,13 @@ describe('getGoalIdsBySimilarity', () => {
     await Goal.destroy({
       where: {
         id: goals.map((g) => g.id),
+      },
+      force: true,
+    });
+
+    await GoalTemplate.destroy({
+      where: {
+        id: template.id,
       },
       force: true,
     });

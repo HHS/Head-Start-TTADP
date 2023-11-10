@@ -2616,7 +2616,6 @@ export async function getGoalIdsBySimilarity(similarityResponse) {
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId'],
-    logging: console.log,
     where: {
       [Op.or]: [
         {
