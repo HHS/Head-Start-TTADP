@@ -2678,7 +2678,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
         },
         {
           where: { id: g.activityReportGoals.map((arg) => arg.id) },
-          logging: true,
         },
       ));
     }
