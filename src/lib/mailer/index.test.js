@@ -365,6 +365,25 @@ describe('mailer tests', () => {
       );
       expect(message.text).toContain('/asdf/');
     });
+    it('Honors no send', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      process.env.CI = '';
+      const data = {
+        emailTo: [`no-send_${mockNewCollaborator.email}`],
+        templatePath: 'tr_session_completed',
+        debugMessage: 'Congrats dude',
+        displayId: 'TR-04-1235',
+        reportPath: '/asdf/',
+        report: {
+          id: 1,
+          displayId: 'mockReport-1',
+        },
+      };
+      const email = await sendTrainingReportNotification({
+        data,
+      }, jsonTransport);
+      expect(email).toBeNull();
+    });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
       const data = {
