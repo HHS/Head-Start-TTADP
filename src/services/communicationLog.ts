@@ -3,19 +3,17 @@ import db from '../models';
 
 const { CommunicationLog } = db;
 
-const createLog = async (recipientId: number, userId: number, data: unknown) => {
-  const log = await CommunicationLog.create({
-    recipientId,
-    userId,
-    data,
-  });
-  return log;
-};
+const createLog = async (
+  recipientId: number,
+  userId: number,
+  data: unknown,
+) => CommunicationLog.create({
+  recipientId,
+  userId,
+  data,
+});
 
-const logById = async (id: number) => {
-  const log = await CommunicationLog.findByPk(id);
-  return log;
-};
+const logById = async (id: number) => CommunicationLog.findByPk(id);
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
