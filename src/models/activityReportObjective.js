@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
-const { beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
+const { beforeValidate, beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -64,6 +64,7 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ActivityReportObjective',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
