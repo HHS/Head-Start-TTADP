@@ -2450,10 +2450,17 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   // for activity report objectives, simply update
   // existing objectives to point to the new objective
   objective.activityReportObjectives.forEach((aro) => {
-    updatesToRelatedModels.push(aro.update({
-      originalObjectiveId: id,
-      objectiveId: newObjective.id,
-    }, { individualHooks: true }));
+    updatesToRelatedModels.push(
+      ActivityReportObjective.update({
+        objectiveId: newObjective.id,
+        originalObjectiveId: aro.objectiveId,
+      }, {
+        where: {
+          id: aro.id,
+        },
+        individualHooks: true,
+      }),
+    );
   });
 
   // for topics, resources, and files, we need to create new ones
@@ -2612,6 +2619,10 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     },
   });
 
+  if (!grantsWithReplacements.length) {
+    throw new Error('No active grants found to merge goals into');
+  }
+
   const grantsWithReplacementsDictionary = {};
 
   grantsWithReplacements.forEach((grant) => {
@@ -2665,7 +2676,10 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
             grantsWithReplacementsDictionary[g.grantId]
           ],
         },
-        { where: { id: g.activityReportGoals.map((arg) => arg.id) } },
+        {
+          where: { id: g.activityReportGoals.map((arg) => arg.id) },
+          logging: true,
+        },
       ));
     }
 
