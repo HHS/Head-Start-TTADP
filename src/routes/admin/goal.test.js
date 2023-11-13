@@ -7,7 +7,7 @@ jest.mock('../../services/goalTemplates', () => ({
   getCuratedTemplates: jest.fn(),
 }));
 
-jest.mock('../../goalServices', () => ({
+jest.mock('../../goalServices/goals', () => ({
   createMultiRecipientGoalsFromAdmin: jest.fn(),
 }));
 

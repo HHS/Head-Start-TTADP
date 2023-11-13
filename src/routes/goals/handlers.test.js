@@ -28,7 +28,7 @@ jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
 }));
 
-jest.mock('../../goalServices', () => ({
+jest.mock('../../goalServices/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),
