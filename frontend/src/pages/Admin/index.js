@@ -10,6 +10,7 @@ import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
 import NationalCenters from './NationalCenters';
 import Email from './Email';
+import Goals from './Goals';
 
 function Admin() {
   return (
@@ -20,6 +21,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
+          Goals
+        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/flags">
           Feature flags
         </NavLink>
@@ -29,7 +33,6 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
           Site alerts
         </NavLink>
-
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
         </NavLink>
@@ -78,6 +81,10 @@ function Admin() {
         <Route
           path="/admin/email/"
           render={({ match }) => <Email match={match} />}
+        />
+        <Route
+          path="/admin/goals/"
+          render={() => <Goals />}
         />
       </Switch>
     </>

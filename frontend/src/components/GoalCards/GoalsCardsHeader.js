@@ -7,6 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
+import { sampleSize } from 'lodash';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
@@ -36,6 +37,7 @@ export default function GoalCardsHeader({
   createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
+  canMergeGoals,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -43,7 +45,7 @@ export default function GoalCardsHeader({
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
       sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
     });
   };
@@ -52,6 +54,11 @@ export default function GoalCardsHeader({
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
+
+  const goalMergeGroups = [
+    sampleSize(pageGoalIds, 5),
+    sampleSize(pageGoalIds, 2),
+  ];
 
   return (
     <div className="padding-x-3 position-relative">
@@ -103,8 +110,33 @@ export default function GoalCardsHeader({
           />
         </div>
         )}
-
       </div>
+      {(canMergeGoals && goalMergeGroups.length) && (
+        <FeatureFlag flag="merge_goals">
+          <div className="usa-alert usa-alert--info" data-testid="alert">
+            <div className="usa-alert__body">
+              <div className="usa-alert__text">
+                <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
+                <ul className="usa-list">
+                  {goalMergeGroups.filter((g) => g.length).map((group) => (
+                    <li key={group.join('-')}>
+                      <Link
+                        to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${group.map((g) => `goalId[]=${g}`).join('&')}`}
+                      >
+                        Review
+                        {' '}
+                        {group.length}
+                        {' '}
+                        similar goals
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </FeatureFlag>
+      )}
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
@@ -221,6 +253,7 @@ GoalCardsHeader.propTypes = {
   createRttapa: PropTypes.func.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

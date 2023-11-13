@@ -63,6 +63,8 @@ export default function ObjectiveTopics({
   }, { editableTopics: [], fixedTopics: [] });
 
   const savedTopicIds = fixedTopics ? fixedTopics.map(({ value }) => value) : [];
+
+  topicOptions.sort((a, b) => a.name.localeCompare(b.name));
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.id));
 
   return (

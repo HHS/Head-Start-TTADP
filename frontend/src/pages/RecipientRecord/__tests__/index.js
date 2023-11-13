@@ -145,6 +145,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/widgets/goalStatusGraph?region.in[]=45&recipientId.ctn[]=1', 200);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', []);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', []);
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
   });
   afterEach(() => {
     fetchMock.restore();
@@ -212,7 +213,7 @@ describe('recipient record page', () => {
 
   it('navigates to the goals & objectives page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    memoryHistory.push('/recipient-tta-records/1/region/45/goals-objectives');
+    memoryHistory.push('/recipient-tta-records/1/region/45/rttapa');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     expect(document.querySelector('#recipientGoalsObjectives')).toBeTruthy();
@@ -231,7 +232,7 @@ describe('recipient record page', () => {
   it('navigates to the print goals page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false', { goalRows: [] });
-    memoryHistory.push('/recipient-tta-records/45/region/1/goals-objectives/print');
+    memoryHistory.push('/recipient-tta-records/45/region/1/rttapa/print');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/TTA Goals for the Mighty Recipient/i);

@@ -195,6 +195,15 @@ class CollaboratorRoles{
  * updatedAt : timestamp with time zone
 }
 
+class CommunicationLogs{
+ * id : integer : <generated>
+ * recipientId : integer : REFERENCES "Recipients".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * data : jsonb
+ * updatedAt : timestamp with time zone
+}
+
 class EventReportPilots{
  * id : integer : <generated>
  * collaboratorIds : integer[]
@@ -301,6 +310,7 @@ class GoalTemplates{
 class Goals{
  * id : integer : <generated>
  goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ mapsToParentGoalId : integer : REFERENCES "Goals".id
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
@@ -678,6 +688,16 @@ class SessionReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
 }
 
+class SimScoreGoalCaches{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * goal1 : integer
+ * goal2 : integer
+ * recipient_id : integer
+ * score : decimal(3,1)
+ * updatedAt : timestamp with time zone
+}
+
 class SiteAlerts{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
@@ -754,7 +774,9 @@ class Users{
 
 enum enum_Users_flags {
  anv_statistics
+ communication_log
  goal_source
+ merge_goals
  regional_goal_dashboard
  resources_dashboard
  rttapa_form
@@ -957,6 +979,20 @@ class ZALActivityReports{
 }
 
 class ZALCollaboratorRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCommunicationLogs{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1515,6 +1551,20 @@ class ZALSessionReportPilots{
  session_sig : text
 }
 
+class ZALSimScoreGoalCaches{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALSiteAlerts{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1674,7 +1724,9 @@ GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTempl
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, activityReportGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
+Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
+Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
@@ -1698,8 +1750,10 @@ OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : oth
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
@@ -1728,6 +1782,7 @@ UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : se
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
+Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots

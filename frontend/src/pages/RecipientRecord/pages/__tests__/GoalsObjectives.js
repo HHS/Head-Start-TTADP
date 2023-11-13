@@ -99,10 +99,20 @@ describe('Goals and Objectives', () => {
     ],
   };
 
-  const renderGoalsAndObjectives = (ids = []) => {
+  const renderGoalsAndObjectives = (ids = [], canMergeGoals = false) => {
+    const userForContext = {
+      ...user,
+    };
+
+    if (canMergeGoals) {
+      userForContext.flags = [
+        'merge_goals',
+      ];
+    }
+
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user }}>
+        <UserContext.Provider value={{ user: userForContext }}>
           <FilterContext.Provider value={{ filterKey: 'test' }}>
             <GoalsObjectives
               recipientId="401"
@@ -112,6 +122,7 @@ describe('Goals and Objectives', () => {
                 state: { ids }, hash: '', pathname: '', search: '',
               }}
               recipientName="test"
+              canMergeGoals={canMergeGoals}
             />
           </FilterContext.Provider>
         </UserContext.Provider>
@@ -149,6 +160,12 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+  });
+
+  it('shows merge goals when prop is passed', async () => {
+    act(() => renderGoalsAndObjectives([], true));
+    expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+    expect(await screen.findByText(/We found groups of similar goals that might be duplicates/i)).toBeVisible();
   });
 
   it('renders correctly when filter is changed', async () => {

@@ -16,6 +16,8 @@ import {
   Permission,
   ProgramPersonnel,
   User,
+  ActivityReportCollaborator,
+  ActivityReportApprover,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -27,6 +29,46 @@ import {
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+
+export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
+  const reports = await ActivityReport.findAll({
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+      },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+      },
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId,
+          status: 'Active',
+        },
+        required: true,
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            where: {
+              id: recipientId,
+            },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
+
+  return uniq([
+    ...reports.map((r) => r.userId),
+    ...reports.map((r) => r.activityReportCollaborators.map((c) => c.userId)).flat(),
+    ...reports.map((r) => r.approvers.map((a) => a.userId)).flat(),
+  ]);
+}
 
 /**
  *
@@ -431,7 +473,7 @@ export async function getGoalsByActivityRecipient(
     [Op.or]: [
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
-      { createdVia: 'rtr' },
+      { createdVia: ['rtr', 'admin'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
     ],
     [Op.and]: scopes,
@@ -581,6 +623,9 @@ export async function getGoalsByActivityRecipient(
 
     allGoalIds.push(current.id);
 
+    const isCurated = current.goalTemplate
+      && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
+
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
@@ -591,6 +636,7 @@ export async function getGoalsByActivityRecipient(
         existingGoal.grantNumbers,
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.isCurated = isCurated || existingGoal.isCurated;
       return {
         goalRows: previous.goalRows,
       };
@@ -612,6 +658,7 @@ export async function getGoalsByActivityRecipient(
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
       responsesForComparison,
+      isCurated,
     };
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(

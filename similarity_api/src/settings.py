@@ -1,5 +1,8 @@
-import os
 import json
+import os
+
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+
 
 def get_postgres_credentials_from_vcap():
     vcap_services = os.environ.get('VCAP_SERVICES')
@@ -25,3 +28,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{PORT}/{DB_NAME}"
 
 API_KEY = os.environ.get("SIMILARITY_API_KEY")
+
+SCHEDULER_JOBSTORES = {
+  'default': SQLAlchemyJobStore(url='sqlite:///jobs.sqlite')
+}
