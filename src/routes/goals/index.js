@@ -5,6 +5,7 @@ import {
   retrieveGoalsByIds,
   retrieveGoalByIdAndRecipient,
   deleteGoal,
+  mergeGoalHandler,
   getSimilarGoalsForRecipient,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
@@ -15,6 +16,7 @@ router.post('/', transactionWrapper(createGoals));
 router.get('/', transactionWrapper(retrieveGoalsByIds));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
+router.post('/merge', transactionWrapper(mergeGoalHandler));
 router.delete('/', transactionWrapper(deleteGoal));
 router.get(
   '/similar/:recipientId',

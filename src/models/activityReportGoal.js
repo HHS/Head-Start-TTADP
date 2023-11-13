@@ -21,6 +21,10 @@ export default (sequelize, DataTypes) => {
         otherKey: 'resourceId',
         as: 'resources',
       });
+      ActivityReportGoal.belongsTo(models.Goal, {
+        foreignKey: 'originalGoalId',
+        as: 'originalGoal',
+      });
     }
   }
   ActivityReportGoal.init({
@@ -63,6 +67,17 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: true,
+    },
+    originalGoalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Goals',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,

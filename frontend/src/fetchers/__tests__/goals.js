@@ -1,8 +1,16 @@
 import fetchMock from 'fetch-mock';
-import { updateGoalStatus, similarity } from '../goals';
+import { updateGoalStatus, mergeGoals, similarity } from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
+
+  it('merges goals', async () => {
+    fetchMock.post('/api/goals/merge', { res: 'ok' });
+
+    const res = await mergeGoals([1, 2, 3], 4);
+
+    expect(res).toEqual({ res: 'ok' });
+  });
 
   it('test updates goals status', async () => {
     fetchMock.put('/api/goals/changeStatus', [{
