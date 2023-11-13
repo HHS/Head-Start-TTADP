@@ -2,14 +2,14 @@ import faker from '@faker-js/faker';
 import {
   updateGoalStatusById,
   verifyAllowedGoalStatusTransition,
-} from '../goals';
+} from './goals';
 import {
   Goal,
   Grant,
   Recipient,
   sequelize,
-} from '../../models';
-import { GOAL_STATUS } from '../../constants';
+} from '../models';
+import { GOAL_STATUS } from '../constants';
 
 describe('Change Goal Status', () => {
   let goal;

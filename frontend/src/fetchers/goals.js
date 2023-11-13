@@ -48,6 +48,14 @@ export async function deleteGoal(goalIds, regionId) {
   return deleted.json();
 }
 
+export async function mergeGoals(selectedGoalIds, finalGoalId) {
+  const res = await post(join(goalsUrl, 'merge'), {
+    selectedGoalIds,
+    finalGoalId,
+  });
+  return res.json();
+}
+
 export async function similarity(recipientId) {
   const url = join(goalsUrl, 'similar', String(recipientId), '?cluster=true');
   const response = await get(url);
