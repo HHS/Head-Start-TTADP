@@ -21,6 +21,7 @@ import RTTAPAHistory from './pages/RTTAPAHistory';
 import FeatureFlag from '../../components/FeatureFlag';
 import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
+import CommunicationLogForm from './pages/CommunicationLogForm';
 
 function PageWithHeading({
   children,
@@ -337,6 +338,20 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match: routerMatch }) => (
+            <FeatureFlag
+              flag="communication_log"
+              renderNotFound
+            >
+              <CommunicationLogForm
+                recipientName={recipientName}
+                match={routerMatch}
+              />
+            </FeatureFlag>
+          )}
+        />
+        <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication"
           render={() => (
             <FeatureFlag
@@ -351,13 +366,14 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 hasAlerts={hasAlerts}
               >
                 <CommunicationLog
-                  recipientName={recipientName}
                   regionId={regionId}
+                  recipientName={recipientName}
                 />
               </PageWithHeading>
             </FeatureFlag>
           )}
         />
+
         <Route
           render={() => (
             <PageWithHeading
