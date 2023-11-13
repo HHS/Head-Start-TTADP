@@ -1,5 +1,33 @@
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 
+const methodOptions = [
+  'Email',
+  'Phone',
+  'In person',
+  'Virtual',
+];
+
+const purposeOptions = [
+  'CLASS',
+  'FEI',
+  'Monitoring',
+  'New TTA request',
+  'Program Specialist or Regional Office meeting',
+  'Program Specialist\'s Monthly contact',
+  'Program Specialist\'s site visit',
+  'Recipient question/feedback',
+  'RTTAPA updates',
+  'RTTAPA Initial Plan / New Recipient',
+  'TTA planning or scheduling',
+];
+
+const resultOptions = [
+  'New TTA accepted',
+  'New TTA declined',
+  'RTTAPA declined',
+  'Next Steps identified',
+];
+
 const defaultLogValues = {
   communicationDate: '',
   duration: '',
@@ -9,8 +37,13 @@ const defaultLogValues = {
   result: '',
 };
 
+const defaultAttachmentValues = {
+  files: [],
+};
+
 const defaultValues = {
   ...defaultLogValues,
+  ...defaultAttachmentValues,
   id: 0,
   recipientId: '',
   userId: '',
@@ -34,8 +67,18 @@ const formatCommunicationLogUrl = (
   currentPage = '',
 ) => `${recipientRecordRootUrl(recipientId, regionId)}/communication/${communicationLogId}/${currentPage}`;
 
+const pageComplete = (
+  hookForm,
+  fields,
+) => fields.every((field) => hookForm.getValues(field));
+
 export {
   defaultValues,
+  defaultLogValues,
   recipientRecordRootUrl,
   formatCommunicationLogUrl,
+  methodOptions,
+  purposeOptions,
+  resultOptions,
+  pageComplete,
 };
