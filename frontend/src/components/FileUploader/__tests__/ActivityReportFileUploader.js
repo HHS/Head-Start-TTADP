@@ -5,7 +5,8 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import FileRejections from '../FileRejections';
-import ActivityReportFileUploader, { upload } from '../ActivityReportFileUploader';
+import ActivityReportFileUploader from '../ActivityReportFileUploader';
+import { upload } from '../ReportFileUploader';
 
 describe('ActivityReportFileUploader', () => {
   const dispatchEvt = (node, type, data) => {
@@ -136,7 +137,7 @@ describe('ActivityReportFileUploader', () => {
         url: 1,
       });
       const setErrorMessage = jest.fn();
-      const response = await upload({ size: 1, name: 'test' }, 1, setErrorMessage);
+      const response = await upload({ size: 1, name: 'test' }, 'reportId', 1, setErrorMessage);
       expect(response.id).toBe(1);
       expect(response.originalFileName).toBe('test');
       expect(response.fileSize).toBe(1);
@@ -146,7 +147,7 @@ describe('ActivityReportFileUploader', () => {
     it('sets error message if upload fails', async () => {
       fetchMock.post('/api/files', 400);
       const setErrorMessage = jest.fn();
-      await upload({ name: 'test' }, 1, setErrorMessage);
+      await upload({ name: 'test' }, 'reportId', 1, setErrorMessage);
       expect(setErrorMessage).toHaveBeenCalledWith('test failed to upload');
     });
   });

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Controller } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 import {
@@ -8,14 +9,14 @@ import {
   Label,
   Button,
 } from '@trussworks/react-uswds';
-import ActivityReportFileUploader from '../../../../../components/FileUploader/ActivityReportFileUploader';
 import { pageComplete, defaultLogValues } from '../constants';
+import ReportFileUploader from '../../../../../components/FileUploader/ReportFileUploader';
 
 const path = 'supporting-attachments';
 const fields = Object.keys(defaultLogValues);
 const position = 2;
 
-const SupportingAttachments = () => {
+const SupportingAttachments = ({ reportId }) => {
   const [fileError, setFileError] = useState();
 
   return (
@@ -42,13 +43,24 @@ const SupportingAttachments = () => {
             name="files"
             defaultValue={[]}
             render={({ onChange, value }) => (
-              <ActivityReportFileUploader setErrorMessage={setFileError} files={value} onChange={onChange} id="files" />
+              <ReportFileUploader
+                setErrorMessage={setFileError}
+                files={value}
+                onChange={onChange}
+                id="files"
+                idKey="communicationLogId"
+                idValue={reportId}
+              />
             )}
           />
         </FormGroup>
       </Fieldset>
     </>
   );
+};
+
+SupportingAttachments.propTypes = {
+  reportId: PropTypes.number.isRequired,
 };
 
 const ReviewSection = () => <></>;
@@ -63,7 +75,7 @@ export default {
   render: (
     _additionalData,
     _formData,
-    _reportId,
+    reportId,
     isAppLoading,
     onContinue,
     _onSaveDraft,
@@ -74,7 +86,7 @@ export default {
     Alert,
   ) => (
     <div className="padding-x-1">
-      <SupportingAttachments />
+      <SupportingAttachments reportId={reportId} />
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
