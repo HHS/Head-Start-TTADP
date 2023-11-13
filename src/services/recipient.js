@@ -32,7 +32,7 @@ import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import {
   findOrFailExistingGoal,
   responsesForComparison,
-} from './goalServices/helpers';
+} from '../goalServices/helpers';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -527,13 +527,13 @@ export async function getGoalsByActivityRecipient(
       'source',
       'goalTemplateId',
       [sequelize.literal(`
-        CASE 
-          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1 
-          WHEN "Goal"."status" = 'Draft' THEN 2 
-          WHEN "Goal"."status" = 'Not Started' THEN 3 
-          WHEN "Goal"."status" = 'In Progress' THEN 4 
-          WHEN "Goal"."status" = 'Closed' THEN 5 
-          WHEN "Goal"."status" = 'Suspended' THEN 6 
+        CASE
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
+          WHEN "Goal"."status" = 'Draft' THEN 2
+          WHEN "Goal"."status" = 'Not Started' THEN 3
+          WHEN "Goal"."status" = 'In Progress' THEN 4
+          WHEN "Goal"."status" = 'Closed' THEN 5
+          WHEN "Goal"."status" = 'Suspended' THEN 6
           ELSE 7 END`),
       'status_sort'],
       [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
