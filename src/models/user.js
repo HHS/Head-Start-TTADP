@@ -1,16 +1,7 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
-
-const featureFlags = [
-  'resources_dashboard',
-  'rttapa_form',
-  'anv_statistics',
-  'regional_goal_dashboard',
-  'goal_source',
-  'training_reports',
-  'merge_goals',
-];
+const { FEATURE_FLAGS } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -79,7 +70,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     flags: {
-      type: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+      type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
       defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
     },
     fullName: {
@@ -98,8 +89,4 @@ export default (sequelize, DataTypes) => {
     modelName: 'User',
   });
   return User;
-};
-
-export {
-  featureFlags,
 };
