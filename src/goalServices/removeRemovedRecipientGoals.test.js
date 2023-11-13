@@ -9,8 +9,8 @@ import db, {
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
-} from '../../models';
-import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
+} from '../models';
+import { activityReportAndRecipientsById, createOrUpdate } from '../services/activityReports';
 
 describe('removeRemovedRecipientsGoals', () => {
   let multiRecipientReport;
