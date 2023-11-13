@@ -14,6 +14,7 @@ export default (sequelize, DataTypes) => {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
       Recipient.hasMany(models.RttapaPilot, { as: 'rttapaPilots', foreignKey: 'recipientId' });
       Recipient.hasMany(models.SimScoreGoalCache, { foreignKey: 'recipient_id', as: 'recipient' });
+      Recipient.hasMany(models.CommunicationLog, { foreignKey: 'recipientId', as: 'communicationLogs' });
     }
   }
   Recipient.init({

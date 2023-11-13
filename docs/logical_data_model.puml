@@ -197,6 +197,15 @@ class CollaboratorRoles{
  * updatedAt : timestamp with time zone
 }
 
+class CommunicationLogs{
+ * id : integer : <generated>
+ * recipientId : integer : REFERENCES "Recipients".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * data : jsonb
+ * updatedAt : timestamp with time zone
+}
+
 class EventReportPilots{
  * id : integer : <generated>
  * collaboratorIds : integer[]
@@ -986,6 +995,20 @@ class ZALCollaboratorRoles{
  session_sig : text
 }
 
+class ZALCommunicationLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALDDL{
  * id : bigint : <generated>
  * ddl_timestamp : timestamp with time zone
@@ -1731,6 +1754,7 @@ OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : oth
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
@@ -1762,6 +1786,7 @@ UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : se
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
+Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
