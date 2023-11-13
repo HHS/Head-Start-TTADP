@@ -19,6 +19,7 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
+  getGoalIdsBySimilarity,
 } from '../../services/goals';
 import { currentUserId } from '../../services/currentUser';
 
@@ -38,6 +39,7 @@ jest.mock('../../services/goals', () => ({
   destroyGoal: jest.fn(),
   createOrUpdateGoalsForActivityReport: jest.fn(),
   goalsByIdsAndActivityReport: jest.fn(),
+  getGoalIdsBySimilarity: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -933,9 +935,6 @@ describe('similarGoalsForRecipient', () => {
       params: {
         recipient_id: 1,
       },
-      query: {
-        cluster: false,
-      },
       session: {
         userId: 1,
       },
@@ -951,38 +950,34 @@ describe('similarGoalsForRecipient', () => {
       ],
     });
 
-    similarGoalsForRecipient.mockResolvedValueOnce([
-      {
-        goal1: { id: 1, name: 'Goal 1', grantId: 1 },
-        goal2: { id: 2, name: 'Goal 2', grantId: 1 },
-        similarity: 0.9,
-      },
-      {
-        goal1: { id: 1, name: 'Goal 1', grantId: 2 },
-        goal2: { id: 2, name: 'Goal 2', grantId: 2 },
-        similarity: 0.9,
-      },
-    ]);
+    const simResponse = {
+
+      result: [
+        {
+          matches: [{ id: 1 }, { id: 2 }],
+        },
+        {
+          matches: [{ id: 1 }, { id: 2 }],
+        },
+      ],
+    };
+
+    similarGoalsForRecipient.mockResolvedValueOnce(simResponse);
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
     });
 
+    getGoalIdsBySimilarity.mockResolvedValueOnce({
+      wokka: 'wokka',
+    });
+
     await getSimilarGoalsForRecipient(req, mockResponse);
 
-    expect(mockResponse.json).toHaveBeenCalledWith([
-      {
-        goal1: { id: 1, name: 'Goal 1', grantId: 1 },
-        goal2: { id: 2, name: 'Goal 2', grantId: 1 },
-        similarity: 0.9,
-      },
-      {
-        goal1: { id: 1, name: 'Goal 1', grantId: 2 },
-        goal2: { id: 2, name: 'Goal 2', grantId: 2 },
-        similarity: 0.9,
-      },
-    ]);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      wokka: 'wokka',
+    });
   });
 
   it('handlers error', async () => {

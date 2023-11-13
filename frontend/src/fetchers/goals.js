@@ -47,3 +47,9 @@ export async function deleteGoal(goalIds, regionId) {
   const deleted = await destroy(url, { regionId });
   return deleted.json();
 }
+
+export async function similarity(recipientId) {
+  const url = join(goalsUrl, 'similar', String(recipientId), '?cluster=true');
+  const response = await get(url);
+  return response.json();
+}
