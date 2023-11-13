@@ -83,11 +83,6 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
-  const goalMergeGroups = [
-    sampleSize(pageGoalIds, 5),
-    sampleSize(pageGoalIds, 2),
-  ];
-
   const mergedGoals = (() => {
     if (history.location && history.location.state) {
       return history.location.state.mergedGoals;
