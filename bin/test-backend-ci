@@ -41,10 +41,10 @@ main(){
 	check_exit "$?"
 
     # then list through the folders and run the tests
-    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
 
-    for target in "${targets[@]}"; do        
-        # jest command to 
+    for target in "${targets[@]}"; do
+        # jest command to
         # - run tests in the target folder
         # - collect coverage from the target folder
         # - output coverage relative to the target folder
@@ -73,7 +73,7 @@ main(){
 			--collectCoverageFrom="src/$target/**/!(*CLI).js" \
 			--forceExit
 
-			check_exit "$?"	    
+			check_exit "$?"
     done
 
 	if [[ $exit_code -ne 0 ]]; then
