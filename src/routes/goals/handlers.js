@@ -239,6 +239,11 @@ export async function getSimilarGoalsForRecipient(req, res) {
   try {
     const similarGoalIds = await similarGoalsForRecipient(recipientId, cluster);
 
+    if (!similarGoalIds.length) {
+      res.json([]);
+      return;
+    }
+
     const ids = Array.from(similarGoalIds.reduce((acc, resp) => {
       const id1 = parseInt(resp.goal1.id, 10);
       const id2 = parseInt(resp.goal2.id, 10);
@@ -253,12 +258,12 @@ export async function getSimilarGoalsForRecipient(req, res) {
     }));
 
     if (!canView.every((permission) => permission)) {
-      return res.sendStatus(401);
+      res.sendStatus(401);
+      return;
     }
 
-    return res.json(similarGoalIds);
+    res.json(similarGoalIds);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
-    return null;
   }
 }
