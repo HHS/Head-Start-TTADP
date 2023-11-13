@@ -1,5 +1,26 @@
-/* eslint-disable import/prefer-default-export */
-const defaultValues = {};
+import { NOT_STARTED } from '../../../../components/Navigator/constants';
+
+const defaultLogValues = {
+  communicationDate: '',
+  duration: '',
+  method: '',
+  purpose: '',
+  notes: '',
+  result: '',
+};
+
+const defaultValues = {
+  ...defaultLogValues,
+  id: 0,
+  recipientId: '',
+  userId: '',
+  pageState: {
+    1: NOT_STARTED,
+    2: NOT_STARTED,
+    3: NOT_STARTED,
+    4: NOT_STARTED,
+  },
+};
 
 const recipientRecordRootUrl = (
   recipientId,

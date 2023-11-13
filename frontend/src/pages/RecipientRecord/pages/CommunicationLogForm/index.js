@@ -14,7 +14,7 @@ import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../../../hooks/useSocket';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
-import { defaultValues, recipientRecordRootUrl } from './constants';
+import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from './constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 import Navigator from '../../../../components/Navigator';
@@ -189,11 +189,11 @@ export default function CommunicationLogForm({ match, recipientName }) {
     // history.push(newPath, state);
   };
 
-  //   if (!currentPage) {
-  //     return (
-  //       <Redirect to={`/training-report/${communicationLogId}/session/${reportId.current}/log`} />
-  //     );
-  //   }
+  if (!currentPage) {
+    return (
+      <Redirect to={formatCommunicationLogUrl(recipientId, regionId, communicationLogId, 'log')} />
+    );
+  }
 
   const onSave = async () => {
     // try {
@@ -272,7 +272,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   if (!reportFetched) {
-    return null;
+    // return null;
   }
 
   //   if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
