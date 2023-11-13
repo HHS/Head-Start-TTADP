@@ -42,7 +42,7 @@ jest.mock('../../services/recipient', () => ({
   allArUserIdsByRecipientAndRegion: jest.fn(),
 }));
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices', () => ({
   goalsByIdAndRecipient: jest.fn(),
 }));
 
