@@ -4,14 +4,8 @@ const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {
     static associate(models) {
-      NationalCenter.belongsTo(models.NationalCenter, {
-        foreignKey: 'mapsTo',
-        as: 'mapsToNationalCenter',
-      });
-      NationalCenter.hasMany(models.NationalCenter, {
-        foreignKey: 'mapsTo',
-        as: 'mapsFromNationalCenters',
-      });
+      // A National center can belong to a user through a national center user.
+      NationalCenter.belongsToMany(models.User, { through: models.NationalCenterUser, foreignKey: 'nationalCenterId', as: 'users' });
     }
   }
   NationalCenter.init({
@@ -29,17 +23,6 @@ export default (sequelize, DataTypes) => {
         notEmpty: true,
       },
       unique: true,
-    },
-    mapsTo: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: null,
-      references: {
-        model: {
-          tableName: 'NationalCenters',
-        },
-        key: 'id',
-      },
     },
     updatedAt: {
       allowNull: false,
