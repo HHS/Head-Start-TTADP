@@ -195,6 +195,14 @@ class CollaboratorRoles{
  * updatedAt : timestamp with time zone
 }
 
+class CommunicationLogFiles{
+ * id : integer : <generated>
+ * communicationLogId : integer : REFERENCES "CommunicationLogs".id
+ * fileId : integer : REFERENCES "Files".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class CommunicationLogs{
  * id : integer : <generated>
  * recipientId : integer : REFERENCES "Recipients".id
@@ -992,6 +1000,20 @@ class ZALCollaboratorRoles{
  session_sig : text
 }
 
+class ZALCommunicationLogFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALCommunicationLogs{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1695,6 +1717,9 @@ class ZALZAFilter{
 ' Associations
 
 
+!issue='associations need to be defined both directions'
+Files "1" --[#d54309,plain,thickness=2]-- "1" CommunicationLogFiles : file
+
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -1709,6 +1734,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
@@ -1802,6 +1828,7 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activ
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
+CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, files
