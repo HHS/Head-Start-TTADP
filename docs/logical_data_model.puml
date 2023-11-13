@@ -70,6 +70,8 @@ enum_ActivityReportGoalResources_sourceFields <|-- ActivityReportGoalResources
 
 class ActivityReportGoals{
  * id : integer : <generated>
+!issue='column missing from model'
+!issue='column reference missing' <color:#d54309>originalGoalId</color>: integer : REFERENCES "Goals".id
  * activityReportId : integer : REFERENCES "ActivityReports".id
  * goalId : integer : REFERENCES "Goals".id
  * createdAt : timestamp with time zone
@@ -120,6 +122,8 @@ class ActivityReportObjectiveTopics{
 
 class ActivityReportObjectives{
  * id : integer : <generated>
+!issue='column missing from model'
+!issue='column reference missing' <color:#d54309>originalObjectiveId</color>: integer : REFERENCES "Objectives".id
  * activityReportId : integer : REFERENCES "ActivityReports".id
  * objectiveId : integer : REFERENCES "Objectives".id
  * createdAt : timestamp with time zone : now()
@@ -192,6 +196,15 @@ class CollaboratorRoles{
  * activityReportCollaboratorId : integer : REFERENCES "ActivityReportCollaborators".id
  * roleId : integer : REFERENCES "Roles".id
  * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
+class CommunicationLogs{
+ * id : integer : <generated>
+ * recipientId : integer : REFERENCES "Recipients".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * data : jsonb
  * updatedAt : timestamp with time zone
 }
 
@@ -526,6 +539,8 @@ class ObjectiveTopics{
 class Objectives{
  * id : integer : <generated>
  goalId : integer : REFERENCES "Goals".id
+!issue='column missing from model'
+!issue='column reference missing' <color:#d54309>mapsToParentObjectiveId</color>: integer : REFERENCES "Objectives".id
  objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
  otherEntityId : integer : REFERENCES "OtherEntities".id
  * createdAt : timestamp with time zone : now()
@@ -775,6 +790,7 @@ class Users{
 
 enum enum_Users_flags {
  anv_statistics
+ communication_log
  goal_source
  merge_goals
  regional_goal_dashboard
@@ -979,6 +995,20 @@ class ZALActivityReports{
 }
 
 class ZALCollaboratorRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCommunicationLogs{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1780,6 +1810,7 @@ OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : oth
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
@@ -1811,6 +1842,7 @@ UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : se
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
+Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
@@ -1850,6 +1882,8 @@ Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 
 !issue='association missing from models'!issue='associations need to be defined both directions'
 NationalCenters o--[#yellow,bold,thickness=2]--o NationalCenterUsers : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Objectives o--[#yellow,bold,thickness=2]--o Objectives : <color:#2491FF>missing-from-model</color>
 !issue='associations need to be defined both directions'
 Users o--[#yellow,bold,thickness=2]--o NationalCenterUsers : <color:#2491FF>missing-from-model</color>
 
