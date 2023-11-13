@@ -19,6 +19,7 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
+  getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
 import { currentUserId } from '../../services/currentUser';
 
