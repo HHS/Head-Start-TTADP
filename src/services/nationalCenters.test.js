@@ -1,13 +1,17 @@
 import faker from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import {
   findAll,
   create,
   updateById,
   deleteById,
+  findAllNationalCenterUsers,
 } from './nationalCenters';
 import { auditLogger } from '../logger';
+
+const { READ_WRITE_TRAINING_REPORTS, READ_WRITE_REPORTS, READ_TRAINING_REPORTS } = SCOPES;
 
 jest.spyOn(auditLogger, 'info');
 jest.mock('../models/hooks/sessionReportPilot');
@@ -44,6 +48,104 @@ describe('nationalCenters service', () => {
       const names = results.map((center) => center.name);
       expect(names).toContain(centerOneName);
       expect(names).toContain(centerTwoName);
+    });
+  });
+
+  describe('findAllUsers', () => {
+    /*
+      Note: Right now the only requirement is that the user
+            have the ability to read/write training reports.
+    */
+    let user1;
+    let user2;
+    let user3;
+
+    beforeAll(async () => {
+      // User 1.
+      user1 = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.Permission.create({
+        userId: user1.id,
+        regionId: 1,
+        scopeId: READ_WRITE_TRAINING_REPORTS,
+      });
+
+      // User 2.
+      user2 = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 2,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.Permission.create({
+        userId: user2.id,
+        regionId: 2,
+        scopeId: READ_WRITE_REPORTS,
+      });
+
+      // User 3.
+      user3 = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 3,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.Permission.create({
+        userId: user3.id,
+        regionId: 3,
+        scopeId: READ_TRAINING_REPORTS,
+      });
+
+      await db.Permission.create({
+        userId: user3.id,
+        regionId: 1,
+        scopeId: READ_WRITE_TRAINING_REPORTS,
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy scopes for user 1, user 2, and user 3.
+      await db.Permission.destroy({
+        where: {
+          userId: [user1.id, user2.id, user3.id],
+        },
+      });
+
+      // Destroy all users.
+      await db.User.destroy({
+        where: {
+          id: [user1.id, user2.id, user3.id],
+        },
+      });
+    });
+
+    it('returns all national center users', async () => {
+      const results = await findAllNationalCenterUsers();
+      expect(results.length).toBeGreaterThanOrEqual(2);
+
+      // Ensure that user 1 and user 3 are returned.
+      const user1Result = results.find((result) => result.id === user1.id);
+      expect(user1Result).not.toBe(undefined);
+
+      const user3Result = results.find((result) => result.id === user3.id);
+      expect(user3Result).not.toBe(undefined);
+
+      // Ensure any remaining results are not user 2.
+      const user2Result = results.find((result) => result.id === user2.id);
+      expect(user2Result).toBe(undefined);
     });
   });
 
