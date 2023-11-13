@@ -25,7 +25,7 @@ import {
 } from '../constants';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 
-jest.mock('./goalTemplates', () => ({
+jest.mock('../services/goalTemplates', () => ({
   setFieldPromptsForCuratedTemplate: jest.fn(),
 }));
 
