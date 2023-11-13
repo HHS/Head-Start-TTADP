@@ -86,7 +86,7 @@ describe('GoalDataController', () => {
 
   it('displays correct singular message with merged goals', async () => {
     const url = `/api/goals/similar/${RECIPIENT_ID}`;
-    fetchMock.get(url, {});
+    fetchMock.get(url, [{ ids: [1], goals: [2] }]);
     act(() => {
       renderTest(
         {}, // props
