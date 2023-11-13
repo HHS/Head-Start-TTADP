@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { destroyGoal } from '../goals';
+import { destroyGoal } from './goals';
 import db, {
   Goal,
   Grant,

@@ -1,6 +1,6 @@
 import {
   saveGoalsForReport, goalsForGrants,
-} from '../goals';
+} from './goals';
 import {
   sequelize,
   Goal,

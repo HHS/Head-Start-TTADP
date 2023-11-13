@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
-import { processObjectiveForResourcesById } from './resource';
+import { processObjectiveForResourcesById } from '../resource';
 import {
   Goal,
   GoalFieldResponse,
@@ -27,21 +27,21 @@ import {
   Topic,
   Program,
   File,
-} from '../models';
+} from '../../models';
 import {
   OBJECTIVE_STATUS,
   GOAL_STATUS,
   SOURCE_FIELD,
   CREATION_METHOD,
-} from '../constants';
+} from '../../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,
   destroyActivityReportObjectiveMetadata,
-} from './reportCache';
-import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
-import { auditLogger } from '../logger';
-import { findOrFailExistingGoal, responsesForComparison } from './goalServices/helpers';
+} from '../reportCache';
+import { setFieldPromptsForCuratedTemplate } from '../goalTemplates';
+import { auditLogger } from '../../logger';
+import { findOrFailExistingGoal, responsesForComparison } from './helpers';
 
 const namespace = 'SERVICE:GOALS';
 

@@ -2,7 +2,7 @@ import faker from '@faker-js/faker';
 import {
   updateGoalStatusById,
   verifyAllowedGoalStatusTransition,
-} from '../goals';
+} from './goals';
 import {
   Goal,
   Grant,

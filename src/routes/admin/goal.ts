@@ -4,7 +4,7 @@ import httpCodes from 'http-codes';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { getCuratedTemplates } from '../../services/goalTemplates';
-import { createMultiRecipientGoalsFromAdmin } from '../../services/goals';
+import { createMultiRecipientGoalsFromAdmin } from '../../services/goalServices/goals';
 
 const namespace = 'ADMIN:GROUPS';
 const logContext = { namespace };

@@ -37,7 +37,7 @@ import {
   saveGoalsForReport,
   removeRemovedRecipientsGoals,
   getGoalsForReport,
-} from './goals';
+} from './goalServices/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
@@ -857,7 +857,7 @@ export async function activityReportAlerts(userId, {
               ],
             },
             id: {
-              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara                
+              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara
                 WHERE ara."userId" = ${userId} AND ara."activityReportId" = "ActivityReport"."id" AND ara."deletedAt" IS NULL)`),
             },
           },
@@ -875,7 +875,7 @@ export async function activityReportAlerts(userId, {
                   { userId },
                   {
                     id: {
-                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc                
+                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc
                       WHERE arc."userId" = ${userId} AND arc."activityReportId" = "ActivityReport"."id")`),
                     },
                   },

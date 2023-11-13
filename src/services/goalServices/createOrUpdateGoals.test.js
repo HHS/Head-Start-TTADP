@@ -1,7 +1,7 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
-import { OBJECTIVE_STATUS } from '../constants';
+import { OBJECTIVE_STATUS } from '../../constants';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
@@ -12,8 +12,8 @@ import db, {
   ObjectiveResource,
   ObjectiveTopic,
   Resource,
-} from '../models';
-import { processObjectiveForResourcesById } from './resource';
+} from '../../models';
+import { processObjectiveForResourcesById } from '../resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {

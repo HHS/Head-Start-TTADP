@@ -9,7 +9,7 @@ import db, {
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
 
-import { goalByIdWithActivityReportsAndRegions } from '../goals';
+import { goalByIdWithActivityReportsAndRegions } from './goals';
 
 describe('goalByIdWithActivityReportsAndRegions', () => {
   let recipientForFirstGrant;
