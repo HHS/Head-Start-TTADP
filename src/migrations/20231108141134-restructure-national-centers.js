@@ -9,8 +9,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(
-      /* sql */`
+      await queryInterface.sequelize.query(/* sql */`
       -- Delete all data from table "NationalCenters".
         DELETE FROM "NationalCenters";
 
