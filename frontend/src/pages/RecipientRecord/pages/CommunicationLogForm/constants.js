@@ -28,6 +28,12 @@ const resultOptions = [
   'Next Steps identified',
 ];
 
+const nextStepsFields = {
+  specialistNextSteps: [{ note: '', completeDate: '' }],
+  recipientNextSteps: [{ note: '', completeDate: '' }],
+  pocComplete: false,
+};
+
 const defaultLogValues = {
   communicationDate: '',
   duration: '',
@@ -44,6 +50,7 @@ const defaultAttachmentValues = {
 const defaultValues = {
   ...defaultLogValues,
   ...defaultAttachmentValues,
+  ...nextStepsFields,
   id: 0,
   recipientId: '',
   userId: '',
@@ -81,4 +88,5 @@ export {
   purposeOptions,
   resultOptions,
   pageComplete,
+  nextStepsFields,
 };
