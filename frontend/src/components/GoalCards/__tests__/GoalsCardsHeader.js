@@ -17,6 +17,13 @@ describe('GoalDataController', () => {
   const REGION_ID = 1;
   const RECIPIENT_ID = 1;
 
+  beforeEach(() => {
+    const url = `/api/goals/similar/${RECIPIENT_ID}?cluster=true`;
+    fetchMock.get(url, [{ ids: [1], goals: [2] }]);
+  });
+
+  afterEach(() => fetchMock.restore());
+
   const dismissMergeSuccess = jest.fn();
 
   const defaultProps = {
@@ -85,8 +92,6 @@ describe('GoalDataController', () => {
   });
 
   it('displays correct singular message with merged goals', async () => {
-    const url = `/api/goals/similar/${RECIPIENT_ID}?cluster=true`;
-    fetchMock.get(url, [{ ids: [1], goals: [2] }]);
     act(() => {
       renderTest(
         {}, // props
