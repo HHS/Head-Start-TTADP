@@ -5,6 +5,7 @@ import {
 } from './index';
 
 const communicationLogUrl = join(
+  '/',
   'api',
   'communication-logs',
 );
