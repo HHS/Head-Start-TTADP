@@ -1,4 +1,4 @@
-import { processObjectiveForResourcesById, getResourcesForObjectives } from '../resource';
+import { processObjectiveForResourcesById, getResourcesForObjectives } from '../services/resource';
 import db, {
   Objective,
   ObjectiveResource,
@@ -6,9 +6,9 @@ import db, {
   Topic,
   ObjectiveTopic,
   Resource,
-} from '../../models';
-import { saveObjectiveAssociations } from '../goals';
-import { OBJECTIVE_STATUS } from '../../constants';
+} from '../models';
+import { saveObjectiveAssociations } from './goals';
+import { OBJECTIVE_STATUS } from '../constants';
 
 describe('saveObjectiveAssociations', () => {
   describe('should save objective associations', () => {

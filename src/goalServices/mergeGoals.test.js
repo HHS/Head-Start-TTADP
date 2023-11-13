@@ -17,17 +17,17 @@ import db, {
   Resource,
   Topic,
   File,
-} from '../../models';
+} from '../models';
 import {
   mergeGoals,
   getGoalsForReport,
-} from '../goals';
-import { createReport, destroyReport, createGoalTemplate } from '../../testUtils';
+} from './goals';
+import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
 import {
   OBJECTIVE_STATUS,
   FILE_STATUSES,
   GOAL_STATUS,
-} from '../../constants';
+} from '../constants';
 
 describe('mergeGoals', () => {
   let recipient;

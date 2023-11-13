@@ -16,10 +16,10 @@ import db, {
   ObjectiveTopic,
   ObjectiveResource,
   Resource,
-} from '../../models';
-import { saveGoalsForReport } from '../goals';
-import { activityReportAndRecipientsById } from '../activityReports';
-import { processObjectiveForResourcesById } from '../resource';
+} from '../models';
+import { saveGoalsForReport } from './goals';
+import { activityReportAndRecipientsById } from '../services/activityReports';
+import { processObjectiveForResourcesById } from '../services/resource';
 
 const mockUser = {
   id: 54253461,

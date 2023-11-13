@@ -2,7 +2,7 @@ import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   getGoalsForReport,
-} from '../goals';
+} from './goals';
 import {
   Goal,
   Objective,
@@ -11,8 +11,8 @@ import {
   ActivityReportObjective,
   User,
   sequelize,
-} from '../../models';
-import { OBJECTIVE_STATUS } from '../../constants';
+} from '../models';
+import { OBJECTIVE_STATUS } from '../constants';
 
 describe('getGoalsForReport', () => {
   let goal;

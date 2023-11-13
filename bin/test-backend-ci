@@ -41,7 +41,7 @@ main(){
 	check_exit "$?"
 
     # then list through the folders and run the tests
-    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices") 
 
     for target in "${targets[@]}"; do        
         # jest command to 

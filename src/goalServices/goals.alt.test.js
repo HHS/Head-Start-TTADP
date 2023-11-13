@@ -23,7 +23,7 @@ import {
   AUTOMATIC_CREATION,
   GOAL_STATUS,
 } from '../constants';
-import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
+import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 
 jest.mock('./goalTemplates', () => ({
   setFieldPromptsForCuratedTemplate: jest.fn(),

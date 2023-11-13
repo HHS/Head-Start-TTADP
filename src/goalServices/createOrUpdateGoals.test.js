@@ -13,7 +13,7 @@ import db, {
   ObjectiveTopic,
   Resource,
 } from '../models';
-import { processObjectiveForResourcesById } from './resource';
+import { processObjectiveForResourcesById } from '../services/resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
