@@ -1,10 +1,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, TextInput } from '@trussworks/react-uswds';
+import {
+  Button,
+  TextInput,
+  Label,
+  Dropdown,
+  Textarea,
+} from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import FormItem from '../../../../../components/FormItem';
 import ControlledDatePicker from '../../../../../components/ControlledDatePicker';
+import Req from '../../../../../components/Req';
+import {
+  methodOptions,
+  purposeOptions,
+  resultOptions,
+  pageComplete,
+  defaultLogValues,
+} from '../constants';
+
+const fields = Object.keys(defaultLogValues);
 
 const Log = ({ datePickerKey }) => {
   const {
@@ -78,6 +94,64 @@ const Log = ({ datePickerKey }) => {
           </div>
         </FormItem>
       </div>
+      <div className="margin-top-2">
+        <Label htmlFor="method">
+          How was the communication conducted?
+          <Req />
+        </Label>
+        <Dropdown
+          required
+          id="method"
+          name="method"
+          inputRef={register({ required: 'Select a communication method' })}
+        >
+          {methodOptions.map((option) => (
+            <option key={`methodoptions${option}`}>{option}</option>
+          ))}
+        </Dropdown>
+      </div>
+      <div className="margin-top-2">
+        <Label htmlFor="purpose">
+          Purpose of communication
+          <Req />
+        </Label>
+        <Dropdown
+          required
+          id="purpose"
+          name="purpose"
+          inputRef={register({ required: 'Select a purpose of communication' })}
+        >
+          {purposeOptions.map((option) => (
+            <option key={`purposeoptions${option}`}>{option}</option>
+          ))}
+        </Dropdown>
+      </div>
+      <div className="margin-top-2">
+        <Label htmlFor="notes">
+          Notes
+        </Label>
+        <Textarea
+          name="notes"
+          id="notes"
+          inputRef={register()}
+        />
+      </div>
+      <div className="margin-top-2">
+        <Label htmlFor="result">
+          Result
+          <Req />
+        </Label>
+        <Dropdown
+          required
+          id="result"
+          name="result"
+          inputRef={register({ required: 'Select a result of communication' })}
+        >
+          {resultOptions.map((option) => (
+            <option key={`resultOptions${option}`}>{option}</option>
+          ))}
+        </Dropdown>
+      </div>
     </>
   );
 };
@@ -86,12 +160,11 @@ Log.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
 };
 
-const fields = [];
 const path = 'log';
 const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = () => true; // pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,

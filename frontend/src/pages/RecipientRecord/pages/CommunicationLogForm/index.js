@@ -179,14 +179,14 @@ export default function CommunicationLogForm({ match, recipientName }) {
   useHookFormPageState(hookForm, pages, currentPage);
 
   const updatePage = (position) => {
-    // const state = {};
-    // if (reportId.current) {
-    //   state.showLastUpdatedTime = true;
-    // }
+    const state = {};
+    if (reportId.current) {
+      state.showLastUpdatedTime = true;
+    }
 
-    // const page = pages.find((p) => p.position === position);
-    // const newPath = `/training-report/${communicationLogId}/session/${reportId.current}/${page.path}`;
-    // history.push(newPath, state);
+    const page = pages.find((p) => p.position === position);
+    const newPath = `${formatCommunicationLogUrl(recipientId, regionId, communicationLogId)}${page.path}`;
+    history.push(newPath, state);
   };
 
   if (!currentPage) {
