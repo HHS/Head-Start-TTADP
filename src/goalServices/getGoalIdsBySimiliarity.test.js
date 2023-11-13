@@ -1,15 +1,15 @@
 import faker from '@faker-js/faker';
 import {
   Grant, Recipient, Goal, GoalTemplate, sequelize,
-} from '../../models';
+} from '../models';
 import {
   createGoal,
   createGoalTemplate,
   createRecipient,
   createGrant,
-} from '../../testUtils';
-import { CREATION_METHOD, GOAL_STATUS } from '../../constants';
-import { getGoalIdsBySimilarity } from '../goals';
+} from '../testUtils';
+import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import { getGoalIdsBySimilarity } from './goals';
 
 describe('getGoalIdsBySimilarity', () => {
   let goalGroupOne = [];

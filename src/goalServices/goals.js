@@ -42,7 +42,7 @@ import {
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
-import { findOrFailExistingGoal, responsesForComparison } from './goalServices/helpers';
+import { findOrFailExistingGoal, responsesForComparison } from './helpers';
 
 const namespace = 'SERVICE:GOALS';
 
