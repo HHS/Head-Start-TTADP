@@ -267,7 +267,7 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     // Default goal recipient.
-    const defaultRecip = await ActivityRecipient.create({
+    await ActivityRecipient.create({
       activityReportId: defaultGoalReport.id,
       grantId: defaultGoalGrant.id,
     });
@@ -401,9 +401,8 @@ describe('saveGoalsForReport (more tests)', () => {
         activityReportId: reportIds,
       },
     });
-    const objectiveIds = [
-      ...arObjectives.map((aro) => aro.objectiveId),
-    ];
+
+    const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
 
     if (rtrObjectiveNotOnReport) {
       objectiveIds.push(rtrObjectiveNotOnReport.id);
@@ -448,15 +447,12 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    const goalsToDestroy = await Goal.findAll({
+    const grantIds = grants.map((g) => g.id);
+    const recipientIds = recipients.map((r) => r.id);
+
+    const goalsToDestroy = await Goal.unscoped().findAll({
       where: {
-        grantId: [
-          grantOne.id,
-          grantTwo.id,
-          addingRecipientGrantOne.id,
-          addingRecipientGrantTwo.id,
-          defaultGoalGrant.id,
-        ],
+        grantId: grantIds,
       },
     });
 
@@ -488,16 +484,9 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id } })),
-    );
-
-    await Promise.all(
-      recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })),
-    );
-
+    await Grant.destroy({ where: { id: grantIds } });
+    await Recipient.destroy({ where: { id: recipientIds } });
     await User.destroy({ where: { id: [mockUser.id] } });
-
     await db.sequelize.close();
   });
 
