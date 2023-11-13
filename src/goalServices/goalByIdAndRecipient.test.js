@@ -18,11 +18,11 @@ import db, {
   ActivityReportObjectiveTopic,
   File,
   Resource,
-} from '../../models';
-import { createReport, destroyReport } from '../../testUtils';
-import { processObjectiveForResourcesById } from '../resource';
-import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from '../goals';
-import { FILE_STATUSES } from '../../constants';
+} from '../models';
+import { createReport, destroyReport } from '../testUtils';
+import { processObjectiveForResourcesById } from '../services/resource';
+import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from './goals';
+import { FILE_STATUSES } from '../constants';
 
 describe('goalById', () => {
   let grantRecipient;

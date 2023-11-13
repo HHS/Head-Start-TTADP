@@ -5,22 +5,27 @@ import db, {
   Recipient,
   Grant,
   Goal,
-  Objective,
-  ActivityReport,
-  ActivityReportGoal,
-  ActivityRecipient,
   GoalTemplate,
+  Objective,
+  ActivityReportGoal,
+  ActivityReport,
+  ActivityRecipient,
   User,
 } from '../models';
 import {
   reduceObjectives,
   reduceObjectivesForActivityReport,
+  determineMergeGoalStatus,
   createMultiRecipientGoalsFromAdmin,
 } from './goals';
-import { OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
-import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
+import {
+  OBJECTIVE_STATUS,
+  AUTOMATIC_CREATION,
+  GOAL_STATUS,
+} from '../constants';
+import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 
-jest.mock('./goalTemplates', () => ({
+jest.mock('../services/goalTemplates', () => ({
   setFieldPromptsForCuratedTemplate: jest.fn(),
 }));
 
@@ -257,6 +262,48 @@ describe('Goals DB service', () => {
       expect(response.data).toEqual(data);
       expect(response.goals.length).toBe(1);
       expect(response.goals[0].name).toBe(goalText);
+    });
+  });
+
+  describe('determineMergeGoalStatus', () => {
+    it('at least one in progress', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.IN_PROGRESS,
+        GOAL_STATUS.CLOSED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.IN_PROGRESS);
+    });
+
+    it('at least one closed', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.CLOSED,
+        GOAL_STATUS.SUSPENDED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.CLOSED);
+    });
+
+    it('at least one suspended', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.NOT_STARTED,
+      ]);
+      expect(status).toBe(GOAL_STATUS.SUSPENDED);
+    });
+
+    it('not started', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.DRAFT,
+      ]);
+      expect(status).toBe(GOAL_STATUS.NOT_STARTED);
+    });
+
+    it('DRAFT', async () => {
+      const status = determineMergeGoalStatus([
+        GOAL_STATUS.DRAFT,
+        GOAL_STATUS.DRAFT,
+      ]);
+      expect(status).toBe(GOAL_STATUS.DRAFT);
     });
   });
 

@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { destroyGoal } from '../goals';
+import { destroyGoal } from './goals';
 import db, {
   Goal,
   Grant,
@@ -10,10 +10,10 @@ import db, {
   Resource,
   ObjectiveFile,
   File,
-} from '../../models';
-import { processObjectiveForResourcesById } from '../resource';
-import { auditLogger } from '../../logger';
-import { FILE_STATUSES } from '../../constants';
+} from '../models';
+import { processObjectiveForResourcesById } from '../services/resource';
+import { auditLogger } from '../logger';
+import { FILE_STATUSES } from '../constants';
 
 describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
