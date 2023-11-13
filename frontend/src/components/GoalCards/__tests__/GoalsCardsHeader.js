@@ -3,6 +3,7 @@ import { render, act, screen } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import GoalCardsHeader from '../GoalsCardsHeader';
 import UserContext from '../../../UserContext';
 
@@ -84,6 +85,8 @@ describe('GoalDataController', () => {
   });
 
   it('displays correct singular message with merged goals', async () => {
+    const url = `/api/goals/similar/${RECIPIENT_ID}`;
+    fetchMock.get(url, {});
     act(() => {
       renderTest(
         {}, // props
