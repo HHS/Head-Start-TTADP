@@ -46,6 +46,12 @@ export default (sequelize, DataTypes) => {
         otherKey: 'sessionReportPilotId',
         as: 'sessions',
       });
+      File.belongsToMany(models.CommunicationLog, {
+        through: models.CommunicationLogFile,
+        foreignKey: 'fileId',
+        otherKey: 'communicationLogId',
+        as: 'logs',
+      });
     }
   }
   File.init({
