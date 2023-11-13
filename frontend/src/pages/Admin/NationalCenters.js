@@ -25,8 +25,10 @@ export default function NationalCenters({ match }) {
     async function fetchNationalCenters() {
       setError(null);
       try {
-        const fetchedNationalCenters = await getNationalCenters();
-        setNationalCenters(fetchedNationalCenters);
+        const { centers, users } = await getNationalCenters();
+        console.log('\n\n\n----Fetched centers: ', centers);
+        console.log('\n\n\n----Fetched Users: ', users);
+        setNationalCenters(centers);
       } catch (e) {
         setError('Error fetching national centers');
         setNationalCenters([]);

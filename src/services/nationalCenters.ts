@@ -1,13 +1,22 @@
 import { auditLogger } from '../logger';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 
-const { NationalCenter } = db;
+const { NationalCenter, User, Permission } = db;
+
+const { READ_WRITE_TRAINING_REPORTS } = SCOPES;
 
 interface NationalCenterType {
   name: string;
   id: number;
   mapsTo?: number;
 }
+
+interface NationalCenterUserType {
+  name: string;
+  id: number;
+}
+
 interface NCModel extends NationalCenterType {
   destroy: (args: { individualHooks: boolean }) => Promise<void>;
   save: () => Promise<void>;
@@ -16,11 +25,27 @@ interface NCModel extends NationalCenterType {
 
 export async function findAll(): Promise<NationalCenterType[]> {
   return NationalCenter.findAll({
-    where: {
-      mapsTo: null,
-    },
-    attributes: ['id', 'name', 'mapsTo'],
+    attributes: ['id', 'name'],
+    include: [{
+      // National Center Users.
+      model: User,
+      as: 'users',
+      attributes: ['id', 'name'],
+    }],
     order: [['name', 'ASC']],
+  });
+}
+
+export async function findAllNationalCenterUsers(): Promise<NationalCenterUserType[]> {
+  // Get all users that have READ_WRITE_TRAINING_REPORTS permission.
+  return User.findAll({
+    attributes: ['id', 'name'],
+    include: [{
+      attributes: [],
+      model: Permission,
+      as: 'permissions',
+      where: { scopeId: READ_WRITE_TRAINING_REPORTS },
+    }],
   });
 }
 
