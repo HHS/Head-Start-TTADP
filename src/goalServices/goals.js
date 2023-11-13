@@ -1534,7 +1534,7 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
     });
   } catch (error) {
     auditLogger.error(
-      ` SERVICE:GOALS:setActivityReportGoalsAsActivielyEdited\nunable to update ActivityReportGoals table \n${error}`,
+      ` SERVICE:GOALS:setActivityReportGoalsAsActivelyEdited\nunable to update ActivityReportGoals table \n${error}`,
     );
 
     return [];
