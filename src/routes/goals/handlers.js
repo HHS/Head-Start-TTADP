@@ -10,7 +10,7 @@ import {
   destroyGoal,
   mergeGoals,
   goalRegionsById,
-} from '../../services/goals';
+} from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';

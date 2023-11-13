@@ -15,10 +15,10 @@ import {
   Objective,
   ObjectiveTopic,
   Topic,
-} from '../../models';
+} from '../models';
 
-import { getGoalsByActivityRecipient } from '../recipient';
-import { OBJECTIVE_STATUS, CREATION_METHOD } from '../../constants';
+import { getGoalsByActivityRecipient } from '../services/recipient';
+import { OBJECTIVE_STATUS, CREATION_METHOD } from '../constants';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
