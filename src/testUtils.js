@@ -245,11 +245,11 @@ export async function createGoal(goal) {
   }
   const dg = defaultGoal();
   const dbGoalTemplate = goal.goalTemplateId
-    ? { id: goal.goalTemplateId }
-    : await GoalTemplate.findOrCreate({
+  ? { id: goal.goalTemplateId }
+  : (await GoalTemplate.findOrCreate({
       where: { templateName: dg.name },
       defaults: { templateName: dg.name },
-    });
+    }))[0];
   const dbGoal = await Goal.create({
     ...dg,
     ...goal,
