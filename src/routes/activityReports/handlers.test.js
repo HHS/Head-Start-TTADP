@@ -85,7 +85,7 @@ jest.mock('../../services/activityReportApprovers', () => ({
 
 jest.mock('../../services/accessValidation');
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   copyGoalsToGrants: jest.fn(),
   setActivityReportGoalAsActivelyEdited: jest.fn(),
 }));
