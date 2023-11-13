@@ -7,7 +7,7 @@ import db, {
   ObjectiveTopic,
   Resource,
 } from '../../models';
-import { saveObjectiveAssociations } from './goals';
+import { saveObjectiveAssociations } from '../goals';
 import { OBJECTIVE_STATUS } from '../../constants';
 
 describe('saveObjectiveAssociations', () => {

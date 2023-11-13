@@ -9,7 +9,7 @@ import {
   goalByIdAndRecipient,
   destroyGoal,
   getGoalIdsBySimilarity,
-} from '../../services/goalServices/goals';
+} from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';

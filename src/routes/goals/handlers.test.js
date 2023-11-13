@@ -20,7 +20,7 @@ import {
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
   getGoalIdsBySimilarity,
-} from '../../services/goalServices/goals';
+} from '../../services/goals';
 import { currentUserId } from '../../services/currentUser';
 
 jest.mock('../../services/users', () => ({

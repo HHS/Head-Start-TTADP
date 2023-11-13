@@ -38,7 +38,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { setActivityReportGoalAsActivelyEdited } from '../../services/goalServices/goals';
+import { setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';

@@ -2,7 +2,7 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { createOrUpdateGoalsForActivityReport } from './goals';
-import { saveObjectivesForReport, getObjectivesByReportId } from '../objectives';
+import { saveObjectivesForReport, getObjectivesByReportId } from './objectives';
 import db, {
   Goal,
   Grant,
@@ -14,7 +14,7 @@ import db, {
   User,
   OtherEntity,
   ActivityRecipient,
-} from '../../models';
+} from '../models';
 
 const mockUser = {
   id: faker.datatype.number(),

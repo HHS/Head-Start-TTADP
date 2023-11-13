@@ -9,7 +9,7 @@ import {
   createGrant,
 } from '../../testUtils';
 import { CREATION_METHOD, GOAL_STATUS } from '../../constants';
-import { getGoalIdsBySimilarity } from './goals';
+import { getGoalIdsBySimilarity } from '../goals';
 
 describe('getGoalIdsBySimilarity', () => {
   let goalGroupOne = [];
