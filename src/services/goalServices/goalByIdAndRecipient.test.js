@@ -21,7 +21,7 @@ import db, {
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
 import { processObjectiveForResourcesById } from '../resource';
-import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from '../goals';
+import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from './goals';
 import { FILE_STATUSES } from '../../constants';
 
 describe('goalById', () => {

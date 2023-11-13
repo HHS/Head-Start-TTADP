@@ -3,7 +3,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import {
   setActivityReportGoalAsActivelyEdited,
   getGoalsForReport,
-} from '../goals';
+} from './goals';
 import {
   Goal,
   ActivityReport,

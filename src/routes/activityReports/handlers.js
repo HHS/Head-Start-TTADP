@@ -33,7 +33,7 @@ import {
 } from '../../services/activityReports';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
+import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goalServices/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { logger } from '../../logger';

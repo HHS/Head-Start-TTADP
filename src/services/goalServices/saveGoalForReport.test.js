@@ -17,7 +17,7 @@ import db, {
   ObjectiveResource,
   Resource,
 } from '../../models';
-import { saveGoalsForReport } from '../goals';
+import { saveGoalsForReport } from './goals';
 import { activityReportAndRecipientsById } from '../activityReports';
 import { processObjectiveForResourcesById } from '../resource';
 
