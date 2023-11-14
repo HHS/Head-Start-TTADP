@@ -65,6 +65,14 @@ const createLog = async (
   data,
 });
 
+const LOG_INCLUDE_ATTRIBUTES = {
+  include: [
+    [
+      sequelize.col('author.name'), 'authorName',
+    ],
+  ],
+};
+
 const LOG_WHERE_OPTIONS = (id: number) => ({
   where: {
     id,
@@ -73,6 +81,14 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
     {
       model: db.File,
       as: 'files',
+    },
+    {
+      model: db.User,
+      attributes: [
+        'name',
+        'id',
+      ],
+      as: 'author',
     },
   ],
 });
@@ -87,13 +103,7 @@ const logsByRecipientAndScopes = async (
   scopes: WhereOptions[] = [],
 ) => CommunicationLog
   .findAndCountAll({
-    attributes: {
-      include: [
-        [
-          sequelize.col('author.name'), 'authorName',
-        ],
-      ],
-    },
+    attributes: LOG_INCLUDE_ATTRIBUTES,
     where: {
       recipientId,
       [Op.and]: [
@@ -121,7 +131,13 @@ const deleteLog = async (id: number) => CommunicationLog.destroy({
 });
 
 const updateLog = async (id: number, logData: CommLog) => {
-  const { files, ...data } = logData;
+  const {
+    files,
+    id: logId,
+    userId,
+    recipientId,
+    ...data
+  } = logData;
   const log = await CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
   return log.update({ data });
 };
