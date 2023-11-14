@@ -152,7 +152,35 @@ describe('nationalCenters service', () => {
   describe('create', () => {
     let center;
     const centerName = faker.lorem.words(8);
-    afterAll(async () => {
+    let mockNcUser;
+    beforeEach(async () => {
+      // Create mock user.
+      mockNcUser = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+    });
+
+    afterEach(async () => {
+      // Destroy NationalCenterUser.
+      await db.NationalCenterUser.destroy({
+        where: {
+          nationalCenterId: center.id,
+        },
+      });
+
+      // Destroy User.
+      await db.User.destroy({
+        where: {
+          id: mockNcUser.id,
+        },
+      });
+
+      // Destroy NationalCenter.
       await db.NationalCenter.destroy({
         where: {
           id: center.id,
@@ -161,10 +189,16 @@ describe('nationalCenters service', () => {
       });
     });
 
-    it('creates a nationalCenter', async () => {
-      center = await create({ name: centerName });
-
+    it('creates a nationalCenter without a user', async () => {
+      center = await create({ name: centerName }, null);
       expect(center.name).toBe(centerName);
+    });
+
+    it('creates a nationalCenter with a user', async () => {
+      center = await create({ name: centerName }, mockNcUser.id);
+      expect(center.name).toBe(centerName);
+      expect(center.users.length).toBe(1);
+      expect(center.users[0].name).toBe(mockNcUser.name);
     });
   });
 
@@ -388,21 +422,59 @@ describe('nationalCenters service', () => {
   });
   describe('deleteById', () => {
     let center;
+    let centerWithUser;
     const centerName = faker.lorem.words(8);
+    const centerNameWitUserName = faker.lorem.words(8);
+    let mockNcUser;
     beforeAll(async () => {
+      // Create mock user.
+      mockNcUser = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      // Create National Center.
       center = await db.NationalCenter.create({ name: centerName });
+
+      // Create National Center with user.
+      centerWithUser = await db.NationalCenter.create({ name: centerNameWitUserName });
+
+      // Create National Center User.
+      await db.NationalCenterUser.create({
+        nationalCenterId: centerWithUser.id,
+        userId: mockNcUser.id,
+      });
     });
 
     afterAll(async () => {
+      // Destroy NationalCenterUser.
+      await db.NationalCenterUser.destroy({
+        where: {
+          nationalCenterId: center.id,
+        },
+      });
+
+      // Destroy User.
+      await db.User.destroy({
+        where: {
+          id: mockNcUser.id,
+        },
+      });
+
+      // Destroy NationalCenter.
       await db.NationalCenter.destroy({
         where: {
-          id: center.id,
+          id: [center.id, centerWithUser.id],
         },
         force: true,
       });
     });
 
-    it('deletes a nationalCenter', async () => {
+    it('deletes a nationalCenter without a user', async () => {
       await deleteById(center.id);
       const results = await db.NationalCenter.findAll({
         where: {
@@ -410,6 +482,23 @@ describe('nationalCenters service', () => {
         },
       });
       expect(results.length).toBe(0);
+    });
+
+    it('deletes a nationalCenter with a user', async () => {
+      await deleteById(centerWithUser.id);
+      const results = await db.NationalCenter.findAll({
+        where: {
+          id: centerWithUser.id,
+        },
+      });
+      expect(results.length).toBe(0);
+
+      const results2 = await db.NationalCenterUser.findAll({
+        where: {
+          nationalCenterId: centerWithUser.id,
+        },
+      });
+      expect(results2.length).toBe(0);
     });
   });
 });

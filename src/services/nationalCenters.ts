@@ -72,8 +72,22 @@ export async function findById(id: number): Promise<NCModel> {
 }
 
 export async function create(nationalCenter
-: { name: string, mapsTo?: number }): Promise<NationalCenterType> {
-  return NationalCenter.create(nationalCenter);
+: { name: string }, userId: number): Promise<NationalCenterType> {
+  // Create NationalCenter.
+  const createdNationalCenter = await NationalCenter.create(nationalCenter);
+
+  // If we have a userId, create NationalCenterUser.
+  if (userId) {
+    // Create NationalCenterUser.
+    await NationalCenterUser.create(
+      {
+        userId,
+        nationalCenterId: createdNationalCenter.id,
+      },
+      { individualHooks: true },
+    );
+  }
+  return findById(createdNationalCenter.id);
 }
 
 export async function updateById(id: number, data: { name: string, userId: number })
@@ -125,6 +139,17 @@ export async function updateById(id: number, data: { name: string, userId: numbe
 }
 
 export async function deleteById(id: number) {
+  // Get national center to delete.
+  const toDelete = await findById(id);
+
+  // Delete national center user.
+  if (toDelete.users.length) {
+    await NationalCenterUser.destroy({
+      where: { nationalCenterId: id },
+      individualHooks: true,
+    });
+  }
+  // Delete national center.
   return NationalCenter.destroy({
     where: { id },
     individualHooks: true,
