@@ -2961,7 +2961,7 @@ export async function getGoalIdsBySimilarity(similarityResponse) {
         {
           id: group,
           '$"goalTemplate"."creationMethod"$': {
-            [Op.is]: null,
+            [Op.ne]: CREATION_METHOD.CURATED,
           },
         },
         {

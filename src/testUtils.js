@@ -273,7 +273,13 @@ export async function destroyGoal(goal) {
  * @param {string} name? template name
  * @returns GoalTemplate sequelize.model object
  */
-export async function createGoalTemplate({ name = null } = {}) {
+export async function createGoalTemplate({
+  name = null,
+  creationMethod = AUTOMATIC_CREATION,
+} = {
+  name: null,
+  creationMethod: AUTOMATIC_CREATION,
+}) {
   const n = faker.lorem.sentence(5);
   const varForNameOrN = name || n;
   const secret = 'secret';
@@ -285,6 +291,6 @@ export async function createGoalTemplate({ name = null } = {}) {
   return GoalTemplate.create({
     hash,
     templateName: varForNameOrN,
-    creationMethod: AUTOMATIC_CREATION,
+    creationMethod,
   });
 }
