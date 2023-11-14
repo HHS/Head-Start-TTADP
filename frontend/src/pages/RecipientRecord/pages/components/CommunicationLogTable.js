@@ -62,7 +62,7 @@ export default function CommunicationLogTable({
           {logs.map((log) => (
             <tr>
               <td data-label="Date">
-                <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}`}>
+                <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
                   {log.data.communicationDate}
                 </Link>
               </td>

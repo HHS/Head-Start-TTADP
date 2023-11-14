@@ -22,6 +22,7 @@ import FeatureFlag from '../../components/FeatureFlag';
 import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
+import ViewCommunicationLog from './pages/ViewCommunicationLog';
 
 function PageWithHeading({
   children,
@@ -334,6 +335,20 @@ export default function RecipientRecord({ match, hasAlerts }) {
                   recipientNameWithRegion={recipientNameWithRegion}
                 />
               </PageWithHeading>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
+          render={({ match: routerMatch }) => (
+            <FeatureFlag
+              flag="communication_log"
+              renderNotFound
+            >
+              <ViewCommunicationLog
+                recipientName={recipientName}
+                match={routerMatch}
+              />
             </FeatureFlag>
           )}
         />
