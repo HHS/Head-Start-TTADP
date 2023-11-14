@@ -8,10 +8,17 @@ import {
   findSessionsByEventId,
   updateSession,
   getPossibleSessionParticipants,
+  findSessionHelper,
 } from './sessionReports';
+import sessionReportPilot from '../models/sessionReportPilot';
+
+jest.mock('bull');
 
 describe('session reports service', () => {
-  let eventId;
+  let event;
+
+  const eventId = 'R01-PD-99_888';
+  const eventIdSubstring = '99_888';
 
   beforeAll(async () => {
     const eventData = {
@@ -19,24 +26,26 @@ describe('session reports service', () => {
       regionId: 99_888,
       pocIds: [99_888],
       collaboratorIds: [99_888],
-      data: {},
+      data: {
+        eventId,
+      },
     };
     const created = await createEvent(eventData);
-    eventId = created.id;
+    event = created;
   });
 
   afterAll(async () => {
-    await destroyEvent(eventId);
+    await destroyEvent(event.id);
     await db.sequelize.close();
   });
 
   describe('createSession', () => {
     it('works', async () => {
-      const created = await createSession({ eventId, data: {} });
+      const created = await createSession({ eventId: event.id, data: {} });
 
       expect(created).toMatchObject({
         id: expect.anything(),
-        eventId,
+        eventId: eventIdSubstring,
       });
 
       await destroySession(created.id);
@@ -45,10 +54,10 @@ describe('session reports service', () => {
 
   describe('updateSession', () => {
     it('works', async () => {
-      const created = await createSession({ eventId, data: {} });
+      const created = await createSession({ eventId: event.id, data: {} });
 
       const updatedData = {
-        eventId,
+        eventId: eventIdSubstring,
         data: {
           harry: 'potter',
         },
@@ -56,7 +65,7 @@ describe('session reports service', () => {
       const updated = await updateSession(created.id, updatedData);
 
       expect(updated).toMatchObject({
-        eventId,
+        eventId: eventIdSubstring,
         data: updatedData.data,
       });
 
@@ -67,12 +76,12 @@ describe('session reports service', () => {
       const found = await findSessionById(99_999);
       expect(found).toBeNull();
 
-      const updatedData = { eventId, data: { harry: 'potter' } };
+      const updatedData = { eventId: event.id, data: { harry: 'potter' } };
       const updated = await updateSession(99_999, updatedData);
 
       expect(updated).toMatchObject({
         id: expect.anything(),
-        eventId,
+        eventId: eventIdSubstring,
         data: updatedData.data,
       });
 
@@ -82,13 +91,13 @@ describe('session reports service', () => {
 
   describe('findSessionById', () => {
     it('works', async () => {
-      const created = await createSession({ eventId, data: {} });
+      const created = await createSession({ eventId: event.id, data: {} });
 
       const found = await findSessionById(created.id);
 
       expect(found).toMatchObject({
         id: created.id,
-        eventId,
+        eventId: eventIdSubstring,
       });
 
       await destroySession(created.id);
@@ -97,20 +106,20 @@ describe('session reports service', () => {
 
   describe('findSessionsByEventId', () => {
     it('works', async () => {
-      const created1 = await createSession({ eventId, data: {} });
-      const created2 = await createSession({ eventId, data: {} });
+      const created1 = await createSession({ eventId: event.id, data: {} });
+      const created2 = await createSession({ eventId: event.id, data: {} });
 
-      const found = await findSessionsByEventId(eventId);
+      const found = await findSessionsByEventId(event.id);
 
       expect(found).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: created1.id,
-            eventId,
+            eventId: event.id,
           }),
           expect.objectContaining({
             id: created2.id,
-            eventId,
+            eventId: event.id,
           }),
         ]),
       );
@@ -200,6 +209,45 @@ describe('session reports service', () => {
       expect(participants[0]).toHaveProperty('id');
       expect(participants[0]).toHaveProperty('name');
       expect(participants[0].grants.length).toBe(1);
+    });
+  });
+  describe('findSessionHelper', () => {
+    let createdEvent;
+    let sessionIds;
+    beforeAll(async () => {
+      const eventData = {
+        ownerId: 99_989,
+        regionId: 99_888,
+        pocIds: [99_888],
+        collaboratorIds: [99_888],
+        data: {
+          eventId,
+        },
+      };
+      createdEvent = await createEvent(eventData);
+
+      // Create Sessions.
+      const session1 = await createSession({ eventId: createdEvent.id, data: { startDate: '04/20/2022' } });
+      const session2 = await createSession({ eventId: createdEvent.id, data: { startDate: '01/01/2023' } });
+      const session3 = await createSession({ eventId: createdEvent.id, data: { startDate: '02/10/2022' } });
+      sessionIds = [session1.id, session2.id, session3.id];
+    });
+
+    afterAll(async () => {
+      await sessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+      destroyEvent(createdEvent.id);
+    });
+
+    it('check sessions sort order', async () => {
+      const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
+      expect(sessions.length).toBe(3);
+      expect(sessions[0].data.startDate).toBe('02/10/2022');
+      expect(sessions[1].data.startDate).toBe('04/20/2022');
+      expect(sessions[2].data.startDate).toBe('01/01/2023');
     });
   });
 });

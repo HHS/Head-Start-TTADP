@@ -55,6 +55,7 @@ import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import useGaUserData from './hooks/useGaUserData';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -73,6 +74,8 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useGaUserData(user);
 
   useEffect(() => {
     try {
@@ -272,7 +275,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/view/:trainingReportId([0-9]*)"
+          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
@@ -283,7 +286,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>
@@ -294,7 +297,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="training_reports" renderNotFound>

@@ -57,14 +57,25 @@ export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updated
   if (Number.isNaN(idRegion)) {
     throw new Error('Region ID must be a number');
   }
-
   const goalsParam = goalIds.map((goalId) => `goalIds=${goalId}`);
   const recipientGoalsUrl = join(recipientUrl, recipientId, 'region', regionId, 'goals');
   const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${goalsParam && goalsParam.length ? `&${goalsParam.join('&')}` : ''}${filters ? `&${filters}` : ''}`);
   return goals.json();
 };
 
+export const getMergeGoalPermissions = async (recipientId, regionId) => {
+  const url = join(recipientUrl, recipientId, 'region', regionId, 'merge-permissions');
+  const res = await get(url);
+  return res.json();
+};
+
 export const getRecipientAndGrantsByUser = async () => {
   const recipients = await get(join(recipientUrl, 'user'));
   return recipients.json();
+};
+
+export const getRecipientLeadership = async (recipientId, regionId) => {
+  const url = join(recipientUrl, recipientId, 'region', regionId, 'leadership');
+  const leadership = await get(url);
+  return leadership.json();
 };

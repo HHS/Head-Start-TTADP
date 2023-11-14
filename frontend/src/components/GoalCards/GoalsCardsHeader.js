@@ -7,6 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
+import { sampleSize } from 'lodash';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
@@ -36,6 +37,9 @@ export default function GoalCardsHeader({
   createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
+  canMergeGoals,
+  shouldDisplayMergeSuccess,
+  dismissMergeSuccess,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -43,7 +47,7 @@ export default function GoalCardsHeader({
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
       sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
     });
   };
@@ -52,6 +56,19 @@ export default function GoalCardsHeader({
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
+
+  const goalMergeGroups = [
+    sampleSize(pageGoalIds, 5),
+    sampleSize(pageGoalIds, 2),
+  ];
+
+  const mergedGoals = (() => {
+    if (history.location && history.location.state) {
+      return history.location.state.mergedGoals;
+    }
+
+    return null;
+  })();
 
   return (
     <div className="padding-x-3 position-relative">
@@ -103,8 +120,33 @@ export default function GoalCardsHeader({
           />
         </div>
         )}
-
       </div>
+      {(canMergeGoals && goalMergeGroups.length) && (
+        <FeatureFlag flag="merge_goals">
+          <div className="usa-alert usa-alert--info" data-testid="alert">
+            <div className="usa-alert__body">
+              <div className="usa-alert__text">
+                <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
+                <ul className="usa-list">
+                  {goalMergeGroups.filter((g) => g.length).map((group) => (
+                    <li key={group.join('-')}>
+                      <Link
+                        to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge?${group.map((g) => `goalId[]=${g}`).join('&')}`}
+                      >
+                        Review
+                        {' '}
+                        {group.length}
+                        {' '}
+                        similar goals
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </FeatureFlag>
+      )}
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
@@ -188,6 +230,31 @@ export default function GoalCardsHeader({
             )
             : null
             }
+        {
+          (shouldDisplayMergeSuccess && mergedGoals)
+            ? (
+              <FeatureFlag flag="merge_goals">
+                <Alert className="margin-top-3" type="success">
+                  Goal
+                  {mergedGoals.length === 1 ? ' ' : 's '}
+                  {' '}
+                  {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
+                  {' '}
+                  {mergedGoals.length === 1 ? 'has' : 'have'}
+                  {' '}
+                  been merged.
+                  <button
+                    type="button"
+                    className="usa-button usa-button--unstyled margin-left-1"
+                    onClick={() => dismissMergeSuccess()}
+                  >
+                    Reset goal sort order
+                  </button>
+                </Alert>
+              </FeatureFlag>
+            )
+            : null
+            }
       </div>
     </div>
   );
@@ -221,6 +288,9 @@ GoalCardsHeader.propTypes = {
   createRttapa: PropTypes.func.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

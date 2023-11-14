@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { OBJECTIVE_STATUS } from '../../constants';
+import { validateChangedOrSetEnums } from '../helpers/enum';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -277,6 +278,7 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
+  validateChangedOrSetEnums(sequelize, instance);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {

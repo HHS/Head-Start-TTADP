@@ -14,7 +14,7 @@ import { COMPLETE } from '../../../components/Navigator/constants';
 
 describe('TrainingReportForm', () => {
   const history = createMemoryHistory();
-  const sessionsUrl = '/api/session-reports/eventId/1';
+  const sessionsUrl = '/api/session-reports/eventId/1234';
 
   const renderTrainingReportForm = (trainingReportId, currentPage) => render(
     <Router history={history}>
@@ -41,11 +41,12 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/users/training-report-users?regionId=1', {
       pointOfContact: [],
       collaborators: [],
+      creators: [],
     });
   });
 
   it('renders training report form', async () => {
-    fetchMock.getOnce('/api/events/id/1', {
+    fetchMock.get('/api/events/id/1', {
       id: 1,
       name: 'test event',
       regionId: '1',
@@ -65,7 +66,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('redirects to event summary', async () => {
-    fetchMock.getOnce('/api/events/id/1', {
+    fetchMock.get('/api/events/id/1', {
       id: 1,
       name: 'test event',
       regionId: '1',
@@ -88,7 +89,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('renders training report form if pocId is null', async () => {
-    fetchMock.getOnce('/api/events/id/1', {
+    fetchMock.get('/api/events/id/1', {
       id: 1,
       name: 'test event',
       regionId: '1',
@@ -112,7 +113,7 @@ describe('TrainingReportForm', () => {
     fetchMock.reset();
     fetchMock.get('/api/users/training-report-users?regionId=1', 500);
 
-    fetchMock.getOnce('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123', {
       regionId: '1',
       reportId: 1,
       collaboratorIds: [],
@@ -129,7 +130,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('fetches event report data', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123', {
       regionId: '1',
       reportId: 1,
       collaboratorIds: [],
@@ -145,7 +146,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('displays error when event report fails to load', async () => {
-    fetchMock.getOnce('/api/events/id/123', 500);
+    fetchMock.get('/api/events/id/123', 500);
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
     });
@@ -155,7 +156,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('displays "no training report id provided" error', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123', {
       regionId: '1',
       reportId: 1,
       data: {},
@@ -173,10 +174,11 @@ describe('TrainingReportForm', () => {
   });
 
   it('tests the on save & continue button', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123', {
       regionId: '1',
       reportId: 1,
       data: {
+        eventId: 'R01-PD-1234',
         eventIntendedAudience: 'recipients',
         eventOrganizer: 'Regional PD Event (with National Centers)',
         targetPopulations: ['Infants and Toddlers (ages birth to 3)'],
@@ -221,7 +223,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('tests the on save draft event', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123', {
       regionId: '1',
       reportId: 1,
       data: {},
@@ -254,7 +256,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('shows an error when failing to save', async () => {
-    fetchMock.getOnce('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123', {
       regionId: '1',
       reportId: 1,
       data: {},
@@ -326,6 +328,9 @@ describe('TrainingReportForm', () => {
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
+      data: {
+        eventId: 'R01-PD-1234',
+      },
     });
 
     fetchMock.put('/api/events/id/1', {
@@ -369,6 +374,9 @@ describe('TrainingReportForm', () => {
       reportId: 1,
       collaboratorIds: [],
       ownerId: 1,
+      data: {
+        eventId: 'R01-PD-1234',
+      },
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
       },
@@ -377,7 +385,9 @@ describe('TrainingReportForm', () => {
     fetchMock.put('/api/events/id/1', {
       regionId: '1',
       reportId: 1,
-      data: {},
+      data: {
+        eventId: 'R01-PD-1234',
+      },
       ownerId: 1,
       owner: {
         id: 1, name: 'Ted User', email: 'ted.user@computers.always',
@@ -421,6 +431,7 @@ describe('TrainingReportForm', () => {
       },
       pocIds: [1],
       data: {
+        eventId: 'R01-PD-1234',
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
         startDate: '01/01/2021',
@@ -431,7 +442,6 @@ describe('TrainingReportForm', () => {
         status: 'In progress',
         vision: 'asdf',
         goal: 'afdf',
-        eventId: 'E-1',
         eventName: 'E-1 Event',
         pageState: {
           1: COMPLETE,
@@ -493,7 +503,7 @@ describe('TrainingReportForm', () => {
         status: 'In progress',
         vision: 'asdf',
         goal: 'afdf',
-        eventId: 'E-1',
+        eventId: 'R01-PD-1234',
         eventName: 'E-1 Event',
         pageState: {
           1: COMPLETE,
@@ -555,7 +565,7 @@ describe('TrainingReportForm', () => {
         status: 'In progress',
         vision: 'asdf',
         goal: 'afdf',
-        eventId: 'E-1',
+        eventId: 'R01-PD-1234',
         eventName: 'E-1 Event',
         pageState: {
           1: COMPLETE,
@@ -608,6 +618,7 @@ describe('TrainingReportForm', () => {
       },
       pocIds: [1],
       data: {
+        eventId: 'R01-PD-1234',
         eventOrganizer: 'IST TTA/Visit',
         eventIntendedAudience: 'recipients',
         startDate: '01/01/2021',
@@ -618,7 +629,6 @@ describe('TrainingReportForm', () => {
         status: 'In progress',
         vision: 'asdf',
         goal: 'afdf',
-        eventId: 'E-1',
         eventName: 'E-1 Event',
         pageState: {
           1: COMPLETE,
@@ -628,6 +638,7 @@ describe('TrainingReportForm', () => {
     };
 
     fetchMock.get('/api/events/id/1', completedForm);
+
     fetchMock.put('/api/events/id/1', 500);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
