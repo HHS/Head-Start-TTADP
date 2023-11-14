@@ -220,7 +220,7 @@ export default function RTTAPA({
 
           <div className="margin-top-3">
             <Button type="submit">Submit RTTAPA</Button>
-            <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`} className="usa-button usa-button--outline">
+            <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`} className="usa-button usa-button--outline">
               Cancel
             </Link>
           </div>

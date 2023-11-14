@@ -28,8 +28,57 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnApprovedAR(sequelize, instance, options);
 };
 
+const syncActivityReportGoalFieldResponses = async (sequelize, instance, options) => {
+  if (instance.onApprovedAR === false) {
+    const changed = instance.changed();
+    if (instance.id !== null
+    && Array.isArray(changed)
+    && changed.includes('response')) {
+      // Update all ActivityReportGoalFieldResponses with this goalId and promptId.
+      const { goalId, goalTemplateFieldPromptId } = instance;
+
+      // Get ids to update (sequelize update doesn't support joins...)
+      const idsToUpdate = await sequelize.models.ActivityReportGoalFieldResponse.findAll(
+        {
+          attributes: ['id'],
+          where: {
+            goalTemplateFieldPromptId,
+          },
+          include: {
+            attributes: [],
+            required: true,
+            model: sequelize.models.ActivityReportGoal,
+            as: 'activityReportGoal',
+            where: {
+              goalId,
+            },
+          },
+        },
+      );
+
+      // Get ids to update.
+      const ids = idsToUpdate.map((item) => item.id);
+
+      // Perform the update.
+      await sequelize.models.ActivityReportGoalFieldResponse.update(
+        { response: instance.response },
+        {
+          where: {
+            id: ids,
+          },
+        },
+      );
+    }
+  }
+};
+
+const afterUpdate = async (sequelize, instance, options) => {
+  await syncActivityReportGoalFieldResponses(sequelize, instance, options);
+};
+
 export {
   autoPopulateOnAR,
   autoPopulateOnApprovedAR,
   beforeValidate,
+  afterUpdate,
 };

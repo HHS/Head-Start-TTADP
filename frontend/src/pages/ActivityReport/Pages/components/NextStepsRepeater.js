@@ -7,10 +7,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
-import colors from '../../../../colors';
+
 import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
+import Req from '../../../../components/Req';
+import PlusButton from '../../../../components/GoalForm/PlusButton';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -108,10 +109,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-${index + 1}`}
               >
                 {`Step ${index + 1}`}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                <Req />
               </Label>
               {(errors[name]
                 && errors[name][index] && errors[name][index].note)
@@ -130,6 +128,7 @@ export default function NextStepsRepeater({
                   data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
                   style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
                   onChange={(e) => onStepTextChanged(e, index)}
+                  required
                 />
                 {canDelete ? (
                   <Button
@@ -158,10 +157,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
                 {dateLabel(index)}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                <Req announce />
               </Label>
               {(errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
@@ -184,19 +180,12 @@ export default function NextStepsRepeater({
         ))}
       </div>
 
-      <Button
-        type="button"
-        unstyled
+      <PlusButton
         onClick={onAddNewStep}
-        className="ttahub-next-steps__add-step-button margin-bottom-2"
-        data-testid={
-          `${name === 'specialistNextSteps'
-            ? 'specialist' : 'recipient'}NextSteps-button`
-        }
-      >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
-        Add next step
-      </Button>
+        text="Add next step"
+        testId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-button`}
+        className="margin-bottom-2"
+      />
     </>
   );
 }

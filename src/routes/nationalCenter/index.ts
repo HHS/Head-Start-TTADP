@@ -6,7 +6,8 @@ import {
 } from './handlers';
 
 const router = express.Router();
+const context = 'nationalCenter';
 
-router.get('/', authMiddleware, transactionWrapper(getHandler));
+router.get('/', authMiddleware, transactionWrapper(getHandler, context));
 
 export default router;

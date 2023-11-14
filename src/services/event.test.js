@@ -1,12 +1,13 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
 import { Op } from 'sequelize';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import {
   createEvent,
   updateEvent,
   destroyEvent,
-  findEventById,
+  findEventByDbId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByCollaboratorId,
@@ -25,6 +26,11 @@ describe('event service', () => {
     collaboratorIds: [num],
     data: {
       status: 'active',
+      owner: {
+        id: num,
+        name: 'test',
+        email: 'test@test.com',
+      },
     },
   });
 
@@ -72,8 +78,35 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('update owner json', async () => {
+      const created = await createAnEvent(99_927);
+      const newOwner = await db.User.create({
+        homeRegionId: 1,
+        name: 'New Owner',
+        hsesUsername: 'DF431423',
+        hsesUserId: 'DF431423',
+        email: 'newowner@test.com',
+        role: [],
+        lastLogin: new Date(),
+      });
+
+      const updated = await updateEvent(created.id, {
+        ownerId: newOwner.id,
+        pocIds: [123],
+        regionId: 123,
+        collaboratorIds: [123],
+        data: {},
+      });
+
+      expect(updated.data.owner).toHaveProperty('id', newOwner.id);
+      expect(updated.data.owner).toHaveProperty('name', 'New Owner');
+      expect(updated.data.owner).toHaveProperty('email', 'newowner@test.com');
+
+      await destroyEvent(created.id);
+      await db.User.destroy({ where: { id: newOwner.id } });
+    });
     it('creates a new event when the id cannot be found', async () => {
-      const found = await findEventById(99_999);
+      const found = await findEventByDbId(99_999);
       expect(found).toBeNull();
 
       const updated = await updateEvent(99_999, {
@@ -92,11 +125,54 @@ describe('event service', () => {
   });
 
   describe('finders', () => {
-    it('findEventById', async () => {
+    it('findEventByDbId', async () => {
       const created = await createAnEvent(98_989);
-      const found = await findEventById(created.id);
+      const found = await findEventByDbId(created.id);
       expect(found).toHaveProperty('id');
       expect(found).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
+    });
+
+    it('findEventHelper session sort order', async () => {
+      const created = await createAnEvent(98_989);
+      const sessionReport1 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          sessionName: 'Session Name 2',
+        },
+      });
+
+      const sessionReport2 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+        },
+      });
+
+      const sessionReport3 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          startDate: '01/01/2023',
+          sessionName: 'Session Name 1',
+        },
+      });
+
+      const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
+
+      const found = await findEventByDbId(created.id);
+      expect(found).toHaveProperty('id');
+      expect(found).toHaveProperty('ownerId', 98_989);
+
+      expect(found.sessionReports.length).toBe(3);
+      expect(found.sessionReports[0].id).toBe(sessionReport3.id);
+      expect(found.sessionReports[1].id).toBe(sessionReport1.id);
+      expect(found.sessionReports[2].id).toBe(sessionReport2.id);
+
+      await db.SessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+
       await destroyEvent(created.id);
     });
 
@@ -194,6 +270,58 @@ describe('event service', () => {
 
       // await destroyEvent(created3.id);
       await destroyEvent(created4.id);
+    });
+
+    it('findEventHelperBlob session sort order', async () => {
+      const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
+
+      const sessionReport1 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          sessionName: 'Session Name 2',
+        },
+      });
+
+      const sessionReport2 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+        },
+      });
+
+      const sessionReport3 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          startDate: '01/01/2023',
+          sessionName: 'Session Name 1',
+        },
+      });
+
+      const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
+
+      const found = await findEventsByStatus(
+        TRS.IN_PROGRESS,
+        [],
+        98_989,
+        null,
+        false,
+        { ownerId: 98_989 },
+      );
+
+      expect(found.length).toBe(1);
+      expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
+
+      expect(found[0].sessionReports.length).toBe(3);
+      expect(found[0].sessionReports[0].id).toBe(sessionReport3.id);
+      expect(found[0].sessionReports[1].id).toBe(sessionReport1.id);
+      expect(found[0].sessionReports[2].id).toBe(sessionReport2.id);
+
+      await db.SessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+
+      await destroyEvent(created.id);
     });
 
     it('shows all if user is admin', async () => {

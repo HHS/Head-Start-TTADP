@@ -22,6 +22,7 @@ import {
   recipients,
   mockGoalsAndObjectives,
 } from '../testHelpers';
+import { formatReportWithSaveBeforeConversion } from '..';
 import { HTTPError } from '../../../fetchers';
 
 describe('ActivityReport', () => {
@@ -253,7 +254,11 @@ describe('ActivityReport', () => {
         startDate: 'blah', creatorRole: '',
       };
       const result = findWhatsChanged(orig, changed);
-      expect(result).toEqual({ startDate: null, creatorRole: null });
+      expect(result).toEqual({ creatorRole: null });
+
+      // ensure NaN values are removed
+      const out = findWhatsChanged({ duration: Number('a') }, { duration: 1 });
+      expect(out).toEqual({});
     });
 
     it('access correct fields when diffing turns up activity recipients', () => {
@@ -1122,5 +1127,28 @@ describe('ActivityReport', () => {
 
     radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
     expect(radios).not.toBeNull();
+  });
+});
+
+describe('formatReportWithSaveBeforeConversion', () => {
+  it('properly formats dates', async () => {
+    const reportData = await formatReportWithSaveBeforeConversion(
+      {
+        creatorRole: 'Tiny Lizard',
+        startDate: '10/04/2020',
+        endDate: '10/04/2020',
+      },
+      {
+        creatorRole: 'Tiny Lizard',
+        startDate: '10/04/2020',
+        endDate: '10/04/2020',
+      },
+      {},
+      false,
+      1,
+      [],
+    );
+    expect(reportData.startDate).toBe('10/04/2020');
+    expect(reportData.endDate).toBe('10/04/2020');
   });
 });

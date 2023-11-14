@@ -95,6 +95,7 @@ const SessionSummary = ({ datePickerKey }) => {
     async function fetchTopics() {
       try {
         const topics = await getTopics();
+        topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
@@ -216,7 +217,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Session name"
+          label="Session name "
           name="sessionName"
           htmlFor="sessionName"
           required
@@ -281,7 +282,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Duration in hours (round to the nearest quarter hour)"
+          label="Duration in hours (round to the nearest quarter hour) "
           name="duration"
         >
           <div className="maxw-card-lg">
@@ -308,13 +309,14 @@ const SessionSummary = ({ datePickerKey }) => {
                   max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                 })
               }
+              required
             />
           </div>
         </FormItem>
       </div>
 
       <FormItem
-        label="Session context"
+        label="Session context "
         name="context"
         required
       >
@@ -324,12 +326,13 @@ const SessionSummary = ({ datePickerKey }) => {
           inputRef={register({
             required: 'Describe the session context',
           })}
+          required
         />
       </FormItem>
 
       <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
       <FormItem
-        label="Session objective"
+        label="Session objective "
         name="objective"
         required
       >
@@ -339,6 +342,7 @@ const SessionSummary = ({ datePickerKey }) => {
           inputRef={register({
             required: 'Describe the session objective',
           })}
+          required
         />
       </FormItem>
 
@@ -392,6 +396,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 getOptionValue={(option) => option.id}
                 options={topicOptions || []}
                 isMulti
+                required
               />
             )}
             control={control}
@@ -437,6 +442,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 getOptionLabel={(option) => option.name}
                 getOptionValue={(option) => option.id}
                 isMulti
+                required
               />
             )}
             control={control}
@@ -538,6 +544,21 @@ const SessionSummary = ({ datePickerKey }) => {
 
       </Fieldset>
 
+      <FormItem
+        label="TTA provided "
+        name="ttaProvided"
+        required
+      >
+        <Textarea
+          required
+          id="ttaProvided"
+          name="ttaProvided"
+          inputRef={register({
+            required: 'Describe the tta provided',
+          })}
+        />
+      </FormItem>
+
       <div className="margin-top-2">
         <Drawer
           triggerRef={supportTypeDrawerTriggerRef}
@@ -568,6 +589,7 @@ const SessionSummary = ({ datePickerKey }) => {
           name="objectiveSupportType"
           inputRef={register({ required: 'Select a support type' })}
           defaultValue=""
+          required
         >
           <option disabled hidden value="">Select one</option>
           {[

@@ -1,5 +1,6 @@
 const { Model } = require('sequelize');
-const { beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
+const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
+const { beforeValidate, beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -9,6 +10,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
+
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'activityReportObjectiveId',
@@ -26,6 +28,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+      ActivityReportObjective.belongsTo(models.Objective, {
+        foreignKey: 'originalObjectiveId',
+        as: 'originalObjective',
       });
     }
   }
@@ -49,13 +55,32 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
+    suspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(SUSPEND_REASONS),
+    },
+    suspendContext: {
+      type: DataTypes.TEXT,
+    },
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    originalObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },

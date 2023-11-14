@@ -14,18 +14,19 @@ export const sessionSummaryFields = {
   objectiveSupportType: '',
   files: [],
   regionId: '',
+  ttaProvided: '',
 };
 
 export const participantsFields = {
   participants: [],
   deliveryMethod: '',
   numberOfParticipants: '',
-  ttaProvided: '',
 };
 
 export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
+  pocComplete: false,
 };
 
 export const defaultFormValues = {

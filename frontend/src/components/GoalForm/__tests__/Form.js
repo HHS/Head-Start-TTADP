@@ -68,6 +68,7 @@ describe('Goal Form > Form component', () => {
           onUploadFile={jest.fn()}
           validateGoalNameAndRecipients={jest.fn()}
           prompts={goal.prompts}
+          userCanEdit
         />
       </UserContext.Provider>,
     );
@@ -83,5 +84,131 @@ describe('Goal Form > Form component', () => {
     renderGoalForm(DEFAULT_GOAL, objectives, 'There was a fetch error');
 
     expect(await screen.findByText(/There was a fetch error/i)).toBeVisible();
+  });
+
+  it('disables fei root cause when on approved report with field requirements', async () => {
+    const goal = {
+      ...DEFAULT_GOAL,
+      isOnApprovedReport: true,
+      isOnReport: true,
+      prompts: [{
+        fieldType: 'multiselect',
+        title: 'FEI root cause',
+        prompt: 'Select FEI root cause',
+        options: ['cause1', 'cause2', 'cause3'],
+        response: ['cause2'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 2,
+              message: 'You can only select 2 options',
+            },
+            {
+              name: 'minSelections',
+              value: 1,
+              message: 'You must select at least one option',
+            },
+          ],
+        },
+      }],
+    };
+    renderGoalForm(goal);
+
+    const rootCauseList = await screen.findByRole('listitem');
+    expect(rootCauseList).toHaveTextContent('cause2');
+  });
+
+  it('enables fei root cause when not on approved report with field requirements', async () => {
+    const goal = {
+      ...DEFAULT_GOAL,
+      isOnApprovedReport: false,
+      isOnReport: true,
+      prompts: [{
+        fieldType: 'multiselect',
+        title: 'FEI root cause',
+        prompt: 'Select FEI root cause',
+        options: ['cause1', 'cause2', 'cause3'],
+        response: ['cause2'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 2,
+              message: 'You can only select 2 options',
+            },
+            {
+              name: 'minSelections',
+              value: 1,
+              message: 'You must select at least one option',
+            },
+          ],
+        },
+      }],
+    };
+    renderGoalForm(goal);
+    expect(await screen.findByText(/select fei root cause/i)).toBeVisible();
+  });
+
+  it('enables fei root cause when on approved report without a root cause', async () => {
+    const goal = {
+      ...DEFAULT_GOAL,
+      isOnApprovedReport: true,
+      isOnReport: true,
+      prompts: [{
+        fieldType: 'multiselect',
+        title: 'FEI root cause',
+        prompt: 'Select FEI root cause',
+        options: ['cause1', 'cause2', 'cause3'],
+        response: [],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 2,
+              message: 'You can only select 2 options',
+            },
+            {
+              name: 'minSelections',
+              value: 1,
+              message: 'You must select at least one option',
+            },
+          ],
+        },
+      }],
+    };
+    renderGoalForm(goal);
+    expect(await screen.findByText(/select fei root cause/i)).toBeVisible();
+  });
+
+  it('enables fei root cause when not on approved report without a root cause', async () => {
+    const goal = {
+      ...DEFAULT_GOAL,
+      isOnApprovedReport: false,
+      isOnReport: true,
+      prompts: [{
+        fieldType: 'multiselect',
+        title: 'FEI root cause',
+        prompt: 'Select FEI root cause',
+        options: ['cause1', 'cause2', 'cause3'],
+        response: [],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 2,
+              message: 'You can only select 2 options',
+            },
+            {
+              name: 'minSelections',
+              value: 1,
+              message: 'You must select at least one option',
+            },
+          ],
+        },
+      }],
+    };
+    renderGoalForm(goal);
+    expect(await screen.findByText(/select fei root cause/i)).toBeVisible();
   });
 });

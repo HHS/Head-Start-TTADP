@@ -27,6 +27,9 @@ function GoalCards({
   allGoalIds,
   perPage,
   perPageChange,
+  canMergeGoals,
+  shouldDisplayMergeSuccess,
+  dismissMergeSuccess,
 }) {
   const history = useHistory();
   const [rttapaValidation, setRttapaValidation] = useState(false);
@@ -201,6 +204,9 @@ function GoalCards({
           showRttapaValidation={showRttapaValidation}
           createRttapa={createRttapa}
           draftSelectedRttapa={draftSelectedRttapa}
+          canMergeGoals={canMergeGoals}
+          shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
+          dismissMergeSuccess={dismissMergeSuccess}
         />
         <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
@@ -247,6 +253,9 @@ GoalCards.propTypes = {
   allGoalIds: PropTypes.arrayOf(PropTypes.number),
   perPage: PropTypes.number,
   perPageChange: PropTypes.func.isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
 GoalCards.defaultProps = {

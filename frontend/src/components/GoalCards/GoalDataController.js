@@ -9,6 +9,7 @@ import React, {
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { useHistory } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
@@ -29,6 +30,7 @@ function GoalDataController({
   regionId,
   hasActiveGrants,
   showNewGoals,
+  canMergeGoals,
 }) {
   // Goal Data.
   const [data, setData] = useState({
@@ -49,8 +51,11 @@ function GoalDataController({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
+  const [shouldDisplayMergeSuccess, setShouldDisplayMergedSuccess] = useState(false);
 
-  const defaultSort = showNewGoals
+  const history = useHistory();
+
+  const defaultSort = useMemo(() => (showNewGoals
     ? {
       sortBy: 'createdOn',
       direction: 'desc',
@@ -58,7 +63,7 @@ function GoalDataController({
     : {
       sortBy: 'goalStatus',
       direction: 'asc',
-    };
+    }), [showNewGoals]);
 
   // Grid and Paging.
   const [sortConfig, setSortConfig] = useSessionSort({
@@ -71,17 +76,34 @@ function GoalDataController({
     async function fetchGoals(query) {
       setLoading(true);
       try {
+        const mergedGoals = (() => {
+          if (history.location && history.location.state) {
+            return history.location.state.mergedGoals;
+          }
+
+          return null;
+        })();
+
+        let { sortBy } = sortConfig;
+
+        if (mergedGoals) {
+          sortBy = 'mergedGoals';
+        }
+
         const response = await getRecipientGoals(
           recipientId,
           regionId,
-          sortConfig.sortBy,
+          sortBy,
           sortConfig.direction,
           sortConfig.offset,
           goalsPerPage,
           query,
+          mergedGoals || [],
         );
         setData(response);
         setError('');
+        // display success message if we have merged goals
+        setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
       } catch (e) {
         setError('Unable to fetch goals');
       } finally {
@@ -95,7 +117,16 @@ function GoalDataController({
       return;
     }
     fetchGoals(filterQuery);
-  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig, goalsPerPage]);
+  }, [
+    sortConfig,
+    filters,
+    recipientId,
+    regionId,
+    showNewGoals,
+    setSortConfig,
+    goalsPerPage,
+    history.location,
+  ]);
 
   const handlePageChange = (pageNumber) => {
     setSortConfig({
@@ -125,6 +156,20 @@ function GoalDataController({
 
   const setGoals = (goals) => setData({ ...data, goalRows: goals });
 
+  const dismissMergeSuccess = () => {
+    if (history.location.state && history.location.state.mergedGoals) {
+      history.location.state.mergedGoals = null;
+    }
+
+    setSortConfig({
+      ...defaultSort,
+      activePage: 1,
+      offset: 0,
+    });
+
+    setShouldDisplayMergedSuccess(false);
+  };
+
   return (
     <div>
       <Grid row>
@@ -132,7 +177,7 @@ function GoalDataController({
           <Graph data={data.statuses} loading={loading} />
         </Grid>
       </Grid>
-      <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+      <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
         <GoalsTable
           recipientId={recipientId}
           regionId={regionId}
@@ -150,6 +195,9 @@ function GoalDataController({
           loading={loading}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
+          canMergeGoals={canMergeGoals}
+          shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
+          dismissMergeSuccess={dismissMergeSuccess}
         />
       </FilterContext.Provider>
     </div>
@@ -169,6 +217,7 @@ GoalDataController.propTypes = {
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
   showNewGoals: PropTypes.bool.isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 export default GoalDataController;

@@ -32,7 +32,7 @@ import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 import { findSessionById } from '../../services/sessionReports';
-import { findEventById } from '../../services/event';
+import { findEventBySmartsheetIdSuffix } from '../../services/event';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -139,7 +139,7 @@ const deleteHandler = async (req, res) => {
       }
     } else if (eventSessionId) {
       const session = await findSessionById(eventSessionId);
-      const event = await findEventById(session.eventId);
+      const event = await findEventBySmartsheetIdSuffix(session.eventId);
 
       const eventPolicy = new EventPolicy(user, event);
 
@@ -292,7 +292,7 @@ const uploadHandler = async (req, res) => {
       );
     } else if (sessionId) {
       const session = await findSessionById(sessionId);
-      const event = await findEventById(session.eventId);
+      const event = await findEventBySmartsheetIdSuffix(session.eventId);
 
       const eventPolicy = new EventPolicy(user, event);
 
@@ -456,7 +456,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
     }
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 };
 
@@ -493,7 +493,7 @@ async function deleteActivityReportObjectiveFile(req, res) {
 
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 

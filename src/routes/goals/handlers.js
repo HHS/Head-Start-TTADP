@@ -8,7 +8,9 @@ import {
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
   destroyGoal,
-} from '../../services/goals';
+  mergeGoals,
+  goalRegionsById,
+} from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
@@ -225,5 +227,32 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
     res.json(retrievedGoal);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOAL_BY_ID_AND_RECIPIENT`);
+  }
+}
+
+export async function mergeGoalHandler(req, res) {
+  try {
+    const { finalGoalId, selectedGoalIds } = req.body;
+
+    const regions = await goalRegionsById([finalGoalId, ...selectedGoalIds]);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    let canCreate = true;
+
+    regions.forEach((region) => {
+      if (canCreate && !new Goal(user, null, region).canCreate()) {
+        canCreate = false;
+      }
+    });
+
+    if (!canCreate) {
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+    } else {
+      const mergedGoals = await mergeGoals(finalGoalId, selectedGoalIds);
+      res.json(mergedGoals);
+    }
+  } catch (err) {
+    await handleErrors(req, res, err, `${logContext}:MERGE_GOAL`);
   }
 }
