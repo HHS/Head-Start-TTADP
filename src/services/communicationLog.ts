@@ -1,7 +1,7 @@
 import { WhereOptions, Op } from 'sequelize';
 import db from '../models';
 
-const { CommunicationLog } = db;
+const { sequelize, CommunicationLog } = db;
 
 interface CommLog {
   files: unknown[];
@@ -10,6 +10,49 @@ interface CommLog {
   id: number;
   data: unknown;
 }
+
+const COMMUNICATION_LOGS_PER_PAGE = 10;
+
+const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
+  let result = [];
+  switch (sortBy) {
+    case 'authorName':
+      result = [[
+        sequelize.literal(`author.name ${sortDir}`),
+      ], [
+        'data.communicationDate',
+        sortDir,
+      ]];
+      break;
+    case 'purpose':
+      result = [[
+        sequelize.literal(`data.purpose ${sortDir}`),
+      ],
+      [
+        'data.communicationDate',
+        sortDir,
+      ]];
+      break;
+    case 'result':
+      result = [[
+        'data.result',
+        sortDir,
+      ],
+      [
+        'data.communicationDate',
+        sortDir,
+      ]];
+      break;
+    case 'communicationDate':
+    default:
+      result = [[
+        'data.communicationDate',
+        sortDir,
+      ]];
+      break;
+  }
+  return result;
+};
 
 const createLog = async (
   recipientId: number,
@@ -37,15 +80,37 @@ const logById = async (id: number) => CommunicationLog.findOne(LOG_WHERE_OPTIONS
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
+  sortBy: string,
+  offset: number,
+  direction: string,
   scopes: WhereOptions[] = [],
 ) => CommunicationLog
-  .findAll({
+  .findAndCountAll({
+    attributes: {
+      include: [
+        [
+          sequelize.col('author.name'), 'authorName',
+        ],
+      ],
+    },
     where: {
       recipientId,
       [Op.and]: [
         ...scopes,
       ],
     },
+    include: [
+      {
+        model: db.User,
+        attributes: [
+          'name', 'id',
+        ],
+        as: 'author',
+      },
+    ],
+    order: orderLogsBy(sortBy, direction),
+    limit: COMMUNICATION_LOGS_PER_PAGE,
+    offset,
   });
 
 const deleteLog = async (id: number) => CommunicationLog.destroy({
