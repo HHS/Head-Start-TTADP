@@ -1,18 +1,16 @@
-/* eslint-disable max-len */
-/* eslint-disable no-unused-vars */
 import React, {
   useEffect,
   useState,
   useContext,
   useRef,
 } from 'react';
-// import moment from 'moment';
+import PropTypes from 'prop-types';
+import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import useSocket, { usePublishWebsocketLocationOnInterval } from '../../../../hooks/useSocket';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
 import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from './constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
@@ -21,26 +19,27 @@ import Navigator from '../../../../components/Navigator';
 import BackLink from '../../../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../../../AppLoadingContext';
-// import { isValidResourceUrl } from '../../components/GoalForm/constants';
-
-// websocket publish location interval
-const INTERVAL_DELAY = 10000; // TEN SECONDS
+import {
+  updateCommunicationLogById,
+  createCommunicationLogByRecipientId,
+  getCommunicationLogById,
+} from '../../../../fetchers/communicationLog';
 
 /**
-     * this is just a simple handler to "flatten"
-     * the JSON column data into the form
-     *
-     * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
-     *  replaces the form with those values; it also calls the standard form.reset event
-     * @param {*} event - not an HTML event, but the event object from the database, which has some
-     * information stored at the top level of the object, and some stored in a data column
-     */
-const resetFormData = (reset, updatedSession) => {
+ * this is just a simple handler to "flatten"
+ * the JSON column data into the form
+ *
+ * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
+ *  replaces the form with those values; it also calls the standard form.reset event
+ * @param {*} event - not an HTML event, but the event object from the database, which has some
+ * information stored at the top level of the object, and some stored in a data column
+ */
+const resetFormData = (reset, updatedLog) => {
   const {
     data,
     updatedAt,
     ...fields
-  } = updatedSession;
+  } = updatedLog;
 
   const form = {
     ...defaultValues,
@@ -49,6 +48,25 @@ const resetFormData = (reset, updatedSession) => {
   };
 
   reset(form);
+};
+
+const shouldFetch = (
+  communicationLogId,
+  regionId,
+  recipientId,
+  reportFetched,
+  isAppLoading,
+) => {
+  if (
+    !communicationLogId
+    || !regionId
+    || !recipientId
+    || communicationLogId === 'new'
+    || reportFetched
+    || isAppLoading) {
+    return false;
+  }
+  return true;
 };
 
 export default function CommunicationLogForm({ match, recipientName }) {
@@ -68,9 +86,9 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   /* ============
 
-       * the following errors are a bit confusingly named, but
-       * I'm copying the pattern from the ActivityReport
-       */
+  * the following errors are a bit confusingly named, but
+  * I'm copying the pattern from the ActivityReport
+  */
 
   // this error is for errors fetching reports, its the top error
   const [error, setError] = useState();
@@ -78,14 +96,12 @@ export default function CommunicationLogForm({ match, recipientName }) {
   // this is the error that appears in the sidebar
   const [errorMessage, updateErrorMessage] = useState();
 
+  const { user } = useContext(UserContext);
+
   /* ============ */
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
-
-  // we use both of these to determine if we're in the loading screen state
-  // (see the use effect below)
-  const [reportFetched, setReportFetched] = useState(false);
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
@@ -96,84 +112,55 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   const hookForm = useForm({
     mode: 'onBlur',
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+      userId: user.id,
+      regionId,
+    },
     shouldUnregister: false,
+
   });
 
   const formData = hookForm.getValues();
 
-  const { user } = useContext(UserContext);
-  const { setIsAppLoading } = useContext(AppLoadingContext);
-
-  const {
-    socket,
-    setSocketPath,
-    socketPath,
-    messageStore,
-  } = useSocket(user);
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const [reportFetched, setReportFetched] = useState(false);
 
   useEffect(() => {
-    if (!communicationLogId) {
-      return;
+    // fetch communication log data
+    async function fetchLog() {
+      if (!shouldFetch(
+        reportId.current,
+        regionId,
+        recipientId,
+        reportFetched,
+        isAppLoading,
+      )) {
+        return;
+      }
+
+      try {
+        setIsAppLoading(true);
+        const log = await getCommunicationLogById(regionId, reportId.current);
+        resetFormData(hookForm.reset, log);
+      } catch (e) {
+        setError('Error fetching communication log');
+      } finally {
+        setDatePickerKey(`f${Date.now().toString()}`);
+        setReportFetched(true);
+        setIsAppLoading(false);
+      }
     }
-    const newPath = `/communication-log/${communicationLogId}`;
-    setSocketPath(newPath);
-  }, [communicationLogId, setSocketPath]);
-
-  usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
-
-  useEffect(() => {
-    // const loading = !reportFetched;
-    // setIsAppLoading(loading);
-  }, [reportFetched, setIsAppLoading]);
-
-  useEffect(() => {
-    // // create a new session
-    // async function createNewSession() {
-    //   if (!trainingReportId || !currentPage || sessionId !== 'new' || reportFetched) {
-    //     return;
-    //   }
-
-    //   try {
-    //     const session = await createSession(trainingReportId);
-
-    //     // we don't want to refetch if we've extracted the session data
-    //     setReportFetched(true);
-    //     resetFormData(hookForm.reset, session);
-    //     reportId.current = session.id;
-    //     history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
-    //   } catch (e) {
-    //     setError('Error creating session');
-    //   } finally {
-    //     // in case an error is thrown, we don't want to be stuck in the loading screen
-    //     if (!reportFetched) {
-    //       setReportFetched(true);
-    //     }
-    //   }
-    // }
-
-    // createNewSession();
-  }, []); // [currentPage, history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
-
-  //   useEffect(() => {
-  //     // fetch event report data
-  //     async function fetchSession() {
-  //       if (!currentPage || reportFetched || sessionId === 'new') {
-  //         return;
-  //       }
-  //       try {
-  //         const session = await getSessionBySessionId(sessionId);
-  //         resetFormData(hookForm.reset, session);
-  //         reportId.current = session.id;
-  //       } catch (e) {
-  //         setError('Error fetching session');
-  //       } finally {
-  //         setReportFetched(true);
-  //         setDatePickerKey(`f${Date.now().toString()}`);
-  //       }
-  //     }
-  //     fetchSession();
-  //   }, [currentPage, hookForm.reset, reportFetched, sessionId]);
+    fetchLog();
+  }, [
+    reportId,
+    hookForm.reset,
+    recipientId,
+    regionId,
+    reportFetched,
+    isAppLoading,
+    setIsAppLoading,
+  ]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
@@ -185,44 +172,57 @@ export default function CommunicationLogForm({ match, recipientName }) {
     }
 
     const page = pages.find((p) => p.position === position);
-    const newPath = `${formatCommunicationLogUrl(recipientId, regionId, communicationLogId)}${page.path}`;
+    const newPath = `${formatCommunicationLogUrl(recipientId, regionId, reportId.current)}${page.path}`;
     history.push(newPath, state);
   };
 
   if (!currentPage) {
     return (
-      <Redirect to={formatCommunicationLogUrl(recipientId, regionId, communicationLogId, 'log')} />
+      <Redirect to={formatCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
     );
   }
 
   const onSave = async () => {
-    // try {
-    //   // reset the error message
-    //   setError('');
-    //   setIsAppLoading(true);
-    //   hookForm.clearErrors();
+    try {
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
+      hookForm.clearErrors();
 
-    //   // grab the newest data from the form
-    //   const data = hookForm.getValues();
+      // grab the newest data from the form
+      const data = hookForm.getValues();
 
-    //   // PUT it to the backend
-    //   const updatedSession = await updateSession(sessionId, {
-    //     data: {
-    //       ...data,
-    //       objectiveResources: data.objectiveResources.filter((r) => (
-    //         r && isValidResourceUrl(r.value))),
-    //     },
-    //     trainingReportId,
-    //     eventId: trainingReportId || null,
-    //   });
+      let loggedCommunication;
 
-    //   updateLastSaveTime(moment(updatedSession.updatedAt));
-    //   updateShowSavedDraft(true);
-    // } catch (err) {
-    //   setError('There was an error saving the session. Please try again later.');
-    // } finally {
-    //   setIsAppLoading(false);
-    // }
+      // check to see if report ID is "new"
+      if (reportId.current === 'new') {
+        loggedCommunication = await createCommunicationLogByRecipientId(
+          regionId,
+          recipientId,
+          data,
+        );
+        reportId.current = loggedCommunication.id;
+      } else if (reportId.current) {
+      // PUT it to the backend
+        loggedCommunication = await updateCommunicationLogById(reportId.current, data);
+      } else {
+        throw new Error('No communication log ID provided');
+      }
+
+      // update the form data
+      resetFormData(hookForm.reset, loggedCommunication);
+
+      // update the last save time
+      updateLastSaveTime(moment(loggedCommunication.updatedAt));
+
+      // update the sidebar message
+      updateShowSavedDraft(true);
+    } catch (err) {
+      setError('There was an error saving the communication log. Please try again later.');
+    } finally {
+      setReportFetched(true);
+      setIsAppLoading(false);
+    }
   };
 
   const onSaveAndContinue = async () => {
@@ -235,35 +235,32 @@ export default function CommunicationLogForm({ match, recipientName }) {
     }
   };
 
-  const onFormSubmit = async (updatedStatus) => {
-    // try {
-    //   await hookForm.trigger();
+  const onFormSubmit = async () => {
+    try {
+      await hookForm.trigger();
 
-    //   // reset the error message
-    //   setError('');
-    //   setIsAppLoading(true);
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
 
-    //   // grab the newest data from the form
-    //   const {
-    //     ...data
-    //   } = hookForm.getValues();
+      // grab the newest data from the form
+      const data = hookForm.getValues();
 
-    //   // PUT it to the backend
-    //   await updateSession(sessionId, {
-    //     data: {
-    //       ...data,
-    //       status: updatedStatus,
-    //     },
-    //     trainingReportId,
-    //     eventId: trainingReportId || null,
-    //   });
+      // PUT it to the backend
+      await updateCommunicationLogById(
+        reportId.current,
+        data,
+      );
 
-    //   history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
-    // } catch (err) {
-    //   setError('There was an error saving the session report. Please try again later.');
-    // } finally {
-    //   setIsAppLoading(false);
-    // }
+      history.push(
+        `${recipientRecordRootUrl(recipientId, regionId)}/communication`,
+        { message: 'You successfully saved the communication log.' },
+      );
+    } catch (err) {
+      setError('There was an error saving the communication log. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
+    }
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
@@ -271,18 +268,8 @@ export default function CommunicationLogForm({ match, recipientName }) {
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
-  if (!reportFetched) {
-    // return null;
-  }
-
-  //   if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
-  //     return (
-  //       <Redirect to={`/communt/view/${trainingReportId}`} />
-  //     );
-  //   }
-
   return (
-    <div className="smart-hub-communication-log--form">
+    <div className="smart-hub-communication-log--form padding-top-3">
       { error
           && (
           <Alert type="warning">
@@ -307,7 +294,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         <FormProvider {...hookForm}>
           <Navigator
             datePickerKey={datePickerKey}
-            socketMessageStore={messageStore}
+            socketMessageStore={{}}
             key={currentPage}
             editable
             updatePage={updatePage}
@@ -342,5 +329,5 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
 CommunicationLogForm.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
-  recipientName: ReactRouterPropTypes.match.isRequired,
+  recipientName: PropTypes.string.isRequired,
 };

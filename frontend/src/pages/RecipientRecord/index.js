@@ -368,6 +368,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 <CommunicationLog
                   regionId={regionId}
                   recipientName={recipientName}
+                  recipientId={recipientId}
                 />
               </PageWithHeading>
             </FeatureFlag>

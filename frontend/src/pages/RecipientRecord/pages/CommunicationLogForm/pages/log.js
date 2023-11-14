@@ -182,12 +182,12 @@ export default {
     _onSaveDraft,
     _onUpdatePage,
     _weAreAutoSaving,
-    _datePickerKey,
+    datePickerKey,
     _onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
-      <Log />
+      <Log datePickerKey={datePickerKey} />
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>

@@ -10,6 +10,7 @@ import {
   ObjectiveTemplateFile,
   ActivityReportObjective,
   SessionReportPilotFile,
+  CommunicationLogFile,
   sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
@@ -322,6 +323,31 @@ const createSessionObjectiveFileMetaData = async (
   return file.dataValues;
 };
 
+const createCommunicationLogFileMetadata = async (
+  originalFileName,
+  s3FileName,
+  communicationLogId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await CommunicationLogFile.create({ communicationLogId, fileId: file.id });
+  return file.dataValues;
+};
+
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
   // Get ARO files to delete (destroy does NOT support join's).
   const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
@@ -380,4 +406,5 @@ export {
   createObjectiveTemplateFileMetaData,
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
+  createCommunicationLogFileMetadata,
 };

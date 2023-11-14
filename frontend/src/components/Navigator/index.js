@@ -220,7 +220,7 @@ Navigator.propTypes = {
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
-    regionId: PropTypes.number.isRequired,
+    regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),

@@ -9,11 +9,11 @@ import {
   Label,
   Button,
 } from '@trussworks/react-uswds';
-import { pageComplete, defaultLogValues } from '../constants';
+import { pageComplete } from '../constants';
 import ReportFileUploader from '../../../../../components/FileUploader/ReportFileUploader';
 
 const path = 'supporting-attachments';
-const fields = Object.keys(defaultLogValues);
+const fields = [];
 const position = 2;
 
 const SupportingAttachments = ({ reportId }) => {
@@ -79,7 +79,7 @@ export default {
     isAppLoading,
     onContinue,
     _onSaveDraft,
-    _onUpdatePage,
+    onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
@@ -90,6 +90,7 @@ export default {
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+        <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
     </div>
   ),

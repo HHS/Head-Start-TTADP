@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import Container from './Container';
 import PaginationCard from './PaginationCard';
+import WidgetContainerTitleGroup from './WidgetContainerTitleGroup';
 import './WidgetContainer.scss';
 
 export default function WidgetContainer(
@@ -11,7 +12,8 @@ export default function WidgetContainer(
     title,
     subtitle,
     children,
-    showPaging,
+    showPagingBottom,
+    showPagingTop,
     loading,
     loadingLabel,
     currentPage,
@@ -21,20 +23,19 @@ export default function WidgetContainer(
     handlePageChange,
     error,
     showHeaderBorder,
+    titleSlot,
   },
 ) {
   return (
     <Container className="smart-hub-widget-container width-full shadow-2 padding-top-0" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
-      {
-        !title && !subtitle
-          ? null
-          : (
-            <div className={`${showHeaderBorder ? 'smart-hub-widget-container-header-border' : ''} padding-3`}>
-              <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
-              <p className="usa-prose margin-0">{subtitle}</p>
-            </div>
-          )
-      }
+      <WidgetContainerTitleGroup
+        title={title}
+        subtitle={subtitle}
+        showHeaderBorder={showHeaderBorder}
+        showPagingTop={showPagingTop}
+      >
+        {titleSlot}
+      </WidgetContainerTitleGroup>
       <Grid row>
         {error && (
         <Alert className="width-full margin-x-3 margin-bottom-2" type="error" role="alert">
@@ -47,7 +48,7 @@ export default function WidgetContainer(
       </div>
       <div className="smart-hub-widget-container-footer">
         {
-          showPaging
+          showPagingBottom
             ? (
               <PaginationCard
                 currentPage={currentPage}
@@ -68,7 +69,8 @@ WidgetContainer.propTypes = {
   title: PropTypes.string,
   subtitle: PropTypes.string,
   children: PropTypes.node.isRequired,
-  showPaging: PropTypes.bool,
+  showPagingBottom: PropTypes.bool,
+  showPagingTop: PropTypes.bool,
   loading: PropTypes.bool.isRequired,
   loadingLabel: PropTypes.string.isRequired,
   currentPage: PropTypes.number,
@@ -78,12 +80,14 @@ WidgetContainer.propTypes = {
   handlePageChange: PropTypes.func,
   error: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
+  titleSlot: PropTypes.node,
 };
 
 WidgetContainer.defaultProps = {
   title: null,
   subtitle: null,
-  showPaging: false,
+  showPagingBottom: false,
+  showPagingTop: false,
   totalCount: 0,
   currentPage: 0,
   offset: 0,
@@ -91,4 +95,5 @@ WidgetContainer.defaultProps = {
   handlePageChange: () => { },
   showHeaderBorder: true,
   error: null,
+  titleSlot: null,
 };

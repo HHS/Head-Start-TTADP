@@ -25,8 +25,8 @@ const getAuthorizationByRegion = async (req: Request, res: Response) => {
 };
 
 const getAuthorizationByLogId = async (req: Request, res: Response) => {
-  const { regionId, logId } = req.params;
-  const log = await logById(Number(logId));
+  const { regionId, id } = req.params;
+  const log = await logById(Number(id));
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
   return new Policy(user, Number(regionId), log);
@@ -111,8 +111,10 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     }
 
     const { recipientId } = req.params;
+    const userId = await currentUserId(req, res);
     const { data } = req.body;
-    const log = await createLog(Number(recipientId), 0, data);
+
+    const log = await createLog(Number(recipientId), userId, data);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
