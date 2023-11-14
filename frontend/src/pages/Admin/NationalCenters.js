@@ -25,9 +25,8 @@ export default function NationalCenters({ match }) {
     async function fetchNationalCenters() {
       setError(null);
       try {
+        // eslint-disable-next-line no-unused-vars
         const { centers, users } = await getNationalCenters();
-        console.log('\n\n\n----Fetched centers: ', centers);
-        console.log('\n\n\n----Fetched Users: ', users);
         setNationalCenters(centers);
       } catch (e) {
         setError('Error fetching national centers');
@@ -96,7 +95,7 @@ export default function NationalCenters({ match }) {
 
   const getCenterToDisplay = (center) => {
     let centerToDisplay = center.name;
-    if (center.users.length > 0) {
+    if (center.users && center.users.length > 0) {
       centerToDisplay = `${center.name} (${center.users[0].name})`;
     }
     return centerToDisplay;
