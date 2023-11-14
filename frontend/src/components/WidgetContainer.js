@@ -32,9 +32,19 @@ export default function WidgetContainer(
         title={title}
         subtitle={subtitle}
         showHeaderBorder={showHeaderBorder}
-        showPagingTop={showPagingTop}
       >
-        {titleSlot}
+        <>
+          {titleSlot}
+          {showPagingTop ? (
+            <PaginationCard
+              currentPage={currentPage}
+              totalCount={totalCount}
+              offset={offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+            />
+          ) : null}
+        </>
       </WidgetContainerTitleGroup>
       <Grid row>
         {error && (
@@ -68,11 +78,11 @@ export default function WidgetContainer(
 WidgetContainer.propTypes = {
   title: PropTypes.string,
   subtitle: PropTypes.string,
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
   showPagingBottom: PropTypes.bool,
   showPagingTop: PropTypes.bool,
   loading: PropTypes.bool.isRequired,
-  loadingLabel: PropTypes.string.isRequired,
+  loadingLabel: PropTypes.string,
   currentPage: PropTypes.number,
   totalCount: PropTypes.number,
   offset: PropTypes.number,
@@ -84,6 +94,7 @@ WidgetContainer.propTypes = {
 };
 
 WidgetContainer.defaultProps = {
+  children: <></>,
   title: null,
   subtitle: null,
   showPagingBottom: false,
@@ -96,4 +107,5 @@ WidgetContainer.defaultProps = {
   showHeaderBorder: true,
   error: null,
   titleSlot: null,
+  loadingLabel: 'Loading',
 };
