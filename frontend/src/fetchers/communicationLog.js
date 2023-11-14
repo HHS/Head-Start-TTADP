@@ -23,15 +23,17 @@ export const getCommunicationLogById = async (regionId, logId) => {
   return response.json();
 };
 
-export const getCommunicationLogsByRecipientId = async (regionId, recipientId) => {
+export const getCommunicationLogsByRecipientId = async (
+  regionId, recipientId, sortBy, direction, offset,
+) => {
   const response = await get(
-    join(
+    `${join(
       communicationLogUrl,
       'region',
       String(regionId),
       'recipient',
       String(recipientId),
-    ),
+    )}?sortBy=${sortBy}&direction=${direction}&offset=${offset}`,
   );
 
   return response.json();

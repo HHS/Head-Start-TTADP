@@ -37,8 +37,8 @@ describe('communcation log fetchers', () => {
       recipientId.toString(10),
     );
     const data = { test: 'test' };
-    fetchMock.getOnce(url, data);
-    const response = await getCommunicationLogsByRecipientId(regionId, recipientId);
+    fetchMock.getOnce(`${url}?sortBy=communicationDate&direction=desc&offset=0`, data);
+    const response = await getCommunicationLogsByRecipientId(regionId, recipientId, 'communicationDate', 'desc', 0);
     expect(response).toEqual(data);
   });
   it('updateCommunicationLogById', async () => {
