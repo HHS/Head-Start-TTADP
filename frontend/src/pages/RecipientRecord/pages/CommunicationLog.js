@@ -1,20 +1,58 @@
-import React from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+
 import { Link } from 'react-router-dom';
+import useDeepCompareEffect from 'use-deep-compare-effect';
+import { getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
+import AppLoadingContext from '../../../AppLoadingContext';
 import WidgetContainer from '../../../components/WidgetContainer';
-import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import CommunicationLogTable from './components/CommunicationLogTable';
+
+const COMMUNICATION_LOG_PER_PAGE = 10;
 
 export default function CommunicationLog({ recipientName, regionId, recipientId }) {
-  const activePage = 1;
-  const topicCount = 0;
-  const offset = 0;
-  const perPageNumber = 10;
-  const handlePageChange = () => {};
-  const sortConfig = {};
-  const requestSort = () => {};
+  const [logs, setLogs] = useState();
+  const [error, setError] = useState();
+  const [sortConfig, setSortConfig] = useState({
+    sortBy: 'communicationDate',
+    direction: 'desc',
+    offset: 0,
+    activePage: 1,
+  });
 
-  const TitleSlot = () => (
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  useDeepCompareEffect(() => {
+    async function fetchLogs() {
+      try {
+        setError(null);
+        setIsAppLoading(true);
+        const response = await getCommunicationLogsByRecipientId(
+          String(regionId),
+          String(recipientId),
+          sortConfig.sortBy,
+          sortConfig.direction,
+          sortConfig.offset,
+        );
+
+        setLogs(response);
+      } catch (err) {
+        setError('Error fetching communication logs');
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+    fetchLogs();
+  }, [
+    logs,
+    recipientId,
+    regionId,
+    setIsAppLoading,
+    sortConfig,
+  ]);
+
+  const AddCommunication = () => (
     <Link
       to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
       className="usa-button smart-hub--new-report-btn"
@@ -23,6 +61,36 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       <span className="smart-hub--new-report">Add communication</span>
     </Link>
   );
+
+  const requestSort = (sortBy) => {
+    let direction = 'asc';
+    if (
+      sortConfig
+      && sortConfig.sortBy === sortBy
+      && sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+
+    setSortConfig({
+      sortBy,
+      direction,
+      activePage: 1,
+      offset: 0,
+    });
+  };
+
+  const handlePageChange = (pageNumber) => {
+    // copy state
+    const sort = { ...sortConfig };
+
+    // mutate
+    sort.activePage = pageNumber;
+    sort.offset = (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE;
+
+    // store it
+    setSortConfig(sort);
+  };
 
   return (
     <>
@@ -38,25 +106,26 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       </Helmet>
       <WidgetContainer
         title="Communication log"
-        loading={false}
-        loadingLabel="Resource associated with topics loading"
         showPagingBottom
         showPagingTop
-        currentPage={activePage}
-        totalCount={topicCount}
-        offset={offset}
-        perPage={perPageNumber}
+        loading={false}
+        currentPage={sortConfig.activePage}
+        totalCount={logs ? logs.count : 0}
+        offset={sortConfig.offset}
+        perPage={COMMUNICATION_LOG_PER_PAGE}
         handlePageChange={handlePageChange}
-        titleSlot={<TitleSlot />}
+        error={error}
+        titleSlot={<AddCommunication />}
       >
-        <HorizontalTableWidget
-          headers={[]}
-          data={[]}
-          firstHeading="Topic"
-          enableSorting
-          sortConfig={sortConfig}
-          requestSort={requestSort}
-        />
+        {(logs && logs.count > 0) ? (
+          <CommunicationLogTable
+            sortConfig={sortConfig}
+            requestSort={requestSort}
+            logs={logs.rows}
+            recipientId={recipientId}
+            regionId={regionId}
+          />
+        ) : null}
       </WidgetContainer>
     </>
   );

@@ -26,7 +26,8 @@ const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
       break;
     case 'purpose':
       result = [[
-        sequelize.literal(`data.purpose ${sortDir}`),
+        'data.purpose',
+        sortDir,
       ],
       [
         'data.communicationDate',
