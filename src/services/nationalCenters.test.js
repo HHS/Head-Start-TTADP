@@ -173,33 +173,116 @@ describe('nationalCenters service', () => {
     const originalCenterName = faker.lorem.words(8);
     const newCenterName = faker.lorem.words(8);
     const ids = [];
-    beforeAll(async () => {
+    let firstCenterUser;
+    let secondCenterUser;
+    beforeEach(async () => {
+      // Create first mock users.
+      firstCenterUser = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+      // Create second mock users.
+      secondCenterUser = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      // Create National Center.
       center = await db.NationalCenter.create({ name: originalCenterName });
       ids.push(center.id);
+
+      // Create National Center Users.
+      await db.NationalCenterUser.create({
+        nationalCenterId: center.id,
+        userId: firstCenterUser.id,
+      });
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
+      // Destroy national center users.
+      await db.NationalCenterUser.destroy({
+        where: {
+          nationalCenterId: center.id,
+        },
+      });
+
+      // Destroy National.
       await db.NationalCenter.destroy({
         where: {
           id: ids,
         },
         force: true,
       });
+
+      // Destroy users.
+      await db.User.destroy({
+        where: {
+          id: [firstCenterUser.id, secondCenterUser.id],
+        },
+      });
     });
 
     it('updates a nationalCenter', async () => {
-      center = await updateById(center.id, { name: newCenterName });
+      center = await updateById(center.id, { name: newCenterName, userId: secondCenterUser.id });
       ids.push(center.id);
       expect(center.name).toBe(newCenterName);
+      expect(center.users.length).toBe(1);
+      expect(center.users[0].id).toBe(secondCenterUser.id);
+      expect(center.users[0].name).toBe(secondCenterUser.name);
     });
 
-    it('doesn\'t update if name hasn\'t changed', async () => {
-      center = await updateById(center.id, { name: newCenterName });
+    it('updates a nationalCenter with no user', async () => {
+      await db.NationalCenterUser.destroy({
+        where: {
+          nationalCenterId: center.id,
+        },
+      });
+      center = await updateById(center.id, {
+        name: originalCenterName, userId: secondCenterUser.id,
+      });
       ids.push(center.id);
-      expect(center.name).toBe(newCenterName);
+      expect(center.name).toBe(originalCenterName);
       expect(auditLogger.info).toHaveBeenCalledWith(
         `Name ${center.name} has not changed`,
       );
+      expect(center.users.length).toBe(1);
+      expect(center.users[0].id).toBe(secondCenterUser.id);
+      expect(center.users[0].name).toBe(secondCenterUser.name);
+    });
+
+    it('doesn\'t update if name hasn\'t changed', async () => {
+      center = await updateById(center.id, {
+        name: originalCenterName,
+        userId: firstCenterUser.id,
+      });
+      ids.push(center.id);
+      expect(center.name).toBe(originalCenterName);
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `Name ${center.name} has not changed`,
+      );
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `Name ${center.name} has not changed the national center user`,
+      );
+    });
+    it('destroy user if removed', async () => {
+      center = await updateById(center.id, {
+        name: originalCenterName,
+        userId: null,
+      });
+      ids.push(center.id);
+      expect(center.name).toBe(originalCenterName);
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `Name ${center.name} has not changed`,
+      );
+      expect(center.users.length).toBe(0);
     });
   });
 

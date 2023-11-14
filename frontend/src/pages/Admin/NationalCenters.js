@@ -94,6 +94,14 @@ export default function NationalCenters({ match }) {
 
   const message = history.location.state && history.location.state.message;
 
+  const getCenterToDisplay = (center) => {
+    let centerToDisplay = center.name;
+    if (center.users.length > 0) {
+      centerToDisplay = `${center.name} (${center.users[0].name})`;
+    }
+    return centerToDisplay;
+  };
+
   return (
     <div>
       <Modal
@@ -118,7 +126,7 @@ export default function NationalCenters({ match }) {
             {nationalCenters.map((center) => (
               <li key={center.id}>
                 <Link to={`/admin/national-centers/${center.id}`}>
-                  {center.name}
+                  {getCenterToDisplay(center)}
                 </Link>
               </li>
             ))}
