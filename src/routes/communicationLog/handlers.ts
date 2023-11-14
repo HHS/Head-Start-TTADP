@@ -58,7 +58,14 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
       return;
     }
 
-    const logs = await logsByRecipientAndScopes(Number(recipientId));
+    const { sortBy, offset, direction } = req.query;
+
+    const logs = await logsByRecipientAndScopes(
+      Number(recipientId),
+      String(sortBy),
+      Number(offset),
+      String(direction),
+    );
     res.status(httpCodes.OK).json(logs);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
