@@ -1,5 +1,4 @@
 import join from 'url-join';
-import { DECIMAL_BASE } from '@ttahub/common';
 import {
   get, put, post, destroy,
 } from './index';
@@ -15,9 +14,9 @@ export const getCommunicationLogById = async (regionId, logId) => {
     join(
       communicationLogUrl,
       'region',
-      regionId.toString(DECIMAL_BASE),
+      String(regionId),
       'log',
-      logId.toString(DECIMAL_BASE),
+      String(logId),
     ),
   );
 
@@ -29,23 +28,23 @@ export const getCommunicationLogsByRecipientId = async (regionId, recipientId) =
     join(
       communicationLogUrl,
       'region',
-      regionId.toString(DECIMAL_BASE),
+      String(regionId),
       'recipient',
-      recipientId.toString(DECIMAL_BASE),
+      String(recipientId),
     ),
   );
 
   return response.json();
 };
 
-export const updateCommunicationLogById = async (logId, logData) => {
+export const updateCommunicationLogById = async (logId, data) => {
   const response = await put(
     join(
       communicationLogUrl,
       'log',
-      logId.toString(DECIMAL_BASE),
+      String(logId),
     ),
-    logData,
+    { data },
   );
 
   return response.json();
@@ -56,23 +55,23 @@ export const deleteCommunicationLogById = async (logId) => {
     join(
       communicationLogUrl,
       'log',
-      logId.toString(DECIMAL_BASE),
+      String(logId),
     ),
   );
 
   return response.json();
 };
 
-export const createCommunicationLogByRecipientId = async (regionId, recipientId, logData) => {
+export const createCommunicationLogByRecipientId = async (regionId, recipientId, data) => {
   const response = await post(
     join(
       communicationLogUrl,
       'region',
-      regionId.toString(DECIMAL_BASE),
+      String(regionId),
       'recipient',
-      recipientId.toString(DECIMAL_BASE),
+      String(recipientId),
     ),
-    logData,
+    { data },
   );
 
   return response.json();

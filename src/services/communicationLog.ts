@@ -3,6 +3,14 @@ import db from '../models';
 
 const { CommunicationLog } = db;
 
+interface CommLog {
+  files: unknown[];
+  recipientId: number;
+  userId: number;
+  id: number;
+  data: unknown;
+}
+
 const createLog = async (
   recipientId: number,
   userId: number,
@@ -13,7 +21,19 @@ const createLog = async (
   data,
 });
 
-const logById = async (id: number) => CommunicationLog.findByPk(id);
+const LOG_WHERE_OPTIONS = (id: number) => ({
+  where: {
+    id,
+  },
+  include: [
+    {
+      model: db.File,
+      as: 'files',
+    },
+  ],
+});
+
+const logById = async (id: number) => CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
@@ -34,9 +54,10 @@ const deleteLog = async (id: number) => CommunicationLog.destroy({
   },
 });
 
-const updateLog = async (id: number, data: unknown) => {
-  const log = await CommunicationLog.findByPk(id);
-  return log.update(data);
+const updateLog = async (id: number, logData: CommLog) => {
+  const { files, ...data } = logData;
+  const log = await CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
+  return log.update({ data });
 };
 
 export {
