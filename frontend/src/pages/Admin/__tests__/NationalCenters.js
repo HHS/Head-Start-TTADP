@@ -12,12 +12,16 @@ describe('National Centers page', () => {
   const nationalCenterUrl = join('api', 'national-center');
   const nationalCenterAdminUrl = join('api', 'admin', 'national-center');
   beforeEach(() => {
-    fetchMock.get(nationalCenterUrl, [
-      'DTL',
-      'HBHS',
-      'PFCE',
-      'PFMO',
-    ].map((name, id) => ({ id: (id + 1).toString(), name })));
+    fetchMock.get(nationalCenterUrl,
+      {
+        centers: [
+          'DTL',
+          'HBHS',
+          'PFCE',
+          'PFMO',
+        ].map((name, id) => ({ id: (id + 1).toString(), name })),
+        users: [],
+      });
   });
 
   afterEach(() => {
