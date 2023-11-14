@@ -7,7 +7,7 @@ import {
   recipientLeadership,
   allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
-import { goalsByIdAndRecipient } from '../../services/goals';
+import { goalsByIdAndRecipient } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import Recipient from '../../policies/recipient';

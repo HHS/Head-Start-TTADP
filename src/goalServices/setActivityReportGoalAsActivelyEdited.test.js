@@ -3,14 +3,14 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import {
   setActivityReportGoalAsActivelyEdited,
   getGoalsForReport,
-} from '../goals';
+} from './goals';
 import {
   Goal,
   ActivityReport,
   ActivityReportGoal,
   User,
   sequelize,
-} from '../../models';
+} from '../models';
 
 describe('setActivityReportGoalAsActivelyEdited', () => {
   let goal;
