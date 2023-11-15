@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import {
   Button,
@@ -8,6 +7,7 @@ import {
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import { nextStepsFields } from '../constants';
 import NextStepsRepeater from '../../../../ActivityReport/Pages/components/NextStepsRepeater';
+import { isPageComplete } from '../../../../SessionForm/pages/nextSteps';
 
 const NextSteps = () => (
   <>
@@ -38,21 +38,6 @@ const path = 'next-steps';
 const position = 3;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
-export const isPageComplete = (hookForm) => {
-  const formData = hookForm.getValues();
-
-  const { specialistNextSteps, recipientNextSteps } = formData;
-
-  if (!specialistNextSteps.length || !recipientNextSteps.length) {
-    return false;
-  }
-
-  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
-    return false;
-  }
-
-  return true;
-};
 
 export default {
   position,
