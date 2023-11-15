@@ -72,8 +72,25 @@ const removeTables = async (
   }
 };
 
+/**
+ * Updates an enum with the provided values if they don't already exist.
+ * @async
+ * @param {Object} queryInterface - The interface for executing queries.
+ * @param {string} enumName - Name of the enum to add values to...
+ *  in sequelize, theses are formatted like "enum_Goals_createdVia"
+ * @param {String[]} enumValues - Array of enum values to add.
+ */
+const addValuesToEnumIfTheyDontExist = async (
+  queryInterface,
+  enumName,
+  enumValues = [],
+) => Promise.all(Object.values(enumValues).map((enumValue) => queryInterface.sequelize.query(`
+  ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';
+`)));
+
 module.exports = {
   prepMigration,
   setAuditLoggingState,
   removeTables,
+  addValuesToEnumIfTheyDontExist,
 };

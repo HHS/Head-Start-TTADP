@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import db, {
-  User, Permission,
+  User, EventReportPilot, Permission,
 } from '../models';
 
 import {
@@ -238,6 +238,7 @@ describe('Users DB service', () => {
       faker.datatype.number({ min: 25000 }),
       faker.datatype.number({ min: 25000 }),
       faker.datatype.number({ min: 25000 }),
+      faker.datatype.number({ min: 25000 }),
     ];
     const users = [
       {
@@ -265,7 +266,14 @@ describe('Users DB service', () => {
         regionId: 5,
         scopeId: SCOPES.SITE_ACCESS,
       },
+      {
+        id: userIds[5],
+        regionId: 1,
+        scopeId: SCOPES.SITE_ACCESS,
+      },
     ];
+
+    const eventReportPilotId = faker.datatype.number({ min: 25000 });
 
     beforeEach(async () => {
       await Promise.all(
@@ -281,11 +289,23 @@ describe('Users DB service', () => {
           }],
           lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
+        EventReportPilot.create({
+          id: eventReportPilotId,
+          ownerId: userIds[5],
+          pocIds: [],
+          collaboratorIds: [],
+          regionId: [1],
+          data: {
+            eventId: `-${eventReportPilotId}`,
+          },
+          imported: {},
+        }),
       );
     });
 
     afterEach(async () => {
       await User.destroy({ where: { id: userIds } });
+      await EventReportPilot.destroy({ where: { id: eventReportPilotId } });
     });
 
     it('returns a list of users that have permissions on the region', async () => {
@@ -293,6 +313,7 @@ describe('Users DB service', () => {
 
       const collaboratorIds = result.collaborators.map((u) => u.id);
       const pointOfContact = result.pointOfContact.map((u) => u.id);
+      const creators = result.creators.map((u) => u.id);
 
       expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
       expect(collaboratorIds.length).toBe(1);
@@ -300,6 +321,28 @@ describe('Users DB service', () => {
       expect(pointOfContact.includes(userIds[0])).toBeTruthy();
       expect(pointOfContact.includes(userIds[1])).toBeTruthy();
       expect(pointOfContact.length).toBe(2);
+
+      expect(creators.includes(userIds[2])).toBeTruthy();
+      expect(creators.length).toBe(1);
+    });
+
+    it('adds missing creator id when event id is passed', async () => {
+      const result = await getTrainingReportUsersByRegion(5, eventReportPilotId);
+
+      const collaboratorIds = result.collaborators.map((u) => u.id);
+      const pointOfContact = result.pointOfContact.map((u) => u.id);
+      const creators = result.creators.map((u) => u.id);
+
+      expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
+      expect(collaboratorIds.length).toBe(1);
+
+      expect(pointOfContact.includes(userIds[0])).toBeTruthy();
+      expect(pointOfContact.includes(userIds[1])).toBeTruthy();
+      expect(pointOfContact.length).toBe(2);
+
+      expect(creators.includes(userIds[2])).toBeTruthy();
+      expect(creators.includes(userIds[5])).toBeTruthy();
+      expect(creators.length).toBe(2);
     });
   });
 });

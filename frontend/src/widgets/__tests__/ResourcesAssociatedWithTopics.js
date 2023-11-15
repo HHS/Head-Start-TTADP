@@ -18,6 +18,7 @@ const emptyData = {
 const mockData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
   topics: [{
+    link: 'https://official.gov',
     heading: 'https://official.gov',
     isUrl: true,
     data: [
@@ -46,6 +47,7 @@ const mockSortData = {
   headers: ['Feb-22'],
   topics: [
     {
+      link: 'https://secondrow.gov',
       heading: 'https://secondrow.gov',
       isUrl: true,
       data: [
@@ -60,6 +62,7 @@ const mockSortData = {
       ],
     },
     {
+      link: 'https://firstrow.gov',
       heading: 'https://firstrow.gov',
       isUrl: true,
       data: [

@@ -7,11 +7,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
-import colors from '../../../../colors';
+
 import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
 import Req from '../../../../components/Req';
+import PlusButton from '../../../../components/GoalForm/PlusButton';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -180,19 +180,12 @@ export default function NextStepsRepeater({
         ))}
       </div>
 
-      <Button
-        type="button"
-        unstyled
+      <PlusButton
         onClick={onAddNewStep}
-        className="ttahub-next-steps__add-step-button margin-bottom-2"
-        data-testid={
-          `${name === 'specialistNextSteps'
-            ? 'specialist' : 'recipient'}NextSteps-button`
-        }
-      >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
-        Add next step
-      </Button>
+        text="Add next step"
+        testId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-button`}
+        className="margin-bottom-2"
+      />
     </>
   );
 }
