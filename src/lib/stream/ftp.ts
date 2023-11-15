@@ -1,6 +1,7 @@
 import * as fs from 'fs'; // Import the 'fs' module for file system operations
 import * as FTP from 'ftp'; // Import the 'ftp' module for FTP operations
 import { finalize } from 'node-cleanup'; // Import the 'finalize' function from the 'node-cleanup' module
+import { Readable } from 'stream';
 
 interface FTPSettings {
   host: string, // The FTP server host
@@ -10,11 +11,12 @@ interface FTPSettings {
 }
 
 interface FileInfo {
-  name: string; // The name of the file
-  type: string; // The type of the file (e.g., file or directory)
-  size: number; // The size of the file in bytes
-  date: Date; // The last modified date of the file
-  target?: string; // The target of a symbolic link (optional)
+  name: string, // The name of the file
+  type: string, // The type of the file (e.g., file or directory)
+  size: number, // The size of the file in bytes
+  date: Date, // The last modified date of the file
+  target?: string, // The target of a symbolic link (optional)
+  stream?: Readable, // Stream to file (optional)
 }
 
 class FtpClient {
@@ -64,21 +66,45 @@ class FtpClient {
    * @param path - The path to list files from.
    * @returns A promise that resolves with an array of file information, or rejects with an error.
    */
-  listFiles(path = '/'): Promise<FileInfo[]> {
+  listFiles(
+    path = '/',
+    fileMask?: string,
+    priorFile?: string,
+    includeStream = false,
+  ): Promise<{
+      path: string,
+      fileInfo: FileInfo,
+      stream?: Promise<Readable>,
+    }[]> {
     return new Promise((resolve, reject) => {
-      this.client.list(path, (err, files) => { // List files in the specified path on the FTP server
+      // List files in the specified path on the FTP server
+      this.client.list(path, (err, files: FileInfo[]) => {
         if (err) {
           reject(err);
           return;
         }
+
         // Map the returned files to FileInfo objects
-        const fileInfoList: FileInfo[] = files.map((file) => ({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          date: file.date,
-          target: file.target,
-        }));
+        const fileInfoList: {
+          path: string,
+          fileInfo: FileInfo,
+          stream?: Promise<Readable>,
+        }[] = files
+          .filter(({ name }) => fileMask === undefined
+            || new RegExp(fileMask).test(name))
+          .filter(({ name }) => priorFile === undefined
+            || name > priorFile)
+          .map((file) => ({
+            path: `${path}/${file.name}`,
+            fileInfo: {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              date: file.date,
+              target: file.target,
+            },
+            ...(includeStream && { stream: this.downloadAsStream(`${path}/${file}`) }),
+          }));
 
         resolve(fileInfoList);
       });
@@ -106,54 +132,6 @@ class FtpClient {
           resolve(stream);
         },
       );
-    });
-  }
-
-  /**
-   * Retrieves the latest file from a given path and returns it as a stream.
-   * @param path - The path to retrieve the latest file from.
-   * @returns A Promise that resolves to an object containing the path, fileInfo, and stream of the latest file, or null if no files are found.
-   */
-  async getLatest(path: string): Promise<{
-    path: string,
-    fileInfo: FileInfo,
-    stream: fs.ReadStream
-  } | null> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // List all files
-        const files: FileInfo[] = await this.listFiles(path);
-        console.log('Files:', files);
-
-        // Get the latest file
-        const latestFile: FileInfo | undefined = files.reduce((
-          prev,
-          current,
-        ) => (prev.date > current.date
-          ? prev
-          : current));
-        console.log('Latest File:', latestFile);
-
-        if (latestFile) {
-          // Download the latest file as a stream
-          const stream: fs.ReadStream = await this.downloadAsStream(`${path}/${latestFile.name}`);
-          console.log('Downloaded Stream:', stream);
-
-          // Wait for the stream to close before disconnecting from FTP server
-          stream.on('close', this.disconnect);
-
-          // Return the stream
-          resolve({
-            path,
-            fileInfo: latestFile,
-            stream,
-          });
-        }
-      } catch (err) {
-        console.error('Error:', err);
-        reject(err);
-      }
-      reject();
     });
   }
 }
