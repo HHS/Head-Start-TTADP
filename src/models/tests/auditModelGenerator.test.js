@@ -115,14 +115,14 @@ describe('Audit System', () => {
           throw (err);
         }
 
-        expect(data.sort((a, b) => a.table_name >= b.table_name))
+        expect(data.sort((a, b) => a.table_name.localeCompare(b.table_name)))
           .toEqual([{
             table_catalog: 'ttasmarthub',
             table_name: 'Tests',
           }, {
             table_catalog: 'ttasmarthub',
             table_name: 'ZALTests',
-          }].sort((a, b) => a.table_name >= b.table_name));
+          }].sort((a, b) => a.table_name.localeCompare(b.table_name)));
 
         // Postgres information_schema.triggers table does not include any triggers on truncate so
         // to find them the following simulates the same data including all the triggers.
