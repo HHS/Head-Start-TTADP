@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { Readable } from 'stream';
+import { Readable, PassThrough } from 'stream';
 
 // Define an object that maps algorithm names to their corresponding string values
 const Algorithms = {
@@ -14,109 +14,42 @@ const Algorithms = {
 // Create a type alias for the values of the Algorithms object
 type Algorithm = typeof Algorithms[keyof typeof Algorithms];
 
-// Define a class called Hasher
-class Hasher {
-  constructor(private stream: Readable) {}
+class Hasher extends PassThrough {
+  private hash: crypto.Hash;
 
-  /**
-   * Generate a hash using the specified algorithm.
-   *
-   * @param algorithm - The algorithm to use for hashing. Defaults to SHA256.
-   * @returns A promise that resolves with the generated hash as a hexadecimal string.
-   */
-  public generateHash(algorithm: Algorithm = Algorithms.SHA256): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash(algorithm);
-      let dataReceived = false;
+  private hashPromise: Promise<string>;
 
-      let dataListener;
-      let endListener;
-      let errorListener;
-      const clearListeners = () => {
-        this.stream.off('data', dataListener);
-        this.stream.off('end', endListener);
-        this.stream.off('error', errorListener);
-      };
-      dataListener = (chunk) => {
-        dataReceived = true;
-        hash.update(chunk);
-      };
-      endListener = () => {
-        if (!dataReceived) {
-          resolve('');
-        } else {
-          resolve(hash.digest('hex'));
-        }
-        clearListeners();
-      };
-      errorListener = (err) => {
-        reject(err);
-        clearListeners();
-      };
+  private resolveHash: (hash: string) => void;
 
-      // Listen for 'data' events and update the hash
-      this.stream.on('data', dataListener);
+  private rejectHash: (error: Error) => void;
 
-      // Listen for 'end' event and resolve the promise with an empty string if no data was received
-      this.stream.on('end', endListener);
+  constructor(algorithm: Algorithm = Algorithms.SHA256) {
+    super();
+    this.hash = crypto.createHash(algorithm);
 
-      // Listen for 'error' event and remove the listener after rejecting the promise
-      this.stream.on('error', errorListener);
+    // Initialize the hash promise and its resolver/rejector functions
+    this.hashPromise = new Promise<string>((resolve, reject) => {
+      this.resolveHash = resolve;
+      this.rejectHash = reject;
+    });
+
+    this.on('data', (chunk) => {
+      this.hash.update(chunk);
+    });
+
+    this.on('end', () => {
+      // Finalize the hash when the stream ends and resolve the promise
+      this.resolveHash(this.hash.digest('hex'));
+    });
+
+    this.on('error', (err) => {
+      // Reject the promise if an error occurs in the stream
+      this.rejectHash(err);
     });
   }
 
-  /**
-   * Generate a SHA1 hash.
-   *
-   * @returns A promise that resolves with the generated SHA1 hash as a hexadecimal string.
-   */
-  public generateSha1(): Promise<string> {
-    return this.generateHash(Algorithms.SHA1);
-  }
-
-  /**
-   * Generate a SHA256 hash.
-   *
-   * @returns A promise that resolves with the generated SHA256 hash as a hexadecimal string.
-   */
-  public generateSha256(): Promise<string> {
-    return this.generateHash(Algorithms.SHA256);
-  }
-
-  /**
-   * Generate a SHA384 hash.
-   *
-   * @returns A promise that resolves with the generated SHA384 hash as a hexadecimal string.
-   */
-  public generateSha384(): Promise<string> {
-    return this.generateHash(Algorithms.SHA384);
-  }
-
-  /**
-   * Generate a SHA512 hash.
-   *
-   * @returns A promise that resolves with the generated SHA512 hash as a hexadecimal string.
-   */
-  public generateSha512(): Promise<string> {
-    return this.generateHash(Algorithms.SHA512);
-  }
-
-  /**
-   * Generate an MD5 hash.
-   *
-   * @returns A promise that resolves with the generated MD5 hash as a hexadecimal string.
-   */
-  public generateMD5(): Promise<string> {
-    return this.generateHash(Algorithms.MD5);
-  }
-
-  /**
-   * Generate a RIPEMD160 hash.
-   *
-   * @returns A promise that resolves with the generated RIPEMD160 hash as a hexadecimal string.
-   */
-  public generateRipemd160(): Promise<string> {
-    return this.generateHash(Algorithms.RIPEMD160);
+  public getHash(): Promise<string> {
+    return this.hashPromise;
   }
 }
 
@@ -125,3 +58,19 @@ export {
   Algorithms,
   Algorithm,
 };
+
+// // Usage example:
+// import fs from 'fs';
+
+// const hasher = new Hasher(Algorithms.SHA256);
+// const readStream = fs.createReadStream('some-file.txt');
+// const writeStream = fs.createWriteStream('some-file-copy.txt');
+
+// readStream.pipe(hasher).pipe(writeStream).on('finish', () => {
+//   console.log('File has been copied and hashed');
+//   hasher.getHash().then((hash) => {
+//     console.log('Hash:', hash);
+//   }).catch((error) => {
+//     console.error('Error generating hash:', error);
+//   });
+// });
