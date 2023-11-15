@@ -51,7 +51,11 @@ function FinalGoalCard({
       return 'Suspended';
     }
 
-    return 'Not Started';
+    if (mergedGoalStatuses.includes('Not Started')) {
+      return 'Not Started';
+    }
+
+    return 'Draft';
   })();
 
   return (

@@ -286,6 +286,8 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             }}
             setGoals={setGoals}
             allGoalIds={allGoalIds || goals.map((g) => g.id)}
+            shouldDisplayMergeSuccess={false}
+            dismissMergeSuccess={jest.fn()}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
