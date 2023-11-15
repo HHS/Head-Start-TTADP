@@ -1,0 +1,37 @@
+import express from 'express';
+import httpCodes from 'http-codes';
+import { readFileSync } from 'fs';
+import multiparty from 'multiparty';
+import transactionWrapper from '../transactionWrapper';
+import { handleError } from '../../lib/apiErrorHandler';
+import { csvImport } from '../../services/event';
+
+const namespace = 'ADMIN:TRAINING_REPORT';
+const logContext = { namespace };
+
+export async function importTrainingReport(req, res) {
+  try {
+    const form = new multiparty.Form();
+
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        await handleError(req, res, err, logContext);
+        return;
+      }
+
+      const file = files.file[0];
+      const buf = readFileSync(file.path);
+      const response = await csvImport(buf);
+
+      res.status(httpCodes.OK).json(response);
+    });
+  } catch (err) {
+    await handleError(req, res, err, logContext);
+  }
+}
+
+const router = express.Router();
+
+router.post('/', transactionWrapper(importTrainingReport));
+
+export default router;

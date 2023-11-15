@@ -60,7 +60,7 @@ function TrainingReports() {
 
       // Get File.
       const data = new FormData();
-      data.append('file', file);
+      data.append('file', file, { contentType: file.type });
       const res = await importTrainingReports(data);
       setSuccess(`${res.count} events imported successfully.`);
       setSkipped(res.skipped);
