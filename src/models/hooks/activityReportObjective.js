@@ -1,3 +1,5 @@
+import { validateChangedOrSetEnums } from '../helpers/enum';
+
 const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
   [
     sequelize.models.ActivityReportObjectiveFile,
@@ -34,6 +36,10 @@ const recalculateOnAR = async (sequelize, instance, options) => {
   `, { transaction: options.transaction });
 };
 
+const beforeValidate = async (sequelize, instance, options) => {
+  validateChangedOrSetEnums(sequelize, instance);
+};
+
 const beforeDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToMetadata(sequelize, instance, options);
 };
@@ -45,6 +51,7 @@ const afterDestroy = async (sequelize, instance, options) => {
 export {
   propagateDestroyToMetadata,
   recalculateOnAR,
+  beforeValidate,
   beforeDestroy,
   afterDestroy,
 };

@@ -95,6 +95,7 @@ const SessionSummary = ({ datePickerKey }) => {
     async function fetchTopics() {
       try {
         const topics = await getTopics();
+        topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
@@ -542,6 +543,21 @@ const SessionSummary = ({ datePickerKey }) => {
         ) : null}
 
       </Fieldset>
+
+      <FormItem
+        label="TTA provided "
+        name="ttaProvided"
+        required
+      >
+        <Textarea
+          required
+          id="ttaProvided"
+          name="ttaProvided"
+          inputRef={register({
+            required: 'Describe the tta provided',
+          })}
+        />
+      </FormItem>
 
       <div className="margin-top-2">
         <Drawer

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import EventCards from '../EventCards';
@@ -70,6 +71,7 @@ describe('EventCards', () => {
     events = defaultEvents,
     eventType = EVENT_STATUS.NOT_STARTED,
     user = DEFAULT_USER,
+    onDeleteEvent = jest.fn(),
   ) => {
     render((
       <MemoryRouter>
@@ -78,6 +80,7 @@ describe('EventCards', () => {
             events={events}
             eventType={eventType}
             onRemoveSession={jest.fn()}
+            onDeleteEvent={onDeleteEvent}
           />
         </UserContext.Provider>
       </MemoryRouter>));
@@ -141,7 +144,7 @@ describe('EventCards', () => {
       pocIds: [2],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -157,7 +160,7 @@ describe('EventCards', () => {
       pocIds: [3],
       data: {
         eventName: 'Region event 2',
-        eventId: 'Region event ID 2',
+        eventId: 'TR-R02-1235',
         eventOrganizer: 'Sample Region event organizer 2',
         reasons: ['New Staff/Turnover'],
         startDate: '02/02/2021',
@@ -182,7 +185,7 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
@@ -190,14 +193,14 @@ describe('EventCards', () => {
 
     // Region Event.
     expect(screen.getByText('Region event 2')).toBeInTheDocument();
-    expect(screen.getByText('Region event ID 2')).toBeInTheDocument();
+    expect(screen.getByText('TR-R02-1235')).toBeInTheDocument();
     expect(screen.getByText('Sample Region event organizer 2')).toBeInTheDocument();
     expect(screen.getByText('02/02/2021')).toBeInTheDocument();
     expect(screen.getByText('02/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Staff/Turnover').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    let button = screen.getByRole('button', { name: /actions for event 1/i });
+    let button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
@@ -205,7 +208,7 @@ describe('EventCards', () => {
     button.click(button);
 
     // Show correct actions for region event.
-    button = screen.getByRole('button', { name: /actions for event 2/i });
+    button = screen.getByRole('button', { name: /actions for event TR-R02-1235/i });
     button.click(button);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
@@ -221,7 +224,7 @@ describe('EventCards', () => {
       pocIds: [2],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -246,14 +249,14 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
@@ -270,7 +273,7 @@ describe('EventCards', () => {
       pocIds: [4],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -295,14 +298,14 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
@@ -319,7 +322,7 @@ describe('EventCards', () => {
       pocIds: [4],
       data: {
         eventName: 'Collab Event 1',
-        eventId: 'Collab Event ID 1',
+        eventId: 'TR-R01-1234',
         eventOrganizer: 'Sample Collab event organizer 1',
         reasons: ['New Program/Option'],
         startDate: '01/02/2021',
@@ -344,18 +347,85 @@ describe('EventCards', () => {
 
     // Collaborator Event.
     expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Collab Event ID 1')).toBeInTheDocument();
+    expect(screen.getByText('TR-R01-1234')).toBeInTheDocument();
     expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText('01/03/2021')).toBeInTheDocument();
     expect(screen.queryAllByText('New Program/Option').length).toBe(1);
 
     // Show correct actions for collaborator event.
-    const button = screen.getByRole('button', { name: /actions for event 1/i });
+    const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     button.click(button);
+  });
+
+  it('admins see edit and delete event', () => {
+    const deleteFunction = jest.fn();
+    const collaboratorEvents = [{
+      id: 1,
+      ownerId: 2,
+      regionId: 1,
+      collaboratorIds: [3],
+      pocIds: [4],
+      data: {
+        eventName: 'Collab Event 1',
+        eventId: '-1234',
+        eventOrganizer: 'Sample Collab event organizer 1',
+        reasons: ['New Program/Option'],
+        startDate: '01/02/2021',
+        endDate: '01/03/2021',
+        status: 'Not started',
+      },
+      sessionReports: [],
+    }];
+
+    const COLLABORATOR_USER = {
+      id: 1,
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.ADMIN,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderEventCards(
+      collaboratorEvents,
+      EVENT_STATUS.NOT_STARTED,
+      COLLABORATOR_USER,
+      deleteFunction,
+    );
+
+    // Collaborator Event.
+    expect(screen.getByText('Collab Event 1')).toBeInTheDocument();
+    expect(screen.getByText('-1234')).toBeInTheDocument();
+    expect(screen.getByText('Sample Collab event organizer 1')).toBeInTheDocument();
+    expect(screen.getByText('01/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('01/03/2021')).toBeInTheDocument();
+    expect(screen.queryAllByText('New Program/Option').length).toBe(1);
+
+    // Show correct actions for collaborator event.
+    const button = screen.getByRole('button', { name: /actions for event -1234/i });
+    userEvent.click(button);
+    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+
+    // Click delete.
+    expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
+    const deleteBtns = screen.queryAllByRole('button', { name: /delete event/i });
+    userEvent.click(deleteBtns[0]);
+
+    expect(screen.getByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /delete event/i });
+    userEvent.click(confirmBtn);
+    expect(deleteFunction).toHaveBeenCalledWith('1234', 1);
   });
 });

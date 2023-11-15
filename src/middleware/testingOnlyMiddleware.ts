@@ -1,6 +1,6 @@
 export const isTestingOrCI = () => {
   const isLocal = process.env.NODE_ENV === 'development'
-    || process.env.NODE_ENV === 'test';
+    || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'dss';
   const isCI = process.env.CI !== undefined
     && process.env.CI !== null;
 

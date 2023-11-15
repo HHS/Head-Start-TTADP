@@ -33,7 +33,7 @@ import {
 } from '../../services/activityReports';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
+import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { logger } from '../../logger';
@@ -246,7 +246,7 @@ export async function updateLegacyFields(req, res) {
     const savedReport = await createOrUpdate({ imported }, report);
     res.json(savedReport);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 
@@ -268,7 +268,7 @@ export async function getLegacyReport(req, res) {
     }
     res.json(report);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 
