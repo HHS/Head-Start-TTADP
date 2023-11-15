@@ -163,14 +163,18 @@ function TrainingReports() {
                 <div>
                   <h3>Import Summary:</h3>
                   <ul>
-                    <li>{`${skipped.length} skipped`}</li>
-                    {skipped.map((item) => (
-                      <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
-                    ))}
-                    <li>{`${errors.length} errors`}</li>
-                    {errors.map((err) => (
-                      <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
-                    ))}
+                    <li>
+                      {`${skipped.length} skipped`}
+                      {skipped.map((item) => (
+                        <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
+                      ))}
+                    </li>
+                    <li>
+                      {`${errors.length} errors`}
+                      {errors.map((err) => (
+                        <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
+                      ))}
+                    </li>
                   </ul>
                 </div>
               )}

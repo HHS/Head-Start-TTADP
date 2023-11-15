@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { Router } from 'react-router';
@@ -145,13 +145,21 @@ describe('Training Reports page', () => {
     const success = await screen.findByText(/2 events imported successfully./i);
     expect(success).toBeVisible();
 
-    // assert to see the text '2 skipped: event id 1, event id 2'.
-    const skipped = await screen.findByText(/2 skipped: event id 1, event id 2/i);
-    expect(skipped).toBeVisible();
+    // assert to see the text '2 skipped' and then check each skipped event in its own <li> element
+    const skippedHeader = await screen.findByText(/2 skipped/i);
+    expect(skippedHeader).toBeVisible();
+    const eventId1 = within(skippedHeader).getByText(/event id 1/i);
+    expect(eventId1).toBeInTheDocument();
+    const eventId2 = within(skippedHeader).getByText(/event id 2/i);
+    expect(eventId2).toBeInTheDocument();
 
     // assert to see the text '2 errors: event id 2, event id 3'.
-    const errors = await screen.findByText(/2 errors: event id 2, event id 3/i);
-    expect(errors).toBeVisible();
+    const errorsHeader = await screen.findByText(/2 errors/i);
+    expect(errorsHeader).toBeVisible();
+    const errorEventId2 = within(errorsHeader).getByText(/event id 2/i);
+    expect(errorEventId2).toBeInTheDocument();
+    const errorEventId3 = within(errorsHeader).getByText(/event id 3/i);
+    expect(errorEventId3).toBeInTheDocument();
 
     expect(uploadButton).toBeVisible();
 
