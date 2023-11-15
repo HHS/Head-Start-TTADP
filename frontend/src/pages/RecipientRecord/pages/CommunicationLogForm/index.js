@@ -226,10 +226,14 @@ export default function CommunicationLogForm({ match, recipientName }) {
   };
 
   const onSaveAndContinue = async () => {
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
+    const valid = await hookForm.trigger();
+    if (!valid) {
+      return;
+    }
     await onSave();
     updateShowSavedDraft(false);
+    const whereWeAre = pages.find((p) => p.path === currentPage);
+    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
     if (nextPage) {
       updatePage(nextPage.position);
     }
@@ -237,7 +241,10 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   const onFormSubmit = async () => {
     try {
-      await hookForm.trigger();
+      const valid = await hookForm.trigger();
+      if (!valid) {
+        return;
+      }
 
       // reset the error message
       setError('');

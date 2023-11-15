@@ -11,7 +11,6 @@ import { useFormContext } from 'react-hook-form';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import FormItem from '../../../../../components/FormItem';
 import ControlledDatePicker from '../../../../../components/ControlledDatePicker';
-import Req from '../../../../../components/Req';
 import {
   methodOptions,
   purposeOptions,
@@ -24,13 +23,9 @@ const fields = Object.keys(defaultLogValues);
 
 const Log = ({ datePickerKey }) => {
   const {
-    // getValues,
     register,
     watch,
-    // setValue,
     control,
-    // formState: { errors },
-    // setError,
   } = useFormContext();
 
   const communicationDate = watch('communicationDate');
@@ -95,36 +90,38 @@ const Log = ({ datePickerKey }) => {
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <Label htmlFor="method">
-          How was the communication conducted?
-          <Req />
-        </Label>
-        <Dropdown
-          required
-          id="method"
+        <FormItem
+          label="How was the communication conducted? "
           name="method"
-          inputRef={register({ required: 'Select a communication method' })}
         >
-          {methodOptions.map((option) => (
-            <option key={`methodoptions${option}`}>{option}</option>
-          ))}
-        </Dropdown>
+          <Dropdown
+            required
+            id="method"
+            name="method"
+            inputRef={register({ required: 'Select a communication method' })}
+          >
+            {methodOptions.map((option) => (
+              <option key={`methodoptions${option}`}>{option}</option>
+            ))}
+          </Dropdown>
+        </FormItem>
       </div>
       <div className="margin-top-2">
-        <Label htmlFor="purpose">
-          Purpose of communication
-          <Req />
-        </Label>
-        <Dropdown
-          required
-          id="purpose"
+        <FormItem
+          label="Purpose of communication "
           name="purpose"
-          inputRef={register({ required: 'Select a purpose of communication' })}
         >
-          {purposeOptions.map((option) => (
-            <option key={`purposeoptions${option}`}>{option}</option>
-          ))}
-        </Dropdown>
+          <Dropdown
+            required
+            id="purpose"
+            name="purpose"
+            inputRef={register({ required: 'Select a purpose of communication' })}
+          >
+            {purposeOptions.map((option) => (
+              <option key={`purposeoptions${option}`}>{option}</option>
+            ))}
+          </Dropdown>
+        </FormItem>
       </div>
       <div className="margin-top-2">
         <Label htmlFor="notes">
@@ -137,20 +134,21 @@ const Log = ({ datePickerKey }) => {
         />
       </div>
       <div className="margin-top-2">
-        <Label htmlFor="result">
-          Result
-          <Req />
-        </Label>
-        <Dropdown
-          required
-          id="result"
+        <FormItem
+          label="Result "
           name="result"
-          inputRef={register({ required: 'Select a result of communication' })}
         >
-          {resultOptions.map((option) => (
-            <option key={`resultOptions${option}`}>{option}</option>
-          ))}
-        </Dropdown>
+          <Dropdown
+            required
+            id="result"
+            name="result"
+            inputRef={register({ required: 'Select a result of communication' })}
+          >
+            {resultOptions.map((option) => (
+              <option key={`resultOptions${option}`}>{option}</option>
+            ))}
+          </Dropdown>
+        </FormItem>
       </div>
     </>
   );
