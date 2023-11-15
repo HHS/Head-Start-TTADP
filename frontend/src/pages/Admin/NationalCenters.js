@@ -3,7 +3,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { Link, useHistory } from 'react-router-dom';
 import {
   Alert,
-  Button, Form, Label, ModalToggleButton, TextInput,
+  Button, Form, Label, ModalToggleButton, TextInput, Dropdown,
 } from '@trussworks/react-uswds';
 import Modal from '../../components/VanillaModal';
 import { getNationalCenters } from '../../fetchers/nationalCenters';
@@ -19,6 +19,8 @@ export default function NationalCenters({ match }) {
   const history = useHistory();
   const modalRef = useRef();
   const [nationalCenters, setNationalCenters] = useState();
+  const [allUserOptions, setAllUserOptions] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(0);
   const [error, setError] = useState();
 
   useEffect(() => {
@@ -28,6 +30,20 @@ export default function NationalCenters({ match }) {
         // eslint-disable-next-line no-unused-vars
         const { centers, users } = await getNationalCenters();
         setNationalCenters(centers);
+
+        // Get users in use.
+        const userIds = centers.reduce((acc, center) => {
+          if (center.users) {
+            center.users.forEach((user) => {
+              acc.push(user.id);
+            });
+          }
+          return acc;
+        }, []);
+
+        // Filter out users in use.
+        const cleanFilterOptions = users.filter((user) => !userIds.includes(user.id));
+        setAllUserOptions(cleanFilterOptions);
       } catch (e) {
         setError('Error fetching national centers');
         setNationalCenters([]);
@@ -38,16 +54,39 @@ export default function NationalCenters({ match }) {
     }
   }, [nationalCenters]);
 
+  // Add a useEffect for change of national center.
+  useEffect(() => {
+    if (nationalCenters) {
+      const selectedCenter = nationalCenters.find((c) => (
+        c.id === nationalCenterId
+      ));
+      if (selectedCenter && selectedCenter.users && selectedCenter.users.length > 0) {
+        setSelectedUser(selectedCenter.users[0].id); // set current selected.
+      } else {
+        setSelectedUser(0); // reset.
+      }
+    }
+  }, [nationalCenterId, nationalCenters]);
+
   if (!nationalCenters) {
     return 'Loading...';
   }
 
   let selectedCenter = null;
+  let userOptions = [...allUserOptions]; // Reset user options.
 
   if (nationalCenterId && nationalCenterId !== 'new') {
     selectedCenter = nationalCenters.find((c) => (
       c.id === nationalCenterId
     ));
+
+    // Update the user options.
+    if (selectedCenter && selectedCenter.users && selectedCenter.users.length > 0) {
+      const [user] = selectedCenter.users;
+      if (!userOptions.find((u) => u.id === user.id)) {
+        userOptions = [...userOptions, user];
+      }
+    }
   }
 
   if (nationalCenterId === 'new') {
@@ -99,6 +138,11 @@ export default function NationalCenters({ match }) {
       centerToDisplay = `${center.name} (${center.users[0].name})`;
     }
     return centerToDisplay;
+  };
+
+  const changeUser = (e) => {
+    const { target: { value } } = e;
+    setSelectedUser(value);
   };
 
   return (
@@ -156,6 +200,19 @@ export default function NationalCenters({ match }) {
             <TextInput key={`name-for-${selectedCenter.id}`} defaultValue={selectedCenter.name} name="name" id="name" required />
 
             <input type="hidden" required name="id" value={selectedCenter.id} />
+
+            <Label htmlFor="group">
+              Associated User
+              {' '}
+            </Label>
+            <Dropdown id="associatedUser" name="associatedUser" value={selectedUser} onChange={changeUser}>
+              <option value="0" disabled selected hidden>Select</option>
+              {userOptions.map((u) => (
+                <option key={`user${u.id}`} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </Dropdown>
 
             <div className="display-flex">
               <Button type="submit">Save</Button>
