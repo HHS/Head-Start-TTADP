@@ -27,7 +27,7 @@ module.exports = {
           allowNull: true,
           type: Sequelize.TEXT,
         },
-        file: {
+        fileMask: {
           allowNull: true,
           type: Sequelize.TEXT,
         },
@@ -89,6 +89,11 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
+        processed: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
         hash: {
           type: Sequelize.TEXT,
           allowNull: true,
@@ -115,7 +120,7 @@ module.exports = {
           allowNull: false,
           references: {
             model: {
-              tableName: 'Imports',
+              tableName: 'ImportFiles',
             },
             key: 'id',
           },
@@ -126,12 +131,12 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
-        hash: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
         processed: {
           type: Sequelize.BOOLEAN,
+          allowNull: true,
+        },
+        hash: {
+          type: Sequelize.TEXT,
           allowNull: true,
         },
         schema: {
