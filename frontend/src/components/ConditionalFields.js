@@ -17,6 +17,7 @@ export const FIELD_DICTIONARY = {
       isOnReport,
       onChange,
       onBlur,
+      userCanEdit,
     }) => (
       <ConditionalMultiselect
         fieldData={field}
@@ -24,6 +25,7 @@ export const FIELD_DICTIONARY = {
         fieldName={field.title.replace(/\s/g, '-').toLowerCase()}
         fieldValue={value}
         isOnReport={isOnReport}
+        userCanEdit={userCanEdit}
         isComplete={isComplete}
         onBlur={onBlur}
         onChange={onChange}
@@ -40,6 +42,7 @@ export default function ConditionalFields({
   setPrompts,
   validatePrompts,
   errors,
+  userCanEdit,
 }) {
   const [initialValues, setInitialValues] = useState([]);
 
@@ -106,6 +109,7 @@ export default function ConditionalFields({
           onChange,
           onBlur,
           isComplete,
+          userCanEdit,
         };
 
         return field.render(fieldData);
@@ -126,4 +130,9 @@ ConditionalFields.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
+  userCanEdit: PropTypes.bool,
+};
+
+ConditionalFields.defaultProps = {
+  userCanEdit: true,
 };

@@ -4,24 +4,27 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   StepIndicatorStep,
   Button,
   Checkbox,
   Alert,
+  ModalToggleButton,
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../../../../components/Container';
 import StepIndicator from '../../../../components/StepIndicator';
 import { getRecipientGoals } from '../../../../fetchers/recipient';
+import { mergeGoals } from '../../../../fetchers/goals';
 import './index.css';
 import GoalCard from './components/GoalCard';
 import FinalGoalCard from './components/FinalGoalCard';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import GoalMergeGuidanceDrawer from './components/GoalMergeGuidanceDrawer';
+import Modal from '../../../../components/VanillaModal';
 
 const OFFSET = 0;
 const SELECT_GOALS_TO_MERGE = 1;
@@ -106,6 +109,7 @@ export default function MergeGoals({
   const [activePage, setActivePage] = useState(SELECT_GOALS_TO_MERGE);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const drawerTriggerRef = useRef(null);
+  const modalRef = useRef();
 
   const hookForm = useForm({
     mode: 'onSubmit',
@@ -118,6 +122,8 @@ export default function MergeGoals({
   const { register, watch } = hookForm;
   const selectedGoalIds = watch('selectedGoalIds');
   const finalGoalId = watch('finalGoalId');
+
+  const history = useHistory();
 
   useEffect(() => {
     async function fetchGoals() {
@@ -256,9 +262,7 @@ export default function MergeGoals({
   const FirstButton = () => {
     if (activePage === REVIEW_AND_MERGE) {
       return (
-        <Button type="submit">
-          Merge goals
-        </Button>
+        <ModalToggleButton modalRef={modalRef}>Merge goals</ModalToggleButton>
       );
     }
 
@@ -269,7 +273,7 @@ export default function MergeGoals({
     );
   };
 
-  const backPath = `/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`;
+  const backPath = `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`;
 
   const helpLink = (
     <button
@@ -280,6 +284,20 @@ export default function MergeGoals({
       What happens when goals are merged?
     </button>
   );
+
+  const onSubmit = async (data) => {
+    try {
+      setIsAppLoading(true);
+      const mergedGoals = await mergeGoals(data.selectedGoalIds, data.finalGoalId);
+      const goalIds = mergedGoals.map((g) => g.id);
+      setIsAppLoading(false);
+      history.push(`${backPath}`, { mergedGoals: goalIds });
+    } catch (e) {
+      setValidation('Unable to merge goals');
+      setIsAppLoading(false);
+      modalRef.current.toggleModal(false);
+    }
+  };
 
   return (
     <div className="padding-top-5">
@@ -324,8 +342,22 @@ export default function MergeGoals({
           be selected as the goal to keep, and other goals can&apos;t be selected.
         </Alert>
         )}
-        {/* eslint-disable-next-line no-console */}
-        <form onSubmit={hookForm.handleSubmit((data) => console.log(data))}>
+        <form onSubmit={hookForm.handleSubmit((data) => onSubmit(data))}>
+          <Modal
+            modalRef={modalRef}
+            heading="Permanently merge goals?"
+          >
+            <p>This action can&apos;t be undone.</p>
+
+            <Button
+              type="submit"
+              className="margin-right-1"
+              onClick={(e) => hookForm.handleSubmit((data) => onSubmit(data))(e)}
+            >
+              Yes, merge goals
+            </Button>
+            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, go back</ModalToggleButton>
+          </Modal>
           <fieldset className="margin-right-2 padding-0 border-0" hidden={activePage !== SELECT_GOALS_TO_MERGE}>
             {goals.map((goal) => (
               <GoalCard

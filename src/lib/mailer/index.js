@@ -426,6 +426,13 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
     debugMessage,
   } = data;
 
+  const toEmails = filterAndDeduplicateEmails([emailTo]);
+
+  if (toEmails.length === 0) {
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
+    return null;
+  }
+
   logger.debug(debugMessage);
 
   if (SEND_NOTIFICATIONS === 'true' && !CI) {
@@ -442,7 +449,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
     return email.send({
       template: path.resolve(emailTemplatePath, templatePath),
       message: {
-        to: emailTo,
+        to: toEmails,
       },
       locals: data,
     });

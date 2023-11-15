@@ -17,7 +17,7 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
-} from '../../services/goals';
+} from '../../goalServices/goals';
 import { currentUserId } from '../../services/currentUser';
 
 jest.mock('../../services/users', () => ({
@@ -28,7 +28,7 @@ jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
 }));
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),

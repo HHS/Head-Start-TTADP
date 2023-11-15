@@ -68,6 +68,7 @@ describe('Goal Form > Form component', () => {
           onUploadFile={jest.fn()}
           validateGoalNameAndRecipients={jest.fn()}
           prompts={goal.prompts}
+          userCanEdit
         />
       </UserContext.Provider>,
     );

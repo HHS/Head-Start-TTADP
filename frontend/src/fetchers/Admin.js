@@ -102,3 +102,23 @@ export const sendEmail = async (data) => {
   const result = await post((join('/', 'api', 'admin', 'email')), data);
   return result.json();
 };
+
+export const getGroupsByRegion = async (regionId) => {
+  const groups = await get((join('/', 'api', 'admin', 'groups', 'region', String(regionId))));
+  return groups.json();
+};
+
+export const getCuratedTemplates = async () => {
+  const templates = await get((join('/', 'api', 'admin', 'goals', 'curated-templates')));
+  return templates.json();
+};
+
+export const getCreatorsByRegion = async (regionId) => {
+  const creators = await get((join('/', 'api', 'admin', 'users', 'creators', 'region', String(regionId))));
+  return creators.json();
+};
+
+export const createMultiRecipientGoalsFromAdmin = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'goals')), data);
+  return result.json();
+};
