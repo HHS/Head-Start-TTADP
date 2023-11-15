@@ -10,6 +10,11 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.sequelize.query(/* sql */`
+
+      -- Change national centers id to type INT.
+      ALTER TABLE "NationalCenters"
+      ALTER COLUMN "id" TYPE INT;
+
       -- Delete all data from table "NationalCenters".
         DELETE FROM "NationalCenters";
 
