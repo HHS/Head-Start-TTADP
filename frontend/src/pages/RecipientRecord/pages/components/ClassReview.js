@@ -41,18 +41,13 @@ const ClassReview = ({ grantId }) => {
 
   const getScoreBadge = (key, score, received) => {
     if (key === 'ES' || key === 'CO') {
-      switch (score) {
-        case score >= 6:
-          return BadgeAbove();
-        case score < 5:
-          return BadgeBelowCompetetive();
-        default:
-          return BadgeBelowQuality();
-      }
-    } else if (key === 'IS') {
-      if (score >= 3) {
-        return BadgeAbove();
-      }
+      if (score >= 6) return BadgeAbove();
+      if (score < 5) return BadgeBelowCompetetive();
+      return BadgeBelowQuality();
+    }
+
+    if (key === 'IS') {
+      if (score >= 3) return BadgeAbove();
 
       // IS is slightly more complicated.
       // See TTAHUB-2097 for details.
@@ -117,7 +112,7 @@ const ClassReview = ({ grantId }) => {
 
         {/* Emotional support score */}
         {scores.ES && (
-        <div className="margin-y-2">
+        <div className="margin-y-2" data-testid="class-es">
           <div className="display-flex flex-row flex-justify flex-align-center">
             <p className="margin-y-1">
               <strong>Emotional support</strong>
@@ -132,7 +127,7 @@ const ClassReview = ({ grantId }) => {
 
         {/* Classroom organization score */}
         {scores.CO && (
-        <div className="margin-y-2">
+        <div className="margin-y-2" data-testid="class-co">
           <div className="display-flex flex-row flex-justify flex-align-center">
             <p className="margin-y-1">
               <strong>Classroom organization</strong>
@@ -147,7 +142,7 @@ const ClassReview = ({ grantId }) => {
 
         {/* Instructional support score */}
         {scores.IS && (
-        <div className="margin-y-2">
+        <div className="margin-y-2" data-testid="class-is">
           <div className="display-flex flex-row flex-justify flex-align-center">
             <p className="margin-y-1">
               <strong>Instructional support</strong>

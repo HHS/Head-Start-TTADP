@@ -13,12 +13,12 @@ export const getMonitoringReview = async (grantId) => {
 };
 
 export const getClassScores = async (grantId) => {
-  // const scores = await get(join(classUrl, grantId));
-  // return scores.json();
-  return {
-    received: '05/01/2023',
-    ES: 5,
-    CO: 3,
-    IS: 7,
-  };
+  const scores = await get(join(classUrl, grantId));
+  return scores.json();
+  // return {
+  //   received: '05/01/2023',
+  //   ES: 6,
+  //   CO: 3,
+  //   IS: 7,
+  // };
 };
