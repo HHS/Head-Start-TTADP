@@ -5,6 +5,7 @@ export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {
     static associate(models) {
       // A National center can belong to a user through a national center user.
+      NationalCenter.hasMany(models.NationalCenterUser, { foreignKey: 'nationalCenterId', as: 'nationalCenterUsers' });
       NationalCenter.belongsToMany(models.User, { through: models.NationalCenterUser, foreignKey: 'nationalCenterId', as: 'users' });
     }
   }
