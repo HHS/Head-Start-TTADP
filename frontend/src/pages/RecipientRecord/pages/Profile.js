@@ -6,6 +6,7 @@ import RecipientSummary from '../components/RecipientSummary';
 import GrantList from '../components/GrantsList';
 import RecipientLeadership from '../components/RecipientLeadership';
 import './Profile.css';
+import ClassReview from './components/ClassReview';
 
 export default function Profile({
   recipientSummary,
@@ -29,7 +30,19 @@ export default function Profile({
           </Grid>
           <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
             <RecipientLeadership recipientId={recipientId} regionId={regionId} />
+          </Grid>
+          <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
+          </Grid>
+          <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+            {recipientSummary.grants.map((grant) => (
+              <div key={grant.number}>
+                <ClassReview grantId={grant.number} />
+              </div>
+            ))}
+          </Grid>
+          <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+            This is where monitoring review goes.
           </Grid>
         </Grid>
       </div>
