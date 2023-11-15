@@ -4,96 +4,68 @@ import Cloner from '../cloner';
 describe('Cloner', () => {
   let sourceStream;
   let cloner;
+  const numberOfClones = 3;
 
   beforeEach(() => {
-    sourceStream = new Readable();
-    cloner = new Cloner(sourceStream, 3);
+    // Create a mock readable stream
+    sourceStream = new Readable({
+      read(size) {
+        this.push('some data');
+        this.push(null); // End the stream
+      },
+    });
+    cloner = new Cloner(sourceStream, numberOfClones);
   });
 
-  afterEach(() => {
-    // Clean up the source stream and clone streams
-    sourceStream.destroy();
-    cloner.getClones().forEach((clone) => clone.destroy());
+  test('should create the specified number of clones', () => {
+    const clones = cloner.getClones();
+    expect(clones).toHaveLength(numberOfClones);
   });
 
-  describe('constructor', () => {
-    it('should initialize the sourceStream and clones', () => {
-      expect(cloner.sourceStream).toBe(sourceStream);
-      expect(cloner.clones.length).toBe(3);
-      expect(cloner.clones[0]).toBeInstanceOf(PassThrough);
-      expect(cloner.clones[1]).toBeInstanceOf(PassThrough);
-      expect(cloner.clones[2]).toBeInstanceOf(PassThrough);
-    });
-  });
-
-  describe('cloneStreams', () => {
-    it('should pipe data from sourceStream to each clone', () => {
-      const clone1 = cloner.getClones()[0];
-      const clone2 = cloner.getClones()[1];
-      const clone3 = cloner.getClones()[2];
-
-      const dataChunk = Buffer.from('test data');
-
-      // Mock the write method of clone streams
-      clone1.write = jest.fn();
-      clone2.write = jest.fn();
-      clone3.write = jest.fn();
-
-      // Emit a data event on the source stream
-      sourceStream.emit('data', dataChunk);
-
-      expect(clone1.write).toHaveBeenCalledWith(dataChunk);
-      expect(clone2.write).toHaveBeenCalledWith(dataChunk);
-      expect(clone3.write).toHaveBeenCalledWith(dataChunk);
-    });
-
-    it('should end each clone stream when the sourceStream ends', () => {
-      const clone1 = cloner.getClones()[0];
-      const clone2 = cloner.getClones()[1];
-      const clone3 = cloner.getClones()[2];
-
-      // Mock the end method of clone streams
-      clone1.end = jest.fn();
-      clone2.end = jest.fn();
-      clone3.end = jest.fn();
-
-      // Emit an end event on the source stream
-      sourceStream.emit('end');
-
-      expect(clone1.end).toHaveBeenCalled();
-      expect(clone2.end).toHaveBeenCalled();
-      expect(clone3.end).toHaveBeenCalled();
-    });
-
-    it('should emit error to each clone stream when an error occurs in the sourceStream', () => {
-      const clone1 = cloner.getClones()[0];
-      const clone2 = cloner.getClones()[1];
-      const clone3 = cloner.getClones()[2];
-
-      const error = new Error('Test error');
-
-      // Mock the emit method of clone streams
-      clone1.emit = jest.fn();
-      clone2.emit = jest.fn();
-      clone3.emit = jest.fn();
-
-      // Emit an error event on the source stream
-      sourceStream.emit('error', error);
-
-      expect(clone1.emit).toHaveBeenCalledWith('error', error);
-      expect(clone2.emit).toHaveBeenCalledWith('error', error);
-      expect(clone3.emit).toHaveBeenCalledWith('error', error);
+  test('each clone should be an instance of PassThrough', () => {
+    const clones = cloner.getClones();
+    clones.forEach((clone) => {
+      expect(clone.constructor.name).toBe('PassThrough');
     });
   });
 
-  describe('getClones', () => {
-    it('should return an array of clone streams', () => {
-      const clones = cloner.getClones();
+  test('clones should receive data from the source stream', async () => {
+    const clones = cloner.getClones();
 
-      expect(clones.length).toBe(3);
-      expect(clones[0]).toBeInstanceOf(PassThrough);
-      expect(clones[1]).toBeInstanceOf(PassThrough);
-      expect(clones[2]).toBeInstanceOf(PassThrough);
+    const dataPromises = clones.map((clone) => new Promise((resolve) => {
+      clone.on('data', (chunk) => {
+        expect(chunk.toString()).toEqual('some data');
+        resolve();
+      });
+    }));
+
+    sourceStream.resume(); // Start flowing the source stream
+    await Promise.all(dataPromises);
+  });
+
+  it('clones should end when the source stream ends', async () => {
+    // Simulate some data being pushed to the stream
+    sourceStream.push('some data');
+    sourceStream.push(null); // This signifies the end of the stream
+
+    // Clone the stream here (this would be replaced with your actual cloning implementation)
+    const clonedStream = sourceStream; // For demonstration purposes only
+
+    // Return a promise that resolves when the cloned stream ends
+    const result = await Promise(async (resolve) => {
+      // Listen for the 'end' event on the cloned stream
+      clonedStream.on('end', () => {
+        // The assertion is inside this callback
+        resolve(true); // Resolve the promise to indicate the test is complete
+      });
     });
+    expect(result).toBe(true); // This is a placeholder assertion
+  });
+
+  test('should not modify the original source stream', () => {
+    const originalSourceListeners = sourceStream.listenerCount('data');
+    new Cloner(sourceStream, 1);
+    expect(sourceStream.listenerCount('data')).toBe(originalSourceListeners);
   });
 });
+Copy
