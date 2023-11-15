@@ -410,14 +410,14 @@ class MaintenanceLogs{
 
 class NationalCenterUsers{
  * id : integer : <generated>
-!issue='column type does not match model: integer != bigint' * nationalCenterId : <color:#d54309>integer</color> : REFERENCES "NationalCenters".id
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class NationalCenters{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone
  * name : text
  * updatedAt : timestamp with time zone
