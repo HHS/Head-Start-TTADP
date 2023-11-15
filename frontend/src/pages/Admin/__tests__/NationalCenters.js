@@ -15,12 +15,27 @@ describe('National Centers page', () => {
     fetchMock.get(nationalCenterUrl,
       {
         centers: [
-          'DTL',
-          'HBHS',
-          'PFCE',
-          'PFMO',
-        ].map((name, id) => ({ id: (id + 1).toString(), name })),
-        users: [],
+          { id: '1', name: 'DTL', users: [] },
+          { id: '2', name: 'HBHS', users: [{ id: 1, name: 'User 1' }] },
+          { id: '3', name: 'PFCE', users: [] },
+          { id: '4', name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
+        ],
+        users: [{
+          id: 1,
+          name: 'User 1',
+        },
+        {
+          id: 2,
+          name: 'User 2',
+        },
+        {
+          id: 3,
+          name: 'User 3',
+        },
+        {
+          id: 4,
+          name: 'User 4',
+        }],
       });
   });
 
@@ -52,9 +67,75 @@ describe('National Centers page', () => {
 
     fetchMock.post(nationalCenterAdminUrl, { name: 'New Center', id: 5 });
     userEvent.type(screen.getByLabelText(/National center name/i), 'New Center');
+
+    const dropdown = screen.getByTestId('user-dropdown');
+
+    // Assert the dropdown doesn't contain entries for users already assigned to other centers.
+    expect(screen.queryByText('User 1')).toBeNull();
+    expect(screen.queryByText('User 4')).toBeNull();
+
+    userEvent.selectOptions(dropdown, '2');
+    expect(screen.getByText('User 2')).toBeVisible();
+
     userEvent.click(screen.getByText(/Save/i));
 
     expect(await screen.findByText('Center created successfully')).toBeVisible();
+  });
+
+  it('creating a new national center with a user updates the list', async () => {
+    const history = createMemoryHistory();
+    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} /></Router>);
+    expect(await screen.findByText(/National Centers/i)).toBeVisible();
+
+    fetchMock.post(nationalCenterAdminUrl, { name: 'New Center', id: 5 });
+    userEvent.type(screen.getByLabelText(/National center name/i), 'New Center');
+
+    const dropdown = screen.getByTestId('user-dropdown');
+    userEvent.selectOptions(dropdown, '2');
+    expect(screen.getByText('User 2')).toBeVisible();
+
+    // fetch mock get once for the initial render, and once for the update
+    fetchMock.get(nationalCenterUrl,
+      {
+        centers: [
+          { id: '1', name: 'DTL', users: [] },
+          { id: '2', name: 'HBHS', users: [{ id: 1, name: 'User 1' }] },
+          { id: '3', name: 'PFCE', users: [] },
+          { id: '4', name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
+          { id: '5', name: 'New Center', users: [{ id: 2, name: 'User 2' }] },
+        ],
+        users: [{
+          id: 1,
+          name: 'User 1',
+        },
+        {
+          id: 2,
+          name: 'User 2',
+        },
+        {
+          id: 3,
+          name: 'User 3',
+        },
+        {
+          id: 4,
+          name: 'User 4',
+        }],
+      }, { overwriteRoutes: true });
+
+    // Save with updated response.
+    userEvent.click(screen.getByText(/Save/i));
+    expect(await screen.findByText('Center created successfully')).toBeVisible();
+
+    // Expect to see the new center in the list with the user.
+    expect(screen.getByText('New Center (User 2)')).toBeVisible();
+
+    // Verify list of users is updated.
+    userEvent.click(screen.getByText('DTL'));
+
+    // Verify 'dropdown' doesn't contain entries for users already assigned to other centers.
+    expect(screen.queryByText('User 1')).toBeNull();
+    expect(screen.queryByText('User 4')).toBeNull();
+    expect(screen.queryByText('User 3')).not.toBeNull();
   });
 
   it('can update an existing national center', async () => {
@@ -64,8 +145,17 @@ describe('National Centers page', () => {
 
     fetchMock.put(join(nationalCenterAdminUrl, '1'), { name: 'New Center', id: 5 });
     userEvent.type(screen.getByLabelText(/National center name/i), '1');
-    userEvent.click(screen.getByText(/Save/i));
 
+    const dropdown = screen.getByTestId('user-dropdown');
+
+    // Assert the dropdown doesn't contain entries for users already assigned to other centers.
+    expect(screen.queryByText('User 1')).toBeNull();
+    expect(screen.queryByText('User 4')).toBeNull();
+
+    userEvent.selectOptions(dropdown, '2');
+    expect(screen.getByText('User 2')).toBeVisible();
+
+    userEvent.click(screen.getByText(/Save/i));
     expect(await screen.findByText('Center updated successfully')).toBeVisible();
   });
 
@@ -76,6 +166,11 @@ describe('National Centers page', () => {
 
     fetchMock.put(join(nationalCenterAdminUrl, '1'), 500);
     userEvent.type(screen.getByLabelText(/National center name/i), '1');
+
+    const dropdown = screen.getByTestId('user-dropdown');
+    userEvent.selectOptions(dropdown, '3');
+    expect(screen.getByText('User 3')).toBeVisible();
+
     userEvent.click(screen.getByText(/Save/i));
 
     expect(await screen.findByText('Error saving national center')).toBeVisible();
@@ -93,6 +188,7 @@ describe('National Centers page', () => {
 
     expect(await screen.findByText('Center deleted successfully')).toBeVisible();
   });
+
   it('handles an error to delete a national center', async () => {
     const history = createMemoryHistory();
     render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
