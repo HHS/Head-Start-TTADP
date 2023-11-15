@@ -160,13 +160,19 @@ function TrainingReports() {
               <Label htmlFor="tr-file-input-single">Input accepts a single file</Label>
               <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
               {(success) && (
-              <div>
-                <h3>Import Summary:</h3>
-                <ul>
-                  <li>{`${skipped.length} skipped: ${skipped.join(', ')} `}</li>
-                  <li>{`${errors.length} errors: ${errors.join(', ')}`}</li>
-                </ul>
-              </div>
+                <div>
+                  <h3>Import Summary:</h3>
+                  <ul>
+                    <li>{`${skipped.length} skipped`}</li>
+                    {skipped.map((item) => (
+                      <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
+                    ))}
+                    <li>{`${errors.length} errors`}</li>
+                    {errors.map((err) => (
+                      <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
               <Button className="margin-top-2" type="button" onClick={importTr}>Upload training reports</Button>
             </FormGroup>
