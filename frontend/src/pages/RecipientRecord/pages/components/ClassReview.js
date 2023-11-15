@@ -5,7 +5,7 @@ import { Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../../../../components/Container';
 import Drawer from '../../../../components/Drawer';
-import getClassScores from '../../../../fetchers/monitoring';
+import { getClassScores } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
 
 const BadgeAbove = () => (
@@ -27,7 +27,7 @@ const BadgeBelowCompetetive = () => (
 );
 
 const ClassReview = ({ grantId }) => {
-  const [scores, setScores] = useState([]);
+  const [scores, setScores] = useState({});
   const howMetRef = useRef(null);
 
   useEffect(() => {

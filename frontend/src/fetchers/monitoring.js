@@ -1,10 +1,19 @@
 import join from 'url-join';
 import { get } from '.';
 
-const classUrl = join('/', 'api', 'monitoring');
+const monitoringUrl = join('/', 'api', 'monitoring');
+const classUrl = join('/', 'api', 'monitoring', 'class');
 
-const getClassScores = async (grantId) => {
-  // const scores = await get(join(classUrl, 'class', grantId));
+export const getMonitoringReview = async (grantId) => {
+  return {
+    reviewStatus: 'Compliant',
+    reviewDate: '05/01/2023',
+    reviewType: 'FA-2',
+  };
+};
+
+export const getClassScores = async (grantId) => {
+  // const scores = await get(join(classUrl, grantId));
   // return scores.json();
   return {
     received: '05/01/2023',
@@ -13,5 +22,3 @@ const getClassScores = async (grantId) => {
     IS: 7,
   };
 };
-
-export default getClassScores;
