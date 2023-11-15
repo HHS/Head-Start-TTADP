@@ -207,8 +207,6 @@ export default function CommunicationLogForm({ match, recipientName }) {
       } else if (reportId.current) {
         // PUT it to the backend
         loggedCommunication = await updateCommunicationLogById(reportId.current, data);
-      } else {
-        throw new Error('No communication log ID provided');
       }
 
       // update the form data
