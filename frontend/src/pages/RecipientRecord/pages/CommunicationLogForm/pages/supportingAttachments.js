@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 import {
   ErrorMessage,
@@ -13,17 +13,29 @@ import { pageComplete } from '../constants';
 import ReportFileUploader from '../../../../../components/FileUploader/ReportFileUploader';
 
 const path = 'supporting-attachments';
-const fields = [];
 const position = 2;
+const visitedField = `pageVisited-${path}`;
+const fields = [visitedField];
 
 const SupportingAttachments = ({ reportId }) => {
   const [fileError, setFileError] = useState();
+  const { watch, register, setValue } = useFormContext();
+  const visitedRef = useRef(false);
+  const pageVisited = watch(visitedField);
+
+  useEffect(() => {
+    if (!pageVisited && !visitedRef.current) {
+      visitedRef.current = true;
+      setValue(visitedField, true);
+    }
+  }, [pageVisited, setValue]);
 
   return (
     <>
       <Helmet>
         <title>Supporting attachments</title>
       </Helmet>
+      <input type="hidden" ref={register()} name={visitedField} />
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>
           <div id="attachments" />
