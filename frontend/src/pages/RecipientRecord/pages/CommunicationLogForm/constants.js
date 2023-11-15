@@ -39,7 +39,6 @@ const defaultLogValues = {
   duration: '',
   method: '',
   purpose: '',
-  notes: '',
   result: '',
 };
 
