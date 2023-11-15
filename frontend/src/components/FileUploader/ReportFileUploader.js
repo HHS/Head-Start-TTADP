@@ -62,7 +62,7 @@ const ReportFileUploader = ({
 
   return (
     <>
-      <Dropzone inputName={id} handleDrop={handleDrop} />
+      <Dropzone inputName={id} handleDrop={handleDrop} setErrorMessage={setErrorMessage} />
       <FileTable
         onFileRemoved={onFileRemoved}
         files={files.map((f) => (
@@ -77,7 +77,10 @@ ReportFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
-  idValue: PropTypes.number.isRequired,
+  idValue: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
   idKey: PropTypes.string.isRequired,
   id: PropTypes.oneOfType([
     PropTypes.string,
