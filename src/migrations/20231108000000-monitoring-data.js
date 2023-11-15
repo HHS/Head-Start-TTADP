@@ -313,6 +313,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_Review.xml',
+        encoding: 'utf16le',
         tableName: 'MonitoringReviews',
         remapDef: {
           ReviewId: 'reviewId',
@@ -328,6 +329,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_ReviewGrantee.xml',
+        encoding: 'utf16le',
         tableName: 'MonitoringReviewGrantees',
         remapDef: {
           ReviewId: 'reviewId',
@@ -340,6 +342,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_FindingHistory.xml',
+        encoding: 'utf16le',
         tableName: 'MonitoringFindingHistories',
         remapDef: {
           FindingHistoryId: 'findingHistoryId',
@@ -349,6 +352,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_CLASS_SUMMARYGrants.xml',
+        encoding: 'utf16le',
         tableName: 'MonitoringClassSummaries',
         remapDef: {
           ReviewId: 'reviewId',
