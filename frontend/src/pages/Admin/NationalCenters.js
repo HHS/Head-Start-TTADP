@@ -205,7 +205,7 @@ export default function NationalCenters({ match }) {
               Associated User
               {' '}
             </Label>
-            <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser}>
+            <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown">
               <option value="0" disabled selected hidden>Select</option>
               {userOptions.map((u) => (
                 <option key={`user${u.id}`} value={u.id}>
