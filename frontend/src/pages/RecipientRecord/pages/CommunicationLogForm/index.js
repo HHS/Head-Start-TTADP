@@ -196,7 +196,6 @@ export default function CommunicationLogForm({ match, recipientName }) {
       const data = hookForm.getValues();
 
       let loggedCommunication;
-
       // check to see if report ID is "new"
       if (reportId.current === 'new') {
         loggedCommunication = await createCommunicationLogByRecipientId(
@@ -206,7 +205,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         );
         reportId.current = loggedCommunication.id;
       } else if (reportId.current) {
-      // PUT it to the backend
+        // PUT it to the backend
         loggedCommunication = await updateCommunicationLogById(reportId.current, data);
       } else {
         throw new Error('No communication log ID provided');
@@ -244,8 +243,9 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   const onFormSubmit = async () => {
     try {
-      const valid = await hookForm.trigger();
-      if (!valid) {
+      const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
+
+      if (!allPagesComplete) {
         return;
       }
 
