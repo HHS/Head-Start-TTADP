@@ -122,7 +122,7 @@ describe('Audit System', () => {
           }, {
             table_catalog: 'ttasmarthub',
             table_name: 'ZALTests',
-          }]);
+          }].sort((a, b) => a.table_name >= b.table_name));
 
         // Postgres information_schema.triggers table does not include any triggers on truncate so
         // to find them the following simulates the same data including all the triggers.
