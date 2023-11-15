@@ -15,6 +15,7 @@ export default (sequelize, DataTypes) => {
       File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
       File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles' });
       File.hasMany(models.SessionReportPilotFile, { foreignKey: 'fileId', as: 'sessionFiles' });
+      File.hasMany(models.CommunicationLogFile, { foreignKey: 'fileId', as: 'communicationLogFiles' });
 
       File.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportFile,
