@@ -56,9 +56,11 @@ const shouldFetch = (
   recipientId,
   reportFetched,
   isAppLoading,
+  currentPage,
 ) => {
   if (
-    !communicationLogId
+    !currentPage
+    || !communicationLogId
     || !regionId
     || !recipientId
     || communicationLogId === 'new'
@@ -118,7 +120,6 @@ export default function CommunicationLogForm({ match, recipientName }) {
       regionId,
     },
     shouldUnregister: false,
-
   });
 
   const formData = hookForm.getValues();
@@ -135,6 +136,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         recipientId,
         reportFetched,
         isAppLoading,
+        currentPage,
       )) {
         return;
       }
@@ -160,6 +162,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
     reportFetched,
     isAppLoading,
     setIsAppLoading,
+    currentPage,
   ]);
 
   // hook to update the page state in the sidebar
