@@ -303,6 +303,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
+            shouldAutoSave={communicationLogId !== 'new'}
             datePickerKey={datePickerKey}
             socketMessageStore={{}}
             key={currentPage}
