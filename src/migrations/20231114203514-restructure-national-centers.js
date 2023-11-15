@@ -21,6 +21,14 @@ module.exports = {
      -- Remove the column 'mapsTo' from table "NationalCenters".
         ALTER TABLE "NationalCenters"
         DROP COLUMN "mapsTo";
+
+      -- Insert default national centers 'DTL','HBHS', 'PFCE', 'PFMO' into table "NationalCenters".
+      INSERT INTO "NationalCenters" ("id", "name", "createdAt", "updatedAt")
+      VALUES
+        (1, 'DTL', NOW(), NOW()),
+        (2, 'HBHS', NOW(), NOW()),
+        (3, 'PFCE', NOW(), NOW()),
+        (4, 'PFMO', NOW(), NOW());
       `, { transaction });
 
       // Create table 'NationalCenterUsers'.
