@@ -3,6 +3,7 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import Container from '../../../../components/Container';
 import Drawer from '../../../../components/Drawer';
 import { getClassScores } from '../../../../fetchers/monitoring';
@@ -38,7 +39,7 @@ const ClassReview = ({ grantId }) => {
     fetchScores();
   }, [grantId]);
 
-  const getScoreBadge = (key, score) => {
+  const getScoreBadge = (key, score, received) => {
     if (key === 'ES' || key === 'CO') {
       switch (score) {
         case score >= 6:
@@ -49,13 +50,22 @@ const ClassReview = ({ grantId }) => {
           return BadgeBelowQuality();
       }
     } else if (key === 'IS') {
-      switch (score) {
-        case score >= 3:
-          return BadgeAbove();
-        case score < 2.3:
-          return BadgeBelowCompetetive();
-        default:
-          return BadgeBelowQuality();
+      if (score >= 3) {
+        return BadgeAbove();
+      }
+
+      // IS is slightly more complicated.
+      // See TTAHUB-2097 for details.
+      const dt = moment(received, 'MM/DD/YYYY');
+
+      if (dt.isAfter('2025-08-01')) {
+        if (score < 2.5) return BadgeBelowCompetetive();
+        return BadgeBelowQuality();
+      }
+
+      if (dt.isAfter('2020-11-09') && dt.isBefore('2025-07-31')) {
+        if (score < 2.3) return BadgeBelowCompetetive();
+        return BadgeBelowQuality();
       }
     }
 
@@ -112,7 +122,7 @@ const ClassReview = ({ grantId }) => {
             <p className="margin-y-1">
               <strong>Emotional support</strong>
             </p>
-            {getScoreBadge('ES', scores.ES)}
+            {getScoreBadge('ES', scores.ES, scores.received)}
           </div>
           <p className="margin-0">
             {scores.ES}
@@ -127,7 +137,7 @@ const ClassReview = ({ grantId }) => {
             <p className="margin-y-1">
               <strong>Classroom organization</strong>
             </p>
-            {getScoreBadge('CO', scores.CO)}
+            {getScoreBadge('CO', scores.CO, scores.received)}
           </div>
           <p className="margin-0">
             {scores.CO}
@@ -142,7 +152,7 @@ const ClassReview = ({ grantId }) => {
             <p className="margin-y-1">
               <strong>Instructional support</strong>
             </p>
-            {getScoreBadge('IS', scores.IS)}
+            {getScoreBadge('IS', scores.IS, scores.received)}
           </div>
           <p className="margin-0">
             {scores.IS}
