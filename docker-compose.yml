@@ -86,6 +86,13 @@ services:
     environment:
       - POSTGRES_HOST=postgres_docker
       - NODE_ENV=development
+  sftp:
+    image: atmoz/sftp
+    volumes:
+        - <host-dir>/upload:/home/foo/upload
+    ports:
+        - "22:22"
+    command: foo:pass:1001
 volumes:
   dbdata: {}
   minio-data: {}
