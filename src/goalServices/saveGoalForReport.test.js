@@ -16,10 +16,10 @@ import db, {
   ObjectiveTopic,
   ObjectiveResource,
   Resource,
-} from '../../models';
-import { saveGoalsForReport } from '../goals';
-import { activityReportAndRecipientsById } from '../activityReports';
-import { processObjectiveForResourcesById } from '../resource';
+} from '../models';
+import { saveGoalsForReport } from './goals';
+import { activityReportAndRecipientsById } from '../services/activityReports';
+import { processObjectiveForResourcesById } from '../services/resource';
 
 const mockUser = {
   id: 54253461,
@@ -60,6 +60,10 @@ describe('saveGoalsForReport (more tests)', () => {
   let addingRecipientObjective;
   let objective2;
 
+  // Saving default goal.
+  let defaultGoalGrant;
+  let defaultGoalReport;
+
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser });
     const recipientOne = await Recipient.create(
@@ -94,7 +98,20 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     );
 
-    recipients = [recipientOne, recipientTwo, addingRecipientOne, addingRecipientTwo];
+    const defaultGoalRecipient = await Recipient.create(
+      {
+        id: faker.datatype.number({ min: 90000 }),
+        name: faker.company.companyName(),
+        uei: faker.datatype.string(12),
+      },
+    );
+
+    recipients = [
+      recipientOne,
+      recipientTwo,
+      addingRecipientOne,
+      addingRecipientTwo,
+      defaultGoalRecipient];
 
     grantOne = await Grant.create(
       {
@@ -108,6 +125,16 @@ describe('saveGoalsForReport (more tests)', () => {
     grantTwo = await Grant.create(
       {
         id: recipientTwo.id,
+        number: faker.datatype.number({ min: 90000 }),
+        recipientId: recipientTwo.id,
+        startDate: new Date(),
+        endDate: new Date(),
+      },
+    );
+
+    defaultGoalGrant = await Grant.create(
+      {
+        id: defaultGoalRecipient.id,
         number: faker.datatype.number({ min: 90000 }),
         recipientId: recipientTwo.id,
         startDate: new Date(),
@@ -134,7 +161,12 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     );
 
-    grants = [grantOne, grantTwo, addingRecipientGrantOne, addingRecipientGrantTwo];
+    grants = [
+      grantOne,
+      grantTwo,
+      addingRecipientGrantOne,
+      addingRecipientGrantTwo,
+      defaultGoalGrant];
 
     // Activity report for adding a new goal
     activityReportForNewGoal = await ActivityReport.create({
@@ -185,12 +217,23 @@ describe('saveGoalsForReport (more tests)', () => {
       version: 2,
     });
 
+    // Activity Report for default goal save.
+    defaultGoalReport = await ActivityReport.create({
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      regionId: 1,
+      userId: 1,
+      activityRecipientType: 'recipient',
+      context: 'Test saving default goal state',
+      version: 1,
+    });
+
     activityReports = [
       activityReportForNewGoal,
       multiRecipientReport,
       reportWeArentWorryingAbout,
       addingRecipientReport,
       reportForReusedObjectiveText,
+      defaultGoalReport,
     ];
 
     await ActivityRecipient.create({
@@ -221,6 +264,12 @@ describe('saveGoalsForReport (more tests)', () => {
     await ActivityRecipient.create({
       activityReportId: addingRecipientReport.id,
       grantId: addingRecipientGrantOne.id,
+    });
+
+    // Default goal recipient.
+    await ActivityRecipient.create({
+      activityReportId: defaultGoalReport.id,
+      grantId: defaultGoalGrant.id,
     });
 
     goal = await Goal.create({
@@ -347,17 +396,17 @@ describe('saveGoalsForReport (more tests)', () => {
 
   afterAll(async () => {
     const reportIds = activityReports.map((report) => report.id);
-
     const arObjectives = await ActivityReportObjective.findAll({
       where: {
         activityReportId: reportIds,
       },
     });
 
-    const objectiveIds = [
-      ...arObjectives.map((aro) => aro.objectiveId),
-      rtrObjectiveNotOnReport.id,
-    ];
+    const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
+
+    if (rtrObjectiveNotOnReport) {
+      objectiveIds.push(rtrObjectiveNotOnReport.id);
+    }
 
     await ActivityReportObjective.destroy({
       where: {
@@ -398,13 +447,12 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    const goalsToDestroy = await Goal.findAll({
+    const grantIds = grants.map((g) => g.id);
+    const recipientIds = recipients.map((r) => r.id);
+
+    const goalsToDestroy = await Goal.unscoped().findAll({
       where: {
-        grantId: [
-          grantOne.id,
-          grantTwo.id,
-          addingRecipientGrantOne.id,
-          addingRecipientGrantTwo.id],
+        grantId: grantIds,
       },
     });
 
@@ -436,16 +484,9 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id } })),
-    );
-
-    await Promise.all(
-      recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })),
-    );
-
+    await Grant.destroy({ where: { id: grantIds } });
+    await Recipient.destroy({ where: { id: recipientIds } });
     await User.destroy({ where: { id: [mockUser.id] } });
-
     await db.sequelize.close();
   });
 
@@ -1272,5 +1313,57 @@ describe('saveGoalsForReport (more tests)', () => {
     afterObjectives.forEach((o) => {
       expect(o.title).toBe(addingRecipientObjective.title);
     });
+  });
+
+  it('saves goal in default state', async () => {
+    const beforeGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: defaultGoalReport.id,
+      },
+    });
+
+    expect(beforeGoals.length).toBe(0);
+
+    const [
+      savedReport,
+      activityRecipients,
+      goalsAndObjectives,
+    ] = await activityReportAndRecipientsById(
+      defaultGoalReport.id,
+    );
+    expect(activityRecipients.length).toBe(1);
+    expect(goalsAndObjectives.length).toBe(0);
+
+    const defaultGoals = [
+      {
+        name: undefined,
+        isActivelyBeingEditing: true,
+        endDate: '',
+        objectives: [],
+        regionId: 1,
+        grantIds: [defaultGoalGrant.id],
+        prompts: [],
+      },
+    ];
+
+    await saveGoalsForReport(defaultGoals, savedReport);
+
+    const afterReportGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: defaultGoalReport.id,
+      },
+    });
+
+    expect(afterReportGoals.length).toBe(1);
+    expect(afterReportGoals[0].name).toBe(null);
+
+    const afterGoals = await Goal.findAll({
+      where: {
+        id: afterReportGoals[0].goalId,
+      },
+    });
+
+    expect(afterGoals.length).toBe(1);
+    expect(afterGoals[0].name).toBe(null);
   });
 });

@@ -15,10 +15,10 @@ import {
   Objective,
   ObjectiveTopic,
   Topic,
-} from '../../models';
+} from '../models';
 
-import { getGoalsByActivityRecipient } from '../recipient';
-import { OBJECTIVE_STATUS, CREATION_METHOD } from '../../constants';
+import { getGoalsByActivityRecipient } from '../services/recipient';
+import { OBJECTIVE_STATUS, CREATION_METHOD } from '../constants';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
@@ -259,7 +259,7 @@ describe('Goals by Recipient Test', () => {
     const savedGrant2 = await Grant.create(grant2);
     const savedGrant3 = await Grant.create(grant3);
     const savedGrant4 = await Grant.create(grant4);
-    const savedGrant5 = await Grant.create(grant5);
+    await Grant.create(grant5);
 
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
@@ -752,17 +752,20 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].grantNumbers.length).toBe(1);
       expect(goalRowsx[1].grantNumbers[0]).toBe('12345');
 
-      // Goal 3 Objectives.
+      // Get objective 4.
       expect(goalRowsx[1].objectives.length).toBe(2);
-      expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
-      expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
-      expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[0].status).toEqual(OBJECTIVE_STATUS.COMPLETE);
+      const objecitve4 = goalRowsx[1].objectives.find((o) => o.title === 'objective 4');
+      expect(objecitve4.title).toBe('objective 4');
+      expect(objecitve4.endDate).toBe('09/01/2020');
+      expect(objecitve4.reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(objecitve4.status).toEqual(OBJECTIVE_STATUS.COMPLETE);
 
-      expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
-      expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
-      expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[1].status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
+      // Get objective 3.
+      const objecitve3 = goalRowsx[1].objectives.find((o) => o.title === 'objective 3');
+      expect(objecitve3.title).toBe('objective 3');
+      expect(objecitve3.endDate).toBe('09/01/2020');
+      expect(objecitve3.reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(objecitve3.status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
 
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
@@ -786,6 +789,40 @@ describe('Goals by Recipient Test', () => {
     it('Retrieves All Goals by Recipient', async () => {
       const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
         sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 20,
+      });
+      const countx = count;
+      const goalRowsx = goalRows;
+      expect(countx).toBe(3);
+      expect(goalRowsx.length).toBe(3);
+    });
+
+    it('Retrieves and sorts for merged goals by Recipient', async () => {
+      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
+        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20, goalIds: [goalIds[9]],
+      });
+      const countx = count;
+      const goalRowsx = goalRows;
+      expect(countx).toBe(3);
+      expect(goalRowsx.length).toBe(3);
+      expect(goalRowsx[0].id).toBe(goalIds[9]);
+      expect(goalRowsx[1].id).toBe(goalIds[11]);
+      expect(goalRowsx[2].id).toBe(goalIds[10]);
+    });
+
+    it('Retrieves and sorts for merged goals by Recipient with garbage parameters', async () => {
+      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
+        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20, goalIds: [goalIds[9], false],
+      });
+      const countx = count;
+      const goalRowsx = goalRows;
+      expect(countx).toBe(3);
+      expect(goalRowsx.length).toBe(3);
+      expect(goalRowsx[0].id).toBe(goalIds[9]);
+    });
+
+    it('Retrieves and sorts for merged goals by Recipient with no goal ids', async () => {
+      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
+        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20,
       });
       const countx = count;
       const goalRowsx = goalRows;

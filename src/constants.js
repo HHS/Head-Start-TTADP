@@ -197,10 +197,23 @@ const MAINTENANCE_TYPE = {
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
 };
 
+const FEATURE_FLAGS = [
+  'resources_dashboard',
+  'rttapa_form',
+  'anv_statistics',
+  'regional_goal_dashboard',
+  'goal_source',
+  'training_reports',
+  'merge_goals',
+  'communication_log',
+];
+
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',
   MAINTENANCE: 'MAINTENANCE',
 };
+
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
 module.exports = {
   FILE_STATUSES,
@@ -208,6 +221,7 @@ module.exports = {
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
+  GOAL_CREATED_VIA,
   SEARCH_RESULTS_PER_PAGE,
   AUTOMATIC_CREATION,
   CURATED_CREATION,
@@ -230,4 +244,5 @@ module.exports = {
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
+  FEATURE_FLAGS,
 };

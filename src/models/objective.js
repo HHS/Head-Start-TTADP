@@ -27,6 +27,9 @@ export default (sequelize, DataTypes) => {
       Objective.hasMany(models.ActivityReportObjective, {
         foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'originalObjectiveId', as: 'reassignedActivityReportObjectives',
+      });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
@@ -50,6 +53,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      Objective.belongsTo(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'parentObjective',
+      });
+      Objective.hasMany(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'childObjectives',
       });
     }
   }
@@ -132,6 +143,17 @@ export default (sequelize, DataTypes) => {
     },
     suspendContext: {
       type: DataTypes.TEXT,
+    },
+    mapsToParentObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,
