@@ -1,16 +1,17 @@
 import { filterAssociation } from './utils';
 
-const activityReportGoalResponseSql = `
+const activityReportGoalResponseSql = /* sql */`
 WITH unnested_responses AS (
-    SELECT "activityReportGoalId", unnest("response") AS res
-    FROM "ActivityReportGoalFieldResponses"
+  SELECT unnest("response") AS res, ARRAY_AGG(DISTINCT "ActivityReportGoals"."activityReportId") ids
+  FROM "ActivityReportGoalFieldResponses" "ActivityReportGoalFieldResponses"
+  INNER JOIN "ActivityReportGoals" "ActivityReportGoals"
+  ON "ActivityReportGoalFieldResponses"."activityReportGoalId" = "ActivityReportGoals"."id"
+  GROUP BY 1
 )
-SELECT
-  DISTINCT "ActivityReportGoals"."activityReportId"
-FROM "ActivityReportGoals" "ActivityReportGoals"
-INNER JOIN unnested_responses arr
-    ON arr."activityReportGoalId" = "ActivityReportGoals"."id"
-WHERE arr."res"`;
+SELECT 
+  UNNEST(ids) AS "activityReportId"
+FROM unnested_responses
+WHERE "res"`;
 
 export function withActivityReportGoalResponse(responses) {
   return filterAssociation(activityReportGoalResponseSql, responses, false);
