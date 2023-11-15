@@ -72,7 +72,7 @@ const SupportingAttachments = ({ reportId }) => {
 };
 
 SupportingAttachments.propTypes = {
-  reportId: PropTypes.number.isRequired,
+  reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
 
 const ReviewSection = () => <></>;
