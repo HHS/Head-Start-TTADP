@@ -9,6 +9,11 @@ interface CommLog {
   userId: number;
   id: number;
   data: unknown;
+  authorName: string;
+  author: {
+    id: number;
+    name: string;
+  }
 }
 
 const COMMUNICATION_LOGS_PER_PAGE = 10;
@@ -97,9 +102,9 @@ const logById = async (id: number) => CommunicationLog.findOne(LOG_WHERE_OPTIONS
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
-  sortBy: string,
-  offset: number,
-  direction: string,
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
   scopes: WhereOptions[] = [],
 ) => CommunicationLog
   .findAndCountAll({
@@ -136,6 +141,8 @@ const updateLog = async (id: number, logData: CommLog) => {
     id: logId,
     userId,
     recipientId,
+    author,
+    authorName,
     ...data
   } = logData;
   const log = await CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
