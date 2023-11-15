@@ -96,6 +96,20 @@ describe('CommunicationLogForm', () => {
     expect(screen.getByText(/Little Lord Wigglytoes/i)).toBeInTheDocument();
   });
 
+  it('handlers error fetching log by id', async () => {
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    fetchMock.get(url, 500);
+
+    await act(() => waitFor(() => {
+      renderTest('1', 'log');
+    }));
+
+    expect(fetchMock.called(url)).toBe(true);
+
+    expect(screen.getByText(/Little Lord Wigglytoes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Error fetching communication log/i)).toBeInTheDocument();
+  });
+
   it('Validates required fields', async () => {
     await act(() => waitFor(() => {
       renderTest('new', 'log');
@@ -162,6 +176,41 @@ describe('CommunicationLogForm', () => {
     }));
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'post' })).toBe(true));
+  });
+
+  it('handles an error saving page', async () => {
+    await act(() => waitFor(() => {
+      renderTest('new', 'log');
+    }));
+
+    const communicationDate = document.querySelector('#communicationDate');
+    userEvent.type(communicationDate, '11/01/2023');
+
+    const duration = await screen.findByLabelText(/duration in hours/i);
+    userEvent.type(duration, '1');
+
+    const method = await screen.findByLabelText(/How was the communication conducted/i);
+    userEvent.selectOptions(method, 'Phone');
+
+    const purpose = await screen.findByLabelText(/purpose of communication/i);
+    userEvent.selectOptions(purpose, 'Monitoring');
+
+    const notes = await screen.findByLabelText(/notes/i);
+    userEvent.type(notes, 'This is a note');
+
+    const result = await screen.findByLabelText(/result/i);
+    userEvent.selectOptions(result, 'Next Steps identified');
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
+    fetchMock.post(url, 500);
+
+    const onSaveButton = screen.getByText(/save and continue/i);
+    await act(() => waitFor(() => {
+      userEvent.click(onSaveButton);
+    }));
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'post' })).toBe(true));
+    await waitFor(() => expect(screen.getByText(/There was an error saving the communication log. Please try again later/i)).toBeInTheDocument());
   });
 
   it('you can complete support attachment', async () => {
@@ -270,6 +319,62 @@ describe('CommunicationLogForm', () => {
     }));
     expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
     expect(history.location.pathname).toEqual(`/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication`);
+  });
+
+  it('handles error submitting the form', async () => {
+    const formData = {
+      id: 1,
+      recipientId: RECIPIENT_ID,
+      userId: '1',
+      updatedAt: new Date(),
+      files: [],
+      data: {
+        communicationDate: '11/01/2023',
+        notes: 'adsf',
+        method: 'Phone',
+        result: 'New TTA accepted',
+        purpose: "Program Specialist's site visit",
+        duration: 1,
+        regionId: '1',
+        createdAt: '2023-11-15T16:15:55.134Z',
+        pageState: {
+          1: 'Complete',
+          2: 'Complete',
+          3: 'Complete',
+        },
+        pocComplete: false,
+        recipientNextSteps: [
+          {
+            note: 'asdf',
+            completeDate: '11/01/2023',
+          },
+        ],
+        specialistNextSteps: [
+          {
+            note: 'asf',
+            completeDate: '11/01/2023',
+          },
+        ],
+        'pageVisited-supporting-attachments': 'true',
+      },
+    };
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    const putUrl = `${communicationLogUrl}/log/1`;
+    fetchMock.get(url, formData);
+    fetchMock.put(putUrl, 500);
+
+    await act(() => waitFor(() => {
+      renderTest('1', 'next-steps');
+    }));
+
+    expect(fetchMock.called(url, { method: 'get' })).toBe(true);
+    const submit = screen.getByText(/save log/i);
+    await act(() => waitFor(() => {
+      userEvent.click(submit);
+    }));
+    expect(fetchMock.called(putUrl, { method: 'put' })).toBe(true);
+    await waitFor(() => expect(screen.getByText(/There was an error saving the communication log. Please try again later/i)).toBeInTheDocument());
   });
 
   it('can go back', async () => {
