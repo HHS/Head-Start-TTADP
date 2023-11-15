@@ -1,6 +1,6 @@
 import {
   saveGoalsForReport, goalsForGrants,
-} from '../goals';
+} from './goals';
 import {
   sequelize,
   Goal,
@@ -8,7 +8,7 @@ import {
   Objective,
   ActivityReportObjective,
   ActivityReportGoal,
-} from '../../models';
+} from '../models';
 
 const mockObjectiveId = 10000001;
 const mockGoalId = 10000002;

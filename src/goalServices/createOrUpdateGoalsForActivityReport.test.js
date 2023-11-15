@@ -2,7 +2,7 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { createOrUpdateGoalsForActivityReport } from './goals';
-import { saveObjectivesForReport, getObjectivesByReportId } from './objectives';
+import { saveObjectivesForReport, getObjectivesByReportId } from '../services/objectives';
 import db, {
   Goal,
   Grant,
