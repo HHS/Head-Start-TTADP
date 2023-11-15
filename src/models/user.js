@@ -1,16 +1,7 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
-
-const featureFlags = [
-  'resources_dashboard',
-  'rttapa_form',
-  'anv_statistics',
-  'regional_goal_dashboard',
-  'goal_source',
-  'training_reports',
-  'merge_goals',
-];
+const { FEATURE_FLAGS } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -35,6 +26,7 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
       User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
       User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
+      User.hasMany(models.CommunicationLog, { foreignKey: 'userId', as: 'communicationLogs' });
     }
   }
   User.init({
@@ -79,7 +71,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     flags: {
-      type: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+      type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
       defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
     },
     fullName: {
@@ -98,8 +90,4 @@ export default (sequelize, DataTypes) => {
     modelName: 'User',
   });
   return User;
-};
-
-export {
-  featureFlags,
 };

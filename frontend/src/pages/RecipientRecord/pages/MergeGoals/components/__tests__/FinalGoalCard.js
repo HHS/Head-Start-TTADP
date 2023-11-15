@@ -175,4 +175,34 @@ describe('FinalGoalCard', () => {
     const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
     expect(label.textContent).toBe('Not started');
   });
+  it('shows the correct status for draft + not started', async () => {
+    act(() => renderTest([
+      {
+        ...baseGoals[0],
+        goalStatus: 'Not Started',
+      },
+      {
+        ...baseGoals[1],
+        goalStatus: 'Draft',
+      },
+    ]));
+
+    const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
+    expect(label.textContent).toBe('Not started');
+  });
+  it('shows the correct status for 2 draft', async () => {
+    act(() => renderTest([
+      {
+        ...baseGoals[0],
+        goalStatus: 'Draft',
+      },
+      {
+        ...baseGoals[1],
+        goalStatus: 'Draft',
+      },
+    ]));
+
+    const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
+    expect(label.textContent).toBe('Draft');
+  });
 });
