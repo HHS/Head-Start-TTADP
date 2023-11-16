@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import filtersToScopes from '../index';
 
-import db, {
+import {
   User,
   EventReportPilot,
   sequelize,
