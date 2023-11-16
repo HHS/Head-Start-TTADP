@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
+import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
@@ -8,6 +9,7 @@ import {
   deleteFile,
   deleteActivityReportFile,
   deleteObjectiveFile,
+  deleteCommunicationLogFile,
   deleteSessionFile,
   getFileById,
   updateStatus,
@@ -115,7 +117,7 @@ const deleteHandler = async (req, res) => {
   const user = await userById(userId);
 
   try {
-    let file = await getFileById(fileId);
+    const file = await getFileById(fileId);
 
     if (reportId) {
       if (!await hasReportAuthorization(user, reportId)) {
@@ -163,7 +165,7 @@ const deleteHandler = async (req, res) => {
       const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
 
       if (!logPolicy.canUploadFileToLog()) {
-        res.sendStatus(403);
+        res.sendStatus(httpCodes.UNAUTHORIZED);
         return;
       }
 
@@ -171,31 +173,10 @@ const deleteHandler = async (req, res) => {
         (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE),
       );
       if (clf) {
-        await deleteSessionFile(clf.id);
+        await deleteCommunicationLogFile(clf.id);
       }
     }
 
-    const reportLength = file.reports ? file.reports.length : 0;
-    const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
-    const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
-    const objectiveTemplateFilesLength = file.objectiveTemplateFiles
-      ? file.objectiveTemplateFiles.length : 0;
-    const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
-    const communicationLogFilesLength = file
-      .communicationLogFiles ? file.communicationLogFiles.length : 0;
-
-    const canDelete = (reportLength
-      + reportObjectiveLength
-      + objectiveLength
-      + objectiveTemplateFilesLength
-      + communicationLogFilesLength
-      + sessionLength === 0);
-
-    file = await getFileById(fileId);
-    if (canDelete) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);

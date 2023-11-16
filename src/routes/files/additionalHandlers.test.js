@@ -1,23 +1,24 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import {
   deleteOnlyFile,
   deleteObjectiveFileHandler,
+  deleteHandler,
 } from './handlers';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import {
   getFileById,
   deleteFile,
-  createActivityReportFileMetaData,
-  createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData,
-  createObjectiveTemplateFileMetaData,
   deleteObjectiveFile,
+  deleteCommunicationLogFile,
 } from '../../services/files';
-import { activityReportAndRecipientsById } from '../../services/activityReports';
+import { logById } from '../../services/communicationLog';
 import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
 import { getObjectiveById } from '../../services/objectives';
+
+jest.mock('../../services/communicationLog', () => ({
+  logById: jest.fn(),
+}));
 
 jest.mock('../../services/files', () => ({
   getFileById: jest.fn(),
@@ -28,6 +29,7 @@ jest.mock('../../services/files', () => ({
   createObjectiveTemplateFileMetaData: jest.fn(),
   createObjectivesFileMetaData: jest.fn(),
   deleteObjectiveFile: jest.fn(),
+  deleteCommunicationLogFile: jest.fn(),
 }));
 
 jest.mock('../../services/activityReports', () => ({
@@ -61,6 +63,50 @@ describe('file handlers, additional tests', () => {
       send: jest.fn(),
     })),
   };
+
+  describe('deleteHandler', () => {
+    afterEach(() => jest.clearAllMocks());
+
+    it('deletes a communication log file', async () => {
+      const mockRequest = {
+        params: {
+          fileId: '123',
+          communicationLogId: '456',
+        },
+        user: {
+          id: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({
+        id: 1,
+        permissions: [{
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+          regionId: 1,
+        }],
+      });
+
+      getFileById.mockResolvedValueOnce({
+        id: 123,
+        key: 'key',
+        communicationLogFiles: [{
+          communicationLogId: 456,
+          fileId: 123,
+        }],
+      });
+
+      logById.mockResolvedValue({
+        userId: 1,
+        id: 456,
+      });
+
+      await deleteHandler(mockRequest, mockResponse);
+
+      expect(deleteCommunicationLogFile).toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+    });
+  });
 
   describe('deleteOnlyFile', () => {
     afterEach(() => {
