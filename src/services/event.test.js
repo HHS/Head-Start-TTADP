@@ -449,6 +449,8 @@ describe('event service', () => {
     let buffer;
     let created;
 
+    const userId = faker.datatype.number();
+
     const eventId = 'R01-TR-02-3333';
     const regionId = 1;
     const editTitle = 'Hogwarts Academy';
@@ -470,14 +472,20 @@ describe('event service', () => {
     const headings = ['Sheet Name', 'Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'National Center(s) Requested', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
 
     beforeAll(async () => {
-      user = await db.User.create({
-        id: faker.datatype.number(),
+      await db.User.create({
+        id: userId,
         homeRegionId: regionId,
         hsesUsername: faker.datatype.string(),
         hsesUserId: faker.datatype.string(),
         email,
         lastLogin: new Date(),
       });
+      await db.Permission.create({
+        userId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+      user = await db.User.findOne({ where: { id: userId } });
       data = `${headings.join(',')}
       ,${eventId},${editTitle},${istName},${email},${organizer},${nationalCenters},${duration},${reasons},${targetPopulation},${audience},${vision}
       ,bad_id,bad_title,bad_istname,bad_email,bad_organizer,bad_nc,bad_duration,bad_reasons,bad_target,bad_audience,bad_vision`;
@@ -486,8 +494,9 @@ describe('event service', () => {
     });
 
     afterAll(async () => {
-      await db.User.destroy({ where: { id: user.id } });
+      await db.User.destroy({ where: { id: userId } });
       await db.EventReportPilot.destroy({ where: { id: created.id } });
+      await db.Permission.destroy({ where: { userId } });
     });
 
     it('imports good data correctly', async () => {
@@ -501,7 +510,7 @@ describe('event service', () => {
         raw: true,
       });
 
-      expect(created).toHaveProperty('ownerId', user.id);
+      expect(created).toHaveProperty('ownerId', userId);
       expect(created).toHaveProperty('regionId', regionId);
       expect(created.data.reasons).toEqual(['Reason 1', 'Reason 2']);
       expect(created.data.vision).toEqual(vision);
@@ -525,6 +534,18 @@ describe('event service', () => {
       const resultSkip = await csvImport(Buffer.from(secondImport));
       expect(resultSkip.count).toEqual(0);
       expect(resultSkip.skipped).toEqual([eventId]);
+    });
+
+    it('gives an error if the user can\'t write in the region', async () => {
+      await db.Permission.destroy({ where: { userId } });
+      const result = await csvImport(buffer);
+      expect(result.count).toEqual(0);
+      expect(result.errors).toEqual([`User ${email} does not have permission to write in region ${regionId}`, 'User bad_email does not exist']);
+      await db.Permission.create({
+        userId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
     });
   });
 });

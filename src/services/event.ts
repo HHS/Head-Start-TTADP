@@ -489,7 +489,15 @@ const mapLineToData = (line: Record<string, string>) => {
 };
 
 const checkUserExists = async (creator: string) => {
-  const user = await db.User.findOne({ where: { email: creator } });
+  const user = await db.User.findOne({
+    where: { email: creator },
+    include: [
+      {
+        model: db.Permission,
+        as: 'permissions',
+      },
+    ],
+  });
   if (!user) throw new Error(`User ${creator} does not exist`);
   return user;
 };
@@ -516,7 +524,7 @@ export async function csvImport(buffer: Buffer) {
   const results = parsed.map(async (line: Record<string, string>) => {
     try {
       const eventId = line['Event ID'];
-      const regionId = eventId.split('-')[0].replace(/\D/g, '');
+      const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
 
       const creator = line.Creator;
       let owner;
@@ -527,7 +535,8 @@ export async function csvImport(buffer: Buffer) {
         });
 
         if (!policy.canWriteInRegion()) {
-          throw new Error(`User ${creator} does not have permission to write in region ${regionId}`);
+          errors.push(`User ${creator} does not have permission to write in region ${regionId}`);
+          return false;
         }
       }
 
