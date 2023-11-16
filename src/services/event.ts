@@ -11,6 +11,7 @@ import {
   CreateEventRequest,
   UpdateEventRequest,
 } from './types/event';
+import EventReport from '../policies/event';
 
 const {
   EventReportPilot,
@@ -490,7 +491,7 @@ const mapLineToData = (line: Record<string, string>) => {
 const checkUserExists = async (creator: string) => {
   const user = await db.User.findOne({ where: { email: creator } });
   if (!user) throw new Error(`User ${creator} does not exist`);
-  return user.id;
+  return user;
 };
 
 const checkEventExists = async (eventId: string) => {
@@ -518,9 +519,16 @@ export async function csvImport(buffer: Buffer) {
       const regionId = eventId.split('-')[0].replace(/\D/g, '');
 
       const creator = line.Creator;
-      let ownerId;
+      let owner;
       if (creator) {
-        ownerId = await checkUserExists(creator);
+        owner = await checkUserExists(creator);
+        const policy = new EventReport(owner, {
+          regionId,
+        });
+
+        if (!policy.canWriteInRegion()) {
+          throw new Error(`User ${creator} does not have permission to write in region ${regionId}`);
+        }
       }
 
       await checkEventExists(eventId);
@@ -534,7 +542,7 @@ export async function csvImport(buffer: Buffer) {
 
       await db.EventReportPilot.create({
         collaboratorIds: [],
-        ownerId,
+        ownerId: owner.id,
         regionId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(line), 'jsonb'),
