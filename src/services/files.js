@@ -91,6 +91,12 @@ const getFileById = async (id) => File.findOne({
       required: false,
       attributes: ['id', 'sessionReportPilotId'],
     },
+    {
+      model: CommunicationLogFile,
+      as: 'communicationLogFiles',
+      required: false,
+      attributes: ['id', 'communicationLogId'],
+    },
   ],
 });
 const getActivityReportFilesById = async (reportId) => ActivityReportFile.findAll({

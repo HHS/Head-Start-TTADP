@@ -108,6 +108,7 @@ const deleteHandler = async (req, res) => {
     objectiveId,
     fileId,
     eventSessionId,
+    communicationLogId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
@@ -157,6 +158,21 @@ const deleteHandler = async (req, res) => {
       if (sof) {
         await deleteSessionFile(sof.id);
       }
+    } else if (communicationLogId) {
+      const communicationLog = await logById(communicationLogId);
+      const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+      if (!logPolicy.canUploadFileToLog()) {
+        res.sendStatus(403);
+        return;
+      }
+
+      const clf = file.communicationLogFiles.find(
+        (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE),
+      );
+      if (clf) {
+        await deleteSessionFile(clf.id);
+      }
     }
 
     const reportLength = file.reports ? file.reports.length : 0;
@@ -165,11 +181,14 @@ const deleteHandler = async (req, res) => {
     const objectiveTemplateFilesLength = file.objectiveTemplateFiles
       ? file.objectiveTemplateFiles.length : 0;
     const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
+    const communicationLogFilesLength = file
+      .communicationLogFiles ? file.communicationLogFiles.length : 0;
 
     const canDelete = (reportLength
       + reportObjectiveLength
       + objectiveLength
       + objectiveTemplateFilesLength
+      + communicationLogFilesLength
       + sessionLength === 0);
 
     file = await getFileById(fileId);
