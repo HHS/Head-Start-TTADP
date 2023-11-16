@@ -27,6 +27,21 @@ describe('similarity service tests', () => {
   it('works', async () => {
     const result = await similarGoalsForRecipient(1, true);
     await expect(result).toEqual(MOCK_DATA);
+    expect(fetch).toHaveBeenCalledWith(
+      process.env.SIMILARITY_ENDPOINT,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': process.env.SIMILARITY_API_KEY,
+        },
+        body: JSON.stringify({
+          recipient_id: 1,
+          cluster: true,
+          alpha: 0.9,
+        }),
+      },
+    );
   });
 
   it('throws when fetch fails', async () => {
