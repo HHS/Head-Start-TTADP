@@ -177,6 +177,24 @@ const deleteHandler = async (req, res) => {
       }
     }
 
+    const reportLength = file.reports ? file.reports.length : 0;
+    const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
+    const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
+    const objectiveTemplateFilesLength = file.objectiveTemplateFiles
+      ? file.objectiveTemplateFiles.length : 0;
+    const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
+
+    const canDelete = (reportLength
+      + reportObjectiveLength
+      + objectiveLength
+      + objectiveTemplateFilesLength
+      + sessionLength === 0);
+
+    if (canDelete) {
+      await deleteFileFromS3(file.key);
+      await deleteFile(fileId);
+    }
+
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
