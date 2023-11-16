@@ -19,6 +19,12 @@ export async function importTrainingReport(req, res) {
         return;
       }
 
+      // allow text/csv only
+      if (files.file[0].headers['content-type'] !== 'text/csv') {
+        res.status(httpCodes.BAD_REQUEST).json({ error: 'Invalid file type' });
+        return;
+      }
+
       const file = files.file[0];
       const buf = readFileSync(file.path);
       const response = await csvImport(buf);
