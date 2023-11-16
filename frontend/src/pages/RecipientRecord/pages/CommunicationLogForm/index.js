@@ -59,17 +59,17 @@ const shouldFetch = (
   currentPage,
 ) => {
   if (
-    !currentPage
-    || !communicationLogId
-    || !regionId
-    || !recipientId
-    || communicationLogId === 'new'
-    || reportFetched
-    || isAppLoading) {
-    return false;
-  }
-  return true;
-};
+    !currentPage // we
+    || !communicationLogId // need
+    || !regionId // all
+    || !recipientId // of
+    || communicationLogId === 'new' // these
+    || reportFetched // conditions
+    || isAppLoading) { // to
+    return false; // be
+  } // met
+  return true; // to
+}; // fetch
 
 export default function CommunicationLogForm({ match, recipientName }) {
   const {
