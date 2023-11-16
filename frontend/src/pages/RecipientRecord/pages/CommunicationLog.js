@@ -45,7 +45,6 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
     }
     fetchLogs();
   }, [
-    logs,
     recipientId,
     regionId,
     setIsAppLoading,
