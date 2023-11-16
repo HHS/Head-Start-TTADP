@@ -1,3 +1,5 @@
+const { deleteFileFromS3 } = require('../../lib/s3');
+
 const propagateDestroyToFile = async (sequelize, instance, options) => {
   const file = await sequelize.models.File.findOne({
     where: { id: instance.fileId },
@@ -46,6 +48,9 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
       individualHooks: true,
       transaction: options.transaction,
     });
+
+    // also remove from S3
+    await deleteFileFromS3(file.key);
   }
 };
 
