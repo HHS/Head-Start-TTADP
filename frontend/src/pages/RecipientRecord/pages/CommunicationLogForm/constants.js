@@ -1,33 +1,5 @@
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 
-const methodOptions = [
-  'Email',
-  'Phone',
-  'In person',
-  'Virtual',
-];
-
-const purposeOptions = [
-  'CLASS',
-  'FEI',
-  'Monitoring',
-  'New TTA request',
-  'Program Specialist or Regional Office meeting',
-  'Program Specialist\'s Monthly contact',
-  'Program Specialist\'s site visit',
-  'Recipient question/feedback',
-  'RTTAPA updates',
-  'RTTAPA Initial Plan / New Recipient',
-  'TTA planning or scheduling',
-];
-
-const resultOptions = [
-  'New TTA accepted',
-  'New TTA declined',
-  'RTTAPA declined',
-  'Next Steps identified',
-];
-
 const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
@@ -82,9 +54,6 @@ export {
   defaultLogValues,
   recipientRecordRootUrl,
   formatCommunicationLogUrl,
-  methodOptions,
-  purposeOptions,
-  resultOptions,
   pageComplete,
   nextStepsFields,
 };
