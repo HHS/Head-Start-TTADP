@@ -11,6 +11,7 @@ import {
 } from '@trussworks/react-uswds';
 import { pageComplete } from '../constants';
 import ReportFileUploader from '../../../../../components/FileUploader/ReportFileUploader';
+import { deleteLogFile } from '../../../../../fetchers/File';
 
 const path = 'supporting-attachments';
 const position = 2;
@@ -69,6 +70,7 @@ const SupportingAttachments = ({ reportId }) => {
                 id="files"
                 idKey="communicationLogId"
                 idValue={reportId}
+                deleteFile={deleteLogFile}
               />
             )}
           />

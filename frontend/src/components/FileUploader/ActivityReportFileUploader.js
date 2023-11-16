@@ -9,6 +9,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReportFileUploader from './ReportFileUploader';
+import { deleteReportFile } from '../../fetchers/File';
 
 const ActivityReportFileUploader = ({
   onChange, files, reportId, id, setErrorMessage,
@@ -20,6 +21,7 @@ const ActivityReportFileUploader = ({
     idValue={reportId}
     id={id}
     setErrorMessage={setErrorMessage}
+    deleteFile={deleteReportFile}
   />
 );
 
