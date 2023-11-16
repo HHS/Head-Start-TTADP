@@ -282,7 +282,7 @@ describe('File Upload', () => {
       await request(app)
         .delete(`/api/files/r/${report.dataValues.id}/${file.id}`)
         .expect(204);
-      expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
+      expect(deleteFileFromS3).not.toHaveBeenCalled();
       const noFile = await File.findOne({ where: { id: file.id } });
       expect(noFile).toBe(null);
     });
