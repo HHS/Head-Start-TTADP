@@ -458,9 +458,13 @@ const mappings: Record<string, string> = {
   'Reason for Activity': 'reasons',
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
+  'IST Name:': 'istName',
+  'IST Name': 'istName',
+  'National Center(s) Requested': 'nationalCenters',
+  'Event Duration/# NC Days of Support': 'eventDuration',
 };
 
-const toSplit = ['targetPopulations', 'reasons'];
+const toSplit = ['targetPopulations', 'reasons', 'nationalCenters'];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
@@ -526,6 +530,7 @@ export async function csvImport(buffer: Buffer) {
       // remove duplicates in reasons and targetPopulations
       data.reasons = [...new Set(data.reasons as string[])];
       data.targetPopulations = [...new Set(data.targetPopulations as string[])];
+      data.nationalCenters = [...new Set(data.nationalCenters as string[])];
 
       await db.EventReportPilot.create({
         collaboratorIds: [],
