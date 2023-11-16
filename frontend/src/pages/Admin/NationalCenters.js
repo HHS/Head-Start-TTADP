@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import {
   Alert,
@@ -57,8 +58,9 @@ export default function NationalCenters({ match }) {
   // Add a useEffect for change of national center.
   useEffect(() => {
     if (nationalCenters) {
+      const lookUpCenterId = typeof value === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
       const selectedCenter = nationalCenters.find((c) => (
-        c.id === nationalCenterId
+        c.id === lookUpCenterId
       ));
       if (selectedCenter && selectedCenter.users && selectedCenter.users.length > 0) {
         setSelectedUser(selectedCenter.users[0].id); // set current selected.
@@ -76,8 +78,9 @@ export default function NationalCenters({ match }) {
   let userOptions = [...allUserOptions]; // Reset user options.
 
   if (nationalCenterId && nationalCenterId !== 'new') {
+    const lookUpCenterId = typeof value === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
     selectedCenter = nationalCenters.find((c) => (
-      c.id === nationalCenterId
+      c.id === lookUpCenterId
     ));
 
     // Update the user options.
