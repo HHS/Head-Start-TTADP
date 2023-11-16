@@ -6,6 +6,7 @@ import {
   Alert,
   Button, Form, Label, ModalToggleButton, TextInput, Dropdown,
 } from '@trussworks/react-uswds';
+import Req from '../../components/Req';
 import Modal from '../../components/VanillaModal';
 import { getNationalCenters } from '../../fetchers/nationalCenters';
 import {
@@ -58,7 +59,7 @@ export default function NationalCenters({ match }) {
   // Add a useEffect for change of national center.
   useEffect(() => {
     if (nationalCenters) {
-      const lookUpCenterId = typeof value === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
+      const lookUpCenterId = typeof nationalCenterId === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
       const selectedCenter = nationalCenters.find((c) => (
         c.id === lookUpCenterId
       ));
@@ -78,7 +79,7 @@ export default function NationalCenters({ match }) {
   let userOptions = [...allUserOptions]; // Reset user options.
 
   if (nationalCenterId && nationalCenterId !== 'new') {
-    const lookUpCenterId = typeof value === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
+    const lookUpCenterId = typeof nationalCenterId === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
     selectedCenter = nationalCenters.find((c) => (
       c.id === lookUpCenterId
     ));
@@ -102,8 +103,15 @@ export default function NationalCenters({ match }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
+      setError(null);
       const formData = new FormData(e.target);
       const { id, ...data } = Object.fromEntries(formData.entries());
+
+      // Verify the user is selected.
+      if (!data.userId || data.userId === '0') {
+        setError('Please select a user.');
+        return;
+      }
 
       if (id === 'new') {
         const c = await createNationalCenter(data);
@@ -205,18 +213,18 @@ export default function NationalCenters({ match }) {
             <input type="hidden" required name="id" value={selectedCenter.id} />
 
             <Label htmlFor="group">
-              Associated User
+              Associated user
               {' '}
+              <Req />
             </Label>
-            <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown">
-              <option value="0" disabled selected hidden>Select</option>
+            <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown" required>
+              <option value="0" selected hidden>- Select -</option>
               {userOptions.map((u) => (
                 <option key={`user${u.id}`} value={u.id}>
                   {u.name}
                 </option>
               ))}
             </Dropdown>
-
             <div className="display-flex">
               <Button type="submit">Save</Button>
               { selectedCenter.id !== 'new' ? <ModalToggleButton modalRef={modalRef} secondary>Delete</ModalToggleButton> : null }
