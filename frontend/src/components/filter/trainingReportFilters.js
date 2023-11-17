@@ -4,21 +4,17 @@ import moment from 'moment';
 import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
-  SELECT_CONDITIONS,
   REGION_CONDITIONS,
+  SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
+  EMPTY_MULTI_SELECT,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
-import FilterInput from './FilterInput';
 import FilterRegionalSelect from './FilterRegionSelect';
+import FilterNationalCenterNameSelect from './FilterNationalCenterNameSelect';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
   'is not': '',
-};
-
-const EMPTY_TEXT_INPUT = {
-  contains: '',
-  'does not contain': '',
 };
 
 const handleStringQuery = (q) => q;
@@ -30,6 +26,13 @@ const defaultDateValues = {
   'is within': '',
   'is on or after': '',
   'is on or before': '',
+};
+
+const handleArrayQuery = (q) => {
+  if (q.length) {
+    return [q].flat().join(', ');
+  }
+  return '';
 };
 
 export const fixQueryWhetherStringOrArray = (query) => {
@@ -84,15 +87,31 @@ export const regionFilter = {
 export const collaboratorFilter = {
   id: 'collaborator',
   display: 'Collaborator',
-  conditions: SELECT_CONDITIONS,
-  defaultValues: EMPTY_TEXT_INPUT,
-  displayQuery: handleStringQuery,
+  conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterInput
-      query={query}
+    <FilterNationalCenterNameSelect
       inputId={`collaborator-${condition}-${id}`}
       onApply={onApplyQuery}
-      label="Enter a collaborator name"
+      query={query}
+      title="Collaborator"
+    />
+  ),
+};
+
+export const creatorFilter = {
+  id: 'creator',
+  display: 'Creator',
+  conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterNationalCenterNameSelect
+      inputId={`creator-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      title="Creator"
     />
   ),
 };

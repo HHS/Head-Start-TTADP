@@ -4,16 +4,19 @@ import {
   startDateFilter,
   regionFilter,
   collaboratorFilter,
+  creatorFilter,
 } from '../../components/filter/trainingReportFilters';
 
 const TRAINING_REPORT_BASE_FILTER_CONFIG = [
   startDateFilter,
+  creatorFilter,
   collaboratorFilter,
 ];
 
 const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
   startDateFilter,
   regionFilter,
+  creatorFilter,
   collaboratorFilter,
 ];
 
