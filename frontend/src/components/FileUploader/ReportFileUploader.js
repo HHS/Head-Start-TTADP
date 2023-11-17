@@ -8,7 +8,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { deleteReportFile, uploadFile } from '../../fetchers/File';
+import { uploadFile } from '../../fetchers/File';
 import FileTable from './FileTable';
 import Dropzone from './Dropzone';
 import './FileUploader.scss';
@@ -40,12 +40,13 @@ const ReportFileUploader = ({
   idValue,
   id,
   setErrorMessage,
+  deleteFile,
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
     const remainingFiles = files.filter((f) => f.id !== file.id);
     onChange(remainingFiles);
-    await deleteReportFile(file.id, idValue);
+    await deleteFile(file.id, idValue);
   };
 
   const handleDrop = async (e) => {
@@ -87,6 +88,7 @@ ReportFileUploader.propTypes = {
     PropTypes.number,
   ]).isRequired,
   setErrorMessage: PropTypes.func.isRequired,
+  deleteFile: PropTypes.func.isRequired,
 };
 
 ReportFileUploader.defaultProps = {

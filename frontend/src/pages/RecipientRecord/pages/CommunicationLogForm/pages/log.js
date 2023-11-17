@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
   Button,
   TextInput,
@@ -12,9 +13,6 @@ import IndicatesRequiredField from '../../../../../components/IndicatesRequiredF
 import FormItem from '../../../../../components/FormItem';
 import ControlledDatePicker from '../../../../../components/ControlledDatePicker';
 import {
-  methodOptions,
-  purposeOptions,
-  resultOptions,
   pageComplete,
   defaultLogValues,
 } from '../constants';
@@ -100,7 +98,7 @@ const Log = ({ datePickerKey }) => {
             name="method"
             inputRef={register({ required: 'Select a communication method' })}
           >
-            {methodOptions.map((option) => (
+            {COMMUNICATION_METHODS.map((option) => (
               <option key={`methodoptions${option}`}>{option}</option>
             ))}
           </Dropdown>
@@ -117,7 +115,7 @@ const Log = ({ datePickerKey }) => {
             name="purpose"
             inputRef={register({ required: 'Select a purpose of communication' })}
           >
-            {purposeOptions.map((option) => (
+            {COMMUNICATION_PURPOSES.map((option) => (
               <option key={`purposeoptions${option}`}>{option}</option>
             ))}
           </Dropdown>
@@ -144,7 +142,7 @@ const Log = ({ datePickerKey }) => {
             name="result"
             inputRef={register({ required: 'Select a result of communication' })}
           >
-            {resultOptions.map((option) => (
+            {COMMUNICATION_RESULTS.map((option) => (
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
           </Dropdown>
