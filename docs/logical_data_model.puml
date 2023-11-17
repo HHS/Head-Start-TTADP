@@ -416,8 +416,16 @@ class MaintenanceLogs{
  isSuccessful : boolean
 }
 
+class NationalCenterUsers{
+ * id : integer : <generated>
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class NationalCenters{
- * id : bigint : <generated>
+ * id : integer : <generated>
  mapsTo : integer : REFERENCES "NationalCenters".id
  * createdAt : timestamp with time zone
  * name : text
@@ -1240,6 +1248,20 @@ class ZALMaintenanceLogs{
  session_sig : text
 }
 
+class ZALNationalCenterUsers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALNationalCenters{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1762,6 +1784,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPerso
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
@@ -1812,6 +1835,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : us
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
+Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
@@ -1839,6 +1863,7 @@ GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goa
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
+NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectiveTemplates
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectiveTemplates
