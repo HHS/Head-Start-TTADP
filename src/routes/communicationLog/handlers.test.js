@@ -16,10 +16,12 @@ import {
   createLogByRecipientId,
 } from './handlers';
 import SCOPES from '../../middleware/scopeConstants';
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/communicationLog');
+jest.mock('../../services/accessValidation');
 
 describe('communicationLog handlers', () => {
   const REGION_ID = 15;
@@ -160,6 +162,7 @@ describe('communicationLog handlers', () => {
           direction: 'asc',
         },
       };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
@@ -182,6 +185,7 @@ describe('communicationLog handlers', () => {
         },
       };
       userById.mockImplementation(() => Promise.resolve(unauthorized));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
@@ -203,6 +207,7 @@ describe('communicationLog handlers', () => {
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
       logsByRecipientAndScopes.mockRejectedValue(new Error('error'));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
@@ -224,6 +229,7 @@ describe('communicationLog handlers', () => {
       };
       userById.mockImplementation(() => Promise.resolve(admin));
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
     });
