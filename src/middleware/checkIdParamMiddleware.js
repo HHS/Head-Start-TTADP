@@ -173,6 +173,10 @@ export function checkIdParam(req, res, next, paramName) {
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
 
+export function checkCommunicationLogIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'communicationLogId');
+}
+
 export function checkRegionIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'regionId');
 }

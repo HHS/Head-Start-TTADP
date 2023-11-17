@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
-import { lowerCase } from 'lodash';
 import Container from '../../../../components/Container';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getCommunicationLogById } from '../../../../fetchers/communicationLog';
 import ReadOnlyField from '../../../../components/ReadOnlyField';
 import BackLink from '../../../../components/BackLink';
 import UserContext from '../../../../UserContext';
+import DisplayNextSteps from './components/DisplayNextSteps';
+import LogLine from './components/LogLine';
 
 export default function ViewCommunicationLog({ match, recipientName }) {
   const {
@@ -65,24 +66,12 @@ export default function ViewCommunicationLog({ match, recipientName }) {
         Back to communication log
       </BackLink>
       <h1 className="landing">{recipientName}</h1>
-      <p className="text-bold">
-        { /* todo: update font */}
-        {log.author.name}
-        {' '}
-        communicated via
-        {' '}
-        {lowerCase(log.data.method || '')}
-        {' '}
-        on
-        {' '}
-        {log.data.communicationDate}
-        {' '}
-        for
-        {' '}
-        {log.data.duration}
-        {' '}
-        hours.
-      </p>
+      <LogLine
+        authorName={log.author.name}
+        communicationDate={log.data.communicationDate}
+        duration={log.data.duration}
+        method={log.data.method}
+      />
       <Container paddingX={4} paddingY={2} className="maxw-tablet-lg" positionRelative>
         {isAuthor && (
         <Link
@@ -115,7 +104,18 @@ export default function ViewCommunicationLog({ match, recipientName }) {
             </a>
           </p>
         ))}
-        <p>
+
+        <DisplayNextSteps
+          title="Specialist's next steps"
+          steps={log.data.specialistNextSteps}
+        />
+
+        <DisplayNextSteps
+          title="Recipient's next steps"
+          steps={log.data.recipientNextSteps}
+        />
+
+        <p className="text-bold font-sans-3xs base-dark">
           Date of entry:
           {' '}
           {moment(log.createdAt).format('MMM Do, YYYY')}

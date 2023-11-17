@@ -13,6 +13,7 @@ import {
   checkObjectiveTemplateIdParam,
   checkFileIdParam,
   checkIdParam,
+  checkCommunicationLogIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -36,6 +37,12 @@ router.delete(
   checkReportIdParam,
   checkFileIdParam,
   transactionWrapper(deleteHandler, `${context} /r/:reportId?/:fileId?`),
+);
+router.delete(
+  '/l/:communicationLogId/:fileId?',
+  checkCommunicationLogIdParam,
+  checkFileIdParam,
+  transactionWrapper(deleteHandler, `${context} /r/:communicationLogId/:fileId?`),
 );
 router.delete(
   '/:fileId/objectives',

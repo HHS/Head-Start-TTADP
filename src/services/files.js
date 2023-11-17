@@ -33,6 +33,10 @@ const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
   individualHooks: true,
 });
+const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
 const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
   where: { id },
   individualHooks: true,
@@ -90,6 +94,12 @@ const getFileById = async (id) => File.findOne({
       as: 'sessionFiles',
       required: false,
       attributes: ['id', 'sessionReportPilotId'],
+    },
+    {
+      model: CommunicationLogFile,
+      as: 'communicationLogFiles',
+      required: false,
+      attributes: ['id', 'communicationLogId'],
     },
   ],
 });
@@ -389,6 +399,7 @@ export {
   deleteFile,
   deleteActivityReportFile,
   deleteActivityReportObjectiveFile,
+  deleteCommunicationLogFile,
   deleteObjectiveFile,
   deleteSessionFile,
   deleteObjectiveTemplateFile,
