@@ -21,8 +21,8 @@ describe('FilterNationalCenterNameSelect', () => {
       />,
     ));
 
-  it('calls the onapply handler', async () => {
-    fetchMock.get('/api/national-center', { options: ['NC 1', 'NC 2'] });
+  it('calls the on apply handler', async () => {
+    fetchMock.get('/api/national-center', { centers: [{ id: 1, name: 'NC 1' }, { id: 2, name: 'NC 2' }], users: [] });
     const onApply = jest.fn();
     await renderFilterNationalCenterNameSelect(onApply);
 
