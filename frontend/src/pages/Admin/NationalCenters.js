@@ -29,7 +29,6 @@ export default function NationalCenters({ match }) {
     async function fetchNationalCenters() {
       setError(null);
       try {
-        // eslint-disable-next-line no-unused-vars
         const { centers, users } = await getNationalCenters();
         setNationalCenters(centers);
 

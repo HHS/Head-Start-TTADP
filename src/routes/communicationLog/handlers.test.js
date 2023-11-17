@@ -154,6 +154,11 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
@@ -170,6 +175,11 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
       };
       userById.mockImplementation(() => Promise.resolve(unauthorized));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
@@ -184,6 +194,11 @@ describe('communicationLog handlers', () => {
         params: {
           id: 1,
           regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
@@ -200,6 +215,11 @@ describe('communicationLog handlers', () => {
         params: {
           id: 1,
           regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
         },
       };
       userById.mockImplementation(() => Promise.resolve(admin));
