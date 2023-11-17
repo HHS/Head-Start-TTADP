@@ -7,6 +7,10 @@ export default (sequelize, DataTypes) => {
       // A National center can belong to a user through a national center user.
       NationalCenter.hasMany(models.NationalCenterUser, { foreignKey: 'nationalCenterId', as: 'nationalCenterUsers' });
       NationalCenter.belongsToMany(models.User, { through: models.NationalCenterUser, foreignKey: 'nationalCenterId', as: 'users' });
+      NationalCenter.belongsTo(models.NationalCenter, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToNationalCenter',
+      });
       NationalCenter.hasMany(models.NationalCenter, {
         foreignKey: 'mapsTo',
         as: 'mapsFromNationalCenters',
