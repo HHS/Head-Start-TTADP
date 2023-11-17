@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
+import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
@@ -8,6 +9,7 @@ import {
   deleteFile,
   deleteActivityReportFile,
   deleteObjectiveFile,
+  deleteCommunicationLogFile,
   deleteSessionFile,
   getFileById,
   updateStatus,
@@ -16,6 +18,7 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
   createObjectivesFileMetaData,
+  createCommunicationLogFileMetadata,
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
@@ -23,6 +26,7 @@ import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import EventPolicy from '../../policies/event';
+import CommunicationLogPolicy from '../../policies/communicationLog';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { getObjectiveById } from '../../services/objectives';
@@ -33,6 +37,7 @@ import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 import { findSessionById } from '../../services/sessionReports';
 import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import { logById } from '../../services/communicationLog';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -105,13 +110,14 @@ const deleteHandler = async (req, res) => {
     objectiveId,
     fileId,
     eventSessionId,
+    communicationLogId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
   try {
-    let file = await getFileById(fileId);
+    const file = await getFileById(fileId);
 
     if (reportId) {
       if (!await hasReportAuthorization(user, reportId)) {
@@ -154,6 +160,21 @@ const deleteHandler = async (req, res) => {
       if (sof) {
         await deleteSessionFile(sof.id);
       }
+    } else if (communicationLogId) {
+      const communicationLog = await logById(communicationLogId);
+      const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+      if (!logPolicy.canUploadFileToLog()) {
+        res.sendStatus(httpCodes.UNAUTHORIZED);
+        return;
+      }
+
+      const clf = file.communicationLogFiles.find(
+        (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE),
+      );
+      if (clf) {
+        await deleteCommunicationLogFile(clf.id);
+      }
     }
 
     const reportLength = file.reports ? file.reports.length : 0;
@@ -169,11 +190,11 @@ const deleteHandler = async (req, res) => {
       + objectiveTemplateFilesLength
       + sessionLength === 0);
 
-    file = await getFileById(fileId);
     if (canDelete) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
+
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
@@ -205,6 +226,16 @@ const determineFileTypeFromPath = async (filePath) => {
   return altFileType || type;
 };
 
+// at least one is required
+const uploadHandlerRequiredFields = (fields) => [
+  'reportId',
+  'reportObjectiveId',
+  'objectiveId',
+  'objectiveTempleteId',
+  'sessionId',
+  'communicationLogId',
+].some((field) => fields[field]);
+
 const uploadHandler = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
   const {
@@ -213,6 +244,7 @@ const uploadHandler = async (req, res) => {
     objectiveId,
     objectiveTempleteId,
     sessionId,
+    communicationLogId,
   } = fields;
   let buffer;
   let metadata;
@@ -230,8 +262,8 @@ const uploadHandler = async (req, res) => {
     if (!size) {
       return res.status(400).send({ error: 'fileSize required' });
     }
-    if (!reportId && !reportObjectiveId && !objectiveId && !objectiveTempleteId && !sessionId) {
-      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, or sessionId is required' });
+    if (!uploadHandlerRequiredFields(fields)) {
+      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, or sessionId is required' });
     }
     buffer = fs.readFileSync(path);
 
@@ -304,6 +336,20 @@ const uploadHandler = async (req, res) => {
         originalFilename,
         fileName,
         sessionId,
+        size,
+      );
+    } else if (communicationLogId) {
+      const communicationLog = await logById(communicationLogId);
+      const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+      if (!logPolicy.canUploadFileToLog()) {
+        return res.sendStatus(403);
+      }
+
+      metadata = await createCommunicationLogFileMetadata(
+        originalFilename,
+        fileName,
+        communicationLogId,
         size,
       );
     }
