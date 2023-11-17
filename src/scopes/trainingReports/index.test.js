@@ -5,8 +5,6 @@ import filtersToScopes from '../index';
 import db, {
   User,
   EventReportPilot,
-  NationalCenterUser,
-  NationalCenter,
   sequelize,
 } from '../../models';
 
@@ -198,12 +196,6 @@ describe('filtersToScopes', () => {
     let reportWithBothCollaborators;
     let reportWithOtherCollaborator;
     let possibleIds;
-    // National Centers.
-    let nationalCenterToFind;
-    let nationalCenterToNotFind;
-    // National Center Users.
-    let nationalCenterUserToFind;
-    let nationalCenterUserToNotFind;
 
     beforeAll(async () => {
       // create user.
@@ -211,28 +203,6 @@ describe('filtersToScopes', () => {
 
       // Create collaborator user.
       await User.create(mockCollaboratorUser);
-
-      // create national center to find.
-      nationalCenterToFind = await NationalCenter.create({
-        name: 'NC Test 1',
-      });
-
-      // create national center to not find.
-      nationalCenterToNotFind = await NationalCenter.create({
-        name: 'NC Test 2',
-      });
-
-      // create national center user to find.
-      nationalCenterUserToFind = await NationalCenterUser.create({
-        nationalCenterId: nationalCenterToFind.id,
-        userId: mockUser.id,
-      });
-
-      // create national center user to not find.
-      nationalCenterUserToNotFind = await NationalCenterUser.create({
-        nationalCenterId: nationalCenterToNotFind.id,
-        userId: mockCollaboratorUser.id,
-      });
 
       // create report with region 1.
       reportWithCollaborator = await EventReportPilot.create({
@@ -267,27 +237,6 @@ describe('filtersToScopes', () => {
         reportWithOtherCollaborator.id];
     });
     afterAll(async () => {
-      // destroy national centers users.
-      await NationalCenterUser.destroy({
-        where: {
-          id: [nationalCenterUserToFind.id, nationalCenterUserToNotFind.id],
-        },
-      });
-
-      // destroy national centers.
-      await NationalCenter.destroy({
-        where: {
-          id: [nationalCenterToFind.id, nationalCenterToNotFind.id],
-        },
-        force: true,
-      });
-
-      await NationalCenter.destroy({
-        where: {
-          id: [nationalCenterToFind.id, nationalCenterToNotFind.id],
-        },
-      });
-
       // destroy reports.
       await EventReportPilot.destroy({
         where: {
@@ -299,22 +248,19 @@ describe('filtersToScopes', () => {
       await User.destroy({ where: { id: [mockUser.id, mockCollaboratorUser.id] } });
     });
 
-    it('before returns reports with mock contains collaborator national center', async () => {
-      const filters = { 'collaborators.ctn': 'NC Test 1' };
+    it('before returns reports with mock contains collaborator', async () => {
+      const filters = { 'collaborators.ctn': 'John Smith' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-
-      const reportIds = found.map((report) => report.id);
-
-      expect(reportIds.includes(reportWithCollaborator.id)).toBe(true);
-      expect(reportIds.includes(reportWithBothCollaborators.id)).toBe(true);
+      expect(found[0].id).toBe(reportWithCollaborator.id);
+      expect(found[1].id).toBe(reportWithBothCollaborators.id);
     });
 
     it('before returns reports with mock does not contain collaborator', async () => {
-      const filters = { 'collaborators.nctn': 'NC Test 1' };
+      const filters = { 'collaborators.nctn': 'John Smith' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
