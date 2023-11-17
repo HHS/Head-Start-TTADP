@@ -154,6 +154,22 @@ button:not([disabled]):focus {
   background-color: $ttahub-medium-blue;
 }
 
+/* ========== generic typography ========== */
+
+.smart-hub-serif {
+  font-family: Merriweather, serif;
+}
+
+.smart-hub-title-big-serif {
+  font-size: 30px;
+  font-family: Merriweather, serif;
+}
+
+/* =========== colors ================== */
+.base-dark {
+  color: $base-dark;
+}
+
 /* ========== page heading class to be shared ========== */
 .page-heading {
   font-size: 40px;
@@ -324,10 +340,7 @@ fill: #1B1B1B;
   z-index: 99999;
 }
 
-.smart-hub-title-big-serif {
-  font-size: 30px;
-  font-family: Merriweather, serif;
-}
+
 
 /* ========== some color helpers ========== */
 
