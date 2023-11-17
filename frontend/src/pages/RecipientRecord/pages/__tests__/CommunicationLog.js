@@ -6,15 +6,18 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import CommunicationLog from '../CommunicationLog';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
 
 describe('CommunicationLog', () => {
   const history = createMemoryHistory();
   const renderTest = () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
-        <Router history={history}>
-          <CommunicationLog recipientName="Big recipient" recipientId={1} regionId={5} />
-        </Router>
+        <UserContext.Provider value={{ user: { homeRegionId: 5 } }}>
+          <Router history={history}>
+            <CommunicationLog recipientName="Big recipient" recipientId={1} regionId={5} />
+          </Router>
+        </UserContext.Provider>
       </AppLoadingContext.Provider>,
     );
   };
