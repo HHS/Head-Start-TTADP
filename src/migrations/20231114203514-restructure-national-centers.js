@@ -18,10 +18,6 @@ module.exports = {
       -- Delete all data from table "NationalCenters".
         DELETE FROM "NationalCenters";
 
-     -- Remove the column 'mapsTo' from table "NationalCenters".
-        ALTER TABLE "NationalCenters"
-        DROP COLUMN "mapsTo";
-
       -- Insert default national centers 'DTL','HBHS', 'PFCE', 'PFMO' into table "NationalCenters".
       INSERT INTO "NationalCenters" ("id", "name", "createdAt", "updatedAt")
       VALUES

@@ -426,6 +426,8 @@ class NationalCenterUsers{
 
 class NationalCenters{
  * id : integer : <generated>
+!issue='column missing from model'
+!issue='column reference missing' <color:#d54309>mapsTo</color>: integer : REFERENCES "NationalCenters".id
  * createdAt : timestamp with time zone
  * name : text
  * updatedAt : timestamp with time zone
@@ -1871,5 +1873,8 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+NationalCenters o--[#yellow,bold,thickness=2]--o NationalCenters : <color:#2491FF>missing-from-model</color>
 
 @enduml
