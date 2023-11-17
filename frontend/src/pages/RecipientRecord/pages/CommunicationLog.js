@@ -1,15 +1,33 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
 import WidgetContainer from '../../../components/WidgetContainer';
 import CommunicationLogTable from './components/CommunicationLogTable';
+import FilterPanel from '../../../components/filter/FilterPanel';
+import UserContext from '../../../UserContext';
+import useFilters from '../../../hooks/useFilters';
+import {
+  communicationDateFilter,
+  creatorFilter,
+  methodFilter,
+  resultFilter,
+} from '../../../components/filter/communicationLogFilters';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
+const FILTER_KEY = 'communication-log-filters';
+
+const COMMUNICATION_LOG_FILTER_CONFIG = [
+  methodFilter,
+  resultFilter,
+  creatorFilter,
+  communicationDateFilter,
+];
+
+COMMUNICATION_LOG_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
 export default function CommunicationLog({ recipientName, regionId, recipientId }) {
   const [logs, setLogs] = useState();
@@ -21,7 +39,17 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
     activePage: 1,
   });
 
+  const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  const {
+    filters,
+    onApplyFilters,
+    onRemoveFilter,
+  } = useFilters(
+    user,
+    FILTER_KEY,
+  );
 
   useDeepCompareEffect(() => {
     async function fetchLogs() {
@@ -34,6 +62,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
           sortConfig.sortBy,
           sortConfig.direction,
           sortConfig.offset,
+          filters,
         );
 
         setLogs(response);
@@ -103,6 +132,14 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
           {String(regionId)}
         </title>
       </Helmet>
+      <FilterPanel
+        applyButtonAria="apply filters for training reports"
+        filters={filters}
+        onApplyFilters={onApplyFilters}
+        onRemoveFilter={onRemoveFilter}
+        filterConfig={COMMUNICATION_LOG_FILTER_CONFIG}
+        allUserRegions={[]}
+      />
       <WidgetContainer
         title="Communication log"
         showPagingBottom
