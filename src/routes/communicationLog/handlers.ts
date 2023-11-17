@@ -11,6 +11,8 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import Policy from '../../policies/communicationLog';
+import filtersToScopes from '../../scopes';
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
 
@@ -58,13 +60,17 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
       return;
     }
 
+    const userId = await currentUserId(req, res);
     const { sortBy, offset, direction } = req.query;
+    const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
+    const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
     const logs = await logsByRecipientAndScopes(
       Number(recipientId),
       String(sortBy),
       Number(offset),
       String(direction),
+      scopes,
     );
     res.status(httpCodes.OK).json(logs);
   } catch (error) {

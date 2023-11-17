@@ -1,4 +1,4 @@
-import { filterAssociation } from '../activityReport/utils';
+import { filterAssociation } from './utils';
 
 const collaborators = `
 SELECT
