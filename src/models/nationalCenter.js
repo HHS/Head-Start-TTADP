@@ -7,6 +7,10 @@ export default (sequelize, DataTypes) => {
       // A National center can belong to a user through a national center user.
       NationalCenter.hasMany(models.NationalCenterUser, { foreignKey: 'nationalCenterId', as: 'nationalCenterUsers' });
       NationalCenter.belongsToMany(models.User, { through: models.NationalCenterUser, foreignKey: 'nationalCenterId', as: 'users' });
+      NationalCenter.hasMany(models.NationalCenter, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromNationalCenters',
+      });
     }
   }
   NationalCenter.init({
@@ -24,6 +28,17 @@ export default (sequelize, DataTypes) => {
         notEmpty: true,
       },
       unique: true,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'NationalCenters',
+        },
+        key: 'id',
+      },
     },
     updatedAt: {
       allowNull: false,
