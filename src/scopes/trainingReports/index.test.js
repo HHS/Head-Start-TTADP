@@ -193,7 +193,7 @@ describe('filtersToScopes', () => {
       expect(found[0].id).toBe(reportWithoutRegion.id);
     });
   });
-  describe('collaborator', () => {
+  describe('National Center Names', () => {
     let reportWithCollaborator;
     let reportWithBothCollaborators;
     let reportWithOtherCollaborator;
@@ -254,7 +254,7 @@ describe('filtersToScopes', () => {
 
       // create report with different region.
       reportWithOtherCollaborator = await EventReportPilot.create({
-        ownerId: mockUser.id,
+        ownerId: mockCollaboratorUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockCollaboratorUser.id],
         regionId: 3,
@@ -300,7 +300,7 @@ describe('filtersToScopes', () => {
     });
 
     it('before returns reports with mock contains collaborator national center', async () => {
-      const filters = { 'collaborators.ctn': 'NC Test 1' };
+      const filters = { 'collaborators.in': 'NC Test 1' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -313,14 +313,18 @@ describe('filtersToScopes', () => {
       expect(reportIds.includes(reportWithBothCollaborators.id)).toBe(true);
     });
 
-    it('before returns reports with mock does not contain collaborator', async () => {
-      const filters = { 'collaborators.nctn': 'NC Test 1' };
+    it('before returns reports with mock contains creator national center', async () => {
+      const filters = { 'creator.in': 'NC Test 1' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.length).toBe(1);
-      expect(found[0].id).toBe(reportWithOtherCollaborator.id);
+      expect(found.length).toBe(2);
+
+      const reportIds = found.map((report) => report.id);
+
+      expect(reportIds.includes(reportWithCollaborator.id)).toBe(true);
+      expect(reportIds.includes(reportWithBothCollaborators.id)).toBe(true);
     });
   });
 });

@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { filterAssociation } from './utils';
 
 const collaborators = `
@@ -16,8 +17,4 @@ WHERE "NationalCenters"."name"`;
 
 export function withCollaborators(names) {
   return filterAssociation(collaborators, names, false, 'ILIKE');
-}
-
-export function withoutCollaborators(names) {
-  return filterAssociation(collaborators, names, true, 'ILIKE');
 }
