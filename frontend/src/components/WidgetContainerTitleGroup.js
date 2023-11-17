@@ -1,0 +1,40 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+
+const WidgetContainerTitleGroup = ({
+  children,
+  title,
+  showHeaderBorder,
+  subtitle,
+  className,
+}) => {
+  if (!title) {
+    return null;
+  }
+
+  return (
+    <div className={`${showHeaderBorder ? 'smart-hub-widget-container-header-border' : ''} ${className} desktop:display-flex flex-align-center flex-justify flex-gap-2`}>
+      <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
+      {subtitle ? <p className="usa-prose margin-0">{subtitle}</p> : null }
+      {children}
+    </div>
+  );
+};
+
+WidgetContainerTitleGroup.propTypes = {
+  children: PropTypes.node,
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
+  showHeaderBorder: PropTypes.bool,
+  className: PropTypes.string,
+};
+
+WidgetContainerTitleGroup.defaultProps = {
+  children: null,
+  title: '',
+  subtitle: '',
+  showHeaderBorder: false,
+  className: 'padding-3 ',
+};
+
+export default WidgetContainerTitleGroup;
