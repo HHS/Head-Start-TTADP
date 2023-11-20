@@ -1,5 +1,9 @@
 import faker from '@faker-js/faker';
-import { COMMUNICATION_METHODS, COMMUNICATION_RESULTS } from '@ttahub/common';
+import {
+  COMMUNICATION_METHODS,
+  COMMUNICATION_RESULTS,
+  COMMUNICATION_PURPOSES,
+} from '@ttahub/common';
 import db from '../../models';
 import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
@@ -37,6 +41,7 @@ describe('communicationLog filtersToScopes', () => {
       communicationDate: '2023/01/01',
       result: COMMUNICATION_RESULTS[0],
       method: COMMUNICATION_METHODS[0],
+      purpose: COMMUNICATION_PURPOSES[0],
     };
 
     communicationLogs = await Promise.all([
@@ -59,6 +64,7 @@ describe('communicationLog filtersToScopes', () => {
         data: {
           ...defaultData,
           method: COMMUNICATION_METHODS[1],
+          purpose: COMMUNICATION_PURPOSES[1],
         },
       }),
       db.CommunicationLog.create({
@@ -118,6 +124,23 @@ describe('communicationLog filtersToScopes', () => {
   it('filters by result without', async () => {
     const scopes = communicationLogFiltersToScopes({
       'result.nin': [COMMUNICATION_RESULTS[1]],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', scopes);
+    expect(count).toBe(3);
+  });
+
+  it('filters by purpose within', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'purpose.in': [COMMUNICATION_PURPOSES[1]],
+    });
+
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', scopes);
+    expect(count).toBe(1);
+  });
+
+  it('filters by purpose without', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'purpose.nin': [COMMUNICATION_PURPOSES[1]],
     });
     const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', scopes);
     expect(count).toBe(3);
