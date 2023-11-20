@@ -51,7 +51,7 @@ describe('CommunicationLogForm', () => {
       </AppLoadingContext.Provider>
     </Router>
     );
-          };
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
