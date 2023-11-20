@@ -10,8 +10,8 @@ import EncodingConverter from '../stream/encoding';
 import XMLStream from '../stream/xml';
 import { remap, collectChangedValues } from '../dataObjectUtils';
 import { filterDataToModel } from '../modelUtils';
-import db from '../../models';
-import { FILE_STATUSES } from '../../constants';
+import db, { Sequelize } from '../../models';
+import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
 import addToScanQueue from '../../services/scanQueue';
 import { updateStatusByKey } from '../../services/files';
 
@@ -307,6 +307,113 @@ const formatDate = (date: Date = new Date()): string => {
 
 //---------------------------------------------------------------------------------------
 
+/**
+ * Records available files for a specific import.
+ * @param importId - The ID of the import.
+ * @param availableFiles - An array of available files with their details.
+ * @returns A promise that resolves when all database operations are completed.
+ */
+const recordAvailableFiles = async (
+  importId: number,
+  availableFiles: {
+    fullPath: string,
+    fileInfo: FTPFileInfo,
+    stream?: Promise<Readable>,
+  }[],
+) => {
+  // Retrieve current import files from the database
+  const currentImportFiles: {
+    id: number,
+    importId: number,
+    fileInfo: FTPFileInfo,
+  }[] = await ImportFile.findAll({
+    attributes: [
+      'id',
+      'importId',
+      ['ftpFileInfo', 'fileInfo'],
+    ],
+    where: {
+      importId,
+      status: { [Op.not]: IMPORT_STATUSES.PROCESSED },
+    },
+    raw: true,
+  });
+
+  // Separate the available files into new, matched, and removed files
+  const [
+    newfiles,
+    matchedFiles,
+    removedFiles,
+  ] = [
+    // New files are those that are not already recorded in the database
+    availableFiles
+      .filter((availableFile) => !currentImportFiles
+        .some((currentImportFile) => (
+          importId === currentImportFile.importId
+          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
+          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+        ))),
+    // Matched files are those that are already recorded in the database
+    availableFiles
+      .filter((availableFile) => currentImportFiles
+        .some((currentImportFile) => (
+          importId === currentImportFile.importId
+          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
+          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+        ))),
+    // Removed files are those that were recorded in the database but are no longer available
+    currentImportFiles
+      .filter((currentImportFile) => !availableFiles
+        .some((availableFile) => (
+          importId === currentImportFile.importId
+          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
+          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+        ))),
+  ];
+
+  return Promise.all([
+    // Create new files in the database if there are any
+    (newfiles.length > 0
+      ? ImportFile.bulkCreate(
+        newfiles.map((newFile) => ({
+          importId,
+          ftpFileInfo: newFile.fileInfo,
+          status: IMPORT_STATUSES.IDENTIFIED,
+        })),
+        { independentHooks: true }
+      )
+      : Promise.resolve()),
+    // Update matched files in the database if there are any
+    ...(matchedFiles.length > 0
+      ? matchedFiles.map(async (matchedFile) => ImportFile.update(
+        {
+          importId,
+          ftpFileInfo: matchedFile.fileInfo,
+        },
+        {
+          where: {
+            importId,
+            [Op.and]: [
+              Sequelize.literal(`"ftpFileInfo" -> 'path' = '${matchedFile.fileInfo.path}'`),
+              Sequelize.literal(`"ftpFileInfo" -> 'name' = '${matchedFile.fileInfo.name}'`),
+            ],
+          }
+        }
+      ))
+      : []),
+    // Delete removed files from the database if there are any
+    (removedFiles.length > 0
+      ? ImportFile.destroy({
+        where: {
+          importId,
+          id: removedFiles.map(({id}) => id),
+        },
+        independentHooks: true,
+      })
+      : Promise.resolve()),
+  ]);
+};
+
 const logFileToBeCollected = async (
   importId: number,
   availableFile: {
@@ -315,21 +422,53 @@ const logFileToBeCollected = async (
     stream?: Promise<Readable>,
   },
 ) => {
-  const uuid: string = uuidv4();
-  const extension = availableFile.fileInfo.name.split('.').pop();
-  const key = `/import/${importId}/${uuid}.${extension}`;
+  let key;
+  const importFile = ImportFile.findOne({
+    attributes: [
+      'fileId',
+    ],
+    where: {
+      importId,
+      [Op.and]: [
+        Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
+        Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
+      ],
+      include: [{
+        model: File,
+        as: 'file',
+        attributes: ['key'],
+      }]
+    },
+  });
 
-  const fileRecord = await File.create({
-    key,
-    originalFileName: availableFile.fileInfo.name,
-    fileSize: availableFile.fileInfo.size,
-    status: FILE_STATUSES.UPLOADING,
-  });
-  const importFile = await ImportFile.create({
-    importId,
-    fileId: fileRecord.id,
-    ftpFileInfo: availableFile.fileInfo,
-  });
+  if (!importFile.fileId) {
+    const uuid: string = uuidv4();
+    const extension = availableFile.fileInfo.name.split('.').pop();
+    key = `/import/${importId}/${uuid}.${extension}`;
+
+    const fileRecord = await File.create({
+      key,
+      originalFileName: availableFile.fileInfo.name,
+      fileSize: availableFile.fileInfo.size,
+      status: FILE_STATUSES.UPLOADING,
+    });
+    await ImportFile.update(
+      {
+        fileId: fileRecord.id,
+      },
+      {
+        where: {
+          importId,
+          [Op.and]: [
+            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
+            Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
+          ],
+        },
+      },
+    );
+  } else {
+    key = importFile.file.dataValues.key;
+  }
 
   return {
     importFileId: importFile.id,
@@ -337,40 +476,90 @@ const logFileToBeCollected = async (
   };
 };
 
-const collectFile = async (
+const setImportFileHash = async (
+  importFileId: number,
+  hash: string,
+) => ImportFile.update(
+  { hash },
+  {
+    where: { id: importFileId },
+    individualHooks: true,
+  }
+)
+
+const collectNextFile = async (
   importId: number,
-  availableFile: {
-    path: string,
+  availableFiles: {
+    fullPath: string,
     fileInfo: FTPFileInfo,
     stream?: Promise<Readable>,
+  }[],
+  times: {
+    start: Date,
+    limit: Date,
+    used?: number[],
   },
+  importedFiles: {
+    importFileId: number,
+    key: string,
+  }[] = [],
 ) => {
+  const availableFile = availableFiles.shift();
+  const currentStart = new Date();
+
+  if (availableFile === undefined) {
+    return { hasImportedFiles: !!importedFiles, hasRemainingFiles: false };
+  } else if (currentStart > times.limit) {
+    return {  hasImportedFiles: !!importedFiles, hasRemainingFiles: !!availableFile };
+  } else if ((times?.used?.length || 0) > 0) {
+    const avg = (times?.used?.reduce((acc, val) => acc + val, 0) || 1) / (times?.used?.length || 1);
+    if (new Date(currentStart.getTime() + avg) > times.limit) {
+      return {  hasImportedFiles: !!importedFiles, hasRemainingFiles: !!availableFile };
+    }
+  }
+
+  if (!times?.used) {
+    times.used = [];
+  }
+
   const importFileData = await logFileToBeCollected(importId, availableFile);
 
-  const s3Client = new S3Client();
   try {
+    const stream = await availableFile.stream;
+    if (!stream) throw new Error('Stream failed or missing');
+    const hashStream = new Hasher('sha256');
+    stream.pipe(hashStream);
+    const s3Client = new S3Client();
     await s3Client.uploadFileAsStream(
       importFileData.key,
-      await availableFile.stream,
+      hashStream,
     );
-    await updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOADED);
+    await Promise.all([
+      updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOADED),
+      setImportFileHash(importFileData.importFileId, await hashStream.getHash()),
+    ]);
+    importedFiles.push(importFileData);
   } catch (err) {
     await updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOAD_FAILED);
-    throw err;
+    // TODO: log error
+    return collectNextFile(importId, availableFiles, times, importedFiles);
   }
 
   // Scan file
+  // Note: file will be queued for processing without waiting on status of scanning
   addToScanQueue({ key: importFileData.key });
   await updateStatusByKey(importFileData.key, FILE_STATUSES.QUEUED);
 
-  return importFileData;
+  times.used.push(new Date().getTime() - currentStart.getTime());
+  return collectNextFile(importId, availableFiles, times, importedFiles);
 };
 
 const collectFilesFromSource = async (
   importId,
+  timeBox,
   ftpSettings,
   path = '/',
-  fileMask?: string,
+  fileMask?: string | undefined,
 ) => {
   const {
     host,
@@ -397,8 +586,9 @@ const collectFilesFromSource = async (
     ], // Selecting the 'name' attribute from ftpFileInfo
     where: {
       importId,
+      status: IMPORT_STATUSES.PROCESSED,
     },
-    order: [['ftpFileInfo->>\'date\'', 'DESC']], // Ordering by ftpFileInfo.date in descending order
+    order: [[`ftpFileInfo->>'date'`, 'DESC']], // Ordering by ftpFileInfo.date in descending order
     raw: true,
   });
 
@@ -409,22 +599,32 @@ const collectFilesFromSource = async (
     true,
   );
 
-  const collectedFiles = await Promise.all(availableFiles.map(async (
-    availableFile,
-  ) => collectFile(
+  await recordAvailableFiles(importId, availableFiles);
+
+  const startTime = new Date();
+  const timeLimit = new Date(startTime.getTime() + timeBox);
+
+  const { collectedFiles, hasRemainingFiles } = await collectNextFile(
     importId,
-    availableFile,
-  )));
+    availableFiles,
+    {
+      start: startTime,
+      limit: timeLimit,
+    }
+  );
 
   return collectedFiles;
 };
 
-const download = async (importId: number) => {
+const download = async (
+  importId: number, 
+  timeBox = 5 * 60 * 1000,
+) => {
   const importFileData: {
     importId: number,
     ftpSettings: FTPSettings,
     path: string,
-    fileMask: string | null,
+    fileMask?: string | undefined,
   } = await Import.findOne({
     attributes: [
       ['id', 'importId'],
@@ -438,23 +638,19 @@ const download = async (importId: number) => {
     raw: true,
   });
 
-  const collectedFiles = await collectFilesFromSource(
+  return collectFilesFromSource(
     importFileData.importId,
+    timeBox,
     importFileData.ftpSettings,
     importFileData.path,
     importFileData.fileMask,
   );
-
-  return collectedFiles;
 };
 
-//  // TODO - make this a function that just takes importId
-//   const priorImportedFile = await ImportFiles.findOne({
-//     attributes: [
-//       'ftpFileInfo',
-//     ],
-//     where: {
-//       importId,
-//     },
-//     order: [['createdAt', 'DESC']],
-//   });
+export {
+  logFileToBeCollected,
+  collectNextFile,
+  collectFilesFromSource,
+  download,
+  process,
+};
