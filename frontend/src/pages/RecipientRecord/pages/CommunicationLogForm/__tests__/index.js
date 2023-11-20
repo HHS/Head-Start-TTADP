@@ -28,7 +28,9 @@ describe('CommunicationLogForm', () => {
   const renderTest = (
     communicationLogId = 'new',
     currentPage = 'log',
-  ) => render(
+  ) => {
+    
+    render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
@@ -47,8 +49,9 @@ describe('CommunicationLogForm', () => {
           />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
-    </Router>,
-  );
+    </Router>
+    );
+          };
 
   beforeEach(() => {
     jest.clearAllMocks();

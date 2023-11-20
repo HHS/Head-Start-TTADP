@@ -1,8 +1,11 @@
+/* eslint-disable no-console */
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import { Button } from '@trussworks/react-uswds';
+import { uniqueId } from 'lodash';
 import { getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
 import WidgetContainer from '../../../components/WidgetContainer';
@@ -81,6 +84,29 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
     filters,
   ]);
 
+  const exportLog = async () => {
+    try {
+      const blob = await getCommunicationLogsByRecipientId(
+        String(regionId),
+        String(recipientId),
+        sortConfig.sortBy,
+        sortConfig.direction,
+        sortConfig.offset,
+        filters,
+        'csv',
+      );
+      const csv = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = csv;
+      a.download = `${uniqueId('communication-log-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+    } catch (err) {
+      console.log(err);
+      setError('There was an error exporting logs');
+    }
+  };
+
   const AddCommunication = () => (
     <Link
       to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
@@ -89,6 +115,23 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       <span className="smart-hub--plus">+</span>
       <span className="smart-hub--new-report">Add communication</span>
     </Link>
+  );
+
+  const ExportLog = () => (
+    <Button
+      type="button"
+      onClick={exportLog}
+      outline
+    >
+      Export log
+    </Button>
+  );
+
+  const TitleSlot = () => (
+    <div className="display-flex">
+      <ExportLog />
+      <AddCommunication />
+    </div>
   );
 
   const requestSort = (sortBy) => {
@@ -156,7 +199,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
         perPage={COMMUNICATION_LOG_PER_PAGE}
         handlePageChange={handlePageChange}
         error={error}
-        titleSlot={<AddCommunication />}
+        titleSlot={<TitleSlot />}
       >
         {(logs && logs.count > 0) ? (
           <CommunicationLogTable
