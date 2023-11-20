@@ -6,6 +6,7 @@ import {
   deleteLog,
   updateLog,
   createLog,
+  csvLogsByRecipientAndScopes,
 } from '../../services/communicationLog';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
@@ -61,9 +62,26 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
     }
 
     const userId = await currentUserId(req, res);
-    const { sortBy, offset, direction } = req.query;
+    const {
+      sortBy,
+      offset,
+      direction,
+      format,
+    } = req.query;
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
+
+    if (format === 'csv') {
+      const logs = await csvLogsByRecipientAndScopes(
+        Number(recipientId),
+        String(sortBy),
+        Number(offset),
+        String(direction),
+        scopes,
+      );
+      res.send(logs);
+      return;
+    }
 
     const logs = await logsByRecipientAndScopes(
       Number(recipientId),
