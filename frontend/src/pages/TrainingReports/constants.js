@@ -5,12 +5,14 @@ import {
   regionFilter,
   collaboratorFilter,
   creatorFilter,
+  eventIdFilter,
 } from '../../components/filter/trainingReportFilters';
 
 const TRAINING_REPORT_BASE_FILTER_CONFIG = [
   startDateFilter,
   creatorFilter,
   collaboratorFilter,
+  eventIdFilter,
 ];
 
 const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
@@ -18,6 +20,7 @@ const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
   regionFilter,
   creatorFilter,
   collaboratorFilter,
+  eventIdFilter,
 ];
 
 // sort both by display prop
