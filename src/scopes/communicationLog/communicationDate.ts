@@ -3,9 +3,6 @@ import db from '../../models';
 
 const { sequelize } = db;
 
-// ("CommunicationLog"."data"#>>'{communicationDate}') >= '2022/12/31')
-// ::timestamp with time zone
-
 export function beforeCommunicationDate(dates: string[]) {
   return {
     [Op.and]: [
