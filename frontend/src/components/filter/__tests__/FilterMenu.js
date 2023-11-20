@@ -594,7 +594,7 @@ describe('Filter Menu', () => {
     fetchMock.get('/api/national-center', { centers: [{ id: 1, name: 'NC 1' }, { id: 2, name: 'NC 2' }], users: [] });
 
     // all the filters work
-    userEvent.selectOptions(topics, 'Collaborator');
+    userEvent.selectOptions(topics, 'Collaborators');
     let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
