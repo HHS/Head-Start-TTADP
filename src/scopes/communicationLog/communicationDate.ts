@@ -1,22 +1,24 @@
 import { Op } from 'sequelize';
+import db from '../../models';
+
+const { sequelize } = db;
+
+// ("CommunicationLog"."data"#>>'{communicationDate}') >= '2022/12/31')
+// ::timestamp with time zone
 
 export function beforeCommunicationDate(dates: string[]) {
   return {
-    [Op.and]: {
-      'data.communicationDate': {
-        [Op.lte]: dates[0],
-      },
-    },
+    [Op.and]: [
+      sequelize.literal(`("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone <= ${sequelize.escape(dates[0])}::timestamp with time zone`),
+    ],
   };
 }
 
 export function afterCommunicationDate(dates: string[]) {
   return {
-    [Op.and]: {
-      'data.communicationDate': {
-        [Op.gte]: dates[0],
-      },
-    },
+    [Op.and]: [
+      sequelize.literal(`("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone >= ${sequelize.escape(dates[0])}::timestamp with time zone`),
+    ],
   };
 }
 
@@ -27,11 +29,10 @@ export function withinCommunicationDate(dates: string[]) {
   }
   const startDate = splitDates[0];
   const endDate = splitDates[1];
+
   return {
-    [Op.and]: {
-      'data.communicationDate': {
-        [Op.between]: [startDate, endDate],
-      },
-    },
+    [Op.and]: [
+      sequelize.literal(`("CommunicationLog"."data"#>>'{communicationDate}')::timestamp with time zone BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone AND ${sequelize.escape(endDate)}::timestamp with time zone`),
+    ],
   };
 }
