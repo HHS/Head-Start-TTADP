@@ -136,7 +136,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       </Helmet>
       <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
         <FilterPanel
-          applyButtonAria="apply filters for training reports"
+          applyButtonAria="apply filters on communication logs"
           filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
