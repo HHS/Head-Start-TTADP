@@ -35,7 +35,7 @@ import {
 import {
   creatorFilter,
   eventIdFilter,
-  collaboratorFilter,
+  collaboratorsFilter,
   startDateFilter,
   regionFilter,
 } from '../trainingReportFilters';
@@ -573,7 +573,7 @@ describe('Filter Menu', () => {
     const config = [
       creatorFilter,
       eventIdFilter,
-      collaboratorFilter,
+      collaboratorsFilter,
       startDateFilter,
       regionFilter,
     ];
