@@ -277,6 +277,10 @@ export async function getSimilarGoalsForRecipient(req, res) {
 
     const canView = await Promise.all(ids.map(async (id) => {
       const goal = await goalByIdWithActivityReportsAndRegions(id);
+      // this can be null after we start merging goals
+      if (!goal) {
+        return true;
+      }
       return new Goal(user, goal).canView();
     }));
 
