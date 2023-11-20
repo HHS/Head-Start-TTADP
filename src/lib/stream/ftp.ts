@@ -11,6 +11,7 @@ interface FTPSettings {
 }
 
 interface FileInfo {
+  path: string,
   name: string, // The name of the file
   type: string, // The type of the file (e.g., file or directory)
   size: number, // The size of the file in bytes
@@ -72,7 +73,7 @@ class FtpClient {
     priorFile?: string,
     includeStream = false,
   ): Promise<{
-      path: string,
+      fullPath: string,
       fileInfo: FileInfo,
       stream?: Promise<Readable>,
     }[]> {
@@ -86,7 +87,7 @@ class FtpClient {
 
         // Map the returned files to FileInfo objects
         const fileInfoList: {
-          path: string,
+          fullPath: string,
           fileInfo: FileInfo,
           stream?: Promise<Readable>,
         }[] = files
@@ -95,8 +96,9 @@ class FtpClient {
           .filter(({ name }) => priorFile === undefined
             || name > priorFile)
           .map((file) => ({
-            path: `${path}/${file.name}`,
+            fullPath: `${path}/${file.name}`,
             fileInfo: {
+              path,
               name: file.name,
               type: file.type,
               size: file.size,
