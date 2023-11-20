@@ -88,11 +88,12 @@ services:
       - NODE_ENV=development
   sftp:
     image: atmoz/sftp
+    container_name: monitoring-sftp
     volumes:
-        - <host-dir>/upload:/home/foo/upload
+        - ./test-sftp:/home/tta_ro/ProdTTAHome
     ports:
         - "22:22"
-    command: foo:pass:1001
+    command: tta_ro:password:1001
 volumes:
   dbdata: {}
   minio-data: {}
