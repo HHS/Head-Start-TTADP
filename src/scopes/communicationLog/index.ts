@@ -4,6 +4,7 @@ import { withCreator, withoutCreator } from './creator';
 import { withMethod, withoutMethod } from './method';
 import { withResult, withoutResult } from './result';
 import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDate } from './communicationDate';
+import { withPurpose, withoutPurpose } from './purpose';
 
 export const topicToQuery = {
   creator: {
@@ -23,6 +24,10 @@ export const topicToQuery = {
   result: {
     in: (query: string[]) => withResult(query),
     nin: (query: string[]) => withoutResult(query),
+  },
+  purpose: {
+    in: (query: string[]) => withPurpose(query),
+    nin: (query: string[]) => withoutPurpose(query),
   },
 };
 
