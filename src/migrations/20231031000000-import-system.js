@@ -1,4 +1,4 @@
-const { EMAIL_ACTIONS } = require('../constants');
+const { IMPORT_STATUSES } = require('../constants');
 const { prepMigration, removeTables } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
@@ -75,7 +75,7 @@ module.exports = {
         },
         fileId: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
           references: {
             model: {
               tableName: 'Files',
@@ -89,10 +89,15 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
-        processed: {
-          type: Sequelize.BOOLEAN,
+        status: {
+          type: Sequelize.ENUM(Object.values(IMPORT_STATUSES)),
           allowNull: false,
-          defaultValue: false,
+          defaultValue: IMPORT_STATUSES.IDENTIFIED,
+        },
+        attempts: {
+          type: Sequelize.INT,
+          allowNull: false,
+          defaultValue: 0,
         },
         hash: {
           type: Sequelize.TEXT,
