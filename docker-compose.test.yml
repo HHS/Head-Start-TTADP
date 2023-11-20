@@ -11,6 +11,8 @@ services:
       - test-db
     environment:
       - POSTGRES_HOST=test-db
+    extra_hosts:
+      - "sftp.ams20.com:0.0.0.0"
     volumes:
       - ".:/app:rw"
     networks:
