@@ -4,6 +4,7 @@ import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withRegion, withoutRegion } from './region';
 import { withCollaborators } from './collaborators';
 import { withCreators } from './creator';
+import { withoutEventId, withEventId } from './eventId';
 
 export const topicToQuery = {
   startDate: {
@@ -21,6 +22,10 @@ export const topicToQuery = {
   },
   creator: {
     in: (query) => withCreators(query),
+  },
+  eventId: {
+    ctn: (query) => withEventId(query),
+    nctn: (query) => withoutEventId(query),
   },
 };
 

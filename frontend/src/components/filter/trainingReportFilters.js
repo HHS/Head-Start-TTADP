@@ -7,7 +7,9 @@ import {
   REGION_CONDITIONS,
   SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
   EMPTY_MULTI_SELECT,
+  SELECT_CONDITIONS,
 } from '../../Constants';
+import FilterInput from './FilterInput';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterNationalCenterNameSelect from './FilterNationalCenterNameSelect';
@@ -15,6 +17,11 @@ import FilterNationalCenterNameSelect from './FilterNationalCenterNameSelect';
 const EMPTY_SINGLE_SELECT = {
   is: '',
   'is not': '',
+};
+
+const EMPTY_TEXT_INPUT = {
+  contains: '',
+  'does not contain': '',
 };
 
 const handleStringQuery = (q) => q;
@@ -112,6 +119,22 @@ export const creatorFilter = {
       onApply={onApplyQuery}
       query={query}
       title="Creator"
+    />
+  ),
+};
+
+export const eventIdFilter = {
+  id: 'eventId',
+  display: 'Event ID',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`eventId-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a event id"
     />
   ),
 };
