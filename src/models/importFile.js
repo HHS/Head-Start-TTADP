@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { IMPORT_STATUSES } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class ImportFile extends Model {
@@ -30,7 +31,7 @@ export default (sequelize, DataTypes) => {
     },
     fileId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'Files',
@@ -41,6 +42,16 @@ export default (sequelize, DataTypes) => {
     ftpFileInfo: {
       type: DataTypes.JSONB,
       allowNull: true,
+    },
+    status: {
+      type: DataTypes.ENUM(Object.values(IMPORT_STATUSES)),
+      allowNull: false,
+      defaultValue: IMPORT_STATUSES.IDENTIFIED,
+    },
+    attempts: {
+      type: DataTypes.INT,
+      allowNull: false,
+      defaultValue: 0,
     },
     hash: {
       type: DataTypes.TEXT,
