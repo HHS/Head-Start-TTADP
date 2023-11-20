@@ -25,7 +25,7 @@ export const getCommunicationLogById = async (regionId, logId) => {
 };
 
 export const getCommunicationLogsByRecipientId = async (
-  regionId, recipientId, sortBy, direction, offset, filters = [],
+  regionId, recipientId, sortBy, direction, offset, filters = [], format = 'json',
 ) => {
   const query = filtersToQueryString(filters);
 
@@ -36,8 +36,12 @@ export const getCommunicationLogsByRecipientId = async (
       String(regionId),
       'recipient',
       String(recipientId),
-    )}?sortBy=${sortBy}&direction=${direction}&offset=${offset}&${query}`,
+    )}?sortBy=${sortBy}&direction=${direction}&offset=${offset}&format=${format}&${query}`,
   );
+
+  if (format === 'csv') {
+    return response.blob();
+  }
 
   return response.json();
 };
