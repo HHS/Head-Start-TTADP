@@ -414,15 +414,23 @@ const recordAvailableFiles = async (
   ]);
 };
 
+/**
+ * Retrieves or creates an import file record based on the provided import ID and available file information.
+ * @param importId - The ID of the import.
+ * @param availableFile - An object containing the path, fileInfo, and optional stream of the available file.
+ * @returns An object with the import file ID and key.
+ */
 const logFileToBeCollected = async (
   importId: number,
   availableFile: {
-    path: string,
+    fullPath: string,
     fileInfo: FTPFileInfo,
     stream?: Promise<Readable>,
   },
 ) => {
   let key;
+  
+  // Find the import file record based on the import ID and available file information
   const importFile = ImportFile.findOne({
     attributes: [
       'fileId',
@@ -440,18 +448,22 @@ const logFileToBeCollected = async (
       }]
     },
   });
-
+  
   if (!importFile.fileId) {
+    // Generate a unique key for the file using the import ID, a UUID, and the file extension
     const uuid: string = uuidv4();
     const extension = availableFile.fileInfo.name.split('.').pop();
     key = `/import/${importId}/${uuid}.${extension}`;
-
+    
+    // Create a new file record with the generated key and other details
     const fileRecord = await File.create({
       key,
       originalFileName: availableFile.fileInfo.name,
       fileSize: availableFile.fileInfo.size,
       status: FILE_STATUSES.UPLOADING,
     });
+    
+    // Update the import file record with the newly created file ID
     await ImportFile.update(
       {
         fileId: fileRecord.id,
@@ -467,25 +479,55 @@ const logFileToBeCollected = async (
       },
     );
   } else {
+    // Retrieve the key from the existing import file record
     key = importFile.file.dataValues.key;
   }
-
+  
   return {
     importFileId: importFile.id,
     key,
   };
 };
 
+/**
+ * Updates the hash of an import file with the given ID.
+ * @param importFileId - The ID of the import file to update.
+ * @param hash - The new hash value to set.
+ * @returns A promise that resolves when the update is complete.
+ */
 const setImportFileHash = async (
   importFileId: number,
   hash: string,
+  status?: string,
 ) => ImportFile.update(
-  { hash },
+  { 
+    hash, // Set the 'hash' field of the import file to the new value
+    ...(status && { status }),
+  }, 
   {
-    where: { id: importFileId },
-    individualHooks: true,
+    where: { id: importFileId }, // Specify the import file to update based on its ID
+    individualHooks: true, // Enable individual hooks for each updated record
   }
-)
+);
+
+/**
+ * Updates the status of an import file.
+ * @param importFileId - The ID of the import file to update.
+ * @param status - The new status value to set.
+ * @returns A promise that resolves when the update is complete.
+ */
+const setImportFileStatus = async (
+  importFileId: number,
+  status: string,
+) => ImportFile.update(
+  { 
+    status, // Set the status field to the provided value
+  }, 
+  {
+    where: { id: importFileId }, // Specify the import file to update based on its ID
+    individualHooks: true, // Enable individual hooks for each updated record
+  }
+);
 
 const collectNextFile = async (
   importId: number,
@@ -503,7 +545,10 @@ const collectNextFile = async (
     importFileId: number,
     key: string,
   }[] = [],
-) => {
+): Promise<{
+  hasImportedFiles: boolean,
+  hasRemainingFiles: boolean,
+}> => {
   const availableFile = availableFiles.shift();
   const currentStart = new Date();
 
@@ -536,11 +581,17 @@ const collectNextFile = async (
     );
     await Promise.all([
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOADED),
-      setImportFileHash(importFileData.importFileId, await hashStream.getHash()),
+      setImportFileHash(
+        importFileData.importFileId,
+        await hashStream.getHash(),
+        IMPORT_STATUSES.COLLECTED,
+      ),
     ]);
     importedFiles.push(importFileData);
   } catch (err) {
-    await updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOAD_FAILED);
+    await Promise.all([
+      updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOAD_FAILED),
+    ]);
     // TODO: log error
     return collectNextFile(importId, availableFiles, times, importedFiles);
   }
@@ -616,10 +667,17 @@ const collectFilesFromSource = async (
   return collectedFiles;
 };
 
+/**
+ * Downloads files from a source based on the import ID.
+ * @param importId - The ID of the import.
+ * @param timeBox - Optional time limit for the download process in milliseconds. Defaults to 5 minutes.
+ * @returns A promise that resolves with the collected files from the source.
+ */
 const download = async (
-  importId: number, 
+  importId: number,
   timeBox = 5 * 60 * 1000,
 ) => {
+  // Retrieve import file data from the database
   const importFileData: {
     importId: number,
     ftpSettings: FTPSettings,
@@ -638,6 +696,7 @@ const download = async (
     raw: true,
   });
 
+  // Collect files from the source using the retrieved import file data
   return collectFilesFromSource(
     importFileData.importId,
     timeBox,
