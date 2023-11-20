@@ -88,9 +88,75 @@ const addValuesToEnumIfTheyDontExist = async (
   ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';
 `)));
 
+/**
+ * Replaces a specific value in an array column of a table with a new value.
+ *
+ * @param {Object} queryInterface - The query interface object provided by Sequelize.
+ * @param {string} table - The name of the table to update.
+ * @param {string} column - The name of the column containing the array.
+ * @param {any} oldValue - The value to be replaced in the array.
+ * @param {any} newValue - The new value to replace the old value with.
+ * @returns {Promise} - A promise that resolves when the update query is executed successfully.
+ */
+const replaceValueInArray = async (
+  queryInterface,
+  table,
+  column,
+  oldValue,
+  newValue,
+) => queryInterface.sequelize.query(/* sql */`
+  UPDATE "${table}"
+  SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
+  WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
+`);
+
+/**
+ * Replaces a specific value in a JSONB array within a PostgreSQL table column.
+ *
+ * @param {object} queryInterface - The Sequelize query interface object.
+ * @param {string} table - The name of the table to update.
+ * @param {string} column - The name of the column containing the JSONB array.
+ * @param {string} field - The key of the field within the JSONB array.
+ * @param {any} oldValue - The value to be replaced within the JSONB array.
+ * @param {any} newValue - The new value to replace the old value with.
+ * @returns {Promise<void>} - A promise that resolves when the update is complete.
+ */
+const replaceValueInJSONBArray = async (
+  queryInterface,
+  table,
+  column,
+  field,
+  oldValue,
+  newValue,
+) => queryInterface.sequelize.query(/* sql */`
+  UPDATE "${table}"
+  SET
+    "${column}" = (
+      SELECT
+        JSONB_SET(
+          "${column}",
+          '{${field}}',
+          (
+            SELECT
+              jsonb_agg(
+                CASE
+                  WHEN value::text = '"${oldValue}"'
+                    THEN '"${newValue}"'::jsonb
+                  ELSE value
+                END
+              )
+            FROM jsonb_array_elements("${column}" -> '${field}') AS value
+          )::jsonb
+        )
+    )
+  WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
+`);
+
 module.exports = {
   prepMigration,
   setAuditLoggingState,
   removeTables,
   addValuesToEnumIfTheyDontExist,
+  replaceValueInArray,
+  replaceValueInJSONBArray,
 };
