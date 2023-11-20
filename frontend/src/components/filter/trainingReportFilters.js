@@ -91,18 +91,18 @@ export const regionFilter = {
   ),
 };
 
-export const collaboratorFilter = {
-  id: 'collaborator',
-  display: 'Collaborator',
+export const collaboratorsFilter = {
+  id: 'collaborators',
+  display: 'Collaborators',
   conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterNationalCenterNameSelect
-      inputId={`collaborator-${condition}-${id}`}
+      inputId={`collaborators-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
-      title="Collaborator"
+      title="Collaborators"
     />
   ),
 };
