@@ -53,6 +53,7 @@ const Navigator = ({
   updateShowSavedDraft,
   datePickerKey,
   formDataStatusProp,
+  shouldAutoSave,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -98,6 +99,7 @@ const Navigator = ({
   };
 
   useInterval(async () => {
+    if (!shouldAutoSave) return;
     // Don't auto save if we are already saving, or if the form hasn't been touched
     try {
       if (!isAppLoading && isDirty && !weAreAutoSaving) {
@@ -220,7 +222,7 @@ Navigator.propTypes = {
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
-    regionId: PropTypes.number.isRequired,
+    regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
@@ -263,6 +265,7 @@ Navigator.propTypes = {
   updateShowSavedDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string,
   formDataStatusProp: PropTypes.string,
+  shouldAutoSave: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
@@ -280,6 +283,7 @@ Navigator.defaultProps = {
   },
   datePickerKey: '',
   formDataStatusProp: 'calculatedStatus',
+  shouldAutoSave: true,
 };
 
 export default Navigator;
