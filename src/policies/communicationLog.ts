@@ -48,6 +48,10 @@ export default class CommunicationLog {
     return this.canUpdateLog();
   }
 
+  canUploadFileToLog() {
+    return this.canUpdateLog();
+  }
+
   isAdmin() {
     return this.user.permissions.some((permission) => (
       permission.scopeId === SCOPES.ADMIN
