@@ -78,6 +78,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
     regionId,
     setIsAppLoading,
     sortConfig,
+    filters,
   ]);
 
   const AddCommunication = () => (
@@ -125,6 +126,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       <Helmet>
         <title>
           Communication Log
+          {' '}
           {recipientName}
           {' '}
           Region
@@ -132,14 +134,17 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
           {String(regionId)}
         </title>
       </Helmet>
-      <FilterPanel
-        applyButtonAria="apply filters for training reports"
-        filters={filters}
-        onApplyFilters={onApplyFilters}
-        onRemoveFilter={onRemoveFilter}
-        filterConfig={COMMUNICATION_LOG_FILTER_CONFIG}
-        allUserRegions={[]}
-      />
+      <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+        <FilterPanel
+          applyButtonAria="apply filters for training reports"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={COMMUNICATION_LOG_FILTER_CONFIG}
+          allUserRegions={[]}
+          manageRegions={false}
+        />
+      </div>
       <WidgetContainer
         title="Communication log"
         showPagingBottom

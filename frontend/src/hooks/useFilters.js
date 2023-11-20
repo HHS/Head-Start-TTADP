@@ -6,6 +6,7 @@ import AriaLiveContext from '../AriaLiveContext';
 export default function useFilters(
   user,
   filterKey,
+  manageRegions = false,
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
@@ -15,7 +16,7 @@ export default function useFilters(
     hasMultipleRegions,
     allRegionsFilters,
     defaultFilters,
-  } = useUserDefaultRegionFilters(user);
+  } = useUserDefaultRegionFilters(user, manageRegions);
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     filterKey,

@@ -52,6 +52,7 @@ export default function TrainingReports({ match }) {
   } = useFilters(
     user,
     FILTER_KEY,
+    true, // manage regions
   );
 
   useEffect(() => {
