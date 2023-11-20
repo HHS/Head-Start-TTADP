@@ -1,4 +1,4 @@
-import { fixQueryWhetherStringOrArray } from '../activityReportFilters';
+import { fixQueryWhetherStringOrArray } from '../utils';
 
 describe('fixQueryWhetherStringOrArray', () => {
   it('returns an string if the query is a string', () => {

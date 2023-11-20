@@ -2,6 +2,7 @@ import join from 'url-join';
 import {
   get, put, post, destroy,
 } from './index';
+import { filtersToQueryString } from '../utils';
 
 const communicationLogUrl = join(
   '/',
@@ -24,8 +25,10 @@ export const getCommunicationLogById = async (regionId, logId) => {
 };
 
 export const getCommunicationLogsByRecipientId = async (
-  regionId, recipientId, sortBy, direction, offset,
+  regionId, recipientId, sortBy, direction, offset, filters = [],
 ) => {
+  const query = filtersToQueryString(filters);
+
   const response = await get(
     `${join(
       communicationLogUrl,
@@ -33,7 +36,7 @@ export const getCommunicationLogsByRecipientId = async (
       String(regionId),
       'recipient',
       String(recipientId),
-    )}?sortBy=${sortBy}&direction=${direction}&offset=${offset}`,
+    )}?sortBy=${sortBy}&direction=${direction}&offset=${offset}&${query}`,
   );
 
   return response.json();
