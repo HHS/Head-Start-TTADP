@@ -1,47 +1,17 @@
-/* eslint-disable @typescript-eslint/dot-notation */
-/* eslint-disable dot-notation */
 import { _ } from 'lodash';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
-import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
-import { search } from '../lib/awsElasticSearch/index';
-import { auditLogger } from '../logger';
 
 const models = {
   activityReport,
   grant,
   goal,
   trainingReport,
+  communicationLog,
 };
-
-async function checkForSearchItems(filters) {
-  let propertyName = '';
-  if (_.has(filters, 'reportText.ctn')) {
-    propertyName = 'reportText.ctn';
-  } else if (_.has(filters, 'reportText.nctn')) {
-    propertyName = 'reportText.nctn';
-  }
-  if (propertyName) {
-    try {
-    // Do AWS Elasticsearch.
-      const searchResult = await search(
-        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-        [], // Search all document fields.
-        filters[propertyName][0],
-      );
-      const reportIds = searchResult.hits.map((r) => parseInt(r['_id'], DECIMAL_BASE));
-      const updatedFilters = { ...filters, [propertyName]: reportIds };
-      return updatedFilters;
-    } catch (err) {
-      auditLogger.error('AWS Elasticsearch Filter Search Error: ', err);
-      return { ...filters, [propertyName]: [] };
-    }
-  }
-  return filters;
-}
 
 /**
  * For each model listed, we apply the passed in filters from the express query and
@@ -76,9 +46,6 @@ async function checkForSearchItems(filters) {
  * @returns {obj} scopes
  */
 export default async function filtersToScopes(filters, options) {
-  // Check for AWS Elasticsearch filters.
-  // const updatedFilters = await checkForSearchItems(filters);
-
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {

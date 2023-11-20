@@ -7,6 +7,7 @@ const WidgetContainerTitleGroup = ({
   showHeaderBorder,
   subtitle,
   className,
+  pagination,
 }) => {
   if (!title) {
     return null;
@@ -14,9 +15,12 @@ const WidgetContainerTitleGroup = ({
 
   return (
     <div className={`${showHeaderBorder ? 'smart-hub-widget-container-header-border' : ''} ${className} desktop:display-flex flex-align-center flex-justify flex-gap-2`}>
-      <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
-      {subtitle ? <p className="usa-prose margin-0">{subtitle}</p> : null }
+      <div className="display-flex flex-justify flex-gap-2">
+        <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">{title}</h2>
+        {subtitle ? <p className="usa-prose margin-x-0 margin-y-2">{subtitle}</p> : null }
+      </div>
       {children}
+      {pagination}
     </div>
   );
 };
@@ -27,10 +31,12 @@ WidgetContainerTitleGroup.propTypes = {
   subtitle: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
   className: PropTypes.string,
+  pagination: PropTypes.node,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
   children: null,
+  pagination: null,
   title: '',
   subtitle: '',
   showHeaderBorder: false,
