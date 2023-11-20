@@ -495,7 +495,7 @@ function extractListOfGoalsAndObjectives(csvRows) {
   return goalsAndObjectives;
 }
 
-function toCSVRecord (report, transformers) {
+function toCSVRecord(report, transformers) {
   const callFunctionOrValueGetter = (x) => {
     if (typeof x === 'function') {
       return x(report);
