@@ -51,12 +51,14 @@ describe('FtpClient', () => {
     it('should resolve with file info list if listing is successful', async () => {
       const fileList = [
         {
+          path: '',
           name: 'file1.txt',
           type: 'file',
           size: 100,
           date: new Date(),
         },
         {
+          path: '',
           name: 'file2.txt',
           type: 'file',
           size: 200,
@@ -64,8 +66,8 @@ describe('FtpClient', () => {
         },
       ];
 
-      const listSpy = jest.spyOn(FTP.prototype, 'list').mockImplementation((path, callback) => {
-        expect(path).toBe('/path/to/files');
+      const listSpy = jest.spyOn(FTP.prototype, 'list').mockImplementation((fullPath, callback) => {
+        expect(fullPath).toBe('/path/to/files');
         callback(null, fileList);
       });
 
@@ -76,8 +78,8 @@ describe('FtpClient', () => {
     });
 
     it('should reject with error if listing fails', async () => {
-      const listSpy = jest.spyOn(FTP.prototype, 'list').mockImplementation((path, callback) => {
-        expect(path).toBe('/path/to/files');
+      const listSpy = jest.spyOn(FTP.prototype, 'list').mockImplementation((fullPath, callback) => {
+        expect(fullPath).toBe('/path/to/files');
         callback(new Error('Listing failed'));
       });
 
