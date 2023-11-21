@@ -12,7 +12,7 @@ const checkRecipientAccessAndExistence = async (req, res) => {
   const userId = await currentUserId(req, res);
   const readRegions = await getUserReadRegions(userId);
   if (!readRegions.includes(parseInt(regionId, 10))) {
-    res.sendStatus(httpCodes.UNAUTHORIZED);
+    res.sendStatus(httpCodes.FORBIDDEN);
     return false;
   }
 
