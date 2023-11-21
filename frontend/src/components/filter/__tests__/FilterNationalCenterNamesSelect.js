@@ -17,7 +17,6 @@ describe('FilterNationalCenterNameSelect', () => {
         onApply={onApply}
         inputId="curly"
         query={[]}
-        title="Creator"
       />,
     ));
 

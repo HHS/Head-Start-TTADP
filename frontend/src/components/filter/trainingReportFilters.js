@@ -13,6 +13,7 @@ import FilterInput from './FilterInput';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterNationalCenterNameSelect from './FilterNationalCenterNameSelect';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -33,13 +34,6 @@ const defaultDateValues = {
   'is within': '',
   'is on or after': '',
   'is on or before': '',
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
 };
 
 export const fixQueryWhetherStringOrArray = (query) => {
@@ -102,7 +96,6 @@ export const collaboratorsFilter = {
       inputId={`collaborators-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
-      title="Collaborators"
     />
   ),
 };
@@ -118,7 +111,6 @@ export const creatorFilter = {
       inputId={`creator-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
-      title="Creator"
     />
   ),
 };
