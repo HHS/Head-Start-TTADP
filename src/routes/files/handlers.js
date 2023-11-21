@@ -21,6 +21,7 @@ import {
   createCommunicationLogFileMetadata,
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
+  // deleteSessionSupportingAttachment,
 } from '../../services/files';
 import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
