@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import httpCodes from 'http-codes';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   recipientById,
 } from '../services/recipient';
@@ -11,7 +12,7 @@ const checkRecipientAccessAndExistence = async (req, res) => {
   // Check if user has access to this region.
   const userId = await currentUserId(req, res);
   const readRegions = await getUserReadRegions(userId);
-  if (!readRegions.includes(parseInt(regionId, 10))) {
+  if (!readRegions.includes(parseInt(regionId, DECIMAL_BASE))) {
     res.sendStatus(httpCodes.FORBIDDEN);
     return false;
   }
