@@ -65,6 +65,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
           sortConfig.sortBy,
           sortConfig.direction,
           sortConfig.offset,
+          COMMUNICATION_LOG_PER_PAGE,
           filters,
         );
 
@@ -92,6 +93,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
         sortConfig.sortBy,
         sortConfig.direction,
         sortConfig.offset,
+        false,
         filters,
         'csv',
       );
