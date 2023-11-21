@@ -14,6 +14,7 @@ import {
   checkFileIdParam,
   checkIdParam,
   checkCommunicationLogIdParam,
+  checkSessionIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -43,6 +44,12 @@ router.delete(
   checkCommunicationLogIdParam,
   checkFileIdParam,
   transactionWrapper(deleteHandler, `${context} /r/:communicationLogId/:fileId?`),
+);
+router.delete(
+  '/ssa/:sessionId/:fileId?',
+  checkCommunicationLogIdParam,
+  checkFileIdParam,
+  transactionWrapper(deleteHandler, `${context} /r/:sessionId/:fileId?`),
 );
 router.delete(
   '/:fileId/objectives',

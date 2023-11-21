@@ -699,6 +699,14 @@ class SessionReportPilotFiles{
  * updatedAt : timestamp with time zone
 }
 
+class SessionReportPilotSupportingAttachments{
+ * id : integer : <generated>
+ * fileId : integer : REFERENCES "Files".id
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class SessionReportPilots{
  * id : integer : <generated>
  * eventId : integer : REFERENCES "EventReportPilots".id
@@ -1584,6 +1592,20 @@ class ZALSessionReportPilotFiles{
  session_sig : text
 }
 
+class ZALSessionReportPilotSupportingAttachments{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALSessionReportPilots{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1764,6 +1786,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, co
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
+Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
@@ -1825,6 +1848,7 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : sessionReport, sessionSupportingAttachments
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics
@@ -1857,7 +1881,7 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources,
 CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
-Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, files
+Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
