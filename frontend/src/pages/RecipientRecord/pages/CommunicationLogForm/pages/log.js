@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
@@ -16,6 +16,8 @@ import {
   pageComplete,
   defaultLogValues,
 } from '../constants';
+import ReadOnlyField from '../../../../../components/ReadOnlyField';
+import UserContext from '../../../../../UserContext';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -26,11 +28,20 @@ const Log = ({ datePickerKey }) => {
     control,
   } = useFormContext();
 
+  const { user } = useContext(UserContext);
   const communicationDate = watch('communicationDate');
+  const authorName = watch('author.name');
 
   return (
     <>
       <IndicatesRequiredField />
+      <input type="hidden" name="author.name" ref={register()} />
+      <div className="margin-top-2">
+        <ReadOnlyField label="Creator name">
+          {authorName || user.name}
+        </ReadOnlyField>
+      </div>
+
       <div className="margin-top-2">
         <FormItem
           label="Date of communication"

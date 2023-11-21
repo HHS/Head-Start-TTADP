@@ -12,7 +12,7 @@ export default function CommunicationLogTable({
   regionId,
 }) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name) => {
+  const renderColumnHeader = (displayName, name, className) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -27,7 +27,7 @@ export default function CommunicationLogTable({
         break;
     }
     return (
-      <th scope="col" aria-sort={fullAriaSort}>
+      <th scope="col" className={className} aria-sort={fullAriaSort}>
         <button
           type="button"
           onClick={() => {
@@ -52,7 +52,7 @@ export default function CommunicationLogTable({
         </caption>
         <thead>
           <tr>
-            {renderColumnHeader('Date', 'communicationDate')}
+            {renderColumnHeader('Date', 'communicationDate', 'maxw-4')}
             {renderColumnHeader('Purpose', 'purpose')}
             {renderColumnHeader('Creator name', 'authorName')}
             {renderColumnHeader('Result', 'result')}
@@ -61,7 +61,7 @@ export default function CommunicationLogTable({
         <tbody>
           {logs.map((log) => (
             <tr>
-              <td data-label="Date">
+              <td className="maxw-4" data-label="Date">
                 <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
                   {log.data.communicationDate}
                 </Link>
