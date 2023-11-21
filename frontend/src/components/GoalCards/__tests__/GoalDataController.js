@@ -5,6 +5,7 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import GoalDataController from '../GoalDataController';
 import UserContext from '../../../UserContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 describe('GoalDataController', () => {
   const DEFAULT_USER = {
@@ -54,14 +55,20 @@ describe('GoalDataController', () => {
     history.location.state = locationState;
 
     render(
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
-        <Router history={history}>
-          {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-          <GoalDataController {...defaultProps} {...props} />
-        </Router>
-      </UserContext.Provider>,
+      <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
+        <UserContext.Provider value={{ user: DEFAULT_USER }}>
+          <Router history={history}>
+            {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+            <GoalDataController {...defaultProps} {...props} />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
+
+  beforeEach(async () => {
+    fetchMock.get(`/api/communication-logs/region/${REGION_ID}/recipient/${RECIPIENT_ID}?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates`, { rows: [], count: 0 });
+  });
 
   afterEach(async () => {
     fetchMock.restore();

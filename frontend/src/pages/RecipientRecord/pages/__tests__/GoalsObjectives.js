@@ -14,6 +14,7 @@ import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
 import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -112,20 +113,22 @@ describe('Goals and Objectives', () => {
 
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user: userForContext }}>
-          <FilterContext.Provider value={{ filterKey: 'test' }}>
-            <GoalsObjectives
-              recipientId="401"
-              regionId="1"
-              recipient={recipient}
-              location={{
-                state: { ids }, hash: '', pathname: '', search: '',
-              }}
-              recipientName="test"
-              canMergeGoals={canMergeGoals}
-            />
-          </FilterContext.Provider>
-        </UserContext.Provider>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
+          <UserContext.Provider value={{ user: userForContext }}>
+            <FilterContext.Provider value={{ filterKey: 'test' }}>
+              <GoalsObjectives
+                recipientId="401"
+                regionId="1"
+                recipient={recipient}
+                location={{
+                  state: { ids }, hash: '', pathname: '', search: '',
+                }}
+                recipientName="test"
+                canMergeGoals={canMergeGoals}
+              />
+            </FilterContext.Provider>
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       </Router>,
     );
   };
@@ -151,6 +154,8 @@ describe('Goals and Objectives', () => {
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+
+    fetchMock.get('/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates', { rows: [], count: 0 });
   });
 
   afterEach(() => {

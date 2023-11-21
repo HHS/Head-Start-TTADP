@@ -123,6 +123,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
     <Button
       type="button"
       onClick={exportLog}
+      className="margin-bottom-1 desktop:margin-bottom-0"
       outline
     >
       Export log
@@ -130,7 +131,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
   );
 
   const TitleSlot = () => (
-    <div className="display-flex">
+    <div className="desktop:display-flex">
       <ExportLog />
       <AddCommunication />
     </div>
