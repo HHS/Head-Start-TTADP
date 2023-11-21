@@ -11,6 +11,7 @@ import {
   ActivityReportObjective,
   SessionReportPilotFile,
   CommunicationLogFile,
+  SessionReportPilotSupportingAttachment,
   sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
@@ -38,6 +39,12 @@ const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({
   individualHooks: true,
 });
 const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
+
+// eslint-disable-next-line max-len
+const deleteSessionSupportingAttachment = async (id) => SessionReportPilotSupportingAttachment.destroy({
   where: { id },
   individualHooks: true,
 });
@@ -333,6 +340,31 @@ const createSessionObjectiveFileMetaData = async (
   return file.dataValues;
 };
 
+const createSessionSupportingAttachmentMetaData = async (
+  originalFileName,
+  s3FileName,
+  sessionReportPilotId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await SessionReportPilotSupportingAttachment.create({ sessionReportPilotId, fileId: file.id });
+  return file.dataValues;
+};
+
 const createCommunicationLogFileMetadata = async (
   originalFileName,
   s3FileName,
@@ -400,6 +432,7 @@ export {
   deleteActivityReportFile,
   deleteActivityReportObjectiveFile,
   deleteCommunicationLogFile,
+  deleteSessionSupportingAttachment,
   deleteObjectiveFile,
   deleteSessionFile,
   deleteObjectiveTemplateFile,
@@ -418,4 +451,5 @@ export {
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
   createCommunicationLogFileMetadata,
+  createSessionSupportingAttachmentMetaData,
 };
