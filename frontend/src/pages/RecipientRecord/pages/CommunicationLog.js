@@ -190,8 +190,8 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       </div>
       <WidgetContainer
         title="Communication log"
-        showPagingBottom
-        showPagingTop
+        showPagingBottom={logs && logs.count > 0}
+        showPagingTop={logs && logs.count > 0}
         loading={false}
         currentPage={sortConfig.activePage}
         totalCount={logs ? logs.count : 0}
@@ -209,7 +209,13 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
             recipientId={recipientId}
             regionId={regionId}
           />
-        ) : null}
+        ) : (
+          <div className="display-flex flex-align-center flex-justify-center width-full padding-4">
+            <p className="usa-prose text-center">
+              There are no communication logs for this recipient.
+            </p>
+          </div>
+        )}
       </WidgetContainer>
     </>
   );
