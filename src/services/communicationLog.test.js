@@ -45,6 +45,18 @@ describe('communicationLog services', () => {
     expect(result.rows[0].id).toEqual(log.id);
   });
 
+  it('gets logs by recipient Id with params', async () => {
+    const result = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+    );
+    expect(result.count).toEqual(1);
+    expect(result.rows[0].id).toEqual(log.id);
+  });
+
   it('gets logs by recipient Id as csv', async () => {
     await csvLogsByRecipientAndScopes(recipient.id);
     expect(stringify).toHaveBeenCalledWith([

@@ -171,6 +171,29 @@ describe('communicationLog handlers', () => {
       expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
     });
 
+    it('with limit', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          id: 1,
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          limit: '20',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
     it('csv', async () => {
       const mockRequest = {
         session: {
