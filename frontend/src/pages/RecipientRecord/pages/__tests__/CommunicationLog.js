@@ -35,7 +35,7 @@ describe('CommunicationLog', () => {
   });
 
   it('renders the communication log approriately', async () => {
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=json&', {
+    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', {
       rows: [],
       count: 0,
     });
@@ -49,7 +49,7 @@ describe('CommunicationLog', () => {
       rows: [],
       count: 0,
     };
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=json&', response);
+    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', response);
     await act(() => waitFor(() => renderTest()));
 
     expect(screen.getByText('Communication log')).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('CommunicationLog', () => {
       rows: [],
       count: 0,
     };
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=json&', response);
+    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', response);
     renderTest();
 
     expect(screen.getByText('Communication log')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('CommunicationLog', () => {
     const select = await screen.findByText(/Select result to filter by/i);
     await selectEvent.select(select, ['RTTAPA declined']);
 
-    const filteredUrl = '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=json&result.in[]=RTTAPA%20declined';
+    const filteredUrl = '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&result.in[]=RTTAPA%20declined';
     fetchMock.get(filteredUrl, response);
     const apply = await screen.findByRole('button', { name: /apply filters on communication logs/i });
     act(() => userEvent.click(apply));
