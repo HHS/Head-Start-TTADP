@@ -33,19 +33,17 @@ export default function WidgetContainer(
         title={title}
         subtitle={subtitle}
         showHeaderBorder={showHeaderBorder}
+        pagination={showPagingTop ? (
+          <PaginationCard
+            currentPage={currentPage}
+            totalCount={totalCount}
+            offset={offset}
+            perPage={perPage}
+            handlePageChange={handlePageChange}
+          />
+        ) : null}
       >
-        <>
-          {titleSlot}
-          {showPagingTop ? (
-            <PaginationCard
-              currentPage={currentPage}
-              totalCount={totalCount}
-              offset={offset}
-              perPage={perPage}
-              handlePageChange={handlePageChange}
-            />
-          ) : null}
-        </>
+        {titleSlot}
       </WidgetContainerTitleGroup>
       <Grid row>
         {error && (
