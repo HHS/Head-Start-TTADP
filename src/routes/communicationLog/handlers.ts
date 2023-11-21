@@ -66,10 +66,13 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
       sortBy,
       offset,
       direction,
+      limit,
       format,
     } = req.query;
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
+
+    const limitNumber = Number(limit) || false;
 
     if (format === 'csv') {
       const logs = await csvLogsByRecipientAndScopes(
@@ -88,6 +91,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
       String(sortBy),
       Number(offset),
       String(direction),
+      limitNumber,
       scopes,
     );
     res.status(httpCodes.OK).json(logs);
