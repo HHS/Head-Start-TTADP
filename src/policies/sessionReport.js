@@ -19,7 +19,7 @@ export default class SessionReport {
     if (this.isAdmin()) { return true; }
 
     return !!this.permissions.find((p) => [
-      SCOPES.READ_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
     ].includes(p.scopeId) && p.regionId === this.sessionReport.regionId);
   }
