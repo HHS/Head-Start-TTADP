@@ -25,7 +25,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
 import RttapaUpdates from '../../widgets/RttapaUpdates';
 
-const COMMUNICATION_RESULT = 'RTTAPA updates';
+const COMMUNICATION_RESULT = ['RTTAPA updates', 'RTTAPA Initial Plan / New Recipient'];
 const COMMUNCATION_SORT = {
   sortBy: 'communicationDate',
   direction: 'desc',
