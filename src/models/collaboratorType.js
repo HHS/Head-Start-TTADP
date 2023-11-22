@@ -1,3 +1,5 @@
+const { Model } = require('sequelize');
+
 /**
  * This function exports a model class for the CollaboratorType table.
  * It defines the table structure and associations with other models.
