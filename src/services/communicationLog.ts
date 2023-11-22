@@ -161,6 +161,7 @@ const logsByRecipientAndScopes = async (
   sortBy = 'communicationDate',
   offset = 0,
   direction = 'desc',
+  limit = COMMUNICATION_LOGS_PER_PAGE || false,
   scopes: WhereOptions[] = [],
 ) => CommunicationLog
   .findAndCountAll({
@@ -181,7 +182,7 @@ const logsByRecipientAndScopes = async (
       },
     ],
     order: orderLogsBy(sortBy, direction),
-    limit: COMMUNICATION_LOGS_PER_PAGE,
+    limit: limit || undefined,
     offset,
   });
 
