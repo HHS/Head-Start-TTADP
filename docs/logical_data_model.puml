@@ -796,6 +796,7 @@ enum enum_Users_flags {
  communication_log
  goal_source
  merge_goals
+ monitoring
  regional_goal_dashboard
  resources_dashboard
  rttapa_form
