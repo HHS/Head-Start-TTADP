@@ -47,12 +47,16 @@ const createGoalCollaborator = async (
   typeName,
   linkBack = null,
 ) => {
-  const { type } = await getIdForCollaboratorType(sequelize, transaction, typeName);
+  const { id: collaboratorTypeId } = await getIdForCollaboratorType(
+    sequelize,
+    transaction,
+    typeName,
+  );
   return sequelize.models.GoalCollaborator
     .create({
       goalId,
       userId,
-      type,
+      collaboratorTypeId,
       linkBack,
     }, { transaction });
 };
@@ -148,7 +152,7 @@ const findOrCreateGoalCollaborator = async (
         linkBack: mergeObjects(collaborator.dataValues.linkBack, linkBack),
       },
       {
-        where: { id: collaborator.id },
+        where: { id: collaborator.dataValues.id },
         transaction,
         independentHooks: true,
         returning: true,
