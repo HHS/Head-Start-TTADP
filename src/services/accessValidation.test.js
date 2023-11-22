@@ -16,7 +16,6 @@ const {
   ADMIN,
   READ_REPORTS,
   READ_WRITE_REPORTS,
-  READ_TRAINING_REPORTS,
   READ_WRITE_TRAINING_REPORTS,
 } = SCOPES;
 
@@ -86,7 +85,7 @@ describe('accessValidation', () => {
           {
             userId: 47,
             regionId: 14,
-            scopeId: SCOPES.READ_TRAINING_REPORTS,
+            scopeId: SCOPES.READ_REPORTS,
           },
         ],
       };
@@ -103,7 +102,7 @@ describe('accessValidation', () => {
           {
             userId: 47,
             regionId: 14,
-            scopeId: SCOPES.READ_TRAINING_REPORTS,
+            scopeId: SCOPES.READ_REPORTS,
           },
         ],
       };
@@ -225,7 +224,7 @@ describe('accessValidation', () => {
     it('returns an array of regions user has permissions to', async () => {
       await setupUser(mockUser);
       await Permission.create({
-        scopeId: READ_TRAINING_REPORTS,
+        scopeId: READ_REPORTS,
         userId: mockUser.id,
         regionId: 14,
       });
@@ -352,7 +351,7 @@ describe('accessValidation', () => {
     it('filters out regions user does not have permissions to', async () => {
       await setupUser(mockUser);
       await Permission.create({
-        scopeId: READ_TRAINING_REPORTS,
+        scopeId: READ_REPORTS,
         userId: mockUser.id,
         regionId: 14,
       });
@@ -373,7 +372,7 @@ describe('accessValidation', () => {
       await setupUser(mockUser);
 
       await Permission.create({
-        scopeId: READ_TRAINING_REPORTS,
+        scopeId: READ_REPORTS,
         userId: mockUser.id,
         regionId: 14,
       });
@@ -406,7 +405,7 @@ describe('accessValidation', () => {
 
     it('returns all read regions for central office users', async () => {
       await Permission.create({
-        scopeId: READ_TRAINING_REPORTS,
+        scopeId: READ_REPORTS,
         userId: mockUser.id,
         regionId: 14,
       });

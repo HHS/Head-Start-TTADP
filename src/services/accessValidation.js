@@ -47,9 +47,9 @@ export async function userIsPocRegionalCollaborator(userId) {
 
   // the user sees only reports where they are a collaborator
   // if they don't have the scope READ_WRITE_TRAINING_REPORTS
-  // and the scope READ_TRAINING_REPORTS
+  // and the scope READ_REPORTS
 
-  const hasReadReports = userPermissions.some((p) => p.scopeId === SCOPES.READ_TRAINING_REPORTS);
+  const hasReadReports = userPermissions.some((p) => p.scopeId === SCOPES.READ_REPORTS);
 
   const hasReadWriteReports = userPermissions.some(
     (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
@@ -101,7 +101,7 @@ export async function getUserTrainingReportReadRegions(userId) {
   try {
     const readTrainingReportScopes = [
       SCOPES.READ_WRITE_TRAINING_REPORTS,
-      SCOPES.READ_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
       SCOPES.POC_TRAINING_REPORTS,
     ];
 

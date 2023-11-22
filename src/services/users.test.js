@@ -165,7 +165,7 @@ describe('Users DB service', () => {
       await db.Permission.create({
         userId: user3.id,
         regionId: 3,
-        scopeId: SCOPES.READ_TRAINING_REPORTS,
+        scopeId: SCOPES.READ_REPORTS,
       });
 
       await db.Permission.create({

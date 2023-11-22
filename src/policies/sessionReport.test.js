@@ -24,7 +24,7 @@ const createUser = ({
   }
 
   if (read) {
-    permissions.push({ scopeId: SCOPES.READ_TRAINING_REPORTS, regionId });
+    permissions.push({ scopeId: SCOPES.READ_REPORTS, regionId });
   }
 
   if (admin) {
