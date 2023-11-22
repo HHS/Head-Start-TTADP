@@ -154,7 +154,7 @@ function UserPermissions({
         <Grid row gap className="margin-top-3">
           <h2>Read only</h2>
           <PermissionsCheckboxes scopeGroup={READ_ONLY_SCOPES} />
-          <h2>Read/write</h2>
+          <h2>Write or approve</h2>
           <PermissionsCheckboxes scopeGroup={READ_WRITE_SCOPES} />
         </Grid>
       </Fieldset>
