@@ -10,14 +10,25 @@ import {
   deleteFile,
   deleteObjectiveFile,
   deleteCommunicationLogFile,
+  deleteSessionSupportingAttachment,
 } from '../../services/files';
 import { logById } from '../../services/communicationLog';
 import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
 import { getObjectiveById } from '../../services/objectives';
+import { findSessionById } from '../../services/sessionReports';
+import { findEventBySmartsheetIdSuffix } from '../../services/event';
 
 jest.mock('../../services/communicationLog', () => ({
   logById: jest.fn(),
+}));
+
+jest.mock('../../services/sessionReports', () => ({
+  findSessionById: jest.fn(),
+}));
+
+jest.mock('../../services/event', () => ({
+  findEventBySmartsheetIdSuffix: jest.fn(),
 }));
 
 jest.mock('../../services/files', () => ({
@@ -30,6 +41,7 @@ jest.mock('../../services/files', () => ({
   createObjectivesFileMetaData: jest.fn(),
   deleteObjectiveFile: jest.fn(),
   deleteCommunicationLogFile: jest.fn(),
+  deleteSessionSupportingAttachment: jest.fn(),
 }));
 
 jest.mock('../../services/activityReports', () => ({
@@ -104,6 +116,58 @@ describe('file handlers, additional tests', () => {
       await deleteHandler(mockRequest, mockResponse);
 
       expect(deleteCommunicationLogFile).toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+    });
+
+    it('deletes a session supporting attachment', async () => {
+      const mockRequest = {
+        params: {
+          fileId: '123',
+          sessionAttachmentId: '456',
+        },
+        user: {
+          id: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({
+        id: 1,
+        permissions: [{
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+          regionId: 1,
+        }],
+      });
+
+      findSessionById.mockResolvedValueOnce({
+        id: 456,
+        eventId: 789,
+      });
+
+      findEventBySmartsheetIdSuffix.mockResolvedValueOnce({
+        id: 789,
+        ownerId: 1,
+        collaboratorIds: [],
+        pocIds: [],
+      });
+
+      getFileById.mockResolvedValueOnce({
+        id: 123,
+        key: 'key',
+        supportingAttachments: [{
+          sessionReportPilotId: 456,
+          fileId: 123,
+        }],
+      });
+
+      logById.mockResolvedValue({
+        userId: 1,
+        id: 456,
+      });
+
+      await deleteHandler(mockRequest, mockResponse);
+
+      expect(deleteSessionSupportingAttachment).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(204);
     });
   });
