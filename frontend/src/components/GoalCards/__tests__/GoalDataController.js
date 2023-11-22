@@ -67,7 +67,7 @@ describe('GoalDataController', () => {
   };
 
   beforeEach(async () => {
-    fetchMock.get(`/api/communication-logs/region/${REGION_ID}/recipient/${RECIPIENT_ID}?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates`, { rows: [], count: 0 });
+    fetchMock.get(`/api/communication-logs/region/${REGION_ID}/recipient/${RECIPIENT_ID}?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates%2CRTTAPA%20Initial%20Plan%20%2F%20New%20Recipient`, { rows: [], count: 0 });
   });
 
   afterEach(async () => {

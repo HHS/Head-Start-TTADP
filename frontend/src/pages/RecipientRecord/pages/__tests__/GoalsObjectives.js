@@ -155,7 +155,7 @@ describe('Goals and Objectives', () => {
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
 
-    fetchMock.get('/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates', { rows: [], count: 0 });
+    fetchMock.get('/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates%2CRTTAPA%20Initial%20Plan%20%2F%20New%20Recipient', { rows: [], count: 0 });
   });
 
   afterEach(() => {
