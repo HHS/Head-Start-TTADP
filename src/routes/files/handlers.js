@@ -254,6 +254,7 @@ const uploadHandlerRequiredFields = (fields) => [
   'objectiveTempleteId',
   'sessionId',
   'communicationLogId',
+  'sessionAttachmentId',
 ].some((field) => fields[field]);
 
 const uploadHandler = async (req, res) => {

@@ -68,7 +68,7 @@ const SupportingAttachments = ({ reportId }) => {
                 files={value}
                 onChange={onChange}
                 id="supportingAttachments"
-                idKey="sessionReportId"
+                idKey="sessionAttachmentId"
                 idValue={reportId}
                 deleteFile={deleteSessionSupportingAttachment}
               />
