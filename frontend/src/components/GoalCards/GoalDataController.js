@@ -25,7 +25,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
 import RttapaUpdates from '../../widgets/RttapaUpdates';
 
-const COMMUNICATION_RESULT = ['RTTAPA updates', 'RTTAPA Initial Plan / New Recipient'];
+const COMMUNICATION_PURPOSES = ['RTTAPA updates', 'RTTAPA Initial Plan / New Recipient'];
 const COMMUNCATION_SORT = {
   sortBy: 'communicationDate',
   direction: 'desc',
@@ -33,17 +33,13 @@ const COMMUNCATION_SORT = {
   offset: 0,
 };
 
-const LOG_FILTERS = [
-  {
-    id: uniqueId('log-filters'),
-    display: '',
-    topic: 'purpose',
-    condition: 'is',
-    query: [
-      COMMUNICATION_RESULT,
-    ],
-  },
-];
+const LOG_FILTERS = COMMUNICATION_PURPOSES.map((purpose) => ({
+  id: uniqueId('log-filters'),
+  display: '',
+  topic: 'purpose',
+  condition: 'is',
+  query: [purpose],
+}));
 
 const Graph = memo(GoalStatusChart);
 
