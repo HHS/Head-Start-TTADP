@@ -11,7 +11,7 @@ import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
-const position = 4;
+const position = 5;
 const path = 'complete-session';
 
 const pages = {
