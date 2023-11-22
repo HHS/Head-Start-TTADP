@@ -2946,7 +2946,7 @@ const fieldMappingForDeduplication = {
  *  ids: number[]
  * }[]
  */
-export async function getGoalIdsBySimilarity(similarityResponse) {
+export async function getGoalIdsBySimilarity(similarityResponse = []) {
   // convert the response to a group of IDs
   const goalIdGroups = similarityResponse.map((matchedGoals) => {
     const { id, matches } = matchedGoals;

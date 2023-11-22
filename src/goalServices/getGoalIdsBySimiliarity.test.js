@@ -180,7 +180,12 @@ describe('getGoalIdsBySimilarity', () => {
     await sequelize.close();
   });
 
-  it('shapes the similiarty response', async () => {
+  it('handles undefined response', async () => {
+    const idsSets = await getGoalIdsBySimilarity(undefined);
+    expect(idsSets).toEqual([]);
+  });
+
+  it('shapes the similarity response', async () => {
     const similarityResponse = [goalGroupOne, goalGroupTwo, goalGroupThree].map((group) => ({
       id: group[0].id,
       name: group[0].name,
