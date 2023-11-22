@@ -31,6 +31,7 @@ import sessionReportsRouter from './sessionReports';
 import nationalCenterRouter from './nationalCenter';
 import feedRouter from './feeds';
 import communicationLogRouter from './communicationLog';
+import monitoringRouter from './monitoring';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -78,6 +79,7 @@ router.use('/events', eventRouter);
 router.use('/session-reports', sessionReportsRouter);
 router.use('/national-center', nationalCenterRouter);
 router.use('/communication-logs', communicationLogRouter);
+router.use('/monitoring', monitoringRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
