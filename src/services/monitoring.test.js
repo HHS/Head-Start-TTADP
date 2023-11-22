@@ -1,4 +1,3 @@
-import { expect } from '@playwright/test';
 import { classScore, monitoringData } from './monitoring';
 
 describe('monitoring services', () => {
