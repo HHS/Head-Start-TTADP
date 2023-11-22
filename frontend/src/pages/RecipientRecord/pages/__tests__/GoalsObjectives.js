@@ -155,7 +155,10 @@ describe('Goals and Objectives', () => {
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
 
-    fetchMock.get('/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates%2CRTTAPA%20Initial%20Plan%20%2F%20New%20Recipient', { rows: [], count: 0 });
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
   });
 
   afterEach(() => {
@@ -215,6 +218,11 @@ describe('Goals and Objectives', () => {
   it('will update goals status', async () => {
     fetchMock.restore();
 
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
+
     const response = [{
       id: 4598,
       ids: [4598],
@@ -254,6 +262,7 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     fetchMock.restore();
+
     fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
     const sortCreated = await screen.findByTestId('sortGoalsBy');
     userEvent.selectOptions(sortCreated, 'createdOn-asc');
@@ -281,6 +290,11 @@ describe('Goals and Objectives', () => {
   it('handles a fetch error', async () => {
     fetchMock.restore();
     // Created New Goal.
+
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
     const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
     fetchMock.get(newGoalsUrl, 500);
     act(() => renderGoalsAndObjectives([1]));
@@ -291,6 +305,10 @@ describe('Goals and Objectives', () => {
   it('adjusts items per page', async () => {
     fetchMock.restore();
 
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
     const goalToUse = {
       id: 0,
       goalStatus: 'Not Started',
