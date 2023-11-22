@@ -185,7 +185,7 @@ const deleteHandler = async (req, res) => {
       const eventPolicy = new EventPolicy(user, event);
 
       if (!eventPolicy.canUploadFile()) {
-        res.sendStatus(403);
+        res.sendStatus(httpCodes.UNAUTHORIZED);
         return;
       }
 
