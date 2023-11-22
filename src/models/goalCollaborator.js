@@ -1,5 +1,4 @@
 const { Model } = require('sequelize');
-const { afterCreate, afterUpdate, beforeDestroy } = require('./hooks/goalCollaborator');
 
 // Define and export a function that takes in sequelize and DataTypes as parameters
 export default (sequelize, DataTypes) => {
@@ -41,7 +40,32 @@ export default (sequelize, DataTypes) => {
         },
       );
 
-      // Associate Goal model with User model using belongsToMany association through GoalCollaborator model
+      // GoalCollaboratorType belongs to CollaboratorType with foreign key collaboratorTypeId
+      // and has alias 'type'. On delete cascade is enabled.
+      models.GoalCollaborator.belongsTo(
+        models.CollaboratorType,
+        {
+          foreignKey: 'collaboratorTypeId',
+          sourceKey: 'id',
+          onDelete: 'cascade',
+          as: 'type',
+        },
+      );
+
+      // CollaboratorType has many GoalCollaboratorType with foreign key collaboratorTypeId
+      // and has alias 'goalCollaboratorType'. On delete cascade is enabled.
+      models.CollaboratorType.hasMany(
+        models.GoalCollaborator,
+        {
+          foreignKey: 'collaboratorTypeId',
+          targetKey: 'id',
+          onDelete: 'cascade',
+          as: 'goalCollaboratorType',
+        },
+      );
+
+      // Associate Goal model with User model using belongsToMany association through
+      // GoalCollaborator model
       models.Goal.belongsToMany(
         models.User,
         {
@@ -51,11 +75,60 @@ export default (sequelize, DataTypes) => {
           as: 'users',
         },
       );
-      // Associate User model with Goal model using belongsToMany association through GoalCollaborator model
+      // Associate User model with Goal model using belongsToMany association through
+      // GoalCollaborator model
       models.User.belongsToMany(
         models.Goal,
         {
           foreignKey: 'userId',
+          otherKey: 'goalId',
+          through: models.GoalCollaborator,
+          as: 'goals',
+        },
+      );
+
+      // Associate CollaboratorType model with User model using belongsToMany association through
+      // GoalCollaborator model
+      models.CollaboratorType.belongsToMany(
+        models.User,
+        {
+          foreignKey: 'collaboratorTypeId',
+          otherKey: 'userId',
+          through: models.GoalCollaborator,
+          as: 'users',
+        },
+      );
+
+      // Associate User model with CollaboratorType model using belongsToMany association through
+      // GoalCollaborator model
+      models.User.belongsToMany(
+        models.CollaboratorType,
+        {
+          foreignKey: 'userId',
+          otherKey: 'collaboratorTypeId',
+          through: models.GoalCollaborator,
+          as: 'collaboratorTypes',
+        },
+      );
+
+      // Associate Goal model with User model using belongsToMany association through
+      // GoalCollaborator model
+      models.Goal.belongsToMany(
+        models.CollaboratorType,
+        {
+          foreignKey: 'goalId',
+          otherKey: 'collaboratorTypeId',
+          through: models.GoalCollaborator,
+          as: 'collaboratorTypes',
+        },
+      );
+
+      // Associate User model with Goal model using belongsToMany association through
+      // GoalCollaborator model
+      models.CollaboratorType.belongsToMany(
+        models.Goal,
+        {
+          foreignKey: 'collaboratorTypeId',
           otherKey: 'goalId',
           through: models.GoalCollaborator,
           as: 'goals',
@@ -94,16 +167,24 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    collaboratorTypeId: {
+      allowNull: false,
+      type: DataTypes.INTEGER,
+      references: {
+        model: {
+          tableName: 'CollaboratorTypes',
+        },
+        key: 'id',
+      },
+    },
+    linkBack: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'GoalCollaborator',
     paranoid: true,
-    hooks: {
-      // Define hook functions to be executed after creating, updating, and destroying instances of GoalCollaborator
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
-      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
-    },
     indexes: [
       {
         unique: true,
