@@ -33,6 +33,13 @@ const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
+const GOAL_COLLABORATORS = {
+  CREATOR: 'Creator',
+  EDITOR: 'Editor',
+  LINKER: 'Linker',
+  UTILIZER: 'Utilizer',
+};
+
 const GRANT_PERSONNEL_ROLES = [
   'auth_official_contact',
   'ceo',
@@ -227,6 +234,7 @@ module.exports = {
   CURATED_CREATION,
   CREATION_METHOD,
   GOAL_STATUS,
+  GOAL_COLLABORATORS,
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
   NEXTSTEP_NOTETYPE,
