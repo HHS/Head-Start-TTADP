@@ -216,9 +216,9 @@ module.exports = {
   prepMigration,
   setAuditLoggingState,
   removeTables,
+  dropAndRecreateEnum,
   addValuesToEnumIfTheyDontExist,
   updateUsersFlagsEnum,
-
   replaceValueInArray,
   replaceValueInJSONBArray,
 };
