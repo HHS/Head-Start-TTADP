@@ -62,7 +62,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           ALTER TABLE "ValidFor"
           ADD CONSTRAINT "ValidFor_option_unique" UNIQUE ("name");
-      `, {transaction});
+      `, { transaction });
 
       await queryInterface.sequelize.query(/* sql */`
         INSERT INTO "ValidFor"
@@ -136,7 +136,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           ALTER TABLE "CollaboratorTypes"
           ADD CONSTRAINT "CollaboratorTypes_name_validForId_unique" UNIQUE ("name", "validForId");
-      `, {transaction});
+      `, { transaction });
 
       await queryInterface.sequelize.query(`
         INSERT INTO "CollaboratorTypes"
@@ -219,7 +219,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           ALTER TABLE "GoalCollaborators"
           ADD CONSTRAINT "GoalCollaborators_goalId_userId_unique" UNIQUE ("goalId", "userId");
-      `, {transaction});
+      `, { transaction });
       //---------------------------------------------------------------------------------
       const collectGoalCollaborators = (source, typeName) => /* sql */`
       WITH
@@ -311,8 +311,8 @@ module.exports = {
           AND zg.dml_type = 'INSERT'))
         AND g."createdVia" IN ('activityReport')
         GROUP BY 1
-				HAVING (ARRAY_AGG(ar."userId" ORDER BY ar.id ASC))[1] IS NOT NULL
-				AND MIN(ar."createdAt") IS NOT NULL
+        HAVING (ARRAY_AGG(ar."userId" ORDER BY ar.id ASC))[1] IS NOT NULL
+        AND MIN(ar."createdAt") IS NOT NULL
         ORDER BY 1
         `,
         GOAL_COLLABORATORS.CREATOR,
