@@ -180,50 +180,6 @@ module.exports = {
             key: 'id',
           },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-          defaultValue: null,
-        },
-      }, {
-        transaction,
-      });
-
-      // https://github.com/sequelize/sequelize/issues/9934
-      await queryInterface.sequelize.query(`
-          ALTER TABLE "GoalCollaborators"
-          ADD CONSTRAINT "GoalCollaborators_goalId_userId_unique" UNIQUE ("goalId", "userId");
-      `, {transaction});
-      //---------------------------------------------------------------------------------
-      await queryInterface.createTable('GoalCollaboratorTypes', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        goalCollaboratorId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'GoalCollaborators',
-            },
-            key: 'id',
-          },
-        },
         collaboratorTypeId: {
           type: Sequelize.INTEGER,
           allowNull: false,
@@ -261,96 +217,14 @@ module.exports = {
 
       // https://github.com/sequelize/sequelize/issues/9934
       await queryInterface.sequelize.query(`
-          ALTER TABLE "GoalCollaboratorTypes"
-          ADD CONSTRAINT "GoalCollaboratorTypes_goalCollaboratorId_collaboratorTypeId_unique" UNIQUE ("goalCollaboratorId", "collaboratorTypeId");
-      `, {transaction});
-      //---------------------------------------------------------------------------------
-      await queryInterface.createTable('GoalCollaboratorRoles', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        goalCollaboratorId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'GoalCollaborators',
-            },
-            key: 'id',
-          },
-        },
-        roleId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          onUpdate: 'CASCADE',
-          onDelete: 'CASCADE',
-          references: {
-            model: {
-              tableName: 'Roles',
-            },
-            key: 'id',
-          },
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-          defaultValue: null,
-        },
-      }, {
-        transaction,
-      });
-
-      // https://github.com/sequelize/sequelize/issues/9934
-      await queryInterface.sequelize.query(`
-          ALTER TABLE "GoalCollaboratorRoles"
-          ADD CONSTRAINT "GoalCollaboratorRoles_goalCollaboratorId_roleId_unique" UNIQUE ("goalCollaboratorId", "roleId");
+          ALTER TABLE "GoalCollaborators"
+          ADD CONSTRAINT "GoalCollaborators_goalId_userId_unique" UNIQUE ("goalId", "userId");
       `, {transaction});
       //---------------------------------------------------------------------------------
       const collectGoalCollaborators = (source, typeName) => /* sql */`
       WITH
         source_data AS (
           ${source}
-        ),
-        goal_creators AS (
-          INSERT INTO "GoalCollaborators"
-          (
-            "goalId",
-            "userId",
-            "createdAt",
-            "updatedAt"
-          )
-          SELECT
-            "goalId",
-            "userId",
-            "createdAt",
-            "updatedAt"
-          FROM source_data
-          ON CONFLICT
-          (
-            "goalId",
-            "userId"
-          )
-          DO UPDATE SET
-            "updatedAt" = EXCLUDED."updatedAt"
-          RETURNING
-            "id" "goalCollaboratorId",
-            "goalId",
-            "userId",
-            "createdAt",
-            "updatedAt"
         ),
         collaborator_type AS (
           SELECT
@@ -359,78 +233,41 @@ module.exports = {
           JOIN "ValidFor" vf
           ON ct."validForId" = vf.id
           WHERE ct.name = '${typeName}'
-        ),
-        goal_collaborator_types AS (
-          INSERT INTO "GoalCollaboratorTypes"
-          (
-            "goalCollaboratorId",
-            "collaboratorTypeId",
-            "createdAt",
-            "updatedAt",
-            "linkBack"
-          )
-          SELECT
-            c."goalCollaboratorId",
-            ct."collaboratorTypeId",
-            c."createdAt",
-            c."updatedAt",
-            sd."linkBack"
-          FROM goal_creators c
-          JOIN source_data sd
-          ON c."goalId" = sd."goalId"
-          AND c."userId" = sd."userId"
-          CROSS JOIN collaborator_type ct
-          ON CONFLICT
-          (
-            "goalCollaboratorId",
-            "collaboratorTypeId"
-          )
-          DO UPDATE SET
-            "updatedAt" = EXCLUDED."updatedAt",
-            "linkBack" = "GoalCollaboratorTypes"."linkBack" || EXCLUDED."linkBack"
-          RETURNING
-            "id"
-        ),
-        goal_collaborator_roles AS (
-          INSERT INTO "GoalCollaboratorRoles"
-          (
-            "goalCollaboratorId",
-            "roleId",
-            "createdAt",
-            "updatedAt"
-          )
-          SELECT
-            c."goalCollaboratorId",
-            ur."roleId",
-            c."createdAt",
-            c."updatedAt"
-          FROM goal_creators c
-          JOIN "UserRoles" ur
-          ON c."userId" = ur."userId"
-          ON CONFLICT
-          (
-            "goalCollaboratorId",
-            "roleId"
-          )
-          DO UPDATE SET
-            "updatedAt" = EXCLUDED."updatedAt"
-          RETURNING
-            "id"
         )
+      INSERT INTO "GoalCollaborators"
+      (
+        "goalId",
+        "userId",
+        "collaboratorTypeId",
+        "linkBack",
+        "createdAt",
+        "updatedAt"
+      )
       SELECT
-          'goal_creators',
-          COUNT(*) "count"
-      FROM goal_creators
-      UNION
-      SELECT
-          'goal_collaborator_types',
-          COUNT(*) "count"
-      FROM goal_collaborator_types
-      UNION
-      SELECT
-          'goal_collaborator_roles',
-          COUNT(*) "count"
-      FROM goal_collaborator_roles;
+        sd."goalId",
+        sd."userId",
+        ct."collaboratorTypeId",
+        sd."linkBack",
+        sd."createdAt",
+        sd."updatedAt"
+      FROM source_data sd
+      CROSS JOIN collaborator_type ct
+      ON CONFLICT
+      (
+        "goalId",
+        "userId"
+      )
+      DO UPDATE SET
+        "updatedAt" = EXCLUDED."updatedAt",
+        "linkBack" = "GoalCollaborators"."linkBack" || EXCLUDED."linkBack"
+      RETURNING
+        "id" "goalCollaboratorId",
+        "goalId",
+        "userId",
+        "collaboratorTypeId",
+        "linkBack",
+        "createdAt",
+        "updatedAt";
       `;
 
       const collectGoalCollaboratorsViaAuditLog = (dmlType, typeName) => collectGoalCollaborators(
@@ -613,8 +450,6 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await removeTables(queryInterface, transaction, [
-        'GoalCollaboratorRoles',
-        'GoalCollaboratorTypes',
         'GoalCollaborators',
         'CollaboratorTypes',
         'ValidFor',
