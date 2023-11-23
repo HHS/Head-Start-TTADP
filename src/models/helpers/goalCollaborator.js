@@ -230,7 +230,7 @@ const removeCollaboratorsForType = async (
           name: typeName,
         },
         include: [{
-          model: sequelize.models.validFor,
+          model: sequelize.models.ValidFor,
           as: 'validFor',
           required: true,
           attributes: [],
