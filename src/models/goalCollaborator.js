@@ -60,7 +60,7 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'collaboratorTypeId',
           targetKey: 'id',
           onDelete: 'cascade',
-          as: 'goalCollaboratorType',
+          as: 'goalCollaborator',
         },
       );
 
@@ -120,7 +120,7 @@ export default (sequelize, DataTypes) => {
           otherKey: 'collaboratorTypeId',
           through: models.GoalCollaborator,
           as: 'collaboratorTypes',
-        },
+        },GoalCollaborator
       );
 
       // Associate User model with Goal model using belongsToMany association through
