@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'collaboratorTypeId',
           sourceKey: 'id',
           onDelete: 'cascade',
-          as: 'type',
+          as: 'collaboratorType',
         },
       );
 
