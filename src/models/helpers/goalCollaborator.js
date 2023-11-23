@@ -181,6 +181,7 @@ const currentUserPopulateCollaboratorForType = async (
 ) => {
   // Get the ID of the currently logged in user
   const userId = httpContext.get('loggedUser');
+  if (!userId && process.env.NODE_ENV !== 'production') return Promise.resolve();
 
   // Populate the collaborator for the specified type of goal using the current user's
   // ID and typeName
