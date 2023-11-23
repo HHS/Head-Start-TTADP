@@ -909,7 +909,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
         },
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the first query
-      sequelize.models.ActivityReportGoals.findAll({ // Find all ActivityReportGoals models
+      sequelize.models.ActivityReportGoal.findAll({ // Find all ActivityReportGoals models
         attributes: ['goalId'], // Select the 'goalId' attribute for each model
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
