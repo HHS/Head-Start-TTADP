@@ -13,7 +13,7 @@ const { collectModelData } = require('../../lib/awsElasticSearch/datacollector')
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
 const {
-  populateCollaboratorForType,
+  currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } = require('../helpers/goalCollaborator');
 
@@ -926,8 +926,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       // Use flatMap to iterate over each element in the new array asynchronously
         .flatMap(async ({ userId }) => goals
           // Use map to iterate over each element in the 'goals' array asynchronously
-          // Call the 'populateCollaboratorForType' function with the following arguments
-          .map(async ({ goalId }) => populateCollaboratorForType(
+          // Call the 'currentUserPopulateCollaboratorForType' function with the following arguments
+          .map(async ({ goalId }) => currentUserPopulateCollaboratorForType(
             sequelize, // The 'sequelize' variable
             options, // The 'options' variable
             goalId, // The 'goalId' from the current iteration of the 'goals' array
@@ -992,6 +992,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await autoPopulateUtilizer(sequelize, instance, options);
+  await autoCleanupUtilizer(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);
