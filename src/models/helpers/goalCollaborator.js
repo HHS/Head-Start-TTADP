@@ -209,8 +209,9 @@ const removeCollaboratorsForType = async (
   options,
   goalId,
   typeName,
-  linkBack,
+  linkBack = undefined,
 ) => {
+  if (!linkBack) return;
   // Extract the key-value pair from the linkBack object
   const [[linkBackKey, linkBackValues]] = Object.entries(linkBack);
 
