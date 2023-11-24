@@ -951,7 +951,7 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
     && instance.calculatedStatus !== REPORT_STATUSES.APPROVED
   ) {
     // Find all ActivityReportGoals models
-    const goals = await sequelize.models.ActivityReportGoals.findAll({
+    const goals = await sequelize.models.ActivityReportGoal.findAll({
       attributes: ['goalId'], // Select the 'goalId' attribute for each model
       where: {
         // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
