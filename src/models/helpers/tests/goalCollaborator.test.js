@@ -234,9 +234,10 @@ describe('GoalCollaborator', () => {
       // Define input parameters
       const goalId = 1;
       const typeName = 'type';
+      const linkBack = { activityReportIds: [1] };
 
       // Call the function
-      await removeCollaboratorsForType(sequelize, transaction, goalId, typeName);
+      await removeCollaboratorsForType(sequelize, transaction, goalId, typeName, linkBack);
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).toHaveBeenCalledWith({
