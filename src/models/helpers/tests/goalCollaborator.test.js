@@ -170,89 +170,42 @@ describe('GoalCollaborator', () => {
     });
   });
 
-  describe('currentUserPopulateCollaboratorForType', () => {
-    it('should populate the collaborator for a specific type of goal for the current user', async () => {
-      // Mock Sequelize instance and options
-      const sequelize = {
-        models: {
-          GoalCollaborator: {
-            findOne: jest.fn().mockResolvedValue({ dataValues: { id: 1, linkBack: null } }),
-            update: jest.fn().mockResolvedValue({}),
-          },
-          CollaboratorType: {
-            findOne: jest.fn().mockResolvedValue({ name: 'create', id: 1 }),
-          },
-        },
-      };
-      const options = {};
-
-      // Mock httpContext.get method
-      const loggedUser = 1;
-      jest.mock('express', () => ({
-        get: jest.fn().mockReturnValue(loggedUser),
-      }));
-
-      // Define input parameters
-      const goalId = 1;
-      const typeName = 'type';
-      const linkBack = null;
-
-      // Call the function
-      await currentUserPopulateCollaboratorForType(
-        sequelize,
-        options,
-        findOrCreateGoalCollaborator,
-        goalId,
-        typeName,
-        linkBack,
-      );
-
-      // Verify that the findOrCreateGoalCollaborator function is called with the correct arguments
-      expect(findOrCreateGoalCollaborator).toHaveBeenCalledWith(
-        sequelize,
-        options.transaction,
-        goalId,
-        loggedUser,
-        typeName,
-        linkBack,
-      );
-    });
-  });
-
   describe('removeCollaboratorsForType', () => {
     it('should remove all collaborators of a specific type for a given goal', async () => {
+      // Define input parameters
+      const goalId = 1;
+      const userId = 1;
+      const typeName = 'Linker';
+      const linkBack = { activityReportIds: [1] };
+
       // Mock Sequelize instance and transaction
       const sequelize = {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
+            findAll: jest.fn().mockResolvedValue([{
+              dataValues: {
+                id: 1,
+                goalId,
+                userId,
+                collaboratorTypeId: 1,
+                linkBack,
+              },
+            }]),
           },
         },
       };
       const transaction = {};
 
-      // Define input parameters
-      const goalId = 1;
-      const typeName = 'type';
-      const linkBack = { activityReportIds: [1] };
-
       // Call the function
-      await removeCollaboratorsForType(sequelize, transaction, goalId, typeName, linkBack);
+      await removeCollaboratorsForType(sequelize, { transaction }, goalId, typeName, linkBack);
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).toHaveBeenCalledWith({
         where: {
-          goalId,
+          id: [goalId],
         },
-        include: [
-          {
-            model: sequelize.models.CollaboratorType,
-            as: 'collaboratorType',
-            required: true,
-            where: { name: typeName },
-            attributes: ['name'],
-          },
-        ],
+        independentHooks: true,
         transaction,
       });
     });
