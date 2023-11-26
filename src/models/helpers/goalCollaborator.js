@@ -213,9 +213,17 @@ const removeCollaboratorsForType = async (
 ) => {
   if (!linkBack) return;
   let filteredLinkBack;
-  if (Array.isArray(linkBack)) {
-    filteredLinkBack = linkBack.filter((lb) => lb);
-    if (filteredLinkBack.length === 0) return;
+  if (typeof linkBack === 'object') {
+    filteredLinkBack = Object.entries(linkBack).reduce((acc, [key, values]) => {
+      if (Array.isArray(values)) {
+        const filteredValues = values.filter((v) => v);
+        if (filteredValues.length > 0) {
+          acc[key] = filteredValues;
+        }
+      }
+      return acc;
+    }, {});
+    if (Object.keys(filteredLinkBack).length === 0) return;
   } else {
     return;
   }
