@@ -209,9 +209,9 @@ const removeCollaboratorsForType = async (
   options,
   goalId,
   typeName,
-  linkBack = undefined,
+  linkBack = null,
 ) => {
-  if (!linkBack) return;
+  if (linkBack === null || linkBack === undefined) return;
   let filteredLinkBack;
   if (typeof linkBack === 'object') {
     filteredLinkBack = Object.entries(linkBack).reduce((acc, [key, values]) => {
