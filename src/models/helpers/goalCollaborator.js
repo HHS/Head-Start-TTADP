@@ -212,8 +212,13 @@ const removeCollaboratorsForType = async (
   linkBack = undefined,
 ) => {
   if (!linkBack) return;
-  const filteredLinkBack = linkBack.filter((lb) => lb);
-  if (filteredLinkBack.length === 0) return;
+  let filteredLinkBack;
+  if (Array.isArray(linkBack)) {
+    filteredLinkBack = linkBack.filter((lb) => lb);
+    if (filteredLinkBack.length === 0) return;
+  } else {
+    return;
+  }
 
   // Extract the key-value pair from the linkBack object
   const [[linkBackKey, linkBackValues]] = Object.entries(filteredLinkBack);
