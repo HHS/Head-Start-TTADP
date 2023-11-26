@@ -209,5 +209,75 @@ describe('GoalCollaborator', () => {
         transaction,
       });
     });
+    it('should should do nothing when no linkBack given', async () => {
+      // Define input parameters
+      const goalId = 1;
+      const userId = 1;
+      const typeName = 'Linker';
+      const linkBack = { activityReportIds: [1] };
+
+      // Mock Sequelize instance and transaction
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            destroy: jest.fn().mockResolvedValue({}),
+            findAll: jest.fn().mockResolvedValue([{
+              dataValues: {
+                id: 1,
+                goalId,
+                userId,
+                collaboratorTypeId: 1,
+                linkBack,
+              },
+            }]),
+          },
+        },
+      };
+      const transaction = {};
+
+      // Call the function
+      await removeCollaboratorsForType(sequelize, { transaction }, goalId, typeName, null);
+
+      // Verify that the destroy method is called with the correct arguments
+      expect(sequelize.models.GoalCollaborator.destroy).not.toHaveBeenCalled();
+    });
+    it('should do nothing when empty link back given', async () => {
+      // Define input parameters
+      const goalId = 1;
+      const userId = 1;
+      const typeName = 'Linker';
+      const linkBack = { activityReportIds: [1] };
+
+      // Mock Sequelize instance and transaction
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            destroy: jest.fn().mockResolvedValue({}),
+            findAll: jest.fn().mockResolvedValue([{
+              dataValues: {
+                id: 1,
+                goalId,
+                userId,
+                collaboratorTypeId: 1,
+                linkBack,
+              },
+            }]),
+          },
+        },
+      };
+      const transaction = {};
+
+      // Call the function
+      await removeCollaboratorsForType(
+        sequelize,
+        { transaction },
+        goalId,
+        typeName,
+        { activityReportIds: [null] },
+      );
+
+      // Verify that the destroy method is called with the correct arguments
+      expect(sequelize.models.GoalCollaborator.destroy).not.toHaveBeenCalled();
+    });
   });
 });
