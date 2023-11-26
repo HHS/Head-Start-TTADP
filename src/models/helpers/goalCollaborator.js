@@ -211,16 +211,18 @@ const removeCollaboratorsForType = async (
   typeName,
   linkBack = undefined,
 ) => {
-  const filteredLinkBack = linkBack?.filter((lb) => lb);
-  if (!filteredLinkBack && filteredLinkBack.length > 0) return;
+  if (!linkBack) return;
+  const filteredLinkBack = linkBack.filter((lb) => lb);
+  if (filteredLinkBack.length === 0) return;
+
   // Extract the key-value pair from the linkBack object
-  const [[linkBackKey, linkBackValues]] = Object.entries(linkBack);
+  const [[linkBackKey, linkBackValues]] = Object.entries(filteredLinkBack);
 
   // Find all GoalCollaboratorType records that meet the specified criteria
   const currentCollaboratorsForType = await sequelize.models.GoalCollaborator.findAll({
     where: {
       goalId,
-      linkBack: { [Op.overlap]: linkBack },
+      linkBack: { [Op.overlap]: filteredLinkBack },
     },
     include: [
       {
