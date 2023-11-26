@@ -219,7 +219,9 @@ const removeCollaboratorsForType = async (
   const currentCollaboratorsForType = await sequelize.models.GoalCollaborator.findAll({
     where: {
       goalId,
-      linkBack: { [Op.overlap]: linkBack },
+      ...(linkBack
+        ? { linkBack: { [Op.overlap]: linkBack } }
+        : { linkBack: { [Op.eq]: null } }),
     },
     include: [
       {
