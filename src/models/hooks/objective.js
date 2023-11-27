@@ -1,6 +1,9 @@
 import { Op } from 'sequelize';
-import { OBJECTIVE_STATUS } from '../../constants';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
+const {
+  currentUserPopulateCollaboratorForType,
+} = require('../helpers/genericCollaborator');
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -269,6 +272,28 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
+const autoPopulateCreator = async (sequelize, instance, options) => {
+  const { id: goalId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    sequelize,
+    options,
+    sequelize.models.Objective,
+    goalId,
+    OBJECTIVE_COLLABORATORS.CREATOR,
+  );
+};
+
+const autoPopulateEditor = async (sequelize, instance, options) => {
+  const { id: goalId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    sequelize,
+    options,
+    sequelize.models.Objective,
+    goalId,
+    OBJECTIVE_COLLABORATORS.EDITOR,
+  );
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -291,10 +316,12 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateEditor(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateCreator(sequelize, instance, options);
 };
 
 export {
