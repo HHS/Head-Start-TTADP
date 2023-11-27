@@ -169,6 +169,7 @@ export default function Close() {
         isError: true,
         message: 'An error occurred while creating the goals.',
       });
+      modalRef.current.close();
     } finally {
       setIsAppLoading(false);
     }
