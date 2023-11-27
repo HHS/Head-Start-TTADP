@@ -1,15 +1,25 @@
 import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import filtersToScopes from '../index';
 import {
   Recipient,
   Grant,
+  ActivityReport,
+  Goal,
+  ActivityReportGoal,
   Program,
   User,
   Group,
   GroupGrant,
   sequelize,
 } from '../../models';
+
+const draftReport = {
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  regionId: 1,
+  version: 1,
+};
 
 const recipientOneName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
 const recipientTwoName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
@@ -57,8 +67,29 @@ describe('grant filtersToScopes', () => {
   let grantGroupOne;
   let grantGroupTwo;
   let grants;
+  let activityReports;
+  let goals;
+  let activityReportGoals;
+  let programs;
 
   beforeAll(async () => {
+    mockUser = await User.create({
+      id: faker.datatype.number(),
+      homeRegionId: 1,
+      hsesUsername: faker.datatype.string(),
+      hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
+    });
+
+    mockUserTwo = await User.create({
+      id: faker.datatype.number(),
+      homeRegionId: 1,
+      hsesUsername: faker.datatype.string(),
+      hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
+    });
+
+    console.log('\n\n\n-------Create 1');
     await Promise.all(recipients.map((g) => Recipient.create(g)));
     grants = await Promise.all([
       Grant.create({
@@ -130,8 +161,135 @@ describe('grant filtersToScopes', () => {
         inactivationDate: new Date('07/26/2022'),
       }),
     ]);
+    console.log('\n\n\n-------Create 2');
+    // Create Goals.
+    goals = await Promise.all([
+      Goal.create({
+        name: 'AR activity goal 1',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grants[0].id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      }),
+      Goal.create({
+        name: 'AR activity goal 2',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grants[1].id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      }),
+      Goal.create({
+        name: 'AR activity goal 3',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grants[2].id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      }),
+      Goal.create({
+        name: 'AR activity goal 4',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grants[3].id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      }),
+      Goal.create({
+        name: 'AR activity goal 5',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grants[4].id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      }),
+      Goal.create({
+        name: 'AR activity goal 6',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grants[5].id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      }),
+    ]);
+    console.log('\n\n\n-------Create 3');
+    // Create Activity Reports.
+    activityReports = await Promise.all([
+      // Before range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('01/01/2022'),
+        endDate: new Date('01/15/2022'),
+      }),
+      // After range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('04/01/2022'),
+        endDate: new Date('05/20/2022'),
+      }),
+      // Within range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('03/02/2022'),
+        endDate: new Date('03/15/2022'),
+      }),
+      // Within range starts before ends after.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('01/01/2022'),
+        endDate: new Date('04/02/2022'),
+      }),
+      // Within range starts on last day of range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('03/31/2022'),
+        endDate: new Date('05/20/2022'),
+      }),
+      // Within range ends on first day of range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('02/01/2022'),
+        endDate: new Date('03/01/2022'),
+      }),
+    ]);
 
-    await Program.bulkCreate([
+    console.log('\n\n\n-------Create 4');
+    // Create Activity Report Goals.
+    activityReportGoals = await Promise.all([
+      ActivityReportGoal.create({
+        activityReportId: activityReports[0].id,
+        goalId: goals[0].id,
+      }),
+      ActivityReportGoal.create({
+        activityReportId: activityReports[1].id,
+        goalId: goals[1].id,
+      }),
+      ActivityReportGoal.create({
+        activityReportId: activityReports[2].id,
+        goalId: goals[2].id,
+      }),
+      ActivityReportGoal.create({
+        activityReportId: activityReports[3].id,
+        goalId: goals[3].id,
+      }),
+      ActivityReportGoal.create({
+        activityReportId: activityReports[4].id,
+        goalId: goals[4].id,
+      }),
+      ActivityReportGoal.create({
+        activityReportId: activityReports[5].id,
+        goalId: goals[5].id,
+      }),
+    ]);
+    console.log('\n\n\n-------Create 4');
+    programs = await Program.bulkCreate([
       {
         id: recipients[0].id,
         grantId: recipients[0].id,
@@ -170,22 +328,7 @@ describe('grant filtersToScopes', () => {
       },
     ], { validate: true, individualHooks: true });
 
-    mockUser = await User.create({
-      id: faker.datatype.number(),
-      homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
-      lastLogin: new Date(),
-    });
-
-    mockUserTwo = await User.create({
-      id: faker.datatype.number(),
-      homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
-      lastLogin: new Date(),
-    });
-
+    console.log('\n\n\n-------Create 5');
     group = await Group.create({
       name: groupName,
       userId: mockUser.id,
@@ -217,45 +360,65 @@ describe('grant filtersToScopes', () => {
       groupId: publicGroup.id,
       grantId: grants[1].id,
     });
+    console.log('\n\n\n-------Create 6');
   });
 
   afterAll(async () => {
+    console.log('\n\n\n-------Destroy 1');
+    await ActivityReportGoal.destroy({
+      where: {
+        id: activityReportGoals.map((arg) => arg.id),
+      },
+    });
+    console.log('\n\n\n-------Destroy 2');
+    await ActivityReport.destroy({
+      where: {
+        id: activityReports.map((ar) => ar.id),
+      },
+    });
+    console.log('\n\n\n-------Destroy 3');
+    await Goal.destroy({
+      where: {
+        id: goals.map((g) => g.id),
+      },
+    });
+    console.log('\n\n\n-------Destroy 4');
     await GroupGrant.destroy({
       where: {
         groupId: [group.id, publicGroup.id],
       },
     });
-
+    console.log('\n\n\n-------Destroy 5');
     await Group.destroy({
       where: {
         userId: [mockUser.id, mockUserTwo.id],
       },
     });
-
+    console.log('\n\n\n-------Destroy 6');
     await User.destroy({
       where: {
         id: mockUser.id,
       },
     });
-
+    console.log('\n\n\n-------Destroy 7');
     await Program.destroy({
       where: {
-        id: possibleIds,
+        id: programs.map((p) => p.id),
       },
     });
-
+    console.log('\n\n\n-------Destroy 8');
     await Grant.destroy({
       where: {
-        id: possibleIds,
+        recipientId: possibleIds,
       },
     });
-
+    console.log('\n\n\n-------Destroy 9');
     await Recipient.destroy({
       where: {
         id: possibleIds,
       },
     });
-
+    console.log('\n\n\n-------Destroy 10');
     await sequelize.close();
   });
 
@@ -318,6 +481,27 @@ describe('grant filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([recipients[4].id, recipients[5].id]));
+    });
+  });
+
+  describe('noActivityWithin', () => {
+    it('within plus inactivation date', async () => {
+      const filters = { 'noActivityWithin.win': '2022/03/01-2022/03/31' };
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
+      let found;
+      try {
+        found = await Grant.findAll({
+          logging: console.log,
+          where: {
+            [Op.and]: [scope.grant, { id: possibleIds }],
+          },
+        });
+      } catch (e) {
+        console.log('\n\n\n-------ERROR:', e);
+      }
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([recipients[0].id, recipients[1].id]));
     });
   });
 
