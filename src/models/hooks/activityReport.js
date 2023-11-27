@@ -1,6 +1,11 @@
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
-const { OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES, GOAL_COLLABORATORS } = require('../../constants');
+const {
+  OBJECTIVE_STATUS,
+  AWS_ELASTIC_SEARCH_INDEXES,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_COLLABORATORS,
+} = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
@@ -15,7 +20,7 @@ const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticS
 const {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
-} = require('../helpers/goalCollaborator');
+} = require('../helpers/genericCollaborator');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -897,6 +902,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
     const [
       collaborators,
       goals,
+      objectives,
     ] = await Promise.all([
       // Find all ActivityReportCollaborator models
       sequelize.models.ActivityReportCollaborator.findAll({
@@ -917,9 +923,17 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
         },
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the second query
+      sequelize.models.ActivityReportObjective.findAll({ // Find all ActivityReportObjective models
+        attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }), // End of the second query
     ]);
-    await Promise.all(
-      [
+    await Promise.all([
+      ...[
         ...collaborators, // Spread the elements of the 'collaborators' array into a new array
         { userId: instance.userId }, // Add an object with a 'userId' property to the new array
       ]
@@ -928,6 +942,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           // Use map to iterate over each element in the 'goals' array asynchronously
           // Call the 'currentUserPopulateCollaboratorForType' function with the following arguments
           .map(async ({ goalId }) => currentUserPopulateCollaboratorForType(
+            'goal',
             sequelize, // The 'sequelize' variable
             options, // The 'options' variable
             goalId, // The 'goalId' from the current iteration of the 'goals' array
@@ -935,7 +950,24 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
             GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
             { activityReportIds: [instance.id] },
           ))),
-    );
+      ...[
+        ...collaborators, // Spread the elements of the 'collaborators' array into a new array
+        { userId: instance.userId }, // Add an object with a 'userId' property to the new array
+      ]
+      // Use flatMap to iterate over each element in the new array asynchronously
+        .flatMap(async ({ userId }) => objectives
+          // Use map to iterate over each element in the 'objectives' array asynchronously
+          // Call the 'currentUserPopulateCollaboratorForType' function with the following arguments
+          .map(async ({ objectiveId }) => currentUserPopulateCollaboratorForType(
+            'objective',
+            sequelize, // The 'sequelize' variable
+            options, // The 'options' variable
+            objectiveId, // The 'objectiveId' from the current iteration of the 'objectives' array
+            userId, // The 'userId' from the current iteration of the new array
+            OBJECTIVE_COLLABORATORS.UTILIZER, // The 'OBJECTIVE_COLLABORATORS.UTILIZER' constant
+            { activityReportIds: [instance.id] },
+          ))),
+    ]);
   }
 };
 
@@ -951,21 +983,43 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
     && instance.calculatedStatus !== REPORT_STATUSES.APPROVED
   ) {
     // Find all ActivityReportGoals models
-    const goals = await sequelize.models.ActivityReportGoal.findAll({
-      attributes: ['goalId'], // Select the 'goalId' attribute for each model
-      where: {
-        // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
-        activityReportId: instance.id,
-      },
-      raw: true, // Return raw data instead of Sequelize instances
-    });
-    await Promise.all(goals.map(async (goal) => removeCollaboratorsForType(
-      sequelize,
-      options,
-      goal.goalId,
-      GOAL_COLLABORATORS.UTILIZER,
-      { activityReportIds: [instance.id] },
-    )));
+    const [
+      goals,
+      objectives,
+    ] = await Promise.all([
+      sequelize.models.ActivityReportGoal.findAll({
+        attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }),
+      sequelize.models.ActivityReportObjective.findAll({
+        attributes: ['objectiveId'], // Select the 'goalId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }),
+    ]);
+    await Promise.all([
+      ...goals.map(async (goal) => removeCollaboratorsForType(
+        sequelize,
+        options,
+        goal.goalId,
+        GOAL_COLLABORATORS.UTILIZER,
+        { activityReportIds: [instance.id] },
+      )),
+      ...objectives.map(async (objective) => removeCollaboratorsForType(
+        sequelize,
+        options,
+        objective.objectiveId,
+        OBJECTIVE_COLLABORATORS.UTILIZER,
+        { activityReportIds: [instance.id] },
+      )),
+    ]);
   }
 };
 
