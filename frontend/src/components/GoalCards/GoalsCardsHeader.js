@@ -38,6 +38,8 @@ export default function GoalCardsHeader({
   showRttapaValidation,
   draftSelectedRttapa,
   canMergeGoals,
+  shouldDisplayMergeSuccess,
+  dismissMergeSuccess,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -59,6 +61,14 @@ export default function GoalCardsHeader({
     sampleSize(pageGoalIds, 5),
     sampleSize(pageGoalIds, 2),
   ];
+
+  const mergedGoals = (() => {
+    if (history.location && history.location.state) {
+      return history.location.state.mergedGoals;
+    }
+
+    return null;
+  })();
 
   return (
     <div className="padding-x-3 position-relative">
@@ -220,6 +230,31 @@ export default function GoalCardsHeader({
             )
             : null
             }
+        {
+          (shouldDisplayMergeSuccess && mergedGoals)
+            ? (
+              <FeatureFlag flag="merge_goals">
+                <Alert className="margin-top-3" type="success">
+                  Goal
+                  {mergedGoals.length === 1 ? ' ' : 's '}
+                  {' '}
+                  {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
+                  {' '}
+                  {mergedGoals.length === 1 ? 'has' : 'have'}
+                  {' '}
+                  been merged.
+                  <button
+                    type="button"
+                    className="usa-button usa-button--unstyled margin-left-1"
+                    onClick={() => dismissMergeSuccess()}
+                  >
+                    Reset goal sort order
+                  </button>
+                </Alert>
+              </FeatureFlag>
+            )
+            : null
+            }
       </div>
     </div>
   );
@@ -254,6 +289,8 @@ GoalCardsHeader.propTypes = {
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

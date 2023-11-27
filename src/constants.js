@@ -206,6 +206,7 @@ const FEATURE_FLAGS = [
   'training_reports',
   'merge_goals',
   'communication_log',
+  'monitoring',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -213,7 +214,7 @@ const MAINTENANCE_CATEGORY = {
   MAINTENANCE: 'MAINTENANCE',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
 module.exports = {
   FILE_STATUSES,
@@ -221,6 +222,7 @@ module.exports = {
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
+  GOAL_CREATED_VIA,
   SEARCH_RESULTS_PER_PAGE,
   AUTOMATIC_CREATION,
   CURATED_CREATION,
@@ -244,5 +246,4 @@ module.exports = {
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
-  GOAL_CREATED_VIA,
 };

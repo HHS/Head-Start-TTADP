@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { AUTOMATIC_CREATION } from './constants';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -60,7 +62,7 @@ function defaultUser() {
   };
 }
 
-async function createUser(user) {
+export async function createUser(user) {
   return User.create({ ...defaultUser(), ...user });
 }
 
@@ -261,5 +263,26 @@ export async function destroyGoal(goal) {
       id: goal.id,
     },
     force: true,
+  });
+}
+
+/**
+ *
+ * @param {string} name? template name
+ * @returns GoalTemplate sequelize.model object
+ */
+export async function createGoalTemplate(name = null) {
+  const n = faker.lorem.sentence(5);
+  const varForNameOrN = name || n;
+  const secret = 'secret';
+  const hash = crypto
+    .createHmac('md5', secret)
+    .update(varForNameOrN)
+    .digest('hex');
+
+  return GoalTemplate.create({
+    hash,
+    templateName: varForNameOrN,
+    creationMethod: AUTOMATIC_CREATION,
   });
 }

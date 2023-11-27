@@ -38,7 +38,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { setActivityReportGoalAsActivelyEdited } from '../../services/goals';
+import { setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
@@ -85,7 +85,7 @@ jest.mock('../../services/activityReportApprovers', () => ({
 
 jest.mock('../../services/accessValidation');
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   copyGoalsToGrants: jest.fn(),
   setActivityReportGoalAsActivelyEdited: jest.fn(),
 }));
