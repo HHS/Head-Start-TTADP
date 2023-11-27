@@ -522,8 +522,8 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: OBJECTIVE_STATUS.SUSPENDED,
-            suspendReason: 'Recipient request',
-            suspendContext: 'Yeah, they just asked',
+            closeSuspendReason: 'Recipient request',
+            closeSuspendContext: 'Yeah, they just asked',
             resources: [
               {
                 value: fakeUrl,
@@ -545,7 +545,7 @@ describe('createOrUpdateGoals', () => {
     const [updatedObjective2] = updatedGoal2.objectives;
     expect(updatedObjective2.id).toBe(updatedObjective.id);
     expect(updatedObjective2.status).toBe(OBJECTIVE_STATUS.SUSPENDED);
-    expect(updatedObjective2.suspendReason).toBe('Recipient request');
-    expect(updatedObjective2.suspendContext).toBe('Yeah, they just asked');
+    expect(updatedObjective2.closeSuspendReason).toBe('Recipient request');
+    expect(updatedObjective2.closeSuspendContext).toBe('Yeah, they just asked');
   });
 });

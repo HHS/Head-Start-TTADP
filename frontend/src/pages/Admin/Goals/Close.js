@@ -1,25 +1,87 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+  useRef,
+} from 'react';
+import PropTypes from 'prop-types';
+import { useForm, FormProvider, useController } from 'react-hook-form';
+import { GOAL_CLOSE_REASONS } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckCircle, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import {
   Button,
   Dropdown,
+  Fieldset,
   FormGroup,
   Label,
+  Table,
+  Textarea,
+  Radio,
+  ModalToggleButton,
 } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
+import Select from 'react-select';
+import { uniqueId, uniq } from 'lodash';
 import Container from '../../../components/Container';
 import Req from '../../../components/Req';
 import {
   getGroupsByRegion,
+  closeMultiRecipientGoalsFromAdmin,
 } from '../../../fetchers/Admin';
+import { getGoals } from '../../../fetchers/activityReports';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { REGIONS } from './constants';
+import selectOptionsReset from '../../../components/selectOptionsReset';
+import ReadOnlyField from '../../../components/ReadOnlyField';
+import Modal from '../../../components/VanillaModal';
+import colors from '../../../colors';
+
+const findOrFailExistingGoal = (needle, haystack) => haystack.find(
+  (g) => g.status === needle.status
+      && g.name.trim() === needle.name.trim(),
+);
+
+const reduceAndSortGoals = (goals) => {
+  const reducedGoals = goals.reduce((acc, goal) => {
+    const existingGoal = findOrFailExistingGoal(goal, acc);
+    if (existingGoal) {
+      existingGoal.goalIds = uniq([...existingGoal.goalIds, ...goal.goalIds]);
+      existingGoal.grantIds = uniq([...existingGoal.grantIds, ...goal.grantIds]);
+      return acc;
+    }
+
+    return [...acc, { ...goal, id: uniqueId('goal_') }];
+  }, []);
+
+  return [...reducedGoals].sort((a, b) => a.name.localeCompare(b.name));
+};
+
+const CloseRadios = ({ register }) => GOAL_CLOSE_REASONS.map((r) => (
+  <Radio
+    id={r.trim().replace(' ', '-').toLowerCase()}
+    key={r}
+    name="closeSuspendReason"
+    label={r}
+    value={r}
+    className="smart-hub--report-checkbox"
+    inputRef={register()}
+    required
+  />
+));
+
+CloseRadios.propTypes = {
+  register: PropTypes.func.isRequired,
+};
 
 export default function Close() {
   const [groupOptions, setGroupOptions] = useState([]);
+  const [goalOptions, setGoalOptions] = useState([]);
   const [response, setResponse] = useState(null);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  const modalRef = useRef(null);
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -42,29 +104,68 @@ export default function Close() {
     group,
   } = watch();
 
+  const {
+    field: {
+      onChange: onUpdateSelectedGoal,
+      onBlur: onBlurSelectedGoal,
+      value: selectedGoal,
+      name: selectedGoalInputName,
+    },
+  } = useController({
+    control: hookForm.control,
+    name: 'selectedGoal',
+    rules: {},
+    defaultValue: null,
+  });
+
+  const selectedGroup = useMemo(() => (
+    groupOptions.find((g) => g.id === (Number(group)))
+  ), [group, groupOptions]);
+
+  useEffect(() => {
+    async function getGoalOptions() {
+      try {
+        if (!selectedGroup) {
+          return;
+        }
+        setIsAppLoading(true);
+        const grantIds = selectedGroup.grants.map((g) => g.id);
+        const goals = await getGoals(grantIds);
+        setGoalOptions(reduceAndSortGoals(goals));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log(err);
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+
+    getGoalOptions();
+  }, [selectedGroup, setIsAppLoading]);
+
   useEffect(() => {
     async function updateAdditionalData() {
       try {
         if (!region) {
           return;
         }
+        setIsAppLoading(true);
         const groups = await getGroupsByRegion(region);
         setGroupOptions(groups);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.log(err);
+      } finally {
+        setIsAppLoading(false);
       }
     }
     updateAdditionalData();
-  }, [region]);
+  }, [region, setIsAppLoading]);
 
   const onSubmit = async (data) => {
     try {
       setIsAppLoading(true);
-
-      // send submission to server
-      // eslint-disable-next-line no-console
-      console.log(data);
+      setResponse(await closeMultiRecipientGoalsFromAdmin(data));
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
@@ -77,8 +178,6 @@ export default function Close() {
     }
   };
 
-  const selectedGroup = groupOptions.find((g) => g.id === (Number(group)));
-
   if (response && !response.isError) {
     return (
       <>
@@ -88,32 +187,24 @@ export default function Close() {
         <Container>
           <h2>Close goals</h2>
           <p>
-            Successfully created
+            Successfully closed
             {' '}
             {response.goals.length}
             {' '}
             goals.
           </p>
-          {response.activityReport && (
-            <p>
-              Successfully created activity report
-              {' '}
-              <Link to={`/activity-reports/${response.activityReport.id}`}>
-                {response.activityReport.displayId}
-              </Link>
-              .
-            </p>
-          )}
           <p>
             <Button
               type="button"
               unstyled
               onClick={() => {
+                setGroupOptions([]);
+                setGoalOptions([]);
                 hookForm.reset();
                 setResponse(null);
               }}
             >
-              Create another goal
+              Close more goals
             </Button>
           </p>
         </Container>
@@ -130,7 +221,21 @@ export default function Close() {
         <h2 className="margin-top-0">Close goals</h2>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <form className="usa-form" onSubmit={hookForm.handleSubmit(onSubmit)}>
+          <form className="usa-form maxw-tablet">
+            <Modal
+              modalRef={modalRef}
+              heading="Close goals"
+            >
+              <p>Are you sure?</p>
+              <Button
+                type="submit"
+                className="margin-right-1"
+                onClick={(e) => hookForm.handleSubmit((data) => onSubmit(data))(e)}
+              >
+                Yes, close goals
+              </Button>
+              <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, go back</ModalToggleButton>
+            </Modal>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="region">
                 Region
@@ -163,7 +268,10 @@ export default function Close() {
                 ))}
               </Dropdown>
               {(group && selectedGroup) && (
-                <>
+                <details className="border border-base-light padding-1 margin-y-1 radius-md">
+                  <summary>
+                    Grants in group
+                  </summary>
                   <ul className="usa-list">
                     {selectedGroup.grants.map((g) => (
                       <li key={`grant${g.id}`}>
@@ -171,14 +279,107 @@ export default function Close() {
                       </li>
                     ))}
                   </ul>
-                  <input type="hidden" name="selectedGrants" id="selectedGrants" value={JSON.stringify(selectedGroup.grants)} ref={register()} />
-                </>
+                </details>
               )}
             </FormGroup>
-            <Button type="submit">Submit</Button>
+            <FormGroup>
+              <Label required htmlFor={selectedGoalInputName}>
+                Select goal to close
+                {' '}
+                <Req />
+                <br />
+                <span className="usa-hint">
+                  All objectives under selected goals
+                  that have appeared on approved activity reports
+                  will be closed also.
+                </span>
+              </Label>
+              <Select
+                required
+                id={selectedGoalInputName}
+                name={selectedGoalInputName}
+                options={goalOptions}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.id}
+                onChange={onUpdateSelectedGoal}
+                value={selectedGoal}
+                styles={selectOptionsReset}
+                onBlur={onBlurSelectedGoal}
+                className="usa-select"
+              />
+            </FormGroup>
+            {selectedGoal && (
+            <div>
+              <details className="border border-base-light padding-1 margin-y-1 radius-md">
+                <summary>
+                  Selected goal details
+                </summary>
+                <ReadOnlyField label="Name">
+                  {selectedGoal.name}
+                </ReadOnlyField>
+                <ReadOnlyField label="Status">
+                  {selectedGoal.status}
+                </ReadOnlyField>
+                <Table stackedStyle="default">
+                  <thead>
+                    <tr>
+                      <th scope="col">Grants</th>
+                      <th scope="col">Has goal?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(selectedGroup ? selectedGroup.grants : []).map((grant) => (
+                      <tr>
+                        <td data-label="Grants">{grant.recipientInfo}</td>
+                        <td data-label="Has goal?" align="center">
+                          {selectedGoal.grantIds.includes(grant.id) ? (
+                            <FontAwesomeIcon icon={faCheckCircle} color={colors.successDarker} />
+                          ) : (
+                            <FontAwesomeIcon icon={faCircleXmark} color={colors.error} />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </details>
+
+              <FormGroup>
+                <Fieldset>
+                  <legend>
+                    Select reason for closing goal
+                    {' '}
+                    <Req />
+                    <br />
+                    <span className="usa-hint">
+                      This will overwrite any existing reasons.
+                    </span>
+                  </legend>
+                  <CloseRadios register={register} />
+                </Fieldset>
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="closeSuspendReasonContext">
+                  Additional context
+                </Label>
+                <Textarea
+                  id="closeSuspendReasonContext"
+                  name="closeSuspendReasonContext"
+                  type="text"
+                  inputRef={register()}
+                />
+              </FormGroup>
+            </div>
+            )}
+
+            <ModalToggleButton
+              modalRef={modalRef}
+            >
+              Close goals
+            </ModalToggleButton>
           </form>
         </FormProvider>
-
       </Container>
     </>
   );

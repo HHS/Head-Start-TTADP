@@ -122,3 +122,8 @@ export const createMultiRecipientGoalsFromAdmin = async (data) => {
   const result = await post((join('/', 'api', 'admin', 'goals')), data);
   return result.json();
 };
+
+export const closeMultiRecipientGoalsFromAdmin = async (data) => {
+  const result = await put((join('/', 'api', 'admin', 'goals', 'close')), data);
+  return result.json();
+};
