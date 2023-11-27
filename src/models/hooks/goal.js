@@ -167,9 +167,9 @@ const propagateName = async (sequelize, instance, options) => {
 const autoPopulateCreator = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
   return currentUserPopulateCollaboratorForType(
+    'goal',
     sequelize,
     options,
-    sequelize.models.Goal,
     goalId,
     GOAL_COLLABORATORS.CREATOR,
   );
@@ -178,9 +178,9 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
 const autoPopulateEditor = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
   return currentUserPopulateCollaboratorForType(
+    'goal',
     sequelize,
     options,
-    sequelize.models.Goal,
     goalId,
     GOAL_COLLABORATORS.EDITOR,
   );
