@@ -8,8 +8,8 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import Goals from '../Goals';
-import AppLoadingContext from '../../../AppLoadingContext';
+import Goals from '../Create';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const REGION_ID = 1;
 
@@ -20,7 +20,7 @@ const promptsUrl = join('/', 'api', 'goal-templates', '1', 'prompts');
 
 const createGoalsUrl = join('/', 'api', 'admin', 'goals');
 
-describe('Goals', () => {
+describe('Create', () => {
   const history = createMemoryHistory();
   const renderGoals = () => {
     render(
@@ -40,7 +40,7 @@ describe('Goals', () => {
       renderGoals();
     });
 
-    expect(await screen.findByRole('heading', { name: 'Goals' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Create goals' })).toBeInTheDocument();
     expect(fetchMock.called(templatesUrl)).toBe(true);
   });
 
