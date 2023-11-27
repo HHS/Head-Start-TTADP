@@ -17,6 +17,7 @@ import {
   getCreatorsByRegion,
   getGroupsByRegion,
   createMultiRecipientGoalsFromAdmin,
+  closeMultiRecipientGoalsFromAdmin,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -146,6 +147,15 @@ describe('Admin', () => {
       const res = { created: true };
       fetchMock.post(join('/', 'api', 'admin', 'goals'), res);
       const created = await createMultiRecipientGoalsFromAdmin({});
+      expect(created).toEqual(res);
+    });
+  });
+
+  describe('closeMultiRecipientGoalsFromAdmin', () => {
+    it('closes goals', async () => {
+      const res = { closed: true };
+      fetchMock.put(join('/', 'api', 'admin', 'goals', 'close'), res);
+      const created = await closeMultiRecipientGoalsFromAdmin({});
       expect(created).toEqual(res);
     });
   });
