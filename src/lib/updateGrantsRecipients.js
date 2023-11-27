@@ -20,7 +20,7 @@ const fs = require('mz/fs');
 
 // TTAHUB-2126
 const grantPatches = new Map([
-  [12128, { stateCode: 'OH' }]
+  [12128, { stateCode: 'OH' }],
 ]);
 
 function valueFromXML(value) {
@@ -31,7 +31,7 @@ function valueFromXML(value) {
 
 /**
  * Retrieves the correct state code for a given grant.
- * 
+ *
  * This function checks if there is a patched state code available for the specified grantId.
  * If a patch exists, it returns the patched state code. Otherwise, it defaults to the
  * original state code provided, processed through valueFromXML.
