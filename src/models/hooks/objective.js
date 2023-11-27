@@ -275,6 +275,7 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
 const autoPopulateCreator = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
   return currentUserPopulateCollaboratorForType(
+    'objective',
     sequelize,
     options,
     sequelize.models.Objective,
@@ -286,9 +287,9 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
 const autoPopulateEditor = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
   return currentUserPopulateCollaboratorForType(
+    'objective',
     sequelize,
     options,
-    sequelize.models.Objective,
     goalId,
     OBJECTIVE_COLLABORATORS.EDITOR,
   );
