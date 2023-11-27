@@ -2949,11 +2949,14 @@ export async function closeMultiRecipientGoalsFromAdmin(data) {
   const { goalIds, status } = selectedGoal;
 
   /**
-   * 1) Complete all objectives
+   * 1) Complete all objectives that have been
+   * on an approved AR
    */
 
   await Objective.update({
     status: OBJECTIVE_STATUS.COMPLETE,
+    closeSuspendReason,
+    closeSuspendContext,
   }, {
     where: {
       goalId: goalIds,
