@@ -4,6 +4,10 @@
  * @param {boolean} [cluster] - Specifies whether to cluster the results. Default value is false.
  * @returns {Promise<Array>} A promise that resolves to an array of similar goals.
  */
+import { auditLogger } from '../logger';
+
+const namespace = 'SERVICE:SIMILARITY';
+
 // eslint-disable-next-line import/prefer-default-export
 export async function similarGoalsForRecipient(recipient_id, cluster) {
   /**
@@ -46,8 +50,14 @@ export async function similarGoalsForRecipient(recipient_id, cluster) {
         }),
       },
     );
+    auditLogger.info(`${namespace} Similarity API response status: ${response.status}, body: ${JSON.stringify(response.body)}`);
+
     return await response.json();
   } catch (error) {
+    auditLogger.error(
+      `${namespace} Similarity API response failure: ${error.message}`,
+      { error },
+    );
     throw new Error(error);
   }
 }
