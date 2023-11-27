@@ -24,8 +24,9 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => (
     `
 );
 
-export function activityNotWithin(dates) {
-  const [startActivityDate, endActivityDate] = dates.split('-');
+export function noActivityWithin(dates) {
+  const [startActivityDate, endActivityDate] = dates[0].split('-');
+  console.log('\n\n\n-----DATEZ:', startActivityDate, endActivityDate);
   return {
     id: {
       [Op.in]: grantsMissingActivitySql(startActivityDate, endActivityDate),
