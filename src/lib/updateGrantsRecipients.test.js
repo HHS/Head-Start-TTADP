@@ -818,7 +818,7 @@ describe('Update grants, program personnel, and recipients', () => {
   it('should set correct state code for grant 12128', async () => {
     const id = 12128;
     await processFiles();
-    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id  });
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
     // simulate updating an existing grant with incorrect state code
     await grantBefore.update({ stateCode: 'PA' }, { individualHooks: true });
     const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
@@ -831,7 +831,7 @@ describe('Update grants, program personnel, and recipients', () => {
   it('should set correct state code for grants', async () => {
     const id = 12129;
     await processFiles();
-    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id  });
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
     // simulate updating an existing grant with incorrect state code
     await grantBefore.update({ stateCode: 'AA' }, { individualHooks: true });
     const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
