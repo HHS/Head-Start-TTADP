@@ -326,7 +326,7 @@ export default function Close() {
                   </thead>
                   <tbody>
                     {(selectedGroup ? selectedGroup.grants : []).map((grant) => (
-                      <tr>
+                      <tr key={uniqueId('grant_table_id_')}>
                         <td data-label="Grants">{grant.recipientInfo}</td>
                         <td data-label="Has goal?" align="center">
                           {selectedGoal.grantIds.includes(grant.id) ? (
