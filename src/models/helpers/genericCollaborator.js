@@ -2,6 +2,19 @@ const { Op } = require('sequelize');
 
 const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
 
+const collaboratorDetails = {
+  goal: {
+    idName: 'goalId',
+    validFor: 'Goal',
+    collaborators: 'GoalCollaborator',
+  },
+  objective: {
+    idName: 'objectiveId',
+    validFor: 'Objective',
+    collaborators: 'ObjectiveCollaborator',
+  },
+};
+
 /**
  * Finds the ID for a given collaborator type in the database.
  *
@@ -11,6 +24,7 @@ const httpContext = require('express-http-context'); // eslint-disable-line impo
  * @returns {Promise<Object>} - A promise that resolves to the found collaborator type ID.
  */
 const getIdForCollaboratorType = async (
+  genericCollaboratorType,
   sequelize,
   transaction,
   typeName,
@@ -24,37 +38,39 @@ const getIdForCollaboratorType = async (
     as: 'validFor',
     required: true,
     attributes: [],
-    where: { name: 'Goals' },
+    where: { name: collaboratorDetails[genericCollaboratorType].validFor },
   }],
   raw: true,
   transaction,
 });
 
 /**
- * Creates a new goal collaborator in the database.
+ * Creates a new entity collaborator in the database.
  *
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} transaction - The transaction object for atomicity.
- * @param {number} goalId - The ID of the goal.
+ * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
- * @returns {Promise<Object>} - A Promise that resolves to the created goal collaborator.
+ * @returns {Promise<Object>} - A Promise that resolves to the created entity collaborator.
  */
-const createGoalCollaborator = async (
+const createCollaborator = async (
+  genericCollaboratorType,
   sequelize,
   transaction,
-  goalId,
+  entityId,
   userId,
   typeName,
   linkBack = null,
 ) => {
   const { id: collaboratorTypeId } = await getIdForCollaboratorType(
+    genericCollaboratorType,
     sequelize,
     transaction,
     typeName,
   );
-  return sequelize.models.GoalCollaborator
+  return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators]
     .create({
-      goalId,
+      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
       userId,
       collaboratorTypeId,
       linkBack,
@@ -62,34 +78,43 @@ const createGoalCollaborator = async (
 };
 
 /**
- * Retrieves a goal collaborator record from the database.
+ * Retrieves a entity collaborator record from the database.
  *
  * @param {object} sequelize - The Sequelize instance.
  * @param {object} transaction - The transaction object.
- * @param {number} goalId - The ID of the goal.
+ * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
- * @returns {Promise<object>} - A promise that resolves to the goal collaborator record.
+ * @returns {Promise<object>} - A promise that resolves to the entity collaborator record.
  */
-const getGoalCollaboratorRecord = async (
+const getCollaboratorRecord = async (
+  genericCollaboratorType,
   sequelize,
   transaction,
-  goalId,
+  entityId,
   userId,
   typeName,
-  // Find the goal collaborator record in the database
-) => sequelize.models.GoalCollaborator.findOne({
-  where: {
-    goalId,
-    userId,
-  },
-  include: [{
-    model: sequelize.models.CollaboratorType,
-    as: 'collaboratorType',
-    required: true,
-    where: { name: typeName },
-    attributes: ['name'],
-  }],
-}, { transaction });
+  // Find the entity collaborator record in the database
+) => sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators]
+  .findOne({
+    where: {
+      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+      userId,
+    },
+    include: [{
+      model: sequelize.models.CollaboratorType,
+      as: 'collaboratorType',
+      required: true,
+      where: { name: typeName },
+      attributes: ['name'],
+      include: [{
+        model: sequelize.models.validFor,
+        as: 'validFor',
+        required: true,
+        attributes: [],
+        where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+      }],
+    }],
+  }, { transaction });
 
 const mergeObjects = (obj1, obj2) => {
   if (obj1 === null && obj2 === null) return null;
@@ -111,43 +136,48 @@ const mergeObjects = (obj1, obj2) => {
 };
 
 /**
- * Finds or creates a goal collaborator record in the database.
+ * Finds or creates a collaborator record in the database.
  *
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} transaction - The transaction object for database operations.
- * @param {number} goalId - The ID of the goal.
+ * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
- * @returns {Promise<Object>} - The goal collaborator record.
+ * @returns {Promise<Object>} - The entity collaborator record.
  */
-const findOrCreateGoalCollaborator = async (
+const findOrCreateCollaborator = async (
+  genericCollaboratorType,
   sequelize,
   transaction,
-  goalId,
+  entityId,
   userId,
   typeName,
   linkBack = null,
 ) => {
-  // Check if a goal collaborator record already exists
-  let collaborator = await getGoalCollaboratorRecord(
+  // Check if a collaborator record already exists
+  let collaborator = await getCollaboratorRecord(
+    genericCollaboratorType,
     sequelize,
     transaction,
-    goalId,
+    entityId,
     userId,
     typeName,
   );
 
   // If no collaborator record found, create a new one
   if (!collaborator) {
-    collaborator = await createGoalCollaborator(
+    collaborator = await createCollaborator(
+      genericCollaboratorType,
       sequelize,
       transaction,
-      goalId,
+      entityId,
       userId,
       typeName,
       linkBack,
     );
   } else {
-    collaborator = await sequelize.models.GoalCollaborator.update(
+    collaborator = await sequelize.models[
+      collaboratorDetails[genericCollaboratorType].collaborators
+    ].update(
       {
         linkBack: mergeObjects(collaborator.dataValues.linkBack, linkBack),
       },
@@ -164,18 +194,19 @@ const findOrCreateGoalCollaborator = async (
 };
 
 /**
- * Populates the collaborator for a specific type of goal for the current user.
+ * Populates the collaborator for a specific type of entity for the current user.
  *
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} options - Additional options for the query.
- * @param {number} goalId - The ID of the goal.
+ * @param {number} entityId - The ID of the entity.
  * @param {string} role - The typeName of the collaborator.
  * @returns {Promise} A promise that resolves to the result of populating the collaborator.
  */
 const currentUserPopulateCollaboratorForType = async (
+  genericCollaboratorType,
   sequelize,
   options,
-  goalId,
+  entityId,
   typeName,
   linkBack = null,
 ) => {
@@ -183,12 +214,13 @@ const currentUserPopulateCollaboratorForType = async (
   const userId = httpContext.get('loggedUser');
   if (!userId && process.env.NODE_ENV !== 'production') return Promise.resolve();
 
-  // Populate the collaborator for the specified type of goal using the current user's
+  // Populate the collaborator for the specified type of entity using the current user's
   // ID and typeName
-  return findOrCreateGoalCollaborator(
+  return findOrCreateCollaborator(
+    genericCollaboratorType,
     sequelize,
     options,
-    goalId,
+    entityId,
     userId,
     typeName,
     linkBack,
@@ -196,18 +228,19 @@ const currentUserPopulateCollaboratorForType = async (
 };
 
 /**
- * Removes collaborators for a specific type and goal from the database.
+ * Removes collaborators for a specific type and entity from the database.
  *
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} options - The options object.
- * @param {number} goalId - The ID of the goal.
+ * @param {number} entityId - The ID of the entity.
  * @param {string} typeName - The name of the collaborator type.
  * @param {Object} linkBack - The link back object.
  */
 const removeCollaboratorsForType = async (
+  genericCollaboratorType,
   sequelize,
   options,
-  goalId,
+  entityId,
   typeName,
   linkBack = null,
 ) => {
@@ -231,10 +264,12 @@ const removeCollaboratorsForType = async (
   // Extract the key-value pair from the linkBack object
   const [[linkBackKey, linkBackValues]] = Object.entries(filteredLinkBack);
 
-  // Find all GoalCollaboratorType records that meet the specified criteria
-  const currentCollaboratorsForType = await sequelize.models.GoalCollaborator.findAll({
+  // Find all entity CollaboratorType records that meet the specified criteria
+  const currentCollaboratorsForType = await sequelize.models[
+    collaboratorDetails[genericCollaboratorType].collaborators
+  ].findAll({
     where: {
-      goalId,
+      [[collaboratorDetails[genericCollaboratorType].idName]]: entityId,
       linkBack: { [Op.contains]: filteredLinkBack },
     },
     include: [
@@ -251,7 +286,7 @@ const removeCollaboratorsForType = async (
           as: 'validFor',
           required: true,
           attributes: [],
-          where: { name: 'Goals' },
+          where: { name: collaboratorDetails[genericCollaboratorType].validFor },
         }],
       },
     ],
@@ -290,10 +325,12 @@ const removeCollaboratorsForType = async (
       return acc;
     }, { updates: [], deletes: [] });
 
-    // Update the GoalCollaboratorType records and delete the specified records
+    // Update the entity CollaboratorType records and delete the specified records
     await Promise.all([
       ...(updates.length > 0
-        ? updates.map(async (update) => sequelize.models.GoalCollaborator.update(
+        ? updates.map(async (update) => sequelize.models[
+          collaboratorDetails[genericCollaboratorType].collaborators
+        ].update(
           { linkBack: update.linkBack },
           {
             where: { id: update.id },
@@ -303,7 +340,9 @@ const removeCollaboratorsForType = async (
         ))
         : [Promise.resolve()]),
       (deletes.length > 0
-        ? sequelize.models.GoalCollaborator.destroy({
+        ? sequelize.models[
+          collaboratorDetails[genericCollaboratorType].collaborators
+        ].destroy({
           where: { id: deletes },
           independentHooks: true,
           transaction: options.transaction,
@@ -314,9 +353,9 @@ const removeCollaboratorsForType = async (
 };
 
 export {
-  createGoalCollaborator,
-  getGoalCollaboratorRecord,
-  findOrCreateGoalCollaborator,
+  createCollaborator,
+  getCollaboratorRecord,
+  findOrCreateCollaborator,
   getIdForCollaboratorType,
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
