@@ -89,7 +89,6 @@ describe('grant filtersToScopes', () => {
       lastLogin: new Date(),
     });
 
-    console.log('\n\n\n-------Create 1');
     await Promise.all(recipients.map((g) => Recipient.create(g)));
     grants = await Promise.all([
       Grant.create({
@@ -161,7 +160,7 @@ describe('grant filtersToScopes', () => {
         inactivationDate: new Date('07/26/2022'),
       }),
     ]);
-    console.log('\n\n\n-------Create 2');
+
     // Create Goals.
     goals = await Promise.all([
       Goal.create({
@@ -213,7 +212,7 @@ describe('grant filtersToScopes', () => {
         id: faker.datatype.number({ min: 64000 }),
       }),
     ]);
-    console.log('\n\n\n-------Create 3');
+
     // Create Activity Reports.
     activityReports = await Promise.all([
       // Before range.
@@ -260,7 +259,6 @@ describe('grant filtersToScopes', () => {
       }),
     ]);
 
-    console.log('\n\n\n-------Create 4');
     // Create Activity Report Goals.
     activityReportGoals = await Promise.all([
       ActivityReportGoal.create({
@@ -288,7 +286,7 @@ describe('grant filtersToScopes', () => {
         goalId: goals[5].id,
       }),
     ]);
-    console.log('\n\n\n-------Create 4');
+
     programs = await Program.bulkCreate([
       {
         id: recipients[0].id,
@@ -328,7 +326,6 @@ describe('grant filtersToScopes', () => {
       },
     ], { validate: true, individualHooks: true });
 
-    console.log('\n\n\n-------Create 5');
     group = await Group.create({
       name: groupName,
       userId: mockUser.id,
@@ -360,65 +357,65 @@ describe('grant filtersToScopes', () => {
       groupId: publicGroup.id,
       grantId: grants[1].id,
     });
-    console.log('\n\n\n-------Create 6');
   });
 
   afterAll(async () => {
-    console.log('\n\n\n-------Destroy 1');
     await ActivityReportGoal.destroy({
       where: {
         id: activityReportGoals.map((arg) => arg.id),
       },
     });
-    console.log('\n\n\n-------Destroy 2');
+
     await ActivityReport.destroy({
       where: {
         id: activityReports.map((ar) => ar.id),
       },
     });
-    console.log('\n\n\n-------Destroy 3');
+
     await Goal.destroy({
       where: {
         id: goals.map((g) => g.id),
       },
+      individualHooks: false,
+      force: true,
     });
-    console.log('\n\n\n-------Destroy 4');
+
     await GroupGrant.destroy({
       where: {
         groupId: [group.id, publicGroup.id],
       },
     });
-    console.log('\n\n\n-------Destroy 5');
+
     await Group.destroy({
       where: {
         userId: [mockUser.id, mockUserTwo.id],
       },
     });
-    console.log('\n\n\n-------Destroy 6');
+
     await User.destroy({
       where: {
         id: mockUser.id,
       },
     });
-    console.log('\n\n\n-------Destroy 7');
+
     await Program.destroy({
       where: {
         id: programs.map((p) => p.id),
       },
     });
-    console.log('\n\n\n-------Destroy 8');
+
     await Grant.destroy({
       where: {
-        recipientId: possibleIds,
+        id: grants.map((g) => g.id),
       },
     });
-    console.log('\n\n\n-------Destroy 9');
+
     await Recipient.destroy({
       where: {
         id: possibleIds,
       },
     });
-    console.log('\n\n\n-------Destroy 10');
+
     await sequelize.close();
   });
 
@@ -487,21 +484,15 @@ describe('grant filtersToScopes', () => {
   describe('noActivityWithin', () => {
     it('within plus inactivation date', async () => {
       const filters = { 'noActivityWithin.win': '2022/03/01-2022/03/31' };
-      const scope = await filtersToScopes(filters, { grant: { subset: true } });
-      let found;
-      try {
-        found = await Grant.findAll({
-          logging: console.log,
-          where: {
-            [Op.and]: [scope.grant, { id: possibleIds }],
-          },
-        });
-      } catch (e) {
-        console.log('\n\n\n-------ERROR:', e);
-      }
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: possibleIds }],
+        },
+      });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([recipients[0].id, recipients[1].id]));
+        .toEqual(expect.arrayContaining([recipients[0].id, recipients[3].id]));
     });
   });
 
