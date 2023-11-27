@@ -169,6 +169,7 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
   return currentUserPopulateCollaboratorForType(
     sequelize,
     options,
+    sequelize.models.Goal,
     goalId,
     GOAL_COLLABORATORS.CREATOR,
   );
@@ -179,6 +180,7 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
   return currentUserPopulateCollaboratorForType(
     sequelize,
     options,
+    sequelize.models.Goal,
     goalId,
     GOAL_COLLABORATORS.EDITOR,
   );
