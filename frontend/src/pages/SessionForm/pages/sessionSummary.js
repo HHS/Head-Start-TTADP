@@ -111,8 +111,8 @@ const SessionSummary = ({ datePickerKey }) => {
   useEffect(() => {
     async function fetchNationalCenters() {
       try {
-        const nationalCenters = await getNationalCenters();
-        setTrainerOptions(nationalCenters);
+        const { centers } = await getNationalCenters();
+        setTrainerOptions(centers);
       } catch (err) {
         setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
         setTrainerOptions([]);

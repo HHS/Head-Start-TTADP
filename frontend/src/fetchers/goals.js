@@ -47,3 +47,11 @@ export async function deleteGoal(goalIds, regionId) {
   const deleted = await destroy(url, { regionId });
   return deleted.json();
 }
+
+export async function mergeGoals(selectedGoalIds, finalGoalId) {
+  const res = await post(join(goalsUrl, 'merge'), {
+    selectedGoalIds,
+    finalGoalId,
+  });
+  return res.json();
+}

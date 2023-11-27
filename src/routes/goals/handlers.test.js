@@ -1,4 +1,9 @@
-import { INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST } from 'http-codes';
+import {
+  INTERNAL_SERVER_ERROR,
+  NOT_FOUND,
+  BAD_REQUEST,
+  UNAUTHORIZED,
+} from 'http-codes';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -8,6 +13,7 @@ import {
   retrieveGoalsByIds,
   deleteGoal,
   createGoalsForReport,
+  mergeGoalHandler,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -17,7 +23,9 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
-} from '../../services/goals';
+  goalRegionsById,
+  mergeGoals,
+} from '../../goalServices/goals';
 import { currentUserId } from '../../services/currentUser';
 
 jest.mock('../../services/users', () => ({
@@ -28,7 +36,7 @@ jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
 }));
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),
@@ -36,6 +44,8 @@ jest.mock('../../services/goals', () => ({
   destroyGoal: jest.fn(),
   createOrUpdateGoalsForActivityReport: jest.fn(),
   goalsByIdsAndActivityReport: jest.fn(),
+  goalRegionsById: jest.fn(),
+  mergeGoals: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -53,6 +63,88 @@ const mockResponse = {
     end: jest.fn(),
   })),
 };
+
+describe('merge goals', () => {
+  it('handles success', async () => {
+    const req = {
+      body: {
+        finalGoalId: 1,
+        selectedGoalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalRegionsById.mockResolvedValue([1]);
+
+    userById.mockResolvedValue({
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      }],
+    });
+
+    mergeGoals.mockResolvedValue({
+      id: 1,
+    });
+
+    await mergeGoalHandler(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({ id: 1 });
+  });
+
+  it('handles unauthorized', async () => {
+    const req = {
+      body: {
+        finalGoalId: 1,
+        selectedGoalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalRegionsById.mockResolvedValue([1]);
+
+    userById.mockResolvedValue({
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      }],
+    });
+
+    await mergeGoalHandler(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+  });
+
+  it('handles errors', async () => {
+    const req = {
+      body: {
+        finalGoalId: 1,
+        selectedGoalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalRegionsById.mockResolvedValue([1]);
+    userById.mockResolvedValue({
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      }],
+    });
+
+    mergeGoals.mockRejectedValue(new Error('Unauthorized'));
+
+    await mergeGoalHandler(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
 
 describe('retrieve goal', () => {
   it('checks permissions', async () => {
