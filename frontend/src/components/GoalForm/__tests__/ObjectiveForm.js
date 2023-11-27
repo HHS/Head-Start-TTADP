@@ -20,8 +20,8 @@ describe('ObjectiveForm', () => {
   const defaultObjective = {
     title: 'This is an objective',
     files: [],
-    suspendReason: '',
-    suspendContext: '',
+    closeSuspendReason: '',
+    closeSuspendContext: '',
     topics: [
       {
         id: 1,

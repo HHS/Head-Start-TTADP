@@ -90,8 +90,8 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'Objective status': objective.status,
         ...(objective.status === 'Suspended' ? {
           'Reason suspended': (
-            objective.suspendReason || ''
-          ) + (` - ${objective.suspendContext}` || ''),
+            objective.closeSuspendReason || ''
+          ) + (` - ${objective.closeSuspendContext}` || ''),
         } : {}),
       },
       isStriped,

@@ -15,8 +15,8 @@ export default function ObjectiveStatus({
   onChangeStatus,
   onBlur,
   inputName,
-  suspendReason,
-  suspendContext,
+  closeSuspendContext,
+  closeSuspendReason,
 }) {
   return (
     <>
@@ -41,8 +41,8 @@ export default function ObjectiveStatus({
       </Label>
       <ObjectiveStatusSuspendReason
         status={status}
-        suspendReason={suspendReason}
-        suspendContext={suspendContext}
+        closeSuspendReason={closeSuspendReason}
+        closeSuspendContext={closeSuspendContext}
       />
     </>
   );
@@ -53,8 +53,8 @@ ObjectiveStatus.propTypes = {
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   onBlur: PropTypes.func.isRequired,
-  suspendReason: PropTypes.string.isRequired,
-  suspendContext: PropTypes.string.isRequired,
+  closeSuspendReason: PropTypes.string.isRequired,
+  closeSuspendContext: PropTypes.string.isRequired,
 };
 
 ObjectiveStatus.defaultProps = {

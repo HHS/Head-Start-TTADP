@@ -77,12 +77,12 @@ const RecipientReviewSection = () => {
                         {' '}
                         {objective.status}
                       </div>
-                      { objective.status === 'Suspended' && objective.suspendReason && (
+                      { objective.status === 'Suspended' && objective.closeSuspendReason && (
                         <div className="margin-top-1">
                           <span className="text-bold">Reason suspended:</span>
                           {' '}
-                          {objective.suspendReason}
-                          {objective.suspendContext && (` - ${objective.suspendContext}`)}
+                          {objective.closeSuspendReason}
+                          {objective.closeSuspendContext && (` - ${objective.closeSuspendContext}`)}
                         </div>
                       )}
                       <div className="margin-top-1">
