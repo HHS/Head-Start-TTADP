@@ -169,7 +169,7 @@ export default function Close() {
         isError: true,
         message: 'An error occurred while creating the goals.',
       });
-      modalRef.current.close();
+      modalRef.current.toggleModal();
     } finally {
       setIsAppLoading(false);
     }
@@ -373,7 +373,7 @@ export default function Close() {
             <ModalToggleButton
               modalRef={modalRef}
             >
-              Close goals
+              Submit
             </ModalToggleButton>
           </form>
         </FormProvider>
