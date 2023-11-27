@@ -347,7 +347,7 @@ export default function Close() {
               <FormGroup>
                 <Fieldset>
                   <legend>
-                    Select reason for closing goal
+                    Select reason for closing goal and objectives
                     {' '}
                     <Req />
                     <br />
