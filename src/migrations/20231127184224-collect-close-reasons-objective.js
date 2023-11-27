@@ -9,8 +9,7 @@ module.exports = {
       await queryInterface.renameColumn('Objectives', 'suspendReason', 'closeSuspendReason', { transaction });
       await addValuesToEnumIfTheyDontExist(
         queryInterface,
-        'Objectives',
-        'closeSuspendReason',
+        'enum_Objectives_suspendReason',
         CLOSE_SUSPEND_REASONS,
       );
 
@@ -18,8 +17,7 @@ module.exports = {
       await queryInterface.renameColumn('ActivityReportObjectives', 'suspendReason', 'closeSuspendReason', { transaction });
       await addValuesToEnumIfTheyDontExist(
         queryInterface,
-        'Objectives',
-        'closeSuspendReason',
+        'enum_ActivityReportObjectives_suspendReason',
         CLOSE_SUSPEND_REASONS,
       );
 
