@@ -292,8 +292,8 @@ export default function Close() {
                 </span>
               </Label>
               <Select
+                inputId={selectedGoalInputName}
                 required
-                id={selectedGoalInputName}
                 name={selectedGoalInputName}
                 options={goalOptions}
                 getOptionLabel={(option) => option.name}
