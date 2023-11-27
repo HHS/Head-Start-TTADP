@@ -9,7 +9,7 @@ import {
   closeMultiRecipientGoalsFromAdmin,
 } from '../../goalServices/goals';
 
-const namespace = 'ADMIN:GROUPS';
+const namespace = 'ADMIN:GOALS';
 const logContext = { namespace };
 
 /**
