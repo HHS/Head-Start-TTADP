@@ -20,6 +20,7 @@ import {
   Table,
   Textarea,
   Radio,
+  Alert,
   ModalToggleButton,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
@@ -167,7 +168,7 @@ export default function Close() {
       console.log(err);
       setResponse({
         isError: true,
-        message: 'An error occurred while creating the goals.',
+        message: 'An error occurred while closing the goals.',
       });
       modalRef.current.toggleModal();
     } finally {
@@ -368,6 +369,11 @@ export default function Close() {
                 />
               </FormGroup>
             </div>
+            )}
+            {(response && response.isError) && (
+              <Alert type="error">
+                {response.message}
+              </Alert>
             )}
 
             <ModalToggleButton
