@@ -2,7 +2,7 @@ const { GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
-} = require('../helpers/goalCollaborator');
+} = require('../helpers/genericCollaborator');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -51,6 +51,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
 const autoPopulateLinker = async (sequelize, instance, options) => {
   const { id: goalId, activityReportId } = instance;
   return currentUserPopulateCollaboratorForType(
+    'goal',
     sequelize,
     options,
     goalId,
@@ -62,6 +63,7 @@ const autoPopulateLinker = async (sequelize, instance, options) => {
 const autoCleanupLinker = async (sequelize, instance, options) => {
   const { id: goalId, activityReportId } = instance;
   return removeCollaboratorsForType(
+    'goal',
     sequelize,
     options,
     goalId,
