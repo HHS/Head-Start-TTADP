@@ -815,6 +815,32 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(recipient.name).toBe('Entity name');
   });
 
+  it('should set correct state code for grant 12128', async () => {
+    const id = 12128;
+    await processFiles();
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id  });
+    // simulate updating an existing grant with incorrect state code
+    await grantBefore.update({ stateCode: 'PA' }, { individualHooks: true });
+    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('PA');
+    await processFiles();
+    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithCorrectStateCode.stateCode).toEqual('OH');
+  });
+
+  it('should set correct state code for grants', async () => {
+    const id = 12129;
+    await processFiles();
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id  });
+    // simulate updating an existing grant with incorrect state code
+    await grantBefore.update({ stateCode: 'AA' }, { individualHooks: true });
+    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('AA');
+    await processFiles();
+    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithCorrectStateCode.stateCode).toEqual('TN');
+  });
+
   it('should update an existing recipient if it exists in smarthub', async () => {
     const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
     await processFiles();
