@@ -93,7 +93,7 @@ describe('supportingAttachments', () => {
       expect(await screen.findByText(/upload any relevant attachments, such as:/i)).toBeVisible();
       expect(await screen.findByText(/meetings agendas/i)).toBeVisible();
       expect(await screen.findByText(/sign-in or attendance sheets/i)).toBeVisible();
-      expect(await screen.findByText(/other items not available online/i)).toBeVisible();
+      expect(await screen.findByText(/other non-resource items not available online/i)).toBeVisible();
       expect(await screen.findByText(/example: \.doc, \.pdf, \.txt, \.csv \(max size 30 mb\)/i)).toBeVisible();
     });
   });
