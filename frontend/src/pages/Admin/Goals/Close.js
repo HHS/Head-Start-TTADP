@@ -87,14 +87,10 @@ export default function Close() {
     mode: 'onBlur',
     defaultValues: {
       region: null,
-      createReport: false,
-      creator: null,
       group: null,
-      goalText: '',
-      useCuratedGoal: false,
-      goalSource: '',
-      goalDate: '',
-      templateId: null,
+      closeSuspendReason: '',
+      closeSuspendContext: null,
+      selectedGoal: null,
     },
   });
 
