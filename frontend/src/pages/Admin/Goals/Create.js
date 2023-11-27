@@ -217,7 +217,7 @@ export default function Create() {
         <h2 className="margin-top-0">Create goals</h2>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <form className="usa-form" onSubmit={hookForm.handleSubmit(onSubmit)}>
+          <form className="usa-form maxw-tablet" onSubmit={hookForm.handleSubmit(onSubmit)}>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="region">
                 Region
