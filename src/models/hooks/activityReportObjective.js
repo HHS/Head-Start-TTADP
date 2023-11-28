@@ -58,7 +58,7 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
   return removeCollaboratorsForType(
     'objective',
     sequelize,
-    options,
+    options.transaction,
     objectiveId,
     OBJECTIVE_COLLABORATORS.LINKER,
     { activityReportIds: [activityReportId] },
