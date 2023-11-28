@@ -1,14 +1,14 @@
 const {
-  createGoalCollaborator,
-  getGoalCollaboratorRecord,
-  findOrCreateGoalCollaborator,
+  createCollaborator,
+  getCollaboratorRecord,
+  findOrCreateCollaborator,
   getIdForCollaboratorType,
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
-} = require('../goalCollaborator');
+} = require('../genericCollaborator');
 
-describe('GoalCollaborator', () => {
-  describe('createGoalCollaborator', () => {
+describe('GenericCollaborator', () => {
+  describe('createCollaborator', () => {
     it('should create a new goal collaborator in the database', async () => {
       // Mock Sequelize instance and transaction
       const sequelize = {
@@ -30,7 +30,7 @@ describe('GoalCollaborator', () => {
       const linkBack = null;
 
       // Call the function
-      await createGoalCollaborator(sequelize, transaction, goalId, userId, typeName, linkBack);
+      await createCollaborator('goal', sequelize, transaction, goalId, userId, typeName, linkBack);
 
       // Verify that the create method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.create).toHaveBeenCalledWith(
@@ -45,7 +45,7 @@ describe('GoalCollaborator', () => {
     });
   });
 
-  describe('getGoalCollaboratorRecord', () => {
+  describe('getCollaboratorRecord', () => {
     it('should retrieve a goal collaborator record from the database', async () => {
       // Mock Sequelize instance and transaction
       const sequelize = {
@@ -64,7 +64,7 @@ describe('GoalCollaborator', () => {
       const typeName = 'type';
 
       // Call the function
-      await getGoalCollaboratorRecord(sequelize, transaction, goalId, userId, typeName);
+      await getCollaboratorRecord('goal', sequelize, transaction, goalId, userId, typeName);
 
       // Verify that the findOne method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.findOne).toHaveBeenCalledWith({
@@ -79,13 +79,20 @@ describe('GoalCollaborator', () => {
             required: true,
             where: { name: typeName },
             attributes: ['name'],
+            include: [{
+              model: sequelize.models.validFor,
+              as: 'validFor',
+              required: true,
+              attributes: [],
+              where: { name: 'Goals' },
+            }],
           },
         ],
       }, { transaction });
     });
   });
 
-  describe('findOrCreateGoalCollaborator', () => {
+  describe('findOrCreateCollaborator', () => {
     it('should find or create a goal collaborator record in the database', async () => {
       // Mock Sequelize instance and transaction
       const sequelize = {
@@ -108,7 +115,8 @@ describe('GoalCollaborator', () => {
       const linkBack = null;
 
       // Call the function
-      await findOrCreateGoalCollaborator(
+      await findOrCreateCollaborator(
+        'goal',
         sequelize,
         transaction,
         goalId,
@@ -148,7 +156,7 @@ describe('GoalCollaborator', () => {
       const typeName = 'type';
 
       // Call the function
-      await getIdForCollaboratorType(sequelize, transaction, typeName);
+      await getIdForCollaboratorType('goal', sequelize, transaction, typeName);
 
       // Verify that the findOne method is called with the correct arguments
       expect(sequelize.models.CollaboratorType.findOne).toHaveBeenCalledWith({
@@ -198,7 +206,7 @@ describe('GoalCollaborator', () => {
       const transaction = {};
 
       // Call the function
-      await removeCollaboratorsForType(sequelize, { transaction }, goalId, typeName, linkBack);
+      await removeCollaboratorsForType('goal', sequelize, { transaction }, goalId, typeName, linkBack);
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).toHaveBeenCalledWith({
@@ -236,7 +244,7 @@ describe('GoalCollaborator', () => {
       const transaction = {};
 
       // Call the function
-      await removeCollaboratorsForType(sequelize, { transaction }, goalId, typeName, null);
+      await removeCollaboratorsForType('goal', sequelize, { transaction }, goalId, typeName, null);
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).not.toHaveBeenCalled();
@@ -269,6 +277,7 @@ describe('GoalCollaborator', () => {
 
       // Call the function
       await removeCollaboratorsForType(
+        'goal',
         sequelize,
         { transaction },
         goalId,
