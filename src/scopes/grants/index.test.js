@@ -165,8 +165,8 @@ describe('grant filtersToScopes', () => {
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Active',
-        startDate: new Date('08/01/2021'),
-        endDate: new Date('08/01/2023'),
+        startDate: new Date('08/03/2022'),
+        endDate: new Date('08/03/2022'),
         programSpecialistName: 'Joe Bob',
         stateCode: 'AR',
       }),
@@ -449,7 +449,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: possibleIds }],
+          [Op.and]: [scope.grant, { id: grants.map((g) => g.id) }],
         },
       });
       expect(found.length).toBe(2);
