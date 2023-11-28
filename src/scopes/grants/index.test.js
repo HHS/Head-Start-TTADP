@@ -481,9 +481,9 @@ describe('grant filtersToScopes', () => {
     });
   });
 
-  describe('noActivityWithin', () => {
+  describe('recipientsWithoutTTA', () => {
     it('within plus inactivation date', async () => {
-      const filters = { 'noActivityWithin.win': '2022/03/01-2022/03/31' };
+      const filters = { 'recipientsWithoutTTA.win': '2022/03/01-2022/03/31' };
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {

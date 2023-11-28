@@ -2,11 +2,13 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
+/*
+  Determine what grants have activity reports within the given date range.
+  From that list of grants, determine which grants are not in that list (no activity).
+  OVERLAPS excludes matches on the start and end dates, so we add and subtract a day.
+*/
 const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequelize.literal(
   `
-    -- Determine what grants have activity reports within the given date range.
-    -- From that list of grants, determine which grants are not in that list (no activity).
-    -- OVERLAPS excludes matches on the start and end dates, so we add and subtract a day.
     (WITH activity AS (
       SELECT
         g."id" AS used_grant_id
