@@ -38,6 +38,7 @@ export const topicToQuery = {
   },
   recipientsWithoutTTA: {
     win: (query) => noActivityWithin(query),
+    in: (query) => noActivityWithin(query),
   },
   region: {
     in: (query) => withRegion(query),
