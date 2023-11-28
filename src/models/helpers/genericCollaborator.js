@@ -34,7 +34,7 @@ const getIdForCollaboratorType = async (
     name: typeName,
   },
   include: [{
-    model: sequelize.models.validFor,
+    model: sequelize.models.ValidFor,
     as: 'validFor',
     required: true,
     attributes: [],
@@ -109,7 +109,7 @@ const getCollaboratorRecord = async (
       where: { name: typeName },
       attributes: ['name'],
       include: [{
-        model: sequelize.models.validFor,
+        model: sequelize.models.ValidFor,
         as: 'validFor',
         required: true,
         attributes: [],
