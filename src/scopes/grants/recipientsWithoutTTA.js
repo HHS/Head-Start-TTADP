@@ -13,12 +13,10 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequ
       SELECT
         g."id" AS used_grant_id
       FROM "Grants" g
-      JOIN "Goals" gl
-        ON g.id = gl."grantId"
-      JOIN "ActivityReportGoals" arg
-        ON gl.id = arg."goalId"
+      JOIN "ActivityRecipients" arr
+        ON g.id = arr."grantId"
       JOIN "ActivityReports" ar
-        ON arg."activityReportId" = ar.id
+        ON arr."activityReportId" = ar.id
       WHERE (ar."startDate", ar."endDate") OVERLAPS (DATE ${sequelize.escape(beginActivityDate)} - 1, DATE ${sequelize.escape(finishActivityDate)} + 1)
       )
       SELECT
