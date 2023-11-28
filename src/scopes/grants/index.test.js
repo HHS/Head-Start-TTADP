@@ -6,12 +6,11 @@ import {
   Recipient,
   Grant,
   ActivityReport,
-  Goal,
-  ActivityReportGoal,
   Program,
   User,
   Group,
   GroupGrant,
+  ActivityRecipient,
   sequelize,
 } from '../../models';
 
@@ -68,8 +67,7 @@ describe('grant filtersToScopes', () => {
   let grantGroupTwo;
   let grants;
   let activityReports;
-  let goals;
-  let activityReportGoals;
+  let activityRecipients;
   let programs;
 
   beforeAll(async () => {
@@ -161,58 +159,6 @@ describe('grant filtersToScopes', () => {
       }),
     ]);
 
-    // Create Goals.
-    goals = await Promise.all([
-      Goal.create({
-        name: 'AR activity goal 1',
-        status: 'In Progress',
-        timeframe: '12 months',
-        grantId: grants[0].id,
-        isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
-      }),
-      Goal.create({
-        name: 'AR activity goal 2',
-        status: 'In Progress',
-        timeframe: '12 months',
-        grantId: grants[1].id,
-        isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
-      }),
-      Goal.create({
-        name: 'AR activity goal 3',
-        status: 'In Progress',
-        timeframe: '12 months',
-        grantId: grants[2].id,
-        isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
-      }),
-      Goal.create({
-        name: 'AR activity goal 4',
-        status: 'In Progress',
-        timeframe: '12 months',
-        grantId: grants[3].id,
-        isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
-      }),
-      Goal.create({
-        name: 'AR activity goal 5',
-        status: 'In Progress',
-        timeframe: '12 months',
-        grantId: grants[4].id,
-        isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
-      }),
-      Goal.create({
-        name: 'AR activity goal 6',
-        status: 'In Progress',
-        timeframe: '12 months',
-        grantId: grants[5].id,
-        isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
-      }),
-    ]);
-
     // Create Activity Reports.
     activityReports = await Promise.all([
       // Before range.
@@ -260,30 +206,30 @@ describe('grant filtersToScopes', () => {
     ]);
 
     // Create Activity Report Goals.
-    activityReportGoals = await Promise.all([
-      ActivityReportGoal.create({
+    activityRecipients = await Promise.all([
+      ActivityRecipient.create({
         activityReportId: activityReports[0].id,
-        goalId: goals[0].id,
+        grantId: grants[0].id,
       }),
-      ActivityReportGoal.create({
+      ActivityRecipient.create({
         activityReportId: activityReports[1].id,
-        goalId: goals[1].id,
+        grantId: grants[1].id,
       }),
-      ActivityReportGoal.create({
+      ActivityRecipient.create({
         activityReportId: activityReports[2].id,
-        goalId: goals[2].id,
+        grantId: grants[2].id,
       }),
-      ActivityReportGoal.create({
+      ActivityRecipient.create({
         activityReportId: activityReports[3].id,
-        goalId: goals[3].id,
+        grantId: grants[3].id,
       }),
-      ActivityReportGoal.create({
+      ActivityRecipient.create({
         activityReportId: activityReports[4].id,
-        goalId: goals[4].id,
+        grantId: grants[4].id,
       }),
-      ActivityReportGoal.create({
+      ActivityRecipient.create({
         activityReportId: activityReports[5].id,
-        goalId: goals[5].id,
+        grantId: grants[5].id,
       }),
     ]);
 
@@ -360,9 +306,9 @@ describe('grant filtersToScopes', () => {
   });
 
   afterAll(async () => {
-    await ActivityReportGoal.destroy({
+    await ActivityRecipient.destroy({
       where: {
-        id: activityReportGoals.map((arg) => arg.id),
+        id: activityRecipients.map((ar) => ar.id),
       },
     });
 
@@ -370,14 +316,6 @@ describe('grant filtersToScopes', () => {
       where: {
         id: activityReports.map((ar) => ar.id),
       },
-    });
-
-    await Goal.destroy({
-      where: {
-        id: goals.map((g) => g.id),
-      },
-      individualHooks: false,
-      force: true,
     });
 
     await GroupGrant.destroy({
