@@ -5,12 +5,14 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
+  ObjectiveCollaborator,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -28,12 +30,14 @@ import {
   Topic,
   Program,
   File,
+  CollaboratorType,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
   GOAL_STATUS,
   SOURCE_FIELD,
   CREATION_METHOD,
+  GOAL_COLLABORATORS,
 } from '../constants';
 import {
   cacheObjectiveMetadata,
@@ -42,6 +46,7 @@ import {
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
+import { findOrCreateCollaborator } from '../models/helpers/genericCollaborator';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2463,6 +2468,18 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
     );
   });
 
+  objective.objectiveCollaborators.forEach((oc) => {
+    updatesToRelatedModels.push(findOrCreateCollaborator(
+      'objective',
+      sequelize,
+      null,
+      newObjective.id,
+      oc.userId,
+      oc.collaboratorType.name,
+      oc.linkBack,
+    ));
+  });
+
   // for topics, resources, and files, we need to create new ones
   // that copy the old
   objective.objectiveTopics.forEach((ot) => {
@@ -2565,9 +2582,29 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
         attributes: ['id', 'resourceId'],
       },
       {
+        model: GoalCollaborator,
+        as: 'goalCollaborators',
+        required: false,
+        include: [{
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          attributes: ['name'],
+        }],
+      },
+      {
         model: Objective,
         as: 'objectives',
         include: [
+          {
+            model: ObjectiveCollaborator,
+            as: 'objectiveCollaborators',
+            required: false,
+            include: [{
+              model: CollaboratorType,
+              as: 'collaboratorType',
+              attributes: ['name'],
+            }],
+          },
           {
             model: ObjectiveFile,
             as: 'objectiveFiles',
@@ -2701,6 +2738,19 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
         goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
         response: gfr.response,
       }, { individualHooks: true }));
+    });
+    g.goalCollaborators.forEach((gc) => {
+      updatesToRelatedModels.push(findOrCreateCollaborator(
+        'goal',
+        sequelize,
+        null,
+        g.id,
+        gc.userId,
+        gc.collaboratorType.name !== GOAL_COLLABORATORS.CREATOR
+          ? gc.collaboratorType.name
+          : GOAL_COLLABORATORS.EDITOR,
+        gc.linkBack,
+      ));
     });
   });
 
