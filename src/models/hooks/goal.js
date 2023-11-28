@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
-} = require('../helpers/goalCollaborator');
+} = require('../helpers/genericCollaborator');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
