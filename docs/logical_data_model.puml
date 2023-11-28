@@ -479,6 +479,17 @@ class NextSteps{
  completeDate : date
 }
 
+class ObjectiveCollaborators{
+ * id : integer : <generated>
+ * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
+ * objectiveId : integer : REFERENCES "Objectives".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+ linkBack : jsonb
+}
+
 class ObjectiveFiles{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
@@ -1372,6 +1383,20 @@ class ZALNextSteps{
  session_sig : text
 }
 
+class ZALObjectiveCollaborators{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALObjectiveFiles{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1854,6 +1879,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResource
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : mapsToCollaboratorType, mapsFromCollaboratorTypes
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goalCollaborator, collaboratorType
+CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objectiveCollaborator, collaboratorType
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
@@ -1893,6 +1919,7 @@ ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateRe
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : objectiveTemplate, objectiveTemplateTopics
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, originalObjective, activityReportObjectives, reassignedActivityReportObjectives
+Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objective, objectiveCollaborators
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
@@ -1938,6 +1965,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, comm
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
+Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
@@ -1959,7 +1987,8 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objective
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, collaboratorTypes
-CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, collaboratorTypes
+CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, collaboratorTypes
+CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Users : usersThroughGoalCollaborator, usersThroughObjectiveCollaborators, collaboratorTypes, collaboratorTypesThroughObjectiveCollaborator
 CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
@@ -1976,6 +2005,7 @@ ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resourc
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectiveTemplates
 Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectives
 Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectives
+Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, objectives
 Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
