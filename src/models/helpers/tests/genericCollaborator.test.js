@@ -206,7 +206,7 @@ describe('GenericCollaborator', () => {
       const transaction = {};
 
       // Call the function
-      await removeCollaboratorsForType('goal', sequelize, { transaction }, goalId, typeName, linkBack);
+      await removeCollaboratorsForType('goal', sequelize, transaction, goalId, typeName, linkBack);
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).toHaveBeenCalledWith({
