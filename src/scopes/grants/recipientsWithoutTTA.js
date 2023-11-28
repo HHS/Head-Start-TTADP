@@ -11,23 +11,27 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequ
   `
     (WITH activity AS (
       SELECT
-        g."id" AS used_grant_id
+        DISTINCT g."recipientId" AS used_recipient_id
       FROM "Grants" g
       JOIN "ActivityRecipients" arr
         ON g.id = arr."grantId"
       JOIN "ActivityReports" ar
         ON arr."activityReportId" = ar.id
-      WHERE (ar."startDate", ar."endDate") OVERLAPS (DATE ${sequelize.escape(beginActivityDate)} - 1, DATE ${sequelize.escape(finishActivityDate)} + 1)
+      WHERE
+        (ar."startDate", ar."endDate")
+          OVERLAPS
+        (DATE ${sequelize.escape(beginActivityDate)} - 1, DATE ${sequelize.escape(finishActivityDate)} + 1)
       )
       SELECT
         g."id"
       FROM "Grants" g
-      WHERE g."id" NOT IN (SELECT used_grant_id FROM  activity))
+      WHERE g."recipientId" NOT IN (SELECT used_recipient_id FROM  activity))
     `,
 );
 
 export function noActivityWithin(dates) {
   const [startActivityDate, endActivityDate] = dates[0].split('-');
+  console.log('\n\n\n----VALUES Dates: ', startActivityDate, endActivityDate);
   return {
     id: {
       [Op.in]: grantsMissingActivitySql(startActivityDate, endActivityDate),
