@@ -106,7 +106,7 @@ module.exports = {
       // https://github.com/sequelize/sequelize/issues/9934
       await queryInterface.sequelize.query(`
           ALTER TABLE "ObjectiveCollaborators"
-          ADD CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_unique" UNIQUE ("objectiveId", "userId");
+          ADD CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_unique" UNIQUE ("objectiveId", "userId", "collaboratorTypeId");
       `, { transaction });
       //---------------------------------------------------------------------------------
       const collectObjectiveCollaborators = (source, typeName) => /* sql */`
@@ -144,7 +144,8 @@ module.exports = {
       ON CONFLICT
       (
         "objectiveId",
-        "userId"
+        "userId",
+        "collaboratorTypeId"
       )
       DO UPDATE SET
         "updatedAt" = EXCLUDED."updatedAt",
