@@ -54,7 +54,6 @@ export function grantsFiltersToScopes(filters, options, userId) {
   const isSubset = options && options.subset;
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    console.log('\n\n\n----VALUES: ', topic, condition, query);
     if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
       return condition in topicToQuery.activeWithin;
     }

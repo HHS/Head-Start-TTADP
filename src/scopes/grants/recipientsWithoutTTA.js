@@ -31,7 +31,7 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequ
 
 export function noActivityWithin(dates) {
   const [startActivityDate, endActivityDate] = dates[0].split('-');
-  console.log('\n\n\n----VALUES Dates: ', startActivityDate, endActivityDate);
+
   return {
     id: {
       [Op.in]: grantsMissingActivitySql(startActivityDate, endActivityDate),
