@@ -157,6 +157,19 @@ describe('grant filtersToScopes', () => {
         stateCode: 'AK',
         inactivationDate: new Date('07/26/2022'),
       }),
+      // Use same recipient as above (both should be excluded).
+      Grant.create({
+        // Set id to a faker value to ensure it is not used.
+        id: faker.datatype.number(),
+        number: String(faker.datatype.number({ min: 2800 })),
+        regionId: 1,
+        recipientId: recipients[1].id,
+        status: 'Active',
+        startDate: new Date('08/01/2021'),
+        endDate: new Date('08/01/2023'),
+        programSpecialistName: 'Joe Bob',
+        stateCode: 'AR',
+      }),
     ]);
 
     // Create Activity Reports.
@@ -203,6 +216,13 @@ describe('grant filtersToScopes', () => {
         startDate: new Date('02/01/2022'),
         endDate: new Date('03/01/2022'),
       }),
+      // Report outside of range, but grant is used by another activity report that is in range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('01/01/2021'),
+        endDate: new Date('03/01/2021'),
+      }),
     ]);
 
     // Create Activity Report Goals.
@@ -230,6 +250,10 @@ describe('grant filtersToScopes', () => {
       ActivityRecipient.create({
         activityReportId: activityReports[5].id,
         grantId: grants[5].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[6].id,
+        grantId: grants[6].id,
       }),
     ]);
 
