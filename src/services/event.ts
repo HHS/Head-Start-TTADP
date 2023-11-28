@@ -3,7 +3,6 @@ import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
 import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
-import SCOPES from '../middleware/scopeConstants';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import {
@@ -17,7 +16,6 @@ const {
   EventReportPilot,
   SessionReportPilot,
   User,
-  Permission,
 } = db;
 
 const validateFields = (request, requiredFields) => {

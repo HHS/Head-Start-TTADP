@@ -28,7 +28,7 @@ import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
-import { useDisplayGroups } from './utils';
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -66,13 +66,6 @@ const defaultDateValues = {
   'is within': '',
   'is on or after': '',
   'is on or before': '',
-};
-
-export const fixQueryWhetherStringOrArray = (query) => {
-  if (Array.isArray(query)) {
-    return query.join(', ');
-  }
-  return query;
 };
 
 export const startDateFilter = {
