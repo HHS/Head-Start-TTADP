@@ -170,7 +170,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const totalGrants = await Grant.unscoped().findAll({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    expect(totalGrants.length).toBe(15);
+    expect(totalGrants.length).toBe(17);
   });
 
   it('should import or update program personnel', async () => {
@@ -813,6 +813,32 @@ describe('Update grants, program personnel, and recipients', () => {
     const recipient = await Recipient.findOne({ where: { id: 628 } });
     expect(recipient).not.toBeNull();
     expect(recipient.name).toBe('Entity name');
+  });
+
+  it('should set correct state code for grant 12128', async () => {
+    const id = 12128;
+    await processFiles();
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    // simulate updating an existing grant with incorrect state code
+    await grantBefore.update({ stateCode: 'PA' }, { individualHooks: true });
+    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('PA');
+    await processFiles();
+    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithCorrectStateCode.stateCode).toEqual('OH');
+  });
+
+  it('should set correct state code for grants', async () => {
+    const id = 12129;
+    await processFiles();
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    // simulate updating an existing grant with incorrect state code
+    await grantBefore.update({ stateCode: 'AA' }, { individualHooks: true });
+    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('AA');
+    await processFiles();
+    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithCorrectStateCode.stateCode).toEqual('TN');
   });
 
   it('should update an existing recipient if it exists in smarthub', async () => {
