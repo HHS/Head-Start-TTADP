@@ -944,7 +944,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           .map(async ({ goalId }) => currentUserPopulateCollaboratorForType(
             'goal',
             sequelize, // The 'sequelize' variable
-            options, // The 'options' variable
+            options.transaction, // The 'options' variable
             goalId, // The 'goalId' from the current iteration of the 'goals' array
             userId, // The 'userId' from the current iteration of the new array
             GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
@@ -961,7 +961,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           .map(async ({ objectiveId }) => currentUserPopulateCollaboratorForType(
             'objective',
             sequelize, // The 'sequelize' variable
-            options, // The 'options' variable
+            options.transaction, // The 'options' variable
             objectiveId, // The 'objectiveId' from the current iteration of the 'objectives' array
             userId, // The 'userId' from the current iteration of the new array
             OBJECTIVE_COLLABORATORS.UTILIZER, // The 'OBJECTIVE_COLLABORATORS.UTILIZER' constant
