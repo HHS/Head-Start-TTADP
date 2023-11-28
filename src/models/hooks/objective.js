@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
+
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
