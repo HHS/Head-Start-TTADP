@@ -5,12 +5,12 @@ const httpContext = require('express-http-context'); // eslint-disable-line impo
 const collaboratorDetails = {
   goal: {
     idName: 'goalId',
-    validFor: 'Goal',
+    validFor: 'Goals',
     collaborators: 'GoalCollaborator',
   },
   objective: {
     idName: 'objectiveId',
-    validFor: 'Objective',
+    validFor: 'Objectives',
     collaborators: 'ObjectiveCollaborator',
   },
 };
@@ -205,13 +205,13 @@ const findOrCreateCollaborator = async (
 const currentUserPopulateCollaboratorForType = async (
   genericCollaboratorType,
   sequelize,
-  options,
+  transaction,
   entityId,
   typeName,
   linkBack = null,
 ) => {
   // Get the ID of the currently logged in user
-  const userId = httpContext.get('loggedUser');
+  const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
   if (!userId && process.env.NODE_ENV !== 'production') return Promise.resolve();
 
   // Populate the collaborator for the specified type of entity using the current user's
@@ -219,7 +219,7 @@ const currentUserPopulateCollaboratorForType = async (
   return findOrCreateCollaborator(
     genericCollaboratorType,
     sequelize,
-    options,
+    transaction,
     entityId,
     userId,
     typeName,
@@ -239,7 +239,7 @@ const currentUserPopulateCollaboratorForType = async (
 const removeCollaboratorsForType = async (
   genericCollaboratorType,
   sequelize,
-  options,
+  transaction,
   entityId,
   typeName,
   linkBack = null,
@@ -290,7 +290,7 @@ const removeCollaboratorsForType = async (
         }],
       },
     ],
-    transaction: options.transaction,
+    transaction,
   });
 
   if (currentCollaboratorsForType) {
@@ -335,7 +335,7 @@ const removeCollaboratorsForType = async (
           {
             where: { id: update.id },
             independentHooks: true,
-            transaction: options.transaction,
+            transaction,
           },
         ))
         : [Promise.resolve()]),
@@ -345,7 +345,7 @@ const removeCollaboratorsForType = async (
         ].destroy({
           where: { id: deletes },
           independentHooks: true,
-          transaction: options.transaction,
+          transaction,
         })
         : Promise.resolve()),
     ]);
