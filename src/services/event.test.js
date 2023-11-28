@@ -458,10 +458,15 @@ describe('event service', () => {
     const email = 'smartsheetevents@ss.com';
     const audience = 'Recipients';
     const vision = 'To learn';
-    const nationalCenters = 'ABC\nDEF\nGHI';
+    const nationalCenters = `"ABC
+    DEF
+    GHI"`;
     const duration = 'Series';
-    const targetPopulation = 'Dogs\nCats\nMice';
-    const reasons = 'Reason 1\nReason 2';
+    const targetPopulation = `"Dogs
+    Cats
+    Mice"`;
+    const reasons = `"Reason 1
+    Reason 2"`;
     const organizer = 'Dumbledore';
 
     const headings = ['Sheet Name', 'Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'National Center(s) Requested', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
