@@ -218,7 +218,7 @@ module.exports = {
       // https://github.com/sequelize/sequelize/issues/9934
       await queryInterface.sequelize.query(`
           ALTER TABLE "GoalCollaborators"
-          ADD CONSTRAINT "GoalCollaborators_goalId_userId_unique" UNIQUE ("goalId", "userId");
+          ADD CONSTRAINT "GoalCollaborators_goalId_userId_collaboratorTypeId_unique" UNIQUE ("goalId", "userId", "collaboratorTypeId");
       `, { transaction });
       //---------------------------------------------------------------------------------
       const collectGoalCollaborators = (source, typeName) => /* sql */`
@@ -255,7 +255,8 @@ module.exports = {
       ON CONFLICT
       (
         "goalId",
-        "userId"
+        "userId",
+        "collaboratorTypeId"
       )
       DO UPDATE SET
         "updatedAt" = EXCLUDED."updatedAt",
@@ -345,7 +346,7 @@ module.exports = {
         AND zarg.dml_type = 'INSERT'
         AND zarg.dml_as NOT IN (-1, 0)
         GROUP BY 1,2
-        UNION 
+        UNION
         SELECT
         arg."goalId",
         ar."userId",
