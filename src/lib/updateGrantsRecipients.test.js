@@ -170,7 +170,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const totalGrants = await Grant.unscoped().findAll({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    expect(totalGrants.length).toBe(15);
+    expect(totalGrants.length).toBe(17);
   });
 
   it('should import or update program personnel', async () => {
