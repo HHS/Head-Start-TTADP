@@ -549,3 +549,4 @@ describe('createOrUpdateGoals', () => {
     expect(updatedObjective2.suspendReason).toBe('Recipient request');
     expect(updatedObjective2.suspendContext).toBe('Yeah, they just asked');
   });
+});
