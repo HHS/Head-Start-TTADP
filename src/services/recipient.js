@@ -212,9 +212,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
 
-  console.log('\n\n\n-----BEFORE123');
   const rows = await Recipient.findAll({
-    logging: console.log,
     attributes: [
       [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
       sequelize.literal('STRING_AGG(DISTINCT "grants"."programSpecialistName", \', \' order by "grants"."programSpecialistName") as "programSpecialists"'),
@@ -282,7 +280,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
     offset,
     order: orderRecipientsBy(sortBy, direction),
   });
-  console.log('\n\n\n-----AFTER123');
+
   // handle zero results
   const firstRow = rows[0];
   const count = firstRow ? firstRow.count : 0;
