@@ -159,7 +159,10 @@ module.exports = {
         "updatedAt";
       `;
 
-      const collectObjectiveCollaboratorsViaAuditLog = (dmlType, typeName) => collectObjectiveCollaborators(
+      const collectObjectiveCollaboratorsViaAuditLog = (
+        dmlType,
+        typeName,
+      ) => collectObjectiveCollaborators(
         /* sql */`
         SELECT
           data_id "objectiveId",
