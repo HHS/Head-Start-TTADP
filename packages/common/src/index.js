@@ -259,3 +259,37 @@ const ALERT_SIZES = {
     LARGE: 'large'
 };
 exports.ALERT_SIZES = ALERT_SIZES;
+
+const COMMUNICATION_METHODS = [
+  'Email',
+  'Phone',
+  'In person',
+  'Virtual',
+];
+
+exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
+
+const COMMUNICATION_PURPOSES = [
+  'CLASS',
+  'FEI',
+  'Monitoring',
+  'New TTA request',
+  'Program Specialist or Regional Office meeting',
+  'Program Specialist\'s Monthly contact',
+  'Program Specialist\'s site visit',
+  'Recipient question/feedback',
+  'RTTAPA updates',
+  'RTTAPA Initial Plan / New Recipient',
+  'TTA planning or scheduling',
+];
+
+exports.COMMUNICATION_PURPOSES = COMMUNICATION_PURPOSES;
+
+const COMMUNICATION_RESULTS = [
+  'New TTA accepted',
+  'New TTA declined',
+  'RTTAPA declined',
+  'Next Steps identified',
+];
+
+exports.COMMUNICATION_RESULTS = COMMUNICATION_RESULTS;

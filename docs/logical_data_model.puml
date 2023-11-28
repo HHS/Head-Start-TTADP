@@ -197,6 +197,14 @@ class CollaboratorRoles{
  * updatedAt : timestamp with time zone
 }
 
+class CommunicationLogFiles{
+ * id : integer : <generated>
+ * communicationLogId : integer : REFERENCES "CommunicationLogs".id
+ * fileId : integer : REFERENCES "Files".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class CommunicationLogs{
  * id : integer : <generated>
  * recipientId : integer : REFERENCES "Recipients".id
@@ -408,8 +416,16 @@ class MaintenanceLogs{
  isSuccessful : boolean
 }
 
+class NationalCenterUsers{
+ * id : integer : <generated>
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class NationalCenters{
- * id : bigint : <generated>
+ * id : integer : <generated>
  mapsTo : integer : REFERENCES "NationalCenters".id
  * createdAt : timestamp with time zone
  * name : text
@@ -683,6 +699,14 @@ class SessionReportPilotFiles{
  * updatedAt : timestamp with time zone
 }
 
+class SessionReportPilotSupportingAttachments{
+ * id : integer : <generated>
+ * fileId : integer : REFERENCES "Files".id
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class SessionReportPilots{
  * id : integer : <generated>
  * eventId : integer : REFERENCES "EventReportPilots".id
@@ -780,6 +804,7 @@ enum enum_Users_flags {
  communication_log
  goal_source
  merge_goals
+ monitoring
  regional_goal_dashboard
  resources_dashboard
  rttapa_form
@@ -982,6 +1007,20 @@ class ZALActivityReports{
 }
 
 class ZALCollaboratorRoles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCommunicationLogFiles{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1205,6 +1244,20 @@ class ZALMailerLogs{
 }
 
 class ZALMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALNationalCenterUsers{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1540,6 +1593,20 @@ class ZALSessionReportPilotFiles{
  session_sig : text
 }
 
+class ZALSessionReportPilotSupportingAttachments{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALSessionReportPilots{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1712,12 +1779,15 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
+Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
+Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
@@ -1738,6 +1808,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPerso
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
@@ -1778,6 +1849,7 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : sessionReport, sessionSupportingAttachments
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics
@@ -1788,6 +1860,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : us
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
+Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
@@ -1806,14 +1879,16 @@ ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activ
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
+CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
-Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, files
+Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
+NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectiveTemplates
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectiveTemplates
