@@ -121,6 +121,7 @@ module.exports = {
           JOIN "ValidFor" vf
           ON ct."validForId" = vf.id
           WHERE ct.name = '${typeName}'
+          AND vf.name = 'Objectives'
         )
       INSERT INTO "ObjectiveCollaborators"
       (
@@ -161,20 +162,21 @@ module.exports = {
       const collectObjectiveCollaboratorsViaAuditLog = (dmlType, typeName) => collectObjectiveCollaborators(
         /* sql */`
         SELECT
-            data_id "objectiveId",
-            dml_as "userId",
-            MIN(g."createdAt") "createdAt",
-            MIN(g."createdAt") "updatedAt",
-            null::JSONB "linkBack"
-          FROM "ZALObjectives" zg
-          LEFT JOIN "Users" u
-          ON zg.dml_as = u.id
-          JOIN "Objectives" g
-          ON zg.data_id = g.id
-          WHERE dml_as NOT IN (-1, 0) -- default and migration files
-          AND dml_type = '${dmlType}'
-          AND new_row_data -> 'name' IS NOT NULL
-          GROUP BY 1,2
+          data_id "objectiveId",
+          dml_as "userId",
+          MIN(g."createdAt") "createdAt",
+          MIN(g."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALObjectives" zg
+        LEFT JOIN "Users" u
+        ON zg.dml_as = u.id
+        JOIN "Objectives" g
+        ON zg.data_id = g.id
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = '${dmlType}'
+        AND new_row_data -> 'name' IS NOT NULL
+        GROUP BY 1,2
+        ORDER BY 1,2
         `,
         typeName,
       );
@@ -201,7 +203,7 @@ module.exports = {
         GROUP BY 1
         HAVING (ARRAY_AGG(ar."userId" ORDER BY ar.id ASC))[1] IS NOT NULL
         AND MIN(ar."createdAt") IS NOT NULL
-        ORDER BY 1
+        ORDER BY 1,2
         `,
         OBJECTIVE_COLLABORATORS.CREATOR,
       );
