@@ -80,7 +80,7 @@ describe('GenericCollaborator', () => {
             where: { name: typeName },
             attributes: ['name'],
             include: [{
-              model: sequelize.models.validFor,
+              model: sequelize.models.ValidFor,
               as: 'validFor',
               required: true,
               attributes: [],
@@ -165,7 +165,7 @@ describe('GenericCollaborator', () => {
         },
         include: [
           {
-            model: sequelize.models.validFor,
+            model: sequelize.models.ValidFor,
             as: 'validFor',
             required: true,
             attributes: [],
