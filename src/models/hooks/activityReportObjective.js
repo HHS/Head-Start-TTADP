@@ -46,7 +46,7 @@ const autoPopulateLinker = async (sequelize, instance, options) => {
   return currentUserPopulateCollaboratorForType(
     'objective',
     sequelize,
-    options,
+    options.transaction,
     objectiveId,
     OBJECTIVE_COLLABORATORS.LINKER,
     { activityReportIds: [activityReportId] },
