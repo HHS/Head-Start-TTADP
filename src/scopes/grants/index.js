@@ -8,7 +8,7 @@ import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGroup, withoutGroup } from './group';
-import { noActivityWithin } from './noActivityWithin';
+import { noActivityWithin } from './recipientsWithoutTTA';
 
 export const topicToQuery = {
   recipient: {
@@ -36,7 +36,7 @@ export const topicToQuery = {
     win: (query) => activeWithinDates(query),
     in: (query) => activeWithinDates(query),
   },
-  noActivityWithin: {
+  recipientsWithoutTTA: {
     win: (query) => noActivityWithin(query),
   },
   region: {
