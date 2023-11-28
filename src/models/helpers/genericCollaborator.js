@@ -41,7 +41,7 @@ const getIdForCollaboratorType = async (
     where: { name: collaboratorDetails[genericCollaboratorType].validFor },
   }],
   raw: true,
-  transaction,
+  ...(transaction && { transaction }),
 });
 
 /**
@@ -74,7 +74,9 @@ const createCollaborator = async (
       userId,
       collaboratorTypeId,
       linkBack,
-    }, { transaction });
+    }, {
+      ...(transaction && { transaction }),
+    });
 };
 
 /**
@@ -114,7 +116,9 @@ const getCollaboratorRecord = async (
         where: { name: collaboratorDetails[genericCollaboratorType].validFor },
       }],
     }],
-  }, { transaction });
+  }, {
+    ...(transaction && { transaction }),
+  });
 
 const mergeObjects = (obj1, obj2) => {
   if (obj1 === null && obj2 === null) return null;
@@ -183,7 +187,7 @@ const findOrCreateCollaborator = async (
       },
       {
         where: { id: collaborator.dataValues.id },
-        transaction,
+        ...(transaction && { transaction }),
         independentHooks: true,
         returning: true,
       },
@@ -290,7 +294,7 @@ const removeCollaboratorsForType = async (
         }],
       },
     ],
-    transaction,
+    ...(transaction && { transaction }),
   });
 
   if (currentCollaboratorsForType) {
@@ -335,7 +339,7 @@ const removeCollaboratorsForType = async (
           {
             where: { id: update.id },
             independentHooks: true,
-            transaction,
+            ...(transaction && { transaction }),
           },
         ))
         : [Promise.resolve()]),
@@ -345,7 +349,7 @@ const removeCollaboratorsForType = async (
         ].destroy({
           where: { id: deletes },
           independentHooks: true,
-          transaction,
+          ...(transaction && { transaction }),
         })
         : Promise.resolve()),
     ]);
