@@ -95,7 +95,7 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'collaboratorTypeId',
           otherKey: 'userId',
           through: models.GoalCollaborator,
-          as: 'usersThroughGoalCollaborator',
+          as: 'usersThroughGoalCollaborators',
         },
       );
 
@@ -107,7 +107,7 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'userId',
           otherKey: 'collaboratorTypeId',
           through: models.GoalCollaborator,
-          as: 'collaboratorTypes',
+          as: 'collaboratorTypesThroughGoalCollaborator',
         },
       );
 
