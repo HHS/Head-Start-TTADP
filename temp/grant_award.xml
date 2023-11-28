@@ -228,4 +228,31 @@
   <inactivation_date>2022-07-31</inactivation_date>
   <inactivation_reason>Replaced</inactivation_reason>
 </grant_award>
+<grant_award>
+  <grant_award_id>12128</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>5</region_id>
+  <grant_number>05CH011696</grant_number>
+  <grantee_state>PA</grantee_state>
+  <grant_start_date>2020-07-01</grant_start_date>
+  <grant_end_date>2025-06-30</grant_end_date>
+  <annual_funding_month>December</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Von Felseck School of Ohio, LLC</grantee_name>
+  <grant_status>Active</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+</grant_award>
+<grant_award>
+  <grant_award_id>12129</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>4</region_id>
+  <grant_number>04CH011636</grant_number>
+  <grantee_state>TN</grantee_state>
+  <grant_start_date>2020-07-01</grant_start_date>
+  <grant_end_date>2025-06-30</grant_end_date>
+  <annual_funding_month>July</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Government of Devon</grantee_name>
+  <acquired_from_cdi>false</acquired_from_cdi>
+</grant_award>
 </grant_awards>
