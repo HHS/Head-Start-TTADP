@@ -581,6 +581,7 @@ export async function activityReports(
   },
   excludeLegacy = false,
   userId = 0,
+  ids = [],
 ) {
   const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
@@ -592,6 +593,11 @@ export async function activityReports(
   if (excludeLegacy) {
     where.legacyId = { [Op.eq]: null };
   }
+
+  if (ids && ids.length) {
+    where.id = { [Op.in]: ids };
+  }
+
   const reports = await ActivityReport.findAndCountAll(
     {
       where,

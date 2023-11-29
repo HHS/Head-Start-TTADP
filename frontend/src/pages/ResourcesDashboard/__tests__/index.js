@@ -485,7 +485,9 @@ describe('Resources Dashboard page', () => {
     act(() => userEvent.selectOptions(lastCondition, 'contains'));
 
     const reportIdText = await screen.findByRole('textbox', { name: /enter a report id/i });
-    act(() => fireEvent.change(reportIdText, { target: { value: '123' } }));
+    act(() => {
+      fireEvent.change(reportIdText, { target: { value: '123' } });
+    });
 
     apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
     act(() => userEvent.click(apply));
@@ -548,7 +550,7 @@ describe('Resources Dashboard page', () => {
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Topics/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Topics/i })).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
