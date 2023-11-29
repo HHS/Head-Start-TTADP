@@ -467,6 +467,11 @@ jobs:
           command: |
             npx playwright install
       - run:
+          name: Monitor database
+          command: |
+            docker attach postgres_docker
+          background: true
+      - run:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
