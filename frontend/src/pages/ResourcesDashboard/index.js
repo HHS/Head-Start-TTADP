@@ -20,11 +20,13 @@ import ResourceUse from '../../widgets/ResourceUse';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
 import { fetchResourceData } from '../../fetchers/Resources';
-
+import { downloadReports } from '../../fetchers/activityReports';
+import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
+import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -33,6 +35,7 @@ const defaultDate = formatDateRange({
 });
 
 const FILTER_KEY = 'regional-resources-dashboard-filters';
+
 export default function ResourcesDashboard() {
   const { user } = useContext(UserContext);
   const ariaLiveContext = useContext(AriaLiveContext);
@@ -124,6 +127,9 @@ export default function ResourcesDashboard() {
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
+  const { activityReports } = resourcesData;
+  const { count: reportsCount, rows: reports } = activityReports || {};
+
   useEffect(() => {
     async function fetcHResourcesData() {
       setIsLoading(true);
@@ -146,6 +152,65 @@ export default function ResourcesDashboard() {
     // Call resources fetch.
     fetcHResourcesData();
   }, [filtersToApply]);
+
+  const handleDownloadAllReports = async (
+    setIsDownloading,
+    setDownloadError,
+    downloadAllButtonRef,
+  ) => {
+    const filterQuery = filtersToQueryString(filters);
+    const downloadURL = getAllReportsDownloadURL(filterQuery);
+
+    try {
+      // changed the way this works ever so slightly because I was thinking
+      // you'd want a try/catch around the fetching of the reports and not the
+      // window.location.assign
+      setIsDownloading(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      setDownloadError(true);
+    } finally {
+      setIsDownloading(false);
+      downloadAllButtonRef.current.focus();
+    }
+  };
+
+  const handleDownloadClick = async (
+    reportCheckboxes,
+    setIsDownloading,
+    setDownloadError,
+    downloadSelectedButtonRef,
+  ) => {
+    const toDownloadableReportIds = (accumulator, entry) => {
+      if (!reports) return accumulator;
+      const [key, value] = entry;
+      if (value === false) return accumulator;
+      accumulator.push(key);
+      return accumulator;
+    };
+
+    const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
+    if (downloadable.length) {
+      const downloadURL = getReportsDownloadURL(downloadable);
+      try {
+        setIsDownloading(true);
+        const blob = await downloadReports(downloadURL);
+        const csv = URL.createObjectURL(blob);
+        window.location.assign(csv);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log(err);
+        setDownloadError(true);
+      } finally {
+        setIsDownloading(false);
+        downloadSelectedButtonRef.current.focus();
+      }
+    }
+  };
 
   return (
     <div className="ttahub-resources-dashboard">
@@ -199,6 +264,24 @@ export default function ResourcesDashboard() {
           loading={isLoading}
           resetPagination={resetPagination}
           setResetPagination={setResetPagination}
+        />
+        <ReportsTable
+          loading={isLoading}
+          reports={reports || []}
+          sortConfig={{
+            sortBy: 'updatedAt',
+            direction: 'desc',
+            activePage: 1,
+          }}
+          handleDownloadAllReports={handleDownloadAllReports}
+          handleDownloadClick={handleDownloadClick}
+          setSortConfig={() => {}}
+          offset={0}
+          setOffset={() => {}}
+          tableCaption="Activity Reports"
+          exportIdPrefix="activity-reports"
+          reportsCount={reportsCount || 0}
+          activePage={1}
         />
       </>
     </div>
