@@ -24,6 +24,9 @@ DB_HOST = os.environ.get("DOCKER_INTERNAL_HOST") or os.environ.get("POSTGRES_HOS
 DB_NAME = os.environ.get("POSTGRES_DB") or (vcap_credentials and vcap_credentials.get('db_name'))
 PORT = (vcap_credentials and vcap_credentials.get('port')) or 5432
 
+# Clean the password, converting @ to %40:
+DB_PASSWORD = DB_PASSWORD.replace("@", "%40")
+
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{PORT}/{DB_NAME}"
 
