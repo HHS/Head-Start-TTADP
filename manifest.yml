@@ -35,6 +35,7 @@ applications:
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
       NODE_MODULES_CACHE: false
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
+      SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))

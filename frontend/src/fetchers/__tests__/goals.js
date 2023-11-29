@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock';
-import { updateGoalStatus, mergeGoals } from '../goals';
+import { updateGoalStatus, mergeGoals, similarity } from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
@@ -24,6 +24,12 @@ describe('goals fetcher', () => {
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     }]);
     await updateGoalStatus([4598], 'In Progress');
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('retrieves similarity', async () => {
+    fetchMock.get('/api/goals/similar/123?cluster=true', { res: 'ok' });
+    await similarity(123);
     expect(fetchMock.called()).toBeTruthy();
   });
 });
