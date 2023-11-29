@@ -18,9 +18,10 @@ const collaboratorDetails = {
 /**
  * Finds the ID for a given collaborator type in the database.
  *
+ * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} transaction - The transaction object.
- * @param {string} typeName - The name of the collaborator type to find.
+ * @param {string} typeName - The name of the collaborator type.
  * @returns {Promise<Object>} - A promise that resolves to the found collaborator type ID.
  */
 const getIdForCollaboratorType = async (
@@ -47,10 +48,13 @@ const getIdForCollaboratorType = async (
 /**
  * Creates a new entity collaborator in the database.
  *
+ * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} transaction - The transaction object for atomicity.
  * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
+ * @param {string} typeName - The name of the collaborator type.
+ * @param {Object} linkBack - The link back object.
  * @returns {Promise<Object>} - A Promise that resolves to the created entity collaborator.
  */
 const createCollaborator = async (
@@ -82,10 +86,12 @@ const createCollaborator = async (
 /**
  * Retrieves a entity collaborator record from the database.
  *
+ * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {object} sequelize - The Sequelize instance.
  * @param {object} transaction - The transaction object.
  * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
+ * @param {string} typeName - The name of the collaborator type.
  * @returns {Promise<object>} - A promise that resolves to the entity collaborator record.
  */
 const getCollaboratorRecord = async (
@@ -142,10 +148,13 @@ const mergeObjects = (obj1, obj2) => {
 /**
  * Finds or creates a collaborator record in the database.
  *
+ * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} transaction - The transaction object for database operations.
  * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
+ * @param {string} typeName - The name of the collaborator type.
+ * @param {Object} linkBack - The link back object.
  * @returns {Promise<Object>} - The entity collaborator record.
  */
 const findOrCreateCollaborator = async (
@@ -200,10 +209,12 @@ const findOrCreateCollaborator = async (
 /**
  * Populates the collaborator for a specific type of entity for the current user.
  *
+ * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} options - Additional options for the query.
  * @param {number} entityId - The ID of the entity.
- * @param {string} role - The typeName of the collaborator.
+ * @param {string} typeName - The name of the collaborator type.
+ * @param {Object} linkBack - The link back object.
  * @returns {Promise} A promise that resolves to the result of populating the collaborator.
  */
 const currentUserPopulateCollaboratorForType = async (
@@ -234,6 +245,7 @@ const currentUserPopulateCollaboratorForType = async (
 /**
  * Removes collaborators for a specific type and entity from the database.
  *
+ * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} options - The options object.
  * @param {number} entityId - The ID of the entity.
