@@ -7,7 +7,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import {
-  Alert, Button, Checkbox, FormGroup, TextInput,
+  Alert, Button, Checkbox, FormGroup, TextInput, Radio,
 } from '@trussworks/react-uswds';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
@@ -33,33 +33,54 @@ export const GROUP_FIELD_NAMES = {
   NAME: 'new-group-name',
   RECIPIENTS: 'select-recipients-new-group',
   IS_PRIVATE: 'is-private',
+  CO_OWNERS: 'co-owners',
+  INDIVIDUALS: 'individuals',
+  SHARE_WITH_EVERYONE: 'share-with-everyone',
 };
 
 export default function MyGroups({ match }) {
-  const { groupId } = match.params;
-  const [recipients, setRecipients] = useState([]);
-  const [error, setError] = useState(null);
-  const history = useHistory();
-  const [recipientsFetched, setRecipientsFetched] = useState(false);
-
-  // see the comment above "onSubmit" for, well, context
-  const { myGroups, setMyGroups } = useContext(MyGroupsContext);
-
-  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
-
   const {
     control,
     handleSubmit,
     setValue,
     setError: setFormError,
     errors: formErrors,
+    watch,
   } = useForm({
     defaultValues: {
       [GROUP_FIELD_NAMES.NAME]: '',
       [GROUP_FIELD_NAMES.RECIPIENTS]: [],
       [GROUP_FIELD_NAMES.IS_PRIVATE]: true,
+      [GROUP_FIELD_NAMES.CO_OWNERS]: [],
+      [GROUP_FIELD_NAMES.INDIVIDUALS]: [],
+      [GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE]: 'everyone',
     },
   });
+
+  const watchIsPrivate = watch(GROUP_FIELD_NAMES.IS_PRIVATE);
+  const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
+
+  const { groupId } = match.params;
+  const [recipients, setRecipients] = useState([]);
+  const [coOwners, setCoOwners] = useState([]);
+  const [individuals, setIndividuals] = useState([]);
+  const [shareWithEveryone, setShareWithEveryone] = useState(true);
+  const [error, setError] = useState(null);
+  const history = useHistory();
+  const [recipientsFetched, setRecipientsFetched] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(watchIsPrivate);
+
+  // see the comment above "onSubmit" for, well, context
+  const { myGroups, setMyGroups } = useContext(MyGroupsContext);
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+
+  useEffect(() => {
+    setIsPrivate(watchIsPrivate);
+  }, [watchIsPrivate]);
+
+  useEffect(() => {
+    setShareWithEveryone(watchShareWithEveryone);
+  }, [watchShareWithEveryone]);
 
   useEffect(() => {
     async function getGroup() {
@@ -70,6 +91,9 @@ export default function MyGroups({ match }) {
           setValue(GROUP_FIELD_NAMES.NAME, existingGroupData.name);
           setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapGrants(existingGroupData.grants));
           setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !existingGroupData.isPublic);
+          setValue(GROUP_FIELD_NAMES.CO_OWNERS, []);
+          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, []);
+          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, 'everyone');
         }
       } catch (err) {
         setError('There was an error fetching your group');
@@ -178,6 +202,9 @@ export default function MyGroups({ match }) {
                 {' '}
                 <Req />
               </label>
+              <span className="usa-hint margin-bottom-1">
+                Use a unique and descriptive name.
+              </span>
               {nameError && <span className="usa-error-message">{nameError.message}</span>}
               <Controller
                 control={control}
@@ -186,7 +213,7 @@ export default function MyGroups({ match }) {
                   <TextInput
                     id={GROUP_FIELD_NAMES.NAME}
                     name={GROUP_FIELD_NAMES.NAME}
-                    className="margin-top-0"
+                    className="margin-top-1"
                     onChange={(e) => {
                       controllerOnChange(e.target.value);
                     }}
@@ -214,26 +241,97 @@ export default function MyGroups({ match }) {
               />
             </label>
           </div>
-
-          <div className="margin-top-4 display-flex flex-align-end">
-            <Controller
-              control={control}
-              name={GROUP_FIELD_NAMES.IS_PRIVATE}
-              render={({ onChange: controllerOnChange, value }) => (
-                <>
-                  <Checkbox
-                    id={GROUP_FIELD_NAMES.IS_PRIVATE}
-                    name={GROUP_FIELD_NAMES.IS_PRIVATE}
-                    className="margin-0"
-                    onChange={(e) => controllerOnChange(e.target.checked)}
-                    label="Keep this group private."
-                    checked={value}
-                    disabled={isAppLoading}
+          <div className="margin-top-4">
+            <h2 className="margin-bottom-2">Group permissions</h2>
+            <div className="margin-top-3 display-flex flex-align-end flex-align-center">
+              <Controller
+                control={control}
+                name={GROUP_FIELD_NAMES.IS_PRIVATE}
+                render={({ onChange: controllerOnChange, value }) => (
+                  <>
+                    <Checkbox
+                      id={GROUP_FIELD_NAMES.IS_PRIVATE}
+                      name={GROUP_FIELD_NAMES.IS_PRIVATE}
+                      className="margin-0"
+                      onChange={(e) => controllerOnChange(e.target.checked)}
+                      label="Keep this group private."
+                      checked={value}
+                      disabled={isAppLoading}
+                    />
+                    <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
+                  </>
+                )}
+              />
+            </div>
+            {!isPrivate && (
+              <div className="margin-top-4">
+                <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
+                  Add co-owner
+                  {' '}
+                  <Req />
+                </label>
+                <span className="usa-hint">
+                  Choose up to 3 co-owners who can change permissions and edit the group.
+                </span>
+                <MultiSelect
+                  name={GROUP_FIELD_NAMES.CO_OWNERS}
+                  options={coOwners}
+                  control={control}
+                  simple={false}
+                  required="Select at least one"
+                  disabled={isAppLoading}
+                />
+                <div className="margin-top-4">
+                  <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
+                    Who do you want to share this group with?
+                    <QuestionTooltip text="Shared groups can be seen and used by others but only you and co-owners can edit the group." />
+                  </label>
+                  <Controller
+                    control={control}
+                    name={GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE}
+                    render={({ onChange: controllerOnChange, value }) => (
+                      <>
+                        <Radio
+                          label="Everyone with access to my region"
+                          id="everyone-with-access"
+                          name="everyone-with-access"
+                          checked={value === 'everyone'}
+                          onChange={() => controllerOnChange('everyone')}
+                          disabled={isAppLoading}
+                        />
+                        <Radio
+                          label="Individuals in my region"
+                          id="individuals-in-my-region"
+                          name="individuals-in-my-region"
+                          checked={value === 'individuals'}
+                          onChange={() => controllerOnChange('individuals')}
+                          disabled={isAppLoading}
+                        />
+                      </>
+                    )}
                   />
-                  <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
-                </>
-              )}
-            />
+                </div>
+                {
+                  shareWithEveryone === 'individuals' && (
+                    <div className="margin-top-4">
+                      <label htmlFor={GROUP_FIELD_NAMES.INDIVIDUALS} className="display-block margin-bottom-1">
+                        Invite individuals
+                        {' '}
+                        <Req />
+                      </label>
+                      <MultiSelect
+                        name={GROUP_FIELD_NAMES.INDIVIDUALS}
+                        options={individuals}
+                        control={control}
+                        simple={false}
+                        required="Select at least one"
+                        disabled={isAppLoading}
+                      />
+                    </div>
+                  )
+                }
+              </div>
+            )}
           </div>
 
           {error && (
