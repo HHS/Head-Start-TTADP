@@ -20,7 +20,7 @@ vcap_credentials = get_postgres_credentials_from_vcap()
 
 DB_USERNAME = os.environ.get("POSTGRES_USERNAME") or (vcap_credentials and vcap_credentials.get('username'))
 DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or (vcap_credentials and vcap_credentials.get('password'))
-DB_HOST = os.environ.get("POSTGRES_HOST") or (vcap_credentials and vcap_credentials.get('host'))
+DB_HOST = os.environ.get("DOCKER_INTERNAL_HOST") or os.environ.get("POSTGRES_HOST") or (vcap_credentials and vcap_credentials.get('host'))
 DB_NAME = os.environ.get("POSTGRES_DB") or (vcap_credentials and vcap_credentials.get('db_name'))
 PORT = (vcap_credentials and vcap_credentials.get('port')) or 5432
 
