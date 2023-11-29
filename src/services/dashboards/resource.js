@@ -977,8 +977,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   let reportsMap = mergeInResources(new Map(), dbData.allReports);
   const reportIds = Array.from(reportsMap.keys());
 
-  console.log({ reportIds });
-
   delete dbData.allReports;
   /*
   let reportsMap = mergeInResources(new Map(), dbData.viaReport);
