@@ -18,7 +18,7 @@ const { collectModelData } = require('../../lib/awsElasticSearch/datacollector')
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
 const {
-  currentUserPopulateCollaboratorForType,
+  findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 
@@ -940,8 +940,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       // Use flatMap to iterate over each element in the new array asynchronously
         .flatMap(async ({ userId }) => goals
           // Use map to iterate over each element in the 'goals' array asynchronously
-          // Call the 'currentUserPopulateCollaboratorForType' function with the following arguments
-          .map(async ({ goalId }) => currentUserPopulateCollaboratorForType(
+          // Call the 'findOrCreateCollaborator' function with the following arguments
+          .map(async ({ goalId }) => findOrCreateCollaborator(
             'goal',
             sequelize, // The 'sequelize' variable
             options.transaction, // The 'options' variable
@@ -957,8 +957,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       // Use flatMap to iterate over each element in the new array asynchronously
         .flatMap(async ({ userId }) => objectives
           // Use map to iterate over each element in the 'objectives' array asynchronously
-          // Call the 'currentUserPopulateCollaboratorForType' function with the following arguments
-          .map(async ({ objectiveId }) => currentUserPopulateCollaboratorForType(
+          // Call the 'findOrCreateCollaborator' function with the following arguments
+          .map(async ({ objectiveId }) => findOrCreateCollaborator(
             'objective',
             sequelize, // The 'sequelize' variable
             options.transaction, // The 'options' variable
