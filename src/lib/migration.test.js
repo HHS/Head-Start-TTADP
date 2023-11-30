@@ -1,4 +1,10 @@
-const { prepMigration, setAuditLoggingState, removeTables } = require('./migration');
+const {
+  prepMigration,
+  setAuditLoggingState,
+  removeTables,
+  replaceValueInArray,
+  replaceValueInJSONBArray,
+} = require('./migration');
 
 describe('prepMigration', () => {
   const queryInterface = {
@@ -130,5 +136,76 @@ describe('removeTables', () => {
 
     // Check that no tables were truncated
     expect(queryInterface.truncate).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe('replaceValueInArray', () => {
+  let queryInterface;
+  const table = 'test_table';
+  const column = 'test_column';
+  const oldValue = 'old_value';
+  const newValue = 'new_value';
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  it('should call the update query with the correct SQL', async () => {
+    await replaceValueInArray(queryInterface, table, column, oldValue, newValue);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
+  UPDATE "${table}"
+  SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
+  WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
+`);
+  });
+});
+
+describe('replaceValueInJSONBArray', () => {
+  let queryInterface;
+  const table = 'test_table';
+  const column = 'test_column';
+  const field = 'test_field';
+  const oldValue = 'old_value';
+  const newValue = 'new_value';
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  it('should call the update query with the correct SQL', async () => {
+    await replaceValueInJSONBArray(queryInterface, table, column, field, oldValue, newValue);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
+  UPDATE "${table}"
+  SET
+    "${column}" = (
+      SELECT
+        JSONB_SET(
+          "${column}",
+          '{${field}}',
+          (
+            SELECT
+              jsonb_agg(
+                CASE
+                  WHEN value::text = '"${oldValue}"'
+                    THEN '"${newValue}"'::jsonb
+                  ELSE value
+                END
+              )
+            FROM jsonb_array_elements("${column}" -> '${field}') AS value
+          )::jsonb
+        )
+    )
+  WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
+`);
   });
 });

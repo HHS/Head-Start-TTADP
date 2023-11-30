@@ -118,4 +118,9 @@ describe('Goal pilot script', () => {
     expect(allGoals).not.toBeNull();
     expect(allGoals2.length).toBe(allGoals.length);
   });
+
+  it('should throw an error', async () => {
+    downloadFile.mockImplementationOnce(() => { throw new Error('oops'); });
+    await expect(createGoal('asdf')).rejects.toThrow('oops');
+  });
 });

@@ -93,8 +93,8 @@ describe('completeSession', () => {
         userEvent.click(backButton);
       });
 
-      // 2 is the complete event page position (4) - 1
-      expect(onUpdatePage).toHaveBeenCalledWith(3);
+      // We are on page 5, so we should go back to page 4.
+      expect(onUpdatePage).toHaveBeenCalledWith(4);
     });
 
     it('calls saveDraft when the save draft button is clicked', async () => {
