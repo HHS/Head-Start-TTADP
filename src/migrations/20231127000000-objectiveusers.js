@@ -51,6 +51,8 @@ module.exports = {
         objectiveId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Objectives',
@@ -61,6 +63,8 @@ module.exports = {
         userId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Users',
