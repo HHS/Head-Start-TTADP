@@ -285,7 +285,7 @@ const removeCollaboratorsForType = async (
     collaboratorDetails[genericCollaboratorType].collaborators
   ].findAll({
     where: {
-      [[collaboratorDetails[genericCollaboratorType].idName]]: entityId,
+      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
       linkBack: { [Op.contains]: filteredLinkBack },
     },
     include: [
