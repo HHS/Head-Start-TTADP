@@ -932,11 +932,13 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the second query
     ]);
+
+    const users = [
+      ...collaborators, // Spread the elements of the 'collaborators' array into a new array
+      { userId: instance.userId }, // Add an object with a 'userId' property to the new array
+    ].filter(({ userId }) => userId);
     await Promise.all([
-      ...[
-        ...collaborators, // Spread the elements of the 'collaborators' array into a new array
-        { userId: instance.userId }, // Add an object with a 'userId' property to the new array
-      ]
+      ...users
       // Use flatMap to iterate over each element in the new array asynchronously
         .flatMap(async ({ userId }) => goals
           // Use map to iterate over each element in the 'goals' array asynchronously
@@ -950,10 +952,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
             GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
             { activityReportIds: [instance.id] },
           ))),
-      ...[
-        ...collaborators, // Spread the elements of the 'collaborators' array into a new array
-        { userId: instance.userId }, // Add an object with a 'userId' property to the new array
-      ]
+      ...users
       // Use flatMap to iterate over each element in the new array asynchronously
         .flatMap(async ({ userId }) => objectives
           // Use map to iterate over each element in the 'objectives' array asynchronously
