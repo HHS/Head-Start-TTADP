@@ -182,7 +182,7 @@ module.exports = {
         ON zg.data_id = g.id
         WHERE dml_as NOT IN (-1, 0) -- default and migration files
         AND dml_type = '${dmlType}'
-        AND new_row_data -> 'name' IS NOT NULL
+        AND new_row_data -> 'title' IS NOT NULL
         GROUP BY 1,2
         ORDER BY 1,2
         `,
