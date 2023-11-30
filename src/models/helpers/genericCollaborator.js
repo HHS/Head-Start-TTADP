@@ -342,28 +342,31 @@ const removeCollaboratorsForType = async (
     }, { updates: [], deletes: [] });
 
     // Update the entity CollaboratorType records and delete the specified records
-    await Promise.all([
-      ...(updates.length > 0
-        ? updates.map(async (update) => sequelize.models[
-          collaboratorDetails[genericCollaboratorType].collaborators
-        ].update(
-          { linkBack: update.linkBack },
-          {
-            where: { id: update.id },
-            independentHooks: true,
-            ...(transaction && { transaction }),
-          },
-        ))
-        : [Promise.resolve()]),
-      (deletes.length > 0
-        ? sequelize.models[
-          collaboratorDetails[genericCollaboratorType].collaborators
-        ].destroy({
-          where: { id: deletes },
+    const updatePromises = (updates.length > 0
+      ? updates.map(async (update) => sequelize.models[
+        collaboratorDetails[genericCollaboratorType].collaborators
+      ].update(
+        { linkBack: update.linkBack },
+        {
+          where: { id: update.id },
           independentHooks: true,
           ...(transaction && { transaction }),
-        })
-        : Promise.resolve()),
+        },
+      ))
+      : [Promise.resolve()]);
+    const deletePromise = (deletes.length > 0
+      ? sequelize.models[
+        collaboratorDetails[genericCollaboratorType].collaborators
+      ].destroy({
+        where: { id: deletes },
+        independentHooks: true,
+        ...(transaction && { transaction }),
+      })
+      : Promise.resolve());
+
+    await Promise.all([
+      ...updatePromises,
+      deletePromise,
     ]);
   }
 };
