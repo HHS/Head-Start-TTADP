@@ -163,6 +163,8 @@ module.exports = {
         goalId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Goals',
@@ -173,6 +175,8 @@ module.exports = {
         userId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Users',
