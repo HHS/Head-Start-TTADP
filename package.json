@@ -98,8 +98,6 @@
     "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js",
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
-    "importSmartSheetEvent": "node ./build/server/src/tools/importSmartSheetCLI.js",
-    "importSmartSheetEvent:local": "tsx ./src/tools/importSmartSheetCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish"
   },
   "repository": {
@@ -188,6 +186,7 @@
       "<rootDir>/src/worker.ts",
       "<rootDir>/src/app.js",
       "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/*Cli.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
       "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
@@ -210,6 +209,7 @@
       "<rootDir>/src/app.js",
       "<rootDir>/src/lib/cron.js",
       "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/*Cli.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
@@ -291,7 +291,7 @@
     "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "1.9.0",
+    "@ttahub/common": "1.9.2",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",

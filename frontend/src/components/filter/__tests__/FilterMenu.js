@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import fetchMock from 'fetch-mock';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
@@ -31,6 +32,13 @@ import {
   statusFilter,
   topicsFilter as goalTopicsFilter,
 } from '../goalFilters';
+import {
+  creatorFilter,
+  eventIdFilter,
+  collaboratorsFilter,
+  startDateFilter,
+  regionFilter,
+} from '../trainingReportFilters';
 import UserContext from '../../../UserContext';
 
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
@@ -559,6 +567,60 @@ describe('Filter Menu', () => {
 
     // it renders an option for each config passed in (plus a dummy option)
     expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
+  });
+
+  it('renders training report filters', async () => {
+    const config = [
+      creatorFilter,
+      eventIdFilter,
+      collaboratorsFilter,
+      startDateFilter,
+      regionFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+
+    // Create mock for fetch.
+    fetchMock.get('/api/national-center', { centers: [{ id: 1, name: 'NC 1' }, { id: 2, name: 'NC 2' }], users: [] });
+
+    // all the filters work
+    userEvent.selectOptions(topics, 'Collaborators');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Creator');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Date started');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is within');
+
+    userEvent.selectOptions(topics, 'Event ID');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Creator');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Region');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
+    expect(true).toBe(true);
   });
 
   it('display correct filter count', () => {

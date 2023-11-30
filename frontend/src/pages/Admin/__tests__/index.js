@@ -86,7 +86,7 @@ describe('Admin landing page', () => {
   });
 
   it('displays the national centers page', async () => {
-    fetchMock.get('/api/national-center', []);
+    fetchMock.get('/api/national-center', { centers: [], users: [] });
     history.push('/admin/national-centers');
     render(
       <Router history={history}>
