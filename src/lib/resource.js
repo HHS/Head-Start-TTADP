@@ -249,33 +249,30 @@ const getMetadataValues = async (url) => {
   let mimeType; // Variable to store the MIME type of the resource.
 
   try {
-    const [
-      fromJson,
-      fromHtml,
-    ] = await Promise.allSettled([
-      await getMetadataValuesFrommJson(url), // Retrieve metadata values from JSON format.
-      await getMetadataValuesFromHtml(url), // Retrieve metadata values from HTML format.
-    ]);
+    const fromJson = await getMetadataValuesFrommJson(url);
+    if (fromJson.value.statusCode === httpCodes.OK) {
+      // Destructure metadata and status code from JSON result.
+      const { metadata: metadataFromJson, statusCode: statuscodeFromJson } = fromJson.value;
+      // filter out unsupported characters.
+      metadata = filterToSupportedCharacters(metadataFromJson);
+      statusCode = statuscodeFromJson;
+    } else {
+      const fromHtml = await getMetadataValuesFromHtml(url);
 
-    // Destructure metadata and status code from JSON result.
-    const { metadata: metadataFromJson, statusCode: statuscodeFromJson } = fromJson.value;
-    // Destructure metadata, status code, and MIME type from HTML result.
-    const {
-      metadata: metadataFromHtml,
-      statusCode: statuscodeFromHtml,
-      mimeType: mimeTypeFromHtml,
-    } = fromHtml.value;
-
-    metadata = filterToSupportedCharacters({
-      ...metadataFromJson,
-      ...metadataFromHtml,
-    }); // Combine metadata from JSON and HTML formats and filter out unsupported characters.
+      // Destructure metadata, status code, and MIME type from HTML result.
+      const {
+        metadata: metadataFromHtml,
+        statusCode: statuscodeFromHtml,
+        mimeType: mimeTypeFromHtml,
+      } = fromHtml.value;
+      // filter out unsupported characters.
+      metadata = filterToSupportedCharacters(metadataFromHtml);
+      statusCode = statuscodeFromHtml;
+      mimeType = mimeTypeFromHtml;
+    }
 
     // If metadata is not empty, assign it to the variable, otherwise assign null.
     metadata = (Object.keys(metadata).length !== 0 && metadata) || null;
-    // Assign the minimum status code between JSON and HTML results.
-    statusCode = Math.min(statuscodeFromJson, statuscodeFromHtml);
-    mimeType = mimeTypeFromHtml; // Assign the MIME type from HTML result.
 
     if (metadata) {
       if (metadata.title) {
