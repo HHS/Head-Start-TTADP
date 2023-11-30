@@ -5,8 +5,6 @@ const {
 const { ENTITY_TYPE } = require('../constants');
 
 /**
- * Status table. Stores topics used in activity reports and tta plans.
- *
  * @param {} sequelize
  * @param {*} DataTypes
  */
