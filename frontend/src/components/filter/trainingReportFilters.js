@@ -4,12 +4,16 @@ import moment from 'moment';
 import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
-  SELECT_CONDITIONS,
   REGION_CONDITIONS,
+  SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
+  EMPTY_MULTI_SELECT,
+  SELECT_CONDITIONS,
 } from '../../Constants';
-import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
+import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
+import FilterNationalCenterNameSelect from './FilterNationalCenterNameSelect';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -81,18 +85,48 @@ export const regionFilter = {
   ),
 };
 
-export const collaboratorFilter = {
-  id: 'collaborator',
-  display: 'Collaborator',
+export const collaboratorsFilter = {
+  id: 'collaborators',
+  display: 'Collaborators',
+  conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterNationalCenterNameSelect
+      inputId={`collaborators-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const creatorFilter = {
+  id: 'creator',
+  display: 'Creator',
+  conditions: SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterNationalCenterNameSelect
+      inputId={`creator-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const eventIdFilter = {
+  id: 'eventId',
+  display: 'Event ID',
   conditions: SELECT_CONDITIONS,
   defaultValues: EMPTY_TEXT_INPUT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterInput
       query={query}
-      inputId={`collaborator-${condition}-${id}`}
+      inputId={`eventId-${condition}-${id}`}
       onApply={onApplyQuery}
-      label="Enter a collaborator name"
+      label="Enter a event id"
     />
   ),
 };

@@ -3,6 +3,7 @@ import { render, act, screen } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import GoalCardsHeader from '../GoalsCardsHeader';
 import UserContext from '../../../UserContext';
 
@@ -15,6 +16,13 @@ describe('GoalDataController', () => {
 
   const REGION_ID = 1;
   const RECIPIENT_ID = 1;
+
+  beforeEach(() => {
+    const url = `/api/goals/similar/${RECIPIENT_ID}?cluster=true`;
+    fetchMock.get(url, [{ ids: [1], goals: [2] }]);
+  });
+
+  afterEach(() => fetchMock.restore());
 
   const dismissMergeSuccess = jest.fn();
 

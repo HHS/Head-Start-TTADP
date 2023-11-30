@@ -14,3 +14,4 @@ TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
+SIMILARITY_ENDPOINT: https://tta-similarity-api-prod.app.cloud.gov/compute

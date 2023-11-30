@@ -36,12 +36,12 @@ describe('communicationLog services', () => {
 
   it('gets logs by recipient Id', async () => {
     const result = await logsByRecipientAndScopes(recipient.id);
-    expect(result.length).toEqual(1);
-    expect(result[0].id).toEqual(log.id);
+    expect(result.count).toEqual(1);
+    expect(result.rows[0].id).toEqual(log.id);
   });
 
   it('updates logs', async () => {
-    const result = await updateLog(log.id, { data: { foo: 'bar' } });
+    const result = await updateLog(log.id, { foo: 'bar' });
     expect(result.id).toEqual(log.id);
     expect(result.recipientId).toEqual(recipient.id);
     expect(result.userId).toEqual(user.id);
