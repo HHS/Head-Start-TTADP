@@ -74,11 +74,37 @@ export const getRecipientAndGrantsByUser = async () => {
   return recipients.json();
 };
 
-export const getGroupUsers = async (regionId) => {
-  console.log('called get users');
-  const recipients = await get(join(recipientUrl, 'user', regionId, 'group'));
+export const getGroupUsers = async (regionIds) => {
+  const userGroupUrl = join(recipientUrl, 'user', 'groupUsers');
+  const groupUsersURL = `${userGroupUrl}?regionIds=${regionIds.join('&regionIds=')}`;
+  console.log('\n\n\n----URL FOR USERS:', groupUsersURL);
+  const recipients = await get(groupUsersURL);
   return recipients.json();
 };
+
+/*
+export const getGroupUsers = async (regionIds) => ({
+  coOwnerUsers: [{
+    id: 1,
+    name: 'co-owner1',
+  },
+  {
+    id: 2,
+    name: 'co-owner2',
+  },
+  ],
+  individualUsers: [
+    {
+      id: 1,
+      name: 'individual1',
+    },
+    {
+      id: 2,
+      name: 'individual2',
+    },
+  ],
+});
+*/
 
 export const getRecipientLeadership = async (recipientId, regionId) => {
   const url = join(recipientUrl, recipientId, 'region', regionId, 'leadership');
