@@ -3,6 +3,7 @@ const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
+const { skipIf } = require('../helpers/flowControl');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -165,6 +166,7 @@ const propagateName = async (sequelize, instance, options) => {
 };
 
 const autoPopulateCreator = async (sequelize, instance, options) => {
+  if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
   const { id: goalId } = instance;
   return currentUserPopulateCollaboratorForType(
     'goal',
@@ -177,13 +179,18 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
 
 const autoPopulateEditor = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
-  return currentUserPopulateCollaboratorForType(
-    'goal',
-    sequelize,
-    options.transaction,
-    goalId,
-    GOAL_COLLABORATORS.EDITOR,
-  );
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('name')) {
+    return currentUserPopulateCollaboratorForType(
+      'goal',
+      sequelize,
+      options.transaction,
+      goalId,
+      GOAL_COLLABORATORS.EDITOR,
+    );
+  }
+  return Promise.resolve();
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
