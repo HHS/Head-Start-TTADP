@@ -1,10 +1,10 @@
 import { Op } from 'sequelize';
 import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
-
-const {
+import { skipIf } from '../helpers/flowControl';
+import {
   currentUserPopulateCollaboratorForType,
-} = require('../helpers/genericCollaborator');
+} from '../helpers/genericCollaborator';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -274,6 +274,7 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
 };
 
 const autoPopulateCreator = async (sequelize, instance, options) => {
+  if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
   const { id: goalId } = instance;
   return currentUserPopulateCollaboratorForType(
     'objective',
@@ -286,13 +287,18 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
 
 const autoPopulateEditor = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
-  return currentUserPopulateCollaboratorForType(
-    'objective',
-    sequelize,
-    options.transaction,
-    goalId,
-    OBJECTIVE_COLLABORATORS.EDITOR,
-  );
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('title')) {
+    return currentUserPopulateCollaboratorForType(
+      'objective',
+      sequelize,
+      options.transaction,
+      goalId,
+      OBJECTIVE_COLLABORATORS.EDITOR,
+    );
+  }
+  return Promise.resolve();
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
