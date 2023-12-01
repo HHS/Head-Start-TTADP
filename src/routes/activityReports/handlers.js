@@ -910,10 +910,13 @@ export async function downloadAllReports(req, res) {
     const userId = await currentUserId(req, res);
     const readRegions = await setReadRegions(req.query, userId);
 
+    const ids = req.query.id || [];
+
     const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
       userId,
+      ids,
     );
 
     await sendActivityReportCSV(reports, res);

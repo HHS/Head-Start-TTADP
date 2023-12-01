@@ -1330,11 +1330,11 @@ export async function getAllDownloadableActivityReports(
   readRegions,
   filters,
   userId = 0,
+  reportIds = [],
 ) {
   const regions = readRegions || [];
 
   const { activityReport: scopes } = await filtersToScopes(filters, { userId });
-
   const where = {
     regionId: {
       [Op.in]: regions,
@@ -1342,6 +1342,10 @@ export async function getAllDownloadableActivityReports(
     calculatedStatus: REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
   };
+
+  if (reportIds.length) {
+    where.id = { [Op.in]: reportIds };
+  }
 
   return getDownloadableActivityReports(where);
 }
