@@ -149,60 +149,58 @@ export default function ResourcesDashboard() {
 
   return (
     <div className="ttahub-resources-dashboard">
-      <Helmet titleTemplate="%s - Resources Dashboard - TTA Hub" defaultTitle="TTA Hub - Resources Dashboard" />
-      <>
-        <Helmet titleTemplate="%s - Resources Dashboard - TTA Hub" defaultTitle="TTA Hub - Resources Dashboard" />
-        <RegionPermissionModal
+      <Helmet>
+        <title>Resource Dashboard</title>
+      </Helmet>
+      <RegionPermissionModal
+        filters={filters}
+        user={user}
+        showFilterWithMyRegions={
+          () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        }
+      />
+      <h1 className="landing">
+        Resource dashboard
+      </h1>
+      <Grid row>
+        {error && (
+          <Alert className="margin-bottom-2" type="error" role="alert">
+            {error}
+          </Alert>
+        )}
+      </Grid>
+      <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+        <FilterPanel
+          applyButtonAria="apply filters for resources dashboard"
           filters={filters}
-          user={user}
-          showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
-          }
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={RESOURCES_DASHBOARD_FILTER_CONFIG}
+          allUserRegions={regions}
         />
-        <h1 className="landing">
-          Resource dashboard
-        </h1>
-        <Grid row>
-          {error && (
-            <Alert className="margin-bottom-2" type="error" role="alert">
-              {error}
-            </Alert>
-          )}
-        </Grid>
-        <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
-          <FilterPanel
-            applyButtonAria="apply filters for resources dashboard"
-            filters={filters}
-            onApplyFilters={onApplyFilters}
-            onRemoveFilter={onRemoveFilter}
-            filterConfig={RESOURCES_DASHBOARD_FILTER_CONFIG}
-            allUserRegions={regions}
-          />
-        </Grid>
-        <ResourcesDashboardOverview
-          data={resourcesData.resourcesDashboardOverview}
-          loading={isLoading}
-          fields={[
-            'Reports with resources',
-            'ECLKC Resources',
-            'Recipients reached',
-            'Participants reached',
-          ]}
-          showTooltips
-        />
-        <ResourceUse
-          data={resourcesData.resourcesUse}
-          loading={isLoading}
-        />
-        <ResourcesAssociatedWithTopics
-          data={resourcesData.topicUse}
-          loading={isLoading}
-          resetPagination={resetPagination}
-          setResetPagination={setResetPagination}
-        />
-      </>
+      </Grid>
+      <ResourcesDashboardOverview
+        data={resourcesData.resourcesDashboardOverview}
+        loading={isLoading}
+        fields={[
+          'Reports with resources',
+          'ECLKC Resources',
+          'Recipients reached',
+          'Participants reached',
+        ]}
+        showTooltips
+      />
+      <ResourceUse
+        data={resourcesData.resourcesUse}
+        loading={isLoading}
+      />
+      <ResourcesAssociatedWithTopics
+        data={resourcesData.topicUse}
+        loading={isLoading}
+        resetPagination={resetPagination}
+        setResetPagination={setResetPagination}
+      />
     </div>
-
   );
 }
 

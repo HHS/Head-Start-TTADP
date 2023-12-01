@@ -106,7 +106,9 @@ export default function RegionalGoalDashboard() {
 
   return (
     <div className="ttahub-dashboard">
-      <Helmet titleTemplate="%s - Goal Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
+      <Helmet>
+        <title>Goal Dashboard</title>
+      </Helmet>
       <RegionPermissionModal
         filters={filters}
         user={user}

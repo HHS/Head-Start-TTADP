@@ -153,7 +153,9 @@ export default function TrainingReports({ match }) {
 
   return (
     <div className="ttahub-training-reports">
-      <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
+      <Helmet>
+        <title>Training Reports</title>
+      </Helmet>
       <>
         <RegionPermissionModal
           filters={filters}
@@ -184,7 +186,6 @@ export default function TrainingReports({ match }) {
             {msg}
           </Alert>
         )}
-        <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
         <Grid>
           <Grid row gap>
             <Grid>

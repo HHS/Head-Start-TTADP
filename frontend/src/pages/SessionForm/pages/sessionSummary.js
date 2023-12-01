@@ -195,7 +195,7 @@ const SessionSummary = ({ datePickerKey }) => {
     }
   };
 
-  const pageTitle = `Session summary - ${sessionName && ` ${sessionName}`} ${eventName && ` - ${eventName}`}`;
+  const pageTitle = `Session Summary - ${sessionName && ` ${sessionName}`} ${eventName && ` - ${eventName}`}`;
 
   return (
     <>
