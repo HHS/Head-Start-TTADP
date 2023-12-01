@@ -116,7 +116,7 @@ export default function ApprovedActivityReport({ match, user }) {
     return (
       <>
         <Helmet>
-          <title>Not authorized to view activity report</title>
+          <title>Not Authorized To View Activity Report</title>
         </Helmet>
         <div className="usa-alert usa-alert--error no-print" role="alert">
           <div className="usa-alert__body">
@@ -134,7 +134,7 @@ export default function ApprovedActivityReport({ match, user }) {
     return (
       <>
         <Helmet>
-          <title>Error displaying activity report - TTAHUB</title>
+          <title>Error Displaying Activity Report - TTAHUB</title>
         </Helmet>
         <div className="usa-alert usa-alert--warning no-print">
           <div className="usa-alert__body">

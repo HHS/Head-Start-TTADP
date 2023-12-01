@@ -27,7 +27,7 @@ const NextSteps = ({ formData }) => {
     return (
       <PocCompleteView formData={formData} userId={user.id}>
         <Helmet>
-          <title>Next steps</title>
+          <title>Next Steps</title>
         </Helmet>
 
         <h2>Specialist&apos;s next steps</h2>

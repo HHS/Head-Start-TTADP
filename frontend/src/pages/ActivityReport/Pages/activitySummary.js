@@ -121,7 +121,7 @@ const ActivitySummary = ({
   return (
     <>
       <Helmet>
-        <title>Activity summary</title>
+        <title>Activity Summary</title>
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
