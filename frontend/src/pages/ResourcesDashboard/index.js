@@ -2,7 +2,6 @@ import React, {
   useContext,
   useMemo,
   useState,
-  useEffect,
   useCallback,
 } from 'react';
 import moment from 'moment';
@@ -10,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -24,9 +24,11 @@ import { downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
+import { REPORTS_PER_PAGE } from '../../Constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
+import useSessionSort from '../../hooks/useSessionSort';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -49,6 +51,18 @@ export default function ResourcesDashboard() {
   const hasCentralOffice = useMemo(() => (
     user && user.homeRegionId && user.homeRegionId === 14
   ), [user]);
+
+  const [activityReportSortConfig, setActivityReportSortConfig] = useSessionSort({
+    sortBy: 'updatedAt',
+    direction: 'desc',
+    activePage: 1,
+  }, 'resource-dashboard-activity-report-sort');
+
+  const { activePage } = activityReportSortConfig;
+
+  const [activityReportOffset, setActivityReportOffset] = useState(
+    (activePage - 1) * REPORTS_PER_PAGE,
+  );
 
   const getFiltersWithAllRegions = () => {
     const filtersWithAllRegions = [...allRegionsFilters];
@@ -127,10 +141,10 @@ export default function ResourcesDashboard() {
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
-  const { activityReports } = resourcesData;
+  const { activityReports, reportIds } = resourcesData;
   const { count: reportsCount, rows: reports } = activityReports || {};
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetcHResourcesData() {
       setIsLoading(true);
       // Filters passed also contains region.
@@ -138,6 +152,11 @@ export default function ResourcesDashboard() {
       try {
         const data = await fetchResourceData(
           filterQuery,
+          {
+            ...activityReportSortConfig,
+            offset: activityReportOffset,
+            limit: REPORTS_PER_PAGE,
+          },
         );
         setResourcesData(data);
         updateError('');
@@ -151,32 +170,36 @@ export default function ResourcesDashboard() {
     }
     // Call resources fetch.
     fetcHResourcesData();
-  }, [filtersToApply]);
+  }, [activityReportOffset, activityReportSortConfig, filtersToApply]);
+
+  const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
+    try {
+      setIsDownloading(true);
+      const blob = await downloadReports(url);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (err) {
+      setDownloadError(true);
+    } finally {
+      setIsDownloading(false);
+      buttonRef.current.focus();
+    }
+  };
 
   const handleDownloadAllReports = async (
     setIsDownloading,
     setDownloadError,
     downloadAllButtonRef,
   ) => {
-    const filterQuery = filtersToQueryString(filters);
-    const downloadURL = getAllReportsDownloadURL(filterQuery);
+    const queryString = reportIds.map((i) => `id=${i}`).join('&');
+    const downloadURL = getAllReportsDownloadURL(queryString);
 
-    try {
-      // changed the way this works ever so slightly because I was thinking
-      // you'd want a try/catch around the fetching of the reports and not the
-      // window.location.assign
-      setIsDownloading(true);
-      const blob = await downloadReports(downloadURL);
-      const csv = URL.createObjectURL(blob);
-      window.location.assign(csv);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-      setDownloadError(true);
-    } finally {
-      setIsDownloading(false);
-      downloadAllButtonRef.current.focus();
-    }
+    return handleDownloadReports(
+      setIsDownloading,
+      setDownloadError,
+      downloadURL,
+      downloadAllButtonRef,
+    );
   };
 
   const handleDownloadClick = async (
@@ -196,19 +219,12 @@ export default function ResourcesDashboard() {
     const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
     if (downloadable.length) {
       const downloadURL = getReportsDownloadURL(downloadable);
-      try {
-        setIsDownloading(true);
-        const blob = await downloadReports(downloadURL);
-        const csv = URL.createObjectURL(blob);
-        window.location.assign(csv);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
-        setDownloadError(true);
-      } finally {
-        setIsDownloading(false);
-        downloadSelectedButtonRef.current.focus();
-      }
+      await handleDownloadReports(
+        setIsDownloading,
+        setDownloadError,
+        downloadURL,
+        downloadSelectedButtonRef,
+      );
     }
   };
 
@@ -268,20 +284,16 @@ export default function ResourcesDashboard() {
         <ReportsTable
           loading={isLoading}
           reports={reports || []}
-          sortConfig={{
-            sortBy: 'updatedAt',
-            direction: 'desc',
-            activePage: 1,
-          }}
+          sortConfig={activityReportSortConfig}
           handleDownloadAllReports={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
-          setSortConfig={() => {}}
-          offset={0}
-          setOffset={() => {}}
+          setSortConfig={setActivityReportSortConfig}
+          offset={activityReportOffset}
+          setOffset={setActivityReportOffset}
           tableCaption="Activity Reports"
           exportIdPrefix="activity-reports"
           reportsCount={reportsCount || 0}
-          activePage={1}
+          activePage={activePage}
         />
       </>
     </div>

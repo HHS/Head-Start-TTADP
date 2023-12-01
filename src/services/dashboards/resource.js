@@ -1591,7 +1591,7 @@ export async function resourceDashboardPhase1(scopes) {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
-    activityReports: data.reportIds,
+    reportIds: data.reportIds,
   };
 }
 
