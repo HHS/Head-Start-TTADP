@@ -2,12 +2,11 @@
 import React, {
   useState,
   useMemo,
-  useEffect,
-  useRef,
   memo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { useHistory } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
@@ -45,8 +44,6 @@ function GoalDataController({
     count: 0,
   });
 
-  const queryString = useRef(filtersToQueryString(filters));
-
   // Page Behavior.
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,7 +69,7 @@ function GoalDataController({
     offset: 0,
   }, `goalsTable/${recipientId}/${regionId}`);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchGoals(query) {
       setLoading(true);
       try {
@@ -111,11 +108,6 @@ function GoalDataController({
       }
     }
     const filterQuery = filtersToQueryString(filters);
-    if (filterQuery !== queryString.current) {
-      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
-      queryString.current = filterQuery;
-      return;
-    }
     fetchGoals(filterQuery);
   }, [
     sortConfig,
