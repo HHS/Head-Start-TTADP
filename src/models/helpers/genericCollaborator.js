@@ -1,17 +1,26 @@
 const { Op } = require('sequelize');
 
 const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
+const { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS } = require('../../constants');
 
 const collaboratorDetails = {
   goal: {
     idName: 'goalId',
     validFor: 'Goals',
     collaborators: 'GoalCollaborator',
+    creator: GOAL_COLLABORATORS.CREATOR,
+    editor: GOAL_COLLABORATORS.EDITOR,
+    mergeCreator: GOAL_COLLABORATORS.MERGE_CREATOR,
+    mergeDeprecator: GOAL_COLLABORATORS.MERGE_DEPRECATOR,
   },
   objective: {
     idName: 'objectiveId',
     validFor: 'Objectives',
     collaborators: 'ObjectiveCollaborator',
+    creator: OBJECTIVE_COLLABORATORS.CREATOR,
+    editor: OBJECTIVE_COLLABORATORS.EDITOR,
+    mergeCreator: OBJECTIVE_COLLABORATORS.MERGE_CREATOR,
+    mergeDeprecator: OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR,
   },
 };
 
@@ -371,6 +380,92 @@ const removeCollaboratorsForType = async (
   }
 };
 
+/**
+ * Merges collaborators for a given entity.
+ *
+ * @param {string} genericCollaboratorType - The type of the collaborators.
+ * @param {Object} sequelize - The Sequelize instance.
+ * @param {Object} transaction - The transaction object.
+ * @param {number} entityId - The ID of the entity.
+ * @param {Array<number>} sourceEntityIds - The IDs of the source entities.
+ * @param {number} selectedEntityId - The ID of the selected entity.
+ * @returns {Promise<void>} - A promise that resolves when the collaborators are merged.
+ * @throws {Error} - If an error occurs during the merging process.
+ */
+const mergeCollaborators = async (
+  genericCollaboratorType,
+  sequelize,
+  transaction,
+  entityId,
+  sourceEntityIds,
+  selectedEntityId,
+) => {
+  // Get the ID of the currently logged in user
+  const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+  // Retrieve the source collaborators based on the generic collaborator type
+  const sourceCollaborators = await sequelize.models[
+    collaboratorDetails[genericCollaboratorType].collaborators
+  ].findAll({
+    where: {
+      [collaboratorDetails[genericCollaboratorType].idName]: sourceEntityIds,
+    },
+    include: [{
+      model: sequelize.models.CollaboratorType,
+      as: 'collaboratorType',
+    }],
+    ...(transaction && { transaction }),
+  });
+
+  const promises = [];
+
+  // Find or create the main collaborator for the entity
+  promises.push(findOrCreateCollaborator(
+    genericCollaboratorType,
+    sequelize,
+    transaction,
+    entityId,
+    userId,
+    collaboratorDetails[genericCollaboratorType].mergeCreator,
+  ));
+
+  // Find or create the collaborators for each source entity
+  sourceEntityIds.forEach((sourceEntityId) => {
+    promises.push(findOrCreateCollaborator(
+      genericCollaboratorType,
+      sequelize,
+      transaction,
+      sourceEntityId,
+      userId,
+      collaboratorDetails[genericCollaboratorType].mergeDeprecator,
+    ));
+  });
+
+  // Find or create collaborators based on the source collaborators and their collaborator types
+  sourceCollaborators.forEach((sourceCollaborator) => {
+    if (sourceCollaborator.collaboratorType.propagateOnMerge) {
+      let mappedCollaboratorType = sourceCollaborator.collaboratorType.name;
+      if (mappedCollaboratorType === collaboratorDetails[genericCollaboratorType].creator
+        && selectedEntityId !== sourceCollaborator.dataValues[
+          collaboratorDetails[genericCollaboratorType].idName
+        ]) {
+        mappedCollaboratorType = collaboratorDetails[genericCollaboratorType].editor;
+      }
+      promises.push(findOrCreateCollaborator(
+        genericCollaboratorType,
+        sequelize,
+        transaction,
+        entityId,
+        userId,
+        mappedCollaboratorType,
+      ));
+    }
+  });
+
+  // Wait for all promises to resolve
+  await Promise.all(promises);
+};
+
 export {
   createCollaborator,
   getCollaboratorRecord,
@@ -378,4 +473,5 @@ export {
   getIdForCollaboratorType,
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
+  mergeCollaborators,
 };
