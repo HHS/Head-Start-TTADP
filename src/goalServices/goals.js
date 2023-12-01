@@ -2637,8 +2637,18 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   objective.activityReportObjectives.forEach((aro) => {
     updatesToRelatedModels.push(
       ActivityReportObjective.update({
-        objectiveId: newObjective.id,
         originalObjectiveId: aro.objectiveId,
+      }, {
+        where: {
+          id: aro.id,
+          originalObjectiveId: null,
+        },
+        individualHooks: true,
+      }),
+    );
+    updatesToRelatedModels.push(
+      ActivityReportObjective.update({
+        objectiveId: newObjective.id,
       }, {
         where: {
           id: aro.id,
@@ -2865,6 +2875,13 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
           originalGoalId: g.id,
+        },
+        {
+          where: { id: g.activityReportGoals.map((arg) => arg.id), originalGoalId: null },
+        },
+      ));
+      updatesToRelatedModels.push(ActivityReportGoal.update(
+        {
           goalId: grantToGoalDictionary[
             grantsWithReplacementsDictionary[g.grantId]
           ],
