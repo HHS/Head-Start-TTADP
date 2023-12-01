@@ -38,6 +38,8 @@ const GOAL_COLLABORATORS = {
   EDITOR: 'Editor',
   LINKER: 'Linker',
   UTILIZER: 'Utilizer',
+  MERGE_CREATOR: 'Merge-Creator',
+  MERGE_DEPRECATOR: 'Merge-Deprecator',
 };
 
 const GRANT_PERSONNEL_ROLES = [
@@ -61,6 +63,8 @@ const OBJECTIVE_COLLABORATORS = {
   EDITOR: 'Editor',
   LINKER: 'Linker',
   UTILIZER: 'Utilizer',
+  MERGE_CREATOR: 'Merge-Creator',
+  MERGE_DEPRECATOR: 'Merge-Deprecator',
 };
 
 const NEXTSTEP_NOTETYPE = {
