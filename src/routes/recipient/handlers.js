@@ -145,39 +145,47 @@ export async function getRecipientLeadership(req, res) {
   }
 }
 
+export async function validateMergeGoalPermissions(req, res) {
+  const { recipientId, regionId } = req.params;
+
+  if (!recipientId || !regionId) {
+    res.sendStatus(httpCodes.BAD_REQUEST);
+    return false;
+  }
+
+  const recipient = await recipientById(recipientId, []);
+  if (!recipient) {
+    res.sendStatus(httpCodes.NOT_FOUND);
+    return false;
+  }
+
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const arUsers = await allArUserIdsByRecipientAndRegion(
+    Number(recipientId),
+    Number(regionId),
+  );
+
+  const userIsAdmin = user.permissions.some((p) => p.scopeId === SCOPES.ADMIN);
+
+  const policy = new Recipient(
+    user,
+    recipient,
+    arUsers.includes(userId),
+  );
+
+  return policy.canMergeGoals() || userIsAdmin;
+}
+
 export async function getMergeGoalPermissions(req, res) {
   try {
-    const { recipientId, regionId } = req.params;
+    const canMergeGoalsForRecipient = await validateMergeGoalPermissions(req, res);
 
-    if (!recipientId || !regionId) {
-      res.sendStatus(httpCodes.BAD_REQUEST);
-      return;
+    if (!res.headersSent) {
+      res.json({
+        canMergeGoalsForRecipient,
+      });
     }
-
-    const recipient = await recipientById(recipientId, []);
-    if (!recipient) {
-      res.sendStatus(httpCodes.NOT_FOUND);
-      return;
-    }
-
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const arUsers = await allArUserIdsByRecipientAndRegion(
-      Number(recipientId),
-      Number(regionId),
-    );
-
-    const userIsAdmin = user.permissions.some((p) => p.scopeId === SCOPES.ADMIN);
-
-    const policy = new Recipient(
-      user,
-      recipient,
-      arUsers.includes(userId),
-    );
-
-    res.json({
-      canMergeGoalsForRecipient: policy.canMergeGoals() || userIsAdmin,
-    });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
