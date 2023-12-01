@@ -61,7 +61,7 @@ const autoPopulateLinker = async (sequelize, instance, options) => {
 };
 
 const autoCleanupLinker = async (sequelize, instance, options) => {
-  const { id: goalId, activityReportId } = instance;
+  const { goalId, activityReportId } = instance;
   return removeCollaboratorsForType(
     'goal',
     sequelize,
