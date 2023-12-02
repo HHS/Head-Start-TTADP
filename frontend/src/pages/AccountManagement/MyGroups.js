@@ -78,26 +78,25 @@ export default function MyGroups({ match }) {
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   useEffect(() => {
-    console.log('UserEffect 1');
     async function getGroup() {
       setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
-        console.log('\n\n\n---------FOUNDZ4: ', existingGroupData);
+        // console.log('\n\n\nINIT FETCH: ', existingGroupData);
         if (existingGroupData) {
           setValue(GROUP_FIELD_NAMES.NAME, existingGroupData.name);
           setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapGrants(existingGroupData.grants));
           setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !existingGroupData.isPublic);
           setValue(GROUP_FIELD_NAMES.CO_OWNERS, existingGroupData.coOwners.map((coOwner) => (
-            { value: coOwner.id, label: coOwner.name }
+            { value: coOwner.id, label: coOwner.name, regionId: coOwner.regionId }
           )));
-          const valueToSet = existingGroupData.individuals.map(
+          const individualsToSet = existingGroupData.individuals.map(
             (individual) => (
-              { value: individual.id, label: individual.name }
+              { value: individual.id, label: individual.name, regionId: individual.regionId }
             ),
           );
-          console.log('\n\n\n---------FOUNDZ5: ', valueToSet);
-          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, valueToSet);
+          // console.log('\n\n\n-----individualsToSet', individualsToSet);
+          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, individualsToSet);
           setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, !existingGroupData.shareWithEveryone ? 'everyone' : 'individuals');
         }
       } catch (err) {
@@ -114,14 +113,13 @@ export default function MyGroups({ match }) {
   }, [groupId, setIsAppLoading, setValue]);
 
   useEffect(() => {
-    console.log('UserEffect 2');
     // get grants/recipients for user
     async function fetchRecipients() {
       setIsAppLoading(true);
       try {
-        setRecipientsFetched(true);
         const response = await getRecipientAndGrantsByUser();
         setRecipients(mapRecipients(response));
+        setRecipientsFetched(true);
         setUsersFetched(false);
       } catch (err) {
         setError('There was an error fetching your recipients');
@@ -143,11 +141,12 @@ export default function MyGroups({ match }) {
         const { coOwnerUsers, individualUsers } = await getGroupUsers(regionIds);
 
         // Set available.
-        const fetchedCoOwners = coOwnerUsers.map((user) => ({ value: user.id, label: user.name }));
-        setCoOwners(fetchedCoOwners);
-        const fetchedIndividuals = individualUsers.map((user) => (
-          { value: user.id, label: user.name }));
-        setIndividuals(fetchedIndividuals);
+        setCoOwners(coOwnerUsers.map((user) => ({
+          value: user.id, label: user.name, regionId: user.regionId,
+        })));
+        const toSet = individualUsers.map((user) => (
+          { value: user.id, label: user.name, regionId: user.regionId }));
+        setIndividuals(toSet);
         setUsersFetched(true);
 
         // Update selected based on user id (region access).
@@ -205,7 +204,7 @@ export default function MyGroups({ match }) {
       }
     }
     // If co-owners regions are not in the selected
-  }, [setIsAppLoading, watchRecipients, recipientsFetched, usersFetched]);
+  }, [watchRecipients, recipientsFetched]);
 
   // you'll notice that "setMyGroups" is called below
   // - since we fetch that data once, way earlier, in App.js, we must update it here
@@ -347,7 +346,7 @@ export default function MyGroups({ match }) {
             </div>
             {!watchIsPrivate && (
               <div className="margin-top-4">
-                <label htmlFor={GROUP_FIELD_NAMES.CO_OWNERS} className="display-block margin-bottom-1">
+                <label className="display-block margin-bottom-1">
                   Add co-owner
                   {' '}
                   <Req />
@@ -400,20 +399,20 @@ export default function MyGroups({ match }) {
                 {
                   watchShareWithEveryone === 'individuals' && (
                     <div className="margin-top-4">
-                      <label htmlFor={GROUP_FIELD_NAMES.INDIVIDUALS} className="display-block margin-bottom-1">
+                      <label className="display-block margin-bottom-1">
                         Invite individuals
                         {' '}
                         <Req />
+                        {nameError && <span className="usa-error-message">{individualsError.message}</span>}
+                        <MultiSelect
+                          name={GROUP_FIELD_NAMES.INDIVIDUALS}
+                          options={individuals}
+                          control={control}
+                          simple={false}
+                          required="Select at least one"
+                          disabled={isAppLoading}
+                        />
                       </label>
-                      {nameError && <span className="usa-error-message">{individualsError.message}</span>}
-                      <MultiSelect
-                        name={GROUP_FIELD_NAMES.INDIVIDUALS}
-                        options={individuals}
-                        control={control}
-                        simple={false}
-                        required="Select at least one"
-                        disabled={isAppLoading}
-                      />
                     </div>
                   )
                 }
