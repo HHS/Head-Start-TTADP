@@ -13,7 +13,7 @@ test('my groups', async ({ page }) => {
   await page.getByRole('link', { name: 'Create a group' }).click();
   await page.getByTestId('textInput').fill('A new group for me');
 
-  await page.locator('[class$="-ValueContainer"]').click();
+  await page.locator('[class$="-ValueContainer"]').first().click();
   await page.keyboard.press('Enter');
 
   await blur(page);
