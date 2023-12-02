@@ -140,6 +140,76 @@ describe('Groups', () => {
     });
   });
 
+  it('renders without any groups', async () => {
+    const defaultGroup = {
+      id: 1,
+      name: 'group1',
+      userId: 2,
+      isPublic: true,
+    };
+    fetchMock.get('/api/groups', [
+      {
+        ...defaultGroup,
+        name: 'group1',
+        id: 1,
+      },
+      {
+        ...defaultGroup,
+        name: 'group2',
+        id: 2,
+      },
+      {
+        ...defaultGroup,
+        name: 'group3',
+        id: 3,
+      },
+      {
+        ...defaultGroup,
+        name: 'group4',
+        id: 4,
+      },
+      {
+        ...defaultGroup,
+        name: 'group5',
+        id: 5,
+      },
+      {
+        ...defaultGroup,
+        name: 'group6',
+        id: 6,
+      },
+      {
+        ...defaultGroup,
+        name: 'group7',
+        id: 7,
+      },
+      {
+        ...defaultGroup,
+        name: 'group8',
+        id: 8,
+      },
+      {
+        ...defaultGroup,
+        name: 'group9',
+        id: 9,
+      },
+      {
+        ...defaultGroup,
+        name: 'group10',
+        id: 10,
+      },
+      {
+        ...defaultGroup,
+        name: 'group11',
+        id: 11,
+      },
+    ]);
+    fetchMock.delete('/api/groups/1', {});
+
+    act(renderGroups);
+    expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+  });
+
   it('you can delete a group', async () => {
     fetchMock.get('/api/groups', [
       {
