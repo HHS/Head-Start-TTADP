@@ -17,6 +17,11 @@ test('my groups', async ({ page }) => {
   await page.keyboard.press('Enter');
 
   await blur(page);
+
+  // Check 'Keep this group private.' checkbox for now.
+  await page.getByText('Keep this group private.').click();
+  await blur(page);
+
   await page.getByRole('button', { name: 'Save group' }).click();
 
   // navigate to the recipient search page
