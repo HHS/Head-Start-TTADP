@@ -1,6 +1,7 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
 import { expect } from '@playwright/test';
+import { determineMergeGoalStatus } from '@ttahub/common';
 import db, {
   Recipient,
   Grant,
@@ -15,7 +16,6 @@ import db, {
 import {
   reduceObjectives,
   reduceObjectivesForActivityReport,
-  determineMergeGoalStatus,
   createMultiRecipientGoalsFromAdmin,
 } from './goals';
 import {
