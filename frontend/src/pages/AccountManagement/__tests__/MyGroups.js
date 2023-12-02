@@ -147,63 +147,6 @@ describe('MyGroups', () => {
       expect(screen.getByText(/grant1/i)).toBeInTheDocument();
     });
   });
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  it('removing all recipients clears the co-owners and individuals selected', async () => {
-    fetchMock.get('/api/groups/3', {
-      id: 1,
-      name: 'group1',
-      grants: [
-        {
-          id: 1,
-          name: 'grant1',
-          regionId: 1,
-        },
-      ],
-      isPublic: true,
-      shareWithEveryone: true,
-      coOwners: [
-        {
-          id: 1,
-          name: 'co-owner1',
-          regionId: 1,
-        },
-      ],
-      individuals: [
-        {
-          id: 1,
-          name: 'individual1',
-          regionId: 1,
-        },
-      ],
-    });
-
-    await act(async () => {
-      await renderMyGroups(3);
-    });
-
-    await act(async () => {
-      expect(await screen.findByText(/co-owner1/i)).toBeInTheDocument();
-      expect(await screen.findByText(/individual1/i)).toBeInTheDocument();
-    });
-
-    // Clear all recipients.
-    await act(async () => {
-      await waitFor(() => {
-        // Remove 'grant1'.
-        userEvent.click(screen.getByRole('button', { name: /remove grant1/i }));
-      });
-    });
-
-    await act(async () => {
-      // Assert that co-owner1 is no longer selected.
-      expect(screen.queryByText(/co-owner1/i)).not.toBeInTheDocument();
-
-      // Assert that individual1 is no longer selected.
-      expect(screen.queryByText(/individual1/i)).not.toBeInTheDocument();
-    });
-  });
-  */
 
   it('handles fetch errors', async () => {
     fetchMock.get('/api/group/1', 500);

@@ -19,36 +19,6 @@ export const fetchGroup = async (groupId) => {
   return response.json();
 };
 
-/*
-export const fetchGroup = async (groupId) => ({
-  id: 1,
-  name: 'group1',
-  grants: [
-    {
-      id: 1,
-      name: 'grant1',
-      regionId: 1,
-    },
-  ],
-  isPublic: true,
-  shareWithEveryone: true,
-  coOwners: [
-    {
-      id: 1,
-      name: 'co-owner1',
-      regionId: 1,
-    },
-  ],
-  individuals: [
-    {
-      id: 1,
-      name: 'individual1',
-      regionId: 1,
-    },
-  ],
-});
-*/
-
 export const createGroup = async (group) => {
   const response = await post(groupsUrl, group);
   return response.json();
