@@ -179,7 +179,7 @@ export default function ViewTrainingReport({ match }) {
         <title>
           Training Event Report
           {' '}
-          {event.data ? event.data.eventId : ''}
+          {(event && event.data) ? event.data.eventId : ''}
         </title>
       </Helmet>
       <BackLink to={backLinkUrl}>
