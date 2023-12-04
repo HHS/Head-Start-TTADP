@@ -25,6 +25,7 @@ export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
 export const REGION_CONDITIONS = [IS];
 export const SINGLE_OR_MULTI_RECIPIENT_CONDITIONS = [IS];
+export const SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
@@ -45,6 +46,11 @@ export const DATE_CONDITIONS = [
   IS,
   AFTER,
   BEFORE,
+  WITHIN,
+];
+
+export const WITHOUT_ACTIVITY_DATE_CONDITIONS = [
+  IS,
   WITHIN,
 ];
 
