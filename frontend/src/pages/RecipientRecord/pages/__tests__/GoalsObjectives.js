@@ -159,6 +159,27 @@ describe('Goals and Objectives', () => {
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
       { rows: [], count: 0 },
     );
+    const similarityResponse = [
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+          { ids: [3] },
+          { ids: [4] },
+          { ids: [5] },
+        ],
+        ids: [1, 2, 3, 4, 5],
+      },
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+        ],
+        ids: [1, 2],
+      },
+    ];
+
+    fetchMock.get('/api/goals/similar/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {

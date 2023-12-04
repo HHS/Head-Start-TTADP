@@ -9,9 +9,9 @@ import React, {
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { useHistory } from 'react-router-dom';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
@@ -141,10 +141,6 @@ function GoalDataController({
       } finally {
         setLoading(false);
       }
-    }
-
-    if (loading) {
-      return;
     }
     const filterQuery = filtersToQueryString(filters);
     fetchGoals(filterQuery);

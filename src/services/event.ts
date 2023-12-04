@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
+import parse from 'csv-parse/lib/sync';
 import _ from 'lodash';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import { auditLogger } from '../logger';
@@ -9,6 +10,7 @@ import {
   CreateEventRequest,
   UpdateEventRequest,
 } from './types/event';
+import EventReport from '../policies/event';
 
 const {
   EventReportPilot,
@@ -441,4 +443,134 @@ export async function findAllEvents(): Promise<EventShape[]> {
     ],
     raw: true,
   });
+}
+
+const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(Boolean);
+
+const mappings: Record<string, string> = {
+  Audience: 'audience',
+  Creator: 'creator',
+  'Edit Title': 'eventName',
+  'Event Duration/#NC Days of Support': 'eventDuration',
+  'Event ID': 'eventId',
+  'Overall Vision/Goal for the PD Event': 'vision',
+  'Reason for Activity': 'reasons',
+  'Target Population(s)': 'targetPopulations',
+  'Event Organizer - Type of Event': 'eventOrganizer',
+  'IST Name:': 'istName',
+  'IST Name': 'istName',
+  'National Center(s) Requested': 'nationalCenters',
+  'Event Duration/# NC Days of Support': 'eventDuration',
+};
+
+const toSplit = ['targetPopulations', 'reasons', 'nationalCenters'];
+
+const replacements: Record<string, string> = {
+  'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
+  'Pregnant Women/Pregnant People': 'Pregnant Women / Pregnant Persons',
+  'Pregnant Women': 'Pregnant Women / Pregnant Persons',
+};
+
+const applyReplacements = (value: string) => replacements[value] || value;
+
+const mapLineToData = (line: Record<string, string>) => {
+  const data: Record<string, unknown> = {};
+
+  Object.keys(line).forEach((key) => {
+    const mappedKey = mappings[key] || key;
+    data[mappedKey] = toSplit.includes(mappedKey)
+      ? splitPipe(line[key]).map(applyReplacements)
+      : line[key];
+  });
+
+  return data;
+};
+
+const checkUserExists = async (creator: string) => {
+  const user = await db.User.findOne({
+    where: { email: creator },
+    include: [
+      {
+        model: db.Permission,
+        as: 'permissions',
+      },
+    ],
+  });
+  if (!user) throw new Error(`User ${creator} does not exist`);
+  return user;
+};
+
+const checkEventExists = async (eventId: string) => {
+  const event = await db.EventReportPilot.findOne({
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`,
+        ),
+      },
+    },
+  });
+  if (event) throw new Error(`Event ${eventId} already exists`);
+};
+
+export async function csvImport(buffer: Buffer) {
+  const skipped: string[] = [];
+  const errors: string[] = [];
+
+  const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+
+  const results = parsed.map(async (line: Record<string, string>) => {
+    try {
+      const eventId = line['Event ID'];
+      const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
+
+      const creator = line.Creator;
+      let owner;
+      if (creator) {
+        owner = await checkUserExists(creator);
+        const policy = new EventReport(owner, {
+          regionId,
+        });
+
+        if (!policy.canWriteInRegion()) {
+          errors.push(`User ${creator} does not have permission to write in region ${regionId}`);
+          return false;
+        }
+      }
+
+      await checkEventExists(eventId);
+
+      const data = mapLineToData(line);
+
+      // remove duplicates in reasons and targetPopulations
+      data.reasons = [...new Set(data.reasons as string[])];
+      data.targetPopulations = [...new Set(data.targetPopulations as string[])];
+      data.nationalCenters = [...new Set(data.nationalCenters as string[])];
+
+      await db.EventReportPilot.create({
+        collaboratorIds: [],
+        ownerId: owner.id,
+        regionId,
+        data: sequelize.cast(JSON.stringify(data), 'jsonb'),
+        imported: sequelize.cast(JSON.stringify(line), 'jsonb'),
+      });
+
+      return true;
+    } catch (error) {
+      if (error.message.startsWith('User')) {
+        errors.push(error.message);
+      } else if (error.message.startsWith('Event')) {
+        skipped.push(line['Event ID']);
+      }
+      return false;
+    }
+  });
+
+  const count = (await Promise.all(results)).filter(Boolean).length;
+
+  return {
+    count,
+    skipped,
+    errors,
+  };
 }
