@@ -144,9 +144,8 @@ export default function MyGroups({ match }) {
         setCoOwners(coOwnerUsers.map((user) => ({
           value: user.id, label: user.name, regionId: user.regionId,
         })));
-        const toSet = individualUsers.map((user) => (
-          { value: user.id, label: user.name, regionId: user.regionId }));
-        setIndividuals(toSet);
+        setIndividuals(individualUsers.map((user) => (
+          { value: user.id, label: user.name, regionId: user.regionId })));
         setUsersFetched(true);
 
         // Update selected based on user id (region access).
@@ -195,15 +194,14 @@ export default function MyGroups({ match }) {
         const missingIndividuals = watchIndividuals.filter(
           (individual) => !selectedRecipientRegionIds.includes(individual.regionId),
         );
-        // Anytime the selected recipient list changes
-        // it means we potentially have a new list of regions
-        // we need to make sure we update the users for co-owner and individuals.
+
+        // Handle two cases here initial load of users or a change in selected recipients.
         if (!usersFetched || (missingCoOwners.length > 0 || missingIndividuals.length > 0)) {
           fetchUsers(selectedRecipientRegionIds);
         }
       }
     }
-    // If co-owners regions are not in the selected
+    // If selected recipients change or recipients fetched.
   }, [watchRecipients, recipientsFetched]);
 
   // you'll notice that "setMyGroups" is called below
