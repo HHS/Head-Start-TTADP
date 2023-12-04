@@ -82,7 +82,7 @@ export default function MyGroups({ match }) {
       setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
-        // console.log('\n\n\nINIT FETCH: ', existingGroupData);
+
         if (existingGroupData) {
           setValue(GROUP_FIELD_NAMES.NAME, existingGroupData.name);
           setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapGrants(existingGroupData.grants));
@@ -95,7 +95,7 @@ export default function MyGroups({ match }) {
               { value: individual.id, label: individual.name, regionId: individual.regionId }
             ),
           );
-          // console.log('\n\n\n-----individualsToSet', individualsToSet);
+
           setValue(GROUP_FIELD_NAMES.INDIVIDUALS, individualsToSet);
           setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, !existingGroupData.shareWithEveryone ? 'everyone' : 'individuals');
         }
