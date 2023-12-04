@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { GOAL_STATUS } = require('../../constants');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
@@ -54,6 +55,22 @@ const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
       && changed.includes('name')) {
       throw new Error('Goal name change not allowed for goals on approved activity reports.');
     }
+  }
+};
+
+const invalidateSimilarityScores = async (sequelize, instance, options) => {
+  const changed = Array.from(instance.changed());
+
+  if (changed.includes('name')) {
+    await sequelize.models.SimScoreGoalCache.destroy({
+      where: {
+        [Op.or]: [
+          { goal1: instance.id },
+          { goal2: instance.id },
+        ],
+      },
+      transaction: options.transaction,
+    });
   }
 };
 
@@ -166,6 +183,7 @@ const afterCreate = async (sequelize, instance, options) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
+  await invalidateSimilarityScores(sequelize, instance, options);
 };
 
 export {

@@ -10,6 +10,7 @@ import {
   sequelize,
 } from '../models';
 import {
+  groupsByRegion,
   groups,
   group,
   createNewGroup,
@@ -165,6 +166,16 @@ describe('Groups service', () => {
   describe('groups', () => {
     it('returns a list of groups', async () => {
       const result = await groups(mockUser.id, [1]);
+      expect(result).toHaveLength(3);
+
+      const groupNames = result.map((gr) => gr.name);
+      expect(groupNames).toContain('Group 1');
+      expect(groupNames).toContain('Group 2');
+      expect(groupNames).toContain('Public Group');
+    });
+
+    it('returns a list of groups by region', async () => {
+      const result = await groupsByRegion(1);
       expect(result).toHaveLength(3);
 
       const groupNames = result.map((gr) => gr.name);

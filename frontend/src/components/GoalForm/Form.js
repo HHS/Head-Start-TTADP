@@ -155,6 +155,7 @@ export default function Form({
         setPrompts={setPrompts}
         validatePrompts={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
+        userCanEdit={userCanEdit}
       />
 
       <FeatureFlag flag="goal_source">

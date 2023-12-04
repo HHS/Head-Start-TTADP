@@ -1,7 +1,10 @@
 import { createTransport } from 'nodemailer';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
-  notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
+  notifyCollaboratorAssigned,
+  notifyApproverAssigned,
+  notifyChangesRequested,
+  notifyReportApproved,
   collaboratorAssignedNotification,
   approverAssignedNotification,
   reportApprovedNotification,
@@ -14,6 +17,14 @@ import {
   notificationQueue as notificationQueueMock,
   notificationQueue as notificationDigestQueueMock,
   notifyRecipientReportApproved,
+  sendTrainingReportNotification,
+  trVisionAndGoalComplete,
+  trPocSessionComplete,
+  trSessionCreated,
+  trSessionCompleted,
+  trCollaboratorAdded,
+  trPocAdded,
+  trPocEventComplete,
   filterAndDeduplicateEmails,
 } from '.';
 import {
@@ -22,7 +33,7 @@ import {
   DIGEST_SUBJECT_FREQ,
 } from '../../constants';
 import { auditLogger as logger } from '../../logger';
-
+import { userById } from '../../services/users';
 import db, {
   ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
 } from '../../models';
@@ -137,6 +148,10 @@ const submittedReport = {
 
 jest.mock('../../services/userSettings', () => ({
   usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
+}));
+
+jest.mock('../../services/users', () => ({
+  userById: jest.fn().mockReturnValue(Promise.resolve(mockUser)),
 }));
 
 jest.mock('../../logger');
@@ -320,6 +335,90 @@ describe('mailer tests', () => {
       expect(notifyCollaboratorAssigned({
         data: { report: mockReport, newCollaborator: mockCollaborator1 },
       }, jsonTransport)).toBeNull();
+    });
+  });
+
+  describe('sendTrainingReportNotification', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      process.env.CI = '';
+      const data = {
+        emailTo: [mockNewCollaborator.email],
+        templatePath: 'tr_session_completed',
+        debugMessage: 'Congrats dude',
+        displayId: 'TR-04-1235',
+        reportPath: '/asdf/',
+        report: {
+          id: 1,
+          displayId: 'mockReport-1',
+        },
+      };
+      const email = await sendTrainingReportNotification({
+        data,
+      }, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`A session has been completed for Training Report ${data.displayId}`);
+      expect(message.text).toContain(
+        `A session has been completed for Training Report ${data.displayId}`,
+      );
+      expect(message.text).toContain('/asdf/');
+    });
+    it('Honors no send', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      process.env.CI = '';
+      const data = {
+        emailTo: [`no-send_${mockNewCollaborator.email}`],
+        templatePath: 'tr_session_completed',
+        debugMessage: 'Congrats dude',
+        displayId: 'TR-04-1235',
+        reportPath: '/asdf/',
+        report: {
+          id: 1,
+          displayId: 'mockReport-1',
+        },
+      };
+      const email = await sendTrainingReportNotification({
+        data,
+      }, jsonTransport);
+      expect(email).toBeNull();
+    });
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = false;
+      const data = {
+        emailTo: [mockNewCollaborator.email],
+        templatePath: 'tr_session_completed',
+        debugMessage: 'Congrats dude',
+        displayId: 'TR-04-1235',
+        reportPath: '/asdf/',
+        report: {
+          id: 1,
+          displayId: 'mockReport-1',
+        },
+      };
+      await expect(sendTrainingReportNotification({
+        data,
+      }, jsonTransport)).resolves.toBeNull();
+    });
+
+    it('Tests that emails are not sent on CI', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      process.env.CI = true;
+      const data = {
+        emailTo: [mockNewCollaborator.email],
+        templatePath: 'tr_session_completed',
+        debugMessage: 'Congrats dude',
+        displayId: 'TR-04-1235',
+        reportPath: '/asdf/',
+        report: {
+          id: 1,
+          displayId: 'mockReport-1',
+        },
+      };
+      await expect(sendTrainingReportNotification({
+        data,
+      }, jsonTransport)).resolves.toBeNull();
     });
   });
 
@@ -1053,6 +1152,203 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('training report notifications', () => {
+    afterAll(() => {
+      jest.clearAllMocks();
+    });
+    beforeEach(() => {
+      notificationQueueMock.add.mockClear();
+      logger.error.mockClear();
+      process.env.CI = '';
+    });
+    afterEach(() => {
+      process.env.CI = '';
+    });
+    const mockEvent = {
+      id: 1,
+      ownerId: 1,
+      collaboratorIds: [2, 3],
+      pocIds: [4, 5],
+      data: {
+        eventId: 'tr-1234',
+      },
+    };
+    it('trVisionAndGoalComplete success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trVisionAndGoalComplete({
+        id: 1,
+        ownerId: 1,
+        collaboratorIds: [2, 3],
+        pocIds: [4, 5],
+        data: { val: JSON.stringify(mockEvent.data) },
+      });
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(3);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+          expect.any(Object),
+        );
+    });
+    it('trVisionAndGoalComplete error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trVisionAndGoalComplete();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trVisionAndGoal on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trVisionAndGoalComplete(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+    it('trPocSessionComplete success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocSessionComplete(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(3);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+          expect.any(Object),
+        );
+    });
+    it('trPocSessionComplete on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocSessionComplete(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+    it('trPocSessionComplete error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocSessionComplete();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trSessionCreated success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCreated(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+          expect.any(Object),
+        );
+    });
+    it('trSessionCreated error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCreated();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trSessionCreated early return on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCreated(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+    it('trSessionCompleted success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCompleted(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
+          expect.any(Object),
+        );
+    });
+    it('trSessionCompleted error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCompleted();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trSessionCompleted early return on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trSessionCompleted(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+    it('trCollaboratorAdded success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trCollaboratorAdded({
+        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
+      }, 1);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+          expect.any(Object),
+        );
+    });
+    it('trCollaboratorAdded error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trCollaboratorAdded();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trCollaboratorAdded early return', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trCollaboratorAdded();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+    it('trPocAdded success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocAdded({
+        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
+      }, 1);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+          expect.any(Object),
+        );
+    });
+    it('trPocAdded error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocAdded();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trPocAdded early return', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocAdded(mockEvent);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+    it('trPocEventComplete success', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocEventComplete({
+        id: 1, data: { val: JSON.stringify(mockEvent.data) }, pocIds: [4, 5],
+      });
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+      expect(notificationQueueMock.add)
+        .toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+          expect.any(Object),
+        );
+    });
+    it('trPocEventComplete error', async () => {
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocEventComplete();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+    it('trPocEventComplete early return on CI', async () => {
+      process.env.CI = 'true';
+      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
+      await trPocEventComplete({
+        id: 1, data: { val: JSON.stringify(mockEvent) }, pocIds: [4, 5],
+      });
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+  });
   describe('filterAndDeduplicateEmails', () => {
     it('should return an array with unique emails when given an array with duplicate emails', () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com'];
