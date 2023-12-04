@@ -90,9 +90,9 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
       const blob = await getCommunicationLogsByRecipientId(
         String(regionId),
         String(recipientId),
-        sortConfig.sortBy,
-        sortConfig.direction,
-        sortConfig.offset,
+        'communicationDate', // default values for sort
+        'desc', // and direction
+        0, // no offset
         false,
         filters,
         'csv',

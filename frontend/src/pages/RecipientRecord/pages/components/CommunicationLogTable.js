@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import { Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import './CommunicationLogTable.scss';
@@ -52,7 +53,7 @@ export default function CommunicationLogTable({
         </caption>
         <thead>
           <tr>
-            {renderColumnHeader('Date', 'communicationDate', 'maxw-4')}
+            {renderColumnHeader('Date', 'communicationDate', 'maxw-6')}
             {renderColumnHeader('Purpose', 'purpose')}
             {renderColumnHeader('Creator name', 'authorName')}
             {renderColumnHeader('Result', 'result')}
@@ -60,8 +61,8 @@ export default function CommunicationLogTable({
         </thead>
         <tbody>
           {logs.map((log) => (
-            <tr>
-              <td className="maxw-4" data-label="Date">
+            <tr key={uniqueId('log-table-row')}>
+              <td className="maxw-6" data-label="Date">
                 <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
                   {log.data.communicationDate}
                 </Link>
@@ -85,7 +86,7 @@ CommunicationLogTable.propTypes = {
       purpose: PropTypes.string,
       result: PropTypes.string,
     }),
-    userId: PropTypes.string,
+    userId: PropTypes.number,
   })).isRequired,
   requestSort: PropTypes.func.isRequired,
   sortConfig: PropTypes.shape({
