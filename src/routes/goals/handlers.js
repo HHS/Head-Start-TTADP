@@ -269,7 +269,7 @@ export async function getSimilarGoalsForRecipient(req, res) {
     const { result } = await similarGoalsForRecipient(recipientId, true);
 
     const ids = Array.from((result || []).reduce((acc, resp) => {
-      const goals = resp.matches.map((match) => match.id);
+      const goals = (resp.matches || []).map((match) => match.id);
       goals.forEach((goal) => acc.add(goal));
 
       return acc;
