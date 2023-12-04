@@ -2637,17 +2637,7 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   objective.activityReportObjectives.forEach((aro) => {
     updatesToRelatedModels.push(
       ActivityReportObjective.update({
-        originalObjectiveId: aro.objectiveId,
-      }, {
-        where: {
-          id: aro.id,
-          originalObjectiveId: null,
-        },
-        individualHooks: true,
-      }),
-    );
-    updatesToRelatedModels.push(
-      ActivityReportObjective.update({
+        originalObjectiveId: sequelize.fn('COALESCE', sequelize.col('originalObjectiveId'), aro.objectiveId),
         objectiveId: newObjective.id,
       }, {
         where: {
@@ -2872,16 +2862,10 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {
+      // originalGoalId: g.id,
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
-          originalGoalId: g.id,
-        },
-        {
-          where: { id: g.activityReportGoals.map((arg) => arg.id), originalGoalId: null },
-        },
-      ));
-      updatesToRelatedModels.push(ActivityReportGoal.update(
-        {
+          originalGoalId: sequelize.fn('COALESCE', sequelize.col('originalGoalId'), g.id),
           goalId: grantToGoalDictionary[
             grantsWithReplacementsDictionary[g.grantId]
           ],
