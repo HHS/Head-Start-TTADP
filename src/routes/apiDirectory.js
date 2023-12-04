@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
 import cookieSession from '../middleware/sessionMiddleware';
-import { isTestingOrCI } from '../middleware/testingOnlyMiddleware';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
@@ -31,6 +30,8 @@ import eventRouter from './events';
 import sessionReportsRouter from './sessionReports';
 import nationalCenterRouter from './nationalCenter';
 import feedRouter from './feeds';
+import communicationLogRouter from './communicationLog';
+import monitoringRouter from './monitoring';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -77,6 +78,8 @@ router.use('/goal-templates', goalTemplatesRouter);
 router.use('/events', eventRouter);
 router.use('/session-reports', sessionReportsRouter);
 router.use('/national-center', nationalCenterRouter);
+router.use('/communication-logs', communicationLogRouter);
+router.use('/monitoring', monitoringRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

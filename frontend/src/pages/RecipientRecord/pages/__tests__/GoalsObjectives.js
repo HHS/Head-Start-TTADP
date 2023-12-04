@@ -99,10 +99,20 @@ describe('Goals and Objectives', () => {
     ],
   };
 
-  const renderGoalsAndObjectives = (ids = []) => {
+  const renderGoalsAndObjectives = (ids = [], canMergeGoals = false) => {
+    const userForContext = {
+      ...user,
+    };
+
+    if (canMergeGoals) {
+      userForContext.flags = [
+        'merge_goals',
+      ];
+    }
+
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user }}>
+        <UserContext.Provider value={{ user: userForContext }}>
           <FilterContext.Provider value={{ filterKey: 'test' }}>
             <GoalsObjectives
               recipientId="401"
@@ -112,6 +122,7 @@ describe('Goals and Objectives', () => {
                 state: { ids }, hash: '', pathname: '', search: '',
               }}
               recipientName="test"
+              canMergeGoals={canMergeGoals}
             />
           </FilterContext.Provider>
         </UserContext.Provider>
@@ -140,6 +151,28 @@ describe('Goals and Objectives', () => {
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+
+    const similarityResponse = [
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+          { ids: [3] },
+          { ids: [4] },
+          { ids: [5] },
+        ],
+        ids: [1, 2, 3, 4, 5],
+      },
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+        ],
+        ids: [1, 2],
+      },
+    ];
+
+    fetchMock.get('/api/goals/similar/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {
@@ -149,6 +182,12 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+  });
+
+  it('shows merge goals when prop is passed', async () => {
+    act(() => renderGoalsAndObjectives([], true));
+    expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+    expect(await screen.findByText(/We found groups of similar goals that might be duplicates/i)).toBeVisible();
   });
 
   it('renders correctly when filter is changed', async () => {

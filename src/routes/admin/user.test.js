@@ -5,7 +5,7 @@ import db, {
   Role,
   UserRole,
 } from '../../models';
-import { featureFlags } from '../../models/user';
+import { FEATURE_FLAGS } from '../../constants';
 import {
   getUsers,
   getUser,
@@ -119,7 +119,7 @@ describe('User route handler', () => {
 
   it('properly fetches features', async () => {
     await getFeatures(mockRequest, mockResponse);
-    expect(mockResponse.json).toHaveBeenCalledWith(featureFlags);
+    expect(mockResponse.json).toHaveBeenCalledWith(FEATURE_FLAGS);
   });
 
   it('Creates a new user', async () => {

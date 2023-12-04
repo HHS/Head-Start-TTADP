@@ -9,6 +9,7 @@ import fetchMock from 'fetch-mock';
 import completeSession from '../completeSession';
 import NetworkContext from '../../../../NetworkContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
 
 describe('completeSession', () => {
   describe('render', () => {
@@ -21,11 +22,15 @@ describe('completeSession', () => {
       id: 1,
       status: 'Not started',
       pageState: defaultPageState,
+      event: {
+        ownerId: 1,
+      },
     };
 
     const onSubmit = jest.fn();
     const onSaveForm = jest.fn();
     const onUpdatePage = jest.fn();
+    const userId = 1;
 
     // eslint-disable-next-line react/prop-types
     const RenderCompleteSession = ({ defaultValues = defaultFormValues }) => {
@@ -39,21 +44,23 @@ describe('completeSession', () => {
       return (
         <FormProvider {...hookForm}>
           <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {completeSession.render(
-                {},
-                formData,
-                1,
-                false,
-                jest.fn(),
-                onSaveForm,
-                onUpdatePage,
-                false,
-                '',
-                onSubmit,
-                () => <></>,
-              )}
-            </NetworkContext.Provider>
+            <UserContext.Provider value={{ user: { id: userId } }}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {completeSession.render(
+                  {},
+                  formData,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveForm,
+                  onUpdatePage,
+                  false,
+                  '',
+                  onSubmit,
+                  () => <></>,
+                )}
+              </NetworkContext.Provider>
+            </UserContext.Provider>
           </AppLoadingContext.Provider>
         </FormProvider>
       );
@@ -86,8 +93,8 @@ describe('completeSession', () => {
         userEvent.click(backButton);
       });
 
-      // 2 is the complete event page position (4) - 1
-      expect(onUpdatePage).toHaveBeenCalledWith(3);
+      // We are on page 5, so we should go back to page 4.
+      expect(onUpdatePage).toHaveBeenCalledWith(4);
     });
 
     it('calls saveDraft when the save draft button is clicked', async () => {
@@ -169,6 +176,23 @@ describe('completeSession', () => {
       const statusSelect = await screen.findByRole('combobox', { name: /status/i });
 
       expect(statusSelect).toHaveValue('In progress');
+    });
+
+    it('poc cannot submit', async () => {
+      act(() => {
+        render(<RenderCompleteSession defaultValues={{
+          id: 1,
+          pageState: defaultPageState,
+          event: {
+            ownerId: 1,
+            pocIds: [userId],
+          },
+        }}
+        />);
+      });
+
+      const submitButton = screen.queryByRole('button', { name: /submit/i });
+      expect(submitButton).toBeNull();
     });
   });
 });

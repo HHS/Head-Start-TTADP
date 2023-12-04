@@ -63,7 +63,7 @@ const NeedsAction = ({
 
   return (
     <>
-      <h2>Review and re-submit report</h2>
+      <h2>Review and submit</h2>
       <IndicatesRequiredField />
       <div className="margin-bottom-2">
         {
@@ -122,7 +122,7 @@ const NeedsAction = ({
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <div className="margin-top-3">
         <ApproverStatusList approverStatus={approverStatusList} />
-        <Button className="margin-bottom-4" onClick={submit}>Re-submit for Approval</Button>
+        <Button className="margin-bottom-4" onClick={submit}>Update report</Button>
       </div>
     </>
   );

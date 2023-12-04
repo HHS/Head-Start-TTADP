@@ -1,12 +1,17 @@
 import express from 'express';
 import {
-  User, Permission, Role, UserRole, sequelize,
+  User,
+  Permission,
+  Role,
+  UserRole,
+  sequelize,
 } from '../../models';
-import { featureFlags } from '../../models/user';
+import { FEATURE_FLAGS } from '../../constants';
 import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
 import transactionWrapper from '../transactionWrapper';
+import SCOPES from '../../middleware/scopeConstants';
 
 const namespace = 'SERVICE:USER';
 
@@ -169,9 +174,36 @@ export async function deleteUser(req, res) {
 
 export async function getFeatures(req, res) {
   try {
-    res.json(featureFlags);
+    res.json(FEATURE_FLAGS);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getCreatorsByRegion(req, res) {
+  try {
+    const { regionId } = req.params;
+    const creators = await User.findAll({
+      attributes: userAttributes,
+      include: [
+        {
+          model: Permission,
+          as: 'permissions',
+          where: {
+            regionId: Number(regionId),
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+          required: true,
+        },
+      ],
+      order: [
+        [sequelize.fn('CONCAT', sequelize.col('"User"."name"'), sequelize.col('email')), 'ASC'],
+      ],
+    });
+
+    res.json(creators);
+  } catch (err) {
+    await handleErrors(req, res, err, logContext);
   }
 }
 
@@ -180,6 +212,7 @@ const router = express.Router();
 router.get('/features', transactionWrapper(getFeatures));
 router.get('/:userId', transactionWrapper(getUser));
 router.get('/', transactionWrapper(getUsers));
+router.get('/creators/region/:regionId', transactionWrapper(getCreatorsByRegion));
 router.post('/', transactionWrapper(createUser));
 router.put('/:userId', transactionWrapper(updateUser));
 router.delete('/:userId', transactionWrapper(deleteUser));

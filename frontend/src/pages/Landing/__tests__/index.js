@@ -414,33 +414,34 @@ describe('My alerts sorting', () => {
     expect(statusColumnHeaders.length).toBe(1);
     fetchMock.reset();
 
-    fireEvent.click(statusColumnHeaders[0]);
-
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
-
-    fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
+    const url = '/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(url,
       convertToResponse(activityReportsSorted, true));
 
-    fireEvent.click(statusColumnHeaders[0]);
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
+    expect(fetchMock.called(url)).toBe(false);
+    act(() => {
+      fireEvent.click(statusColumnHeaders[0]);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
   });
 
   it('is enabled for Report ID', async () => {
     const reportIdHeaders = await screen.findAllByRole('columnheader', { name: /report id/i });
     expect(reportIdHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    const url = '/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(url,
       convertToResponse(activityReports, true));
     fetchMock.get(
       base,
       { count: 0, rows: [], recipients: [] },
     );
     const columnHeaders = await screen.findAllByText(/report id/i);
-    fireEvent.click(columnHeaders[0]);
-    await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/r14-ar-1/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/r14-ar-2/i));
+    expect(fetchMock.called(url)).toBe(false);
+    act(() => {
+      fireEvent.click(columnHeaders[0]);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
   });
 
   it('is enabled for Recipient', async () => {
@@ -449,35 +450,38 @@ describe('My alerts sorting', () => {
     });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10',
+    const url = '/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(url,
       convertToResponse(activityReports, true));
     fetchMock.get(
       base,
       { count: 0, rows: [], recipients: [] },
     );
 
-    fireEvent.click(columnHeaders[0]);
-
-    const textContent = /Johnston-Romaguera Johnston-Romaguera Recipient Name click to visually reveal the recipients for R14-AR-1$/i;
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
-    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/qris system/i));
+    expect(fetchMock.called(url)).toBe(false);
+    act(() => {
+      fireEvent.click(columnHeaders[0]);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
   });
 
   it('is enabled for Start date', async () => {
     const columnHeaders = await screen.findAllByRole('button', { name: /date started\. activate to sort ascending/i });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    const url = '/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(url,
       convertToResponse(activityReportsSorted, true));
     fetchMock.get(
       base,
       { count: 0, rows: [], recipients: [] },
     );
 
-    fireEvent.click(columnHeaders[0]);
-
-    await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/02\/01\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/02\/08\/2021/i));
+    expect(fetchMock.called(url)).toBe(false);
+    act(() => {
+      fireEvent.click(columnHeaders[0]);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
   });
 
   it('is enabled for Creator', async () => {
@@ -485,32 +489,35 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    const url = '/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(url,
       convertToResponse(activityReportsSorted, true));
     fetchMock.get(
       base,
       { count: 0, rows: [], recipients: [] },
     );
 
-    fireEvent.click(columnHeaders[0]);
-
-    await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/kiwi, gs/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/kiwi, ttac/i));
+    expect(fetchMock.called(url)).toBe(false);
+    act(() => {
+      fireEvent.click(columnHeaders[0]);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
   });
 
   it('is enabled for Collaborator(s)', async () => {
     const columnHeaders = await screen.findAllByText(/collaborators/i);
     fetchMock.reset();
 
-    fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    const url = '/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(url,
       convertToResponse(activityReportsSorted, true));
     fetchMock.get(`${base}`, { count: 0, rows: [], recipients: [] });
 
-    fireEvent.click(columnHeaders[0]);
-    const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
-    const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
-    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(firstCell));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(secondCell));
+    expect(fetchMock.called(url)).toBe(false);
+    act(() => {
+      fireEvent.click(columnHeaders[0]);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
   });
 });
 

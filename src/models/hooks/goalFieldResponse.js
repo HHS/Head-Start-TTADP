@@ -36,19 +36,36 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, options
     && changed.includes('response')) {
       // Update all ActivityReportGoalFieldResponses with this goalId and promptId.
       const { goalId, goalTemplateFieldPromptId } = instance;
-      await sequelize.models.ActivityReportGoalFieldResponse.update(
-        { response: instance.response },
+
+      // Get ids to update (sequelize update doesn't support joins...)
+      const idsToUpdate = await sequelize.models.ActivityReportGoalFieldResponse.findAll(
         {
+          attributes: ['id'],
           where: {
             goalTemplateFieldPromptId,
           },
-          includes: {
+          include: {
+            attributes: [],
+            required: true,
             model: sequelize.models.ActivityReportGoal,
+            as: 'activityReportGoal',
             where: {
               goalId,
             },
           },
+        },
+      );
 
+      // Get ids to update.
+      const ids = idsToUpdate.map((item) => item.id);
+
+      // Perform the update.
+      await sequelize.models.ActivityReportGoalFieldResponse.update(
+        { response: instance.response },
+        {
+          where: {
+            id: ids,
+          },
         },
       );
     }

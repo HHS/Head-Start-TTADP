@@ -517,7 +517,7 @@ export default function GoalForm({
   };
 
   const redirectToGoalsPage = (goals) => {
-    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/rttapa`, {
       ids: goals.map((g) => g.id),
     });
   };
@@ -888,7 +888,7 @@ export default function GoalForm({
       { showRTRnavigation ? (
         <Link
           className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
         >
           <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
           <span>Back to RTTAPA</span>
@@ -969,7 +969,7 @@ export default function GoalForm({
             { showForm ? <Button type="button" outline onClick={onSaveDraft}>Save draft</Button> : null }
             { showForm && !createdGoals.length ? (
               <Link
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
                 className=" usa-button usa-button--outline"
               >
                 Cancel
@@ -994,7 +994,7 @@ export default function GoalForm({
               </Button>
               <Link
                 className="usa-button usa-button--outline"
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
               >
                 Cancel
               </Link>
