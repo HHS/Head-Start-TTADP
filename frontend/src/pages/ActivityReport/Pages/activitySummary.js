@@ -7,7 +7,14 @@ import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox, Label, Alert as USWDSAlert,
+  Fieldset,
+  Radio,
+  Grid,
+  TextInput,
+  Checkbox,
+  Label,
+  Alert as USWDSAlert,
+  Dropdown,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
@@ -16,7 +23,6 @@ import {
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
-import Select from '../../../components/Select';
 import {
   otherEntityParticipants,
   recipientParticipants,
@@ -41,6 +47,14 @@ const ActivitySummary = ({
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
 
+  /*
+  const groups = [
+    { id: 1, name: 'Group 1' },
+    { id: 2, name: 'Group 2' },
+    { id: 3, name: 'Group 3' },
+  ];
+  */
+
   const {
     register,
     watch,
@@ -51,9 +65,9 @@ const ActivitySummary = ({
 
   const activityRecipientType = watch('activityRecipientType');
   const watchFormRecipients = watch('activityRecipients');
-
+  const watchGroup = watch('recipientGroup');
+  console.log('watchGroup', watchGroup);
   const [useGroup, setUseGroup] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState(null);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
 
   const startDate = watch('startDate');
@@ -106,10 +120,10 @@ const ActivitySummary = ({
 
   useDeepCompareEffect(() => {
     // If the user changes recipients manually while using groups.
-    if (useGroup && selectedGroup) {
+    if (useGroup && watchGroup) {
       setShowGroupInfo(true);
       setUseGroup(false);
-      setSelectedGroup(null);
+      setValue('recipientGroup', [], { shouldValidate: false });
     }
   }, [watchFormRecipients]);
 
@@ -167,7 +181,7 @@ const ActivitySummary = ({
     const { target: { checked = null } = {} } = event;
     // Reset.
     setValue('activityRecipients', [], { shouldValidate: false });
-    setSelectedGroup(null);
+    setValue('recipientGroup', [], { shouldValidate: false });
     setUseGroup(checked);
     setShowGroupInfo(false);
 
@@ -179,7 +193,7 @@ const ActivitySummary = ({
   };
 
   const handleGroupChange = (e) => {
-    setSelectedGroup(e);
+    console.log('called on changezzzz');
     /*
     const groupToUse = recipientGroups.find((group) => group.id === e.value);
     const recipientIds = groupToUse.recipients.map((recipient) => recipient.id);
@@ -196,7 +210,7 @@ const ActivitySummary = ({
   };
 
   const resetGroup = () => {
-    setSelectedGroup(null);
+    setValue('recipientGroup', [], { shouldValidate: false });
     setUseGroup(true);
     setValue('activityRecipients', [], { shouldValidate: false });
     setShowGroupInfo(false);
@@ -252,18 +266,23 @@ const ActivitySummary = ({
           : (
             <div className="margin-top-2">
               <FormItem
-                label="Group name "
-                name="groupName"
-                required
+                label="Group name"
+                name="recipientGroup"
               >
-                <Select
-                  name="recipientGroup"
-                  value={selectedGroup}
-                  onChange={(e) => handleGroupChange(e)}
+                <Dropdown
                   required
-                  placeholderText={placeholderText}
-                  options={groups.map((group) => ({ value: group.id, label: group.name }))}
-                />
+                  control={control}
+                  id="recipientGroup"
+                  name="recipientGroup"
+                  inputRef={register({ required: 'Select a group' })}
+                  onAbort={resetGroup}
+                  onChange={handleGroupChange}
+                >
+                  <option value="" disabled selected hidden>- Select -</option>
+                  {groups.map((group) => (
+                    <option key={group.id}>{group.name}</option>
+                  ))}
+                </Dropdown>
               </FormItem>
             </div>
           )
