@@ -40,6 +40,7 @@ import {
   getApprovers,
   reviewReport,
   resetToDraft,
+  getGroupsForActivityReport,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -181,6 +182,7 @@ function ActivityReport({
       },
       collaborators: [],
       availableApprovers: [],
+      groups: [],
     },
   );
   const [isApprover, updateIsApprover] = useState(false);
@@ -268,8 +270,10 @@ function ActivityReport({
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+         // getGroupsForActivityReport(report.regionId),
         ];
 
+        //const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
         const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
 
         const isCollaborator = report.activityReportCollaborators
@@ -296,6 +300,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
+          groups: [],
         });
 
         let shouldUpdateFromNetwork = true;
