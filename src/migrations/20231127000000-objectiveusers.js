@@ -28,10 +28,11 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         INSERT INTO "CollaboratorTypes"
-        ("name", "validForId", "createdAt", "updatedAt")
+        ("name", "validForId", "propagateOnMerge", "createdAt", "updatedAt")
         SELECT
           t.name,
           vf.id,
+          t.name NOT LIKE 'Merge%',
           current_timestamp,
           current_timestamp
         FROM "ValidFor" vf
@@ -153,7 +154,23 @@ module.exports = {
       )
       DO UPDATE SET
         "updatedAt" = EXCLUDED."updatedAt",
-        "linkBack" = "ObjectiveCollaborators"."linkBack" || EXCLUDED."linkBack"
+        "linkBack" = (
+          SELECT
+            JSONB_OBJECT_AGG(key_values.key, key_values.values)
+          FROM (
+            SELECT
+              je.key,
+              JSONB_AGG(DISTINCT jae.value ORDER BY jae.value) "values"
+            FROM (
+              SELECT "ObjectiveCollaborators"."linkBack"
+              UNION
+              SELECT EXCLUDED."linkBack"
+            ) "linkBacks"("linkBack")
+            CROSS JOIN jsonb_each("linkBacks"."linkBack") je
+            CROSS JOIN jsonb_array_elements(je.value) jae(value)
+            GROUP BY 1
+          ) key_values
+        )
       RETURNING
         "id" "objectiveCollaboratorId",
         "objectiveId",
@@ -164,50 +181,69 @@ module.exports = {
         "updatedAt";
       `;
 
-      const collectObjectiveCollaboratorsViaAuditLog = (
-        dmlType,
-        typeName,
-      ) => collectObjectiveCollaborators(
+      const collectObjectiveCollaboratorsViaAuditLogAsCreator = () => collectObjectiveCollaborators(
         /* sql */`
         SELECT
           data_id "objectiveId",
           dml_as "userId",
-          MIN(g."createdAt") "createdAt",
-          MIN(g."createdAt") "updatedAt",
+          MIN(o."createdAt") "createdAt",
+          MIN(o."createdAt") "updatedAt",
           null::JSONB "linkBack"
-        FROM "ZALObjectives" zg
+        FROM "ZALObjectives" zo
         LEFT JOIN "Users" u
-        ON zg.dml_as = u.id
-        JOIN "Objectives" g
-        ON zg.data_id = g.id
+        ON zo.dml_as = u.id
+        JOIN "Objectives" o
+        ON zo.data_id = o.id
         WHERE dml_as NOT IN (-1, 0) -- default and migration files
-        AND dml_type = '${dmlType}'
+        AND dml_type = 'INSERT'
         AND new_row_data -> 'title' IS NOT NULL
         GROUP BY 1,2
         ORDER BY 1,2
         `,
-        typeName,
+        OBJECTIVE_COLLABORATORS.CREATOR,
+      );
+
+      const collectObjectiveCollaboratorsViaAuditLogAsEditor = () => collectObjectiveCollaborators(
+        /* sql */`
+        SELECT
+          data_id "objectiveId",
+          dml_as "userId",
+          MIN(o."createdAt") "createdAt",
+          MIN(o."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALObjectives" zo
+        LEFT JOIN "Users" u
+        ON zo.dml_as = u.id
+        JOIN "Objectives" o
+        ON zo.data_id = o.id
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'UPDATE'
+        AND new_row_data -> 'title' IS NOT NULL
+        GROUP BY 1,2
+        ORDER BY 1,2
+        `,
+        OBJECTIVE_COLLABORATORS.EDITOR,
       );
 
       const collectObjectiveCollaboratorsViaActivityReport = () => collectObjectiveCollaborators(
         /* sql */`
         SELECT
-          g.id "objectiveId",
+          o.id "objectiveId",
           (ARRAY_AGG(ar."userId" ORDER BY ar.id ASC))[1] "userId",
           MIN(ar."createdAt") "createdAt",
           MIN(ar."createdAt") "updatedAt",
           null::JSONB "linkBack"
-        FROM "Objectives" g
-        LEFT JOIN "ZALObjectives" zg
-        ON g.id = zg.data_id
-        LEFT JOIN "ActivityReportObjectives" arg
-        ON g.id = arg."objectiveId"
+        FROM "Objectives" o
+        LEFT JOIN "ZALObjectives" zo
+        ON o.id = zo.data_id
+        LEFT JOIN "ActivityReportObjectives" aro
+        ON o.id = aro."objectiveId"
         LEFT JOIN "ActivityReports" ar
-        ON arg."activityReportId" = ar.id
-        WHERE (zg.id IS NULL
-        OR (zg.dml_as IN (-1, 0)
-          AND zg.dml_type = 'INSERT'))
-        AND g."createdVia" IN ('activityReport')
+        ON aro."activityReportId" = ar.id
+        WHERE (zo.id IS NULL
+        OR (zo.dml_as IN (-1, 0)
+          AND zo.dml_type = 'INSERT'))
+        AND o."createdVia" IN ('activityReport')
         GROUP BY 1
         HAVING (ARRAY_AGG(ar."userId" ORDER BY ar.id ASC))[1] IS NOT NULL
         AND MIN(ar."createdAt") IS NOT NULL
@@ -310,11 +346,141 @@ module.exports = {
         OBJECTIVE_COLLABORATORS.UTILIZER,
       );
 
+      const collectObjectiveCollaboratorsAsMergeDeprecators = () => collectObjectiveCollaborators(
+        /* sql */`
+        select
+          data_id "objectiveId",
+          dml_as "userId",
+          MIN(o."createdAt") "createdAt",
+          MIN(o."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALObjectives" zo
+        JOIN "Objectives" o
+        ON zo.data_id = o.id
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'UPDATE'
+        AND new_row_data -> 'title' IS NOT NULL
+        and new_row_data ->> 'mapsToParentObjectiveId' IS NOT null
+        GROUP BY 1,2
+        `,
+        OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR,
+      );
+
+      const collectObjectiveCollaboratorsAsMergeCreator = () => collectObjectiveCollaborators(
+        /* sql */`
+        SELECT
+          data_id "objectiveId",
+          dml_as "userId",
+          MIN(o."createdAt") "createdAt",
+          MIN(o."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALObjectives" zo
+        JOIN "Objectives" o
+        ON zo.data_id = o.id
+        JOIN "Objectives" o2
+        ON o.id = o2."mapsToParentObjectiveId"
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'INSERT'
+        AND new_row_data -> 'title' IS NOT NULL
+        GROUP BY 1,2
+        `,
+        OBJECTIVE_COLLABORATORS.MERGE_CREATOR,
+      );
+
+      const collectObjectiveCollaboratorsForMerged = () => /* sql */`
+        WITH
+          clusters as (
+            select
+              o."mapsToParentObjectiveId" "objectiveId",
+              oc."userId",
+              oc."collaboratorTypeId",
+              oc."linkBack",
+              oc."createdAt",
+              oc."updatedAt",
+              oc."objectiveId" "originalObjectiveId",
+              (o.title = po.title) "isChosen"
+            FROM "ObjectiveCollaborators" oc
+            JOIN "Objectives" o
+            ON oc."objectiveId" = o.id
+            JOIN "Objectives" po
+            ON o."mapsToParentObjectiveId" = po.id
+            WHERE o."mapsToParentObjectiveId" IS NOT NULL
+          ),
+          unrolled as (
+            SELECT
+              c."objectiveId",
+              c."userId",
+              c."collaboratorTypeId",
+              je.key,
+              JSONB_AGG(DISTINCT v.value ORDER BY v.value) "values",
+              MIN(c."createdAt") "createdAt",
+              MAX(c."updatedAt") "updatedAt"
+            FROM clusters c
+            CROSS JOIN jsonb_each(c."linkBack") je
+            CROSS JOIN jsonb_array_elements(je.value) v(value)
+            where c."linkBack" is not null
+            group by 1,2,3,4
+          ),
+          rerolled as (
+            SELECT
+              u."objectiveId",
+              u."userId",
+              u."collaboratorTypeId",
+              JSONB_OBJECT_AGG(u.key,u.values) "linkBack",
+              MIN(u."createdAt") "createdAt",
+              MAX(u."updatedAt") "updatedAt"
+            FROM unrolled u
+            group by 1,2,3
+          ),
+          rolled as (
+            SELECT
+              c."objectiveId",
+              c."userId",
+              ct2.id "collaboratorTypeId",
+              null::JSONB "linkBack",
+              MIN(c."createdAt") "createdAt",
+              MAX(c."updatedAt") "updatedAt"
+            FROM clusters c
+            JOIN "CollaboratorTypes" ct
+            ON c."collaboratorTypeId" = ct.id
+            JOIN "CollaboratorTypes" ct2
+            ON ct."validForId" = ct2."validForId"
+            AND ((c."isChosen" IS NOT TRUE
+              AND ct."name" = '${OBJECTIVE_COLLABORATORS.CREATOR}'
+              AND ct2."name" = '${OBJECTIVE_COLLABORATORS.EDITOR}')
+              OR ct.id = ct2.id)
+            WHERE c."linkBack" IS null
+            GROUP BY 1,2,3
+          ),
+          mapped_collaborators AS (
+            SELECT
+              *
+            FROM rerolled
+            UNION
+            SELECT
+              *
+            FROM rolled
+          )
+          INSERT INTO "ObjectiveCollaborators"
+          (
+            "objectiveId",
+            "userId",
+            "collaboratorTypeId",
+            "linkBack",
+            "createdAt",
+            "updatedAt"
+          )
+          SELECT
+            "objectiveId",
+            "userId",
+            "collaboratorTypeId",
+            "linkBack",
+            "createdAt",
+            "updatedAt"
+          FROM mapped_collaborators;`;
+
       await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsViaAuditLog(
-          'INSERT',
-          OBJECTIVE_COLLABORATORS.CREATOR,
-        ),
+        collectObjectiveCollaboratorsViaAuditLogAsCreator(),
         { transaction },
       );
 
@@ -324,10 +490,7 @@ module.exports = {
       );
 
       await queryInterface.sequelize.query(
-        collectObjectiveCollaboratorsViaAuditLog(
-          'UPDATE',
-          OBJECTIVE_COLLABORATORS.EDITOR,
-        ),
+        collectObjectiveCollaboratorsViaAuditLogAsEditor(),
         { transaction },
       );
 
@@ -338,6 +501,21 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         collectObjectiveCollaboratorsAsUtilizers(),
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        collectObjectiveCollaboratorsAsMergeDeprecators(),
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        collectObjectiveCollaboratorsAsMergeCreator(),
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        collectObjectiveCollaboratorsForMerged(),
         { transaction },
       );
     });
