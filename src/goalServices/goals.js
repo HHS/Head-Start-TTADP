@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
@@ -2578,36 +2578,6 @@ export async function getGoalIdsBySimilarity(similarityResponse = []) {
 }
 
 /**
- * Given a list of goal statuses, determine the final status
- * based on the criteria provided by OHS. Intended only
- * to be used for merge goals
- *
- * Note that this should be kept in sync with the status predicted by
- * the React component the user sees (FinalGoalCard)
- *
- * @param {string[]} statuses
- * @returns string one of Object.values(GOAL_STATUS)
- */
-export function determineMergeGoalStatus(statuses) {
-  if (statuses.includes(GOAL_STATUS.IN_PROGRESS)) {
-    return GOAL_STATUS.IN_PROGRESS;
-  }
-
-  if (statuses.includes(GOAL_STATUS.CLOSED)) {
-    return GOAL_STATUS.CLOSED;
-  }
-
-  if (statuses.includes(GOAL_STATUS.SUSPENDED)) {
-    return GOAL_STATUS.SUSPENDED;
-  }
-
-  if (statuses.includes(GOAL_STATUS.NOT_STARTED)) {
-    return GOAL_STATUS.NOT_STARTED;
-  }
-  return GOAL_STATUS.DRAFT;
-}
-
-/**
  *
  * @param {*} objective
  * @param {*} parentGoalId
@@ -2637,8 +2607,8 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   objective.activityReportObjectives.forEach((aro) => {
     updatesToRelatedModels.push(
       ActivityReportObjective.update({
+        originalObjectiveId: sequelize.fn('COALESCE', sequelize.col('originalObjectiveId'), aro.objectiveId),
         objectiveId: newObjective.id,
-        originalObjectiveId: aro.objectiveId,
       }, {
         where: {
           id: aro.id,
@@ -2862,9 +2832,10 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {
+      // originalGoalId: g.id,
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
-          originalGoalId: g.id,
+          originalGoalId: sequelize.fn('COALESCE', sequelize.col('originalGoalId'), g.id),
           goalId: grantToGoalDictionary[
             grantsWithReplacementsDictionary[g.grantId]
           ],
