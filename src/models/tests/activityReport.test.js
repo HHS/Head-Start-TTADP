@@ -1,7 +1,6 @@
 /* eslint-disable dot-notation */
 import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
-import httpContext from 'express-http-context';
 import db, {
   ActivityReport,
   ActivityRecipient,
