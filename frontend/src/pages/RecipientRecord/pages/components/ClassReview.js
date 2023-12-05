@@ -27,17 +27,17 @@ const BadgeBelowCompetetive = () => (
   </span>
 );
 
-const ClassReview = ({ grantId }) => {
+const ClassReview = ({ grantNumber, recipientId, regionId }) => {
   const [scores, setScores] = useState({});
   const howMetRef = useRef(null);
 
   useEffect(() => {
     const fetchScores = async () => {
-      const data = await getClassScores(grantId);
+      const data = await getClassScores({ grantNumber, recipientId, regionId });
       setScores(data);
     };
     fetchScores();
-  }, [grantId]);
+  }, [grantNumber, recipientId, regionId]);
 
   const getScoreBadge = (key, score, received) => {
     if (key === 'ES' || key === 'CO') {
@@ -161,7 +161,9 @@ const ClassReview = ({ grantId }) => {
 };
 
 ClassReview.propTypes = {
-  grantId: PropTypes.string.isRequired,
+  grantNumber: PropTypes.string.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default ClassReview;

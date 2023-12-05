@@ -4,7 +4,7 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from '@trussworks/react-uswds';
 import Container from '../../../../components/Container';
-import { getMonitoringReview } from '../../../../fetchers/monitoring';
+import { getMonitoringData } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
 
 const BadgeCompliant = () => (
@@ -19,16 +19,16 @@ const BadgeNoncompliant = (text = 'Noncompliant') => (
   </span>
 );
 
-const MonitoringReview = ({ grantId }) => {
+const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
   const [review, setReview] = useState({});
 
   useEffect(() => {
     const fetchReview = async () => {
-      const data = await getMonitoringReview(grantId);
+      const data = await getMonitoringData({ grantNumber, recipientId, regionId });
       setReview(data);
     };
     fetchReview();
-  }, [grantId]);
+  }, [grantNumber, regionId, recipientId]);
 
   const getComplianceBadge = (key) => {
     if (key === 'Compliant') return BadgeCompliant();
@@ -88,7 +88,9 @@ const MonitoringReview = ({ grantId }) => {
 };
 
 MonitoringReview.propTypes = {
-  grantId: PropTypes.string.isRequired,
+  grantNumber: PropTypes.string.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default MonitoringReview;

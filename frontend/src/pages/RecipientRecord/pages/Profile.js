@@ -8,6 +8,7 @@ import RecipientLeadership from '../components/RecipientLeadership';
 import './Profile.css';
 import ClassReview from './components/ClassReview';
 import MonitoringReview from './components/MonitoringReview';
+import FeatureFlag from '../../../components/FeatureFlag';
 
 export default function Profile({
   recipientSummary,
@@ -49,12 +50,20 @@ export default function Profile({
                 </Grid>
                 <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
                   <div key={grant.number}>
-                    <ClassReview grantId={grant.number} />
+                    <ClassReview
+                      grantNumber={grant.number}
+                      regionId={regionId}
+                      recipientId={recipientId}
+                    />
                   </div>
                 </Grid>
                 <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
                   <div key={grant.number}>
-                    <MonitoringReview grantId={grant.number} regionId={regionId} />
+                    <MonitoringReview
+                      grantNumber={grant.number}
+                      regionId={regionId}
+                      recipientId={recipientId}
+                    />
                   </div>
                 </Grid>
               </>

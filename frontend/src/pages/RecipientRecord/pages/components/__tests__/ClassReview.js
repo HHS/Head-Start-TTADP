@@ -10,7 +10,7 @@ import ClassReview from '../ClassReview';
 const grantId = '1';
 
 describe('ClassReview', () => {
-  const renderClassReview = () => render(<ClassReview grantId={grantId} />);
+  const renderClassReview = () => render(<ClassReview grantNumber={grantId} />);
 
   describe('emotional support', () => {
     afterEach(() => {

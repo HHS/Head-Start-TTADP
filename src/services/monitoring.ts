@@ -1,4 +1,10 @@
-export async function monitoringData(recipientId: number, regionId: number) {
+type MonitoringDataArgs = {
+  recipientId: number;
+  grantNumber: string;
+  regionId: number;
+};
+
+export async function monitoringData({ recipientId, grantNumber, regionId }: MonitoringDataArgs) {
   return {
     recipientId,
     regionId,
@@ -8,7 +14,7 @@ export async function monitoringData(recipientId: number, regionId: number) {
   };
 }
 
-export async function classScore(recipientId: number, regionId: number) {
+export async function classScore({ recipientId, grantNumber, regionId }: MonitoringDataArgs) {
   return {
     recipientId,
     regionId,
