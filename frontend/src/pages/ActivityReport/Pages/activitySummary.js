@@ -36,11 +36,10 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 const ActivitySummary = ({
   recipients,
   collaborators,
+  groups,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
-
-  const recipientGroups = [{ id: 1, name: 'Group 1' }, { id: 2, name: 'Group 2' }];
 
   const {
     register,
@@ -263,7 +262,7 @@ const ActivitySummary = ({
                   onChange={(e) => handleGroupChange(e)}
                   required
                   placeholderText={placeholderText}
-                  options={recipientGroups.map((group) => ({ value: group.id, label: group.name }))}
+                  options={groups.map((group) => ({ value: group.id, label: group.name }))}
                 />
               </FormItem>
             </div>
@@ -612,6 +611,12 @@ ActivitySummary.propTypes = {
       }),
     ),
   }).isRequired,
+  groups: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
 };
 
 const sections = [
@@ -775,12 +780,13 @@ export default {
     _onFormSubmit,
     Alert,
   ) => {
-    const { recipients, collaborators } = additionalData;
+    const { recipients, collaborators, groups } = additionalData;
     return (
       <>
         <ActivitySummary
           recipients={recipients}
           collaborators={collaborators}
+          groups={groups}
         />
         <Alert />
         <NavigatorButtons
