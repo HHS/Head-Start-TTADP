@@ -203,6 +203,7 @@ class CollaboratorTypes{
  * validForId : integer : REFERENCES "ValidFor".id
  * createdAt : timestamp with time zone : now()
  * name : varchar(255)
+ * propagateOnMerge : boolean : true
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
 }
