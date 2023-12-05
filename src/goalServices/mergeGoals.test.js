@@ -29,6 +29,16 @@ import {
   GOAL_STATUS,
 } from '../constants';
 
+// Mocking express-http-context
+jest.mock('express-http-context', () => {
+  const httpContext = jest.requireActual('express-http-context');
+
+  // Mock the get function to return 1
+  httpContext.get = jest.fn(() => 1);
+
+  return httpContext;
+});
+
 describe('mergeGoals', () => {
   let recipient;
   let grantOne;
