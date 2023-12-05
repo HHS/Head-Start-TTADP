@@ -270,11 +270,10 @@ function ActivityReport({
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
-         // getGroupsForActivityReport(report.regionId),
+          getGroupsForActivityReport(report.regionId),
         ];
 
-        //const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
-        const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
+        const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
 
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
@@ -300,7 +299,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
-          groups: [],
+          groups: groups || [],
         });
 
         let shouldUpdateFromNetwork = true;

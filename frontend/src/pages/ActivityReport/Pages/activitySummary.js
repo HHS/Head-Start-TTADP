@@ -2,11 +2,12 @@ import React, {
   useState, useEffect, useRef, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox, Label, Alert,
+  Fieldset, Radio, Grid, TextInput, Checkbox, Label, Alert as USWDSAlert,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
@@ -104,24 +105,14 @@ const ActivitySummary = ({
     previousActivityRecipientType.current = activityRecipientType;
   }, [activityRecipientType, setValue, pageState]);
 
-  // Check box use group.
-  useEffect(() => {
-    console.log('UseGroup', useGroup);
-    if (!useGroup) {
-      setValue('recipientGroup', [], { shouldValidate: false });
-      setValue('activityRecipients', [], { shouldValidate: false });
-    }
-  }, [useGroup, setValue]);
-
-  useEffect(() => {
-    console.log('UseGroup', useGroup);
+  useDeepCompareEffect(() => {
     // If the user changes recipients manually while using groups.
     if (useGroup && selectedGroup) {
       setShowGroupInfo(true);
       setUseGroup(false);
       setSelectedGroup(null);
     }
-  }, [watchFormRecipients, useGroup, selectedGroup]);
+  }, [watchFormRecipients]);
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
@@ -175,22 +166,22 @@ const ActivitySummary = ({
 
   const toggleUseGroup = (event) => {
     const { target: { checked = null } = {} } = event;
-    console.log('Toggle Check', checked);
-    // Clear selected recipients.
+    // Reset.
     setValue('activityRecipients', [], { shouldValidate: false });
-    // Clear selected group.
     setSelectedGroup(null);
-
-    // Update checkbox state.
     setUseGroup(checked);
+    setShowGroupInfo(false);
+
+    // Use group checkbox unchecked.
+    if (!useGroup) {
+      setValue('recipientGroup', [], { shouldValidate: false });
+      setValue('activityRecipients', [], { shouldValidate: false });
+    }
   };
 
   const handleGroupChange = (e) => {
-    console.log('Gropu Change');
-   
-    console.log('selectedRecipients: ', selectedRecipients);
     setSelectedGroup(e);
- /*
+    /*
     const groupToUse = recipientGroups.find((group) => group.id === e.value);
     const recipientIds = groupToUse.recipients.map((recipient) => recipient.id);
 
@@ -206,13 +197,10 @@ const ActivitySummary = ({
   };
 
   const resetGroup = () => {
-    console.log('Reset Group');
-    // Clear selected group.
     setSelectedGroup(null);
-    // Clear checkbox state.
     setUseGroup(true);
-    // Clear selected recipients.
     setValue('activityRecipients', [], { shouldValidate: false });
+    setShowGroupInfo(false);
   };
 
   return (
@@ -250,13 +238,13 @@ const ActivitySummary = ({
         </div>
         {
         showGroupInfo && (
-        <Alert type="info">
+        <USWDSAlert type="info">
           You&apos;ve successfully modified the Group&apos;s recipients for this
           report. Changes here do not affect the Group itself.
           <button type="button" className="usa-button usa-button--unstyled margin-top-0" onClick={resetGroup}>
             Reset or select a different group.
           </button>
-        </Alert>
+        </USWDSAlert>
         )
         }
         {
@@ -282,7 +270,7 @@ const ActivitySummary = ({
           )
         }
         {
-          activityRecipientType === 'recipient'
+          activityRecipientType === 'recipient' && !showGroupInfo
            && (
            <div className="margin-top-2">
              <Checkbox
