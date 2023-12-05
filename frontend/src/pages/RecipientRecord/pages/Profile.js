@@ -15,6 +15,8 @@ export default function Profile({
   recipientName,
   recipientId,
 }) {
+  const activeGrants = recipientSummary.grants.filter((grant) => grant.status === 'Active');
+
   return (
     <>
       <Helmet>
@@ -36,7 +38,7 @@ export default function Profile({
             <GrantList summary={recipientSummary} />
           </Grid>
           <FeatureFlag name="monitoring">
-            {recipientSummary.grants.map((grant) => (
+            {activeGrants.map((grant) => (
               <>
                 <Grid desktop={{ col: 12 }}>
                   <h2 className="smart-hub-title-big-serif">
@@ -52,7 +54,7 @@ export default function Profile({
                 </Grid>
                 <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
                   <div key={grant.number}>
-                    <MonitoringReview grantId={grant.number} />
+                    <MonitoringReview grantId={grant.number} regionId={regionId} />
                   </div>
                 </Grid>
               </>
