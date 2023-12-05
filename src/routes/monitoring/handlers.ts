@@ -10,7 +10,7 @@ const logContext = {
 };
 
 export async function getMonitoringData(req: Request, res: Response) {
-  const { recipientId, grantNumber, regionId } = req.query;
+  const { recipientId, grantNumber, regionId } = req.params;
 
   try {
     await checkRecipientAccessAndExistence(req, res);
@@ -27,7 +27,7 @@ export async function getMonitoringData(req: Request, res: Response) {
 }
 
 export async function getClassScore(req: Request, res: Response) {
-  const { recipientId, grantNumber, regionId } = req.query;
+  const { recipientId, grantNumber, regionId } = req.params;
 
   try {
     await checkRecipientAccessAndExistence(req, res);

@@ -8,37 +8,27 @@ export const getMonitoringData = async ({ grantNumber, recipientId, regionId }) 
   const data = await get(
     join(
       monitoringUrl,
-      `?recipientId=${recipientId}`,
-      `&grantNumber=${grantNumber}`,
-      `&regionId=${regionId}`,
+      recipientId,
+      'region',
+      regionId,
+      'grant',
+      grantNumber,
     ),
   );
 
-  console.log(data.json());
-
   return data.json();
-
-  // return {
-  //   reviewStatus: 'Compliant',
-  //   reviewDate: '05/01/2023',
-  //   reviewType: 'FA-2',
-  // };
 };
 
 export const getClassScores = async ({ grantNumber, recipientId, regionId }) => {
-  const scores = await get(
+  const data = await get(
     join(
       classUrl,
-      `?recipientId=${recipientId}`,
-      `&grantNumber=${grantNumber}`,
-      `&regionId=${regionId}`,
+      recipientId,
+      'region',
+      regionId,
+      'grant',
+      grantNumber,
     ),
   );
-  return scores.json();
-  // return {
-  //   received: '05/01/2023',
-  //   ES: 6,
-  //   CO: 3,
-  //   IS: 7,
-  // };
+  return data.json();
 };

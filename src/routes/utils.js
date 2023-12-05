@@ -8,7 +8,7 @@ import { getUserReadRegions } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 
 const checkRecipientAccessAndExistence = async (req, res) => {
-  const { recipientId, regionId } = req.query;
+  const { recipientId, regionId } = req.params;
   // Check if user has access to this region.
   const userId = await currentUserId(req, res);
   const readRegions = await getUserReadRegions(userId);
