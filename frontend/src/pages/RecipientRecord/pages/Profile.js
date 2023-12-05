@@ -35,27 +35,29 @@ export default function Profile({
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
           </Grid>
-          {recipientSummary.grants.map((grant) => (
-            <>
-              <Grid desktop={{ col: 12 }}>
-                <h2 className="smart-hub-title-big-serif">
-                  Grant number
-                  {' '}
-                  {grant.number}
-                </h2>
-              </Grid>
-              <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                <div key={grant.number}>
-                  <ClassReview grantId={grant.number} />
-                </div>
-              </Grid>
-              <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                <div key={grant.number}>
-                  <MonitoringReview grantId={grant.number} />
-                </div>
-              </Grid>
-            </>
-          ))}
+          <FeatureFlag name="monitoring">
+            {recipientSummary.grants.map((grant) => (
+              <>
+                <Grid desktop={{ col: 12 }}>
+                  <h2 className="smart-hub-title-big-serif">
+                    Grant number
+                    {' '}
+                    {grant.number}
+                  </h2>
+                </Grid>
+                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                  <div key={grant.number}>
+                    <ClassReview grantId={grant.number} />
+                  </div>
+                </Grid>
+                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                  <div key={grant.number}>
+                    <MonitoringReview grantId={grant.number} />
+                  </div>
+                </Grid>
+              </>
+            ))}
+          </FeatureFlag>
         </Grid>
       </div>
     </>
