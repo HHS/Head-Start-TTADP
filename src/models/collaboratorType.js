@@ -82,6 +82,11 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    propagateOnMerge: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
