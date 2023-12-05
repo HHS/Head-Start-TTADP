@@ -458,6 +458,7 @@ const mergeCollaborators = async (
         entityId,
         userId,
         mappedCollaboratorType,
+        sourceCollaborator.linkBack,
       ));
     }
   });
