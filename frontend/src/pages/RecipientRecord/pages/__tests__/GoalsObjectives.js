@@ -151,6 +151,28 @@ describe('Goals and Objectives', () => {
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+
+    const similarityResponse = [
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+          { ids: [3] },
+          { ids: [4] },
+          { ids: [5] },
+        ],
+        ids: [1, 2, 3, 4, 5],
+      },
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+        ],
+        ids: [1, 2],
+      },
+    ];
+
+    fetchMock.get('/api/goals/similar/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {
