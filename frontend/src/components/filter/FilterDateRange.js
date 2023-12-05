@@ -31,8 +31,12 @@ export default function FilterDateRange({
   condition,
   onApplyDateRange,
   query,
+  customDateOptions,
 }) {
   const { setError } = useContext(FilterErrorContext);
+
+  // If we have any additional date options, we'll need to include and sort them
+  const DateOptionsToUse = customDateOptions || DATE_OPTIONS;
 
   // we'll need this to do some of that vanilla stuff
   const container = useRef();
@@ -79,7 +83,7 @@ export default function FilterDateRange({
             name="filter-date-range"
             onChange={isOnChange}
           >
-            {DATE_OPTIONS.map(
+            {DateOptionsToUse.map(
               (dateOption) => (
                 <option
                   key={dateOption.value}
@@ -143,4 +147,12 @@ FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
   query: PropTypes.string.isRequired,
+  customDateOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    value: PropTypes.string.isRequired,
+  })),
+};
+
+FilterDateRange.defaultProps = {
+  customDateOptions: null,
 };

@@ -10,11 +10,14 @@ import {
   destroyGoal,
   mergeGoals,
   goalRegionsById,
+  getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
+import { similarGoalsForRecipient } from '../../services/similarity';
+import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -255,4 +258,39 @@ export async function mergeGoalHandler(req, res) {
   } catch (err) {
     await handleErrors(req, res, err, `${logContext}:MERGE_GOAL`);
   }
+}
+
+export async function getSimilarGoalsForRecipient(req, res) {
+  const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+
+  try {
+    const { result } = await similarGoalsForRecipient(recipientId, true);
+
+    const ids = Array.from((result || []).reduce((acc, resp) => {
+      const goals = (resp.matches || []).map((match) => match.id);
+      goals.forEach((goal) => acc.add(goal));
+
+      return acc;
+    }, new Set()));
+
+    const canView = await Promise.all(ids.map(async (id) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(id);
+      // this can be null after we start merging goals
+      if (!goal) {
+        return true;
+      }
+      return new Goal(user, goal).canView();
+    }));
+
+    if (!canView.every((permission) => permission)) {
+      return res.sendStatus(401).send();
+    }
+    return res.json(await getGoalIdsBySimilarity(result));
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
+  }
+
+  return null;
 }

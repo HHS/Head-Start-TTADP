@@ -55,3 +55,9 @@ export async function mergeGoals(selectedGoalIds, finalGoalId) {
   });
   return res.json();
 }
+
+export async function similarity(recipientId) {
+  const url = join(goalsUrl, 'similar', String(recipientId), '?cluster=true');
+  const response = await get(url);
+  return response.json();
+}
