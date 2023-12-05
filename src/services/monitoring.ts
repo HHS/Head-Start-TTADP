@@ -8,6 +8,7 @@ export async function monitoringData({ recipientId, grantNumber, regionId }: Mon
   return {
     recipientId,
     regionId,
+    grantNumber,
     reviewStatus: 'Compliant',
     reviewDate: '05/01/2023',
     reviewType: 'FA-2',
@@ -18,6 +19,7 @@ export async function classScore({ recipientId, grantNumber, regionId }: Monitor
   return {
     recipientId,
     regionId,
+    grantNumber,
     received: '05/01/2023',
     ES: 6,
     CO: 3,
