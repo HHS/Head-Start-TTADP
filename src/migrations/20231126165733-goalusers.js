@@ -100,6 +100,11 @@ module.exports = {
             key: 'id',
           },
         },
+        propagateOnMerge: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: true,
+        },
         createdAt: {
           type: Sequelize.DATE,
           allowNull: false,
@@ -140,10 +145,11 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         INSERT INTO "CollaboratorTypes"
-        ("name", "validForId", "createdAt", "updatedAt")
+        ("name", "validForId", "propagateOnMerge", "createdAt", "updatedAt")
         SELECT
           t.name,
           vf.id,
+          t.name NOT LIKE 'Merge%',
           current_timestamp,
           current_timestamp
         FROM "ValidFor" vf
@@ -264,7 +270,23 @@ module.exports = {
       )
       DO UPDATE SET
         "updatedAt" = EXCLUDED."updatedAt",
-        "linkBack" = "GoalCollaborators"."linkBack" || EXCLUDED."linkBack"
+        "linkBack" = (
+          SELECT
+            JSONB_OBJECT_AGG(key_values.key, key_values.values)
+          FROM (
+            SELECT
+              je.key,
+              JSONB_AGG(DISTINCT jae.value ORDER BY jae.value) "values"
+            FROM (
+              SELECT "GoalCollaborators"."linkBack"
+              UNION
+              SELECT EXCLUDED."linkBack"
+            ) "linkBacks"("linkBack")
+            CROSS JOIN jsonb_each("linkBacks"."linkBack") je
+            CROSS JOIN jsonb_array_elements(je.value) jae(value)
+            GROUP BY 1
+          ) key_values
+        )
       RETURNING
         "id" "goalCollaboratorId",
         "goalId",
@@ -275,25 +297,45 @@ module.exports = {
         "updatedAt";
       `;
 
-      const collectGoalCollaboratorsViaAuditLog = (dmlType, typeName) => collectGoalCollaborators(
+      const collectGoalCollaboratorsViaAuditLogAsCreator = () => collectGoalCollaborators(
         /* sql */`
         SELECT
-            data_id "goalId",
-            dml_as "userId",
-            MIN(g."createdAt") "createdAt",
-            MIN(g."createdAt") "updatedAt",
-            null::JSONB "linkBack"
-          FROM "ZALGoals" zg
-          LEFT JOIN "Users" u
-          ON zg.dml_as = u.id
-          JOIN "Goals" g
-          ON zg.data_id = g.id
-          WHERE dml_as NOT IN (-1, 0) -- default and migration files
-          AND dml_type = '${dmlType}'
-          AND new_row_data -> 'name' IS NOT NULL
-          GROUP BY 1,2
+          data_id "goalId",
+          dml_as "userId",
+          MIN(g."createdAt") "createdAt",
+          MIN(g."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALGoals" zg
+        JOIN "Goals" g
+        ON zg.data_id = g.id
+        LEFT JOIN "Goals" g2
+        ON g.id = g2."mapsToParentGoalId"
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'INSERT'
+        AND new_row_data -> 'name' IS NOT NULL
+        AND g2.id IS NULL
+        GROUP BY 1,2
         `,
-        typeName,
+        GOAL_COLLABORATORS.CREATOR,
+      );
+
+      const collectGoalCollaboratorsViaAuditLogAsEditor = () => collectGoalCollaborators(
+        /* sql */`
+        SELECT
+          data_id "goalId",
+          dml_as "userId",
+          MIN(g."createdAt") "createdAt",
+          MIN(g."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALGoals" zg
+        JOIN "Goals" g
+        ON zg.data_id = g.id
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'UPDATE'
+        AND new_row_data -> 'name' IS NOT NULL
+        GROUP BY 1,2
+        `,
+        GOAL_COLLABORATORS.EDITOR,
       );
 
       const collectGoalCollaboratorsViaActivityReport = () => collectGoalCollaborators(
@@ -417,11 +459,141 @@ module.exports = {
         GOAL_COLLABORATORS.UTILIZER,
       );
 
+      const collectGoalCollaboratorsAsMergeDeprecators = () => collectGoalCollaborators(
+        /* sql */`
+        select
+          data_id "goalId",
+          dml_as "userId",
+          MIN(g."createdAt") "createdAt",
+          MIN(g."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALGoals" zg
+        JOIN "Goals" g
+        ON zg.data_id = g.id
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'UPDATE'
+        AND new_row_data -> 'name' IS NOT NULL
+        and new_row_data ->> 'mapsToParentGoalId' IS NOT null
+        GROUP BY 1,2
+        `,
+        GOAL_COLLABORATORS.MERGE_DEPRECATOR,
+      );
+
+      const collectGoalCollaboratorsAsMergeCreator = () => collectGoalCollaborators(
+        /* sql */`
+        SELECT
+          data_id "goalId",
+          dml_as "userId",
+          MIN(g."createdAt") "createdAt",
+          MIN(g."createdAt") "updatedAt",
+          null::JSONB "linkBack"
+        FROM "ZALGoals" zg
+        JOIN "Goals" g
+        ON zg.data_id = g.id
+        JOIN "Goals" g2
+        ON g.id = g2."mapsToParentGoalId"
+        WHERE dml_as NOT IN (-1, 0) -- default and migration files
+        AND dml_type = 'INSERT'
+        AND new_row_data -> 'name' IS NOT NULL
+        GROUP BY 1,2
+        `,
+        GOAL_COLLABORATORS.MERGE_CREATOR,
+      );
+
+      const collectGoalCollaboratorsForMerged = () => /* sql */`
+        WITH
+          clusters as (
+            select
+              g."mapsToParentGoalId" "goalId",
+              gc."userId",
+              gc."collaboratorTypeId",
+              gc."linkBack",
+              gc."createdAt",
+              gc."updatedAt",
+              gc."goalId" "originalGoalId",
+              (g.name = pg.name) "isChosen"
+            FROM "GoalCollaborators" gc
+            JOIN "Goals" g
+            ON gc."goalId" = g.id
+            JOIN "Goals" pg
+            ON g."mapsToParentGoalId" = pg.id
+            WHERE g."mapsToParentGoalId" IS NOT NULL
+          ),
+          unrolled as (
+            SELECT
+              c."goalId",
+              c."userId",
+              c."collaboratorTypeId",
+              je.key,
+              JSONB_AGG(DISTINCT v.value ORDER BY v.value) "values",
+              MIN(c."createdAt") "createdAt",
+              MAX(c."updatedAt") "updatedAt"
+            FROM clusters c
+            CROSS JOIN jsonb_each(c."linkBack") je
+            CROSS JOIN jsonb_array_elements(je.value) v(value)
+            where c."linkBack" is not null
+            group by 1,2,3,4
+          ),
+          rerolled as (
+            SELECT
+              u."goalId",
+              u."userId",
+              u."collaboratorTypeId",
+              JSONB_OBJECT_AGG(u.key,u.values) "linkBack",
+              MIN(u."createdAt") "createdAt",
+              MAX(u."updatedAt") "updatedAt"
+            FROM unrolled u
+            group by 1,2,3
+          ),
+          rolled as (
+            SELECT
+              c."goalId",
+              c."userId",
+              ct2.id "collaboratorTypeId",
+              null::JSONB "linkBack",
+              MIN(c."createdAt") "createdAt",
+              MAX(c."updatedAt") "updatedAt"
+            FROM clusters c
+            JOIN "CollaboratorTypes" ct
+            ON c."collaboratorTypeId" = ct.id
+            JOIN "CollaboratorTypes" ct2
+            ON ct."validForId" = ct2."validForId"
+            AND ((c."isChosen" IS NOT TRUE
+              AND ct."name" = '${GOAL_COLLABORATORS.CREATOR}'
+              AND ct2."name" = '${GOAL_COLLABORATORS.EDITOR}')
+              OR ct.id = ct2.id)
+            WHERE c."linkBack" IS null
+            GROUP BY 1,2,3
+          ),
+          mapped_collaborators AS (
+            SELECT
+              *
+            FROM rerolled
+            UNION
+            SELECT
+              *
+            FROM rolled
+          )
+          INSERT INTO "GoalCollaborators"
+          (
+            "goalId",
+            "userId",
+            "collaboratorTypeId",
+            "linkBack",
+            "createdAt",
+            "updatedAt"
+          )
+          SELECT
+            "goalId",
+            "userId",
+            "collaboratorTypeId",
+            "linkBack",
+            "createdAt",
+            "updatedAt"
+          FROM mapped_collaborators;`;
+
       await queryInterface.sequelize.query(
-        collectGoalCollaboratorsViaAuditLog(
-          'INSERT',
-          GOAL_COLLABORATORS.CREATOR,
-        ),
+        collectGoalCollaboratorsViaAuditLogAsCreator(),
         { transaction },
       );
 
@@ -431,10 +603,7 @@ module.exports = {
       );
 
       await queryInterface.sequelize.query(
-        collectGoalCollaboratorsViaAuditLog(
-          'UPDATE',
-          GOAL_COLLABORATORS.EDITOR,
-        ),
+        collectGoalCollaboratorsViaAuditLogAsEditor(),
         { transaction },
       );
 
@@ -445,6 +614,21 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         collectGoalCollaboratorsAsUtilizers(),
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        collectGoalCollaboratorsAsMergeCreator(),
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        collectGoalCollaboratorsAsMergeDeprecators(),
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        collectGoalCollaboratorsForMerged(),
         { transaction },
       );
     });
