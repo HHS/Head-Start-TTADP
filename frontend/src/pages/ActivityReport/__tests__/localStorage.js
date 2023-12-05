@@ -36,6 +36,7 @@ describe('Local storage fallbacks', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
+    fetchMock.get('/api/activity-reports/groups?region=1', []);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     const savedToStorage = moment().toISOString();

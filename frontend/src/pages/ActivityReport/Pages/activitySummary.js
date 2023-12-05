@@ -6,7 +6,7 @@ import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox, Label,
+  Fieldset, Radio, Grid, TextInput, Checkbox, Label, Alert,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
+import Select from '../../../components/Select';
 import {
   otherEntityParticipants,
   recipientParticipants,
@@ -38,6 +39,8 @@ const ActivitySummary = ({
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
 
+  const recipientGroups = [{ id: 1, name: 'Group 1' }, { id: 2, name: 'Group 2' }];
+
   const {
     register,
     watch,
@@ -45,7 +48,13 @@ const ActivitySummary = ({
     control,
     getValues,
   } = useFormContext();
+
   const activityRecipientType = watch('activityRecipientType');
+  const watchFormRecipients = watch('activityRecipients');
+
+  const [useGroup, setUseGroup] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -82,6 +91,7 @@ const ActivitySummary = ({
       && previousActivityRecipientType.current !== ''
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: false });
+      setValue('recipientGroup', [], { shouldValidate: false });
       setValue('participants', [], { shouldValidate: false });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
@@ -93,6 +103,25 @@ const ActivitySummary = ({
     }
     previousActivityRecipientType.current = activityRecipientType;
   }, [activityRecipientType, setValue, pageState]);
+
+  // Check box use group.
+  useEffect(() => {
+    console.log('UseGroup', useGroup);
+    if (!useGroup) {
+      setValue('recipientGroup', [], { shouldValidate: false });
+      setValue('activityRecipients', [], { shouldValidate: false });
+    }
+  }, [useGroup, setValue]);
+
+  useEffect(() => {
+    console.log('UseGroup', useGroup);
+    // If the user changes recipients manually while using groups.
+    if (useGroup && selectedGroup) {
+      setShowGroupInfo(true);
+      setUseGroup(false);
+      setSelectedGroup(null);
+    }
+  }, [watchFormRecipients, useGroup, selectedGroup]);
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
@@ -109,6 +138,32 @@ const ActivitySummary = ({
     />
   );
 
+  const renderRecipients = (marginTop = 2, marginBottom = 0) => (
+    <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
+      {!disableRecipients
+         && !connectionActive
+         && !selectedRecipients.length
+        ? <ConnectionError />
+        : null}
+      <FormItem
+        label={recipientLabel}
+        name="activityRecipients"
+      >
+        <MultiSelect
+          name="activityRecipients"
+          disabled={disableRecipients}
+          control={control}
+          valueProperty="activityRecipientId"
+          labelProperty="name"
+          simple={false}
+          required="Select at least one"
+          options={selectedRecipients}
+          placeholderText={placeholderText}
+        />
+      </FormItem>
+    </div>
+  );
+
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
 
@@ -116,6 +171,48 @@ const ActivitySummary = ({
     // uncontrolled end date input
     // it's a little clumsy, but it does work
     setEndDateKey(`endDate-${newEnd}`);
+  };
+
+  const toggleUseGroup = (event) => {
+    const { target: { checked = null } = {} } = event;
+    console.log('Toggle Check', checked);
+    // Clear selected recipients.
+    setValue('activityRecipients', [], { shouldValidate: false });
+    // Clear selected group.
+    setSelectedGroup(null);
+
+    // Update checkbox state.
+    setUseGroup(checked);
+  };
+
+  const handleGroupChange = (e) => {
+    console.log('Gropu Change');
+   
+    console.log('selectedRecipients: ', selectedRecipients);
+    setSelectedGroup(e);
+ /*
+    const groupToUse = recipientGroups.find((group) => group.id === e.value);
+    const recipientIds = groupToUse.recipients.map((recipient) => recipient.id);
+
+    // Get all selectedRecipients the have ids in the recipientIds array.
+    const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
+      const groupRecipients = curr.options.filter((option) => recipientIds.includes(option.value));
+      return [...acc, ...groupRecipients];
+    }, []);
+
+    // Set selected recipients.
+    setValue('activityRecipients', selectedGroupRecipients, { shouldValidate: false });
+    */
+  };
+
+  const resetGroup = () => {
+    console.log('Reset Group');
+    // Clear selected group.
+    setSelectedGroup(null);
+    // Clear checkbox state.
+    setUseGroup(true);
+    // Clear selected recipients.
+    setValue('activityRecipients', [], { shouldValidate: false });
   };
 
   return (
@@ -151,29 +248,58 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        <div className="margin-top-2">
-          {!disableRecipients
-          && !connectionActive
-          && !selectedRecipients.length
-            ? <ConnectionError />
-            : null}
-          <FormItem
-            label={recipientLabel}
-            name="activityRecipients"
-          >
-            <MultiSelect
-              name="activityRecipients"
-              disabled={disableRecipients}
-              control={control}
-              valueProperty="activityRecipientId"
-              labelProperty="name"
-              simple={false}
-              required="Select at least one"
-              options={selectedRecipients}
-              placeholderText={placeholderText}
-            />
-          </FormItem>
-        </div>
+        {
+        showGroupInfo && (
+        <Alert type="info">
+          You&apos;ve successfully modified the Group&apos;s recipients for this
+          report. Changes here do not affect the Group itself.
+          <button type="button" className="usa-button usa-button--unstyled margin-top-0" onClick={resetGroup}>
+            Reset or select a different group.
+          </button>
+        </Alert>
+        )
+        }
+        {
+        !useGroup
+          ? renderRecipients()
+          : (
+            <div className="margin-top-2">
+              <FormItem
+                label="Group name "
+                name="groupName"
+                required
+              >
+                <Select
+                  name="recipientGroup"
+                  value={selectedGroup}
+                  onChange={(e) => handleGroupChange(e)}
+                  required
+                  placeholderText={placeholderText}
+                  options={recipientGroups.map((group) => ({ value: group.id, label: group.name }))}
+                />
+              </FormItem>
+            </div>
+          )
+        }
+        {
+          activityRecipientType === 'recipient'
+           && (
+           <div className="margin-top-2">
+             <Checkbox
+               id="use-group"
+               label="Use group"
+               className="smart-hub--report-checkbox"
+               onChange={toggleUseGroup}
+               checked={useGroup}
+             />
+           </div>
+           )
+        }
+        {
+          activityRecipientType === 'recipient' && useGroup
+            ? renderRecipients(1, 5)
+            : null
+        }
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem

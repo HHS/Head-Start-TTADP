@@ -25,6 +25,7 @@ const RenderActivitySummary = () => {
     recipients: { grants: [], otherEntities: [] },
     collaborators: [],
     availableApprovers: [],
+    groups: [],
   };
 
   return (
@@ -63,6 +64,22 @@ describe('activity summary', () => {
       userEvent.type(input, '99.5');
       expect(await screen.findByText('Duration must be less than or equal to 99 hours')).toBeInTheDocument();
     });
+  });
+});
+
+describe('groups', () => {
+  it('shows an error for values < 0.5', async () => {
+    const { container } = render(<RenderActivitySummary />);
+    const input = container.querySelector('#duration');
+    userEvent.type(input, '0');
+    expect(await screen.findByText('Duration must be greater than 0 hours')).toBeInTheDocument();
+  });
+
+  it('shows an error for numbers > 99', async () => {
+    const { container } = render(<RenderActivitySummary />);
+    const input = container.querySelector('#duration');
+    userEvent.type(input, '99.5');
+    expect(await screen.findByText('Duration must be less than or equal to 99 hours')).toBeInTheDocument();
   });
 });
 
