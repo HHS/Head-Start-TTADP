@@ -53,7 +53,7 @@ const SupportingAttachments = ({ reportId }) => {
             <ul className="margin-top-0 padding-left-4">
               <li>meetings agendas</li>
               <li>sign-in or attendance sheets</li>
-              <li>other items not available online</li>
+              <li>other non-resource items not available online</li>
             </ul>
           </Label>
 

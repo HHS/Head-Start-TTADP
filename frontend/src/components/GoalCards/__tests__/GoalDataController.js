@@ -63,6 +63,10 @@ describe('GoalDataController', () => {
     );
   };
 
+  beforeEach(async () => {
+    fetchMock.get('/api/goals/similar/1?cluster=true', []);
+  });
+
   afterEach(async () => {
     fetchMock.restore();
   });
@@ -81,6 +85,7 @@ describe('GoalDataController', () => {
 
     expect(fetchMock.called(url)).toBe(true);
   });
+
   it('fetches goals in the correct order if no location state specified', async () => {
     const url = ` /api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`;
     fetchMock.get(url, response);

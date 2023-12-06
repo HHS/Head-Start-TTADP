@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
@@ -42,6 +42,7 @@ import {
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
+import { findOrFailExistingGoal, responsesForComparison } from './helpers';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2393,33 +2394,187 @@ export async function destroyGoal(goalIds) {
 }
 
 /**
- * Given a list of goal statuses, determine the final status
- * based on the criteria provided by OHS. Intended only
- * to be used for merge goals
- *
- * Note that this should be kept in sync with the status predicted by
- * the React component the user sees (FinalGoalCard)
- *
- * @param {string[]} statuses
- * @returns string one of Object.values(GOAL_STATUS)
- */
-export function determineMergeGoalStatus(statuses) {
-  if (statuses.includes(GOAL_STATUS.IN_PROGRESS)) {
-    return GOAL_STATUS.IN_PROGRESS;
-  }
+ * @param {goals[]} include .activityReportGoals
+ * @returns {
+*  reportId: countOfGoalsOnReport,
+* }
+*/
+export const getReportCountForGoals = (goals) => goals.reduce((acc, goal) => {
+  (goal.activityReportGoals || []).forEach((arg) => {
+    if (!acc[arg.activityReportId]) {
+      acc[arg.activityReportId] = 0;
+    }
+    acc[arg.activityReportId] += 1;
+  });
 
-  if (statuses.includes(GOAL_STATUS.CLOSED)) {
-    return GOAL_STATUS.CLOSED;
-  }
+  return acc;
+}, {});
 
-  if (statuses.includes(GOAL_STATUS.SUSPENDED)) {
-    return GOAL_STATUS.SUSPENDED;
-  }
+const fieldMappingForDeduplication = {
+  name: 'name',
+  source: 'source',
+  status: 'status',
+  responsesForComparison: 'responsesForComparison',
+};
 
-  if (statuses.includes(GOAL_STATUS.NOT_STARTED)) {
-    return GOAL_STATUS.NOT_STARTED;
+/**
+*
+* key is activityReportid, value is count of goals on that report
+* @param {{ number: number }} countObject
+*/
+// eslint-disable-next-line max-len
+export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
+
+/**
+*
+* similarity response is an array of objects with the following structure:
+* {
+     "id": number,
+     "name": string,
+     "matches": [{
+       "id": number,
+       "name": string,
+       "grantId": number,
+       "similarity": float,
+     }]
   }
-  return GOAL_STATUS.DRAFT;
+*
+* @param {[]} similarityResponse
+* @returns {
+*  goals: [{
+*    name: string,
+*    source: string,
+*    status: string,
+*    responsesForComparison: string,
+*    ids: number[],
+*  }],
+*  ids: number[]
+* }[]
+*/
+export async function getGoalIdsBySimilarity(similarityResponse = []) {
+  // convert the response to a group of IDs
+  const goalIdGroups = similarityResponse.map((matchedGoals) => {
+    const { id, matches } = matchedGoals;
+    return uniq([id, ...matches.map((match) => match.id)]);
+  });
+
+  // convert the ids to a big old database query
+  const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
+    attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
+    where: {
+      [Op.or]: [
+        {
+          id: group,
+          '$"goalTemplate"."creationMethod"$': {
+            [Op.ne]: CREATION_METHOD.CURATED,
+          },
+        },
+        {
+          id: group,
+          '$"goalTemplate"."creationMethod"$': {
+            [Op.eq]: CREATION_METHOD.CURATED,
+          },
+          status: {
+            [Op.not]: GOAL_STATUS.CLOSED,
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        attributes: ['goalId', 'activityReportId'],
+        required: false,
+      },
+      {
+        model: Grant,
+        as: 'grant',
+        required: true,
+        attributes: ['id', 'status'],
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        required: false,
+        attributes: ['id', 'creationMethod'],
+      },
+    ],
+  })));
+
+  const uniqueGrantIds = uniq(goalGroups.map((group) => group.map((goal) => goal.grantId)).flat());
+
+  const grants = await Grant.findAll({
+    where: {
+      [Op.or]: [
+        { id: uniqueGrantIds },
+        { oldGrantId: uniqueGrantIds },
+      ],
+      status: 'Active',
+    },
+    attributes: ['id', 'oldGrantId', 'status'],
+  });
+
+  const grantLookup = {};
+  grants.forEach((grant) => {
+    grantLookup[grant.id] = grant.id;
+    if (grant.oldGrantId) {
+      grantLookup[grant.oldGrantId] = grant.id;
+    }
+  });
+
+  // filter out goal groups that include multiple goals on the same report
+  const filteredGoalGroups = goalGroups.filter((group) => {
+    // eslint-disable-next-line max-len
+    const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
+
+    if (uniqueFieldResponses.length > 2) {
+      return false;
+    }
+    const reportCount = getReportCountForGoals(group);
+
+    return !hasMultipleGoalsOnSameActivityReport(reportCount);
+  });
+
+  const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
+    .reduce((previous, current) => {
+      if (!grantLookup[current.grantId]) {
+        return previous;
+      }
+
+      // see if we can find an existing goal
+      const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
+      // if we found an existing goal,
+      // we'll add the current goal's ID to the existing goal's ID array
+      if (existingGoal) {
+        existingGoal.ids.push(current.id);
+        return previous;
+      }
+
+      return [
+        ...previous,
+        {
+          name: current.name,
+          source: current.source,
+          status: current.status,
+          responsesForComparison: responsesForComparison(current),
+          ids: [current.id],
+        },
+      ];
+    }, []));
+
+  const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
+
+  return groupsWithMoreThanOneGoal.map((gg) => ({
+    ids: uniq(gg.map((g) => g.ids).flat()),
+    goals: gg,
+  }));
 }
 
 /**
@@ -2452,8 +2607,8 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   objective.activityReportObjectives.forEach((aro) => {
     updatesToRelatedModels.push(
       ActivityReportObjective.update({
+        originalObjectiveId: sequelize.fn('COALESCE', sequelize.col('originalObjectiveId'), aro.objectiveId),
         objectiveId: newObjective.id,
-        originalObjectiveId: aro.objectiveId,
       }, {
         where: {
           id: aro.id,
@@ -2534,6 +2689,14 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
  * @param {number[]} selectedGoalIds
  */
 export async function mergeGoals(finalGoalId, selectedGoalIds) {
+  // first thing we do is test elibility
+  // in case something weird got into a URL on the frontend
+  const mockResponse = [{ id: finalGoalId, matches: selectedGoalIds.map((id) => ({ id })) }];
+  const elibilityGroup = await getGoalIdsBySimilarity(mockResponse);
+  if (!elibilityGroup.length) {
+    throw new Error('Cannot merge: goals ineligible for merge');
+  }
+
   // create a new goal from "finalGoalId"
   // - update selectedGoalIds to point to newGoalId
   // - i.e. { parentGoalId: newGoalId }
@@ -2669,9 +2832,10 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {
+      // originalGoalId: g.id,
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
-          originalGoalId: g.id,
+          originalGoalId: sequelize.fn('COALESCE', sequelize.col('originalGoalId'), g.id),
           goalId: grantToGoalDictionary[
             grantsWithReplacementsDictionary[g.grantId]
           ],
@@ -2683,13 +2847,16 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     }
 
     // copy the goal resources
-    g.goalResources.forEach((gr) => {
-      updatesToRelatedModels.push(GoalResource.create({
-        goalId: grantToGoalDictionary[
-          grantsWithReplacementsDictionary[g.grantId]
-        ],
-        resourceId: gr.resourceId,
-      }, { individualHooks: true }));
+    g.goalResources.forEach(async (gr) => {
+      updatesToRelatedModels.push(GoalResource.findOrCreate({
+        where: {
+          goalId: grantToGoalDictionary[
+            grantsWithReplacementsDictionary[g.grantId]
+          ],
+          resourceId: gr.resourceId,
+        },
+        individualHooks: true,
+      }));
     });
 
     // copy the goal field responses
