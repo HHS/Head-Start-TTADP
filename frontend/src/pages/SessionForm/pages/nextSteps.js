@@ -107,7 +107,7 @@ NextSteps.propTypes = {
 
 const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
-const position = 3;
+const position = 4;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {

@@ -177,6 +177,10 @@ export function checkCommunicationLogIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'communicationLogId');
 }
 
+export function checkSessionAttachmentIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'sessionAttachmentId');
+}
+
 export function checkRegionIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'regionId');
 }

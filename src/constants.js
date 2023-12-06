@@ -205,6 +205,7 @@ const FEATURE_FLAGS = [
   'goal_source',
   'merge_goals',
   'communication_log',
+  'monitoring',
 ];
 
 const MAINTENANCE_CATEGORY = {
