@@ -30,6 +30,11 @@ import {
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
 import { currentUserId } from '../../services/currentUser';
+import { validateMergeGoalPermissions } from '../recipient/handlers';
+
+jest.mock('../recipient/handlers', () => ({
+  validateMergeGoalPermissions: jest.fn(),
+}));
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -85,14 +90,7 @@ describe('merge goals', () => {
       },
     };
 
-    goalRegionsById.mockResolvedValue([1]);
-
-    userById.mockResolvedValue({
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      }],
-    });
+    validateMergeGoalPermissions.mockResolvedValue(true);
 
     mergeGoals.mockResolvedValue({
       id: 1,
@@ -114,14 +112,7 @@ describe('merge goals', () => {
       },
     };
 
-    goalRegionsById.mockResolvedValue([1]);
-
-    userById.mockResolvedValue({
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_REPORTS,
-      }],
-    });
+    validateMergeGoalPermissions.mockResolvedValue(false);
 
     await mergeGoalHandler(req, mockResponse);
 
@@ -139,15 +130,8 @@ describe('merge goals', () => {
       },
     };
 
-    goalRegionsById.mockResolvedValue([1]);
-    userById.mockResolvedValue({
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      }],
-    });
-
-    mergeGoals.mockRejectedValue(new Error('Unauthorized'));
+    validateMergeGoalPermissions.mockResolvedValue(true);
+    mergeGoals.mockRejectedValue(new Error('Big time error'));
 
     await mergeGoalHandler(req, mockResponse);
 

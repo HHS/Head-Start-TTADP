@@ -288,7 +288,12 @@ export default function MergeGoals({
   const onSubmit = async (data) => {
     try {
       setIsAppLoading(true);
-      const mergedGoals = await mergeGoals(data.selectedGoalIds, data.finalGoalId);
+      const mergedGoals = await mergeGoals(
+        data.selectedGoalIds,
+        data.finalGoalId,
+        recipientId,
+        regionId,
+      );
       const goalIds = mergedGoals.map((g) => g.id);
       setIsAppLoading(false);
       history.push(`${backPath}`, { mergedGoals: goalIds });
