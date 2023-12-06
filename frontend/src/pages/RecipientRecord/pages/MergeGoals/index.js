@@ -313,7 +313,8 @@ export default function MergeGoals({
         These goals might be duplicates
       </h1>
       <p className="usa-prose">
-        You can choose to merge 2 or more goals, or indicate that none are duplicates.
+        {/*  You can choose to merge 2 or more goals, or indicate that none are duplicates. */}
+        You can choose to merge 2 or more goals.
       </p>
       <Container className="ttahub-merge-goals-container">
         <StepIndicator helpLink={helpLink}>
