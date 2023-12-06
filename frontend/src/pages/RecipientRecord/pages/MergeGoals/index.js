@@ -25,6 +25,9 @@ import FinalGoalCard from './components/FinalGoalCard';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import GoalMergeGuidanceDrawer from './components/GoalMergeGuidanceDrawer';
 import Modal from '../../../../components/VanillaModal';
+import useSocket, { usePublishWebsocketLocationOnInterval } from '../../../../hooks/useSocket';
+import UserContext from '../../../../UserContext';
+import SocketAlert from '../../../../components/SocketAlert';
 
 const OFFSET = 0;
 const SELECT_GOALS_TO_MERGE = 1;
@@ -87,6 +90,8 @@ const stepIndicatorStatus = (position, activePage) => {
   return 'incomplete';
 };
 
+const INTERVAL_DELAY = 2500;
+
 export const navigate = (newPage, setActivePage) => {
   if (!pages.includes(newPage)) {
     return;
@@ -108,6 +113,7 @@ export default function MergeGoals({
   const [goals, setGoals] = useState([]);
   const [activePage, setActivePage] = useState(SELECT_GOALS_TO_MERGE);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
   const drawerTriggerRef = useRef(null);
   const modalRef = useRef();
 
@@ -124,6 +130,26 @@ export default function MergeGoals({
   const finalGoalId = watch('finalGoalId');
 
   const history = useHistory();
+
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket(user);
+
+  useEffect(() => {
+    const newPath = `/merge-goals/${new URLSearchParams(location.search).toString()}&recipientId=${recipientId}&regionId=${regionId}`;
+    setSocketPath(newPath);
+  }, [location.search, recipientId, regionId, setSocketPath]);
+
+  usePublishWebsocketLocationOnInterval(
+    socket,
+    socketPath,
+    user,
+    Date.now().toString(),
+    INTERVAL_DELAY,
+  );
 
   useEffect(() => {
     async function fetchGoals() {
@@ -288,7 +314,12 @@ export default function MergeGoals({
   const onSubmit = async (data) => {
     try {
       setIsAppLoading(true);
-      const mergedGoals = await mergeGoals(data.selectedGoalIds, data.finalGoalId);
+      const mergedGoals = await mergeGoals(
+        data.selectedGoalIds,
+        data.finalGoalId,
+        recipientId,
+        regionId,
+      );
       const goalIds = mergedGoals.map((g) => g.id);
       setIsAppLoading(false);
       history.push(`${backPath}`, { mergedGoals: goalIds });
@@ -300,7 +331,7 @@ export default function MergeGoals({
   };
 
   return (
-    <div className="padding-top-5">
+    <div className="padding-top-5 position-relative">
       <Link
         className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block"
         to={backPath}
@@ -309,11 +340,13 @@ export default function MergeGoals({
         {' '}
         {recipientNameWithRegion}
       </Link>
+      <SocketAlert store={messageStore} messageSubject="on this goal merge" />
       <h1 className="ttahub-recipient-record--heading merge-goals page-heading margin-top-0 margin-bottom-3">
         These goals might be duplicates
       </h1>
       <p className="usa-prose">
-        You can choose to merge 2 or more goals, or indicate that none are duplicates.
+        {/*  You can choose to merge 2 or more goals, or indicate that none are duplicates. */}
+        You can choose to merge 2 or more goals.
       </p>
       <Container className="ttahub-merge-goals-container">
         <StepIndicator helpLink={helpLink}>

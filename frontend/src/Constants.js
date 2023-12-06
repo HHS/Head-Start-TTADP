@@ -49,6 +49,11 @@ export const DATE_CONDITIONS = [
   WITHIN,
 ];
 
+export const WITHOUT_ACTIVITY_DATE_CONDITIONS = [
+  IS,
+  WITHIN,
+];
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const REGIONAL_SCOPES = {
