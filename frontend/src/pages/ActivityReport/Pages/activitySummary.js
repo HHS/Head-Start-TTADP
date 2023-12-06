@@ -66,7 +66,6 @@ const ActivitySummary = ({
   const activityRecipientType = watch('activityRecipientType');
   const watchFormRecipients = watch('activityRecipients');
   const watchGroup = watch('recipientGroup');
-  console.log('watchGroup', watchGroup);
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
 
@@ -193,9 +192,7 @@ const ActivitySummary = ({
   };
 
   const handleGroupChange = (e) => {
-    console.log('called on changezzzz');
-    /*
-    const groupToUse = recipientGroups.find((group) => group.id === e.value);
+    const groupToUse = watchGroup.find((group) => group.id === e.value);
     const recipientIds = groupToUse.recipients.map((recipient) => recipient.id);
 
     // Get all selectedRecipients the have ids in the recipientIds array.
@@ -206,7 +203,6 @@ const ActivitySummary = ({
 
     // Set selected recipients.
     setValue('activityRecipients', selectedGroupRecipients, { shouldValidate: false });
-    */
   };
 
   const resetGroup = () => {
