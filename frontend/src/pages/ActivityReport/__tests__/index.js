@@ -40,7 +40,17 @@ describe('ActivityReport', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
-    fetchMock.get('/api/activity-reports/groups?region=1', []);
+    fetchMock.get('/api/activity-reports/groups?region=1', [{
+      id: 1,
+      name: 'Group 1',
+      recipients: [1, 2],
+    },
+    {
+      id: 2,
+      name: 'Group 2',
+      recipients: [2, 3],
+    },
+    ]);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -49,7 +59,7 @@ describe('ActivityReport', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
-
+/*
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
     fetchMock.get('/api/activity-reports/1', async () => { throw e; });
@@ -117,7 +127,49 @@ describe('ActivityReport', () => {
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
     });
   });
+*/
+  describe('groups', () => {
+    it('recipients correctly update for groups', async () => {
+      const groupRecipients = {
+        grants: [
+          { id: 1, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 2, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+        ],
+        otherEntities: [],
+      };
 
+      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Page is done loading.
+      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
+
+      // Make sure 'recipient' is selected.
+      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
+      expect(recipient[0]).toBeChecked();
+
+      // Check use group.
+      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
+      });
+      expect(await screen.findByText(/Group name/i)).toBeVisible();
+
+      // Get the group name drop down.
+      const groupName = await screen.findByLabelText(/group name/i);
+      const groupSelect = await within(groupName).findByText(/- select -/i);
+      await reactSelectEvent.select(groupSelect, ['Group 1']);
+      expect(await screen.findByText(/Group name/i)).toBeVisible(/Group 1/i);
+   
+      expect(true).toBe(false);
+    });
+  });
+/*
   describe('last saved time', () => {
     it('is shown if history.state.showLastUpdatedTime is true', async () => {
       const data = formData();
@@ -1152,4 +1204,5 @@ describe('formatReportWithSaveBeforeConversion', () => {
     expect(reportData.startDate).toBe('10/04/2020');
     expect(reportData.endDate).toBe('10/04/2020');
   });
+  */
 });

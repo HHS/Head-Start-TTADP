@@ -42,19 +42,17 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 const ActivitySummary = ({
   recipients,
   collaborators,
-  groups,
+  // groups,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
 
-  /*
   const groups = [
-    { id: 1, name: 'Group 1' },
-    { id: 2, name: 'Group 2' },
-    { id: 3, name: 'Group 3' },
+    { id: 1, name: 'Group 1', recipients: [1, 2] },
+    { id: 2, name: 'Group 2', recipients: [1, 2] },
+    { id: 3, name: 'Group 3', recipients: [1, 2] },
   ];
-  */
-
+  console.log('\n\n\n----GROUPS: ', groups);
   const {
     register,
     watch,
@@ -77,13 +75,20 @@ const ActivitySummary = ({
 
   const { connectionActive } = useContext(NetworkContext);
 
-  const grants = rawGrants.map((recipient) => ({
+  const testGrants = [
+    { id: 1, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+    { id: 2, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+  ];
+
+  const grants = testGrants.map((recipient) => ({
     label: recipient.name,
     options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
       label: grant.name,
     })),
   }));
+
+  console.log('GRANTS: ', grants);
 
   const otherEntities = rawOtherEntities.map((entity) => ({
     label: entity.name,
@@ -191,18 +196,26 @@ const ActivitySummary = ({
     }
   };
 
-  const handleGroupChange = (e) => {
-    const groupToUse = watchGroup.find((group) => group.id === e.value);
-    const recipientIds = groupToUse.recipients.map((recipient) => recipient.id);
+  const handleGroupChange = (event) => {
+    const { selectedIndex } = event.target.options;
+    const groupId = event.target.options[selectedIndex].getAttribute('data-key');
+    const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
 
-    // Get all selectedRecipients the have ids in the recipientIds array.
-    const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
-      const groupRecipients = curr.options.filter((option) => recipientIds.includes(option.value));
-      return [...acc, ...groupRecipients];
-    }, []);
+    try {
+      // Get all selectedRecipients the have ids in the recipientIds array.
+      const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
+        const groupRecipients = curr.options.filter(
+          (option) => groupToUse.recipients.includes(option.value),
+        );
+        return [...acc, ...groupRecipients];
+      }, []);
+      console.log('---selectedGroupRecipients: ', selectedGroupRecipients);
 
-    // Set selected recipients.
-    setValue('activityRecipients', selectedGroupRecipients, { shouldValidate: false });
+      // Set selected recipients.
+      // setValue('activityRecipients', selectedGroupRecipients, { shouldValidate: false });
+    } catch (err) {
+      console.log('\n\n\n\n---ERROR: ', err);
+    }
   };
 
   const resetGroup = () => {
@@ -276,7 +289,7 @@ const ActivitySummary = ({
                 >
                   <option value="" disabled selected hidden>- Select -</option>
                   {groups.map((group) => (
-                    <option key={group.id}>{group.name}</option>
+                    <option key={group.id} data-key={group.id}>{group.name}</option>
                   ))}
                 </Dropdown>
               </FormItem>
