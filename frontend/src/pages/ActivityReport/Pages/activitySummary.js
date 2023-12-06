@@ -48,14 +48,6 @@ const ActivitySummary = ({
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
 
-  /*
-  const groups = [
-    { id: 1, name: 'Group 1', recipients: [1, 2] },
-    { id: 2, name: 'Group 2', recipients: [1, 2] },
-    { id: 3, name: 'Group 3', recipients: [1, 2] },
-  ];
-  */
-
   const {
     register,
     watch,
@@ -64,13 +56,13 @@ const ActivitySummary = ({
     getValues,
   } = useFormContext();
 
-  const activityRecipientType = watch('activityRecipientType');
-  const watchFormRecipients = watch('activityRecipients');
-  const watchGroup = watch('recipientGroup');
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
 
+  const activityRecipientType = watch('activityRecipientType');
+  const watchFormRecipients = watch('activityRecipients');
+  const watchGroup = watch('recipientGroup');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const pageState = watch('pageState');
@@ -79,12 +71,7 @@ const ActivitySummary = ({
 
   const { connectionActive } = useContext(NetworkContext);
 
-  const testGrants = [
-    { id: 1, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
-    { id: 2, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
-  ];
-
-  const grants = testGrants.map((recipient) => ({
+  const grants = rawGrants.map((recipient) => ({
     label: recipient.name,
     options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
