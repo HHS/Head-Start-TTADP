@@ -93,6 +93,16 @@ const ActivitySummary = ({
   const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
   const placeholderText = '- Select -';
 
+  const resetGroup = (checkUseGroup = true) => {
+    setValue('recipientGroup', null, { shouldValidate: false });
+    setGroupRecipientIds([]);
+    setValue('activityRecipients', [], { shouldValidate: false });
+    setShowGroupInfo(false);
+    if (checkUseGroup) {
+      setUseGroup(true);
+    }
+  };
+
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
       && previousActivityRecipientType.current !== ''
@@ -100,8 +110,8 @@ const ActivitySummary = ({
       setValue('activityRecipients', [], { shouldValidate: false });
       setValue('recipientGroup', null, { shouldValidate: false });
       setGroupRecipientIds([]);
-      setValue('participants', [], { shouldValidate: false });
       setShowGroupInfo(false);
+      setValue('participants', [], { shouldValidate: false });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
@@ -164,19 +174,8 @@ const ActivitySummary = ({
   const toggleUseGroup = (event) => {
     const { target: { checked = null } = {} } = event;
     // Reset.
-    setValue('activityRecipients', [], { shouldValidate: false });
-    setValue('recipientGroup', null, { shouldValidate: false });
-    setGroupRecipientIds([]);
+    resetGroup(false);
     setUseGroup(checked);
-    setShowGroupInfo(false);
-  };
-
-  const resetGroup = () => {
-    setValue('recipientGroup', null, { shouldValidate: false });
-    setGroupRecipientIds([]);
-    setUseGroup(true);
-    setValue('activityRecipients', [], { shouldValidate: false });
-    setShowGroupInfo(false);
   };
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
