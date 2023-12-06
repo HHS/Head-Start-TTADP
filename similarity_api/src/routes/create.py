@@ -25,6 +25,7 @@ def create_routes(app: Flask):
       data = request.get_json()
 
       alpha = data["alpha"] if "alpha" in data else 0.9
+      cluster = data["cluster"] if "cluster" in data else False
 
       if "text" in data and "recipient_id" in data:
           recipient_id = data["recipient_id"]
@@ -36,6 +37,6 @@ def create_routes(app: Flask):
           return calculate_string_similarity(text_1, text_2)
       elif "recipient_id" in data:
           recipient_id = data["recipient_id"]
-          return compute_goal_similarities(recipient_id, alpha)
+          return compute_goal_similarities(recipient_id, alpha, cluster)
       else:
           return jsonify({"error": "recipient_id not provided"}), 400
