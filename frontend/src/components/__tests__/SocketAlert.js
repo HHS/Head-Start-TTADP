@@ -12,7 +12,7 @@ describe('SocketAlert', () => {
         <SocketAlert store={mockStore} />
       </UserContext.Provider>,
     );
-    expect(screen.getByText(/john is now also working in this section\. your changes may not be saved\./i)).toBeInTheDocument();
+    expect(screen.getByText(/john is also working in this section\. your changes may not be saved\./i)).toBeInTheDocument();
     expect(screen.queryByText('Todd')).not.toBeInTheDocument();
   });
   it('excludes the current user from the list of users', () => {
