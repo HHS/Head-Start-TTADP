@@ -73,7 +73,7 @@ export default function GoalMergeGuidanceDrawer({ drawerTriggerRef }) {
         </li>
         <li>
           If the selected goals are a mix of Not started and Closed goals,
-          the merged goal&apos;s status will be ???.
+          the merged goal&apos;s status will be Closed.
         </li>
       </ul>
     </Drawer>
