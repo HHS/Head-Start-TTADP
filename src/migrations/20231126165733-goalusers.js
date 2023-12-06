@@ -238,128 +238,81 @@ module.exports = {
       `, { transaction });
       //---------------------------------------------------------------------------------
       const collectGoalCollaborators = (source, typeName) => /* sql */`
-      DROP TABLE IF EXISTS tmp_collaborators_to_update;
-      CREATE TEMP TABLE tmp_collaborators_to_update (
-        id integer NOT NULL,
-        "linkBack" jsonb,
-        "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
-        "updatedAt" timestamp with time zone NOT NULL DEFAULT now()
-      );
+
+      DROP TABLE IF EXISTS needed_collaborators;
+      CREATE TEMP TABLE needed_collaborators
+      AS
+      WITH source_data AS (
+        ${source}
+      ),
+      collaborator_type AS (
+        SELECT
+          ct.id "collaboratorTypeId"
+        FROM "CollaboratorTypes" ct
+        JOIN "ValidFor" vf
+        ON ct."validForId" = vf.id
+        WHERE ct.name = '${typeName}'
+        AND vf.name = 'Goals'
+      )
+      SELECT
+        sd."goalId",
+        sd."userId",
+        ct."collaboratorTypeId",
+        sd."linkBack",
+        sd."createdAt",
+        sd."updatedAt"
+      FROM source_data sd
+      CROSS JOIN collaborator_type ct
+      ;
 
       DROP TABLE IF EXISTS tmp_collaborators_to_create;
-      CREATE TEMP TABLE tmp_collaborators_to_create (
-        "goalId" integer NOT NULL,
-        "userId" integer NOT NULL,
-        "collaboratorTypeId" integer NOT NULL,
-        "linkBack" jsonb,
-        "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
-        "updatedAt" timestamp with time zone NOT NULL DEFAULT now()
-      );
-
-      WITH
-        source_data AS (
-          ${source}
-        ),
-        collaborator_type AS (
+      CREATE TEMP TABLE tmp_collaborators_to_create
+      AS
+      SELECT
+        nc."goalId",
+        nc."userId",
+        nc."collaboratorTypeId",
+        nc."linkBack",
+        nc."createdAt",
+        nc."updatedAt"
+      FROM needed_collaborators nc
+      LEFT JOIN "GoalCollaborators" gc
+      ON gc."goalId" = nc."goalId"
+      AND gc."userId" = nc."userId"
+      AND gc."collaboratorTypeId" = nc."collaboratorTypeId"
+      WHERE gc.id IS NULL
+      ;
+      
+      DROP TABLE IF EXISTS tmp_collaborators_to_update;
+      CREATE TABLE tmp_collaborators_to_update
+      AS
+      SELECT
+        gc.id "id",
+        LEAST(gc."createdAt", nc."createdAt") "createdAt",
+        GREATEST(gc."updatedAt", nc."updatedAt") "updatedAt",
+        (
           SELECT
-            ct.id "collaboratorTypeId"
-          FROM "CollaboratorTypes" ct
-          JOIN "ValidFor" vf
-          ON ct."validForId" = vf.id
-          WHERE ct.name = '${typeName}'
-          AND vf.name = 'Goals'
-        ),
-        needed_collaborators AS (
-          SELECT
-            sd."goalId",
-            sd."userId",
-            ct."collaboratorTypeId",
-            sd."linkBack",
-            sd."createdAt",
-            sd."updatedAt"
-          FROM source_data sd
-          CROSS JOIN collaborator_type ct
-        ),
-        collaborators_to_update AS (
-          INSERT INTO tmp_collaborators_to_update
-          (
-            id,
-            "createdAt",
-            "updatedAt",
-            "linkBack"
-          )
-          SELECT
-            gc.id "id",
-            LEAST(gc."createdAt", nc."createdAt") "createdAt",
-            GREATEST(gc."updatedAt", nc."updatedAt") "updatedAt",
-            (
-              SELECT
-                JSONB_OBJECT_AGG(key_values.key, key_values.values)
-              FROM (
-                SELECT
-                  je.key,
-                  JSONB_AGG(DISTINCT jae.value ORDER BY jae.value) "values"
-                FROM (
-                  SELECT gc."linkBack"
-                  UNION
-                  SELECT nc."linkBack"
-                ) "linkBacks"("linkBack")
-                CROSS JOIN jsonb_each("linkBacks"."linkBack") je
-                CROSS JOIN jsonb_array_elements(je.value) jae(value)
-                GROUP BY 1
-              ) key_values
-            ) "linkBack"
-          FROM "GoalCollaborators" gc
-          JOIN needed_collaborators nc
-          ON gc."goalId" = nc."goalId"
-          AND gc."userId" = nc."userId"
-          AND gc."collaboratorTypeId" = nc."collaboratorTypeId"
-          returning
-            id,
-            "createdAt",
-            "updatedAt",
-            "linkBack"
-        ),
-        collaborators_to_create AS (
-          INSERT INTO tmp_collaborators_to_create
-          (
-            "goalId",
-            "userId",
-            "collaboratorTypeId",
-            "linkBack",
-            "createdAt",
-            "updatedAt"
-          )
-          SELECT
-            nc."goalId",
-            nc."userId",
-            nc."collaboratorTypeId",
-            nc."linkBack",
-            nc."createdAt",
-            nc."updatedAt"
-          FROM needed_collaborators nc
-          LEFT JOIN "GoalCollaborators" gc
-          ON gc."goalId" = nc."goalId"
-          AND gc."userId" = nc."userId"
-          AND gc."collaboratorTypeId" = nc."collaboratorTypeId"
-          WHERE gc.id IS NULL
-          RETURNING
-            "goalId",
-            "userId",
-            "collaboratorTypeId",
-            "linkBack",
-            "createdAt",
-            "updatedAt"
-        )
-        SELECT
-          'INSERT' "type",
-          count(*) "cnt"
-        FROM collaborators_to_create
-        UNION
-        SELECT
-          'UPDATE' "type",
-          count(*) "cnt"
-        FROM collaborators_to_update;
+            JSONB_OBJECT_AGG(key_values.key, key_values.values)
+          FROM (
+            SELECT
+              je.key,
+              JSONB_AGG(DISTINCT jae.value ORDER BY jae.value) "values"
+            FROM (
+              SELECT gc."linkBack"
+              UNION
+              SELECT nc."linkBack"
+            ) "linkBacks"("linkBack")
+            CROSS JOIN jsonb_each("linkBacks"."linkBack") je
+            CROSS JOIN jsonb_array_elements(je.value) jae(value)
+            GROUP BY 1
+          ) key_values
+        ) "linkBack"
+      FROM "GoalCollaborators" gc
+      JOIN needed_collaborators nc
+        ON gc."goalId" = nc."goalId"
+        AND gc."userId" = nc."userId"
+        AND gc."collaboratorTypeId" = nc."collaboratorTypeId"
+      ;
 
       INSERT INTO "GoalCollaborators"
       (
@@ -384,7 +337,7 @@ module.exports = {
         "createdAt" = ctu."createdAt",
         "updatedAt" = ctu."updatedAt",
         "linkBack" = ctu."linkBack"
-      FROM collaborators_to_update ctu
+      FROM tmp_collaborators_to_update ctu
       WHERE gc.id = ctu.id;
       `;
 
