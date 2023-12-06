@@ -205,6 +205,8 @@ export function formatDateRange(format = {
   yearToDate: false,
   withSpaces: false,
   forDateTime: false,
+  lastThreeMonths: false,
+  lastSixMonths: false,
   sep: '-',
   string: '',
 }) {
@@ -222,6 +224,16 @@ export function formatDateRange(format = {
   if (format.lastThirtyDays) {
     secondDay = moment();
     firstDay = moment().subtract(30, 'days');
+  }
+
+  if (format.lastThreeMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(3, 'months');
+  }
+
+  if (format.lastSixMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(6, 'months');
   }
 
   if (format.yearToDate) {
