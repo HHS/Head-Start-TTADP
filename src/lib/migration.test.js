@@ -214,8 +214,7 @@ describe('replaceValueInJSONBArray', () => {
 
 describe('updateUsersFlagsEnum', () => {
   let queryInterface;
-  const tableName = 'Users';
-  const columnName = 'flags';
+  const transaction = {};
 
   beforeEach(() => {
     queryInterface = {
@@ -231,13 +230,14 @@ describe('updateUsersFlagsEnum', () => {
 
   test('should update flags and recreate enum if valuesToRemove is provided', async () => {
     const valuesToRemove = ['value1', 'value2'];
-    await updateUsersFlagsEnum(queryInterface, valuesToRemove);
+    await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(11);
   });
 });
 
 describe('dropAndRecreateEnum', () => {
+  const transaction = {};
   let queryInterface;
   const enumName = 'MyEnum';
   const tableName = 'MyTable';
@@ -260,6 +260,7 @@ describe('dropAndRecreateEnum', () => {
   it('should rename the existing type, create a new type, add values to the new type, update the columns to use the new type, and remove the old type', async () => {
     await dropAndRecreateEnum(
       queryInterface,
+      transaction,
       enumName,
       tableName,
       columnName,
@@ -271,7 +272,7 @@ describe('dropAndRecreateEnum', () => {
   });
 
   it('should use default values for enumValues and enumType if not provided', async () => {
-    await dropAndRecreateEnum(queryInterface, enumName, tableName, columnName);
+    await dropAndRecreateEnum(queryInterface, transaction, enumName, tableName, columnName);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
   });

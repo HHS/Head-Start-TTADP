@@ -84,11 +84,12 @@ const removeTables = async (
  */
 const addValuesToEnumIfTheyDontExist = async (
   queryInterface,
+  transaction,
   enumName,
   enumValues = [],
 ) => Promise.all(Object.values(enumValues).map((enumValue) => queryInterface.sequelize.query(`
   ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';
-`)));
+`, { transaction })));
 
 /**
  * Replaces a specific value in an array column of a table with a new value.
@@ -156,6 +157,7 @@ const replaceValueInJSONBArray = async (
 
 const dropAndRecreateEnum = async (
   queryInterface,
+  transaction,
   enumName,
   tableName,
   columnName,
@@ -166,9 +168,9 @@ const dropAndRecreateEnum = async (
   -- rename the existing type
   ALTER TYPE "${enumName}" RENAME TO "${enumName}_old";
   -- create the new type
-  CREATE TYPE "${enumName}" AS ENUM();`);
+  CREATE TYPE "${enumName}" AS ENUM();`, { transaction });
 
-  await addValuesToEnumIfTheyDontExist(queryInterface, enumName, enumValues);
+  await addValuesToEnumIfTheyDontExist(queryInterface, transaction, enumName, enumValues);
 
   return queryInterface.sequelize.query(`
   -- update the columns to use the new type
@@ -177,7 +179,7 @@ const dropAndRecreateEnum = async (
   ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];
   -- remove the old type
   DROP TYPE "${enumName}_old";
-`);
+`, { transaction });
 };
 
 /**
@@ -189,7 +191,7 @@ const dropAndRecreateEnum = async (
  * @param {string[]} valuesToRemove
  * @returns Promise<any>
  */
-const updateUsersFlagsEnum = async (queryInterface, valuesToRemove = []) => {
+const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove = []) => {
   const enumName = 'enum_Users_flags';
   const tableName = 'Users';
   const columnName = 'flags';
@@ -198,10 +200,11 @@ const updateUsersFlagsEnum = async (queryInterface, valuesToRemove = []) => {
     await Promise.all(valuesToRemove.map((value) => queryInterface.sequelize.query(`
       UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
         WHERE '${value}' = ANY(${columnName});
-  `)));
+  `, { transaction })));
 
     return dropAndRecreateEnum(
       queryInterface,
+      transaction,
       enumName,
       tableName,
       columnName,
@@ -209,7 +212,12 @@ const updateUsersFlagsEnum = async (queryInterface, valuesToRemove = []) => {
     );
   }
 
-  return addValuesToEnumIfTheyDontExist(queryInterface, enumName, Object.values(FEATURE_FLAGS));
+  return addValuesToEnumIfTheyDontExist(
+    queryInterface,
+    transaction,
+    enumName,
+    Object.values(FEATURE_FLAGS),
+  );
 };
 
 module.exports = {
