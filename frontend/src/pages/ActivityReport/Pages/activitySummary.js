@@ -38,21 +38,24 @@ import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import './activitySummary.scss';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
-  // groups,
+  groups,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
 
+  /*
   const groups = [
     { id: 1, name: 'Group 1', recipients: [1, 2] },
     { id: 2, name: 'Group 2', recipients: [1, 2] },
     { id: 3, name: 'Group 3', recipients: [1, 2] },
   ];
-  console.log('\n\n\n----GROUPS: ', groups);
+  */
+
   const {
     register,
     watch,
@@ -66,6 +69,7 @@ const ActivitySummary = ({
   const watchGroup = watch('recipientGroup');
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [groupRecipientIds, setGroupRecipientIds] = useState([]);
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -88,8 +92,6 @@ const ActivitySummary = ({
     })),
   }));
 
-  console.log('GRANTS: ', grants);
-
   const otherEntities = rawOtherEntities.map((entity) => ({
     label: entity.name,
     value: entity.activityRecipientId,
@@ -109,8 +111,10 @@ const ActivitySummary = ({
       && previousActivityRecipientType.current !== ''
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: false });
-      setValue('recipientGroup', [], { shouldValidate: false });
+      setValue('recipientGroup', null, { shouldValidate: false });
+      setGroupRecipientIds([]);
       setValue('participants', [], { shouldValidate: false });
+      setShowGroupInfo(false);
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
@@ -122,14 +126,71 @@ const ActivitySummary = ({
     previousActivityRecipientType.current = activityRecipientType;
   }, [activityRecipientType, setValue, pageState]);
 
+  const handleGroupChange = (event) => {
+    const { selectedIndex } = event.target.options;
+    const groupId = event.target.options[selectedIndex].getAttribute('data-key');
+    const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
+
+    // Get all selectedRecipients the have ids in the recipientIds array.
+    const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
+      const groupRecipients = curr.options.filter(
+        (option) => groupToUse.recipients.includes(option.value),
+      );
+      return [...acc, ...groupRecipients];
+    }, []);
+
+    // Set selected recipients.
+    const recipientsToSet = selectedGroupRecipients.map((r) => (
+      { ...r, name: r.label, activityRecipientId: r.value }));
+    setValue('activityRecipients', recipientsToSet, { shouldValidate: true });
+    setGroupRecipientIds(recipientsToSet.map((r) => (r.id)));
+  };
+
   useDeepCompareEffect(() => {
+    // Get all selected recipients that are NOT in the watchGroup.recipients array.
+    const usedRecipientIds = watchFormRecipients.map((r) => r.id);
+    const selectedRecipientsNotInGroup = usedRecipientIds.filter(
+      (option) => !groupRecipientIds.includes(option),
+    );
+
     // If the user changes recipients manually while using groups.
-    if (useGroup && watchGroup) {
+    if (useGroup
+      && watchGroup
+      && (groupRecipientIds.length !== watchFormRecipients.length
+        || selectedRecipientsNotInGroup.length > 0)) {
       setShowGroupInfo(true);
       setUseGroup(false);
-      setValue('recipientGroup', [], { shouldValidate: false });
+      setValue('recipientGroup', null, { shouldValidate: false });
+      setGroupRecipientIds([]);
     }
   }, [watchFormRecipients]);
+
+  const setEndDate = (newEnd) => {
+    setValue('endDate', newEnd);
+
+    // this will trigger the re-render of the
+    // uncontrolled end date input
+    // it's a little clumsy, but it does work
+    setEndDateKey(`endDate-${newEnd}`);
+  };
+
+  const toggleUseGroup = (event) => {
+    const { target: { checked = null } = {} } = event;
+    // Reset.
+    setValue('activityRecipients', [], { shouldValidate: false });
+    setValue('recipientGroup', null, { shouldValidate: false });
+    setGroupRecipientIds([]);
+    setUseGroup(checked);
+    setShowGroupInfo(false);
+  };
+
+  const resetGroup = () => {
+    setValue('recipientGroup', null, { shouldValidate: false });
+    setGroupRecipientIds([]);
+    setUseGroup(true);
+    setValue('activityRecipients', [], { shouldValidate: false });
+    setShowGroupInfo(false);
+  };
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
@@ -172,66 +233,13 @@ const ActivitySummary = ({
     </div>
   );
 
-  const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
-
-    // this will trigger the re-render of the
-    // uncontrolled end date input
-    // it's a little clumsy, but it does work
-    setEndDateKey(`endDate-${newEnd}`);
-  };
-
-  const toggleUseGroup = (event) => {
-    const { target: { checked = null } = {} } = event;
-    // Reset.
-    setValue('activityRecipients', [], { shouldValidate: false });
-    setValue('recipientGroup', [], { shouldValidate: false });
-    setUseGroup(checked);
-    setShowGroupInfo(false);
-
-    // Use group checkbox unchecked.
-    if (!useGroup) {
-      setValue('recipientGroup', [], { shouldValidate: false });
-      setValue('activityRecipients', [], { shouldValidate: false });
-    }
-  };
-
-  const handleGroupChange = (event) => {
-    const { selectedIndex } = event.target.options;
-    const groupId = event.target.options[selectedIndex].getAttribute('data-key');
-    const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
-
-    try {
-      // Get all selectedRecipients the have ids in the recipientIds array.
-      const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
-        const groupRecipients = curr.options.filter(
-          (option) => groupToUse.recipients.includes(option.value),
-        );
-        return [...acc, ...groupRecipients];
-      }, []);
-      console.log('---selectedGroupRecipients: ', selectedGroupRecipients);
-
-      // Set selected recipients.
-      // setValue('activityRecipients', selectedGroupRecipients, { shouldValidate: false });
-    } catch (err) {
-      console.log('\n\n\n\n---ERROR: ', err);
-    }
-  };
-
-  const resetGroup = () => {
-    setValue('recipientGroup', [], { shouldValidate: false });
-    setUseGroup(true);
-    setValue('activityRecipients', [], { shouldValidate: false });
-    setShowGroupInfo(false);
-  };
-
   return (
     <>
       <Helmet>
         <title>Activity summary</title>
       </Helmet>
       <IndicatesRequiredField />
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
+      <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
           <FormItem
@@ -263,7 +271,7 @@ const ActivitySummary = ({
         <USWDSAlert type="info">
           You&apos;ve successfully modified the Group&apos;s recipients for this
           report. Changes here do not affect the Group itself.
-          <button type="button" className="usa-button usa-button--unstyled margin-top-0" onClick={resetGroup}>
+          <button type="button" className="smart-hub-activity-summary-group-info usa-button usa-button--unstyled" onClick={resetGroup}>
             Reset or select a different group.
           </button>
         </USWDSAlert>

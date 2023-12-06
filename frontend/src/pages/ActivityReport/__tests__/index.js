@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import reactSelectEvent from 'react-select-event';
@@ -59,7 +61,7 @@ describe('ActivityReport', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
-/*
+  /*
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
     fetchMock.get('/api/activity-reports/1', async () => { throw e; });
@@ -165,7 +167,7 @@ describe('ActivityReport', () => {
       const groupSelect = await within(groupName).findByText(/- select -/i);
       await reactSelectEvent.select(groupSelect, ['Group 1']);
       expect(await screen.findByText(/Group name/i)).toBeVisible(/Group 1/i);
-   
+
       expect(true).toBe(false);
     });
   });
