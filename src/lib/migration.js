@@ -196,7 +196,7 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
   const tableName = 'Users';
   const columnName = 'flags';
 
-  if (valuesToRemove) {
+  if (valuesToRemove && valuesToRemove.length) {
     await Promise.all(valuesToRemove.map((value) => queryInterface.sequelize.query(`
       UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
         WHERE '${value}' = ANY(${columnName});
