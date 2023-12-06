@@ -1,5 +1,7 @@
 import { WhereOptions, Op } from 'sequelize';
+import stringify from 'csv-stringify/lib/sync';
 import db from '../models';
+import { communicationLogToCsvRecord } from '../lib/transform';
 
 const { sequelize, CommunicationLog } = db;
 
@@ -100,11 +102,66 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
 
 const logById = async (id: number) => CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
 
+const csvLogsByRecipientAndScopes = async (
+  recipientId: number,
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  scopes: WhereOptions[] = [],
+) => {
+  const logs = await CommunicationLog
+    .findAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      where: {
+        recipientId,
+        [Op.and]: [
+          ...scopes,
+        ],
+      },
+      include: [
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+        {
+          model: db.File,
+          as: 'files',
+          attributes: [
+            'id',
+            'originalFileName',
+          ],
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+      offset,
+    });
+
+  // convert to csv
+  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
+
+  // base options
+  const options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+  };
+
+  return stringify(
+    data,
+    options,
+  );
+};
+
 const logsByRecipientAndScopes = async (
   recipientId: number,
   sortBy = 'communicationDate',
   offset = 0,
   direction = 'desc',
+  limit = COMMUNICATION_LOGS_PER_PAGE || false,
   scopes: WhereOptions[] = [],
 ) => CommunicationLog
   .findAndCountAll({
@@ -125,7 +182,7 @@ const logsByRecipientAndScopes = async (
       },
     ],
     order: orderLogsBy(sortBy, direction),
-    limit: COMMUNICATION_LOGS_PER_PAGE,
+    limit: limit || undefined,
     offset,
   });
 
@@ -152,6 +209,7 @@ const updateLog = async (id: number, logData: CommLog) => {
 export {
   logById,
   logsByRecipientAndScopes,
+  csvLogsByRecipientAndScopes,
   deleteLog,
   updateLog,
   createLog,

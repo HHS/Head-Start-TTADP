@@ -25,9 +25,12 @@ export const getCommunicationLogById = async (regionId, logId) => {
 };
 
 export const getCommunicationLogsByRecipientId = async (
-  regionId, recipientId, sortBy, direction, offset, filters = [],
+  regionId, recipientId, sortBy, direction, offset, limit = 10, filters = [], format = 'json',
 ) => {
   const query = filtersToQueryString(filters);
+
+  const limitQuery = limit ? `&limit=${limit}` : '';
+  const queryString = `?sortBy=${sortBy}&direction=${direction}&offset=${offset}${limitQuery}&format=${format}&${query}`;
 
   const response = await get(
     `${join(
@@ -36,8 +39,12 @@ export const getCommunicationLogsByRecipientId = async (
       String(regionId),
       'recipient',
       String(recipientId),
-    )}?sortBy=${sortBy}&direction=${direction}&offset=${offset}&${query}`,
+    )}${queryString}`,
   );
+
+  if (format === 'csv') {
+    return response.blob();
+  }
 
   return response.json();
 };

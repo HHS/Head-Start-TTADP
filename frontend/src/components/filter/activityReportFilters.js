@@ -29,6 +29,7 @@ import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
 import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -48,13 +49,6 @@ const EMPTY_SINGLE_SELECT = {
 const EMPTY_TEXT_INPUT = {
   contains: '',
   'does not contain': '',
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
 };
 
 const handleStringQuery = (q) => q;
