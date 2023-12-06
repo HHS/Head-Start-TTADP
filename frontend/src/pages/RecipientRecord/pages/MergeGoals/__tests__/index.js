@@ -267,7 +267,7 @@ describe('Merge goals', () => {
     const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
     expect(label.textContent).toBe('In progress');
 
-    const goalsUrl = join('api', 'goals', 'merge');
+    const goalsUrl = join('api', 'goals', 'recipient', String(RECIPIENT_ID), 'region', String(REGION_ID), 'merge');
     fetchMock.post(goalsUrl, [{ id: 1 }, { id: 2 }]);
 
     const openModal = await screen.findByRole('button', { name: 'Merge goals' });
@@ -314,7 +314,7 @@ describe('Merge goals', () => {
     const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
     expect(label.textContent).toBe('In progress');
 
-    const goalsUrl = join('api', 'goals', 'merge');
+    const goalsUrl = join('api', 'goals', 'recipient', String(RECIPIENT_ID), 'region', String(REGION_ID), 'merge');
     fetchMock.post(goalsUrl, 500);
 
     const openModal = await screen.findByRole('button', { name: 'Merge goals' });
