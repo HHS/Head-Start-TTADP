@@ -2746,29 +2746,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
         attributes: ['id', 'resourceId'],
       },
       {
-        model: GoalCollaborator,
-        as: 'goalCollaborators',
-        required: false,
-        include: [{
-          model: CollaboratorType,
-          as: 'collaboratorType',
-          attributes: ['name'],
-        }],
-      },
-      {
         model: Objective,
         as: 'objectives',
         include: [
-          {
-            model: ObjectiveCollaborator,
-            as: 'objectiveCollaborators',
-            required: false,
-            include: [{
-              model: CollaboratorType,
-              as: 'collaboratorType',
-              attributes: ['name'],
-            }],
-          },
           {
             model: ObjectiveFile,
             as: 'objectiveFiles',
