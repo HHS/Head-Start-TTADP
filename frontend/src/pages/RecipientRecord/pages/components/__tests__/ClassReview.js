@@ -7,10 +7,18 @@ import fetchMock from 'fetch-mock';
 
 import ClassReview from '../ClassReview';
 
-const grantId = '1';
+const grantNumber = '1';
+const regionId = 1;
+const recipientId = 1;
 
 describe('ClassReview', () => {
-  const renderClassReview = () => render(<ClassReview grantNumber={grantId} />);
+  const renderClassReview = () => render(
+    <ClassReview
+      grantNumber={grantNumber}
+      regionId={regionId}
+      recipientId={recipientId}
+    />,
+  );
 
   describe('emotional support', () => {
     afterEach(() => {
@@ -18,7 +26,7 @@ describe('ClassReview', () => {
     });
 
     it('above all thresholds', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 6,
         CO: 0,
@@ -30,7 +38,7 @@ describe('ClassReview', () => {
     });
 
     it('below quality', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 5.1,
         CO: 0,
@@ -42,7 +50,7 @@ describe('ClassReview', () => {
     });
 
     it('below competetive', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 5.1,
         CO: 0,
@@ -60,7 +68,7 @@ describe('ClassReview', () => {
     });
 
     it('above all thresholds', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 0,
         CO: 6,
@@ -72,7 +80,7 @@ describe('ClassReview', () => {
     });
 
     it('below quality', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 0,
         CO: 5.1,
@@ -84,7 +92,7 @@ describe('ClassReview', () => {
     });
 
     it('below competetive', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 0,
         CO: 4.9,
@@ -102,7 +110,7 @@ describe('ClassReview', () => {
     });
 
     it('above all thresholds', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
         received: '05/01/2023',
         ES: 0,
         CO: 0,
@@ -114,7 +122,8 @@ describe('ClassReview', () => {
     });
 
     it('below quality - after 2025-08-01', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
+
         received: '08/02/2025',
         ES: 0,
         CO: 0,
@@ -126,7 +135,8 @@ describe('ClassReview', () => {
     });
 
     it('below quality - between 2020-11-09 and 2025-07-31', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
+
         received: '01/01/2025',
         ES: 0,
         CO: 0,
@@ -138,7 +148,8 @@ describe('ClassReview', () => {
     });
 
     it('below competetive - after 2025-08-01', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
+
         received: '08/02/2025',
         ES: 0,
         CO: 0,
@@ -150,7 +161,8 @@ describe('ClassReview', () => {
     });
 
     it('below competetive - between 2020-11-09 and 2025-07-31', async () => {
-      fetchMock.getOnce(`/api/monitoring/class/${grantId}`, {
+      fetchMock.getOnce(`/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`, {
+
         received: '01/01/2025',
         ES: 0,
         CO: 0,

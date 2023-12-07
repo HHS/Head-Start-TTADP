@@ -8,11 +8,11 @@ export const getMonitoringData = async ({ grantNumber, recipientId, regionId }) 
   const data = await get(
     join(
       monitoringUrl,
-      recipientId,
+      String(recipientId),
       'region',
-      regionId,
+      String(regionId),
       'grant',
-      grantNumber,
+      String(grantNumber),
     ),
   );
 
@@ -23,11 +23,11 @@ export const getClassScores = async ({ grantNumber, recipientId, regionId }) => 
   const data = await get(
     join(
       classUrl,
-      recipientId,
+      String(recipientId),
       'region',
-      regionId,
+      String(regionId),
       'grant',
-      grantNumber,
+      String(grantNumber),
     ),
   );
   return data.json();
