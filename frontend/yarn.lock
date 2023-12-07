@@ -2344,10 +2344,10 @@
   resolved "https://registry.yarnpkg.com/@trysound/sax/-/sax-0.2.0.tgz#cccaab758af56761eb7bf37af6f03f326dd798ad"
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
 
-"@ttahub/common@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.0.0.tgz#ffda956733fa9f6f57f6a0875314ae98dd39d4b4"
-  integrity sha512-028i9Ve5L/4ntC7hjwDxFpHu8kJIOm/1/j1GMkECExbllB54QtDzsZqbQmqAFpqBq7gWMrRm6XPfAmOKrq0fAw==
+"@ttahub/common@2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.0.2.tgz#c502b47edfa06989f8cb0b16a3298bcbfe5c3460"
+  integrity sha512-Yd5ex6Lm3TSswX72r9Ej+HIxa7dp8LjVEy6rEW9L83s8/J1OVXTgUs6YWoA16oLJR8BAO676nC+FbXyj5Xfvlw==
 
 "@turf/area@^6.4.0":
   version "6.5.0"

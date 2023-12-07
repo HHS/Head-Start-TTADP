@@ -4,6 +4,8 @@ const {
   removeTables,
   replaceValueInArray,
   replaceValueInJSONBArray,
+  updateUsersFlagsEnum,
+  dropAndRecreateEnum,
 } = require('./migration');
 
 describe('prepMigration', () => {
@@ -207,5 +209,71 @@ describe('replaceValueInJSONBArray', () => {
     )
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
 `);
+  });
+});
+
+describe('updateUsersFlagsEnum', () => {
+  let queryInterface;
+  const transaction = {};
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('should update flags and recreate enum if valuesToRemove is provided', async () => {
+    const valuesToRemove = ['value1', 'value2'];
+    await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(12);
+  });
+});
+
+describe('dropAndRecreateEnum', () => {
+  const transaction = {};
+  let queryInterface;
+  const enumName = 'MyEnum';
+  const tableName = 'MyTable';
+  const columnName = 'MyColumn';
+  const enumValues = ['Value1', 'Value2'];
+  const enumType = 'text';
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should rename the existing type, create a new type, add values to the new type, update the columns to use the new type, and remove the old type', async () => {
+    await dropAndRecreateEnum(
+      queryInterface,
+      transaction,
+      enumName,
+      tableName,
+      columnName,
+      enumValues,
+      enumType,
+    );
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
+  });
+
+  it('should use default values for enumValues and enumType if not provided', async () => {
+    await dropAndRecreateEnum(queryInterface, transaction, enumName, tableName, columnName);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
   });
 });

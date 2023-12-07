@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
 
 export const CONTAINS = 'contains';
@@ -62,8 +63,9 @@ export const REGIONAL_SCOPES = {
     description: 'Can view and create/edit activity reports in the region',
   },
   [SCOPE_IDS.READ_ACTIVITY_REPORTS]: {
-    name: 'READ_ACTIVITY_REPORTS',
-    description: 'Can view reports activity in the region',
+    name: 'READ_REPORTS',
+    description: 'Can view reports in the region',
+    readOnly: true,
   },
   [SCOPE_IDS.APPROVE_ACTIVITY_REPORTS]: {
     name: 'APPROVE_ACTIVITY_REPORTS',
@@ -73,15 +75,14 @@ export const REGIONAL_SCOPES = {
     name: 'READ_WRITE_TRAINING_REPORTS',
     description: 'Can view and create/edit training reports in the region',
   },
-  [SCOPE_IDS.READ_TRAINING_REPORTS]: {
-    name: 'READ_TRAINING_REPORTS',
-    description: 'Can view training reports in the region',
-  },
   [SCOPE_IDS.POC_TRAINING_REPORTS]: {
     name: 'POC_TRAINING_REPORTS',
     description: 'Can serve as a regional point of contact in the region (A regional POC can create sessions, view and edit reports)',
   },
 };
+
+export const READ_WRITE_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => !scope.readOnly));
+export const READ_ONLY_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => scope.readOnly));
 
 export const GLOBAL_SCOPES = {
   [SCOPE_IDS.SITE_ACCESS]: {
@@ -132,6 +133,9 @@ export const REGIONS = [
   11,
   12,
 ];
+
+export const CENTRAL_OFFICE = 14;
+export const ALL_REGIONS = 15;
 
 export const managerReportStatuses = [
   'needs_action',

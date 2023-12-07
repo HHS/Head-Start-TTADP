@@ -70,4 +70,30 @@ describe('The Button Select component', () => {
 
     expect(openMenu.textContent).toBe('Test');
   });
+
+  it('handles no options', async () => {
+    const labelId = 'Test-Button-Select';
+    const labelText = 'Give me a test, guv';
+
+    render(
+      <div>
+        <ButtonSelect
+          options={[]}
+          labelId={labelId}
+          labelText={labelText}
+          onApply={jest.fn()}
+          initialValue=""
+          applied={1}
+          ariaName="menu"
+        />
+        <button type="button" data-testid="blanko">Blanko</button>
+      </div>,
+    );
+
+    const openMenu = screen.getByRole('button', {
+      name: /toggle menu/i,
+    });
+
+    expect(openMenu.textContent).toBe('');
+  });
 });
