@@ -51,9 +51,6 @@ module.exports = {
       NOW(),
       NOW()
     );    
-
-    -- give cuke the feature flag
-    UPDATE "Users" SET "flags" = array_append("flags", 'training_reports') WHERE "id" = 5;
   `);
   },
 
