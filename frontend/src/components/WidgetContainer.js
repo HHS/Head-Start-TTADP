@@ -40,6 +40,7 @@ export default function WidgetContainer(
             offset={offset}
             perPage={perPage}
             handlePageChange={handlePageChange}
+            className="flex-justify-self-end"
           />
         ) : null}
       >
