@@ -154,6 +154,14 @@ describe('recipient record page', () => {
       {
         received: '05/01/2023', ES: 6, CO: 0, IS: 0,
       });
+    fetchMock.get('/api/monitoring/1/region/45/grant/RECIPIENT_NUMBER',
+      {
+        received: '05/01/2023', ES: 6, CO: 0, IS: 0,
+      });
+    fetchMock.get('/api/monitoring/undefined/region/45/grant/RECIPIENT_NUMBER',
+      {
+        received: '05/01/2023', ES: 6, CO: 0, IS: 0,
+      });
   });
   afterEach(() => {
     fetchMock.restore();
