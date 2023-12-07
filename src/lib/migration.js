@@ -1,3 +1,5 @@
+const { FEATURE_FLAGS } = require('../constants');
+
 /**
  * Sets audit configuration values for a database migration.
  * @param {Object} queryInterface - The Sequelize Query Interface object.
@@ -82,11 +84,12 @@ const removeTables = async (
  */
 const addValuesToEnumIfTheyDontExist = async (
   queryInterface,
+  transaction,
   enumName,
   enumValues = [],
 ) => Promise.all(Object.values(enumValues).map((enumValue) => queryInterface.sequelize.query(`
   ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';
-`)));
+`, { transaction })));
 
 /**
  * Replaces a specific value in an array column of a table with a new value.
@@ -154,11 +157,78 @@ const replaceValueInJSONBArray = async (
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
 `, { transaction });
 
+const dropAndRecreateEnum = async (
+  queryInterface,
+  transaction,
+  enumName,
+  tableName,
+  columnName,
+  enumValues = [],
+  enumType = 'text',
+) => {
+  await queryInterface.sequelize.query(`  
+  -- rename the existing type
+  ALTER TYPE "${enumName}" RENAME TO "${enumName}_old";
+  -- create the new type
+  CREATE TYPE "${enumName}" AS ENUM();`, { transaction });
+
+  await addValuesToEnumIfTheyDontExist(queryInterface, transaction, enumName, enumValues);
+
+  return queryInterface.sequelize.query(`
+  -- update the columns to use the new type
+  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default null;
+  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE "${enumName}"[] USING "${columnName}"::${enumType}[]::"${enumName}"[];
+  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];
+  -- remove the old type
+  DROP TYPE "${enumName}_old";
+`, { transaction });
+};
+
+/**
+ *  Updates all users' flags by removing the specified values and adding all the values
+ *  from the source of truth, which is the FEATURE_FLAGS constant in src/constants.js
+ *   - so you only specify the values you want to remove here.
+ *
+ * @param {sequelize.queryInterface} queryInterface
+ * @param {string[]} valuesToRemove
+ * @returns Promise<any>
+ */
+const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove = []) => {
+  const enumName = 'enum_Users_flags';
+  const tableName = 'Users';
+  const columnName = 'flags';
+
+  if (valuesToRemove && valuesToRemove.length) {
+    await Promise.all(valuesToRemove.map((value) => queryInterface.sequelize.query(`
+      UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
+        WHERE '${value}' = ANY(${columnName});
+  `, { transaction })));
+
+    return dropAndRecreateEnum(
+      queryInterface,
+      transaction,
+      enumName,
+      tableName,
+      columnName,
+      Object.values(FEATURE_FLAGS),
+    );
+  }
+
+  return addValuesToEnumIfTheyDontExist(
+    queryInterface,
+    transaction,
+    enumName,
+    Object.values(FEATURE_FLAGS),
+  );
+};
+
 module.exports = {
   prepMigration,
   setAuditLoggingState,
   removeTables,
+  dropAndRecreateEnum,
   addValuesToEnumIfTheyDontExist,
+  updateUsersFlagsEnum,
   replaceValueInArray,
   replaceValueInJSONBArray,
 };
