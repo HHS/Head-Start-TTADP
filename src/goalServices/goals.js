@@ -2863,7 +2863,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     ]);
     goalSet.sourceGoalIds.push(selectedGoal.id);
     if (finalGoal.name === selectedGoal.name) {
-      goalSet.selectedGoalId = selectedGoal.grantId;
+      goalSet.selectedGoalId = selectedGoal.id;
     }
     return acc;
   }, newGoals.map((newGoal) => ({
@@ -2892,7 +2892,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
 
   goalSets.forEach(({
     newGoalId,
-    soureGoalIds,
+    sourceGoalIds,
     selectedGoalId,
   }) => {
     updatesToRelatedModels.push(mergeCollaborators(
@@ -2900,7 +2900,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       sequelize,
       null,
       newGoalId,
-      soureGoalIds,
+      sourceGoalIds,
       selectedGoalId,
     ));
   });
