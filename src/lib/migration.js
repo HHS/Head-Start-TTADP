@@ -100,6 +100,7 @@ const addValuesToEnumIfTheyDontExist = async (
  */
 const replaceValueInArray = async (
   queryInterface,
+  transaction,
   table,
   column,
   oldValue,
@@ -108,7 +109,7 @@ const replaceValueInArray = async (
   UPDATE "${table}"
   SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
   WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
-`);
+`, { transaction });
 
 /**
  * Replaces a specific value in a JSONB array within a PostgreSQL table column.
@@ -123,6 +124,7 @@ const replaceValueInArray = async (
  */
 const replaceValueInJSONBArray = async (
   queryInterface,
+  transaction,
   table,
   column,
   field,
@@ -150,7 +152,7 @@ const replaceValueInJSONBArray = async (
         )
     )
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
-`);
+`, { transaction });
 
 module.exports = {
   prepMigration,
