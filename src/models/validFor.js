@@ -59,6 +59,17 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    /** The mapsTo column is a crucial component designed to enable flexible
+     * handling of enumerated values. It serves as a reference to another entry
+     * within the same enumeration table. When defined, the mapsTo column
+     * specifies an alternative or replacement value for a particular name entry.
+     * In various database operations, when a mapsTo value is defined for an
+     * entry, it takes precedence over the original name value, ensuring that the
+     * mapped value is consistently used in place of the original when selected
+     * or loaded. This feature enhances the table's versatility by allowing for
+     * the seamless substitution of mapped values, offering adaptability for
+     * various display and analytical purposes, while retaining the integrity
+     * of the original data. */
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
