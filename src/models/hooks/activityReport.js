@@ -983,8 +983,8 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
   ) {
     // Find all ActivityReportGoals models
     const [
-      goals,
-      objectives,
+      arGoals,
+      arObjectives,
     ] = await Promise.all([
       sequelize.models.ActivityReportGoal.findAll({
         attributes: ['goalId'], // Select the 'goalId' attribute for each model
@@ -1004,19 +1004,19 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
       }),
     ]);
     await Promise.all([
-      ...goals.map(async (goal) => removeCollaboratorsForType(
+      ...arGoals.map(async (arGoal) => removeCollaboratorsForType(
         'goal',
         sequelize,
         options.transaction,
-        goal.goalId,
+        arGoal.goalId,
         GOAL_COLLABORATORS.UTILIZER,
         { activityReportIds: [instance.id] },
       )),
-      ...objectives.map(async (objective) => removeCollaboratorsForType(
+      ...arObjectives.map(async (arObjective) => removeCollaboratorsForType(
         'objective',
         sequelize,
         options.transaction,
-        objective.objectiveId,
+        arObjective.objectiveId,
         OBJECTIVE_COLLABORATORS.UTILIZER,
         { activityReportIds: [instance.id] },
       )),
