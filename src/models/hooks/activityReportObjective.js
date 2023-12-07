@@ -42,7 +42,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
 };
 
 const autoPopulateLinker = async (sequelize, instance, options) => {
-  const { id: objectiveId, activityReportId } = instance;
+  const { objectiveId, activityReportId } = instance;
   return currentUserPopulateCollaboratorForType(
     'objective',
     sequelize,
