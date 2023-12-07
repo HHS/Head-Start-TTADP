@@ -1005,15 +1005,17 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
     ]);
     await Promise.all([
       ...goals.map(async (goal) => removeCollaboratorsForType(
+        'goal',
         sequelize,
-        options,
+        options.transaction,
         goal.goalId,
         GOAL_COLLABORATORS.UTILIZER,
         { activityReportIds: [instance.id] },
       )),
       ...objectives.map(async (objective) => removeCollaboratorsForType(
+        'objective',
         sequelize,
-        options,
+        options.transaction,
         objective.objectiveId,
         OBJECTIVE_COLLABORATORS.UTILIZER,
         { activityReportIds: [instance.id] },
