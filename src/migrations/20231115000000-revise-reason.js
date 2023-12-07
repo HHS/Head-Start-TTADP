@@ -12,6 +12,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
       await replaceValueInArray(
         queryInterface,
+        transaction,
         'ActivityReports',
         'reason',
         'Planning/Coordination (also TTA Plan Agreement)',
@@ -19,6 +20,7 @@ module.exports = {
       );
       await replaceValueInJSONBArray(
         queryInterface,
+        transaction,
         'EventReportPilots',
         'data',
         'reasons',
@@ -33,6 +35,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
       await replaceValueInArray(
         queryInterface,
+        transaction,
         'ActivityReports',
         'reason',
         'Planning/Coordination',
@@ -40,6 +43,7 @@ module.exports = {
       );
       await replaceValueInJSONBArray(
         queryInterface,
+        transaction,
         'EventReportPilots',
         'data',
         'reasons',
