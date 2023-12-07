@@ -23,7 +23,7 @@ const RenderActivitySummary = () => {
 
   const additionalData = {
     recipients: { grants: [], otherEntities: [] },
-    collaborators: [],
+    collaborators: [{ id: 1, name: 'test', roles: [] }, { id: 2, name: 'test2', roles: [] }],
     availableApprovers: [],
     groups: [],
   };
