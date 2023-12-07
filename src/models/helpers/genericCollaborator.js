@@ -1,7 +1,10 @@
 const { Op } = require('sequelize');
+const Semaphore = require('../../lib/semaphore');
 
 const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
 const { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS } = require('../../constants');
+
+const semaphore = new Semaphore(1);
 
 const collaboratorDetails = {
   goal: {
@@ -175,6 +178,7 @@ const findOrCreateCollaborator = async (
   typeName,
   linkBack = null,
 ) => {
+  await semaphore.acquire();
   // Check if a collaborator record already exists
   let collaborator = await getCollaboratorRecord(
     genericCollaboratorType,
@@ -211,6 +215,7 @@ const findOrCreateCollaborator = async (
       },
     );
   }
+  semaphore.release();
 
   return collaborator;
 };
