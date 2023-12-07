@@ -449,6 +449,7 @@ module.exports = {
         LEFT JOIN "ZALActivityReportGoals" zarg
         ON arg.id = zarg.data_id
         AND zarg.dml_type = 'INSERT'
+        AND zarg.dml_as NOT IN (-1, 0)
         WHERE zarg.id IS NULL
         GROUP BY 1,2
       ) x
