@@ -80,7 +80,7 @@ const regionOneReportC = {
     'New Program Option',
     'New Staff / Turnover',
     'Ongoing Quality Improvement',
-    'Planning/Coordination (also TTA Plan Agreement)',
+    'Planning/Coordination',
     'School Readiness Goals',
   ],
   startDate: '2021-02-01T12:00:00Z',
