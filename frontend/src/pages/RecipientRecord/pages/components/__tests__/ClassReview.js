@@ -20,6 +20,10 @@ describe('ClassReview', () => {
     />,
   );
 
+  afterAll(() => {
+    fetchMock.restore();
+  });
+
   describe('emotional support', () => {
     afterEach(() => {
       fetchMock.restore();

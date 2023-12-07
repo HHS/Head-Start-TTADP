@@ -146,6 +146,14 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', []);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', []);
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
+    fetchMock.get('/api/monitoring/class/1/region/45/grant/RECIPIENT_NUMBER',
+      {
+        received: '05/01/2023', ES: 6, CO: 0, IS: 0,
+      });
+    fetchMock.get('/api/monitoring/class/undefined/region/45/grant/RECIPIENT_NUMBER',
+      {
+        received: '05/01/2023', ES: 6, CO: 0, IS: 0,
+      });
   });
   afterEach(() => {
     fetchMock.restore();
