@@ -1,9 +1,9 @@
-const { validateChangedOrSetEnums } = require('../helpers/enum');
-const { OBJECTIVE_COLLABORATORS } = require('../../constants');
-const {
+import { validateChangedOrSetEnums } from '../helpers/enum';
+import { OBJECTIVE_COLLABORATORS } from '../../constants';
+import {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
-} = require('../helpers/genericCollaborator');
+} from '../helpers/genericCollaborator';
 
 const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
   [
