@@ -43,14 +43,20 @@ describe('ActivityReport', () => {
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/activity-reports/groups?region=1', [{
-      id: 1,
+      id: 110,
       name: 'Group 1',
-      recipients: [1, 2],
+      grants: [
+        { id: 1 },
+        { id: 2 },
+      ],
     },
     {
-      id: 2,
+      id: 111,
       name: 'Group 2',
-      recipients: [3, 4],
+      grants: [
+        { id: 3 },
+        { id: 4 },
+      ],
     },
     ]);
     fetchMock.get('/api/users/collaborators?region=1', []);
@@ -133,8 +139,8 @@ describe('ActivityReport', () => {
     it('recipients correctly update for groups', async () => {
       const groupRecipients = {
         grants: [
-          { id: 1, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
-          { id: 2, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
         ],
         otherEntities: [],
       };
@@ -203,9 +209,9 @@ describe('ActivityReport', () => {
     it('modifying group recipients notifies the user', async () => {
       const groupRecipients = {
         grants: [
-          { id: 1, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
-          { id: 2, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
-          { id: 3, name: 'Group 3 Recipients', grants: [{ activityRecipientId: 5, name: 'Group 3 Grant A' }, { activityRecipientId: 6, name: 'Group 3 Grant B' }] },
+          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+          { id: 13, name: 'Group 3 Recipients', grants: [{ activityRecipientId: 5, name: 'Group 3 Grant A' }, { activityRecipientId: 6, name: 'Group 3 Grant B' }] },
         ],
         otherEntities: [],
       };

@@ -293,6 +293,13 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
+        // Add recipientIds to groups.
+        const groupsWithRecipientIds = groups.map((group) => ({
+          ...group,
+          // Match groups to grants as recipients could have multiple grants.
+          recipients: group.grants.map((g) => g.id),
+        }));
+
         updateAdditionalData({
           recipients: recipients || {
             grants: [],
@@ -300,7 +307,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
-          groups: groups || [],
+          groups: groupsWithRecipientIds || [],
         });
 
         let shouldUpdateFromNetwork = true;
