@@ -995,7 +995,7 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
         raw: true, // Return raw data instead of Sequelize instances
       }),
       sequelize.models.ActivityReportObjective.findAll({
-        attributes: ['objectiveId'], // Select the 'goalId' attribute for each model
+        attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
