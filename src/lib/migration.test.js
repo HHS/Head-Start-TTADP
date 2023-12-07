@@ -157,7 +157,7 @@ describe('replaceValueInArray', () => {
   });
 
   it('should call the update query with the correct SQL', async () => {
-    await replaceValueInArray(queryInterface, table, column, oldValue, newValue);
+    await replaceValueInArray(queryInterface, null, table, column, oldValue, newValue);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
   UPDATE "${table}"
@@ -184,7 +184,7 @@ describe('replaceValueInJSONBArray', () => {
   });
 
   it('should call the update query with the correct SQL', async () => {
-    await replaceValueInJSONBArray(queryInterface, table, column, field, oldValue, newValue);
+    await replaceValueInJSONBArray(queryInterface, null, table, column, field, oldValue, newValue);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
   UPDATE "${table}"
