@@ -1,7 +1,7 @@
-const { Op } = require('sequelize');
-const httpContext = require('express-http-context');
-const Semaphore = require('../../lib/semaphore');
-const { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS } = require('../../constants');
+import { Op } from 'sequelize';
+import httpContext from 'express-http-context';
+import Semaphore from '../../lib/semaphore';
+import { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
 
 const semaphore = new Semaphore(1);
 
