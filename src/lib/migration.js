@@ -164,13 +164,13 @@ const dropAndRecreateEnum = async (
   enumValues = [],
   enumType = 'text',
 ) => {
-  await queryInterface.sequelize.query(`  
+  await queryInterface.sequelize.query(`
   -- rename the existing type
   ALTER TYPE "${enumName}" RENAME TO "${enumName}_old";
   -- create the new type
-  CREATE TYPE "${enumName}" AS ENUM();`, { transaction });
-
-  await addValuesToEnumIfTheyDontExist(queryInterface, transaction, enumName, enumValues);
+  CREATE TYPE "${enumName}" AS ENUM(
+    ${Object.values(enumValues).map((enumValue) => `'${enumValue}'`).join(',\n')}
+  );`, { transaction });
 
   return queryInterface.sequelize.query(`
   -- update the columns to use the new type
@@ -208,7 +208,7 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
       enumName,
       tableName,
       columnName,
-      Object.values(FEATURE_FLAGS),
+      FEATURE_FLAGS,
     );
   }
 
@@ -216,7 +216,7 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
     queryInterface,
     transaction,
     enumName,
-    Object.values(FEATURE_FLAGS),
+    FEATURE_FLAGS,
   );
 };
 
