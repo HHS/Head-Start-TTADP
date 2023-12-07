@@ -163,7 +163,7 @@ describe('replaceValueInArray', () => {
   UPDATE "${table}"
   SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
   WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
-`);
+`, { transaction: null });
   });
 });
 
@@ -208,7 +208,7 @@ describe('replaceValueInJSONBArray', () => {
         )
     )
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
-`);
+`, { transaction: null });
   });
 });
 
