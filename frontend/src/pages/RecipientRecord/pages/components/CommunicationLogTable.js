@@ -53,7 +53,7 @@ export default function CommunicationLogTable({
         </caption>
         <thead>
           <tr>
-            {renderColumnHeader('Date', 'communicationDate', 'maxw-6')}
+            {renderColumnHeader('Date', 'communicationDate', 'desktop:maxw-6')}
             {renderColumnHeader('Purpose', 'purpose')}
             {renderColumnHeader('Creator name', 'authorName')}
             {renderColumnHeader('Result', 'result')}
@@ -62,7 +62,7 @@ export default function CommunicationLogTable({
         <tbody>
           {logs.map((log) => (
             <tr key={uniqueId('log-table-row')}>
-              <td className="maxw-6" data-label="Date">
+              <td className="desktop:maxw-6" data-label="Date">
                 <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
                   {log.data.communicationDate}
                 </Link>

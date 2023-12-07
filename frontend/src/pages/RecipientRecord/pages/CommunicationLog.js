@@ -192,6 +192,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
         />
       </div>
       <WidgetContainer
+        className="maxw-widescreen"
         title="Communication log"
         showPagingBottom={logs && logs.count > 0}
         showPagingTop={logs && logs.count > 0}
