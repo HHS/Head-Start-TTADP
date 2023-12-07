@@ -20,6 +20,7 @@ import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
   REASONS as reasons,
+  DECIMAL_BASE,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
@@ -131,7 +132,7 @@ const ActivitySummary = ({
     // Get all selectedRecipients the have ids in the recipientIds array.
     const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
       const groupRecipients = curr.options.filter(
-        (option) => groupToUse.recipients.includes(option.value),
+        (option) => groupToUse.recipients.includes(parseInt(option.value, DECIMAL_BASE)),
       );
       return [...acc, ...groupRecipients];
     }, []);
