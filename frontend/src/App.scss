@@ -376,3 +376,9 @@ fill: #1B1B1B;
   font-weight: normal;
   text-decoration: underline;
 }
+
+@media all and (min-width: 64em){
+  .desktop\:maxw-6 {
+    max-width: 3rem;
+  }
+}
