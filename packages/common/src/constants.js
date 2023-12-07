@@ -15,7 +15,7 @@ const RECIPIENT_PARTICIPANTS = [
     'Volunteer',
   ];
   exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
-  
+
   const OTHER_ENTITY_PARTICIPANTS = [
     'HSCO',
     'Local or State Agency',
@@ -28,13 +28,13 @@ const RECIPIENT_PARTICIPANTS = [
     'Other',
   ];
   exports.OTHER_ENTITY_PARTICIPANTS = OTHER_ENTITY_PARTICIPANTS;
-  
+
   const ALL_PARTICIPANTS = [
     ...RECIPIENT_PARTICIPANTS,
     ...OTHER_ENTITY_PARTICIPANTS,
   ];
   exports.ALL_PARTICIPANTS = ALL_PARTICIPANTS;
-  
+
   const TOPICS = [
     'Behavioral / Mental Health / Trauma',
     'Child Screening and Assessment',
@@ -79,7 +79,7 @@ const RECIPIENT_PARTICIPANTS = [
     'Transportation',
   ];
   exports.TOPICS = TOPICS;
-  
+
   const REASONS = [
     'Below Competitive Threshold (CLASS)',
     'Below Quality Threshold (CLASS)',
@@ -93,14 +93,14 @@ const RECIPIENT_PARTICIPANTS = [
     'New Program Option',
     'New Staff / Turnover',
     'Ongoing Quality Improvement',
-    'Planning/Coordination (also TTA Plan Agreement)',
+    'Planning/Coordination',
     'School Readiness Goals',
     'Monitoring | Area of Concern',
     'Monitoring | Noncompliance',
     'Monitoring | Deficiency',
   ];
   exports.REASONS = REASONS;
-  
+
   const REPORT_STATUSES = {
     DRAFT: 'draft',
     DELETED: 'deleted',
@@ -109,7 +109,7 @@ const RECIPIENT_PARTICIPANTS = [
     NEEDS_ACTION: 'needs_action',
   };
   exports.REPORT_STATUSES = REPORT_STATUSES;
-  
+
   const TRAINING_REPORT_STATUSES = {
     NOT_STARTED: 'Not started',
     IN_PROGRESS: 'In progress',
@@ -117,23 +117,23 @@ const RECIPIENT_PARTICIPANTS = [
     SUSPENDED: 'Suspended',
   };
   exports.TRAINING_REPORT_STATUSES = TRAINING_REPORT_STATUSES;
-  
+
   const TRAINING_REPORT_STATUSES_URL_PARAMS = {
     'not-started': TRAINING_REPORT_STATUSES.NOT_STARTED,
     'in-progress': TRAINING_REPORT_STATUSES.IN_PROGRESS,
     suspended: TRAINING_REPORT_STATUSES.SUSPENDED,
     complete: TRAINING_REPORT_STATUSES.COMPLETE,
   };
-  
+
   exports.TRAINING_REPORT_STATUSES_URL_PARAMS = TRAINING_REPORT_STATUSES_URL_PARAMS;
-  
+
   const EVENT_REPORT_STATUSES = {
     IN_PROGRESS: 'In progress',
     COMPLETE: 'Complete',
   }
-  
+
   exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
-  
+
   const TARGET_POPULATIONS = [
     'Infants and Toddlers (ages birth to 3)',
     'Preschool Children (ages 3-5)',
@@ -149,15 +149,15 @@ const RECIPIENT_PARTICIPANTS = [
     'Program Staff',
   ];
   exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
-  
+
   const EVENT_TARGET_POPULATIONS = [
     'Children/Families affected by systemic discrimination/bias/exclusion',
     'Children/Families affected by traumatic events',
     'Parents/Families impacted by health disparities',
   ];
-  
+
   exports.EVENT_TARGET_POPULATIONS = EVENT_TARGET_POPULATIONS;
-  
+
   const USER_ROLES = [
     'Central Office',
     'Other Federal Staff',
@@ -179,18 +179,18 @@ const RECIPIENT_PARTICIPANTS = [
     'System Specialist',
   ];
   exports.USER_ROLES = USER_ROLES;
-  
-  const CLOSE_SUSPEND_REASONS = [ 
-    'Duplicate goal', 
-    'Key staff turnover / vacancies', 
-    'Recipient is not responding', 
-    'Recipient request', 
+
+  const CLOSE_SUSPEND_REASONS = [
+    'Duplicate goal',
+    'Key staff turnover / vacancies',
+    'Recipient is not responding',
+    'Recipient request',
     'Regional Office request',
     'TTA complete',
   ];
-  
+
   exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
-  
+
   const GOAL_CLOSE_REASONS = [
     'Duplicate goal',
     'Recipient request',
@@ -198,7 +198,7 @@ const RECIPIENT_PARTICIPANTS = [
     'TTA complete',
   ];
   exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
-  
+
   const GOAL_SUSPEND_REASONS = [
     'Key staff turnover / vacancies',
     'Recipient request',
@@ -206,7 +206,7 @@ const RECIPIENT_PARTICIPANTS = [
     'Regional Office request',
   ];
   exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
-  
+
   const GOAL_SOURCES = [
     'Federal monitoring issues, including CLASS and RANs',
     'RTTAPA development',
@@ -214,15 +214,15 @@ const RECIPIENT_PARTICIPANTS = [
     'Regional office priority',
     'Training event follow-up',
   ];
-  
+
   exports.GOAL_SOURCES = GOAL_SOURCES;
-  
+
   const APPROVER_STATUSES = {
     APPROVED: 'approved',
     NEEDS_ACTION: 'needs_action',
   };
   exports.APPROVER_STATUSES = APPROVER_STATUSES;
-  
+
   const SCOPE_IDS = {
     SITE_ACCESS: 1,
     ADMIN: 2,
@@ -235,38 +235,38 @@ const RECIPIENT_PARTICIPANTS = [
     POC_TRAINING_REPORTS: 9,
   };
   exports.SCOPE_IDS = SCOPE_IDS;
-  
+
   const DECIMAL_BASE = 10;
   exports.DECIMAL_BASE = DECIMAL_BASE;
-  
+
   const ALERT_STATUSES = {
       UNPUBLISHED: 'Unpublished',
       PUBLISHED: 'Published'
   };
   exports.ALERT_STATUSES = ALERT_STATUSES;
-  
+
   const ALERT_VARIANTS = {
       INFO: 'info',
       EMERGENCY: 'emergency'
   };
   exports.ALERT_VARIANTS = ALERT_VARIANTS;
-  
+
   const ALERT_SIZES = {
       STANDARD: 'standard',
       SLIM: 'slim',
       LARGE: 'large'
   };
   exports.ALERT_SIZES = ALERT_SIZES;
-  
+
   const COMMUNICATION_METHODS = [
     'Email',
     'Phone',
     'In person',
     'Virtual',
   ];
-  
+
   exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
-  
+
   const COMMUNICATION_PURPOSES = [
     'CLASS',
     'FEI',
@@ -280,18 +280,18 @@ const RECIPIENT_PARTICIPANTS = [
     'RTTAPA Initial Plan / New Recipient',
     'TTA planning or scheduling',
   ];
-  
+
   exports.COMMUNICATION_PURPOSES = COMMUNICATION_PURPOSES;
-  
+
   const COMMUNICATION_RESULTS = [
     'New TTA accepted',
     'New TTA declined',
     'RTTAPA declined',
     'Next Steps identified',
   ];
-  
+
   exports.COMMUNICATION_RESULTS = COMMUNICATION_RESULTS;
-  
+
   const GOAL_STATUS = {
     DRAFT: 'Draft',
     NOT_STARTED: 'Not Started',
@@ -299,5 +299,5 @@ const RECIPIENT_PARTICIPANTS = [
     SUSPENDED: 'Suspended',
     CLOSED: 'Closed',
   };
-  
+
   exports.GOAL_STATUS = GOAL_STATUS;
