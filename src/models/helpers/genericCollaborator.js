@@ -1,7 +1,6 @@
 const { Op } = require('sequelize');
+const httpContext = require('express-http-context');
 const Semaphore = require('../../lib/semaphore');
-
-const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
 const { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS } = require('../../constants');
 
 const semaphore = new Semaphore(1);
