@@ -267,9 +267,9 @@ function App() {
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReports user={user} match={match} />
-              </FeatureFlag>
+
+              <TrainingReports user={user} match={match} />
+
             </AppWrapper>
           )}
         />
@@ -278,9 +278,7 @@ function App() {
           path="/training-report/view/:trainingReportId([0-9RT\-]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <ViewTrainingReport match={match} />
-              </FeatureFlag>
+              <ViewTrainingReport match={match} />
             </AppWrapper>
           )}
         />
@@ -289,9 +287,7 @@ function App() {
           path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReportForm match={match} />
-              </FeatureFlag>
+              <TrainingReportForm match={match} />
             </AppWrapper>
           )}
         />
@@ -300,9 +296,7 @@ function App() {
           path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <SessionForm match={match} />
-              </FeatureFlag>
+              <SessionForm match={match} />
             </AppWrapper>
           )}
         />
