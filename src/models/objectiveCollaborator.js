@@ -188,7 +188,7 @@ export default (sequelize, DataTypes) => {
     indexes: [
       {
         unique: true,
-        fields: ['userId', 'objectiveId'],
+        fields: ['userId', 'objectiveId', 'collaboratorTypeId'],
       },
     ],
   });
