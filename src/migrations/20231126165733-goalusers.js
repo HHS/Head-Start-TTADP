@@ -282,9 +282,9 @@ module.exports = {
       AND gc."collaboratorTypeId" = nc."collaboratorTypeId"
       WHERE gc.id IS NULL
       ;
-      
+
       DROP TABLE IF EXISTS tmp_collaborators_to_update;
-      CREATE TABLE tmp_collaborators_to_update
+      CREATE TEMP TABLE tmp_collaborators_to_update
       AS
       SELECT
         gc.id "id",
