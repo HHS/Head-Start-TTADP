@@ -67,7 +67,7 @@ describe('mergeGoals', () => {
   beforeAll(async () => {
     // Recipient.
     recipient = await Recipient.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       name: faker.name.firstName(),
       startDate: new Date(),
       endDate: new Date(),
@@ -75,7 +75,7 @@ describe('mergeGoals', () => {
 
     // Grant.
     grantOne = await Grant.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -85,7 +85,7 @@ describe('mergeGoals', () => {
     });
 
     grantTwo = await Grant.create({
-      id: faker.datatype.number({ min: grantOne.id + 1 }),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -95,7 +95,7 @@ describe('mergeGoals', () => {
     });
 
     grantThree = await Grant.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -121,7 +121,7 @@ describe('mergeGoals', () => {
     });
 
     oldGoal = await Goal.create({
-      name: `old goal${faker.animal.dog()}`,
+      name: `old goal${faker.animal.dog() + faker.datatype.string(100)}}`,
       status: GOAL_STATUS.IN_PROGRESS,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -131,7 +131,7 @@ describe('mergeGoals', () => {
     });
 
     goalOne = await Goal.create({
-      name: `Selected goal 1${faker.animal.dog()}`,
+      name: `Selected goal 1${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -141,7 +141,7 @@ describe('mergeGoals', () => {
     });
 
     goalTwo = await Goal.create({
-      name: `Selected goal 2${faker.animal.dog()}`,
+      name: `Selected goal 2${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.NOT_STARTED,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -152,7 +152,7 @@ describe('mergeGoals', () => {
     });
 
     goalThree = await Goal.create({
-      name: `Selected goal 3${faker.animal.dog()}`,
+      name: `Selected goal 3${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.SUSPENDED,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
