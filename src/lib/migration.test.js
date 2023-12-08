@@ -157,13 +157,13 @@ describe('replaceValueInArray', () => {
   });
 
   it('should call the update query with the correct SQL', async () => {
-    await replaceValueInArray(queryInterface, table, column, oldValue, newValue);
+    await replaceValueInArray(queryInterface, null, table, column, oldValue, newValue);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
   UPDATE "${table}"
   SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
   WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
-`);
+`, { transaction: null });
   });
 });
 
@@ -184,7 +184,7 @@ describe('replaceValueInJSONBArray', () => {
   });
 
   it('should call the update query with the correct SQL', async () => {
-    await replaceValueInJSONBArray(queryInterface, table, column, field, oldValue, newValue);
+    await replaceValueInJSONBArray(queryInterface, null, table, column, field, oldValue, newValue);
 
     expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
   UPDATE "${table}"
@@ -208,7 +208,7 @@ describe('replaceValueInJSONBArray', () => {
         )
     )
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
-`);
+`, { transaction: null });
   });
 });
 
@@ -232,7 +232,7 @@ describe('updateUsersFlagsEnum', () => {
     const valuesToRemove = ['value1', 'value2'];
     await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
 
-    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(12);
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -268,7 +268,7 @@ describe('dropAndRecreateEnum', () => {
       enumType,
     );
 
-    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
   });
 
   it('should use default values for enumValues and enumType if not provided', async () => {
