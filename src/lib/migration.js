@@ -169,7 +169,7 @@ const dropAndRecreateEnum = async (
   ALTER TYPE "${enumName}" RENAME TO "${enumName}_old";
   -- create the new type
   CREATE TYPE "${enumName}" AS ENUM(
-    ${Object.values(enumValues).map((enumValue) => `'${enumValue}'`).join(',\n')}
+    ${enumValues.map((enumValue) => `'${enumValue}'`).join(',\n')}
   );`, { transaction });
 
   return queryInterface.sequelize.query(`
