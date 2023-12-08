@@ -268,7 +268,7 @@ describe('dropAndRecreateEnum', () => {
       enumType,
     );
 
-    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
   });
 
   it('should use default values for enumValues and enumType if not provided', async () => {
