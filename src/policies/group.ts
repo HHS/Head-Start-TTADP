@@ -1,3 +1,5 @@
+import { GROUP_COLLABORATORS } from '../constants';
+
 interface Permission {
   regionId: number;
   scopeId: number;
@@ -15,8 +17,8 @@ interface GrantType {
 
 interface GroupType {
   id: number;
-  userId: number;
   isPublic: boolean;
+  groupCollaborators: { userId: number, collaboratorType: { name: string } }[],
 }
 
 export default class Group {
@@ -39,8 +41,17 @@ export default class Group {
       ))));
   }
 
+  canEditGroup() {
+    return !!this.group.groupCollaborators
+      .find(({ userId, collaboratorType: { name: collaboratorType } }) => userId === this.user.id
+      && (collaboratorType === GROUP_COLLABORATORS.CREATOR
+        || collaboratorType === GROUP_COLLABORATORS.EDITOR));
+  }
+
   ownsGroup() {
-    return this.user.id === this.group.userId;
+    return !!this.group.groupCollaborators
+      .find(({ userId, collaboratorType: { name: collaboratorType } }) => userId === this.user.id
+      && collaboratorType === GROUP_COLLABORATORS.CREATOR);
   }
 
   isPublic() {
