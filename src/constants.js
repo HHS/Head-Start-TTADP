@@ -76,6 +76,12 @@ const RESOURCE_ACTIONS = {
   GET_METADATA: 'getMetaData',
 };
 
+const GROUP_COLLABORATORS = {
+  CREATOR: 'Creator',
+  EDITOR: 'Editor',
+  COHORT: 'Cohort',
+};
+
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
@@ -250,6 +256,7 @@ module.exports = {
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
   OBJECTIVE_COLLABORATORS,
+  GROUP_COLLABORATORS,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
