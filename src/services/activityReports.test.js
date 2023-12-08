@@ -1143,6 +1143,18 @@ describe('Activity report service', () => {
         expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
       });
 
+      it('returns all approved reports when provided with IDs', async () => {
+        const rows = await getAllDownloadableActivityReports(
+          [14],
+          {},
+          0,
+          [approvedReport.id],
+        );
+        const ids = rows.map((row) => row.id);
+        expect(ids.length).toEqual(1);
+        expect(ids).toContain(approvedReport.id);
+      });
+
       it('will return legacy reports', async () => {
         const rows = await getAllDownloadableActivityReports([14], {}, true);
         const ids = rows.map((row) => row.id);
