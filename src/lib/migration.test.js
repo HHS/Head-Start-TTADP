@@ -232,7 +232,7 @@ describe('updateUsersFlagsEnum', () => {
     const valuesToRemove = ['value1', 'value2'];
     await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
 
-    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(12);
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
   });
 });
 
