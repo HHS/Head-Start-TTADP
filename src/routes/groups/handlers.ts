@@ -14,9 +14,15 @@ import {
   destroyGroup,
 } from '../../services/groups';
 import GroupPolicy from '../../policies/group';
+import { GROUP_COLLABORATORS } from '../../constants';
 
 const NAMESPACE = 'GROUPS';
-const { Group, Grant } = db;
+const {
+  Group,
+  Grant,
+  CollaboratorType,
+  GroupCollaborator,
+} = db;
 
 interface GQuery {
   id: number;
@@ -123,7 +129,20 @@ export async function updateGroup(req: Request, res: Response) {
           },
         ],
       },
-      attribtes: ['userId', 'id'],
+      attribtes: ['id'],
+      include: [{
+        model: GroupCollaborator,
+        as: 'groupCollaborators',
+        required: true,
+        include: [{
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          required: true,
+          where: { name: [GROUP_COLLABORATORS.CREATOR, GROUP_COLLABORATORS.EDITOR] },
+          attributes: ['name'],
+        }],
+        attributes: ['userId'],
+      }],
     });
 
     // there can only be one
