@@ -743,6 +743,24 @@ describe('Activity Report handlers', () => {
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
+
+    it('accepts optional id query param', async () => {
+      const updatedMockRequest = {
+        session: {
+          userId: mockUser.id,
+        },
+        query: {
+          'region.in': '1',
+          id: [1],
+        },
+      };
+
+      getAllDownloadableActivityReports.mockResolvedValue([report]);
+      userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
+      setReadRegions.mockResolvedValue([1]);
+      await downloadAllReports(updatedMockRequest, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
+    });
   });
 
   describe('downloadAllAlerts', () => {

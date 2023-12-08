@@ -96,12 +96,17 @@ const resourcesDefault = {
     ],
   },
   activityReports: {
-    count: 0,
-    rows: [],
+    count: 1,
+    rows: [{
+      id: 1,
+      sortedTopics: [],
+      activityRecipients: [],
+      displayId: 'R-1-23',
+    }],
     topics: [],
     recipients: [],
   },
-  reportIds: [],
+  reportIds: [1, 2, 3],
 };
 
 const resourcesRegion1 = {
@@ -242,7 +247,7 @@ const resourcesRegion2 = {
     ],
   },
   activityReports: {
-    count: 0,
+    count: 1,
     rows: [],
     topics: [],
     recipients: [],
@@ -604,5 +609,68 @@ describe('Resources Dashboard page', () => {
     const [alert] = await screen.findAllByRole('alert');
     expect(alert).toBeVisible();
     expect(alert.textContent).toBe('Unable to fetch resources');
+  });
+
+  it('exports reports en masse', async () => {
+    // Page Load.
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}${sortParams}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}${sortParams}`, resourcesDefault);
+
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderResourcesDashboard(user);
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    const exportReportsMenu = await screen.findByRole('button', { name: /reports menu/i });
+    act(() => userEvent.click(exportReportsMenu));
+
+    const getAllUrl = '/api/activity-reports/download-all?id=1&id=2&id=3';
+    fetchMock.get(getAllUrl, 200);
+
+    const exportAllReportsButton = document.querySelector('#activity-reportsexport-table');
+    act(() => userEvent.click(exportAllReportsButton));
+
+    expect(fetchMock.called(getAllUrl)).toBe(true);
+  });
+  it('exports reports singly', async () => {
+    // Page Load.
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}${sortParams}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}${sortParams}`, resourcesDefault);
+
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderResourcesDashboard(user);
+
+    const checkbox = await screen.findByRole('checkbox', { name: /select R-1-23/i });
+    act(() => userEvent.click(checkbox));
+
+    const exportReportsMenu = await screen.findByRole('button', { name: /reports menu/i });
+    act(() => userEvent.click(exportReportsMenu));
+
+    const csvUrl = '/api/activity-reports/download?format=csv&report[]=1';
+    fetchMock.get(csvUrl, 200);
+
+    const exportSelectedReportsButton = document.querySelector('#activity-reportsexport-reports');
+    act(() => userEvent.click(exportSelectedReportsButton));
+
+    expect(fetchMock.called(csvUrl)).toBe(true);
   });
 });
