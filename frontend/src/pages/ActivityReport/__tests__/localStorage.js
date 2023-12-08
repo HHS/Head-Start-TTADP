@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { screen, act } from '@testing-library/react';
+import { screen, act, waitFor } from '@testing-library/react';
 import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -24,6 +24,7 @@ describe('Local storage fallbacks', () => {
     },
     collaborators: [],
     availableApprovers: [],
+    groups: [],
   };
 
   mockWindowProperty('localStorage', {

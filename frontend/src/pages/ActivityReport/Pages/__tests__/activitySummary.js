@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
@@ -7,7 +8,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, { isPageComplete } from '../activitySummary';
 
-const RenderActivitySummary = () => {
+const RenderActivitySummary = ({ passedGroups = null }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -25,7 +26,7 @@ const RenderActivitySummary = () => {
     recipients: { grants: [], otherEntities: [] },
     collaborators: [{ id: 1, name: 'test', roles: [] }, { id: 2, name: 'test2', roles: [] }],
     availableApprovers: [],
-    groups: [],
+    groups: passedGroups || [{ id: 1, name: 'group 1' }, { id: 2, name: 'group 2' }],
   };
 
   return (
@@ -103,6 +104,20 @@ describe('groups', () => {
     });
 
     // Verify the use group checkbox is not visible.
+    expect(useGroupCheckbox).not.toBeInTheDocument();
+  });
+
+  it('hides the use group check box if we dont have any groups', async () => {
+    render(<RenderActivitySummary passedGroups={[]} />);
+
+    // Click 'recipient' radio button.
+    const recipientCheckBox = screen.queryAllByRole('radio', { name: /recipient/i });
+    await act(() => {
+      userEvent.click(recipientCheckBox[0]);
+    });
+
+    // expect the use group check box not to be visible.
+    const useGroupCheckbox = screen.queryByRole('checkbox', { name: /use group/i });
     expect(useGroupCheckbox).not.toBeInTheDocument();
   });
 });
