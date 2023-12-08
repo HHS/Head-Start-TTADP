@@ -7,12 +7,12 @@ import {
   ActivityReportObjective,
   ActivityRecipient,
   Grant,
-  NextStep,
+  // NextStep,
   Goal,
   Objective,
   Recipient,
   Resource,
-  Topic,
+  // Topic,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
