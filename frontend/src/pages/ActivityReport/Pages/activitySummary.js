@@ -125,8 +125,7 @@ const ActivitySummary = ({
   }, [activityRecipientType, setValue, pageState]);
 
   const handleGroupChange = (event) => {
-    const { selectedIndex } = event.target.options;
-    const groupId = event.target.options[selectedIndex].getAttribute('data-key');
+    const { value: groupId } = event.target;
     const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
 
     // Get all selectedRecipients the have ids in the recipientIds array.
@@ -161,7 +160,7 @@ const ActivitySummary = ({
       setValue('recipientGroup', null, { shouldValidate: false });
       setGroupRecipientIds([]);
     }
-  }, [watchFormRecipients]);
+  }, [groupRecipientIds, setValue, useGroup, watchFormRecipients, watchGroup]);
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
@@ -284,7 +283,7 @@ const ActivitySummary = ({
                 >
                   <option value="" disabled selected hidden>- Select -</option>
                   {groups.map((group) => (
-                    <option key={group.id} data-key={group.id}>{group.name}</option>
+                    <option key={group.id} value={group.id}>{group.name}</option>
                   ))}
                 </Dropdown>
               </FormItem>

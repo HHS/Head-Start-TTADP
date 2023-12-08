@@ -13,6 +13,7 @@ import {
   downloadReports,
   unlockReport,
   getReportsForLocalStorageCleanup,
+  getGroupsForActivityReport,
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
@@ -80,6 +81,15 @@ describe('activityReports fetcher', () => {
       fetchMock.get(join('api', 'activity-reports', 'alerts'), alerts, { query });
       await getReportAlerts('updatedAt', 'desc', 0, REPORTS_PER_PAGE, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
+    });
+  });
+
+  describe('getGroupsForActivityReport', () => {
+    it('returns the groups', async () => {
+      const expected = { id: 1 };
+      fetchMock.get(join('api', 'activity-reports', 'groups', '?region=1'), expected);
+      const report = await getGroupsForActivityReport('1');
+      expect(report).toEqual(expected);
     });
   });
 
