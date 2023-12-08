@@ -48,7 +48,6 @@ const ActivitySummary = ({
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
-
   const {
     register,
     watch,
@@ -291,7 +290,7 @@ const ActivitySummary = ({
           )
         }
         {
-          activityRecipientType === 'recipient' && !showGroupInfo
+          activityRecipientType === 'recipient' && !showGroupInfo && groups.length > 0
            && (
            <div className="margin-top-2">
              <Checkbox
