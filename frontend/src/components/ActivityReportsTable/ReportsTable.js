@@ -219,9 +219,11 @@ ReportsTable.propTypes = {
   loading: PropTypes.bool.isRequired,
   reports: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.string,
+      id: PropTypes.number,
       regionId: PropTypes.string,
-      activityRecipients: PropTypes.string,
+      activityRecipients: PropTypes.arrayOf(PropTypes.shape(
+        { activityRecipientId: PropTypes.number },
+      )),
       startDate: PropTypes.string,
     }),
   ).isRequired,
@@ -239,5 +241,4 @@ ReportsTable.propTypes = {
   handleDownloadAllReports: PropTypes.func.isRequired,
   handleDownloadClick: PropTypes.func.isRequired,
   activePage: PropTypes.number.isRequired,
-
 };
