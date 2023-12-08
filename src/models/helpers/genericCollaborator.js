@@ -177,7 +177,8 @@ const findOrCreateCollaborator = async (
   typeName,
   linkBack = null,
 ) => {
-  await semaphore.acquire();
+  const semaphoreKey = `${entityId}_${userId}_${typeName}`;
+  await semaphore.acquire(semaphoreKey);
   // Check if a collaborator record already exists
   let collaborator = await getCollaboratorRecord(
     genericCollaboratorType,
@@ -214,7 +215,7 @@ const findOrCreateCollaborator = async (
       },
     );
   }
-  semaphore.release();
+  semaphore.release(semaphoreKey);
 
   return collaborator;
 };
@@ -460,7 +461,7 @@ const mergeCollaborators = async (
         sequelize,
         transaction,
         entityId,
-        userId,
+        sourceCollaborator.userId,
         mappedCollaboratorType,
         sourceCollaborator.linkBack,
       ));
