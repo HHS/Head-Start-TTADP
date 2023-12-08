@@ -28,27 +28,29 @@ describe('CommunicationLogForm', () => {
   const renderTest = (
     communicationLogId = 'new',
     currentPage = 'log',
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <CommunicationLogForm
-            recipientName={RECIPIENT_NAME}
-            match={{
-              params: {
-                currentPage,
-                communicationLogId,
-                recipientId: RECIPIENT_ID,
-                regionId: REGION_ID,
-              },
-              path: currentPage,
-              url: currentPage,
-            }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+  ) => {
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+            <CommunicationLogForm
+              recipientName={RECIPIENT_NAME}
+              match={{
+                params: {
+                  currentPage,
+                  communicationLogId,
+                  recipientId: RECIPIENT_ID,
+                  regionId: REGION_ID,
+                },
+                path: currentPage,
+                url: currentPage,
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>,
+    );
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
