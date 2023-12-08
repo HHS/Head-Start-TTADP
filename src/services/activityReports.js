@@ -1191,6 +1191,7 @@ async function getDownloadableActivityReports(where, separate = true) {
           include: [{
             model: Goal,
             as: 'goal',
+            required: false,
           },
           ],
           attributes: ['id', 'title', 'status'],

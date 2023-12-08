@@ -1,4 +1,5 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+import faker from '@faker-js/faker';
 
 import { Op } from 'sequelize';
 import SCOPES from '../middleware/scopeConstants';
@@ -13,6 +14,7 @@ import {
   findEventsByCollaboratorId,
   findEventsByRegionId,
   findEventsByStatus,
+  csvImport,
 } from './event';
 
 describe('event service', () => {
@@ -438,6 +440,112 @@ describe('event service', () => {
       await destroyEvent(event1.id);
       await destroyEvent(event2.id);
       await destroyEvent(event3.id);
+    });
+  });
+
+  describe('tr import', () => {
+    let user;
+    let data;
+    let buffer;
+    let created;
+
+    const userId = faker.datatype.number();
+
+    const eventId = 'R01-TR-02-3333';
+    const regionId = 1;
+    const editTitle = 'Hogwarts Academy';
+    const istName = 'Harry Potter';
+    const email = 'smartsheetevents@ss.com';
+    const audience = 'Recipients';
+    const vision = 'To learn';
+    const nationalCenters = `"ABC
+    DEF
+    GHI"`;
+    const duration = 'Series';
+    const targetPopulation = `"Dogs
+    Cats
+    Mice"`;
+    const reasons = `"Reason 1
+    Reason 2"`;
+    const organizer = 'Dumbledore';
+
+    const headings = ['Sheet Name', 'Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'National Center(s) Requested', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
+
+    beforeAll(async () => {
+      await db.User.create({
+        id: userId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email,
+        lastLogin: new Date(),
+      });
+      await db.Permission.create({
+        userId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+      user = await db.User.findOne({ where: { id: userId } });
+      data = `${headings.join(',')}
+      ,${eventId},${editTitle},${istName},${email},${organizer},${nationalCenters},${duration},${reasons},${targetPopulation},${audience},${vision}
+      ,bad_id,bad_title,bad_istname,bad_email,bad_organizer,bad_nc,bad_duration,bad_reasons,bad_target,bad_audience,bad_vision`;
+
+      buffer = Buffer.from(data);
+    });
+
+    afterAll(async () => {
+      await db.User.destroy({ where: { id: userId } });
+      await db.EventReportPilot.destroy({ where: { id: created.id } });
+      await db.Permission.destroy({ where: { userId } });
+    });
+
+    it('imports good data correctly', async () => {
+      const result = await csvImport(buffer);
+
+      // eventId is now a field in the jsonb body of the "data" column on
+      // db.EventReportPilot.
+      // Let's make sure it exists.
+      created = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': eventId },
+        raw: true,
+      });
+
+      expect(created).toHaveProperty('ownerId', userId);
+      expect(created).toHaveProperty('regionId', regionId);
+      expect(created.data.reasons).toEqual(['Reason 1', 'Reason 2']);
+      expect(created.data.vision).toEqual(vision);
+      expect(created.data.audience).toEqual(audience);
+      expect(created.data.targetPopulations).toEqual(['Dogs', 'Cats', 'Mice']);
+      expect(created.data.eventOrganizer).toEqual(organizer);
+      expect(created.data.creator).toEqual(email);
+      expect(created.data.istName).toEqual(istName);
+      expect(created.data.eventName).toEqual(editTitle);
+      expect(created.data.nationalCenters).toEqual(['ABC', 'DEF', 'GHI']);
+      expect(created.data.eventDuration).toEqual(duration);
+
+      expect(result.count).toEqual(1);
+      expect(result.errors).toEqual(['User bad_email does not exist']);
+
+      const secondImport = `${headings.join(',')}
+      ,${eventId},bad_title,bad_istname,${email},bad_organizer,bad_nc,bad_duration,bad_reasons,bad_target,bad_audience,bad_vision`;
+
+      // Subsequent import with event ID that already exists in the database
+      // should skip importing this TR.
+      const resultSkip = await csvImport(Buffer.from(secondImport));
+      expect(resultSkip.count).toEqual(0);
+      expect(resultSkip.skipped).toEqual([eventId]);
+    });
+
+    it('gives an error if the user can\'t write in the region', async () => {
+      await db.Permission.destroy({ where: { userId } });
+      const result = await csvImport(buffer);
+      expect(result.count).toEqual(0);
+      expect(result.errors).toEqual([`User ${email} does not have permission to write in region ${regionId}`, 'User bad_email does not exist']);
+      await db.Permission.create({
+        userId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
     });
   });
 });

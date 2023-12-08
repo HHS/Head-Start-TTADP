@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
@@ -113,7 +114,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
     fetchMergePermissions();
   }, [recipientId, regionId]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchRecipient() {
       try {
         setLoading(true);

@@ -6,15 +6,27 @@ import {
   retrieveGoalByIdAndRecipient,
   deleteGoal,
   mergeGoalHandler,
+  getSimilarGoalsForRecipient,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
+import { checkRegionIdParam, checkRecipientIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
 router.get('/', transactionWrapper(retrieveGoalsByIds));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
-router.post('/merge', transactionWrapper(mergeGoalHandler));
+router.post(
+  '/recipient/:recipientId/region/:regionId/merge',
+  checkRegionIdParam,
+  checkRecipientIdParam,
+  transactionWrapper(mergeGoalHandler),
+);
 router.delete('/', transactionWrapper(deleteGoal));
+router.get(
+  '/similar/:recipientId',
+  checkRecipientIdParam,
+  transactionWrapper(getSimilarGoalsForRecipient),
+);
 
 export default router;
