@@ -62,7 +62,7 @@ const createUser = async ({
   }
 
   if (read) {
-    permissions.push({ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId });
+    permissions.push({ scopeId: SCOPE_IDS.READ_REPORTS, regionId });
   }
 
   if (poc) {

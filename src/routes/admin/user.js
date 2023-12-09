@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import express from 'express';
 import {
   User,
@@ -29,16 +30,52 @@ const logContext = {
  * @returns Promise
  */
 export async function createUserRoles(requestUser, userId) {
-  return Promise.all((requestUser.roles.map(async (role) => {
-    const r = await Role.findOne({ where: { fullName: role.fullName } });
+  const currentUserRoles = await UserRole.findAll({
+    attributes: {
+      include: [[
+        sequelize.col('role.fullName'),
+        'fullName',
+      ]],
+    },
+    where: { userId },
+    include: [
+      {
+        model: Role,
+        as: 'role',
+      },
+    ],
+  });
+
+  const currentRoles = currentUserRoles.map((r) => r.get('fullName'));
+  const newRoles = requestUser.roles.map((r) => r.fullName);
+
+  const rolesToRemove = currentRoles.filter((r) => !newRoles.includes(r));
+  const rolesToCreate = newRoles.filter((r) => !currentRoles.includes(r));
+
+  const operations = [];
+  await Promise.all(rolesToRemove.map(async (roleName) => {
+    const r = await Role.findOne({ where: { fullName: roleName } });
     if (r) {
-      return UserRole.create({
+      operations.push(UserRole.destroy({
+        where: {
+          roleId: r.id,
+          userId,
+        },
+      }));
+    }
+  }));
+
+  await Promise.all(rolesToCreate.map(async (roleName) => {
+    const r = await Role.findOne({ where: { fullName: roleName } });
+    if (r) {
+      operations.push(UserRole.create({
         roleId: r.id,
         userId,
-      });
+      }));
     }
-    return null;
-  })));
+  }));
+
+  return Promise.all(operations);
 }
 
 /**
@@ -137,11 +174,42 @@ export async function updateUser(req, res) {
         individualHooks: true,
       },
     );
-    await Permission.destroy({ where: { userId } });
-    await Permission.bulkCreate(requestUser.permissions, { validate: true, individualHooks: true });
 
-    // User roles are handled a bit more clumsily
-    await UserRole.destroy({ where: { userId } });
+    const ALL_REGIONS = 15;
+
+    const updatedPermissions = requestUser.permissions.filter((permission) => (
+      permission.regionId !== ALL_REGIONS
+    ));
+
+    const currentPermissions = await Permission.findAll({
+      where: { userId },
+    });
+
+    const bulkCreates = [];
+    const permissionsToKeep = [];
+
+    updatedPermissions.forEach((permission) => {
+      const currentPermission = currentPermissions.find((p) => (
+        p.scopeId === permission.scopeId && p.regionId === permission.regionId
+      ));
+
+      if (currentPermission) {
+        permissionsToKeep.push(currentPermission.id);
+      } else {
+        bulkCreates.push(permission);
+      }
+    });
+
+    await Permission.destroy({
+      where: {
+        userId,
+        id: {
+          [Op.notIn]: permissionsToKeep,
+        },
+      },
+    });
+
+    await Permission.bulkCreate(bulkCreates, { validate: true, individualHooks: true });
     await createUserRoles(requestUser, userId);
 
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
