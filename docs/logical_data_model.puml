@@ -841,7 +841,6 @@ enum enum_Users_flags {
  regional_goal_dashboard
  resources_dashboard
  rttapa_form
- training_reports
 }
 
 enum_Users_flags <|-- Users

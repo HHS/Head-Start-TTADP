@@ -227,7 +227,6 @@ const FEATURE_FLAGS = [
   'anv_statistics',
   'regional_goal_dashboard',
   'goal_source',
-  'training_reports',
   'merge_goals',
   'communication_log',
   'monitoring',

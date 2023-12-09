@@ -171,8 +171,8 @@ export function filtersToQueryString(filters, region) {
     const q = String(filter.query).trim();
     return `${filter.topic}.${con}=${encodeURIComponent(q)}`;
   });
-  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
-    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
+  if (region && !Number.isNaN(parseInt(region, DECIMAL_BASE))) {
+    queryFragments.push(`region.in[]=${region}`);
   }
 
   return queryFragments.join('&');
