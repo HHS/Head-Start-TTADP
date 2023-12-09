@@ -289,7 +289,8 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
   const changed = instance.changed();
   if (Array.isArray(changed)
-    && changed.includes('title')) {
+    && changed.includes('title')
+    && instance.previous('title') !== instance.title) {
     return currentUserPopulateCollaboratorForType(
       'objective',
       sequelize,
