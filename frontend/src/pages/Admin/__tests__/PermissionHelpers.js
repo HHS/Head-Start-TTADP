@@ -23,7 +23,7 @@ describe('PermissionHelpers', () => {
     it('returns an all false object for a user with no permissions', () => {
       const regionalPermissions = userRegionalPermissions({});
 
-      expect(Object.keys(regionalPermissions).length).toBe(12);
+      expect(Object.keys(regionalPermissions).length).toBe(13);
       _.forEach(regionalPermissions, (scopes) => {
         expect(_.every(scopes, (scope) => scope === false)).toBeTruthy();
       });

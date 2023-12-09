@@ -57,7 +57,7 @@ export default function LogLine({
 LogLine.propTypes = {
   authorName: PropTypes.string.isRequired,
   communicationDate: PropTypes.string,
-  duration: PropTypes.string,
+  duration: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   method: PropTypes.string,
 };
 
