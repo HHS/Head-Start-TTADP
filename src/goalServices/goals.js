@@ -2606,9 +2606,9 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
     'objective',
     sequelize,
     null,
-    id,
-    [newObjective.id],
     newObjective.id,
+    [id],
+    id,
   ));
 
   updatesToRelatedModels.push(Objective.update({
