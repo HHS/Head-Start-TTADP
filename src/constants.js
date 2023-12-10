@@ -78,7 +78,7 @@ const RESOURCE_ACTIONS = {
 
 const GROUP_COLLABORATORS = {
   CREATOR: 'Creator',
-  EDITOR: 'Editor',
+  CO_OWNER: 'Co-Owner',
   COHORT: 'Cohort',
 };
 
