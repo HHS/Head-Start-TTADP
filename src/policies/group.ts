@@ -13,12 +13,19 @@ interface UserType {
 interface GrantType {
   id: number;
   regionId: number;
+  recipientId?: number;
+  status?: string;
+}
+interface GroupCollaboratorType {
+  user: {id: number, name: string },
+  collaboratorType: { name: string },
 }
 
 interface GroupType {
   id: number;
   isPublic: boolean;
-  groupCollaborators: { userId: number, collaboratorType: { name: string } }[],
+  grants?: GrantType[]
+  groupCollaborators?: GroupCollaboratorType[],
 }
 
 export default class Group {
@@ -34,6 +41,18 @@ export default class Group {
     this.group = group;
   }
 
+  canUseGroup() {
+    return !!this?.group?.groupCollaborators
+      .find(({ user: { id: userId } }) => userId === this.user.id)
+      || (
+        this.group.isPublic
+        && this.grants.every((grant) => (
+        this.user.permissions.some((permission) => (
+          permission.regionId === grant.regionId
+        ))))
+      );
+  };
+
   canAddToGroup() {
     return this.grants.every((grant) => (
       this.user.permissions.some((permission) => (
@@ -43,14 +62,20 @@ export default class Group {
 
   canEditGroup() {
     return !!this.group.groupCollaborators
-      .find(({ userId, collaboratorType: { name: collaboratorType } }) => userId === this.user.id
+      .find(({
+        user: { id: userId },
+        collaboratorType: { name: collaboratorType },
+       }) => userId === this.user.id
       && (collaboratorType === GROUP_COLLABORATORS.CREATOR
-        || collaboratorType === GROUP_COLLABORATORS.EDITOR));
+        || collaboratorType === GROUP_COLLABORATORS.CO_OWNER));
   }
 
   ownsGroup() {
     return !!this.group.groupCollaborators
-      .find(({ userId, collaboratorType: { name: collaboratorType } }) => userId === this.user.id
+      .find(({
+        user: { id: userId },
+        collaboratorType: { name: collaboratorType },
+      }) => userId === this.user.id
       && collaboratorType === GROUP_COLLABORATORS.CREATOR);
   }
 
