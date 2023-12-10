@@ -17,7 +17,7 @@ interface GrantType {
   status?: string;
 }
 interface GroupCollaboratorType {
-  user: {id: number, name: string },
+  user: { id: number, name: string },
   collaboratorType: { name: string },
 }
 
@@ -47,11 +47,11 @@ export default class Group {
       || (
         this.group.isPublic
         && this.grants.every((grant) => (
-        this.user.permissions.some((permission) => (
-          permission.regionId === grant.regionId
-        ))))
+          this.user.permissions.some((permission) => (
+            permission.regionId === grant.regionId
+          ))))
       );
-  };
+  }
 
   canAddToGroup() {
     return this.grants.every((grant) => (
@@ -65,7 +65,7 @@ export default class Group {
       .find(({
         user: { id: userId },
         collaboratorType: { name: collaboratorType },
-       }) => userId === this.user.id
+      }) => userId === this.user.id
       && (collaboratorType === GROUP_COLLABORATORS.CREATOR
         || collaboratorType === GROUP_COLLABORATORS.CO_OWNER));
   }
