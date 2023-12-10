@@ -104,7 +104,6 @@ export async function getEligibleCoOwnersAndCohortsForGroup(req: Request, res: R
   }
 }
 
-
 /**
  * Retrieves the options for recipient grants for a given group.
  *
@@ -152,7 +151,6 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
   }
 }
 
-
 /**
  * Retrieves the groups for the current user.
  *
@@ -180,7 +178,6 @@ export async function getGroups(req: Request, res: Response) {
     res.status(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
-
 
 /**
  * Retrieves a group based on the provided group ID.
@@ -216,7 +213,6 @@ export async function getGroup(req: Request, res: Response) {
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
-
 
 /**
  * Creates a new group.
@@ -325,9 +321,12 @@ export async function createGroup(req: Request, res: Response) {
  * @param req - The request object.
  * @param res - The response object.
  * @returns - A Promise that resolves to the updated group response.
- * @throws - If there is an error while updating the group, an error response with a status code of 500 will be sent.
- * @throws - If the user does not have permission to edit the group, a status code of 403 will be sent.
- * @throws - If the new group name is not unique, an error response with a status code of 202 will be sent.
+ * @throws - If there is an error while updating the group, an error response with a status code
+ * of 500 will be sent.
+ * @throws - If the user does not have permission to edit the group, a status code of 403 will
+ * be sent.
+ * @throws - If the new group name is not unique, an error response with a status code of 202
+ * will be sent.
  */
 export async function updateGroup(req: Request, res: Response) {
   try {
@@ -344,34 +343,35 @@ export async function updateGroup(req: Request, res: Response) {
 
     // Parse the groupId and retrieve necessary data from various async functions
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
-        // Destructure the array returned by Promise.all into individual variables
-        const [
-          userId, // Store the result of the currentUserId function
-          groupData, // Store the result of the group function
-          grants, // Store the result of the Grant.findAll function
-          coOwners, // Store the result of the Promise.all function
-          cohorts, // Store the result of the Promise.all function
-        ] = await Promise.all([
-          currentUserId(req, res), // Call the currentUserId function with req and res parameters and await its result
-          group(groupId), // Call the group function with groupId parameter and await its result
-          Grant.findAll({ // Call the findAll method on the Grant model
-            attributes: [
-              'id',
-              'regionId',
-              'recipeintId',
-              'status',
-            ],
-            where: {
-              id: grantIds,
-              status: 'Active',
-            },
-            raw: true,
-          }),
-          // Map each coOwnerId to a Promise returned by the userById function and await all promises
-          Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
-          // Map each cohortId to a Promise returned by the userById function and await all promises
-          Promise.all(cohortIds.map(async (cohortId) => userById(cohortId))),
-        ]);
+    // Destructure the array returned by Promise.all into individual variables
+    const [
+      userId, // Store the result of the currentUserId function
+      groupData, // Store the result of the group function
+      grants, // Store the result of the Grant.findAll function
+      coOwners, // Store the result of the Promise.all function
+      cohorts, // Store the result of the Promise.all function
+    ] = await Promise.all([
+      // Call the currentUserId function with req and res parameters and await its result
+      currentUserId(req, res),
+      group(groupId), // Call the group function with groupId parameter and await its result
+      Grant.findAll({ // Call the findAll method on the Grant model
+        attributes: [
+          'id',
+          'regionId',
+          'recipeintId',
+          'status',
+        ],
+        where: {
+          id: grantIds,
+          status: 'Active',
+        },
+        raw: true,
+      }),
+      // Map each coOwnerId to a Promise returned by the userById function and await all promises
+      Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
+      // Map each cohortId to a Promise returned by the userById function and await all promises
+      Promise.all(cohortIds.map(async (cohortId) => userById(cohortId))),
+    ]);
 
     // Create a new GroupPolicy instance and check if the user has permission to edit the group
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupData);
@@ -421,7 +421,6 @@ export async function updateGroup(req: Request, res: Response) {
   }
 }
 
-
 /**
  * Deletes a group.
  *
@@ -444,12 +443,14 @@ export async function deleteGroup(req: Request, res: Response) {
 
     // We should check that the group exists before we attempt to delete it.
     if (!groupData) {
-      // If the group does not exist, respond with an empty JSON object and an HTTP status code of 200 (OK)
+      // If the group does not exist, respond with an empty JSON object and an HTTP status code
+      // of 200 (OK)
       res.status(httpCodes.OK).json({});
       return;
     }
 
-    // Create a new GroupPolicy instance with the user's id, an empty array of permissions, and the groupData
+    // Create a new GroupPolicy instance with the user's id, an empty array of permissions, and
+    // the groupData
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupData);
 
     // Check if the user owns the group
