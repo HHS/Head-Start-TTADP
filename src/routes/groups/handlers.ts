@@ -34,8 +34,6 @@ const GROUP_ERRORS = {
   COHORT_PERMISSIONS: 'All cohorts must have permissions matching the owner, and access to all grants within the group',
 };
 
-
-
 /**
  * Checks bulk permissions for a given method.
  *
