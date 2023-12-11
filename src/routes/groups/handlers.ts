@@ -45,9 +45,12 @@ const GROUP_ERRORS = {
  */
 function checkBulkPermissions(
   method: string, // The method to check permissions for
-  userDatas: { id: number, permissions: { regionId: number, scopeId: number }[] }[], // An array of user data objects with their permissions
-  grants: { id: number, regionId: number, recipientId?: number, status?: string }[], // An array of grants
-  group?: {id: number, isPublic: boolean, grants?, groupCollaborators? }, // An optional group object
+  // An array of user data objects with their permissions
+  userDatas: { id: number, permissions: { regionId: number, scopeId: number }[] }[],
+  // An array of grants
+  grants: { id: number, regionId: number, recipientId?: number, status?: string }[],
+  // An optional group object
+  group?: {id: number, isPublic: boolean, grants?, groupCollaborators? },
 ): boolean {
   // Negate the result of the following expression
   return !userDatas
@@ -63,7 +66,8 @@ function checkBulkPermissions(
  * @param req - The request object containing the 'groupId' parameter.
  * @param res - The response object used to send the JSON response or status codes.
  * @returns - This function does not return anything.
- * @throws - If an error occurs during the execution of the function, an internal server error status code is sent.
+ * @throws - If an error occurs during the execution of the function, an internal server error
+ * status code is sent.
  */
 export async function getEligibleCoOwnersAndCohortsForGroup(req: Request, res: Response) {
   try {
@@ -85,11 +89,13 @@ export async function getEligibleCoOwnersAndCohortsForGroup(req: Request, res: R
       potentialCoOwnersAndCohorts(groupId),
     ]);
 
-    // Create a GroupPolicy instance with the current user, an empty array of roles, and the group data
+    // Create a GroupPolicy instance with the current user, an empty array of roles, and the
+    // group data
     const policy = new GroupPolicy(user, [], groupData);
     // Check if the current user can edit the group
     if (!policy.canEditGroup()) {
-      // If the user does not have permission to edit the group, send a forbidden status code and return
+      // If the user does not have permission to edit the group, send a forbidden status code
+      // and return
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
@@ -132,11 +138,13 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
       potentialRecipientGrants(groupId),
     ]);
 
-    // Create a new GroupPolicy instance based on the current user, an empty array of permissions, and the group data
+    // Create a new GroupPolicy instance based on the current user, an empty array of permissions,
+    // and the group data
     const policy = new GroupPolicy(user, [], groupData);
     // Check if the user can edit the group
     if (!policy.canEditGroup()) {
-      // If the user does not have permission to edit the group, send a forbidden status code and return
+      // If the user does not have permission to edit the group, send a forbidden status code and
+      //return
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
@@ -185,7 +193,8 @@ export async function getGroups(req: Request, res: Response) {
  * @param req - The request object containing the group ID in the parameters.
  * @param res - The response object used to send the group response or error status codes.
  * @returns - None.
- * @throws - If an error occurs during the retrieval process, an 'INTERNAL_SERVER_ERROR' status code is sent.
+ * @throws - If an error occurs during the retrieval process, an 'INTERNAL_SERVER_ERROR' status
+ * code is sent.
  */
 export async function getGroup(req: Request, res: Response) {
   try {
@@ -200,7 +209,8 @@ export async function getGroup(req: Request, res: Response) {
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupResponse);
     // Check if the current user owns the group or if the group is public
     if (!policy.ownsGroup() && !policy.isPublic()) {
-      // If the user does not own the group and the group is not public, send a 'FORBIDDEN' status code
+      // If the user does not own the group and the group is not public, send a 'FORBIDDEN'
+      // status code
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
@@ -220,7 +230,8 @@ export async function getGroup(req: Request, res: Response) {
  * @param req - The request object.
  * @param res - The response object.
  * @returns A Promise that resolves to the group response as JSON.
- * @throws If there is an error while creating the group, an error response with an error message is sent.
+ * @throws If there is an error while creating the group, an error response with an error message
+ * is sent.
  */
 export async function createGroup(req: Request, res: Response) {
   try {
