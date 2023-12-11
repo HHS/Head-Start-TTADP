@@ -153,6 +153,7 @@ const Log = ({ datePickerKey }) => {
             name="result"
             inputRef={register()}
           >
+            <option disabled hidden value="">Select one</option>
             {COMMUNICATION_RESULTS.map((option) => (
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
