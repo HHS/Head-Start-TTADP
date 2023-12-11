@@ -198,8 +198,7 @@ module.exports = {
           g.id "groupId",
           g."userId",
           MIN(g."createdAt") "createdAt",
-          MIN(g."createdAt") "updatedAt",
-          ARRAY_AGG(zg.dml_as)
+          MIN(g."createdAt") "updatedAt"
         FROM "Groups" g
         GROUP BY 1,2
         ORDER BY 1
