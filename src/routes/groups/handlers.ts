@@ -40,7 +40,7 @@ const GROUP_ERRORS = {
  * @param method - The method to check permissions for.
  * @param userDatas - An array of user data objects with their permissions.
  * @param grants - An array of grants.
- * @param group - An optional group object.
+ * @param groupData - An optional group object.
  * @returns A boolean indicating whether the bulk permissions check passed or not.
  */
 function checkBulkPermissions(
@@ -50,12 +50,12 @@ function checkBulkPermissions(
   // An array of grants
   grants: { id: number, regionId: number, recipientId?: number, status?: string }[],
   // An optional group object
-  group?: {id: number, isPublic: boolean, grants?, groupCollaborators? },
+  groupData?: { id: number, isPublic: boolean, grants?, groupCollaborators? },
 ): boolean {
   // Negate the result of the following expression
   return !userDatas
     // Map over the userDatas array and create a new GroupPolicy instance for each userData
-    .map((userData) => (new GroupPolicy(userData, grants, group))[method]())
+    .map((userData) => (new GroupPolicy(userData, grants, groupData))[method]())
     // Check if every result is false
     .every((result) => result);
 }
@@ -144,7 +144,7 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
     // Check if the user can edit the group
     if (!policy.canEditGroup()) {
       // If the user does not have permission to edit the group, send a forbidden status code and
-      //return
+      // return
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
