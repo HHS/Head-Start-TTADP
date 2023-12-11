@@ -201,6 +201,7 @@ export async function getGroup(req: Request, res: Response) {
     // Extract the 'groupId' from the request parameters
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
+    console.log(1);
     const [
       userId,
       groupResponse,
@@ -210,14 +211,18 @@ export async function getGroup(req: Request, res: Response) {
       // Get the group response by calling the 'group' function with the parsed 'groupId'
       group(groupId)
     ]);
+    console.log(1);
     // Create a new GroupPolicy instance with the current user's ID, an empty array of permissions,
     // and the group response
-    const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupResponse);
-    // Check if the current user owns the group or if the group is public
-    if (!policy.ownsGroup() && !policy.isPublic()) {
+    const policy = new GroupPolicy({ id: userId, permissions: [] }, groupResponse.grants, groupResponse);
+    console.log(1);
+    // Check if the current user can use the group
+    if (!policy.canUseGroup()) {
+      console.log(1);
       // If the user does not own the group and the group is not public, send a 'FORBIDDEN'
       // status code
       res.sendStatus(httpCodes.FORBIDDEN);
+      console.log(1);
       return;
     }
     // Send the group response as JSON
