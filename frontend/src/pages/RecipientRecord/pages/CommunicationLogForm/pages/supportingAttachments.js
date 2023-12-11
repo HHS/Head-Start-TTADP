@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
@@ -12,6 +12,7 @@ import {
 import { pageComplete } from '../constants';
 import ReportFileUploader from '../../../../../components/FileUploader/ReportFileUploader';
 import { deleteLogFile } from '../../../../../fetchers/File';
+import useCompleteSectionOnVisit from '../../../../../hooks/useCompleteSectionOnVisit';
 
 const path = 'supporting-attachments';
 const position = 2;
@@ -20,23 +21,9 @@ const fields = [visitedField];
 
 const SupportingAttachments = ({ reportId }) => {
   const [fileError, setFileError] = useState();
-  const { watch, register, setValue } = useFormContext();
-  const visitedRef = useRef(false);
-  const pageVisited = watch(visitedField);
+  const { register } = useFormContext();
 
-  useEffect(() => {
-    /**
-     * this is some weirdness, I admit...
-     * I want to replicate the behavior of the
-     * page in the activity report form (not started until you visit it,
-     * complete one you do), but also use the page state hooks that I
-     * wrote for the session & training forms
-     */
-    if (!pageVisited && !visitedRef.current) {
-      visitedRef.current = true;
-      setValue(visitedField, true);
-    }
-  }, [pageVisited, setValue]);
+  useCompleteSectionOnVisit(visitedField);
 
   return (
     <>
