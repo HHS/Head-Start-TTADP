@@ -199,11 +199,17 @@ export async function getGroups(req: Request, res: Response) {
 export async function getGroup(req: Request, res: Response) {
   try {
     // Extract the 'groupId' from the request parameters
-    const { groupId } = req.params;
-    // Get the current user's ID asynchronously
-    const userId = await currentUserId(req, res);
-    // Get the group response by calling the 'group' function with the parsed 'groupId'
-    const groupResponse = await group(parseInt(groupId, 10));
+    const { groupId: groupIdRaw } = req.params;
+    const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
+    const [
+      userId,
+      groupResponse,
+    ] = await Promise.all([
+      // Get the current user's ID asynchronously
+      currentUserId(req, res),
+      // Get the group response by calling the 'group' function with the parsed 'groupId'
+      group(groupId)
+    ]);
     // Create a new GroupPolicy instance with the current user's ID, an empty array of permissions,
     // and the group response
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupResponse);
