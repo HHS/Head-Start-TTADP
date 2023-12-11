@@ -41,18 +41,6 @@ export default class Group {
     this.group = group;
   }
 
-  canUseGroup() {
-    return !!this?.group?.groupCollaborators
-      .find(({ user: { id: userId } }) => userId === this.user.id)
-      || (
-        this.group.isPublic
-        && this.grants.every((grant) => (
-          this.user.permissions.some((permission) => (
-            permission.regionId === grant.regionId
-          ))))
-      );
-  }
-
   canAddToGroup() {
     return this.grants.every((grant) => (
       this.user.permissions.some((permission) => (
@@ -80,6 +68,15 @@ export default class Group {
   }
 
   isPublic() {
-    return this.group.isPublic && this.canAddToGroup();
+    return this.group.isPublic && this.grants.every((grant) => (
+      this.user.permissions.some((permission) => (
+        permission.regionId === grant.regionId
+      ))));
+  }
+
+  canUseGroup() {
+    return !!this?.group?.groupCollaborators
+      ?.find(({ user: { id: userId } }) => userId === this.user.id)
+      || this.isPublic();
   }
 }
