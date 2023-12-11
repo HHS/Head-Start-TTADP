@@ -22,6 +22,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
+          Diag
+        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
           Goals
         </NavLink>
@@ -34,6 +37,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
           Site alerts
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
+          Training Reports
+        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
         </NavLink>
@@ -43,14 +49,8 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/email">
           Email
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
-          Diag
-        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
           Redis info
-        </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
-          Training Reports
         </NavLink>
       </div>
       <Switch>
