@@ -190,6 +190,7 @@ const dropAndRecreateEnum = async (
  *   - so you only specify the values you want to remove here.
  *
  * @param {sequelize.queryInterface} queryInterface
+ * @param {sequelize.transaction} transaction
  * @param {string[]} valuesToRemove
  * @returns Promise<any>
  */
