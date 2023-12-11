@@ -199,6 +199,7 @@ module.exports = {
           g."userId",
           MIN(g."createdAt") "createdAt",
           MIN(g."createdAt") "updatedAt"
+          NULL::JSONB "linkBack"
         FROM "Groups" g
         GROUP BY 1,2
         ORDER BY 1
