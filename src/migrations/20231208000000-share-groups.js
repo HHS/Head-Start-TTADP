@@ -173,7 +173,7 @@ module.exports = {
               je.key,
               JSONB_AGG(DISTINCT jae.value ORDER BY jae.value) "values"
             FROM (
-              SELECT "ObjectiveCollaborators"."linkBack"
+              SELECT "GroupCollaborators"."linkBack"
               UNION
               SELECT EXCLUDED."linkBack"
             ) "linkBacks"("linkBack")
@@ -198,7 +198,7 @@ module.exports = {
           g.id "groupId",
           g."userId",
           MIN(g."createdAt") "createdAt",
-          MIN(g."createdAt") "updatedAt"
+          MIN(g."createdAt") "updatedAt",
           NULL::JSONB "linkBack"
         FROM "Groups" g
         GROUP BY 1,2
