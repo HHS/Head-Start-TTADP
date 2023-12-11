@@ -204,7 +204,6 @@ const FEATURE_FLAGS = [
   'regional_goal_dashboard',
   'goal_source',
   'merge_goals',
-  'communication_log',
   'monitoring',
 ];
 
