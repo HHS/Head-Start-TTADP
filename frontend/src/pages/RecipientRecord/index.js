@@ -342,52 +342,39 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
           render={({ match: routerMatch }) => (
-            <FeatureFlag
-              flag="communication_log"
-              renderNotFound
-            >
-              <ViewCommunicationLog
-                recipientName={recipientName}
-                match={routerMatch}
-              />
-            </FeatureFlag>
+            <ViewCommunicationLog
+              recipientName={recipientName}
+              match={routerMatch}
+            />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match: routerMatch }) => (
-            <FeatureFlag
-              flag="communication_log"
-              renderNotFound
-            >
-              <CommunicationLogForm
-                recipientName={recipientName}
-                match={routerMatch}
-              />
-            </FeatureFlag>
+
+            <CommunicationLogForm
+              recipientName={recipientName}
+              match={routerMatch}
+            />
+
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication"
           render={() => (
-            <FeatureFlag
-              flag="communication_log"
-              renderNotFound
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              error={error}
+              recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
             >
-              <PageWithHeading
+              <CommunicationLog
                 regionId={regionId}
+                recipientName={recipientName}
                 recipientId={recipientId}
-                error={error}
-                recipientNameWithRegion={recipientNameWithRegion}
-                hasAlerts={hasAlerts}
-              >
-                <CommunicationLog
-                  regionId={regionId}
-                  recipientName={recipientName}
-                  recipientId={recipientId}
-                />
-              </PageWithHeading>
-            </FeatureFlag>
+              />
+            </PageWithHeading>
           )}
         />
 
