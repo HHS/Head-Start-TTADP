@@ -7,7 +7,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return addValuesToEnumIfTheyDontExist(queryInterface, 'enum_Goals_createdVia', Object.values(GOAL_CREATED_VIA));
+      return addValuesToEnumIfTheyDontExist(queryInterface, transaction, 'enum_Goals_createdVia', Object.values(GOAL_CREATED_VIA));
     });
   },
 

@@ -19,7 +19,6 @@ export default class EventReport {
     if (this.isAdmin()) { return true; }
 
     return !!this.permissions.find((p) => [
-      SCOPES.READ_TRAINING_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
       SCOPES.READ_REPORTS,
       SCOPES.READ_WRITE_REPORTS,
@@ -61,7 +60,6 @@ export default class EventReport {
    */
   get readableRegions() {
     const viablePermissions = this.permissions.filter((p) => [
-      SCOPES.READ_TRAINING_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
       SCOPES.READ_REPORTS,
       SCOPES.READ_WRITE_REPORTS,
