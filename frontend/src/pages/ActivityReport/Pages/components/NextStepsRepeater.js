@@ -181,7 +181,7 @@ export default function NextStepsRepeater({
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
-                  required={false}
+                  required={required}
                 />
               </div>
             </FormGroup>
