@@ -73,7 +73,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
         triggerRef={howMetRef}
         stickyHeader
         stickyFooter
-        title="How thresholds are met"
+        title="CLASS® review thresholds"
       >
         <h3>Quality thresholds</h3>
         <p>
