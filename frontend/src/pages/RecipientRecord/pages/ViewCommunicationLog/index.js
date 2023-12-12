@@ -96,14 +96,16 @@ export default function ViewCommunicationLog({ match, recipientName }) {
         >
           {log.data.result}
         </ReadOnlyField>
-        <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
-        {log.files.map((file) => (
-          <p className="usa-prose margin-top-0 margin-bottom-0">
-            <a href={file.url.url}>
-              {file.originalFileName}
-            </a>
-          </p>
-        ))}
+        <>
+          <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
+          {log.files.map((file) => (
+            <p className="usa-prose margin-top-0 margin-bottom-0">
+              <a href={file.url.url}>
+                {file.originalFileName}
+              </a>
+            </p>
+          ))}
+        </>
 
         <DisplayNextSteps
           title="Specialist's next steps"

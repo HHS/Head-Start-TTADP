@@ -167,8 +167,8 @@ export default function Objective({
     rules: {
       required: objective.status === 'Suspended',
     },
-    name: `${fieldArrayName}[${index}].suspendReason`,
-    defaultValue: objective.suspendReason || '',
+    name: `${fieldArrayName}[${index}].closeSuspendReason`,
+    defaultValue: objective.closeSuspendReason || '',
   });
 
   const {
@@ -178,9 +178,9 @@ export default function Objective({
       name: objectiveSuspendContextInputName,
     },
   } = useController({
-    name: `${fieldArrayName}[${index}].suspendContext`,
+    name: `${fieldArrayName}[${index}].closeSuspendContext`,
     rules: { required: true },
-    defaultValue: objective.suspendContext || '',
+    defaultValue: objective.closeSuspendContext || '',
   });
 
   const isOnApprovedReport = useMemo(() => objective.activityReports
@@ -269,12 +269,12 @@ export default function Objective({
 
   const setStatusReasonError = (on) => {
     if (on) {
-      setError(`${fieldArrayName}[${index}].suspendReason`, {
+      setError(`${fieldArrayName}[${index}].closeSuspendReason`, {
         type: 'required',
         message: 'Reason for suspension is required',
       });
     } else {
-      clearErrors(`${fieldArrayName}[${index}].suspendReason`);
+      clearErrors(`${fieldArrayName}[${index}].closeSuspendReason`);
     }
   };
 
@@ -367,8 +367,8 @@ export default function Objective({
         onChangeSuspendContext={onChangeSuspendContext}
         onChangeStatus={onChangeStatus}
         setError={setStatusReasonError}
-        error={errors.suspendReason
-          ? ERROR_FORMAT(errors.suspendReason.message)
+        error={errors.closeSuspendReason
+          ? ERROR_FORMAT(errors.closeSuspendReason.message)
           : NO_ERROR}
       />
 
@@ -378,8 +378,8 @@ export default function Objective({
         status={objectiveStatus}
         onChangeStatus={onUpdateStatus}
         userCanEdit
-        suspendContext={objectiveSuspendContext}
-        suspendReason={objectiveSuspendReason}
+        closeSuspendContext={objectiveSuspendContext}
+        closeSuspendReason={objectiveSuspendReason}
       />
     </>
   );
@@ -404,7 +404,7 @@ Objective.propTypes = {
     topics: PropTypes.shape({
       message: PropTypes.string,
     }),
-    suspendReason: PropTypes.shape({
+    closeSuspendReason: PropTypes.shape({
       message: PropTypes.string,
     }),
   }).isRequired,

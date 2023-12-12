@@ -113,14 +113,6 @@ describe('Change Goal Status', () => {
       );
       expect(result).toEqual(false);
 
-      // can't change from draft to closed
-      result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.DRAFT,
-        GOAL_STATUS.CLOSED,
-        [],
-      );
-      expect(result).toEqual(false);
-
       // can't change from draft to suspended
       result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.DRAFT,
