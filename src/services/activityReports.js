@@ -718,8 +718,13 @@ export async function activityReports(
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({
+    attributes: [
+      'activityReportObjectiveId',
+      'topicId',
+    ],
     include: [
       {
+        attributes: ['id', 'activityReportId'],
         model: ActivityReportObjective,
         as: 'activityReportObjective',
         where: {
@@ -728,6 +733,7 @@ export async function activityReports(
         required: true,
       },
       {
+        attributes: ['id', 'name'],
         model: Topic,
         as: 'topic',
         required: true,

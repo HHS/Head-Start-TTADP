@@ -4,7 +4,6 @@ import { currentUserId } from '../../services/currentUser';
 import { setReadRegions } from '../../services/accessValidation';
 import { resourceDashboardPhase1 } from '../../services/dashboards/resource';
 import getCachedResponse from '../../lib/cache';
-import { activityReports } from '../../services/activityReports';
 
 const RESOURCE_DATA_CACHE_VERSION = 1.5;
 
@@ -18,39 +17,51 @@ export async function getResourcesDashboardData(req, res) {
     async () => {
       const scopes = await filtersToScopes(query);
       const data = await resourceDashboardPhase1(scopes);
+
       return JSON.stringify({
         resourcesDashboardOverview: data.overview,
         resourcesUse: data.use,
         topicUse: data.topicUse,
         reportIds: data.reportIds,
+        reports: {
+          rows: data.reports,
+          count: data.reports.length,
+          recipients: data.reportRecipients,
+          topics: [],
+        },
       });
     },
     JSON.parse,
   );
 
+  // res.json(response);
+
   const {
-    sortBy,
-    direction: sortDir,
+    // sortBy,
+    // direction,
     limit,
     offset,
   } = req.query;
+  
+  // const reportSortConfig = {
+  //   sortBy,
+  //   sortDir,
+  //   offset,
+  //   limit,
+  // };
 
-  const reportSortConfig = {
-    sortBy,
-    sortDir,
-    offset,
-    limit,
-  };
-
-  const reports = await activityReports(
-    reportSortConfig,
-    true,
-    userId,
-    response.reportIds,
-  );
+  // const reports = await activityReports(
+  //   reportSortConfig,
+  //   true,
+  //   userId,
+  //   response.reportIds,
+  // );
 
   res.json({
     ...response,
-    activityReports: reports,
+    activityReports: {
+      ...response.reports,
+      rows: response.reports.rows.slice(offset, offset + limit),
+    },
   });
 }

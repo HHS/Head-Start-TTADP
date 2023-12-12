@@ -5,6 +5,7 @@ import {
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveTopic,
   ActivityRecipient,
   Grant,
   // NextStep,
@@ -12,7 +13,11 @@ import {
   Objective,
   Recipient,
   Resource,
-  // Topic,
+  Topic,
+  User,
+  // Role,
+  Program,
+  ActivityReportCollaborator,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
@@ -104,8 +109,10 @@ const mergeInResources = (currentData, additionalData) => additionalData
     clusteredReports,
     report,
   ) => {
+    console.log('topics', report.topics)
     const exists = clusteredReports.get(report.id);
     if (exists) {
+      exists.topics = [...exists.topics, ...(report.topics || [])];
       exists.resources = (report.resourceObjects || [])
         .reduce((resources, resource) => {
           const roExists = resources
@@ -357,6 +364,39 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'numberOfParticipants',
         'topics',
         'startDate',
+        'displayId',
+        'calculatedStatus',
+        'regionId',
+        'updatedAt',
+        'sortedTopics',
+        'legacyId',
+        'createdAt',
+        'approvedAt',
+        'creatorName',
+        'creatorRole',
+        'lastSaved',
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'activityReportId\''),
+              sequelize.col('"activityRecipients"."activityReportId"'),
+              sequelize.literal('\'name\''),
+              sequelize.literal(`(
+                SELECT     
+                  CONCAT(r.name, ' - ', "activityRecipients->grant"."number", ' - ', STRING_AGG(p."programType",',')) "name"
+                FROM "Recipients" r
+                JOIN "Programs" p
+                ON r.id = "activityRecipients->grant"."recipientId"
+                AND p."grantId" = "activityRecipients->grant"."id"
+                GROUP BY r.name
+              )`),
+            ),
+          ),
+        ),
+        'reportRecipients'],
         [sequelize.fn(
           'jsonb_agg',
           sequelize.fn(
@@ -369,6 +409,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"activityRecipients->grant"."recipientId"'),
               sequelize.literal('\'otherEntityId\''),
               sequelize.literal('"activityRecipients"."otherEntityId"'),
+              sequelize.literal('\'recipientName\''),
+              sequelize.literal('"activityRecipients->grant->recipient"."name"'),
             ),
           ),
         ),
@@ -379,6 +421,17 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         '"ActivityReport"."numberOfParticipants"',
         '"ActivityReport"."topics"',
         '"ActivityReport"."startDate"',
+        '"ActivityReport"."approvedAt"',
+        '"ActivityReport"."calculatedStatus"',
+        '"ActivityReport"."updatedAt"',
+        '"ActivityReport"."creatorRole"',
+        '"activityReportCollaborators.id"',
+        '"activityReportCollaborators.userId"',
+        '"activityReportCollaborators.activityReportId"',
+        '"activityReportCollaborators->user.id"',
+        '"activityReportCollaborators->user.name"',
+        '"author.name"',
+        '"author.id"',
       ],
       where: {
         [Op.and]: [
@@ -392,6 +445,24 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       },
       include: [
         {
+          model: User,
+          attributes: ['name', 'id'],
+          as: 'author',
+        },
+        {
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          attributes: ['id', 'activityReportId', 'userId'],
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name'],
+            },
+          ],
+        },
+        {
           model: ActivityRecipient.scope(),
           as: 'activityRecipients',
           attributes: [],
@@ -400,13 +471,25 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
             {
               model: Grant.scope(),
               as: 'grant',
-              attributes: [],
+              attributes: ['name'],
               required: false,
+              include: [
+                {
+                  model: Recipient.scope(),
+                  as: 'recipient',
+                  attributes: [],
+                },
+                {
+                  model: Program.scope(),
+                  as: 'programs',
+                  attributes: [],
+                },
+              ],
             },
           ],
         },
       ],
-      raw: true,
+      // raw: true,
     }),
     /*
     await ActivityReport.findAll({
@@ -974,7 +1057,13 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     }),
   ]);
 
-  let reportsMap = mergeInResources(new Map(), dbData.allReports);
+  const reportRecipients = [];
+
+  let reportsMap = mergeInResources(new Map(), dbData.allReports.map((r) => {
+    const jsonReport = r.toJSON();
+    reportRecipients.push(...jsonReport.reportRecipients);
+    return jsonReport;
+  }));
   const reportIds = Array.from(reportsMap.keys());
 
   delete dbData.allReports;
@@ -1007,6 +1096,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     reports,
     topics,
     reportIds,
+    reportRecipients,
   };
 }
 
@@ -1585,13 +1675,15 @@ export async function resourceTopicUse(scopes) {
   return generateResourceTopicUse(data);
 }
 
-export async function resourceDashboardPhase1(scopes) {
-  const data = await resourceData(scopes);
+export async function resourceDashboardPhase1(scopes, activityReportSortConfig) {
+  const data = await resourceData(scopes, false, false, activityReportSortConfig);
   return {
+    reports: data.reports,
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
     reportIds: data.reportIds,
+    reportRecipients: data.reportRecipients,
   };
 }
 
