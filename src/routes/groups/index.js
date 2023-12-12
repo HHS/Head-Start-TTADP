@@ -9,7 +9,8 @@ import {
   updateGroup,
   deleteGroup,
   getEligibleRecipientGrantsForGroup,
-  getEligibleCoOwnersAndCohortsForGroup,
+  getEligibleCoOwnersForGroup,
+  getEligibleSharedWithForGroup
 } from './handlers';
 
 const router = express.Router();
@@ -21,6 +22,7 @@ router.put('/:groupId', authMiddleware, checkGroupIdParam, transactionWrapper(up
 router.delete('/:groupId', authMiddleware, checkGroupIdParam, transactionWrapper(deleteGroup));
 
 router.get('/:groupId/grants', authMiddleware, checkGroupIdParam, transactionWrapper(getEligibleRecipientGrantsForGroup));
-router.get('/:groupId/users', authMiddleware, checkGroupIdParam, transactionWrapper(getEligibleCoOwnersAndCohortsForGroup));
+router.get('/:groupId/coowners', authMiddleware, checkGroupIdParam, transactionWrapper(getEligibleCoOwnersForGroup));
+router.get('/:groupId/sharedWith', authMiddleware, checkGroupIdParam, transactionWrapper(getEligibleSharedWithForGroup));
 
 export default router;
