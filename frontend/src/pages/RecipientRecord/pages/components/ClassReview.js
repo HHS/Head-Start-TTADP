@@ -75,7 +75,33 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
         stickyFooter
         title="How thresholds are met"
       >
-        Yep
+        <h3>Quality thresholds</h3>
+        <p>
+          Beginning in Novembr 2020, the quality thresholds represent OHS&apos;s
+          expectation for all grantees regarding the quality of classroom learning environments.
+          These thresholds do not trigger competition; rather, a grantee with a score below a
+          quality threshold receives support from OHS in improving the quality of teacher-child
+          interactions in the classroom. The quality thresholds are as follows:
+        </p>
+        <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
+          <li>6 for the Emotional Support domain.</li>
+          <li>6 for the Classroom Organization domain.</li>
+          <li>3 for the Instructional Support domain.</li>
+        </ul>
+        <h3>Competetive thresholds</h3>
+        <p>
+          Grantees with average CLASS® scores below the established competitive threshold
+          on any of the three CLASS® domains is required to compete.
+          The competitive thresholds are as follows:
+        </p>
+        <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
+          <li>5 for the Emotional Support domain.</li>
+          <li>5 for the Classroom Organization domain.</li>
+          <li>
+            2.3 for the Instructional Support domain for CLASS® reviews conducted through
+            July 31, 2025, and 2.5 for those conducted on or after Aug. 1, 2025.
+          </li>
+        </ul>
       </Drawer>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
