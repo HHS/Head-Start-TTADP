@@ -1,43 +1,55 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { useFormContext } from 'react-hook-form';
 import {
   Button,
   Fieldset,
 } from '@trussworks/react-uswds';
+import { pageComplete } from '../constants';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
-import { nextStepsFields } from '../constants';
 import NextStepsRepeater from '../../../../ActivityReport/Pages/components/NextStepsRepeater';
-import { isPageComplete } from '../../../../SessionForm/pages/nextSteps';
+import useCompleteSectionOnVisit from '../../../../../hooks/useCompleteSectionOnVisit';
 
-const NextSteps = () => (
-  <>
-    <Helmet>
-      <title>Next steps</title>
-    </Helmet>
-    <IndicatesRequiredField />
-    <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
-      <NextStepsRepeater
-        id="specialist-next-steps-repeater-id"
-        name="specialistNextSteps"
-        ariaName="Specialist Next Steps"
-      />
-    </Fieldset>
-    <Fieldset id="recipient-field-set" className="smart-hub--report-legend margin-top-3" legend={'Recipient\'s next steps'}>
-      <NextStepsRepeater
-        id="recipient-next-steps-repeater-id"
-        name="recipientNextSteps"
-        ariaName={'Recipient\'s next steps'}
-        recipientType="recipient"
-      />
-    </Fieldset>
-  </>
-);
-
-const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
+const visitedField = `pageVisited-${path}`;
+const fields = [visitedField];
 const position = 3;
 
+const NextSteps = () => {
+  const { register } = useFormContext();
+
+  useCompleteSectionOnVisit(visitedField);
+
+  return (
+    <>
+      <Helmet>
+        <title>Next steps</title>
+      </Helmet>
+      <IndicatesRequiredField />
+      <input type="hidden" ref={register()} name={visitedField} />
+      <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
+        <NextStepsRepeater
+          id="specialist-next-steps-repeater-id"
+          name="specialistNextSteps"
+          ariaName="Specialist Next Steps"
+          required={false}
+        />
+      </Fieldset>
+      <Fieldset id="recipient-field-set" className="smart-hub--report-legend margin-top-3" legend={'Recipient\'s next steps'}>
+        <NextStepsRepeater
+          id="recipient-next-steps-repeater-id"
+          name="recipientNextSteps"
+          ariaName={'Recipient\'s next steps'}
+          recipientType="recipient"
+          required={false}
+        />
+      </Fieldset>
+    </>
+  );
+};
+
 const ReviewSection = () => <><h2>Event summary</h2></>;
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,

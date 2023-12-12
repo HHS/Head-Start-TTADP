@@ -2,8 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ReadOnlyField from '../../../../../components/ReadOnlyField';
 
-export default function DisplayNextSteps({ title, steps }) {
+export const skipDisplaySteps = (steps) => {
   if (!steps || !steps.length) {
+    return true;
+  }
+
+  return steps.every((step) => !step.note && !step.completeDate);
+};
+
+export default function DisplayNextSteps({ title, steps }) {
+  if (skipDisplaySteps(steps)) {
     return null;
   }
 
@@ -11,7 +19,7 @@ export default function DisplayNextSteps({ title, steps }) {
     <>
       <h3>{title}</h3>
       {steps.map(((step, index) => (
-        <div key={`${title}${step}`}>
+        <div key={`${title}${step.note}`}>
           <ReadOnlyField
             label={`Step ${index + 1}`}
           >
