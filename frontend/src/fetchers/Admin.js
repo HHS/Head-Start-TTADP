@@ -123,6 +123,11 @@ export const createMultiRecipientGoalsFromAdmin = async (data) => {
   return result.json();
 };
 
+export const closeMultiRecipientGoalsFromAdmin = async (data) => {
+  const result = await put((join('/', 'api', 'admin', 'goals', 'close')), data);
+  return result.json();
+};
+
 export const importTrainingReports = async (data) => {
   const adminTrUrl = join('/', 'api', 'admin', 'training-reports');
   const res = await fetch(adminTrUrl, {
