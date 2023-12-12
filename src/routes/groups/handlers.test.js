@@ -11,6 +11,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   groups, group, createNewGroup, editGroup, destroyGroup,
 } from '../../services/groups';
+import { GROUP_COLLABORATORS } from '../../constants';
 
 jest.mock('../../models', () => ({
   Group: {
@@ -132,7 +133,7 @@ describe('Groups Handlers', () => {
       };
       const userId = 1;
       currentUserId.mockReturnValueOnce(userId);
-      group.mockRejectedValue(new Error('Error'));
+      group.mockRejectedValueOnce(new Error('Error'));
       await getGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
@@ -332,78 +333,82 @@ describe('Groups Handlers', () => {
   });
 
   describe('deleteGroup', () => {
-    it('should return 200 and the group', async () => {
-      const req = {
+    let req;
+    let res;
+    const userId = 1;
+    beforeEach(() => {
+      req = {
         params: {
           groupId: 1,
         },
       };
-      const res = {
+      res = {
         json: jest.fn(),
-        status: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: jest.fn() })),
       };
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
-      const userId = 1;
-      const groupResponse = 1;
       currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockReturnValue(groupResponse);
+    });
+    it('should return 200 and the group', async () => {
+      // Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 1 });
+      group.mockReturnValueOnce({
+        id: 1,
+        name: '',
+        grants: [],
+        groupCollaborators: [{
+          id: 1,
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+          user: { id: 1, name: '' },
+        }],
+        isPublic: false,
+      });
+      const groupResponse = 1;
+      destroyGroup.mockReturnValueOnce(groupResponse);
       await deleteGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
     });
 
     it('should return 200 if the group no longer exists', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        sendStatus: jest.fn(),
-        status: jest.fn(() => ({ json: jest.fn() })),
-      };
-      Group.findOne.mockReturnValue(null);
-      const userId = 1;
+      // Group.findOne.mockReturnValueOnce(null);
+      group.mockReturnValueOnce(null);
       const groupResponse = 1;
-      currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockReturnValue(groupResponse);
+      destroyGroup.mockReturnValueOnce(groupResponse);
       await deleteGroup(req, res);
       expect(res.status).toHaveBeenCalledWith(httpCodes.OK);
     });
 
     it('should return 403 if the user does not own the group', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        sendStatus: jest.fn(),
-      };
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 2 });
-      const userId = 1;
+      // Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 2 });
+      group.mockReturnValueOnce({
+        id: 1,
+        name: '',
+        grants: [],
+        groupCollaborators: [{
+          id: 1,
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+          user: { id: 2, name: '' },
+        }],
+        isPublic: false,
+      });
       const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
-      currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockReturnValue(groupResponse);
+      destroyGroup.mockReturnValueOnce(groupResponse);
       await deleteGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
     it('should return 500 if there is an error', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        sendStatus: jest.fn(),
-      };
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
-      const userId = 1;
-      currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockRejectedValue(new Error('Error'));
+      group.mockReturnValueOnce({
+        id: 1,
+        name: '',
+        grants: [],
+        groupCollaborators: [{
+          id: 1,
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+          user: { id: 1, name: '' },
+        }],
+        isPublic: false,
+      });
+      destroyGroup.mockReturnValueOnce(new Error('Error'));
       await deleteGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
