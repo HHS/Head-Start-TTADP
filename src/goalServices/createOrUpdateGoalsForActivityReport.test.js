@@ -395,8 +395,8 @@ describe('createOrUpdateGoalsForActivityReport', () => {
           title: `My new obj ${index + 1}`,
           ttaProvided: `<p>My new tta ${index + 1}</p>`,
           status: index === 0 ? 'Not Started' : 'Suspended',
-          suspendReason: index === 0 ? null : 'Recipient request',
-          suspendContext: index === 0 ? null : 'Test suspend context',
+          closeSuspendReason: index === 0 ? null : 'Recipient request',
+          closeSuspendContext: index === 0 ? null : 'Test suspend context',
         })),
       }];
 
@@ -421,8 +421,8 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     expect(createdGoals[0].objectives[1].title).toBe('My new obj 2');
     expect(createdGoals[0].objectives[1].ttaProvided).toBe('<p>My new tta 2</p>');
     expect(createdGoals[0].objectives[1].status).toBe('Suspended');
-    expect(createdGoals[0].objectives[1].suspendReason).toBe('Recipient request');
-    expect(createdGoals[0].objectives[1].suspendContext).toBe('Test suspend context');
+    expect(createdGoals[0].objectives[1].closeSuspendReason).toBe('Recipient request');
+    expect(createdGoals[0].objectives[1].closeSuspendContext).toBe('Test suspend context');
     expect(createdGoals[0].objectives[1].arOrder).toBe(2);
   });
 });

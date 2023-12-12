@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const { beforeValidate, beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
@@ -55,11 +55,11 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
-    suspendReason: {
+    closeSuspendReason: {
       allowNull: true,
-      type: DataTypes.ENUM(SUSPEND_REASONS),
+      type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
     },
-    suspendContext: {
+    closeSuspendContext: {
       type: DataTypes.TEXT,
     },
     title: DataTypes.TEXT,

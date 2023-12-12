@@ -290,8 +290,8 @@ describe('activity report model hooks', () => {
         activityReportId: report2.id,
         status: 'Suspended',
         objectiveId: objective2.id,
-        suspendReason: 'Recipient request',
-        suspendContext: 'It was a request from the recipient',
+        closeSuspendReason: 'Recipient request',
+        closeSuspendContext: 'It was a request from the recipient',
       });
 
       let testGoal = await Goal.findByPk(goal.id);
@@ -325,8 +325,8 @@ describe('activity report model hooks', () => {
       // here we also verify that the suspend metadata was saved to the parent objective
       testObjective = await Objective.findByPk(objective2.id);
       expect(testObjective.status).toEqual('Suspended');
-      expect(testObjective.suspendReason).toEqual('Recipient request');
-      expect(testObjective.suspendContext).toEqual('It was a request from the recipient');
+      expect(testObjective.closeSuspendReason).toEqual('Recipient request');
+      expect(testObjective.closeSuspendContext).toEqual('It was a request from the recipient');
     });
 
     it('unlocking report adjusts objective status', async () => {
