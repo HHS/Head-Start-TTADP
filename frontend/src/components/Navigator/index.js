@@ -54,6 +54,7 @@ const Navigator = ({
   datePickerKey,
   formDataStatusProp,
   shouldAutoSave,
+  preFlightForNavigation,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -75,6 +76,10 @@ const Navigator = ({
   const { isDirty } = formState;
 
   const onUpdatePage = async (index) => {
+    // run the preflight check
+    const preFlightResult = await preFlightForNavigation();
+    if (!preFlightResult) return;
+
     // name the parameters for clarity
     const isAutoSave = false;
     const isNavigation = true;
@@ -266,6 +271,7 @@ Navigator.propTypes = {
   datePickerKey: PropTypes.string,
   formDataStatusProp: PropTypes.string,
   shouldAutoSave: PropTypes.bool,
+  preFlightForNavigation: PropTypes.func,
 };
 
 Navigator.defaultProps = {
@@ -284,6 +290,7 @@ Navigator.defaultProps = {
   datePickerKey: '',
   formDataStatusProp: 'calculatedStatus',
   shouldAutoSave: true,
+  preFlightForNavigation: () => Promise.resolve(true),
 };
 
 export default Navigator;

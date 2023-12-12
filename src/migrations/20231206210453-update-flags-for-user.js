@@ -1,5 +1,4 @@
-const { GOAL_CREATED_VIA } = require('../constants');
-const { prepMigration, addValuesToEnumIfTheyDontExist } = require('../lib/migration');
+const { prepMigration, updateUsersFlagsEnum } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -7,11 +6,11 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return addValuesToEnumIfTheyDontExist(queryInterface, transaction, 'enum_Goals_createdVia', Object.values(GOAL_CREATED_VIA));
+      return updateUsersFlagsEnum(queryInterface, transaction, ['training_reports']);
     });
   },
 
   async down() {
-    // no rollbacks
+    // no rollbacks on enum mods, create a new migration to do that
   },
 };
