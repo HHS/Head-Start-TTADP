@@ -1,13 +1,23 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import fetchMock from 'fetch-mock';
+import { SCOPE_IDS } from '@ttahub/common/src/constants';
 import { render, screen } from '@testing-library/react';
 import Profile from '../Profile';
+import UserContext from '../../../../UserContext';
 
 describe('Recipient Record - Profile', () => {
+  const user = {
+    name: 'harry potter',
+    permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
+  };
   const renderRecipientProfile = (summary) => {
     fetchMock.get('/api/recipient/1/region/1/leadership', []);
-    render(<Profile recipientSummary={summary} recipientId={1} regionId={1} />);
+    render(
+      <UserContext.Provider value={{ user }}>
+        <Profile recipientSummary={summary} recipientId={1} regionId={1} />
+      </UserContext.Provider>,
+    );
   };
 
   it('renders the recipient summary approriately', async () => {
