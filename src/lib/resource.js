@@ -250,15 +250,15 @@ const getMetadataValues = async (url) => {
 
   try {
     const fromJson = await getMetadataValuesFrommJson(url);
-    if (fromJson.value.statusCode === httpCodes.OK) {
+    if (fromJson.statusCode === httpCodes.OK) {
       // Destructure metadata and status code from JSON result.
-      const { metadata: metadataFromJson, statusCode: statuscodeFromJson } = fromJson.value;
+      const statuscodeFromJson = fromJson.statusCode;
+      const metadataFromJson = fromJson.metadata;
       // filter out unsupported characters.
       metadata = filterToSupportedCharacters(metadataFromJson);
       statusCode = statuscodeFromJson;
     } else {
       const fromHtml = await getMetadataValuesFromHtml(url);
-
       // Destructure metadata, status code, and MIME type from HTML result.
       const {
         metadata: metadataFromHtml,
@@ -270,7 +270,6 @@ const getMetadataValues = async (url) => {
       statusCode = statuscodeFromHtml;
       mimeType = mimeTypeFromHtml;
     }
-
     // If metadata is not empty, assign it to the variable, otherwise assign null.
     metadata = (Object.keys(metadata).length !== 0 && metadata) || null;
 
@@ -295,7 +294,6 @@ const getMetadataValues = async (url) => {
       error,
     ); // Log an error message if there is an exception while retrieving metadata.
   }
-
   await Resource.update({
     ...(title && { title }), // Update the title field in the database if it exists.
     // Update the metadata and metadataUpdatedAt fields in the database if they exist.
@@ -309,7 +307,6 @@ const getMetadataValues = async (url) => {
     where: { url }, // Specify the resource to update based on the URL.
     individualHooks: true, // Enable individual hooks for the update operation.
   });
-
   return {
     title,
     statusCode,
@@ -421,18 +418,17 @@ const getResourceMetaDataJob = async (job) => {
     if (isEclkc) {
       ({ title, statusCode } = await getMetadataValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
-        auditLogger.error(`Resource Queue: Warning, unable to retrieve metadata or resource TITLE for resource '${resourceUrl}', received status code '${statusCode}'.`);
-        return { status: statusCode, data: { url: resourceUrl } };
+        auditLogger.error(`Resource Queue: Warning, unable to retrieve metadata or resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);
+        return { status: statusCode || 500, data: { url: resourceUrl } };
       }
     } else {
       // If it is not an ECLKC resource, scrape the page title.
       ({ title, statusCode } = await getPageScrapeValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
-        auditLogger.error(`Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}', received status code '${statusCode}'.`);
-        return { status: statusCode, data: { url: resourceUrl } };
+        auditLogger.error(`Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);
+        return { status: statusCode || 500, data: { url: resourceUrl } };
       }
     }
-
     logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
     return { status: httpCodes.OK, data: { url: resourceUrl } };
   } catch (error) {

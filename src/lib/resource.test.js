@@ -392,7 +392,9 @@ describe('resource worker tests', () => {
   it('tests error with a response from get metadata', async () => {
     const axiosMetadataErrorResponse = new Error();
     axiosMetadataErrorResponse.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
-    mockAxios.mockImplementationOnce(() => Promise.reject(axiosMetadataErrorResponse));
+    mockAxios.mockImplementationOnce(
+      () => Promise.reject(axiosMetadataErrorResponse),
+    ).mockImplementationOnce(() => Promise.resolve(axiosMetadataErrorResponse));
 
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
@@ -414,7 +416,7 @@ describe('resource worker tests', () => {
 
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
 
-    // Verfiy auditlogger.error was called with the message we expect.
+    // Verify auditlogger.error was called with the message we expect.
     expect(auditLogger.error).toBeCalledTimes(3);
   });
 
@@ -442,8 +444,20 @@ describe('resource worker tests', () => {
 
     expect(mockUpdate).toBeCalledTimes(2);
 
+    // Check title scrape update..
+    expect(mockUpdate).toBeCalledWith(
+      {
+        lastStatusCode: 200,
+        mimeType: 'text/html; charset=utf-8',
+      },
+      {
+        individualHooks: true,
+        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
+      },
+    );
+
     // Check the update call.
-    expect(mockUpdate).toHaveBeenLastCalledWith(
+    expect(mockUpdate).toBeCalledWith(
       {
         metadata: {
           changed: [
@@ -480,7 +494,6 @@ describe('resource worker tests', () => {
         },
         metadataUpdatedAt: expect.anything(),
         title: 'null',
-        mimeType: 'text/html; charset=utf-8',
         lastStatusCode: 200,
       },
       {
@@ -488,18 +501,6 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.eclkc.ohs.acf.hhs.gov',
         },
-      },
-    );
-
-    // Check title scrape update..
-    expect(mockUpdate).toBeCalledWith(
-      {
-        lastStatusCode: 200,
-        mimeType: 'text/html; charset=utf-8',
-      },
-      {
-        individualHooks: true,
-        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
       },
     );
   });
