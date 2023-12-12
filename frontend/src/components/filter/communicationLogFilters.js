@@ -11,6 +11,7 @@ import FilterDateRange from './FilterDateRange';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
 import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterInput from './FilterInput';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -20,13 +21,6 @@ const EMPTY_MULTI_SELECT = {
 const EMPTY_TEXT_INPUT = {
   contains: '',
   'does not contain': '',
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
 };
 
 const handleStringQuery = (q) => q;

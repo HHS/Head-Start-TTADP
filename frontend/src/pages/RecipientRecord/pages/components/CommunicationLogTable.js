@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import { Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import './CommunicationLogTable.scss';
@@ -12,7 +13,7 @@ export default function CommunicationLogTable({
   regionId,
 }) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name) => {
+  const renderColumnHeader = (displayName, name, className) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -27,7 +28,7 @@ export default function CommunicationLogTable({
         break;
     }
     return (
-      <th scope="col" aria-sort={fullAriaSort}>
+      <th scope="col" className={className} aria-sort={fullAriaSort}>
         <button
           type="button"
           onClick={() => {
@@ -52,7 +53,7 @@ export default function CommunicationLogTable({
         </caption>
         <thead>
           <tr>
-            {renderColumnHeader('Date', 'communicationDate')}
+            {renderColumnHeader('Date', 'communicationDate', 'desktop:maxw-6')}
             {renderColumnHeader('Purpose', 'purpose')}
             {renderColumnHeader('Creator name', 'authorName')}
             {renderColumnHeader('Result', 'result')}
@@ -60,8 +61,8 @@ export default function CommunicationLogTable({
         </thead>
         <tbody>
           {logs.map((log) => (
-            <tr>
-              <td data-label="Date">
+            <tr key={uniqueId('log-table-row')}>
+              <td className="desktop:maxw-6" data-label="Date">
                 <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
                   {log.data.communicationDate}
                 </Link>
@@ -85,7 +86,7 @@ CommunicationLogTable.propTypes = {
       purpose: PropTypes.string,
       result: PropTypes.string,
     }),
-    userId: PropTypes.string,
+    userId: PropTypes.number,
   })).isRequired,
   requestSort: PropTypes.func.isRequired,
   sortConfig: PropTypes.shape({

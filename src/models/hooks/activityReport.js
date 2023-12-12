@@ -257,8 +257,8 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
           'id',
           'objectiveId',
           'status',
-          'suspendReason',
-          'suspendContext',
+          'closeSuspendReason',
+          'closeSuspendContext',
         ],
         where: {
           objectiveId: objectiveIds,
@@ -349,8 +349,8 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
        * if the objective is suspended, we want to capture the reason and context
        */
       if (newStatus === OBJECTIVE_STATUS.SUSPENDED) {
-        objectiveToUpdate.set('suspendReason', aro.suspendReason);
-        objectiveToUpdate.set('suspendContext', aro.suspendContext);
+        objectiveToUpdate.set('closeSuspendReason', aro.closeSuspendReason);
+        objectiveToUpdate.set('closeSuspendContext', aro.closeSuspendContext);
       }
 
       // if we've gotten this far, we want to update the status
