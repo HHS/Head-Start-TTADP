@@ -3,6 +3,7 @@ import db from '../models';
 import { GROUP_COLLABORATORS } from '../constants';
 import { getCollaboratorTypeMapping } from './collaboratorType';
 import SCOPES from '../middleware/scopeConstants';
+import Users from '../policies/user';
 
 const {
   CollaboratorType,
@@ -25,7 +26,7 @@ interface GroupData {
   isPublic: boolean;
   creator: { userId: number },
   coOwners?: { userId: number }[],
-  cohorts?: { userId: number }[],
+  shareWiths?: { userId: number }[],
 }
 
 interface GroupGrantData {
@@ -85,7 +86,7 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
  * @returns A promise that resolves to an array of GroupResponse objects.
  * @throws This function does not throw any exceptions.
  */
-export async function groupsByRegion(region: number): Promise<GroupResponse[]> {
+export async function groupsByRegion(userId: number, region: number): Promise<GroupResponse[]> {
   // TODO: needs to take current userID as an arg so the permissions can be checked in the query
   return Group.findAll({
     attributes: [
@@ -93,27 +94,37 @@ export async function groupsByRegion(region: number): Promise<GroupResponse[]> {
       'name',
     ],
     where: {
-      '$grants.regionId$': { [Op.eq]: region },
+      '$grants.regionId$': region,
+      [Op.or]: [
+        {
+          isPublic: true,
+        },
+        {
+          '$groupCollaborators.id$': { [Op.not]: null },
+        },
+      ],
     },
     include: [
       {
         model: GroupCollaborator,
         as: 'groupCollaborators',
-        required: true,
-        include: [
-          {
-            model: CollaboratorType,
-            as: 'collaboratorType',
-            required: true,
-            attributes: ['name'],
-          },
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'name'],
-          },
-        ],
+        required: false,
         attributes: [],
+        where: { userId },
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: [],
+          required: true,
+          include: [{
+            model: Permission,
+            as: 'permissions',
+            attributes: [],
+            required: true,
+            where: { regionId: region },
+            through: { attributes: [] },
+          }],
+        }],
       },
       {
         attributes: [
@@ -317,27 +328,33 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
         }],
       },
     ],
-    where: { scopeId: SCOPES.READ_REPORTS },
+    where: {
+      scopeId: [
+        SCOPES.READ_REPORTS,
+        SCOPES.READ_WRITE_REPORTS,
+        SCOPES.APPROVE_REPORTS,
+      ],
+    },
     raw: true,
   });
 }
 
 /**
- * Retrieves users who have the permission to read reports in the specified group and all the
+ * Retrieves users who have the permission to access reports in the specified group and all the
  * regions they have access to.
  *
  * @param groupId - The ID of the group.
- * @returns A promise that resolves to an array of users who have the permission to read reports
+ * @returns A promise that resolves to an array of users who have the permission to access reports
  * in all the regions they have access to.
  * @throws {Error} If there is an error retrieving the users.
  */
-export async function potentialCoOwnersAndCohorts(
+export async function potentialCoOwners(
   groupId: number,
 ): Promise<{ userId: number, name: string }[]> {
-  // Retrieve the regionIds of group creator from permissions to read reports specified by group
+  // Retrieve the regionIds of group creator from permissions to access reports specified by group
   const creatorsRegionIds = await groupCreatorRegionIds(groupId);
 
-  // Retrieve users who have the permission to read reports in all the regionIds obtained above
+  // Retrieve users who have the permission to access reports in all the regionIds obtained above
   const users = await User.findAll({
     attributes: [
       ['id', 'userId'],
@@ -351,7 +368,99 @@ export async function potentialCoOwnersAndCohorts(
         attributes: [],
         required: true,
         where: {
-          scopeId: SCOPES.READ_REPORTS,
+          scopeId: [
+            SCOPES.READ_REPORTS,
+            SCOPES.READ_WRITE_REPORTS,
+            SCOPES.APPROVE_REPORTS,
+          ],
+          regionId: creatorsRegionIds,
+        },
+      },
+      {
+        model: Role,
+        as: 'roles',
+        required: true,
+        attributes: [],
+        through: {
+          attributes: [],
+        },
+      },
+      {
+        model: GroupCollaborator,
+        as: 'groupCollaborators',
+        attributes: [],
+        required: false,
+        where: { groupId },
+        include: [{
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          attributes: [],
+          required: true,
+          where: {
+            name: [
+              GROUP_COLLABORATORS.CREATOR,
+              GROUP_COLLABORATORS.CO_OWNER,
+            ],
+          },
+        }],
+      },
+    ],
+    where: {
+      // Add the top-level where clause for null groupCollaborators.id
+      '$groupCollaborators.id$': null,
+    },
+    group: [
+      ['userId', 'ASC'],
+      ['name', 'ASC'],
+    ],
+    having: {
+      [Op.and]: [
+        // Filter out users who have different regionIds than the ones obtained above
+        Sequelize.literal(`COUNT(DISTINCT "permissions"."regionId") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.READ_REPORTS}) = ${creatorsRegionIds.length}`),
+        // Filter out users who have do not have site access
+        Sequelize.literal(`COUNT(DISTINCT "permissions"."id") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.SITE_ACCESS}) = 1`),
+      ],
+    },
+    raw: true,
+  });
+
+  return users;
+}
+
+/**
+ * Retrieves users who have the permission to access reports in the specified group and all the
+ * regions they have access to.
+ *
+ * @param groupId - The ID of the group.
+ * @returns A promise that resolves to an array of users who have the permission to access reports
+ * in all the regions they have access to.
+ * @throws {Error} If there is an error retrieving the users.
+ */
+export async function potentialShareWiths(
+  groupId: number,
+): Promise<{ userId: number, name: string }[]> {
+  // Retrieve the regionIds of group creator from permissions to access reports specified by group
+  const creatorsRegionIds = await groupCreatorRegionIds(groupId);
+
+  // Retrieve users who have the permission to access reports in any the regionIds obtained above
+  const users = await User.findAll({
+    attributes: [
+      ['id', 'userId'],
+      'name',
+      [Sequelize.literal('ARRAY_AGG(DISTINCT "roles"."name")'), 'roles'],
+    ],
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: [],
+        required: true,
+        where: {
+          scopeId: [
+            SCOPES.READ_REPORTS,
+            SCOPES.READ_WRITE_REPORTS,
+            SCOPES.APPROVE_REPORTS,
+          ],
           regionId: creatorsRegionIds,
         },
       },
@@ -383,7 +492,7 @@ export async function potentialCoOwnersAndCohorts(
     having: {
       [Op.and]: [
         // Filter out users who have different regionIds than the ones obtained above
-        Sequelize.literal(`COUNT(DISTINCT "permissions"."regionId") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.READ_REPORTS}) = ${creatorsRegionIds.length}`),
+        Sequelize.literal(`COUNT(DISTINCT "permissions"."regionId") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.READ_REPORTS}) > 0`),
         // Filter out users who have do not have site access
         Sequelize.literal(`COUNT(DISTINCT "permissions"."id") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.SITE_ACCESS}) = 1`),
       ],
@@ -477,14 +586,14 @@ export async function potentialRecipientGrants(groupId: number): Promise<{
  * @throws {Error} If there is an error performing the database operations.
  */
 export async function editGroup(groupId: number, data: GroupData): Promise<GroupResponse> {
-  const { grants, coOwners, cohorts } = data;
+  const { grants, coOwners, shareWiths } = data;
 
-  // Get all existing group grants, current group co-owners, current group cohorts,
+  // Get all existing group grants, current group co-owners, current group shareWiths,
   // and collaborator types
   const [
     existingGroupGrants,
     currentGroupCoOwners,
-    currentGroupCohorts,
+    currentGroupShareWiths,
     collaboratorTypeMapping,
   ] = await Promise.all([
     // Find all group grants with matching groupId and grantId
@@ -509,7 +618,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
         attributes: [],
       }],
     }),
-    // Find all group collaborators with matching groupId and collaboratorType 'cohort'
+    // Find all group collaborators with matching groupId and collaboratorType 'shareWith'
     GroupCollaborator.findAll({
       where: {
         groupId,
@@ -519,7 +628,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
         as: 'collaboratorType',
         required: true,
         where: {
-          name: GROUP_COLLABORATORS.COHORT,
+          name: GROUP_COLLABORATORS.SHARED_WITH,
         },
         attributes: [],
       }],
@@ -528,14 +637,14 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
     getCollaboratorTypeMapping('Groups'),
   ]);
 
-  // Determine the grants, co-owners, and cohorts to add and remove
+  // Determine the grants, co-owners, and shareWiths to add and remove
   const [
     addGrants,
     removeGrants,
     addCoOwners,
     removeCoOwners,
-    addCohorts,
-    removeCohorts,
+    addShareWiths,
+    removeShareWiths,
   ] = [
     // Find grants that are not already existing group grants
     grants
@@ -569,12 +678,12 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
       }: {
         dataValues: { userId: number },
       }) => userId),
-    // Find cohorts that are not already current group cohorts
-    cohorts
-      .filter(({ userId }) => !currentGroupCohorts
+    // Find shareWiths that are not already current group shareWiths
+    shareWiths
+      .filter(({ userId }) => !currentGroupShareWiths
         .find((cgc) => cgc.dataValues.userId === userId)),
-    // Find current group cohorts that are not in the cohorts list
-    currentGroupCohorts
+    // Find current group shareWiths that are not in the shareWiths list
+    currentGroupShareWiths
       .filter(({
         dataValues: { userId },
       }: {
@@ -632,25 +741,25 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
         { individualHooks: true },
       )
       : Promise.resolve(),
-    // Add new group cohorts
-    addCohorts && addCohorts.length > 0
+    // Add new group shareWiths
+    addShareWiths && addShareWiths.length > 0
       ? GroupCollaborator.bulkCreate(
-        addCohorts.map((userId) => ({
+        addShareWiths.map((userId) => ({
           groupId,
           userId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.COHORT],
+          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
         })),
         { validate: true, individualHooks: true },
       )
       : Promise.resolve(),
-    // Remove existing group cohorts
-    removeCohorts && removeCohorts.length > 0
+    // Remove existing group shareWiths
+    removeShareWiths && removeShareWiths.length > 0
       ? GroupCollaborator.destroy(
         {
           where: {
             groupId,
-            userId: removeCohorts,
-            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.COHORT],
+            userId: removeShareWiths,
+            collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
           },
         },
         { individualHooks: true },
@@ -684,7 +793,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     isPublic,
     grants,
     coOwners,
-    cohorts,
+    shareWiths,
   } = data;
 
   const [
@@ -719,13 +828,13 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
         { validate: true, individualHooks: true },
       )
       : Promise.resolve(),
-    // If there are cohorts, create group collaborators with cohort role
-    cohorts && cohorts.length > 0
+    // If there are shareWiths, create group collaborators with shareWith role
+    shareWiths && shareWiths.length > 0
       ? GroupCollaborator.bulkCreate(
-        cohorts.map((userId) => ({
+        shareWiths.map((userId) => ({
           groupId: newGroup.id,
           userId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.COHORT],
+          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
         })),
         { validate: true, individualHooks: true },
       )
