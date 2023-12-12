@@ -11,7 +11,8 @@ import {
   editGroup,
   createNewGroup,
   destroyGroup,
-  potentialCoOwnersAndCohorts,
+  potentialCoOwners,
+  potentialSharedWith,
   potentialRecipientGrants,
   checkGroupNameAvailable,
 } from '../../services/groups';
@@ -31,7 +32,7 @@ const GROUP_ERRORS = {
   ALREADY_EXISTS: 'This group name already exists, please use a different name',
   ERROR_SAVING: 'There was an error saving your group',
   CO_OWNER_PERMISSIONS: 'All co-owners must have permissions matching the owner, and access to all grants within the group',
-  COHORT_PERMISSIONS: 'All cohorts must have permissions matching the owner, and access to all grants within the group',
+  SHARED_WITH_PERMISSIONS: 'All sharedWith must have permissions matching the owner, and access to all grants within the group',
 };
 
 /**
@@ -61,7 +62,7 @@ function checkBulkPermissions(
 }
 
 /**
- * Retrieves the eligible co-owners and cohorts for a specified group.
+ * Retrieves the eligible co-owners for a specified group.
  *
  * @param req - The request object containing the 'groupId' parameter.
  * @param res - The response object used to send the JSON response or status codes.
@@ -69,7 +70,7 @@ function checkBulkPermissions(
  * @throws - If an error occurs during the execution of the function, an internal server error
  * status code is sent.
  */
-export async function getEligibleCoOwnersAndCohortsForGroup(req: Request, res: Response) {
+export async function getEligibleCoOwnersForGroup(req: Request, res: Response) {
   try {
     // Extract the 'groupId' parameter from the request
     const { groupId: groupIdRaw } = req.params;
@@ -80,13 +81,13 @@ export async function getEligibleCoOwnersAndCohortsForGroup(req: Request, res: R
     // Get the user data based on the user ID
     const user = await userById(userId);
 
-    // Fetch the group data and the potential co-owners and cohorts asynchronously
+    // Fetch the group data and the potential co-owners asynchronously
     const [
       groupData,
-      optionsForCoOwnersAndCohorts,
+      optionsForCoOwners,
     ] = await Promise.all([
       group(groupId),
-      potentialCoOwnersAndCohorts(groupId),
+      potentialCoOwners(groupId),
     ]);
 
     // Create a GroupPolicy instance with the current user, an empty array of roles, and the
@@ -100,11 +101,61 @@ export async function getEligibleCoOwnersAndCohortsForGroup(req: Request, res: R
       return;
     }
 
-    // Send the options for co-owners and cohorts as a JSON response
-    res.json(optionsForCoOwnersAndCohorts);
+    // Send the options for co-owners and sharedWith as a JSON response
+    res.json(optionsForCoOwners);
   } catch (e) {
     // Log any errors that occur during the execution of the function
-    auditLogger.error(`${NAMESPACE} getEligibleCoOwnersAndCohortsForGroup, ${e}`);
+    auditLogger.error(`${NAMESPACE} getEligibleCoOwnersForGroup, ${e}`);
+    // Send an internal server error status code
+    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
+  }
+}
+
+/**
+ * Retrieves the eligible sharedWith for a specified group.
+ *
+ * @param req - The request object containing the 'groupId' parameter.
+ * @param res - The response object used to send the JSON response or status codes.
+ * @returns - This function does not return anything.
+ * @throws - If an error occurs during the execution of the function, an internal server error
+ * status code is sent.
+ */
+export async function getEligibleSharedWithForGroup(req: Request, res: Response) {
+  try {
+    // Extract the 'groupId' parameter from the request
+    const { groupId: groupIdRaw } = req.params;
+    // Parse the 'groupId' as an integer
+    const groupId = parseInt(groupIdRaw, 10);
+    // Get the current user's ID
+    const userId = await currentUserId(req, res);
+    // Get the user data based on the user ID
+    const user = await userById(userId);
+
+    // Fetch the group data and the potential co-owners and sharedWith asynchronously
+    const [
+      groupData,
+      optionsForSharedWith,
+    ] = await Promise.all([
+      group(groupId),
+      potentialSharedWith(groupId),
+    ]);
+
+    // Create a GroupPolicy instance with the current user, an empty array of roles, and the
+    // group data
+    const policy = new GroupPolicy(user, [], groupData);
+    // Check if the current user can edit the group
+    if (!policy.canEditGroup()) {
+      // If the user does not have permission to edit the group, send a forbidden status code
+      // and return
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    // Send the options for co-owners and sharedWith as a JSON response
+    res.json(optionsForSharedWith);
+  } catch (e) {
+    // Log any errors that occur during the execution of the function
+    auditLogger.error(`${NAMESPACE} getEligibleSharedWithForGroup, ${e}`);
     // Send an internal server error status code
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
@@ -252,7 +303,7 @@ export async function createGroup(req: Request, res: Response) {
     const {
       grants: grantIds,
       coOwners: coOwnerIds,
-      cohorts: cohortIds,
+      sharedWith: sharedWithIds,
       isPublic: isPublicRaw,
     } = req.body;
 
@@ -264,7 +315,7 @@ export async function createGroup(req: Request, res: Response) {
       userId,
       grants,
       coOwners,
-      cohorts,
+      sharedWith,
     ] = await Promise.all([
       currentUserId(req, res),
       Grant.findAll({
@@ -281,7 +332,7 @@ export async function createGroup(req: Request, res: Response) {
         raw: true,
       }),
       Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
-      Promise.all(cohortIds.map(async (cohortId) => userById(cohortId))),
+      Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId))),
     ]);
 
     // Fetch the user data for the current user
@@ -305,11 +356,11 @@ export async function createGroup(req: Request, res: Response) {
       return;
     }
 
-    // Check if the cohorts have the necessary permissions
-    if (!checkBulkPermissions('canUseGroup', cohorts, grants, { id: -1, isPublic })) {
+    // Check if the sharedWith have the necessary permissions
+    if (!checkBulkPermissions('canUseGroup', sharedWith, grants, { id: -1, isPublic })) {
       res.status(httpCodes.ACCEPTED).json({
-        error: 'cohort-permissions',
-        message: GROUP_ERRORS.COHORT_PERMISSIONS,
+        error: 'shared-with-permissions',
+        message: GROUP_ERRORS.SHARED_WITH_PERMISSIONS,
       });
       return;
     }
@@ -360,7 +411,7 @@ export async function updateGroup(req: Request, res: Response) {
       name,
       grants: grantIds,
       coOwners: coOwnerIds,
-      cohorts: cohortIds,
+      sharedWith: sharedWithIds,
       isPublic: isPublicRaw,
     } = req.body;
     const isPublic = isPublicRaw === 'true';
@@ -373,7 +424,7 @@ export async function updateGroup(req: Request, res: Response) {
       groupData, // Store the result of the group function
       grants, // Store the result of the Grant.findAll function
       coOwners, // Store the result of the Promise.all function
-      cohorts, // Store the result of the Promise.all function
+      sharedWith, // Store the result of the Promise.all function
     ] = await Promise.all([
       // Call the currentUserId function with req and res parameters and await its result
       currentUserId(req, res),
@@ -393,8 +444,8 @@ export async function updateGroup(req: Request, res: Response) {
       }),
       // Map each coOwnerId to a Promise returned by the userById function and await all promises
       Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
-      // Map each cohortId to a Promise returned by the userById function and await all promises
-      Promise.all(cohortIds.map(async (cohortId) => userById(cohortId))),
+      // Map each sharedWithId to a Promise returned by the userById function and await all promises
+      Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId))),
     ]);
 
     // Create a new GroupPolicy instance and check if the user has permission to edit the group
@@ -413,11 +464,11 @@ export async function updateGroup(req: Request, res: Response) {
       return;
     }
 
-    // Check if the cohorts have the necessary permissions
-    if (!checkBulkPermissions('canUseGroup', cohorts, grants, { ...groupData, isPublic })) {
+    // Check if the sharedWith have the necessary permissions
+    if (!checkBulkPermissions('canUseGroup', sharedWith, grants, { ...groupData, isPublic })) {
       res.status(httpCodes.ACCEPTED).json({
-        error: 'cohort-permissions',
-        message: GROUP_ERRORS.COHORT_PERMISSIONS,
+        error: 'shared-with-permissions',
+        message: GROUP_ERRORS.SHARED_WITH_PERMISSIONS,
       });
       return;
     }
@@ -454,6 +505,7 @@ export async function updateGroup(req: Request, res: Response) {
  * @throws {Error} If an error occurs while deleting the group.
  */
 export async function deleteGroup(req: Request, res: Response) {
+  console.log(Object.keys(res));
   try {
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
@@ -469,7 +521,7 @@ export async function deleteGroup(req: Request, res: Response) {
     if (!groupData) {
       // If the group does not exist, respond with an empty JSON object and an HTTP status code
       // of 200 (OK)
-      res.status(httpCodes.OK).json({});
+      res.status(httpCodes.OK)?.json({});
       return;
     }
 
@@ -477,13 +529,14 @@ export async function deleteGroup(req: Request, res: Response) {
     // the groupData
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupData);
 
+    console.log('y');
     // Check if the user owns the group
     if (!policy.ownsGroup()) {
       // If the user does not own the group, respond with an HTTP status code of 403 (FORBIDDEN)
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
-
+    console.log('x');
     // Delete the group by calling the destroyGroup function asynchronously, passing in the groupId
     const groupResponse = await destroyGroup(groupId);
 
