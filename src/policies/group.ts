@@ -23,9 +23,10 @@ interface GroupCollaboratorType {
 
 interface GroupType {
   id: number;
-  isPublic: boolean;
+  name?: string;
   grants?: GrantType[]
   groupCollaborators?: GroupCollaboratorType[],
+  isPublic: boolean;
 }
 
 export default class Group {
@@ -37,46 +38,56 @@ export default class Group {
 
   constructor(user: UserType, grants?: GrantType[], group?: GroupType) {
     this.user = user;
-    this.grants = grants || [];
+    this.grants = grants || group?.grants || [];
     this.group = group;
   }
 
-  canAddToGroup() {
+  private userIsCollaboratorForType(types?: string[]) {
+    return !!this?.group?.groupCollaborators
+      .find(({
+        user: { id: userId },
+        collaboratorType: { name: collaboratorType },
+      }) => userId === this.user.id
+      && (
+        !types
+        || types.includes(collaboratorType)
+      ));
+  }
+
+  private userIsAbleToAccessGrants() {
     return this.grants.every((grant) => (
       this.user.permissions.some((permission) => (
         permission.regionId === grant.regionId
       ))));
   }
 
+  canAddToGroup() {
+    return this.userIsAbleToAccessGrants();
+  }
+
   canEditGroup() {
-    return !!this.group.groupCollaborators
-      .find(({
-        user: { id: userId },
-        collaboratorType: { name: collaboratorType },
-      }) => userId === this.user.id
-      && (collaboratorType === GROUP_COLLABORATORS.CREATOR
-        || collaboratorType === GROUP_COLLABORATORS.CO_OWNER));
+    return this.userIsCollaboratorForType(
+      [
+        GROUP_COLLABORATORS.CREATOR,
+        GROUP_COLLABORATORS.CO_OWNER,
+      ],
+    );
   }
 
   ownsGroup() {
-    return !!this.group.groupCollaborators
-      .find(({
-        user: { id: userId },
-        collaboratorType: { name: collaboratorType },
-      }) => userId === this.user.id
-      && collaboratorType === GROUP_COLLABORATORS.CREATOR);
+    return this.userIsCollaboratorForType(
+      [
+        GROUP_COLLABORATORS.CREATOR,
+      ],
+    );
   }
 
   isPublic() {
-    return this.group.isPublic && this.grants.every((grant) => (
-      this.user.permissions.some((permission) => (
-        permission.regionId === grant.regionId
-      ))));
+    return this.group.isPublic && this.userIsAbleToAccessGrants();
   }
 
   canUseGroup() {
-    return !!this?.group?.groupCollaborators
-      ?.find(({ user: { id: userId } }) => userId === this.user.id)
+    return this.userIsCollaboratorForType()
       || this.isPublic();
   }
 }
