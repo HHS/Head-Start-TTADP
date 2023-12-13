@@ -94,8 +94,8 @@ export default function ReadOnlyObjective({ objective }) {
 
       <ObjectiveStatusSuspendReason
         status={objective.status}
-        suspendReason={objective.suspendReason}
-        suspendContext={objective.suspendContext}
+        closeSuspendReason={objective.closeSuspendReason}
+        closeSuspendContext={objective.closeSuspendContext}
       />
     </div>
   );
@@ -103,8 +103,8 @@ export default function ReadOnlyObjective({ objective }) {
 
 ReadOnlyObjective.propTypes = {
   objective: PropTypes.shape({
-    suspendContext: PropTypes.string,
-    suspendReason: PropTypes.string,
+    closeSuspendContext: PropTypes.string,
+    closeSuspendReason: PropTypes.string,
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string,
