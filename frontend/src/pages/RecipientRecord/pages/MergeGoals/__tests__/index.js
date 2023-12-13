@@ -387,10 +387,12 @@ describe('Merge goals', () => {
     const gs = [
       {
         ...goals[0],
+        goalStatus: 'Closed',
         isCurated: true,
       },
       {
         ...goals[1],
+        goalStatus: 'In Progress',
         isCurated: true,
       },
     ];
