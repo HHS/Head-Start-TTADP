@@ -335,35 +335,10 @@ export async function createGroup(req: Request, res: Response) {
       nameAvailable,
     ] = await Promise.all([
       userById(userId),
-      Grant.findAll({
-        attributes: [
-          'id',
-          'regionId',
-          'recipeintId',
-          'status',
-        ],
-        where: {
-          id: grantIds,
-          status: 'Active',
-        },
-        include: [{
-          model: Region,
-          as: 'region',
-          attributes: [],
-          required: true,
-          include: [{
-            model: User,
-            as: 'users',
-            attributes: [],
-            required: true,
-            where: { id: userId },
-          }],
-        }],
-        raw: true,
-      }),
+      potentialRecipientGrants({ userId }),
       checkGroupNameAvailable(name),
     ]);
-    console.log({user, grants});
+    console.log({user, grants, nameAvailable});
 
     // Create a new GroupPolicy instance with the user and grants data
     const policy = new GroupPolicy(user, grants);
