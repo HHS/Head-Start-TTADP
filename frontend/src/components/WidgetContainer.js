@@ -24,10 +24,11 @@ export default function WidgetContainer(
     error,
     showHeaderBorder,
     titleSlot,
+    className,
   },
 ) {
   return (
-    <Container className="smart-hub-widget-container width-full shadow-2 padding-top-0" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
+    <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
         className="padding-x-3"
         title={title}
@@ -40,6 +41,7 @@ export default function WidgetContainer(
             offset={offset}
             perPage={perPage}
             handlePageChange={handlePageChange}
+            className="flex-justify-self-end"
           />
         ) : null}
       >
@@ -90,6 +92,7 @@ WidgetContainer.propTypes = {
   error: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
+  className: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -107,4 +110,5 @@ WidgetContainer.defaultProps = {
   error: null,
   titleSlot: null,
   loadingLabel: 'Loading',
+  className: '',
 };

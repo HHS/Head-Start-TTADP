@@ -7,22 +7,19 @@ import {
   Checkbox, Dropdown, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
-import Container from '../../components/Container';
-import Req from '../../components/Req';
-import GoalSource from '../../components/GoalForm/GoalSource';
-import GoalDate from '../../components/GoalForm/GoalDate';
+import Container from '../../../components/Container';
+import Req from '../../../components/Req';
+import GoalSource from '../../../components/GoalForm/GoalSource';
+import GoalDate from '../../../components/GoalForm/GoalDate';
 import {
   getCreatorsByRegion, getGroupsByRegion, getCuratedTemplates, createMultiRecipientGoalsFromAdmin,
-} from '../../fetchers/Admin';
-import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
-import ConditionalFieldsForHookForm from '../ActivityReport/Pages/components/ConditionalFieldsForHookForm';
-import AppLoadingContext from '../../AppLoadingContext';
+} from '../../../fetchers/Admin';
+import { getGoalTemplatePrompts } from '../../../fetchers/goalTemplates';
+import ConditionalFieldsForHookForm from '../../ActivityReport/Pages/components/ConditionalFieldsForHookForm';
+import AppLoadingContext from '../../../AppLoadingContext';
+import { REGIONS } from './constants';
 
-const REGIONS = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-];
-
-export default function Goals() {
+export default function Create() {
   const [groupOptions, setGroupOptions] = useState([]);
   const [curatedGoalOptions, setCuratedGoalOptions] = useState([]);
   const [creatorOptions, setCreatorOptions] = useState([]);
@@ -173,10 +170,10 @@ export default function Goals() {
     return (
       <>
         <Helmet>
-          <title>Goals</title>
+          <title>Create goals</title>
         </Helmet>
         <Container>
-          <h1>Goals</h1>
+          <h2>Create goals</h2>
           <p>
             Successfully created
             {' '}
@@ -214,13 +211,13 @@ export default function Goals() {
   return (
     <>
       <Helmet>
-        <title>Goals</title>
+        <title>Create goals</title>
       </Helmet>
       <Container>
-        <h1>Goals</h1>
+        <h2 className="margin-top-0">Create goals</h2>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <form className="usa-form" onSubmit={hookForm.handleSubmit(onSubmit)}>
+          <form className="usa-form maxw-tablet" onSubmit={hookForm.handleSubmit(onSubmit)}>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="region">
                 Region
