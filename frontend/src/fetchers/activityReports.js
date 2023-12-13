@@ -34,6 +34,11 @@ export const deleteReport = async (reportId) => {
   await destroy(join(activityReportUrl, reportId.toString(DECIMAL_BASE)));
 };
 
+export const getGroupsForActivityReport = async (region) => {
+  const res = await get(join(activityReportUrl, 'groups', `?region=${region}`));
+  return res.json();
+};
+
 export const unlockReport = async (reportId) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'unlock');
   const response = await put(url);
