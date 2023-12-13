@@ -442,7 +442,7 @@ export async function potentialCoOwners(
  * in all the regions they have access to.
  * @throws {Error} If there is an error retrieving the users.
  */
-export async function potentialShareWiths(
+export async function potentialSharedWith(
   groupId: number,
 ): Promise<{ userId: number, name: string }[]> {
   // Retrieve the regionIds of group creator from permissions to access reports specified by group
