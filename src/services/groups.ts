@@ -65,6 +65,7 @@ interface GroupResponse {
  * (true) or not (false).
  */
 export async function checkGroupNameAvailable(name: string, groupId?: number): Promise<boolean> {
+  console.log({ name, groupId });
   // Find an existing group with the given name and optional groupId
   const existingGroup = await Group.findOne({
     attributes: ['id'],
@@ -76,6 +77,7 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
       ...(groupId && { groupId: { [Op.not]: groupId } }),
     },
   });
+  console.log(existingGroup);
   return !!existingGroup; // Return true if an existing group is found, false otherwise
 }
 
@@ -161,10 +163,14 @@ export async function groupsByRegion(userId: number, region: number): Promise<Gr
  */
 export async function groups(userId: number, regions: number[] = []): Promise<GroupResponse[]> {
   return Group.findAll({
+    attributes: [
+      'id',
+      'name',
+    ],
     where: {
+      '$grants.regionId$': { [Op.in]: regions },
       [Op.or]: [
         {
-          '$grants.regionId$': { [Op.in]: regions },
           isPublic: true,
         },
         {
@@ -510,16 +516,36 @@ export async function potentialShareWiths(
  * @returns A promise that resolves to an array of potential recipient grants.
  * @throws If there is an error while retrieving the grants.
  */
-export async function potentialRecipientGrants(groupId: number): Promise<{
-  grantId: number,
-  grantNumber: string,
-  name: string,
-  regionId: number,
-  uei: string,
-  programType: string,
-}[]> {
+export async function potentialRecipientGrants(
+  data: { groupId?: number, userId?: number },
+): Promise<{
+    grantId: number,
+    grantNumber: string,
+    name: string,
+    regionId: number,
+    uei: string,
+    programType: string,
+  }[]> {
+  const {
+    groupId,
+    userId,
+  } = data;
+  if (groupId === null && userId === null) return [];
   // Retrieve the regionIds of group creator from permissions to read reports specified by group
-  const creatorsRegionIds = await groupCreatorRegionIds(groupId);
+  const creatorsRegionIds = groupId
+    ? await groupCreatorRegionIds(groupId)
+    : await Permission.findAll({
+      attributes: ['regionId'],
+      where: {
+        userId,
+        scopeId: [
+          SCOPES.READ_REPORTS,
+          SCOPES.READ_WRITE_REPORTS,
+          SCOPES.APPROVE_REPORTS,
+        ],
+      },
+      group: [['regionId', 'ASC']],
+    });
 
   // Retrieve grants with specific attributes and conditions
   const grants = await Grant.findAll({
@@ -568,6 +594,9 @@ export async function potentialRecipientGrants(groupId: number): Promise<{
         as: 'groupGrants',
         attributes: [],
         required: false,
+        where: {
+          ...(groupId && { groupId }),
+        },
       },
     ],
     // Return raw data instead of Sequelize model instances
