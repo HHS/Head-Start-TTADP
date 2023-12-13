@@ -21,6 +21,8 @@ import GroupPolicy from '../../policies/group';
 const NAMESPACE = 'GROUPS';
 const {
   Grant,
+  Region,
+  User,
 } = db;
 
 interface GQuery {
@@ -54,7 +56,7 @@ function checkBulkPermissions(
   groupData?: { id: number, isPublic: boolean, grants?, groupCollaborators? },
 ): boolean {
   // Negate the result of the following expression
-  return !userDatas
+  return userDatas
     // Map over the userDatas array and create a new GroupPolicy instance for each userData
     .map((userData) => (new GroupPolicy(userData, grants, groupData))[method]())
     // Check if every result is false
@@ -301,10 +303,11 @@ export async function createGroup(req: Request, res: Response) {
   try {
     // Destructure the relevant properties from the request body
     const {
-      grants: grantIds,
-      coOwners: coOwnerIds,
-      sharedWith: sharedWithIds,
-      isPublic: isPublicRaw,
+      name,
+      grants: grantIds = [],
+      coOwners: coOwnerIds = [],
+      sharedWith: sharedWithIds = [],
+      isPublic: isPublicRaw = false,
     } = req.body;
 
     // Convert the isPublicRaw string to a boolean value
@@ -313,11 +316,25 @@ export async function createGroup(req: Request, res: Response) {
     // Fetch the current user ID and related data in parallel
     const [
       userId,
-      grants,
       coOwners,
       sharedWith,
     ] = await Promise.all([
       currentUserId(req, res),
+      sharedWithIds
+        ? Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId)))
+        : Promise.resolve([]),
+      sharedWithIds
+        ? Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId)))
+        : Promise.resolve([]),
+    ]);
+
+    // Fetch the user data for the current user
+    const [
+      user,
+      grants,
+      nameAvailable,
+    ] = await Promise.all([
+      userById(userId),
       Grant.findAll({
         attributes: [
           'id',
@@ -329,32 +346,46 @@ export async function createGroup(req: Request, res: Response) {
           id: grantIds,
           status: 'Active',
         },
+        include: [{
+          model: Region,
+          as: 'region',
+          attributes: [],
+          required: true,
+          include: [{
+            model: User,
+            as: 'users',
+            attributes: [],
+            required: true,
+            where: { id: userId },
+          }],
+        }],
         raw: true,
       }),
-      Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
-      Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId))),
+      checkGroupNameAvailable(name),
     ]);
-
-    // Fetch the user data for the current user
-    const user = await userById(userId);
+    console.log({user, grants});
 
     // Create a new GroupPolicy instance with the user and grants data
     const policy = new GroupPolicy(user, grants);
+    console.log(policy);
 
     // Check if the current user can add to the group
     if (!policy.canAddToGroup()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
+    console.log('a');
 
     // Check if the co-owners have the necessary permissions
     if (!checkBulkPermissions('canAddToGroup', coOwners, grants)) {
+      console.log('aa');
       res.status(httpCodes.ACCEPTED).json({
         error: 'co-owner-permissions',
         message: GROUP_ERRORS.CO_OWNER_PERMISSIONS,
       });
       return;
     }
+    console.log('b');
 
     // Check if the sharedWith have the necessary permissions
     if (!checkBulkPermissions('canUseGroup', sharedWith, grants, { id: -1, isPublic })) {
@@ -364,21 +395,25 @@ export async function createGroup(req: Request, res: Response) {
       });
       return;
     }
+    console.log('c');
 
     // Check if the group name is already taken
-    if (await checkGroupNameAvailable(req.body.name)) {
+    if (nameAvailable) {
+      console.log('cc');
       res.status(httpCodes.ACCEPTED).json({
         error: 'new-group-name',
         message: GROUP_ERRORS.ALREADY_EXISTS,
       });
       return;
     }
+    console.log('d');
 
     // Create a new group with the filtered grants
     const groupResponse = await createNewGroup({
       ...req.body,
       grants: grants.map(({ id }) => id), // filter to only active grants
     });
+    console.log('e');
 
     // Send the group response as JSON
     res.json(groupResponse);
