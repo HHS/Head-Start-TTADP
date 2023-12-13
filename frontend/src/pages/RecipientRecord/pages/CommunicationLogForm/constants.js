@@ -11,7 +11,6 @@ const defaultLogValues = {
   duration: '',
   method: '',
   purpose: '',
-  result: '',
 };
 
 const defaultAttachmentValues = {

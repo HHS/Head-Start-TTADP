@@ -127,9 +127,9 @@ class ActivityReportObjectives{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  arOrder : integer : 1
+ closeSuspendContext : text
+ closeSuspendReason : enum
  status : varchar(255)
- suspendContext : text
- suspendReason : enum
  title : text
  ttaProvided : text
 }
@@ -583,6 +583,8 @@ class Objectives{
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone : now()
+ closeSuspendContext : text
+ closeSuspendReason : enum
  createdVia : enum
  deletedAt : timestamp with time zone
  firstCompleteAt : timestamp with time zone
@@ -595,8 +597,6 @@ class Objectives{
  lastSuspendedAt : timestamp with time zone
  rtrOrder : integer : 1
  status : varchar(255)
- suspendContext : text
- suspendReason : enum
  title : text
 }
 
