@@ -362,7 +362,7 @@ export async function getGroups(req, res) {
   try {
     // Get groups for shared users and region.
     // TODO: Add a optional check for shared users.
-    const groups = await groupsByRegion(regionNumber);
+    const groups = await groupsByRegion(regionNumber, userId);
 
     res.json(groups);
   } catch (error) {
