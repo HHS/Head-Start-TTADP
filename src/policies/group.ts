@@ -44,7 +44,7 @@ export default class Group {
 
   private userIsCollaboratorForType(types?: string[]) {
     return !!this?.group?.groupCollaborators
-      .find(({
+      ?.find(({
         user: { id: userId },
         collaboratorType: { name: collaboratorType },
       }) => userId === this.user.id
