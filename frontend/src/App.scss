@@ -1,5 +1,7 @@
 @use 'colors.scss' as *;
 
+@import './Grid.scss';
+
 @font-face {
   font-family: 'FontAwesome';
   src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
@@ -375,4 +377,10 @@ fill: #1B1B1B;
   color: $ttahub-medium-blue;
   font-weight: normal;
   text-decoration: underline;
+}
+
+@media all and (min-width: 64em){
+  .desktop\:maxw-6 {
+    max-width: 3rem;
+  }
 }

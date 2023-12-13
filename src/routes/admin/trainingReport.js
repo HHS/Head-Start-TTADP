@@ -1,10 +1,10 @@
 import express from 'express';
 import httpCodes from 'http-codes';
-import { readFileSync } from 'fs';
 import multiparty from 'multiparty';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { csvImport } from '../../services/event';
+import { bufferFromPath } from './helpers';
 
 const namespace = 'ADMIN:TRAINING_REPORT';
 const logContext = { namespace };
@@ -26,7 +26,7 @@ export async function importTrainingReport(req, res) {
       }
 
       const file = files.file[0];
-      const buf = readFileSync(file.path);
+      const buf = bufferFromPath(file.path);
       const response = await csvImport(buf);
 
       res.status(httpCodes.OK).json(response);

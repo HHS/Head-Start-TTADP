@@ -8,7 +8,7 @@ import {
   createLogByRecipientId,
 } from './handlers';
 import {
-  checkIdIdParam, checkIdParam, checkRecipientIdParam, checkRegionIdParam,
+  checkIdIdParam, checkRecipientIdParam, checkRegionIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
