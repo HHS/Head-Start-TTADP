@@ -385,7 +385,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.col('"activityRecipients"."activityReportId"'),
               sequelize.literal('\'name\''),
               sequelize.literal(`(
-                SELECT     
+                SELECT
                   CONCAT(r.name, ' - ', "activityRecipients->grant"."number", ' - ', STRING_AGG(p."programType",',')) "name"
                 FROM "Recipients" r
                 JOIN "Programs" p
@@ -415,6 +415,25 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           ),
         ),
         'recipients'],
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'fullName\''),
+              sequelize.literal(`(
+                SELECT
+                  CONCAT("activityReportCollaborators->user"."name", ' - ', STRING_AGG(r."name",',')) "fullName"
+                FROM "UserRoles" ur
+                LEFT JOIN "Roles" r
+                ON ur."userId" = "activityReportCollaborators"."userId"
+                AND ur."roleId" = r.id
+                GROUP BY "activityReportCollaborators->user"."name"
+              )`),
+            ),
+          ),
+        ), 'activityReportCollaborators'],
       ],
       group: [
         '"ActivityReport"."id"',
@@ -425,11 +444,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         '"ActivityReport"."calculatedStatus"',
         '"ActivityReport"."updatedAt"',
         '"ActivityReport"."creatorRole"',
-        '"activityReportCollaborators.id"',
-        '"activityReportCollaborators.userId"',
-        '"activityReportCollaborators.activityReportId"',
-        '"activityReportCollaborators->user.id"',
-        '"activityReportCollaborators->user.name"',
         '"author.name"',
         '"author.id"',
       ],
@@ -453,12 +467,12 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           required: false,
           model: ActivityReportCollaborator,
           as: 'activityReportCollaborators',
-          attributes: ['id', 'activityReportId', 'userId'],
+          attributes: [],
           include: [
             {
               model: User,
               as: 'user',
-              attributes: ['id', 'name'],
+              attributes: [],
             },
           ],
         },
