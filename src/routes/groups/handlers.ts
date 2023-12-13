@@ -373,7 +373,7 @@ export async function createGroup(req: Request, res: Response) {
     console.log('c');
 
     // Check if the group name is already taken
-    if (nameAvailable) {
+    if (!nameAvailable) {
       console.log('cc');
       res.status(httpCodes.ACCEPTED).json({
         error: 'new-group-name',
