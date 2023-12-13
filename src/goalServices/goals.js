@@ -2606,9 +2606,9 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
     'objective',
     sequelize,
     null,
-    id,
-    [newObjective.id],
     newObjective.id,
+    [id],
+    id,
   ));
 
   updatesToRelatedModels.push(Objective.update({
@@ -2836,7 +2836,17 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     grantToGoalDictionary[goal.grantId] = goal.id;
   });
 
-  // build goal sets for collaborator merge
+  /* build goal sets for collaborator merge
+  {
+    newGoalId: number,
+    sourceGoalIds: number[],
+    selectedGoalId: number | null,
+  }[]
+  an array of objects, one for each grant
+  newGoalId - the new goal created for the grant
+  sourceGoalIds - an array of existing goals to be merged into the new goal
+  selectedGoalId - the goal from the sourceGoalIds list for the current grant with the chosen text
+  */
   const goalSets = selectedGoals.reduce((acc, selectedGoal) => {
     const goalSet = acc.find(({ newGoalId }) => newGoalId === grantToGoalDictionary[
       grantsWithReplacementsDictionary[selectedGoal.grantId]
