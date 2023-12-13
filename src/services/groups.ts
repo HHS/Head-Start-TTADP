@@ -38,7 +38,7 @@ interface GroupResponse {
   isPublic: boolean;
 }
 
-export async function groupsByRegion(region: number, userId: number): Promise<GroupResponse[]> {
+export async function groupsByRegion(region: number, userId?: number): Promise<GroupResponse[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let where: any = {
     '$grants.regionId$': { [Op.eq]: region },
