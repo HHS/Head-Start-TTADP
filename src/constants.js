@@ -206,6 +206,7 @@ const FEATURE_FLAGS = [
   'merge_goals',
   'communication_log',
   'monitoring',
+  'closed_goal_merge_override',
 ];
 
 const MAINTENANCE_CATEGORY = {
