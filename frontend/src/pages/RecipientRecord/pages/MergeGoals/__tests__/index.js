@@ -414,6 +414,8 @@ describe('Merge goals', () => {
     const [, radioButton] = radioButtons;
     expect(radioButton).toBeChecked();
 
+    radioButtons.forEach((rb) => expect(rb).toBeDisabled());
+
     continueButton = await screen.findByRole('button', { name: 'Continue' });
     act(() => userEvent.click(continueButton));
 
