@@ -144,15 +144,17 @@ const Log = ({ datePickerKey }) => {
       </div>
       <div className="margin-top-2">
         <FormItem
-          label="Result "
+          label="Result"
           name="result"
+          required={false}
         >
           <Dropdown
-            required
             id="result"
             name="result"
-            inputRef={register({ required: 'Select a result of communication' })}
+            inputRef={register()}
+            defaultValue=""
           >
+            <option value="" disabled hidden>Select one</option>
             {COMMUNICATION_RESULTS.map((option) => (
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
