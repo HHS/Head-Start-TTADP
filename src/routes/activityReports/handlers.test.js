@@ -24,6 +24,7 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  getGroups,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -43,6 +44,7 @@ import { getObjectivesByReportId, saveObjectivesForReport } from '../../services
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
+import { groupsByRegion } from '../../services/groups';
 import { userSettingOverridesById } from '../../services/userSettings';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -93,6 +95,10 @@ jest.mock('../../goalServices/goals', () => ({
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
+}));
+
+jest.mock('../../services/groups', () => ({
+  groupsByRegion: jest.fn(),
 }));
 
 jest.mock('../../policies/user');
@@ -595,6 +601,28 @@ describe('Activity Report handlers', () => {
       const response = [{ name: 'name', id: 1 }];
       usersWithPermissions.mockResolvedValue(response);
       await getApprovers({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getGroups', () => {
+    it('returns a list of groups', async () => {
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      groupsByRegion.mockResolvedValue(response);
+      await getGroups({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+
+    it('handles unauthorized', async () => {
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => false,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      groupsByRegion.mockResolvedValue(response);
+      await getGroups({ ...mockRequest, query: { region: 1 } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
