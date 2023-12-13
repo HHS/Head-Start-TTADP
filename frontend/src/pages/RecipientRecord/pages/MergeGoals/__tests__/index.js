@@ -410,8 +410,8 @@ describe('Merge goals', () => {
     expect(await screen.findByText(/If a goal uses text associated with an OHS initiative, it will automatically/i)).toBeInTheDocument();
 
     const radioButtons = await screen.findAllByRole('radio');
-    expect(radioButtons.length).toBe(1);
-    const [radioButton] = radioButtons;
+    expect(radioButtons.length).toBe(2);
+    const [, radioButton] = radioButtons;
     expect(radioButton).toBeChecked();
 
     continueButton = await screen.findByRole('button', { name: 'Continue' });
