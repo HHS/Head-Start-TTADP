@@ -163,6 +163,21 @@ describe('resource worker tests', () => {
     );
   });
 
+  it('non-eclkc error on resource title get', async () => {
+    // Mock TITLE get.
+    const axiosHtmlScrapeError = new Error();
+    axiosHtmlScrapeError.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosHtmlScrapeError));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceId: 100000, resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign' } });
+
+    // Check the response.
+    expect(got.status).toBe(500);
+  });
+
   it('tests a clean resource metadata get', async () => {
     // Metadata.
     mockAxios.mockImplementationOnce(() => Promise.resolve({
