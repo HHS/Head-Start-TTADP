@@ -71,11 +71,22 @@ describe('Merge goals', () => {
     ],
   };
 
-  const renderTest = (ids = GOAL_IDS, canMergeGoals = true) => {
+  const adminUser = {
+    name: 'admin@admin.com',
+    homeRegionId: 1,
+    permissions: [
+      {
+        scopeId: SCOPE_IDS.ADMIN,
+        regionId: 1,
+      },
+    ],
+  };
+
+  const renderTest = (ids = GOAL_IDS, canMergeGoals = true, isAdmin = false) => {
     render(
       <Router history={memoryHistory}>
         <AppLoadingContext.Provider value={{ setIsAppLoading }}>
-          <UserContext.Provider value={{ user }}>
+          <UserContext.Provider value={{ user: isAdmin ? adminUser : user }}>
             <FilterContext.Provider value={{ filterKey: 'test' }}>
               <MergeGoals
                 recipientId={String(RECIPIENT_ID)}
@@ -338,6 +349,53 @@ describe('Merge goals', () => {
     ];
     fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: gs });
     renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const selectAll = await screen.findByLabelText('Select all');
+    act(() => userEvent.click(selectAll));
+
+    let continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    let newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    expect(await screen.findByText(/If a goal uses text associated with an OHS initiative, it will automatically/i)).toBeInTheDocument();
+
+    const radioButtons = await screen.findAllByRole('radio');
+    expect(radioButtons.length).toBe(1);
+    const [radioButton] = radioButtons;
+    expect(radioButton).toBeChecked();
+
+    continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
+    expect(label.textContent).toBe('In progress');
+
+    const submitButton = await screen.findByRole('button', { name: 'Merge goals' });
+    act(() => userEvent.click(submitButton));
+
+    newPageHeadings = await screen.findAllByText(/review merged goal/i);
+    expect(newPageHeadings.length).toBeTruthy();
+  });
+
+  it('can merge multiple curated goals', async () => {
+    const gs = [
+      {
+        ...goals[0],
+        isCurated: true,
+      },
+      {
+        ...goals[1],
+        isCurated: true,
+      },
+    ];
+    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: gs });
+    renderTest(GOAL_IDS, true, true);
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
     const selectAll = await screen.findByLabelText('Select all');
