@@ -252,4 +252,185 @@ describe('Groups service', () => {
       expect(currentGroupGrants).toHaveLength(0);
     });
   });
+
+  describe('getGroups', () => {
+    let recipientIds;
+    let grantIds;
+    let groupIds;
+    let groupUser;
+    beforeAll(async () => {
+      // Create a user.
+      groupUser = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        name: 'user1474265161',
+        hsesUsername: 'user1474265161',
+        hsesUserId: 'user1474265161',
+        lastLogin: new Date(),
+      });
+
+      // Create a recipient 1.
+      const recipientOne = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      // Create a recipient 2.
+      const recipientTwo = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      // Create a recipient 3.
+      const recipientThree = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      // Set the recipient ids.
+      recipientIds = [recipientOne.id, recipientTwo.id, recipientThree.id];
+
+      // Create a grant for region 1.
+      const g1 = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientOne.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      // Create a second grant for region 1.
+      const g2 = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientTwo.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      // Create a third grant for region 2.
+      const g3 = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientThree.id,
+        regionId: 2,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      // Set the grant ids.
+      grantIds = [g1.id, g2.id, g3.id];
+
+      // Create a public group for the user.
+      const publicGroupRegion1 = await Group.create({
+        name: 'Public Group Region 1',
+        userId: groupUser.id,
+        isPublic: true,
+      });
+
+      // Create a private group for the user.
+      const privateGroupRegion1 = await Group.create({
+        name: 'Private Group Region 1',
+        userId: groupUser.id,
+        isPublic: false,
+      });
+
+      // Create a public group for region 2.
+      const publicGroupRegion2 = await Group.create({
+        name: 'Public Group Region 2',
+        userId: groupUser.id,
+        isPublic: true,
+      });
+
+      // Set the group ids.
+      groupIds = [
+        publicGroupRegion1.id,
+        privateGroupRegion1.id,
+        publicGroupRegion2.id,
+      ];
+
+      // Add the grants to the groups.
+      await GroupGrant.create({
+        groupId: publicGroupRegion1.id,
+        grantId: g1.id,
+      });
+
+      await GroupGrant.create({
+        groupId: privateGroupRegion1.id,
+        grantId: g2.id,
+      });
+
+      await GroupGrant.create({
+        groupId: publicGroupRegion2.id,
+        grantId: g3.id,
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy the GroupGrant records.
+      await GroupGrant.destroy({
+        where: {
+          groupId: groupIds,
+        },
+      });
+
+      // Destroy the Group records.
+      await Group.destroy({
+        where: {
+          id: groupIds,
+        },
+      });
+
+      // Destroy the Grant records.
+      await Grant.destroy({
+        where: {
+          id: grantIds,
+        },
+      });
+
+      // Destroy the Recipient records.
+      await Recipient.destroy({
+        where: {
+          id: recipientIds,
+        },
+      });
+
+      // Destroy the User record.
+      await User.destroy({
+        where: {
+          id: groupUser.id,
+        },
+      });
+    });
+
+    it('get a public and private user groups for report region', async () => {
+      const result = await groupsByRegion(1, groupUser.id);
+
+      // From result get all the groups with ids in groupIds.
+      const groupsToCheck = result.filter((g) => groupIds.includes(g.id));
+      expect(groupsToCheck).toHaveLength(2);
+
+      // Find the Group with the name 'Public Group Region 1'.
+      const publicGroupRegion1 = groupsToCheck.find((g) => g.name === 'Public Group Region 1');
+      expect(publicGroupRegion1).toBeDefined();
+
+      // Find the Group with the name 'Private Group Region 1'.
+      const privateGroupRegion1 = groupsToCheck.find((g) => g.name === 'Private Group Region 1');
+      expect(privateGroupRegion1).toBeDefined();
+    });
+
+    it('get a public user groups for report region', async () => {
+      const result = await groupsByRegion(1, faker.datatype.number());
+
+      // From result get all the groups with ids in groupIds.
+      const groupsToCheck = result.filter((g) => groupIds.includes(g.id));
+      expect(groupsToCheck).toHaveLength(1);
+
+      // Find the Group with the name 'Public Group Region 1'.
+      const publicGroupRegion1 = groupsToCheck.find((g) => g.name === 'Public Group Region 1');
+      expect(publicGroupRegion1).toBeDefined();
+    });
+  });
 });

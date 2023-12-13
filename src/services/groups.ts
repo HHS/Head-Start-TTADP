@@ -38,16 +38,29 @@ interface GroupResponse {
   isPublic: boolean;
 }
 
-export async function groupsByRegion(region: number): Promise<GroupResponse[]> {
+export async function groupsByRegion(region: number, userId: number): Promise<GroupResponse[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let where: any = {
+    '$grants.regionId$': { [Op.eq]: region },
+  };
+
+  if (userId) {
+    where = {
+      ...where,
+      [Op.or]: [
+        { userId },
+        { isPublic: true },
+      ],
+    };
+  }
+
   return Group.findAll({
     attributes: [
       'id',
       'name',
       'userId',
     ],
-    where: {
-      '$grants.regionId$': { [Op.eq]: region },
-    },
+    where,
     include: [
       {
         attributes: [
