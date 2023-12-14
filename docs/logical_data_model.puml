@@ -680,8 +680,10 @@ class Resources{
  * domain : text
  * updatedAt : timestamp with time zone
  * url : text
+ lastStatusCode : integer
  metadata : jsonb
  metadataUpdatedAt : timestamp with time zone
+ mimeType : varchar(255)
  title : text
 }
 
