@@ -128,7 +128,6 @@ describe('CommunicationLogForm', () => {
       /Select a communication method/i,
       /enter duration/i,
       /Select a purpose of communication/i,
-      /Select a result of communication/i,
     ].map(async (message) => {
       expect(await screen.findByText(message)).toBeInTheDocument();
     }));

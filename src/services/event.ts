@@ -451,6 +451,7 @@ const mappings: Record<string, string> = {
   Audience: 'audience',
   Creator: 'creator',
   'Edit Title': 'eventName',
+  'Event Title': 'eventName',
   'Event Duration/#NC Days of Support': 'eventDuration',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
