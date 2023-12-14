@@ -21,6 +21,7 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  getReportsByManyIds,
 } from './handlers';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -49,6 +50,7 @@ router.get('/download-all', nameTransactionByPath, transactionWrapper(downloadAl
 router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, transactionWrapper(updateLegacyFields));
 router.get('/:activityReportId', nameTransactionByBase, checkActivityReportIdParam, transactionWrapper(getReport));
 router.get('/', transactionWrapper(getReports));
+router.post('/reportsByManyIds', transactionWrapper(getReportsByManyIds));
 router.put('/:activityReportId', checkActivityReportIdParam, transactionWrapper(saveReport));
 router.delete('/:activityReportId', checkActivityReportIdParam, transactionWrapper(softDeleteReport));
 router.put('/:activityReportId/reset', checkActivityReportIdParam, transactionWrapper(resetToDraft));

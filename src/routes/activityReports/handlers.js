@@ -719,6 +719,32 @@ export async function getReports(req, res) {
 }
 
 /**
+ * Retrieve activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReportsByManyIds(req, res) {
+  try {
+    const userId = await currentUserId(req, res);
+
+    const {
+      reportIds,
+      ...query
+    } = req.body;
+
+    const reportsWithCount = await activityReports(query, false, userId, reportIds);
+    if (!reportsWithCount) {
+      res.sendStatus(404);
+    } else {
+      res.json(reportsWithCount);
+    }
+  } catch (err) {
+    await handleErrors(req, res, err, logContext);
+  }
+}
+
+/**
  * Retrieve activity report alerts
  *
  * @param {*} req - request
