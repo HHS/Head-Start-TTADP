@@ -24,6 +24,7 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  getReportsByManyIds,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -996,5 +997,53 @@ describe('Activity Report handlers', () => {
       );
       expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
     });
+  });
+});
+
+describe('getReportsByManyIds', () => {
+  const req = {
+    body: {
+      reportIds: [1, 2, 3],
+    },
+  };
+
+  const res = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+  };
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return reports with count if found', async () => {
+    const mockReportsWithCount = [{ id: 1, name: 'Report 1' }, { id: 2, name: 'Report 2' }];
+    activityReports.mockResolvedValue(mockReportsWithCount);
+
+    await getReportsByManyIds(req, res);
+
+    expect(activityReports).toHaveBeenCalledWith(
+      {},
+      false,
+      expect.any(Number),
+      req.body.reportIds,
+    );
+    expect(res.json).toHaveBeenCalledWith(mockReportsWithCount);
+    expect(res.sendStatus).not.toHaveBeenCalled();
+  });
+
+  it('should send 404 status if reports not found', async () => {
+    activityReports.mockResolvedValue(null);
+
+    await getReportsByManyIds(req, res);
+
+    expect(activityReports).toHaveBeenCalledWith(
+      {},
+      false,
+      expect.any(Number),
+      req.body.reportIds,
+    );
+    expect(res.json).not.toHaveBeenCalled();
+    expect(res.sendStatus).toHaveBeenCalledWith(404);
   });
 });
