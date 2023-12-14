@@ -1,6 +1,7 @@
 /* eslint-disable no-useless-escape */
 import axios from 'axios';
 import { expect } from '@playwright/test';
+import { auditLogger } from '../logger';
 import { getResourceMetaDataJob } from './resource';
 import db, { Resource } from '../models';
 
@@ -15,9 +16,9 @@ const urlReturn = `
 <meta name="language" content="en" />
 <meta name="topic" content="Mental Health" />
 <meta name="resource-type" content="Article" />
-<meta ="national-centers" content="Health, Behavioral Health, and Safety" />
+<meta name="national-centers" content="Health, Behavioral Health, and Safety" />
 <meta name="node-id" content="7858" />
-<meta ="exclude-from-dynamic-view" content="False" />
+<meta name="exclude-from-dynamic-view" content="False" />
 <script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
 <link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
 <link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
@@ -88,8 +89,10 @@ const metadata = {
 };
 
 const mockAxios = jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve());
-const axiosCleanResponse = { status: 200, data: urlReturn };
-const axiosNoTitleResponse = { status: 404, data: urlMissingTitle };
+const mockAxiosHead = jest.spyOn(axios, 'head').mockImplementation(() => Promise.resolve());
+const axiosCleanMimeResponse = { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } };
+const axiosCleanResponse = { ...axiosCleanMimeResponse, data: urlReturn };
+const axiosNoTitleResponse = { status: 404, data: urlMissingTitle, headers: { 'content-type': 'text/html; charset=utf-8' } };
 const axiosResourceNotFound = { status: 404, data: 'Not Found' };
 const axiosError = new Error();
 axiosError.response = { status: 500, data: 'Error' };
@@ -108,10 +111,11 @@ describe('resource worker tests', () => {
   it('non-eclkc clean resource title get', async () => {
     // Mock TITLE get.
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     // Call the function.
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign' } });
+    const got = await getResourceMetaDataJob({ data: { resourceId: 100000, resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign' } });
 
     // Check the response.
     expect(got.status).toBe(200);
@@ -122,29 +126,76 @@ describe('resource worker tests', () => {
     // Check the axios call.
     expect(mockAxios).toBeCalled();
 
+    // expect mockUpdate to have only been called once.
+    expect(mockUpdate).toBeCalledTimes(2);
+
     // Check title update.
-    expect(mockUpdate).toBeCalledWith(
-      { title: 'Head Start | ECLKC' },
-      { where: { url: 'https://test.gov/mental-health/article/head-start-heals-campaign' }, individualHooks: false },
+    expect(mockUpdate).toHaveBeenNthCalledWith(
+      1,
+      {
+        // title: 'Head Start | ECLKC',
+        lastStatusCode: 200,
+        mimeType: axiosCleanResponse.headers['content-type'],
+      },
+      {
+        where: { url: 'https://test.gov/mental-health/article/head-start-heals-campaign' },
+        individualHooks: true,
+      },
     );
 
-    // expect mockUpdate to have only been called once.
-    expect(mockUpdate).toBeCalledTimes(1);
+    expect(mockUpdate).toHaveBeenLastCalledWith(
+      {
+        title: 'Head Start | ECLKC',
+        lastStatusCode: 200,
+        mimeType: axiosCleanResponse.headers['content-type'],
+        metadata: {
+          language: 'en',
+          topic: 'Mental Health',
+          'resource-type': 'Article',
+          'national-centers': 'Health, Behavioral Health, and Safety',
+          'node-id': '7858',
+          'exclude-from-dynamic-view': 'False',
+          title: 'Head Start | ECLKC',
+        },
+        metadataUpdatedAt: expect.anything(),
+      },
+      { where: { url: 'https://test.gov/mental-health/article/head-start-heals-campaign' }, individualHooks: true },
+    );
+  });
+
+  it('non-eclkc error on resource title get', async () => {
+    // Mock TITLE get.
+    const axiosHtmlScrapeError = new Error();
+    axiosHtmlScrapeError.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosHtmlScrapeError));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceId: 100000, resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign' } });
+
+    // Check the response.
+    expect(got.status).toBe(500);
   });
 
   it('tests a clean resource metadata get', async () => {
     // Metadata.
-    mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: metadata }));
+    mockAxios.mockImplementationOnce(() => Promise.resolve({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      data: metadata,
+    }));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
 
-    expect(mockUpdate).toBeCalledTimes(1);
+    expect(mockUpdate).toBeCalledTimes(2);
 
     // Check the update call.
-    expect(mockUpdate).toBeCalledWith(
+    expect(mockUpdate).toHaveBeenLastCalledWith(
       {
         metadata: {
           changed: [
@@ -155,21 +206,6 @@ describe('resource worker tests', () => {
           created: [
             {
               value: '2020-04-21T15:20:23+00:00',
-            },
-          ],
-          fieldContext: [
-            {
-              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
-            },
-          ],
-          fieldTaxonomyNationalCenters: [
-            {
-              target_type: 'taxonomy_term',
-            },
-          ],
-          fieldTaxonomyTopic: [
-            {
-              target_type: 'taxonomy_term',
             },
           ],
           field_context: [
@@ -200,10 +236,10 @@ describe('resource worker tests', () => {
         },
         metadataUpdatedAt: expect.anything(),
         title: 'Head Start Heals Campaign',
+        lastStatusCode: 200,
       },
       {
-        individualHooks: false,
-        returning: true,
+        individualHooks: true,
         where: {
           url: 'http://www.eclkc.ohs.acf.hhs.gov',
         },
@@ -211,10 +247,206 @@ describe('resource worker tests', () => {
     );
   });
 
-  it('eclkc resource we get metadata but no title', async () => {
+  it('tests a clean resource metadata get with a url that has params', async () => {
     // Metadata.
-    // eslint-disable-next-line max-len
-    mockAxios.mockImplementationOnce(() => Promise.resolve({ status: 200, data: { ...metadata, title: null } }));
+    mockAxios.mockImplementationOnce(() => Promise.resolve({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      data: metadata,
+    }));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1' } });
+    expect(got.status).toBe(200);
+    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1' });
+
+    expect(mockUpdate).toBeCalledTimes(2);
+
+    expect(mockAxios).toBeCalledWith(
+      'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1&_format=json',
+      {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        maxRedirects: 25,
+        responseEncoding: 'utf8',
+      },
+    );
+
+    // Check the update call.
+    expect(mockUpdate).toHaveBeenLastCalledWith(
+      {
+        metadata: {
+          changed: [
+            {
+              value: '2023-05-26T18:57:15+00:00',
+            },
+          ],
+          created: [
+            {
+              value: '2020-04-21T15:20:23+00:00',
+            },
+          ],
+          field_context: [
+            {
+              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+            },
+          ],
+          field_taxonomy_national_centers: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          field_taxonomy_topic: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          langcode: [
+            {
+              value: 'en',
+            },
+          ],
+          title: [
+            {
+              value: 'Head Start Heals Campaign',
+            },
+          ],
+        },
+        metadataUpdatedAt: expect.anything(),
+        title: 'Head Start Heals Campaign',
+        lastStatusCode: 200,
+      },
+      {
+        individualHooks: true,
+        where: {
+          url: 'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1',
+        },
+      },
+    );
+  });
+
+  it('tests a clean resource metadata get with a url that has a pound sign', async () => {
+    // Metadata.
+    mockAxios.mockImplementationOnce(() => Promise.resolve({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      data: metadata,
+    }));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov/section#2' } });
+    expect(got.status).toBe(200);
+    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov/section#2' });
+
+    expect(mockUpdate).toBeCalledTimes(2);
+
+    // Expect axios get to have been called with the correct url.
+    expect(mockAxios).toBeCalledWith(
+      'http://www.eclkc.ohs.acf.hhs.gov/section?_format=json',
+      {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        maxRedirects: 25,
+        responseEncoding: 'utf8',
+      },
+    );
+
+    // Check the update call.
+    expect(mockUpdate).toHaveBeenLastCalledWith(
+      {
+        metadata: {
+          changed: [
+            {
+              value: '2023-05-26T18:57:15+00:00',
+            },
+          ],
+          created: [
+            {
+              value: '2020-04-21T15:20:23+00:00',
+            },
+          ],
+          field_context: [
+            {
+              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+            },
+          ],
+          field_taxonomy_national_centers: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          field_taxonomy_topic: [
+            {
+              target_type: 'taxonomy_term',
+            },
+          ],
+          langcode: [
+            {
+              value: 'en',
+            },
+          ],
+          title: [
+            {
+              value: 'Head Start Heals Campaign',
+            },
+          ],
+        },
+        metadataUpdatedAt: expect.anything(),
+        title: 'Head Start Heals Campaign',
+        lastStatusCode: 200,
+      },
+      {
+        individualHooks: true,
+        where: {
+          url: 'http://www.eclkc.ohs.acf.hhs.gov/section#2',
+        },
+      },
+    );
+  });
+
+  it('tests error with a response from get metadata', async () => {
+    const axiosMetadataErrorResponse = new Error();
+    axiosMetadataErrorResponse.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    mockAxios.mockImplementationOnce(
+      () => Promise.reject(axiosMetadataErrorResponse),
+    ).mockImplementationOnce(() => Promise.resolve(axiosMetadataErrorResponse));
+
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    expect(got.status).toBe(500);
+    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+
+    expect(mockUpdate).toBeCalledTimes(2);
+  });
+
+  it('tests error without a response from get metadata', async () => {
+    const axiosMetadataErrorResponse = new Error();
+    axiosMetadataErrorResponse.response = { data: 'Error' };
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosMetadataErrorResponse));
+
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
+
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+
+    // Verify auditlogger.error was called with the message we expect.
+    expect(auditLogger.error).toBeCalledTimes(3);
+  });
+
+  it('eclkc resource we get metadata but no title', async () => {
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
+    mockAxios.mockImplementationOnce(() => Promise.resolve({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      data: { ...metadata, title: null },
+    }));
+    mockAxios.mockImplementationOnce(() => Promise.resolve({
+      status: 200,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+      data: urlMissingTitle,
+    }));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     // Scrape.
@@ -226,6 +458,18 @@ describe('resource worker tests', () => {
     expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
 
     expect(mockUpdate).toBeCalledTimes(2);
+
+    // Check title scrape update..
+    expect(mockUpdate).toBeCalledWith(
+      {
+        lastStatusCode: 200,
+        mimeType: 'text/html; charset=utf-8',
+      },
+      {
+        individualHooks: true,
+        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
+      },
+    );
 
     // Check the update call.
     expect(mockUpdate).toBeCalledWith(
@@ -239,21 +483,6 @@ describe('resource worker tests', () => {
           created: [
             {
               value: '2020-04-21T15:20:23+00:00',
-            },
-          ],
-          fieldContext: [
-            {
-              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
-            },
-          ],
-          fieldTaxonomyNationalCenters: [
-            {
-              target_type: 'taxonomy_term',
-            },
-          ],
-          fieldTaxonomyTopic: [
-            {
-              target_type: 'taxonomy_term',
             },
           ],
           field_context: [
@@ -279,63 +508,101 @@ describe('resource worker tests', () => {
           title: null,
         },
         metadataUpdatedAt: expect.anything(),
-        title: null,
+        title: 'null',
+        lastStatusCode: 200,
       },
       {
-        individualHooks: false,
-        returning: true,
+        individualHooks: true,
         where: {
           url: 'http://www.eclkc.ohs.acf.hhs.gov',
         },
       },
     );
-    // Check title scrape update..
-    expect(mockUpdate).toBeCalledWith(
-      {
-        title: 'Head Start | ECLKC',
-      },
-      {
-        individualHooks: false,
-        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
-      },
-    );
   });
 
   it('non-eclkc resource missing title', async () => {
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
     expect(got.status).toBe(404);
     expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
-    expect(mockAxios).toBeCalled();
-    expect(mockUpdate).not.toBeCalled();
+    expect(mockAxiosHead).toBeCalled();
+    expect(mockAxios).not.toBeCalled();
+    expect(mockUpdate).toBeCalled();
   });
 
   it('non-eclkc resource url not found', async () => {
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
     expect(got.status).toBe(404);
     expect(got.data).toStrictEqual({ url: 'http://www.test.gov' });
-    expect(mockAxios).toBeCalled();
-    expect(mockUpdate).not.toBeCalledWith();
+    expect(mockAxiosHead).toBeCalled();
+    expect(mockAxios).not.toBeCalled();
+    expect(mockUpdate).toBeCalled();
   });
 
   it('eclkc resource url not found', async () => {
-    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
+    mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
     expect(got.status).toBe(404);
     expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
-    expect(mockAxios).toBeCalled();
-    expect(mockUpdate).not.toBeCalledWith();
+    expect(mockAxiosHead).toBeCalled();
+    expect(mockAxios).not.toBeCalled();
+    expect(mockUpdate).toBeCalled();
   });
 
-  it('non-eclkc resource handles error', async () => {
-    mockAxios.mockImplementationOnce(() => Promise.reject(axiosError));
-    await expect(getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } })).rejects.toThrow(Error);
+  it('get mime type handles error response correctly', async () => {
+    // Mock auditLogger.error.
+    const mockAuditLogger = jest.spyOn(auditLogger, 'error');
+    // Mock error on axios head error.
+    const axiosMimeError = new Error();
+    axiosMimeError.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    mockAxiosHead.mockImplementationOnce(() => Promise.reject(axiosMimeError));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
+    // Check the response.
+    expect(got.status).toBe(500);
+
+    // Expect auditLogger.error to have been called with the correct message.
+    expect(mockAuditLogger).toBeCalledTimes(2);
+
+    // Check the axios call.
+    expect(mockAxiosHead).toBeCalled();
+
+    // Check the update call.
+    expect(mockUpdate).toBeCalledTimes(1);
+
+    // Check the update call.
+    expect(mockUpdate).toBeCalledWith(
+      {
+        lastStatusCode: 500,
+        mimeType: 'text/html; charset=utf-8',
+      },
+      {
+        individualHooks: true,
+        where: {
+          url: 'http://www.test.gov',
+        },
+      },
+    );
   });
 
-  it('eclkc resource handles error', async () => {
-    mockAxios.mockImplementationOnce(() => Promise.reject(axiosError));
-    await expect(getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } })).rejects.toThrow(Error);
+  it('get mime type handles no error response correctly', async () => {
+    // Mock error on axios head error.
+    const axiosMimeError = new Error();
+    axiosMimeError.response = { data: 'Error' };
+    mockAxiosHead.mockImplementationOnce(() => Promise.reject(axiosMimeError));
+
+    // Call the function.
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
+
+    // Check the response.
+    expect(got).toEqual({
+      status: 500,
+      data: { url: 'http://www.test.gov' },
+    });
   });
 });
