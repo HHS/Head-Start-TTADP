@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import db from '../models';
 
 const {
@@ -40,7 +40,7 @@ interface GroupResponse {
 
 export async function groupsByRegion(region: number, userId?: number): Promise<GroupResponse[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let where: any = {
+  let where: WhereOptions = {
     '$grants.regionId$': { [Op.eq]: region },
   };
 
