@@ -47,6 +47,7 @@ import {
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { currentUserId } from '../../services/currentUser';
+import { groupsByRegion } from '../../services/groups';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -335,6 +336,35 @@ export async function getApprovers(req, res) {
   try {
     const users = await usersWithPermissions([region], [APPROVE_REPORTS]);
     res.json(users);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Gets all groups that are shared for this user in the region.
+ * regions.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getGroups(req, res) {
+  const { region } = req.query;
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const authorization = new User(user);
+  const regionNumber = parseInt(region, DECIMAL_BASE);
+  if (!authorization.canWriteInRegion(regionNumber)) {
+    res.sendStatus(403);
+    return;
+  }
+
+  try {
+    // Get groups for shared users and region.
+    // TODO: Add a optional check for shared users.
+    const groups = await groupsByRegion(regionNumber);
+
+    res.json(groups);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
