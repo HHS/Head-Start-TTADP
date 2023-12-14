@@ -3,6 +3,7 @@ import React, {
   useMemo,
   useState,
   useCallback,
+  useEffect,
 } from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +21,10 @@ import ResourceUse from '../../widgets/ResourceUse';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
 import { fetchResourceData } from '../../fetchers/Resources';
-import { downloadReports } from '../../fetchers/activityReports';
+import {
+  downloadReports,
+  getReportsViaIdPost,
+} from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
@@ -45,9 +49,14 @@ export default function ResourcesDashboard() {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
   const [isLoading, setIsLoading] = useState(false);
+  const [areReportsLoading, setAreReportsLoading] = useState(false);
   const [resourcesData, setResourcesData] = useState({});
   const [error, updateError] = useState();
   const [resetPagination, setResetPagination] = useState(false);
+  const [activityReports, setActivityReports] = useState({
+    count: 0,
+    rows: [],
+  });
   const hasCentralOffice = useMemo(() => (
     user && user.homeRegionId && user.homeRegionId === 14
   ), [user]);
@@ -105,7 +114,12 @@ export default function ResourcesDashboard() {
   const setFilters = useCallback((newFilters) => {
     setFiltersInHook(newFilters);
     setResetPagination(true);
-  }, [setFiltersInHook]);
+    setActivityReportOffset(0);
+    setActivityReportSortConfig({
+      ...activityReportSortConfig,
+      activePage: 1,
+    });
+  }, [activityReportSortConfig, setActivityReportSortConfig, setFiltersInHook]);
 
   // Remove Filters.
   const onRemoveFilter = (id, addBackDefaultRegions) => {
@@ -141,8 +155,39 @@ export default function ResourcesDashboard() {
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
-  const { activityReports, reportIds } = resourcesData;
-  const { count: reportsCount, rows: reports } = activityReports || {};
+  const { reportIds } = resourcesData;
+
+  useEffect(() => {
+    async function fetchReports() {
+      try {
+        setAreReportsLoading(true);
+        const data = await getReportsViaIdPost(
+          resourcesData.reportIds,
+          activityReportSortConfig.sortBy,
+          activityReportSortConfig.direction,
+          activityReportOffset,
+          REPORTS_PER_PAGE,
+        );
+        setActivityReports(data);
+        updateError('');
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch reports');
+      } finally {
+        setAreReportsLoading(false);
+      }
+    }
+
+    if (resourcesData.reportIds && resourcesData.reportIds.length > 0) {
+      fetchReports();
+    }
+  }, [
+    activityReportOffset,
+    activityReportSortConfig.direction,
+    activityReportSortConfig.sortBy,
+    resourcesData.reportIds,
+  ]);
 
   useDeepCompareEffect(() => {
     async function fetcHResourcesData() {
@@ -152,17 +197,10 @@ export default function ResourcesDashboard() {
       try {
         const data = await fetchResourceData(
           filterQuery,
-          {
-            ...activityReportSortConfig,
-            offset: activityReportOffset,
-            limit: REPORTS_PER_PAGE,
-          },
         );
         setResourcesData(data);
         updateError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
         updateError('Unable to fetch resources');
       } finally {
         setIsLoading(false);
@@ -170,7 +208,9 @@ export default function ResourcesDashboard() {
     }
     // Call resources fetch.
     fetcHResourcesData();
-  }, [activityReportOffset, activityReportSortConfig, filtersToApply]);
+  }, [
+    filtersToApply,
+  ]);
 
   const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
     try {
@@ -209,7 +249,7 @@ export default function ResourcesDashboard() {
     downloadSelectedButtonRef,
   ) => {
     const toDownloadableReportIds = (accumulator, entry) => {
-      if (!reports) return accumulator;
+      if (!activityReports.rows) return accumulator;
       const [key, value] = entry;
       if (value === false) return accumulator;
       accumulator.push(key);
@@ -282,8 +322,8 @@ export default function ResourcesDashboard() {
           setResetPagination={setResetPagination}
         />
         <ReportsTable
-          loading={isLoading}
-          reports={reports || []}
+          loading={areReportsLoading}
+          reports={activityReports.rows}
           sortConfig={activityReportSortConfig}
           handleDownloadAllReports={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
@@ -292,7 +332,7 @@ export default function ResourcesDashboard() {
           setOffset={setActivityReportOffset}
           tableCaption="Activity Reports"
           exportIdPrefix="activity-reports"
-          reportsCount={reportsCount || 0}
+          reportsCount={activityReports.count}
           activePage={activePage}
         />
       </>
