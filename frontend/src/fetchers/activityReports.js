@@ -57,6 +57,18 @@ export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset 
   return combineReportDataFromApi(json);
 };
 
+export const getReportsViaIdPost = async (reportIds, sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE) => {
+  const reports = await post(`${activityReportUrl}/reportsByManyIds`, {
+    reportIds,
+    sortBy,
+    sortDir,
+    offset,
+    limit,
+  });
+  const json = await reports.json();
+  return combineReportDataFromApi(json);
+};
+
 export const getReportsForLocalStorageCleanup = async () => {
   const reports = await get(activityReportsLocalStorageCleanupUrl);
   return reports.json();

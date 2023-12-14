@@ -95,17 +95,6 @@ const resourcesDefault = {
     },
     ],
   },
-  activityReports: {
-    count: 1,
-    rows: [{
-      id: 1,
-      sortedTopics: [],
-      activityRecipients: [],
-      displayId: 'R-1-23',
-    }],
-    topics: [],
-    recipients: [],
-  },
   reportIds: [1, 2, 3],
 };
 
@@ -172,12 +161,6 @@ const resourcesRegion1 = {
       ],
     },
     ],
-  },
-  activityReports: {
-    count: 0,
-    rows: [],
-    topics: [],
-    recipients: [],
   },
   reportIds: [],
 };
@@ -255,12 +238,19 @@ const resourcesRegion2 = {
   reportIds: [],
 };
 
+const reportResponse = {
+  count: 0,
+  rows: [],
+  topics: [],
+  recipients: [],
+};
+
 const allRegions = 'region.in[]=1&region.in[]=2';
 const mockAnnounce = jest.fn();
 const regionInParams = 'region.in[]=1';
 const regionTwoInParams = 'region.in[]=2';
 const reportIdInParams = 'region.in[]=1&region.in[]=2&reportId.ctn[]=123';
-const sortParams = '&sortBy=updatedAt&direction=desc&activePage=1&offset=0&limit=10';
+const reportPostUrl = '/api/activity-reports/reportsByManyIds';
 
 describe('Resources Dashboard page', () => {
   afterEach(() => fetchMock.restore());
@@ -278,17 +268,19 @@ describe('Resources Dashboard page', () => {
 
   it('renders correctly', async () => {
     // Page Load.
-    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}${sortParams}`, resourcesDefault);
-    fetchMock.get(`${resourcesUrl}?${allRegions}${sortParams}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
 
     // Region 1.
-    fetchMock.get(`${resourcesUrl}?${regionInParams}${sortParams}`, resourcesRegion1);
+    fetchMock.get(`${resourcesUrl}?${regionInParams}`, resourcesRegion1);
 
     // Region 2.
-    fetchMock.get(`${resourcesUrl}?${regionTwoInParams}${sortParams}`, resourcesRegion2);
+    fetchMock.get(`${resourcesUrl}?${regionTwoInParams}`, resourcesRegion2);
 
     // Report ID (non-region).
-    fetchMock.get(`${resourcesUrl}?${reportIdInParams}${sortParams}`, resourcesRegion2);
+    fetchMock.get(`${resourcesUrl}?${reportIdInParams}`, resourcesRegion2);
+
+    fetchMock.post(reportPostUrl, reportResponse);
 
     const user = {
       homeRegionId: 14,
@@ -455,9 +447,9 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/565/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -529,9 +521,9 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/565/i)).toBeVisible();
-    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -591,7 +583,8 @@ describe('Resources Dashboard page', () => {
 
   it('handles errors by displaying an error message', async () => {
     // Page Load.
-    fetchMock.get(`${resourcesUrl}?${allRegions}${sortParams}`, 500, { overwriteRoutes: true });
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, 500, { overwriteRoutes: true });
+    fetchMock.post(reportPostUrl, reportResponse);
 
     const user = {
       homeRegionId: 14,
@@ -613,8 +606,19 @@ describe('Resources Dashboard page', () => {
 
   it('exports reports en masse', async () => {
     // Page Load.
-    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}${sortParams}`, resourcesDefault);
-    fetchMock.get(`${resourcesUrl}?${allRegions}${sortParams}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
+    fetchMock.post(reportPostUrl, {
+      count: 1,
+      rows: [{
+        id: 1,
+        sortedTopics: [],
+        activityRecipients: [],
+        displayId: 'R-1-23',
+      }],
+      topics: [],
+      recipients: [],
+    });
 
     const user = {
       homeRegionId: 14,
@@ -643,8 +647,19 @@ describe('Resources Dashboard page', () => {
   });
   it('exports reports singly', async () => {
     // Page Load.
-    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}${sortParams}`, resourcesDefault);
-    fetchMock.get(`${resourcesUrl}?${allRegions}${sortParams}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
+    fetchMock.post(reportPostUrl, {
+      count: 1,
+      rows: [{
+        id: 1,
+        sortedTopics: [],
+        activityRecipients: [],
+        displayId: 'R-1-23',
+      }],
+      topics: [],
+      recipients: [],
+    });
 
     const user = {
       homeRegionId: 14,
