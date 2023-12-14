@@ -42,15 +42,20 @@ export async function getResourcesDashboardData(req, res) {
     limit,
   };
 
-  const reports = await activityReports(
-    reportSortConfig,
-    true,
-    userId,
-    response.reportIds,
-  );
+  // const reports = await activityReports(
+  //   reportSortConfig,
+  //   true,
+  //   userId,
+  //   response.reportIds,
+  // );
 
   res.json({
     ...response,
-    activityReports: reports,
+    activityReports: {
+      rows: [],
+      count: 0,
+      topics: [],
+      recipients: [],
+    },
   });
 }
