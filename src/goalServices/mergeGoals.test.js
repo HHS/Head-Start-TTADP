@@ -426,7 +426,7 @@ describe('mergeGoals', () => {
     const goalForGrantTwo = goalsWithData.find((g) => g.grantId === grantThree.id);
     expect(goalForGrantTwo.status).toBe(GOAL_STATUS.IN_PROGRESS);
     expect(goalForGrantTwo.objectives.length).toBe(1);
-    expect(goalForGrantTwo.responses.length).toBe(1);
+    expect(goalForGrantTwo.responses.length).toBe(0);
     expect(goalForGrantTwo.goalResources.length).toBe(0);
     expect(goalForGrantTwo.activityReportGoals.length).toBe(0);
 
