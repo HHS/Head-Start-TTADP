@@ -39,7 +39,6 @@ interface GroupResponse {
 }
 
 export async function groupsByRegion(region: number, userId?: number): Promise<GroupResponse[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let where: WhereOptions = {
     '$grants.regionId$': { [Op.eq]: region },
   };
