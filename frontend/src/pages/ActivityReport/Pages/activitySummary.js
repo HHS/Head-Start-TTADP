@@ -292,7 +292,7 @@ const ActivitySummary = ({
         {
           activityRecipientType === 'recipient' && !showGroupInfo && groups.length > 0
            && (
-           <div className="margin-top-2">
+           <div className="smart-hub-activity-summary-use-group margin-top-1">
              <Checkbox
                id="use-group"
                label="Use group"
