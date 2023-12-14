@@ -22,6 +22,7 @@ import {
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
   getReportsByManyIds,
+  getGroups,
 } from './handlers';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -37,6 +38,7 @@ const router = express.Router();
 
 router.post('/', transactionWrapper(createReport));
 router.get('/approvers', transactionWrapper(getApprovers));
+router.get('/groups', transactionWrapper(getGroups));
 router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
 router.get('/goals', transactionWrapper(getGoals));
 router.post('/goals', transactionWrapper(createGoalsForReport));
