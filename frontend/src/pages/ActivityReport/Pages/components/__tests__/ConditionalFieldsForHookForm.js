@@ -39,7 +39,6 @@ describe('ConditionalFieldsForHookForm', () => {
   const Rt = ({
     isMultiRecipientReport = false,
     prompts = DEFAULT_PROMPTS,
-    isOnReport = false,
     defaultValues = {},
   }) => {
     const hookForm = useForm({
@@ -54,7 +53,6 @@ describe('ConditionalFieldsForHookForm', () => {
           <ConditionalFieldsForHookForm
             prompts={prompts}
             isMultiRecipientReport={isMultiRecipientReport}
-            isOnReport={isOnReport}
           />
         </FormProvider>
       </div>

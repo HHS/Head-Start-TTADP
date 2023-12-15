@@ -12,8 +12,6 @@ export default function ConditionalMultiselectForHookForm({
   validations,
   fieldName,
   defaultValue,
-  isOnReport,
-  isComplete,
 }) {
   const rules = transformValidationsIntoRules(validations);
 
@@ -39,8 +37,6 @@ export default function ConditionalMultiselectForHookForm({
       validations={validations}
       fieldName={fieldName}
       fieldValue={fieldValue}
-      isOnReport={isOnReport}
-      isComplete={isComplete}
       onBlur={onBlur}
       onChange={onChange}
       error={error}
@@ -60,11 +56,4 @@ ConditionalMultiselectForHookForm.propTypes = {
     message: PropTypes.string,
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isOnReport: PropTypes.bool,
-  isComplete: PropTypes.bool,
-};
-
-ConditionalMultiselectForHookForm.defaultProps = {
-  isOnReport: false,
-  isComplete: false,
 };
