@@ -13,7 +13,6 @@ export async function getSimilarityGroupById(
     where: {
       ...where,
       id: similarityGroupId,
-
     },
     attributes: similarityGroupAttributes,
   });
@@ -37,11 +36,11 @@ export async function getSimilarityGroupByContainingGoalIds(
   return GoalSimilarityGroup.findOne({
     attributes: similarityGroupAttributes,
     where: {
+      ...where,
       goals: {
         [Op.contains]: goalIds,
       },
     },
-    ...where,
   });
 }
 
@@ -70,8 +69,8 @@ export async function getSimilarityGroupsByRecipientId(
   return GoalSimilarityGroup.findAll({
     attributes: similarityGroupAttributes,
     where: {
-      recipientId,
       ...where,
+      recipientId,
     },
   });
 }

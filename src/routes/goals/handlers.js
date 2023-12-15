@@ -15,7 +15,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
-import { validateMergeGoalPermissions } from '../recipient/handlers';
+import { validateMergeGoalPermissions } from '../utils';
 
 const namespace = 'SERVICE:GOALS';
 
