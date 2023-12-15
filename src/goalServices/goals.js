@@ -5,12 +5,14 @@ import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
+  ObjectiveCollaborator,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -28,6 +30,7 @@ import {
   Topic,
   Program,
   File,
+  CollaboratorType,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -42,6 +45,9 @@ import {
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
+import {
+  mergeCollaborators,
+} from '../models/helpers/genericCollaborator';
 import { findOrFailExistingGoal, responsesForComparison } from './helpers';
 
 const namespace = 'SERVICE:GOALS';
@@ -86,8 +92,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           'onAR',
           'onAnyReport',
         ],
-        'suspendReason',
-        'suspendContext',
+        'closeSuspendReason',
+        'closeSuspendContext',
       ],
       model: Objective,
       as: 'objectives',
@@ -469,14 +475,14 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
-    const suspendContext = objective.activityReportObjectives
+    const closeSuspendContext = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].suspendContext
-      ? objective.activityReportObjectives[0].suspendContext : null;
-    const suspendReason = objective.activityReportObjectives
+      && objective.activityReportObjectives[0].closeSuspendContext
+      ? objective.activityReportObjectives[0].closeSuspendContext : null;
+    const closeSuspendReason = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].suspendReason
-      ? objective.activityReportObjectives[0].suspendReason : null;
+      && objective.activityReportObjectives[0].closeSuspendReason
+      ? objective.activityReportObjectives[0].closeSuspendReason : null;
 
     const { id } = objective;
 
@@ -489,8 +495,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
-      suspendContext,
-      suspendReason,
+      closeSuspendContext,
+      closeSuspendReason,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
@@ -772,8 +778,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
-              'suspendReason',
-              'suspendContext',
+              'closeSuspendReason',
+              'closeSuspendContext',
             ],
             required: false,
             where: {
@@ -1234,8 +1240,8 @@ export async function createOrUpdateGoals(goals) {
           files,
           status: objectiveStatus,
           id: objectiveIdsMayContainStrings,
-          suspendContext,
-          suspendReason,
+          closeSuspendContext,
+          closeSuspendReason,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1312,8 +1318,8 @@ export async function createOrUpdateGoals(goals) {
         // if the objective has been suspended, a reason and context should have been collected
         if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
           objective.set({
-            suspendContext,
-            suspendReason,
+            closeSuspendContext,
+            closeSuspendReason,
           });
         }
 
@@ -1837,8 +1843,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
-      suspendReason,
-      suspendContext,
+      closeSuspendReason,
+      closeSuspendContext,
       ...updatedFields
     } = objective;
 
@@ -1913,8 +1919,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       {
         ...metadata,
         status,
-        suspendContext,
-        suspendReason,
+        closeSuspendContext,
+        closeSuspendReason,
         ttaProvided: objective.ttaProvided,
         order: index,
       },
@@ -2073,7 +2079,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
   // here is a little matrix of all the allowed status transitions
   // you can see most are disallowed, but there are a few allowed
   const ALLOWED_TRANSITIONS = {
-    [GOAL_STATUS.DRAFT]: [],
+    [GOAL_STATUS.DRAFT]: [GOAL_STATUS.CLOSED],
     [GOAL_STATUS.NOT_STARTED]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
     [GOAL_STATUS.IN_PROGRESS]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
     [GOAL_STATUS.SUSPENDED]: [GOAL_STATUS.CLOSED],
@@ -2589,9 +2595,21 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   const newObjective = await Objective.create({
     ...data,
     goalId: parentGoalId,
-  }, { individualHooks: true });
+  }, {
+    ignoreHooks: { name: 'autoPopulateCreator' },
+    individualHooks: true,
+  });
 
   const updatesToRelatedModels = [];
+
+  updatesToRelatedModels.push(mergeCollaborators(
+    'objective',
+    sequelize,
+    null,
+    newObjective.id,
+    [id],
+    id,
+  ));
 
   updatesToRelatedModels.push(Objective.update({
     mapsToParentObjectiveId: newObjective.id,
@@ -2804,13 +2822,45 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     grantId,
   }));
 
-  const newGoals = await Goal.bulkCreate(goalsToBulkCreate, { individualHooks: true });
+  const newGoals = await Goal.bulkCreate(
+    goalsToBulkCreate,
+    {
+      ignoreHooks: { name: 'autoPopulateCreator' },
+      individualHooks: true,
+    },
+  );
 
   // we will need these in a moment
   const grantToGoalDictionary = {};
   newGoals.forEach((goal) => {
     grantToGoalDictionary[goal.grantId] = goal.id;
   });
+
+  /* build goal sets for collaborator merge
+  {
+    newGoalId: number,
+    sourceGoalIds: number[],
+    selectedGoalId: number | null,
+  }[]
+  an array of objects, one for each grant
+  newGoalId - the new goal created for the grant
+  sourceGoalIds - an array of existing goals to be merged into the new goal
+  selectedGoalId - the goal from the sourceGoalIds list for the current grant with the chosen text
+  */
+  const goalSets = selectedGoals.reduce((acc, selectedGoal) => {
+    const goalSet = acc.find(({ newGoalId }) => newGoalId === grantToGoalDictionary[
+      grantsWithReplacementsDictionary[selectedGoal.grantId]
+    ]);
+    goalSet.sourceGoalIds.push(selectedGoal.id);
+    if (finalGoal.name === selectedGoal.name) {
+      goalSet.selectedGoalId = selectedGoal.id;
+    }
+    return acc;
+  }, newGoals.map((newGoal) => ({
+    newGoalId: newGoal.id,
+    sourceGoalIds: [],
+    selectedGoalId: null,
+  })));
 
   // update associated models
   // - update AR goals with originalGoalId and goalId with the new goalId
@@ -2829,6 +2879,22 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     ]))));
 
   const updatesToRelatedModels = [];
+
+  goalSets.forEach(({
+    newGoalId,
+    sourceGoalIds,
+    selectedGoalId,
+  }) => {
+    updatesToRelatedModels.push(mergeCollaborators(
+      'goal',
+      sequelize,
+      null,
+      newGoalId,
+      sourceGoalIds,
+      selectedGoalId,
+    ));
+  });
+
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {
@@ -3076,5 +3142,75 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     message,
     grantsForWhomGoalAlreadyExists: [],
     grantsForWhichGoalWillBeCreated: [],
+  };
+}
+
+/*
+Exampled request body, the data param:
+ * {
+  "closeSuspendReason": "Duplicate goal",
+  "closeSuspendReasonContext": "sdf",
+  "selectedGoal": {
+    "endDate": "03/17/2023",
+    "grantIds": [
+      10839
+    ],
+    "goalIds": [
+      47344
+    ],
+    "oldGrantIds": [
+      7965
+    ],
+    "created": "2023-03-18T21:56:38.003Z",
+    "goalTemplateId": null,
+    "name": "The recipient will attend the Back to the Basics: Safety First Training. ",
+    "status": "In Progress",
+    "onApprovedAR": true,
+    "source": null,
+    "isCurated": null,
+    "id": "goal_83"
+  }
+}
+ */
+export async function closeMultiRecipientGoalsFromAdmin(data) {
+  const {
+    selectedGoal,
+    closeSuspendContext,
+    closeSuspendReason,
+  } = data;
+
+  const { goalIds, status } = selectedGoal;
+
+  /**
+   * 1) Complete all objectives that have been
+   * on an approved AR
+   */
+
+  await Objective.update({
+    status: OBJECTIVE_STATUS.COMPLETE,
+    closeSuspendReason,
+    closeSuspendContext,
+  }, {
+    where: {
+      goalId: goalIds,
+      onApprovedAR: true,
+    },
+    individualHooks: true,
+  });
+
+  /**
+   * 2) Close all goals with reason and context
+   */
+
+  return {
+    isError: false,
+    goals: await updateGoalStatusById(
+      goalIds,
+      status,
+      GOAL_STATUS.CLOSED,
+      closeSuspendReason,
+      closeSuspendContext,
+      GOAL_STATUS.CLOSED,
+    ),
   };
 }

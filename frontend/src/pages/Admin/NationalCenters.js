@@ -4,7 +4,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import {
   Alert,
-  Button, Form, Label, ModalToggleButton, TextInput, Dropdown,
+  Button, Form, Label, ModalToggleButton, TextInput, Dropdown, SideNav,
 } from '@trussworks/react-uswds';
 import Req from '../../components/Req';
 import Modal from '../../components/VanillaModal';
@@ -14,7 +14,6 @@ import {
   deleteNationalCenter,
   updateNationalCenter,
 } from '../../fetchers/Admin';
-import './NationalCenters.scss';
 
 export default function NationalCenters({ match }) {
   const { params: { nationalCenterId } } = match;
@@ -173,27 +172,21 @@ export default function NationalCenters({ match }) {
           Yes
         </Button>
       </Modal>
-      <div className="ttahub-national-centers-grid">
-        <nav className="ttahub-national-centers-grid__nav">
-          <ul className="usa-list padding-x-6">
-            {nationalCenters.map((center) => (
-              <li key={center.id}>
-                <Link to={`/admin/national-centers/${center.id}`}>
-                  {getCenterToDisplay(center)}
-                </Link>
-              </li>
-            ))}
-            <hr />
-            <li>
-              <Link to="/admin/national-centers/new">
-                Add new national center
-              </Link>
-            </li>
-          </ul>
+      <div className="ttahub-grid__container ttahub-grid__container--gap-1">
+        <nav className="ttahub-grid__nav">
+          <SideNav items={[...nationalCenters.map((center) => (
+            <Link key={center.id} to={`/admin/national-centers/${center.id}`}>
+              {getCenterToDisplay(center)}
+            </Link>
+          )),
+            <Link to="/admin/national-centers/new">
+              Add new national center
+            </Link>,
+          ]}
+          />
         </nav>
-
-        <div className="ttahub-national-centers-grid__content">
-          <h2>National Centers</h2>
+        <div className="ttahub-grid__content">
+          <h2 className="margin-top-0">National Centers</h2>
           {(message && !error) && (
             <Alert type="success" className="margin-bottom-4 maxw-mobile-lg" noIcon>
               {message}
@@ -205,31 +198,30 @@ export default function NationalCenters({ match }) {
             </Alert>
           )}
           {selectedCenter && (
-          <Form onSubmit={onSubmit}>
-            <Label htmlFor="name">National center name</Label>
-            <TextInput key={`name-for-${selectedCenter.id}`} defaultValue={selectedCenter.name} name="name" id="name" required />
+            <Form onSubmit={onSubmit}>
+              <Label htmlFor="name">National center name</Label>
+              <TextInput key={`name-for-${selectedCenter.id}`} defaultValue={selectedCenter.name} name="name" id="name" required />
 
-            <input type="hidden" required name="id" value={selectedCenter.id} />
+              <input type="hidden" required name="id" value={selectedCenter.id} />
 
-            <Label htmlFor="group">
-              Associated user
-              {' '}
-              <Req />
-            </Label>
-            <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown" required>
-              <option value="0" selected hidden>- Select -</option>
-              {userOptions.map((u) => (
-                <option key={`user${u.id}`} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </Dropdown>
-            <div className="display-flex">
-              <Button type="submit">Save</Button>
-              { selectedCenter.id !== 'new' ? <ModalToggleButton modalRef={modalRef} secondary>Delete</ModalToggleButton> : null }
-            </div>
-
-          </Form>
+              <Label htmlFor="group">
+                Associated user
+                {' '}
+                <Req />
+              </Label>
+              <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown" required>
+                <option value="0" selected hidden>- Select -</option>
+                {userOptions.map((u) => (
+                  <option key={`user${u.id}`} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </Dropdown>
+              <div className="display-flex">
+                <Button type="submit">Save</Button>
+                { selectedCenter.id !== 'new' ? <ModalToggleButton modalRef={modalRef} secondary>Delete</ModalToggleButton> : null }
+              </div>
+            </Form>
           )}
         </div>
       </div>

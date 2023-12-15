@@ -176,14 +176,16 @@ export default function ObjectiveForm({
       <ObjectiveSuspendModal
         objectiveId={objective.id}
         modalRef={modalRef}
-        objectiveSuspendReason={objective.suspendReason}
-        onChangeSuspendReason={(e) => setObjective({ ...objective, suspendReason: e.target.value })}
+        objectiveSuspendReason={objective.closeSuspendReason}
+        onChangeSuspendReason={(e) => setObjective(
+          { ...objective, closeSuspendReason: e.target.value },
+        )}
         objectiveSuspendInputName={`suspend-objective-${objective.id}-reason`}
         objectiveSuspendContextInputName={`suspend-objective-${objective.id}-context`}
-        objectiveSuspendContext={objective.suspendContext}
+        objectiveSuspendContext={objective.closeSuspendContext}
         onChangeSuspendContext={(e) => setObjective({
           ...objective,
-          suspendContext: e.target.value,
+          closeSuspendContext: e.target.value,
         })}
         onChangeStatus={onChangeStatus}
         setError={setSuspendReasonError}
@@ -201,8 +203,8 @@ export default function ObjectiveForm({
 
       <ObjectiveStatusSuspendReason
         status={status}
-        suspendContext={objective.suspendContext}
-        suspendReason={objective.suspendReason}
+        closeSuspendContext={objective.closeSuspendContext}
+        closeSuspendReason={objective.closeSuspendReason}
       />
 
     </div>
@@ -217,8 +219,8 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
-    suspendReason: PropTypes.string,
-    suspendContext: PropTypes.string,
+    closeSuspendReason: PropTypes.string,
+    closeSuspendContext: PropTypes.string,
     isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
       PropTypes.string,

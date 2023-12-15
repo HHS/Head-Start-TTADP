@@ -3,7 +3,11 @@ import PropTypes from 'prop-types';
 import IdleModal from './IdleModal';
 
 export default function AppWrapper({
-  padded, authenticated, children, logout, hasAlerts,
+  padded,
+  authenticated,
+  children,
+  logout,
+  hasAlerts,
 }) {
   const appWrapperRef = useRef(null);
 
@@ -11,6 +15,7 @@ export default function AppWrapper({
   useEffect(() => {
     if (hasAlerts && appWrapperRef.current) {
       const header = document.querySelector('.smart-hub-header.has-alerts');
+
       if (header) {
         appWrapperRef.current.style.marginTop = `${appWrapperRef.current.style.marginTop + header.offsetHeight}px`;
       }
@@ -56,7 +61,7 @@ AppWrapper.propTypes = {
   authenticated: PropTypes.bool,
   padded: PropTypes.bool,
   children: PropTypes.node.isRequired,
-  logout: PropTypes.func.isRequired,
+  logout: PropTypes.func,
   hasAlerts: PropTypes.bool,
 };
 
@@ -64,4 +69,5 @@ AppWrapper.defaultProps = {
   authenticated: false,
   padded: true,
   hasAlerts: false,
+  logout: () => {},
 };
