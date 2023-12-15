@@ -288,6 +288,17 @@ enum enum_GoalResources_sourceFields {
 
 enum_GoalResources_sourceFields <|-- GoalResources
 
+class GoalSimilarityGroups{
+ * id : integer : <generated>
+ * recipientId : integer : REFERENCES "Recipients".id
+ * createdAt : timestamp with time zone
+ * goals : integer[]
+ * updatedAt : timestamp with time zone
+ * userHasInvalidated : boolean : false
+ finalGoalId : integer
+ goalsMerged : integer[]
+}
+
 class GoalTemplateFieldPrompts{
  * id : integer : <generated>
  * goalTemplateId : integer : REFERENCES "GoalTemplates".id
@@ -1189,6 +1200,20 @@ class ZALGoalResources{
  session_sig : text
 }
 
+class ZALGoalSimilarityGroups{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGoalTemplateFieldPrompts{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1864,6 +1889,9 @@ class ZALZAFilter{
 
 ' Associations
 
+
+!issue='associations need to be defined both directions'
+Recipients "1" --[#d54309,plain,thickness=2]-- "1" GoalSimilarityGroups : recipient
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
