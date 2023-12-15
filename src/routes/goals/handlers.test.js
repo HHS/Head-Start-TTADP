@@ -29,7 +29,7 @@ import {
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
 import { currentUserId } from '../../services/currentUser';
-import { validateMergeGoalPermissions } from '../recipient/handlers';
+import { validateMergeGoalPermissions } from '../utils';
 
 jest.mock('../recipient/handlers', () => ({
   validateMergeGoalPermissions: jest.fn(),
