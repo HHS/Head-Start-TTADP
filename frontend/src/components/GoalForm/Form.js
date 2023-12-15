@@ -97,8 +97,8 @@ export default function Form({
 
   const showAlert = isOnReport && status !== 'Closed';
 
-  const showNewObjectiveButton = (() => (status !== 'Closed' && userCanEdit))();
-
+  const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
+  console.log('notClosedWithEditPermission', notClosedWithEditPermission);
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
@@ -150,12 +150,11 @@ export default function Form({
       />
 
       <ConditionalFields
-        isOnReport={isOnApprovedReport}
         prompts={prompts}
         setPrompts={setPrompts}
         validatePrompts={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
-        userCanEdit={userCanEdit}
+        userCanEdit={notClosedWithEditPermission}
       />
 
       <FeatureFlag flag="goal_source">
@@ -201,7 +200,7 @@ export default function Form({
         />
       ))}
 
-      { (showNewObjectiveButton) && (
+      { (notClosedWithEditPermission) && (
         <div className="margin-top-4">
           {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
           <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
