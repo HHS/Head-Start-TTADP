@@ -17,12 +17,12 @@ import { mockWindowProperty } from '../../../../../testHelpers';
 
 const memoryHistory = createMemoryHistory();
 
-const GOAL_IDS = [4598, 4600];
 const RECIPIENT_ID = 401;
 const REGION_ID = 1;
+const GOAL_GROUP_ID = 1;
 
-const urlBase = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goal&sortDir=asc&offset=0&limit=false&`;
-const idsToUrl = (ids) => `${urlBase}${ids.map((i) => `goalIds=${i}`).join('&')}`;
+const urlBase = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/group/`;
+const idToUrl = (id = GOAL_GROUP_ID) => `${urlBase}${id}`;
 
 describe('Merge goals', () => {
   const setIsAppLoading = jest.fn();
@@ -71,7 +71,7 @@ describe('Merge goals', () => {
     ],
   };
 
-  const renderTest = (ids = GOAL_IDS, canMergeGoals = true) => {
+  const renderTest = (goalGroupId = GOAL_GROUP_ID, canMergeGoals = true) => {
     render(
       <Router history={memoryHistory}>
         <AppLoadingContext.Provider value={{ setIsAppLoading }}>
@@ -81,8 +81,10 @@ describe('Merge goals', () => {
                 recipientId={String(RECIPIENT_ID)}
                 regionId={String(REGION_ID)}
                 recipient={recipient}
-                location={{
-                  state: {}, hash: '', pathname: '', search: `${ids.map((i) => `goalId[]=${i}`).join('&')}`,
+                match={{
+                  params: { recipientId: RECIPIENT_ID, regionId: REGION_ID, goalGroupId },
+                  path: '',
+                  url: '',
                 }}
                 recipientNameWithRegion="test"
                 canMergeGoals={canMergeGoals}
@@ -102,7 +104,7 @@ describe('Merge goals', () => {
   });
 
   it('renders and fetches', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('Back to test')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
@@ -110,36 +112,22 @@ describe('Merge goals', () => {
     await waitFor(() => expect(screen.getByText('This is goal text 2.')).toBeInTheDocument());
   });
 
-  it('needs goal ids to proceed', async () => {
-    fetchMock.get(idsToUrl([]), { goalRows: goals });
-    renderTest([]);
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('No goal ids provided')).toBeInTheDocument());
-  });
-
-  it('needs at least 2 goal ids to proceed', async () => {
-    fetchMock.get(idsToUrl([1]), { goalRows: goals[0] });
-    renderTest([1]);
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('No goal ids provided')).toBeInTheDocument());
-  });
-
   it('needs to be able to merge goals to proceed', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
-    act(() => renderTest(GOAL_IDS, false));
+    fetchMock.get(idToUrl(), { goalRows: goals });
+    act(() => renderTest(GOAL_GROUP_ID, false));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('You do not have permission to merge goals for this recipient')).toBeInTheDocument());
   });
 
   it('handles a fetch error', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), 500);
-    renderTest(GOAL_IDS);
+    fetchMock.get(idToUrl(), 500);
+    renderTest(GOAL_GROUP_ID);
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Unable to fetch goals')).toBeInTheDocument());
   });
 
   it('you need to select two goals to proceed', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
     const continueButton = await screen.findByRole('button', { name: 'Continue' });
@@ -148,7 +136,7 @@ describe('Merge goals', () => {
   });
 
   it('selecting two goals allows you to proceed', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
@@ -163,7 +151,7 @@ describe('Merge goals', () => {
   });
 
   it('you need to pick a goal to keep', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
@@ -183,7 +171,7 @@ describe('Merge goals', () => {
   });
 
   it('once you pick a goal to keep, you see a final goal', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
@@ -210,7 +198,7 @@ describe('Merge goals', () => {
   });
 
   it('you can go back', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
@@ -242,7 +230,7 @@ describe('Merge goals', () => {
   it('you can click the submit button', async () => {
     const oldPush = memoryHistory.push;
     memoryHistory.push = jest.fn();
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
@@ -289,7 +277,7 @@ describe('Merge goals', () => {
   });
 
   it('handles submission errors', async () => {
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
@@ -336,7 +324,7 @@ describe('Merge goals', () => {
         isCurated: true,
       },
     ];
-    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: gs });
+    fetchMock.get(idToUrl(), { goalRows: gs });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
 
