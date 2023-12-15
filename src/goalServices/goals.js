@@ -5,14 +5,12 @@ import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
-  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
-  ObjectiveCollaborator,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -30,7 +28,6 @@ import {
   Topic,
   Program,
   File,
-  CollaboratorType,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -49,6 +46,12 @@ import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
 import { findOrFailExistingGoal, responsesForComparison } from './helpers';
+import { similarGoalsForRecipient } from '../services/similarity';
+import {
+  getSimilarityGroupsByRecipientId,
+  createSimilarityGroup,
+  setSimilarityGroupAsUserMerged,
+} from '../services/goalSimilarityGroup';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2432,20 +2435,7 @@ const fieldMappingForDeduplication = {
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
 
 /**
-*
-* similarity response is an array of objects with the following structure:
-* {
-     "id": number,
-     "name": string,
-     "matches": [{
-       "id": number,
-       "name": string,
-       "grantId": number,
-       "similarity": float,
-     }]
-  }
-*
-* @param {[]} similarityResponse
+* @param {Number} recipientId
 * @returns {
 *  goals: [{
 *    name: string,
@@ -2457,9 +2447,42 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(similarityResponse = []) {
+export async function getGoalIdsBySimilarity(recipientId) {
+  // first, we check for goal similarity groups that have already been created
+  const existingRecipientGroups = await getSimilarityGroupsByRecipientId(recipientId, {
+    userHasInvalidated: false,
+    finalGoalId: null,
+  });
+
+  if (existingRecipientGroups.length) {
+    return existingRecipientGroups;
+  }
+
+  // otherwise, we'll create the groups
+  // with a little if just in case the similarity API craps out on us (technical term)
+  const similarity = await similarGoalsForRecipient(recipientId, true);
+  let result = [];
+  if (similarity) {
+    result = similarity.result;
+  }
+
+  /*
+  *
+  * similarity response is an array of objects with the following structure:
+  * {
+      "id": number,
+      "name": string,
+      "matches": [{
+        "id": number,
+        "name": string,
+        "grantId": number,
+        "similarity": float,
+      }]
+    }
+  */
+
   // convert the response to a group of IDs
-  const goalIdGroups = similarityResponse.map((matchedGoals) => {
+  const goalIdGroups = (result || []).map((matchedGoals) => {
     const { id, matches } = matchedGoals;
     return uniq([id, ...matches.map((match) => match.id)]);
   });
@@ -2577,10 +2600,20 @@ export async function getGoalIdsBySimilarity(similarityResponse = []) {
 
   const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
 
-  return groupsWithMoreThanOneGoal.map((gg) => ({
-    ids: uniq(gg.map((g) => g.ids).flat()),
-    goals: gg,
-  }));
+  // save the groups to the database
+  // there should also always be an empty group
+  // to signify that there are no similar goals
+  // and that we've run these computations
+  await Promise.all(
+    [...groupsWithMoreThanOneGoal, []]
+      .map((gg) => (
+        createSimilarityGroup(recipientId, uniq(gg.map((g) => g.ids).flat())))),
+  );
+
+  return getSimilarityGroupsByRecipientId(recipientId, {
+    userHasInvalidated: false,
+    finalGoalId: null,
+  });
 }
 
 /**
@@ -2706,15 +2739,7 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
  * @param {number} finalGoalId
  * @param {number[]} selectedGoalIds
  */
-export async function mergeGoals(finalGoalId, selectedGoalIds) {
-  // first thing we do is test elibility
-  // in case something weird got into a URL on the frontend
-  const mockResponse = [{ id: finalGoalId, matches: selectedGoalIds.map((id) => ({ id })) }];
-  const elibilityGroup = await getGoalIdsBySimilarity(mockResponse);
-  if (!elibilityGroup.length) {
-    throw new Error('Cannot merge: goals ineligible for merge');
-  }
-
+export async function mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGroupId) {
   // create a new goal from "finalGoalId"
   // - update selectedGoalIds to point to newGoalId
   // - i.e. { parentGoalId: newGoalId }
@@ -2898,7 +2923,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {
-      // originalGoalId: g.id,
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
           originalGoalId: sequelize.fn('COALESCE', sequelize.col('originalGoalId'), g.id),
@@ -2943,6 +2967,13 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       grantsWithReplacementsDictionary[g.grantId]
     ],
   }, { individualHooks: true })));
+
+  // record the merge as complete
+  await setSimilarityGroupAsUserMerged(
+    goalSimiliarityGroupId,
+    finalGoalId,
+    selectedGoalIds,
+  );
 
   return newGoals;
 }
