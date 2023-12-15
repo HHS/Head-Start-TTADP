@@ -99,7 +99,7 @@ const Participants = ({ formData }) => {
   return (
     <>
       <Helmet>
-        <title>Session participants</title>
+        <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
       <div className="margin-top-2">

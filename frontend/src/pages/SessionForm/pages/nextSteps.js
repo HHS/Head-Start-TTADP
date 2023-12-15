@@ -60,7 +60,7 @@ const NextSteps = ({ formData }) => {
   return (
     <>
       <Helmet>
-        <title>Next steps</title>
+        <title>Next Steps</title>
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">

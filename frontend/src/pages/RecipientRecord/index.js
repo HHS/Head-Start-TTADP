@@ -154,13 +154,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
   return (
     <>
-      <Helmet>
-        <title>
-          Recipient Profile -
-          {' '}
-          {recipientNameWithRegion}
-        </title>
-      </Helmet>
+      <Helmet titleTemplate={`%s - ${recipientName} | TTA Hub`} defaultTitle="Recipient TTA Record | TTA Hub" />
 
       <Switch>
         <Route
@@ -260,11 +254,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           render={({ location }) => (
             <>
               <Helmet>
-                <title>
-                  Merge goals for
-                  {' '}
-                  {recipientName}
-                </title>
+                <title>These Goals Might Be Duplicates</title>
               </Helmet>
               <MergeGoals
                 regionId={regionId}
@@ -281,11 +271,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           render={() => (
             <>
               <Helmet>
-                <title>
-                  Create a goal for
-                  {' '}
-                  {recipientName}
-                </title>
+                <title>Create a New Goal</title>
               </Helmet>
               <GoalForm
                 regionId={regionId}

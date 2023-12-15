@@ -150,11 +150,22 @@ export default function TrainingReports({ match }) {
       console.log(e);
     }
   };
-
+  function convertToTitleCase(str) {
+    if (!str) {
+      return '';
+    }
+    return str.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase());
+  }
+  const statusForDisplay = tabValues.find((t) => t.value === status).key;
+  const titleCaseStatus = convertToTitleCase(statusForDisplay);
   return (
     <div className="ttahub-training-reports">
       <Helmet>
-        <title>Training Reports</title>
+        <title>
+          {titleCaseStatus}
+          {' '}
+          - Training Reports
+        </title>
       </Helmet>
       <>
         <RegionPermissionModal
