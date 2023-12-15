@@ -23,6 +23,7 @@ describe('ConditionalFields', () => {
         prompts={prompts}
         setPrompts={setPrompts}
         validatePrompts={validatePrompts}
+        userCanEdit
       />
       <button type="button">for blurrin</button>
     </>

@@ -98,7 +98,7 @@ export default function Form({
   const showAlert = isOnReport && status !== 'Closed';
 
   const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
-  console.log('notClosedWithEditPermission', notClosedWithEditPermission);
+
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}

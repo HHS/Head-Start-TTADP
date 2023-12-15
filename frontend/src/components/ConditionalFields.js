@@ -39,7 +39,6 @@ export default function ConditionalFields({
   errors,
   userCanEdit,
 }) {
-  console.log('userCanEdit', userCanEdit);
   const [initialValues, setInitialValues] = useState([]);
 
   useDeepCompareEffect(() => {
@@ -62,7 +61,6 @@ export default function ConditionalFields({
         }
 
         const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
-        console.log('Validations and Completions', validationsAndCompletions);
         const rules = validationsAndCompletions.transformValidationsIntoRules(prompt.validations);
 
         const onChange = (updatedValue) => {
