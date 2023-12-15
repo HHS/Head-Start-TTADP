@@ -20,12 +20,14 @@ import db, {
   Topic,
   File,
   CollaboratorType,
+  GoalSimilarityGroup,
 } from '../models';
 import {
   mergeGoals,
   getGoalsForReport,
 } from './goals';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
+import { createSimilarityGroup } from '../services/goalSimilarityGroup';
 import {
   OBJECTIVE_STATUS,
   FILE_STATUSES,
@@ -72,6 +74,7 @@ describe('mergeGoals', () => {
   let dummyGoal;
   let dummyGoalObjective;
   const dummyGoalName = `dummy goal ${faker.animal.cetacean()} ${faker.datatype.string()}`;
+  let similarityGroup;
 
   beforeAll(async () => {
     // Recipient.
@@ -332,8 +335,33 @@ describe('mergeGoals', () => {
       },
     );
 
-    mergedGoals = await mergeGoals(goalOne.id, [goalOne.id, goalTwo.id, goalThree.id]);
+    similarityGroup = await createSimilarityGroup(
+      recipient.id,
+      [goalOne.id, goalTwo.id, goalThree.id],
+    );
+
+    mergedGoals = await mergeGoals(
+      goalOne.id,
+      [goalOne.id, goalTwo.id, goalThree.id],
+      similarityGroup.id,
+    );
     mergedGoalIds = mergedGoals.map((goal) => goal.id);
+  });
+
+  it('similarity group is updated', async () => {
+    const updatedSimilarityGroup = await GoalSimilarityGroup.findOne({
+      where: {
+        id: similarityGroup.id,
+      },
+      attributes: [
+        'finalGoalId',
+        'id',
+        'goalsMerged',
+      ],
+    });
+
+    expect(updatedSimilarityGroup.finalGoalId).toBe(goalOne.id);
+    expect(updatedSimilarityGroup.goalsMerged).toEqual([goalOne.id, goalTwo.id, goalThree.id]);
   });
 
   it('old goals are merged away', async () => {
@@ -742,6 +770,12 @@ describe('mergeGoals', () => {
         id: [grantOne.id, grantTwo.id, grantThree.id],
       },
       force: true,
+    });
+
+    await GoalSimilarityGroup.destroy({
+      where: {
+        id: similarityGroup.id,
+      },
     });
 
     await Recipient.destroy({
