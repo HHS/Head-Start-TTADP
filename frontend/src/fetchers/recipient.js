@@ -1,6 +1,6 @@
 import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { get } from './index';
+import { get, put } from './index';
 import { GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../utils';
 
@@ -78,4 +78,40 @@ export const getRecipientLeadership = async (recipientId, regionId) => {
   const url = join(recipientUrl, recipientId, 'region', regionId, 'leadership');
   const leadership = await get(url);
   return leadership.json();
+};
+
+export const markRecipientGoalGroupInvalid = async (
+  recipientId,
+  regionId,
+  goalGroupId,
+) => {
+  const url = join(
+    recipientUrl,
+    String(recipientId),
+    'region',
+    String(regionId),
+    'group',
+    String(goalGroupId),
+    'invalid',
+  );
+  const goals = await put(url);
+  return goals.json();
+};
+
+export const getRecipientGoalGroup = async (
+  recipientId,
+  regionId,
+  goalGroupId,
+) => {
+  const url = join(
+    recipientUrl,
+    String(recipientId),
+    'region',
+    String(regionId),
+    'group',
+    String(goalGroupId),
+  );
+
+  const goals = await get(url);
+  return goals.json();
 };
