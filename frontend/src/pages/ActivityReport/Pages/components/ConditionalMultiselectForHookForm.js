@@ -12,6 +12,7 @@ export default function ConditionalMultiselectForHookForm({
   validations,
   fieldName,
   defaultValue,
+  userCanEdit,
 }) {
   const rules = transformValidationsIntoRules(validations);
 
@@ -40,6 +41,7 @@ export default function ConditionalMultiselectForHookForm({
       onBlur={onBlur}
       onChange={onChange}
       error={error}
+      userCanEdit={userCanEdit}
     />
   );
 }
@@ -56,4 +58,9 @@ ConditionalMultiselectForHookForm.propTypes = {
     message: PropTypes.string,
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
+  userCanEdit: PropTypes.bool,
+};
+
+ConditionalMultiselectForHookForm.defaultProps = {
+  userCanEdit: false,
 };
