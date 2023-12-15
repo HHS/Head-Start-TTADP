@@ -609,7 +609,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // check page title is updated (formerly TTAHUB-1322.spec.ts)
-    expect(await page.title()).toBe('RTTAPA Goals and Objectives - Agency 2 in region 1, Inc. | TTA Hub');
+    expect(await page.title()).toBe('RTTAPA - Agency 2 in region 1, Inc. | TTA Hub');
 
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
