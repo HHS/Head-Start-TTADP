@@ -239,6 +239,20 @@ export default function CommunicationLogForm({ match, recipientName }) {
     }
   };
 
+  const preFlight = async () => {
+    /**
+     * if we're on the first page of the form (log)
+     * we need to trigger the validation for the date
+     * since we don't want to save the form if the date
+     * is invalid
+     */
+    const whereWeAre = pages.find((p) => p.path === currentPage);
+    if (whereWeAre.position === 1) {
+      return hookForm.trigger('communicationDate');
+    }
+    return true;
+  };
+
   const onFormSubmit = async () => {
     try {
       const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
@@ -277,7 +291,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   return (
-    <div className="smart-hub-communication-log--form padding-top-3">
+    <div className="smart-hub-communication-log--form padding-top-3 maxw-widescreen">
       { error
           && (
           <Alert type="warning">
@@ -331,6 +345,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="status"
+            preFlightForNavigation={preFlight}
           />
         </FormProvider>
       </NetworkContext.Provider>

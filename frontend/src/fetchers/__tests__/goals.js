@@ -5,9 +5,9 @@ describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
 
   it('merges goals', async () => {
-    fetchMock.post('/api/goals/merge', { res: 'ok' });
+    fetchMock.post('/api/goals/recipient/1/region/2/merge', { res: 'ok' });
 
-    const res = await mergeGoals([1, 2, 3], 4);
+    const res = await mergeGoals([1, 2, 3], 4, 1, 2);
 
     expect(res).toEqual({ res: 'ok' });
   });

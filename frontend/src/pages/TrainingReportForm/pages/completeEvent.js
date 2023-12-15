@@ -169,7 +169,7 @@ const CompleteEvent = ({
       </Helmet>
 
       <IndicatesRequiredField />
-      <p className="usa-prose">Review the information in each section before subitting. Once submitted, the report will no longer be editable.</p>
+      <p className="usa-prose">Review the information in each section before submitting. Once submitted, the report will no longer be editable.</p>
       {error && (
         <div className="margin-top-4">
           <Alert type="error">
