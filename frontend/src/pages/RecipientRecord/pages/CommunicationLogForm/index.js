@@ -298,9 +298,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
             {error}
           </Alert>
           )}
-      <Helmet>
-        <title>Create a New Communication</title>
-      </Helmet>
+      <Helmet titleTemplate="%s - New Communication | TTA Hub" defaultTitle="Communication Log - New Communication | TTA Hub" />
       <BackLink to={`${recipientRecordRootUrl(recipientId, regionId)}/communication`}>
         Back to Communication Log
       </BackLink>

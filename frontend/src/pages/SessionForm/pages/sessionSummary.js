@@ -70,7 +70,6 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
-  const sessionName = watch('sessionName');
 
   // ref for topics guidance drawer
   const drawerTriggerRef = useRef(null);
@@ -195,13 +194,11 @@ const SessionSummary = ({ datePickerKey }) => {
     }
   };
 
-  const pageTitle = `Session Summary - ${sessionName && ` ${sessionName}`} ${eventName && ` - ${eventName}`}`;
-
   return (
     <>
       <Helmet>
         <title>
-          {pageTitle}
+          Session Summary
         </title>
       </Helmet>
       <IndicatesRequiredField />
