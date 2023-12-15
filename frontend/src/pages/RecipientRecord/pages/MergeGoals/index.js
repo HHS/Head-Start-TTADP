@@ -13,11 +13,12 @@ import {
   Alert,
   ModalToggleButton,
 } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../../../../components/Container';
 import StepIndicator from '../../../../components/StepIndicator';
-import { getRecipientGoals } from '../../../../fetchers/recipient';
+import { getRecipientGoalGroup, markRecipientGoalGroupInvalid } from '../../../../fetchers/recipient';
 import { mergeGoals } from '../../../../fetchers/goals';
 import './index.css';
 import GoalCard from './components/GoalCard';
@@ -29,7 +30,6 @@ import useSocket, { usePublishWebsocketLocationOnInterval } from '../../../../ho
 import UserContext from '../../../../UserContext';
 import SocketAlert from '../../../../components/SocketAlert';
 
-const OFFSET = 0;
 const SELECT_GOALS_TO_MERGE = 1;
 const SELECT_GOALS_TO_KEEP = 2;
 const REVIEW_AND_MERGE = 3;
@@ -102,7 +102,7 @@ export const navigate = (newPage, setActivePage) => {
 };
 
 export default function MergeGoals({
-  location,
+  match,
   recipientId,
   regionId,
   recipientNameWithRegion,
@@ -139,9 +139,9 @@ export default function MergeGoals({
   } = useSocket(user);
 
   useEffect(() => {
-    const newPath = `/merge-goals/${new URLSearchParams(location.search).toString()}&recipientId=${recipientId}&regionId=${regionId}`;
+    const newPath = `/merge-goals/${match.params.goalGroupId}`;
     setSocketPath(newPath);
-  }, [location.search, recipientId, regionId, setSocketPath]);
+  }, [match.params, setSocketPath]);
 
   usePublishWebsocketLocationOnInterval(
     socket,
@@ -151,15 +151,9 @@ export default function MergeGoals({
     INTERVAL_DELAY,
   );
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchGoals() {
-      const goalIds = new URLSearchParams(location.search).getAll('goalId[]');
-
-      if (!goalIds.length || goalIds.length < 2) {
-        setError('No goal ids provided');
-        return;
-      }
-
+      const { goalGroupId } = match.params;
       try {
         setError('');
         setIsAppLoading(true);
@@ -170,21 +164,20 @@ export default function MergeGoals({
         // without ever being visible
         if (!canMergeGoals) {
           setError('You do not have permission to merge goals for this recipient');
+          return;
         }
-        const { goalRows } = await getRecipientGoals(
+        const { goalRows } = await getRecipientGoalGroup(
           recipientId,
           regionId,
-          'goal',
-          'asc',
-          OFFSET,
-          false,
-          false,
-          goalIds,
+          goalGroupId,
         );
+
         setGoals(goalRows);
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
+        if (e.status === 404) {
+          setError('Unable to find goals. They may have already been merged.');
+          return;
+        }
         setError('Unable to fetch goals');
       } finally {
         // remove loading screen
@@ -193,7 +186,7 @@ export default function MergeGoals({
     }
 
     fetchGoals();
-  }, [location.search, recipientId, regionId, setIsAppLoading, canMergeGoals]);
+  }, [canMergeGoals, match.params, recipientId, regionId, setIsAppLoading]);
 
   const selectedGoals = goals.filter((g) => (
     selectedGoalIds.includes(g.id.toString())
@@ -252,11 +245,22 @@ export default function MergeGoals({
     navigate(newPage, setActivePage);
   };
 
-  // const noneAreDuplicates = (e) => {
-  //   e.preventDefault();
+  const noneAreDuplicates = async (e) => {
+    try {
+      e.preventDefault();
 
-  //   // mark none as duplicates
-  // };
+      // mark none as duplicates
+      await markRecipientGoalGroupInvalid(
+        recipientId,
+        regionId,
+        match.params.goalGroupId,
+      );
+
+      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`);
+    } catch (err) {
+      setError('Unable to mark goals as not duplicates');
+    }
+  };
 
   const goBack = (e) => {
     e.preventDefault();
@@ -266,16 +270,11 @@ export default function MergeGoals({
 
   const MiddleButton = () => {
     if (activePage === SELECT_GOALS_TO_MERGE) {
-      return null;
-      /**
-       * commenting this (and the method above) out for now
-       * it will not do anything until we have scoring in the database
-       */
-      // return (
-      //   <Button outline onClick={noneAreDuplicates} type="button">
-      //     None are duplicates
-      //   </Button>
-      // );
+      return (
+        <Button outline onClick={noneAreDuplicates} type="button">
+          None are duplicates
+        </Button>
+      );
     }
 
     return (
@@ -319,6 +318,7 @@ export default function MergeGoals({
         data.finalGoalId,
         recipientId,
         regionId,
+        match.params.goalGroupId,
       );
       const goalIds = mergedGoals.map((g) => g.id);
       setIsAppLoading(false);
@@ -442,7 +442,7 @@ export default function MergeGoals({
 }
 
 MergeGoals.propTypes = {
-  location: ReactRouterPropTypes.location.isRequired,
+  match: ReactRouterPropTypes.match.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   recipientNameWithRegion: PropTypes.string.isRequired,
