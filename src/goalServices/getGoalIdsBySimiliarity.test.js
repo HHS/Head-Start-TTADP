@@ -7,6 +7,7 @@ import {
   GoalTemplate,
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
+  GoalSimilarityGroup,
   sequelize,
 } from '../models';
 import {
@@ -23,6 +24,9 @@ import {
   getReportCountForGoals,
   hasMultipleGoalsOnSameActivityReport,
 } from './goals';
+import { similarGoalsForRecipient } from '../services/similarity';
+
+jest.mock('../services/similarity');
 
 describe('getReportCountForGoals', () => {
   it('tallies the goals/report count, inluding goals without reports', () => {
@@ -113,6 +117,7 @@ describe('getGoalIdsBySimilarity', () => {
   let groupIneligibleForSimilarityViaResponse = [];
 
   let recipient;
+  let recipientTwo;
   let activeGrant;
   let inactiveGrantWithReplacement;
   let inactiveGrantWithoutReplacement;
@@ -122,7 +127,8 @@ describe('getGoalIdsBySimilarity', () => {
   let report;
 
   beforeAll(async () => {
-    recipient = createRecipient();
+    recipient = await createRecipient();
+    recipientTwo = await createRecipient();
 
     activeGrant = await createGrant({
       recipientId: recipient.id,
@@ -362,9 +368,15 @@ describe('getGoalIdsBySimilarity', () => {
       force: true,
     });
 
+    await GoalSimilarityGroup.destroy({
+      where: {
+        recipientId: [recipient.id, recipientTwo.id],
+      },
+    });
+
     await Recipient.destroy({
       where: {
-        id: recipients.map((r) => r.id),
+        id: [...recipients.map((r) => r.id), recipientTwo.id],
       },
       force: true,
     });
@@ -372,9 +384,15 @@ describe('getGoalIdsBySimilarity', () => {
     await sequelize.close();
   });
 
+  afterEach(() => {
+    similarGoalsForRecipient.mockClear();
+  });
+
   it('handles undefined response', async () => {
-    const idsSets = await getGoalIdsBySimilarity(undefined);
-    expect(idsSets).toEqual([]);
+    similarGoalsForRecipient.mockResolvedValue(null);
+    const idsSets = await getGoalIdsBySimilarity(recipientTwo.id);
+    expect(idsSets).toHaveLength(1);
+    expect(idsSets[0].goals).toHaveLength(0);
   });
 
   it('shapes the similarity response', async () => {
@@ -393,17 +411,27 @@ describe('getGoalIdsBySimilarity', () => {
       })),
     }));
 
-    const idsSets = await getGoalIdsBySimilarity(similarityResponse);
-    // we expect goal group three to be eliminated, so we should have two sets
-    expect(idsSets).toHaveLength(2);
+    similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
 
-    const [setOne, setTwo] = idsSets;
+    const idsSets = await getGoalIdsBySimilarity(recipient.id);
+    // we expect goal group three to be eliminated, so we should have two sets + an empty
+    expect(idsSets).toHaveLength(3);
 
-    // set one has been partially de-duped
-    expect(setOne.goals.length).toBe(2);
-    expect(setOne.ids).toHaveLength(4);
-    // set two is all distinct
+    // we expect one empty set, removing it leaves two
+    const filteredSet = idsSets.filter((set) => set.goals.length).map((set) => set.toJSON());
+    expect(filteredSet).toHaveLength(2);
+
+    const [setOne, setTwo] = filteredSet;
+
+    expect(setOne.goals.length).toBe(4);
     expect(setTwo.goals.length).toBe(4);
-    expect(setTwo.ids).toHaveLength(4);
+
+    // test to make sure that we don't double tap the similarity API
+    expect(similarGoalsForRecipient).toHaveBeenCalledTimes(1);
+
+    const theSetsAgain = await getGoalIdsBySimilarity(recipient.id);
+    expect(similarGoalsForRecipient).toHaveBeenCalledTimes(1);
+
+    expect(theSetsAgain).toEqual(idsSets);
   });
 });
