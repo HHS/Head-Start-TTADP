@@ -42,7 +42,11 @@ export default function RttapaUpdates({
             <tbody>
               {logs.map((log) => (
                 <tr key={`logrow${log.id}`}>
-                  <td data-label="Date">{log.data ? log.data.communicationDate : ''}</td>
+                  <td data-label="Date">
+                    <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
+                      {log.data ? log.data.communicationDate : ''}
+                    </Link>
+                  </td>
                   <td data-label="Purpose">{log.data ? log.data.purpose : ''}</td>
                   <td data-label="Result">{log.data ? log.data.result : ''}</td>
                 </tr>

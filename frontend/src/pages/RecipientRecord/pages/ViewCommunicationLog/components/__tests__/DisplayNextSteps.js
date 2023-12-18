@@ -1,8 +1,42 @@
 import React from 'react';
-import { render } from '@testing-library/react';
-import DisplayNextSteps from '../DisplayNextSteps';
+import { render, act, screen } from '@testing-library/react';
+import DisplayNextSteps, { skipDisplaySteps } from '../DisplayNextSteps';
 
 describe('DisplayNextSteps', () => {
+  describe('skipDisplaySteps', () => {
+    it('should return true if steps array is empty or not provided', () => {
+      expect(skipDisplaySteps()).toBe(true);
+      expect(skipDisplaySteps([])).toBe(true);
+    });
+
+    it('should return true if all steps do not have a note and completeDate', () => {
+      expect(skipDisplaySteps([
+        { note: '', completeDate: '' },
+        { note: null, completeDate: null },
+      ])).toBe(true);
+    });
+
+    it('should return false if some steps have a note or completeDate', () => {
+      expect(skipDisplaySteps([
+        { note: 'Note 1', completeDate: '' },
+        { note: '', completeDate: '2022-01-01' },
+      ])).toBe(false);
+    });
+
+    it('should return false if all steps have a note or completeDate', () => {
+      expect(skipDisplaySteps([
+        {
+          note: 'First step',
+          completeDate: '2022-01-01',
+        },
+        {
+          note: 'second step',
+          completeDate: '2022-01-02',
+        },
+      ])).toBe(false);
+    });
+  });
+
   const title = 'Next Steps';
   const steps = [
     {
@@ -16,7 +50,8 @@ describe('DisplayNextSteps', () => {
   ];
 
   it('renders the component with title and steps', () => {
-    const { getByText } = render(<DisplayNextSteps title={title} steps={steps} />);
+    const { getByText } = screen;
+    act(() => render(<DisplayNextSteps title={title} steps={steps} />));
 
     expect(getByText(title)).toBeInTheDocument();
     expect(getByText('Step 1')).toBeInTheDocument();
