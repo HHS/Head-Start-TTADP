@@ -1,5 +1,9 @@
 const { Op } = require('sequelize');
-const { GOAL_STATUS } = require('../../constants');
+const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
+const {
+  currentUserPopulateCollaboratorForType,
+} = require('../helpers/genericCollaborator');
+const { skipIf } = require('../helpers/flowControl');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -161,6 +165,35 @@ const propagateName = async (sequelize, instance, options) => {
   }
 };
 
+const autoPopulateCreator = async (sequelize, instance, options) => {
+  if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
+  const { id: goalId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    'goal',
+    sequelize,
+    options.transaction,
+    goalId,
+    GOAL_COLLABORATORS.CREATOR,
+  );
+};
+
+const autoPopulateEditor = async (sequelize, instance, options) => {
+  const { id: goalId } = instance;
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('name')
+    && instance.previous('name') !== instance.name) {
+    return currentUserPopulateCollaboratorForType(
+      'goal',
+      sequelize,
+      options.transaction,
+      goalId,
+      GOAL_COLLABORATORS.EDITOR,
+    );
+  }
+  return Promise.resolve();
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -178,12 +211,14 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
+  await autoPopulateCreator(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await invalidateSimilarityScores(sequelize, instance, options);
+  await autoPopulateEditor(sequelize, instance, options);
 };
 
 export {

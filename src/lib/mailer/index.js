@@ -6,7 +6,7 @@ import Email from 'email-templates';
 import * as path from 'path';
 import { sequelize } from '../../models';
 import { auditLogger, logger } from '../../logger';
-import newQueue from '../queue';
+import newQueue, { increaseListeners } from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import {
@@ -990,6 +990,7 @@ export const processNotificationQueue = () => {
   // Notifications
   notificationQueue.on('failed', onFailedNotification);
   notificationQueue.on('completed', onCompletedNotification);
+  increaseListeners(notificationQueue, 10);
 
   notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
   notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
