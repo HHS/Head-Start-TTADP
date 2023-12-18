@@ -758,10 +758,11 @@ export async function getReportsByManyIds(req, res) {
   try {
     const userId = await currentUserId(req, res);
 
-    const {
-      reportIds,
-      ...query
-    } = req.body;
+    const { reportIds } = req.body;
+
+    // this will return a query with region parameters based
+    // on the req user's permissions
+    const query = await setReadRegions({}, userId);
 
     const reportsWithCount = await activityReports(query, false, userId, reportIds);
     if (!reportsWithCount) {
