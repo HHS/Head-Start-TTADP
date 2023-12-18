@@ -164,7 +164,6 @@ export default function GoalForm({
 
   const prompts = combinePrompts(templatePrompts, goal.prompts);
   const isCurated = goal.isCurated || false;
-  const canEditFei = status !== 'Closed';
 
   return (
     <>
@@ -183,7 +182,7 @@ export default function GoalForm({
       <ConditionalFields
         prompts={prompts}
         isMultiRecipientReport={isMultiRecipientReport}
-        userCanEdit={canEditFei}
+        userCanEdit
       />
 
       <FeatureFlag flag="goal_source">
