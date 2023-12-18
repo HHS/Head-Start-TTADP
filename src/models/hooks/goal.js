@@ -225,6 +225,8 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
 const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, instance, options) => {
   const { grantId } = instance;
 
+  if (!grantId) return;
+
   const recipient = await sequelize.models.Recipient.findOne({
     attributes: ['id'],
     include: [
@@ -240,6 +242,8 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
     ],
     transaction: options.transaction,
   });
+
+  if (!recipient) return;
 
   await sequelize.models.GoalSimilarityGroup.destroy({
     where: {
