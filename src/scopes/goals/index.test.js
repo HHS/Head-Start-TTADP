@@ -920,13 +920,9 @@ describe('goal filtersToScopes', () => {
         ],
       });
 
-      console.log({ reportToInclude });
-
       goalToInclude = await createGoal({
         status: 'Closed',
       });
-
-      console.log({ goalToInclude });
 
       const argToInclude = await ActivityReportGoal.create({
         activityReportId: reportToInclude.id,
