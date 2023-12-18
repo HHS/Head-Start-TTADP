@@ -26,6 +26,8 @@ describe('goal hooks', () => {
       grant = await createGrant({ recipientId: recipient.id });
     });
 
+    afterEach(() => jest.clearAllMocks());
+
     it('should invalidate similarity groups on goal creation', async () => {
       await GoalSimilarityGroupModel.create({
         recipientId: recipient.id,

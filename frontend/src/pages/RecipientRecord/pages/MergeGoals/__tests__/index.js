@@ -35,7 +35,15 @@ describe('Merge goals', () => {
     objectiveCount: 5,
     goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-    objectives: [],
+    objectives: [{
+      title: 'whatever',
+      endDate: '2021-06-15',
+      reasons: [],
+      topics: [],
+      status: 'In Progress',
+      grantNumbers: [],
+      activityReports: [],
+    }],
   },
   {
     id: 4600,
@@ -148,6 +156,21 @@ describe('Merge goals', () => {
 
     const newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
     expect(newPageHeadings.length).toBeTruthy();
+  });
+
+  it('toggle objective visibility', async () => {
+    fetchMock.get(idToUrl(), { goalRows: goals });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    let firstCard = document.querySelector('.ttahub-goal-card__objective-list');
+    expect(firstCard).not.toBeVisible();
+    const [toggleButton] = await screen.findAllByRole('button', { name: /objectives for goal/i });
+    act(() => {
+      userEvent.click(toggleButton);
+    });
+    firstCard = document.querySelector('.ttahub-goal-card__objective-list');
+    expect(firstCard).toBeVisible();
   });
 
   it('you need to pick a goal to keep', async () => {
