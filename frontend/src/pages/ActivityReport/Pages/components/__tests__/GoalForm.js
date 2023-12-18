@@ -13,8 +13,8 @@ import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
 
 describe('GoalForm', () => {
-  const Form = ({ id }) => {
-    const goal = {
+  const Form = ({ id, customGoal }) => {
+    const goal = customGoal || {
       id,
       isNew: id === 'new',
       goalIds: [123],
@@ -60,10 +60,40 @@ describe('GoalForm', () => {
       PropTypes.string,
       PropTypes.number,
     ]).isRequired,
+    customGoal: PropTypes.shape({
+      id: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+      ]).isRequired,
+      isNew: PropTypes.bool,
+      goalIds: PropTypes.arrayOf(PropTypes.number),
+      status: PropTypes.string,
+      prompts: PropTypes.arrayOf(PropTypes.shape({
+        fieldType: PropTypes.string,
+        title: PropTypes.string,
+        prompt: PropTypes.string,
+        options: PropTypes.arrayOf(PropTypes.string),
+        response: PropTypes.arrayOf(PropTypes.string),
+        validations: PropTypes.shape({
+          rules: PropTypes.arrayOf(PropTypes.shape({
+            name: PropTypes.string,
+            value: PropTypes.oneOfType([
+              PropTypes.string,
+              PropTypes.number,
+            ]),
+            message: PropTypes.string,
+          })),
+        }),
+      })),
+    }),
   };
 
-  const renderGoalForm = (id) => {
-    render(<Form id={id} />);
+  Form.defaultProps = {
+    customGoal: undefined,
+  };
+
+  const renderGoalForm = (id, customGoal = undefined) => {
+    render(<Form id={id} customGoal={customGoal} />);
   };
 
   beforeEach(async () => fetchMock.restore());
@@ -91,5 +121,51 @@ describe('GoalForm', () => {
 
     const endDate = await screen.findByText(/anticipated close date/i);
     expect(endDate).toBeVisible();
+  });
+
+  it('disables edit fei root cause on closed goal', async () => {
+    const goalId = 123;
+    fetchMock.get(`/api/goals?reportId=1&goalIds=${goalId}`, [{
+      endDate: '',
+      status: 'Closed',
+      value: goalId,
+      label: 'Test',
+      id: goalId,
+      name: 'Test',
+      objectives: [],
+    }], { overwriteRoutes: true });
+
+    const customGoal = {
+      id: goalId,
+      isNew: false,
+      goalIds: [goalId],
+      status: 'Closed',
+      prompts: [{
+        fieldType: 'multiselect',
+        title: 'FEI root cause',
+        prompt: 'Select FEI root cause',
+        options: ['cause1', 'cause2', 'cause3'],
+        response: ['cause2'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 2,
+              message: 'You can only select 2 options',
+            },
+            {
+              name: 'minSelections',
+              value: 1,
+              message: 'You must select at least one option',
+            },
+          ],
+        },
+      }],
+    };
+
+    renderGoalForm(goalId, customGoal);
+    expect(fetchMock.called()).toBe(true);
+    expect(screen.getByText(/fei root cause/i)).toBeVisible();
+    expect(screen.getByText(/cause2/i)).toBeVisible();
   });
 });
