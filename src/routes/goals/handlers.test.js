@@ -31,7 +31,7 @@ import {
 import { currentUserId } from '../../services/currentUser';
 import { validateMergeGoalPermissions } from '../utils';
 
-jest.mock('../recipient/handlers', () => ({
+jest.mock('../utils', () => ({
   validateMergeGoalPermissions: jest.fn(),
 }));
 
