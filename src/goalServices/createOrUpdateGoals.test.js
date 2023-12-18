@@ -1,4 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import { OBJECTIVE_STATUS } from '../constants';
@@ -57,7 +58,7 @@ describe('createOrUpdateGoals', () => {
       grantId: grants[0].id,
       source: GOAL_SOURCES[0],
     });
-    topic = await Topic.findOne();
+    topic = await Topic.findOne({ where: { mapsTo: { [Op.eq]: null } } });
 
     objective = await Objective.create({
       goalId: goal.id,
