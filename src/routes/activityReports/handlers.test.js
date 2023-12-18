@@ -1033,6 +1033,9 @@ describe('getReportsByManyIds', () => {
     body: {
       reportIds: [1, 2, 3],
     },
+    session: {
+      userId: 1,
+    },
   };
 
   const res = {
