@@ -197,6 +197,39 @@ describe('Merge goals', () => {
     expect(label.textContent).toBe('In progress');
   });
 
+  it('you can set none as duplicates', async () => {
+    fetchMock.get(idToUrl(), { goalRows: goals });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const markInvalidUrl = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/group/${GOAL_GROUP_ID}/invalid`;
+    fetchMock.put(markInvalidUrl, 200);
+    const noneAreDuplicates = await screen.findByRole('button', { name: 'None are duplicates' });
+
+    act(() => {
+      userEvent.click(noneAreDuplicates);
+    });
+
+    await waitFor(() => expect(fetchMock.called(markInvalidUrl, { method: 'PUT' })).toBeTruthy());
+  });
+
+  it('handles an error marking not duplicates', async () => {
+    fetchMock.get(idToUrl(), { goalRows: goals });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const markInvalidUrl = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/group/${GOAL_GROUP_ID}/invalid`;
+    fetchMock.put(markInvalidUrl, 500);
+    const noneAreDuplicates = await screen.findByRole('button', { name: 'None are duplicates' });
+
+    act(() => {
+      userEvent.click(noneAreDuplicates);
+    });
+
+    await waitFor(() => expect(fetchMock.called(markInvalidUrl, { method: 'PUT' })).toBeTruthy());
+    expect(await screen.findByText('Unable to mark goals as not duplicates')).toBeInTheDocument();
+  });
+
   it('you can go back', async () => {
     fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
