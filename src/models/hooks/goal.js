@@ -200,6 +200,8 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
   if (changed.includes('name')) {
     const { id: goalId } = instance;
 
+    if (!goalId) return;
+
     const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
       attributes: ['recipientId', 'goals'],
       where: {
