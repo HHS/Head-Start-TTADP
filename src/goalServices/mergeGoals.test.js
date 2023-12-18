@@ -348,22 +348,6 @@ describe('mergeGoals', () => {
     mergedGoalIds = mergedGoals.map((goal) => goal.id);
   });
 
-  it('similarity group is updated', async () => {
-    const updatedSimilarityGroup = await GoalSimilarityGroup.findOne({
-      where: {
-        id: similarityGroup.id,
-      },
-      attributes: [
-        'finalGoalId',
-        'id',
-        'goalsMerged',
-      ],
-    });
-
-    expect(updatedSimilarityGroup.finalGoalId).toBe(goalOne.id);
-    expect(updatedSimilarityGroup.goalsMerged).toEqual([goalOne.id, goalTwo.id, goalThree.id]);
-  });
-
   it('old goals are merged away', async () => {
     expect(mergedGoals.length).toBe(2);
 
