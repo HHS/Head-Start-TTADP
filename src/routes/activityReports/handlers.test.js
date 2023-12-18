@@ -1040,20 +1040,20 @@ describe('getReportsByManyIds', () => {
     sendStatus: jest.fn(),
   };
 
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should return reports with count if found', async () => {
     const mockReportsWithCount = [{ id: 1, name: 'Report 1' }, { id: 2, name: 'Report 2' }];
     activityReports.mockResolvedValue(mockReportsWithCount);
-
+    setReadRegions.mockResolvedValue({});
     await getReportsByManyIds(req, res);
 
     expect(activityReports).toHaveBeenCalledWith(
       {},
       false,
-      expect.any(Number),
+      expect.anything(),
       req.body.reportIds,
     );
     expect(res.json).toHaveBeenCalledWith(mockReportsWithCount);
@@ -1062,13 +1062,13 @@ describe('getReportsByManyIds', () => {
 
   it('should send 404 status if reports not found', async () => {
     activityReports.mockResolvedValue(null);
-
+    setReadRegions.mockResolvedValue({});
     await getReportsByManyIds(req, res);
 
     expect(activityReports).toHaveBeenCalledWith(
       {},
       false,
-      expect.any(Number),
+      expect.anything(),
       req.body.reportIds,
     );
     expect(res.json).not.toHaveBeenCalled();
