@@ -95,7 +95,6 @@ describe('RecipientReviewSection', () => {
   });
 
   it('renders without goalsAndObjectives', async () => {
-    console.log('\n\n\n-----Start of Test');
     RenderReviewSection(undefined);
     expect(screen.getByText(/Goals summary/i)).toBeInTheDocument();
   });
