@@ -1,6 +1,5 @@
 @use 'colors.scss' as *;
-
-@import './Grid.scss';
+@use './Grid.scss';
 
 @font-face {
   font-family: 'FontAwesome';
