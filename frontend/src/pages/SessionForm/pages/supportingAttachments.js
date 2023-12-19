@@ -42,7 +42,7 @@ const SupportingAttachments = ({ reportId }) => {
   return (
     <>
       <Helmet>
-        <title>Supporting attachments</title>
+        <title>Supporting Attachments</title>
       </Helmet>
       <input type="hidden" ref={register()} name={visitedField} />
       <Fieldset className="smart-hub--report-legend margin-top-4">

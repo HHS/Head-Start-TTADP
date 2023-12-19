@@ -221,7 +221,7 @@ const ActivitySummary = ({
   return (
     <>
       <Helmet>
-        <title>Activity summary</title>
+        <title>Activity Summary</title>
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
@@ -292,7 +292,7 @@ const ActivitySummary = ({
         {
           activityRecipientType === 'recipient' && !showGroupInfo && groups.length > 0
            && (
-           <div className="margin-top-2">
+           <div className="smart-hub-activity-summary-use-group margin-top-1">
              <Checkbox
                id="use-group"
                label="Use group"

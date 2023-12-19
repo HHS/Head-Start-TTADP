@@ -15,7 +15,6 @@ export default function GoalsObjectives({
   regionId,
   recipient,
   location,
-  recipientName,
   canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
@@ -46,11 +45,7 @@ export default function GoalsObjectives({
   return (
     <>
       <Helmet>
-        <title>
-          RTTAPA Goals and Objectives -
-          {' '}
-          {recipientName}
-        </title>
+        <title>RTTAPA</title>
       </Helmet>
       <div className="maxw-widescreen" id="recipientGoalsObjectives">
         <div className="display-flex display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
@@ -86,10 +81,5 @@ GoalsObjectives.propTypes = {
     })).isRequired,
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
-  recipientName: PropTypes.string,
   canMergeGoals: PropTypes.bool.isRequired,
-};
-
-GoalsObjectives.defaultProps = {
-  recipientName: '',
 };

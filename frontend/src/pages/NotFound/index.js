@@ -8,7 +8,7 @@ function NotFound() {
   return (
     <Container>
       <Helmet>
-        <title>Home</title>
+        <title>Page Not Found</title>
       </Helmet>
       <Alert type="error" heading="Not Found" headingLevel="h1">
         Page Not Found, please go to the

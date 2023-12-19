@@ -14,7 +14,6 @@ describe('ConditionalFields', () => {
   const CF = ({
     errors = {},
     prompts = [],
-    isOnReport = false,
     setPrompts = jest.fn(),
     validatePrompts = jest.fn(),
   }) => (
@@ -22,9 +21,9 @@ describe('ConditionalFields', () => {
       <ConditionalFields
         errors={errors}
         prompts={prompts}
-        isOnReport={isOnReport}
         setPrompts={setPrompts}
         validatePrompts={validatePrompts}
+        userCanEdit
       />
       <button type="button">for blurrin</button>
     </>

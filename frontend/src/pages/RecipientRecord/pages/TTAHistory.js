@@ -81,11 +81,7 @@ export default function TTAHistory({
   return (
     <>
       <Helmet>
-        <title>
-          Recipient TTA History -
-          {' '}
-          {recipientName}
-        </title>
+        <title>TTA History</title>
       </Helmet>
       <div className="maxw-widescreen">
         <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
