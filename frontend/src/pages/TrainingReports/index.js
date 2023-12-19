@@ -1,9 +1,8 @@
 import React, {
-  useContext, useState, useEffect, useMemo,
+  useContext, useState, useEffect,
 } from 'react';
 import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { useHistory } from 'react-router-dom';
@@ -13,21 +12,19 @@ import './index.scss';
 import {
   Alert, Grid, Button,
 } from '@trussworks/react-uswds';
-import { allRegionsUserHasPermissionTo } from '../../permissions';
 import UserContext from '../../UserContext';
 import colors from '../../colors';
 import WidgetContainer from '../../components/WidgetContainer';
 import Tabs from '../../components/Tabs';
 import EventCards from './components/EventCards';
-import { getEventsByStatus } from '../../fetchers/event';
+import { getEventsByStatus, deleteEvent } from '../../fetchers/event';
 import { deleteSession } from '../../fetchers/session';
 import AppLoadingContext from '../../AppLoadingContext';
 import { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
-import AriaLiveContext from '../../AriaLiveContext';
 import { filtersToQueryString, expandFilters } from '../../utils';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import useFilters from '../../hooks/useFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import { showFilterWithMyRegions } from '../regionHelpers';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 
 const FILTER_KEY = 'training-report-filters';
@@ -43,36 +40,26 @@ export default function TrainingReports({ match }) {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
 
-  // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user);
-  const ariaLiveContext = useContext(AriaLiveContext);
-
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const hasMultipleRegions = regions && regions.length > 1;
-
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
-
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+  const {
+    regions,
+    defaultRegion,
+    hasMultipleRegions,
+    allRegionsFilters,
+    filters,
+    setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+  } = useFilters(
+    user,
     FILTER_KEY,
-    defaultRegion !== 14
-      && defaultRegion !== 0
-      && hasMultipleRegions
-      ? [{
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      }]
-      : allRegionsFilters,
+    true, // manage regions
   );
-
-  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
   useEffect(() => {
     async function fetchEvents() {
       setAppLoadingText('Fetching events...');
       setIsAppLoading(true);
-      const filterQuery = filtersToQueryString(filtersToApply);
+      const filterQuery = filtersToQueryString(expandFilters(filters));
       try {
         const events = await getEventsByStatus(status, filterQuery);
         setDisplayEvents(events);
@@ -86,7 +73,7 @@ export default function TrainingReports({ match }) {
       }
     }
     fetchEvents();
-  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filtersToApply]);
+  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters]);
 
   const [showAlert, updateShowAlert] = useState(true);
 
@@ -112,38 +99,6 @@ export default function TrainingReports({ match }) {
       </>
     );
   }
-
-  // Apply filters.
-  const onApply = (newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFiltersInHook([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFiltersInHook([
-        ...newFilters,
-      ]);
-    }
-
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
-  };
-
-  // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFiltersInHook([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFiltersInHook(newFilters);
-      }
-    }
-  };
 
   const filterConfig = hasMultipleRegions
     ? TRAINING_REPORT_CONFIG_WITH_REGIONS : TRAINING_REPORT_BASE_FILTER_CONFIG;
@@ -171,6 +126,31 @@ export default function TrainingReports({ match }) {
     }
   };
 
+  /**
+   *
+   * eventId is the number from smartsheet (used in queries)
+   * id is the event id from the DB
+   *
+   * @param {number} eventId
+   * @param {number} id
+   */
+  const onDeleteEvent = async (eventId, id) => {
+    try {
+      // delete the event
+      await deleteEvent(String(eventId));
+
+      // update the UI, exclude the deleted event.
+      const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
+
+      // update the events state.
+      setDisplayEvents(events);
+    } catch (e) {
+      updateError('Unable to delete event');
+      // eslint-disable-next-line no-console
+      console.log(e);
+    }
+  };
+
   return (
     <div className="ttahub-training-reports">
       <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
@@ -179,7 +159,7 @@ export default function TrainingReports({ match }) {
           filters={filters}
           user={user}
           showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
         {showAlert && message && (
@@ -222,7 +202,7 @@ export default function TrainingReports({ match }) {
             <FilterPanel
               applyButtonAria="apply filters for training reports"
               filters={filters}
-              onApplyFilters={onApply}
+              onApplyFilters={onApplyFilters}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
               allUserRegions={regions}
@@ -241,6 +221,7 @@ export default function TrainingReports({ match }) {
                 events={displayEvents}
                 eventType={status}
                 onRemoveSession={onRemoveSession}
+                onDeleteEvent={onDeleteEvent}
               />
             </WidgetContainer>
           </Grid>

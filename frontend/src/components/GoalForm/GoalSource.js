@@ -18,6 +18,7 @@ export default function GoalSource({
   isLoading,
   userCanEdit,
   isMultiRecipientGoal,
+  required,
 }) {
   const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
     [goalStatus, userCanEdit]);
@@ -48,7 +49,7 @@ export default function GoalSource({
           <>
             Goal source
             {' '}
-            <Req />
+            {required && (<Req />)}
           </>
         </Label>
         {error}
@@ -61,6 +62,7 @@ export default function GoalSource({
           }}
           disabled={isLoading}
           value={source}
+          required={required}
         >
           <option value="" disabled selected hidden>- Select -</option>
           {GOAL_SOURCES.map((s) => (
@@ -83,10 +85,12 @@ GoalSource.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
   isMultiRecipientGoal: PropTypes.bool,
+  required: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
   inputName: 'goal-source',
   isLoading: false,
   isMultiRecipientGoal: false,
+  required: true,
 };

@@ -19,8 +19,9 @@ export default class EventReport {
     if (this.isAdmin()) { return true; }
 
     return !!this.permissions.find((p) => [
-      SCOPES.READ_TRAINING_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
+      SCOPES.READ_WRITE_REPORTS,
     ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
   }
 
@@ -59,8 +60,9 @@ export default class EventReport {
    */
   get readableRegions() {
     const viablePermissions = this.permissions.filter((p) => [
-      SCOPES.READ_TRAINING_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
+      SCOPES.READ_WRITE_REPORTS,
     ].includes(p.scopeId));
 
     return viablePermissions.map((p) => Number(p.regionId));
@@ -124,6 +126,10 @@ export default class EventReport {
 
   canEditSession() {
     return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
+  }
+
+  canUploadFile() {
+    return this.canEditSession();
   }
 
   canDeleteSession() {

@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
 
 export const CONTAINS = 'contains';
@@ -25,6 +26,7 @@ export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
 export const REGION_CONDITIONS = [IS];
 export const SINGLE_OR_MULTI_RECIPIENT_CONDITIONS = [IS];
+export const SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
@@ -48,6 +50,11 @@ export const DATE_CONDITIONS = [
   WITHIN,
 ];
 
+export const WITHOUT_ACTIVITY_DATE_CONDITIONS = [
+  IS,
+  WITHIN,
+];
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const REGIONAL_SCOPES = {
@@ -56,8 +63,9 @@ export const REGIONAL_SCOPES = {
     description: 'Can view and create/edit activity reports in the region',
   },
   [SCOPE_IDS.READ_ACTIVITY_REPORTS]: {
-    name: 'READ_ACTIVITY_REPORTS',
-    description: 'Can view reports activity in the region',
+    name: 'READ_REPORTS',
+    description: 'Can view reports in the region',
+    readOnly: true,
   },
   [SCOPE_IDS.APPROVE_ACTIVITY_REPORTS]: {
     name: 'APPROVE_ACTIVITY_REPORTS',
@@ -67,15 +75,14 @@ export const REGIONAL_SCOPES = {
     name: 'READ_WRITE_TRAINING_REPORTS',
     description: 'Can view and create/edit training reports in the region',
   },
-  [SCOPE_IDS.READ_TRAINING_REPORTS]: {
-    name: 'READ_TRAINING_REPORTS',
-    description: 'Can view training reports in the region',
-  },
   [SCOPE_IDS.POC_TRAINING_REPORTS]: {
     name: 'POC_TRAINING_REPORTS',
     description: 'Can serve as a regional point of contact in the region (A regional POC can create sessions, view and edit reports)',
   },
 };
+
+export const READ_WRITE_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => !scope.readOnly));
+export const READ_ONLY_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => scope.readOnly));
 
 export const GLOBAL_SCOPES = {
   [SCOPE_IDS.SITE_ACCESS]: {
@@ -127,6 +134,9 @@ export const REGIONS = [
   12,
 ];
 
+export const CENTRAL_OFFICE = 14;
+export const ALL_REGIONS = 15;
+
 export const managerReportStatuses = [
   'needs_action',
   'approved',
@@ -154,7 +164,7 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.2';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.3';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;

@@ -79,6 +79,8 @@ const hsesUsers = [
   },
 ];
 
+const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
+
 const processHtml = async (input) => {
   if (!input) {
     return input;
@@ -111,7 +113,7 @@ export const convertEmails = (emails) => {
       const foundTransformedUser = transformedUsers.find((user) => user.id === userId);
       return foundTransformedUser ? foundTransformedUser.email : '';
     }
-    return emails.includes('@') ? faker.internet.email() : '';
+    return emails.includes('@') ? generateFakeEmail() : '';
   });
 
   return convertedEmails.join(', ');
@@ -136,7 +138,7 @@ export const convertName = (name, email) => {
     foundTransformedUser = {
       id: foundUser.id,
       name: faker.name.findName(),
-      email: faker.internet.email(),
+      email: generateFakeEmail(),
     };
     transformedUsers.push(foundTransformedUser);
   }
@@ -196,7 +198,7 @@ export const hideUsers = async (userIds) => {
     promises.push(
       user.update({
         hsesUsername: faker.internet.email(),
-        email: faker.internet.email(),
+        email: generateFakeEmail(),
         phoneNumber: faker.phone.phoneNumber(),
         name: faker.name.findName(),
       }, { individualHooks: true }),

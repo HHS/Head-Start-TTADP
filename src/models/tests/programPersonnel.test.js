@@ -11,6 +11,7 @@ describe('ProgramPersonnel', () => {
   let grant;
   let recipient;
   let program;
+  let baseProgramPersonnel;
   let programPersonnel;
   beforeAll(async () => {
     // Recipient.
@@ -44,6 +45,22 @@ describe('ProgramPersonnel', () => {
     });
 
     // Grant Personnel.
+    baseProgramPersonnel = await ProgramPersonnel.create({
+      grantId: grant.id,
+      programId: program.id,
+      role: GRANT_PERSONNEL_ROLES[0],
+      active: false,
+      prefix: 'Mr.',
+      firstName: 'John',
+      lastName: 'Doe',
+      suffix: 'Jr.',
+      title: 'Director',
+      email: 'john.doe@test.gov',
+      effectiveDate: '2023-01-01',
+      mapsTo: null,
+    });
+
+    // Grant Personnel.
     programPersonnel = await ProgramPersonnel.create({
       grantId: grant.id,
       programId: program.id,
@@ -56,11 +73,16 @@ describe('ProgramPersonnel', () => {
       title: 'Director',
       email: 'john.doe@test.gov',
       effectiveDate: '2023-01-01',
-      originalPersonnelId: 1,
+      mapsTo: baseProgramPersonnel.id,
     });
   });
   afterAll(async () => {
     // Delete Grant Personnel.
+    await ProgramPersonnel.destroy({
+      where: {
+        grantId: grant.id,
+      },
+    });
     await ProgramPersonnel.destroy({
       where: {
         grantId: grant.id,
@@ -96,9 +118,10 @@ describe('ProgramPersonnel', () => {
     let programPersonnelToCheck = await ProgramPersonnel.findOne({
       where: {
         grantId: grant.id,
+        active: true,
       },
     });
-
+    const ppId = programPersonnelToCheck.id;
     // Assert all grant personnel values.
     expect(programPersonnelToCheck).toHaveProperty('id');
     expect(programPersonnelToCheck.grantId).toEqual(grant.id);
@@ -111,11 +134,12 @@ describe('ProgramPersonnel', () => {
     expect(programPersonnelToCheck.suffix).toEqual('Jr.');
     expect(programPersonnelToCheck.title).toEqual('Director');
     expect(programPersonnelToCheck.email).toEqual('john.doe@test.gov');
-    expect(programPersonnelToCheck.originalPersonnelId).toEqual(1);
+    expect(programPersonnelToCheck.mapsTo).toEqual(baseProgramPersonnel.id);
 
     // Update Grant Personnel.
     programPersonnelToCheck = await programPersonnel.update({
-      role: GRANT_PERSONNEL_ROLES[1],
+      id: programPersonnelToCheck.id,
+      role: GRANT_PERSONNEL_ROLES[4],
       active: false,
       prefix: 'Ms.',
       firstName: 'Jane',
@@ -124,19 +148,19 @@ describe('ProgramPersonnel', () => {
       title: 'Director2',
       email: 'jane.doe@test.gov',
       effectiveDate: '2023-01-02',
-      originalPersonnelId: 2,
+      mapsTo: null,
     });
 
     // Assert all grant personnel values.
     programPersonnelToCheck = await ProgramPersonnel.findOne({
       where: {
-        grantId: grant.id,
+        id: ppId,
       },
     });
 
     expect(programPersonnelToCheck).toHaveProperty('id');
     expect(programPersonnelToCheck.grantId).toEqual(grant.id);
-    expect(programPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[1]);
+    expect(programPersonnelToCheck.role).toEqual(GRANT_PERSONNEL_ROLES[4]);
     expect(programPersonnelToCheck.active).toEqual(false);
     expect(programPersonnelToCheck.prefix).toEqual('Ms.');
     expect(programPersonnelToCheck.firstName).toEqual('Jane');
@@ -144,7 +168,26 @@ describe('ProgramPersonnel', () => {
     expect(programPersonnelToCheck.suffix).toEqual('Sr2.');
     expect(programPersonnelToCheck.title).toEqual('Director2');
     expect(programPersonnelToCheck.email).toEqual('jane.doe@test.gov');
-    expect(programPersonnelToCheck.originalPersonnelId).toEqual(2);
+    expect(programPersonnelToCheck.mapsTo).toEqual(null);
+
+    // check virtual fields
+    expect(programPersonnelToCheck.fullName).toEqual('Jane Doe');
+    expect(programPersonnelToCheck.nameAndRole).toEqual('Jane Doe - director');
+
+    programPersonnelToCheck = await ProgramPersonnel.findOne({
+      where: {
+        id: ppId,
+      },
+      include: [
+        {
+          model: Program,
+          as: 'program',
+        },
+      ],
+    });
+
+    expect(programPersonnelToCheck.fullName).toEqual('Jane Doe');
+    expect(programPersonnelToCheck.nameAndRole).toEqual('Jane Doe - Director for Head Start');
   });
 
   it('grant returns grant personnel', async () => {
@@ -160,6 +203,8 @@ describe('ProgramPersonnel', () => {
         },
       ],
     });
-    expect(grant.programPersonnel[0].id).toBe(programPersonnel.id);
+
+    // Assert there are two program personnel.
+    expect(grant.programPersonnel.length).toBe(2);
   });
 });

@@ -13,6 +13,11 @@ import {
   deleteNationalCenter,
   createNationalCenter,
   updateNationalCenter,
+  getCuratedTemplates,
+  getCreatorsByRegion,
+  getGroupsByRegion,
+  createMultiRecipientGoalsFromAdmin,
+  closeMultiRecipientGoalsFromAdmin,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -107,6 +112,51 @@ describe('Admin', () => {
       fetchMock.post(join('/', 'api', 'admin', 'redis', 'flush'), res);
       const flushed = await flushRedis();
       expect(flushed).toEqual(res);
+    });
+  });
+
+  describe('goals', () => {
+    it('getCuratedTemplates', async () => {
+      const res = { templates: [] };
+      fetchMock.get(join('/', 'api', 'admin', 'goals', 'curated-templates'), res);
+      const templates = await getCuratedTemplates();
+      expect(templates).toEqual(res);
+    });
+  });
+
+  describe('groups', () => {
+    it('getGroupsByRegion', async () => {
+      const res = { groups: [] };
+      fetchMock.get(join('/', 'api', 'admin', 'groups', 'region', '1'), res);
+      const groups = await getGroupsByRegion(1);
+      expect(groups).toEqual(res);
+    });
+  });
+
+  describe('getCreatorsByRegion', () => {
+    it('gets creators by region', async () => {
+      const res = { creators: [] };
+      fetchMock.get(join('/', 'api', 'admin', 'users', 'creators', 'region', '1'), res);
+      const creators = await getCreatorsByRegion(1);
+      expect(creators).toEqual(res);
+    });
+  });
+
+  describe('createMultiRecipientGoalsFromAdmin', () => {
+    it('creates goals', async () => {
+      const res = { created: true };
+      fetchMock.post(join('/', 'api', 'admin', 'goals'), res);
+      const created = await createMultiRecipientGoalsFromAdmin({});
+      expect(created).toEqual(res);
+    });
+  });
+
+  describe('closeMultiRecipientGoalsFromAdmin', () => {
+    it('closes goals', async () => {
+      const res = { closed: true };
+      fetchMock.put(join('/', 'api', 'admin', 'goals', 'close'), res);
+      const created = await closeMultiRecipientGoalsFromAdmin({});
+      expect(created).toEqual(res);
     });
   });
 

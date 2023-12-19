@@ -10,7 +10,7 @@ import {
 import {
   createEvent,
   findEventsByCollaboratorId,
-  findEventById,
+  findEventBySmartsheetIdSuffix,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
@@ -24,7 +24,7 @@ jest.mock('../../policies/event');
 jest.mock('../../services/event', () => ({
   createEvent: jest.fn(),
   findEventsByCollaboratorId: jest.fn(),
-  findEventById: jest.fn(),
+  findEventBySmartsheetIdSuffix: jest.fn(),
   findEventsByOwnerId: jest.fn(),
   findEventsByPocId: jest.fn(),
   findEventsByRegionId: jest.fn(),
@@ -69,8 +69,8 @@ describe('event handlers', () => {
 
   describe('getHandler', () => {
     it('returns the event', async () => {
-      findEventById.mockResolvedValueOnce(mockEvent);
-      EventReport.mockImplementationOnce(() => ({
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      EventReport.mockImplementation(() => ({
         canRead: () => true,
       }));
       await getHandler({ params: { eventId: 99_999 } }, mockResponse);
@@ -83,41 +83,41 @@ describe('event handlers', () => {
     });
 
     it('404 when not found by eventId', async () => {
-      findEventById.mockResolvedValueOnce(null);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(null);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by regionId', async () => {
-      findEventsByRegionId.mockResolvedValueOnce(null);
+      findEventsByRegionId.mockResolvedValue(null);
       await getHandler({ params: { regionId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by ownerId', async () => {
-      findEventsByOwnerId.mockResolvedValueOnce(null);
+      findEventsByOwnerId.mockResolvedValue(null);
       await getHandler({ params: { ownerId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by pocIds', async () => {
-      findEventsByPocId.mockResolvedValueOnce(null);
+      findEventsByPocId.mockResolvedValue(null);
       await getHandler({ params: { pocIds: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by collaboratorId', async () => {
-      findEventsByCollaboratorId.mockResolvedValueOnce(null);
+      findEventsByCollaboratorId.mockResolvedValue(null);
       await getHandler({ params: { collaboratorId: 1 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 403 when the user cannot read the event', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canRead: () => false,
         isPoc: () => false,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await getHandler({ params: { eventId: 1 } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
@@ -138,10 +138,10 @@ describe('event handlers', () => {
     };
 
     it('returns the event', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canWriteInRegion: () => true,
       }));
-      createEvent.mockResolvedValueOnce(mockEvent);
+      createEvent.mockResolvedValue(mockEvent);
       await createHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -170,10 +170,11 @@ describe('event handlers', () => {
     };
 
     it('returns the event', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canEditEvent: () => true,
       }));
-      updateEvent.mockResolvedValueOnce(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -184,11 +185,12 @@ describe('event handlers', () => {
     });
 
     it('owners can update status to complete', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canEditEvent: () => true,
         canSuspendOrCompleteEvent: () => true,
       }));
-      updateEvent.mockResolvedValueOnce(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
         body: {
@@ -205,11 +207,12 @@ describe('event handlers', () => {
     });
 
     it('others cannot update status to complete', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canEditEvent: () => true,
         canSuspendOrCompleteEvent: () => false,
       }));
-      updateEvent.mockResolvedValueOnce(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
         body: {
@@ -226,11 +229,12 @@ describe('event handlers', () => {
     });
 
     it('owner can update status to suspended', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canEditEvent: () => true,
         canSuspendOrCompleteEvent: () => true,
       }));
-      updateEvent.mockResolvedValueOnce(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
         body: {
@@ -246,12 +250,13 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
-    it('owner cannot update status to suspended', async () => {
-      EventReport.mockImplementationOnce(() => ({
+    it('not owner cannot update status to suspended', async () => {
+      EventReport.mockImplementation(() => ({
         canEditEvent: () => true,
         canSuspendOrCompleteEvent: () => false,
       }));
-      updateEvent.mockResolvedValueOnce(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
       await updateHandler({
         ...mockRequest,
         body: {
@@ -270,10 +275,11 @@ describe('event handlers', () => {
 
   describe('deleteHandler', () => {
     it('works', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canDelete: () => true,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
         mockResponse,
@@ -281,7 +287,7 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
     it('returns 404 when no event', async () => {
-      findEventById.mockResolvedValueOnce(null);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(null);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
         mockResponse,
@@ -290,10 +296,10 @@ describe('event handlers', () => {
     });
 
     it('returns 403 when user can\'t delete', async () => {
-      EventReport.mockImplementationOnce(() => ({
+      EventReport.mockImplementation(() => ({
         canDelete: () => false,
       }));
-      findEventById.mockResolvedValueOnce(mockEvent);
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
         mockResponse,
@@ -302,12 +308,9 @@ describe('event handlers', () => {
     });
 
     it('handles errors', async () => {
-      EventReport.mockImplementationOnce(() => ({
-        canDelete: () => true,
-      }));
-      findEventById.mockRejectedValueOnce(new Error('error'));
+      findEventBySmartsheetIdSuffix.mockRejectedValue(new Error('error'));
       await deleteHandler(
-        { session: { userId: 1 }, params: { eventId: mockEvent.id } },
+        { session: { userId: 1 }, params: { eventId: mockEvent.id }, query: {} },
         mockResponse,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -316,7 +319,10 @@ describe('event handlers', () => {
 
   describe('getByStatus', () => {
     it('works', async () => {
-      findEventsByStatus.mockResolvedValueOnce([mockEvent]);
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+      }));
+      findEventsByStatus.mockResolvedValue([mockEvent]);
       await getByStatus(
         {
           session: { userId: 1 },
@@ -328,11 +334,15 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
     it('handles errors', async () => {
-      findEventsByStatus.mockRejectedValueOnce(new Error('error'));
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+      }));
+      findEventsByStatus.mockRejectedValue(new Error('error'));
       await getByStatus(
         {
           session: { userId: 1 },
           params: { status: 'not-started' },
+          query: { regionId: 99_999 },
         },
         mockResponse,
       );

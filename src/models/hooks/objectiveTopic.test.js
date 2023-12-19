@@ -58,7 +58,7 @@ describe('objectiveTopic hooks', () => {
       where: { objectiveId: objective.id },
     });
 
-    await Objective.destroy({ where: { id: objective.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
 
     await ObjectiveTemplate.destroy({
       where: { id: objectiveTemplate.id },

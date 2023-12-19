@@ -200,6 +200,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
 
       // Delete Goal.
@@ -207,6 +208,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
         where: {
           grantId: grant.id,
         },
+        force: true,
       });
       // Delete Report's.
       await ActivityReport.destroy({ where: { id: reportOne.id } });

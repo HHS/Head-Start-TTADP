@@ -72,6 +72,7 @@ export default function GoalForm({
     objectives: [],
     id: 'new',
     onApprovedAR: false,
+    onAnyReport: false,
     prompts: [],
     isCurated: false,
     source: '',
@@ -96,6 +97,7 @@ export default function GoalForm({
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
+  const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -124,10 +126,6 @@ export default function GoalForm({
       ),
   ).length > 0, [regionId, user.permissions]);
 
-  const isOnReport = useMemo(() => objectives.some(
-    (objective) => objective.activityReports && objective.activityReports.length > 0,
-  ), [objectives]);
-
   // we can access the params as the third arg returned by useUrlParamState
   // (if we need it)
   const [ids, setIds] = useUrlParamState('id[]');
@@ -149,6 +147,7 @@ export default function GoalForm({
         setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
+        setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
         setSource(goal.source || '');
@@ -518,7 +517,7 @@ export default function GoalForm({
   };
 
   const redirectToGoalsPage = (goals) => {
-    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/rttapa`, {
       ids: goals.map((g) => g.id),
     });
   };
@@ -889,10 +888,10 @@ export default function GoalForm({
       { showRTRnavigation ? (
         <Link
           className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
         >
           <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-          <span>Back to Goals & Objectives</span>
+          <span>Back to RTTAPA</span>
         </Link>
       ) : null }
       <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
@@ -949,8 +948,9 @@ export default function GoalForm({
               setObjectiveError={setObjectiveError}
               clearEmptyObjectiveError={clearEmptyObjectiveError}
               topicOptions={topicOptions}
-              isOnReport={isOnReport}
+              isOnReport={goalOnAnyReport}
               isOnApprovedReport={goalOnApprovedAR}
+              isCurated={isCurated}
               status={status || 'Needs status'}
               goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
@@ -969,7 +969,7 @@ export default function GoalForm({
             { showForm ? <Button type="button" outline onClick={onSaveDraft}>Save draft</Button> : null }
             { showForm && !createdGoals.length ? (
               <Link
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
                 className=" usa-button usa-button--outline"
               >
                 Cancel
@@ -994,7 +994,7 @@ export default function GoalForm({
               </Button>
               <Link
                 className="usa-button usa-button--outline"
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
               >
                 Cancel
               </Link>

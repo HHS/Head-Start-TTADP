@@ -15,10 +15,12 @@ const emailTemplatePath = path.join(process.cwd(), 'email_templates');
  *
  */
 export default async function logEmailNotification(job, success, result) {
-  let subject; let emailTo; let
-    template;
-  let newCollaborator; let newApprover; let
-    collabArray;
+  let subject;
+  let emailTo;
+  let template;
+  let newCollaborator;
+  let newApprover;
+  let collabArray;
   let programSpecialists;
   let collaboratorEmailAddresses;
   const { data } = job;
@@ -52,6 +54,16 @@ export default async function logEmailNotification(job, success, result) {
         emailTo = programSpecialists.map((ps) => ps.email);
         report.recipientNamesDisplay = data.recipients.map((r) => r.name).join(', ').trim();
         template = path.resolve(emailTemplatePath, 'recipient_report_approved', 'subject.pug');
+        break;
+      case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE:
+      case EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE:
+        emailTo = data.emailTo;
+        template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
         break;
       default:
         break;

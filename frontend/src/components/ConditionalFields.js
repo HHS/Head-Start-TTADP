@@ -12,19 +12,17 @@ export const FIELD_DICTIONARY = {
       error,
       field,
       validations,
-      isComplete,
       value,
-      isOnReport,
       onChange,
       onBlur,
+      userCanEdit,
     }) => (
       <ConditionalMultiselect
         fieldData={field}
         validations={validations}
         fieldName={field.title.replace(/\s/g, '-').toLowerCase()}
         fieldValue={value}
-        isOnReport={isOnReport}
-        isComplete={isComplete}
+        userCanEdit={userCanEdit}
         onBlur={onBlur}
         onChange={onChange}
         error={error}
@@ -36,10 +34,10 @@ export const FIELD_DICTIONARY = {
 
 export default function ConditionalFields({
   prompts,
-  isOnReport,
   setPrompts,
   validatePrompts,
   errors,
+  userCanEdit,
 }) {
   const [initialValues, setInitialValues] = useState([]);
 
@@ -64,18 +62,6 @@ export default function ConditionalFields({
 
         const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
         const rules = validationsAndCompletions.transformValidationsIntoRules(prompt.validations);
-
-        const initialValue = (() => {
-          const current = initialValues.find((p) => p.promptId === prompt.promptId);
-          if (current) {
-            return current.response;
-          }
-
-          return [];
-        })();
-
-        const completions = validationsAndCompletions.confirmResponseComplete(prompt.validations);
-        const isComplete = completions.every((completion) => completion(initialValue));
 
         const onChange = (updatedValue) => {
           const newPrompts = [...prompts.map((p) => ({ ...p }))];
@@ -102,10 +88,9 @@ export default function ConditionalFields({
           field: prompt,
           validations: {},
           value: prompt.response,
-          isOnReport,
           onChange,
           onBlur,
-          isComplete,
+          userCanEdit,
         };
 
         return field.render(fieldData);
@@ -123,7 +108,11 @@ ConditionalFields.propTypes = {
       title: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
+  userCanEdit: PropTypes.bool,
+};
+
+ConditionalFields.defaultProps = {
+  userCanEdit: false,
 };

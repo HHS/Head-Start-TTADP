@@ -272,6 +272,7 @@ function Landing() {
           <Alert
             type="success"
             role="alert"
+            className="margin-bottom-2"
             noIcon
             cta={(
               <Button

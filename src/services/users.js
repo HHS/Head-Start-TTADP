@@ -10,6 +10,7 @@ import {
   Role,
   sequelize,
   UserValidationStatus,
+  EventReportPilot,
 } from '../models';
 
 const { SITE_ACCESS } = SCOPES;
@@ -426,7 +427,7 @@ export async function setFlag(flag, on = true) {
  * @returns {Promise<Array>} result as a promise resolving to an array of users
  */
 
-export async function getTrainingReportUsersByRegion(regionId) {
+export async function getTrainingReportUsersByRegion(regionId, eventId) {
   // this is weird (poc = collaborators, collaborators = read/write)? but it is the case
   // as far as I understand it
   const pointOfContactScope = SCOPES.POC_TRAINING_REPORTS; // regional poc collab
@@ -476,6 +477,7 @@ export async function getTrainingReportUsersByRegion(regionId) {
   const results = {
     pointOfContact: [],
     collaborators: [],
+    creators: [],
   };
 
   users.forEach((user) => {
@@ -485,6 +487,33 @@ export async function getTrainingReportUsersByRegion(regionId) {
       results.collaborators.push(user);
     }
   });
+
+  // Copy collaborators to creators.
+  results.creators = [...results.collaborators];
+
+  if (eventId) {
+    // get event report pilot that has the id event id.
+    const eventReportPilot = await EventReportPilot.findOne({
+      attributes: ['id', 'ownerId', 'data'],
+      where: {
+        data: {
+          eventId: {
+            [Op.endsWith]: `-${eventId}`,
+          },
+        },
+      },
+    });
+
+    if (eventReportPilot) {
+      // Check if creators contains the current ownerId.
+      const currentOwner = results.creators.find((creator) => creator.id === eventReportPilot.ownerId);
+      if (!currentOwner) {
+        // If the current ownerId is not in the creators array, add it.
+        const owner = await userById(eventReportPilot.ownerId);
+        results.creators.push({ id: owner.id, name: owner.name });
+      }
+    }
+  }
 
   return results;
 }
@@ -499,4 +528,19 @@ export async function getUserNamesByIds(ids) {
   });
 
   return users.map((u) => u.name);
+}
+
+export async function findAllUsersWithScope(scope) {
+  if (!Object.values(SCOPES).includes(scope)) {
+    return [];
+  }
+  return User.findAll({
+    attributes: ['id', 'name'],
+    include: [{
+      attributes: [],
+      model: Permission,
+      as: 'permissions',
+      where: { scopeId: scope },
+    }],
+  });
 }

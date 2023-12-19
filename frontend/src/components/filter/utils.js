@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { useContext } from 'react';
 import { MyGroupsContext } from '../MyGroupsProvider';
 
@@ -13,4 +12,11 @@ export const useDisplayGroups = (query) => {
     const group = myGroups.find((g) => g.id === q);
     return group ? group.name : '';
   }).join(', ');
+};
+
+export const fixQueryWhetherStringOrArray = (query) => {
+  if (Array.isArray(query)) {
+    return query.join(', ');
+  }
+  return query;
 };

@@ -3,6 +3,9 @@ web_instances: 3
 web_memory: 3GB
 worker_instances: 2
 worker_memory: 1GB
+similarity_api_instances: 1
+similarity_api_memory: 1GB
+similarity_api_disk_quota: 5GB
 LOG_LEVEL: info
 AUTH_BASE: https://hses.ohs.acf.hhs.gov
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
@@ -10,3 +13,5 @@ REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
+SUPPRESS_ERROR_LOGGING: "false"
+SIMILARITY_ENDPOINT: https://tta-similarity-api-prod.app.cloud.gov/compute

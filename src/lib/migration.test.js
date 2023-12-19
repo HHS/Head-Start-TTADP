@@ -1,4 +1,12 @@
-const { prepMigration, setAuditLoggingState, removeTables } = require('./migration');
+const {
+  prepMigration,
+  setAuditLoggingState,
+  removeTables,
+  replaceValueInArray,
+  replaceValueInJSONBArray,
+  updateUsersFlagsEnum,
+  dropAndRecreateEnum,
+} = require('./migration');
 
 describe('prepMigration', () => {
   const queryInterface = {
@@ -130,5 +138,142 @@ describe('removeTables', () => {
 
     // Check that no tables were truncated
     expect(queryInterface.truncate).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe('replaceValueInArray', () => {
+  let queryInterface;
+  const table = 'test_table';
+  const column = 'test_column';
+  const oldValue = 'old_value';
+  const newValue = 'new_value';
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  it('should call the update query with the correct SQL', async () => {
+    await replaceValueInArray(queryInterface, null, table, column, oldValue, newValue);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
+  UPDATE "${table}"
+  SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
+  WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
+`, { transaction: null });
+  });
+});
+
+describe('replaceValueInJSONBArray', () => {
+  let queryInterface;
+  const table = 'test_table';
+  const column = 'test_column';
+  const field = 'test_field';
+  const oldValue = 'old_value';
+  const newValue = 'new_value';
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  it('should call the update query with the correct SQL', async () => {
+    await replaceValueInJSONBArray(queryInterface, null, table, column, field, oldValue, newValue);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
+  UPDATE "${table}"
+  SET
+    "${column}" = (
+      SELECT
+        JSONB_SET(
+          "${column}",
+          '{${field}}',
+          (
+            SELECT
+              jsonb_agg(
+                CASE
+                  WHEN value::text = '"${oldValue}"'
+                    THEN '"${newValue}"'::jsonb
+                  ELSE value
+                END
+              )
+            FROM jsonb_array_elements("${column}" -> '${field}') AS value
+          )::jsonb
+        )
+    )
+  WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
+`, { transaction: null });
+  });
+});
+
+describe('updateUsersFlagsEnum', () => {
+  let queryInterface;
+  const transaction = {};
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('should update flags and recreate enum if valuesToRemove is provided', async () => {
+    const valuesToRemove = ['value1', 'value2'];
+    await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
+  });
+});
+
+describe('dropAndRecreateEnum', () => {
+  const transaction = {};
+  let queryInterface;
+  const enumName = 'MyEnum';
+  const tableName = 'MyTable';
+  const columnName = 'MyColumn';
+  const enumValues = ['Value1', 'Value2'];
+  const enumType = 'text';
+
+  beforeEach(() => {
+    queryInterface = {
+      sequelize: {
+        query: jest.fn(),
+      },
+    };
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should rename the existing type, create a new type, add values to the new type, update the columns to use the new type, and remove the old type', async () => {
+    await dropAndRecreateEnum(
+      queryInterface,
+      transaction,
+      enumName,
+      tableName,
+      columnName,
+      enumValues,
+      enumType,
+    );
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('should use default values for enumValues and enumType if not provided', async () => {
+    await dropAndRecreateEnum(queryInterface, transaction, enumName, tableName, columnName);
+
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
   });
 });

@@ -2,6 +2,81 @@ import SCOPES from '../middleware/scopeConstants';
 import Recipient from './recipient';
 
 describe('Recipient', () => {
+  describe('canMergeGoals', () => {
+    it('returns true if user is a TTAC in a given region', async () => {
+      const user = {
+        roles: [
+          {
+            name: 'TTAC',
+          },
+        ],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      const recipient = {
+        grants: [
+          {
+            regionId: 1,
+          },
+        ],
+      };
+      const recipientPolicy = new Recipient(user, recipient);
+      expect(recipientPolicy.canMergeGoals()).toBe(true);
+    });
+    it('returns true if the user is on an approved activity report', async () => {
+      const user = {
+        roles: [
+          {
+            name: 'Mole person',
+          },
+        ],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      const recipient = {
+        grants: [
+          {
+            regionId: 1,
+          },
+        ],
+      };
+      const recipientPolicy = new Recipient(user, recipient, true);
+      expect(recipientPolicy.canMergeGoals()).toBe(true);
+    });
+
+    it('returns false otherwise', async () => {
+      const user = {
+        roles: [
+          {
+            name: 'Mole person',
+          },
+        ],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      const recipient = {
+        grants: [
+          {
+            regionId: 1,
+          },
+        ],
+      };
+      const recipientPolicy = new Recipient(user, recipient, false);
+      expect(recipientPolicy.canMergeGoals()).toBe(false);
+    });
+  });
   describe('canView', () => {
     it('returns false if there are no read permissions', async () => {
       const user = {

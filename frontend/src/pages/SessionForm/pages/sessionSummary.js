@@ -41,6 +41,7 @@ import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../.
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import '../../../components/GoalForm/ObjectiveSupportType.scss';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -74,6 +75,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   // ref for topics guidance drawer
   const drawerTriggerRef = useRef(null);
+  const supportTypeDrawerTriggerRef = useRef(null);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -94,6 +96,7 @@ const SessionSummary = ({ datePickerKey }) => {
     async function fetchTopics() {
       try {
         const topics = await getTopics();
+        topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
       } catch (err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
@@ -109,8 +112,8 @@ const SessionSummary = ({ datePickerKey }) => {
   useEffect(() => {
     async function fetchNationalCenters() {
       try {
-        const nationalCenters = await getNationalCenters();
-        setTrainerOptions(nationalCenters);
+        const { centers } = await getNationalCenters();
+        setTrainerOptions(centers);
       } catch (err) {
         setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
         setTrainerOptions([]);
@@ -215,7 +218,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Session name"
+          label="Session name "
           name="sessionName"
           htmlFor="sessionName"
           required
@@ -280,7 +283,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Duration in hours (round to the nearest quarter hour)"
+          label="Duration in hours (round to the nearest quarter hour) "
           name="duration"
         >
           <div className="maxw-card-lg">
@@ -307,13 +310,14 @@ const SessionSummary = ({ datePickerKey }) => {
                   max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                 })
               }
+              required
             />
           </div>
         </FormItem>
       </div>
 
       <FormItem
-        label="Session context"
+        label="Session context "
         name="context"
         required
       >
@@ -323,12 +327,13 @@ const SessionSummary = ({ datePickerKey }) => {
           inputRef={register({
             required: 'Describe the session context',
           })}
+          required
         />
       </FormItem>
 
       <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
       <FormItem
-        label="Session objective"
+        label="Session objective "
         name="objective"
         required
       >
@@ -338,6 +343,7 @@ const SessionSummary = ({ datePickerKey }) => {
           inputRef={register({
             required: 'Describe the session objective',
           })}
+          required
         />
       </FormItem>
 
@@ -391,6 +397,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 getOptionValue={(option) => option.id}
                 options={topicOptions || []}
                 isMulti
+                required
               />
             )}
             control={control}
@@ -436,6 +443,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 getOptionLabel={(option) => option.name}
                 getOptionValue={(option) => option.id}
                 isMulti
+                required
               />
             )}
             control={control}
@@ -537,17 +545,52 @@ const SessionSummary = ({ datePickerKey }) => {
 
       </Fieldset>
 
-      <div className="margin-top-2">
-        <Label htmlFor="objectiveSupportType">
-          Support type
-          <Req />
-        </Label>
+      <FormItem
+        label="TTA provided "
+        name="ttaProvided"
+        required
+      >
+        <Textarea
+          required
+          id="ttaProvided"
+          name="ttaProvided"
+          inputRef={register({
+            required: 'Describe the tta provided',
+          })}
+        />
+      </FormItem>
 
+      <div className="margin-top-2">
+        <Drawer
+          triggerRef={supportTypeDrawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Support type guidance"
+        >
+          <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
+        </Drawer>
+        <div className="display-flex flex-align-baseline">
+          <Label htmlFor="objectiveSupportType">
+            <>
+              Support type
+              {' '}
+              <Req />
+            </>
+          </Label>
+          <button
+            type="button"
+            className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled margin-left-1"
+            ref={supportTypeDrawerTriggerRef}
+          >
+            Get help choosing a support type
+          </button>
+        </div>
         <Dropdown
           id="objectiveSupportType"
           name="objectiveSupportType"
           inputRef={register({ required: 'Select a support type' })}
           defaultValue=""
+          required
         >
           <option disabled hidden value="">Select one</option>
           {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}

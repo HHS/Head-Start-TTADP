@@ -272,6 +272,7 @@ describe('Create AWS Elastic Search Indexes', () => {
           id: objective.id,
         },
         individualHooks: true,
+        force: true,
       });
       // Delete Goal.
       await Goal.destroy({
@@ -279,6 +280,7 @@ describe('Create AWS Elastic Search Indexes', () => {
           grantId: grant.id,
         },
         individualHooks: true,
+        force: true,
       });
       // Delete Report's.
       await ActivityReport.destroy({

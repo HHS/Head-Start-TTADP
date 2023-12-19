@@ -89,6 +89,11 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
         'Objective status': objective.status,
+        ...(objective.status === 'Suspended' ? {
+          'Reason suspended': (
+            objective.closeSuspendReason || ''
+          ) + (` - ${objective.closeSuspendContext}` || ''),
+        } : {}),
       },
       isStriped,
     };

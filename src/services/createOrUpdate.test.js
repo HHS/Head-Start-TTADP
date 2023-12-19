@@ -256,6 +256,7 @@ describe('createOrUpdate', () => {
         goalId: goals[0].id,
       },
       individualHooks: true,
+      force: true,
     });
 
     await ActivityReportGoal.destroy({
@@ -270,6 +271,7 @@ describe('createOrUpdate', () => {
         grantId: grantIds[0],
       },
       individualHooks: true,
+      force: true,
     });
 
     await Topic.destroy({

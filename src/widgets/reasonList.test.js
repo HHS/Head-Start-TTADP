@@ -67,22 +67,7 @@ const regionOneReportC = {
   ...reportObject,
   regionId: 8,
   duration: 3,
-  reason: [
-    'Below Competitive Threshold (CLASS)',
-    'Below Quality Threshold (CLASS)',
-    'Change in Scope',
-    'Child Incidents',
-    'Complaint',
-    'COVID-19 response',
-    'Full Enrollment',
-    'New Recipient',
-    'New Director or Management',
-    'New Program Option',
-    'New Staff / Turnover',
-    'Ongoing Quality Improvement',
-    'Planning/Coordination (also TTA Plan Agreement)',
-    'School Readiness Goals',
-  ],
+  reason: REASONS,
   startDate: '2021-02-01T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
 };
@@ -91,7 +76,7 @@ const regionOneReportD = {
   ...reportObject,
   regionId: 8,
   duration: 4,
-  reason: ['Below Quality Threshold (CLASS)', 'Change in Scope', 'Child Incidents'],
+  reason: ['Below Quality Threshold (CLASS)', 'Change in Scope', 'Child Incident'],
   startDate: '2021-03-01T12:00:00Z',
   endDate: '2021-03-31T12:00:00Z',
 };
@@ -144,7 +129,7 @@ describe('Reason list widget', () => {
     const reportThree = await ActivityReport.findOne({ where: { duration: 3, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)', 'Change in Scope'] } });
     await createOrUpdate(regionOneReportC, reportThree);
 
-    const reportFour = await ActivityReport.findOne({ where: { duration: 4, reason: ['Below Quality Threshold (CLASS)', 'Change in Scope', 'Child Incidents'] } });
+    const reportFour = await ActivityReport.findOne({ where: { duration: 4, reason: ['Below Quality Threshold (CLASS)', 'Change in Scope', 'Child Incident'] } });
     await createOrUpdate(regionOneReportD, reportFour);
 
     const reportFive = await ActivityReport.findOne({ where: { duration: 5, reason: ['Below Quality Threshold (CLASS)'] } });
@@ -185,7 +170,7 @@ describe('Reason list widget', () => {
     expect(res[1].count).toBe(2);
     expect(res[2].name).toBe('Change in Scope');
     expect(res[2].count).toBe(1);
-    expect(res[3].name).toBe('Child Incidents');
+    expect(res[3].name).toBe('Child Incident');
     expect(res[3].count).toBe(1);
   });
 
@@ -209,7 +194,7 @@ describe('Reason list widget', () => {
     expect(res[0].count).toBe(2);
     expect(res[1].name).toBe('Change in Scope');
     expect(res[1].count).toBe(1);
-    expect(res[2].name).toBe('Child Incidents');
+    expect(res[2].name).toBe('Child Incident');
     expect(res[2].count).toBe(1);
   });
 
@@ -222,7 +207,7 @@ describe('Reason list widget', () => {
     expect(res[0].count).toBe(4);
     expect(res[1].name).toBe('Below Competitive Threshold (CLASS)');
     expect(res[1].count).toBe(2);
-    expect(res[3].name).toBe('Child Incidents');
+    expect(res[3].name).toBe('Child Incident');
     expect(res[3].count).toBe(2);
     expect(res[2].name).toBe('Change in Scope');
     expect(res[2].count).toBe(2);

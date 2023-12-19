@@ -32,7 +32,7 @@ const recalculateOnAR = async (
   instance,
 ) => sequelize.models.GoalFieldResponse.update(
   {
-    onAR: Sequelize.literal(`(
+    onAR: Sequelize.literal(`COALESCE ((
       SELECT
         COUNT(arg.id) > 0 "onAR"
       FROM "Goals" g
@@ -44,7 +44,7 @@ const recalculateOnAR = async (
       AND arg."id" != ${instance.activityReportGoalId}
       AND argfr."goalTemplateFieldPromptId" = ${instance.goalTemplateFieldPromptId}
       GROUP BY TRUE
-    )`),
+    ), FALSE)`),
   },
   {
     where: { goalTemplateFieldPromptId: instance.goalTemplateFieldPromptId },

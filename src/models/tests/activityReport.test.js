@@ -20,6 +20,10 @@ import {
 import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
 jest.mock('../../lib/awsElasticSearch/queueManager');
+jest.mock('express-http-context', () => ({
+  get: jest.fn().mockReturnValue(1),
+  set: jest.fn(),
+}));
 
 const mockUser = {
   name: 'Joe Green',
@@ -227,8 +231,8 @@ describe('Activity Reports model', () => {
       await ActivityReport.destroy({ where: { id: report.id } });
       await ActivityReport.destroy({ where: { id: reportToIndex.id } });
       await ActivityReport.destroy({ where: { id: reportToSubmit.id } });
-      await Objective.destroy({ where: { id: objectives.map((o) => o.id) } });
-      await Goal.destroy({ where: { id: goals.map((g) => g.id) } });
+      await Objective.destroy({ where: { id: objectives.map((o) => o.id) }, force: true });
+      await Goal.destroy({ where: { id: goals.map((g) => g.id) }, force: true });
       await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });

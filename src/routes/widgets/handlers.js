@@ -70,6 +70,6 @@ export async function getWidget(req, res) {
 
     res.json(widgetData);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }

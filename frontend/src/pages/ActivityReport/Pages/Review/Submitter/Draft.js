@@ -8,6 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../IncompletePages';
+import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../components/ApproverStatusList';
@@ -29,12 +30,32 @@ const Draft = ({
   creatorRole,
 }) => {
   const {
-    watch, handleSubmit, register,
+    watch,
+    handleSubmit,
+    register,
+    getValues,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const { connectionActive, localStorageAvailable } = useContext(NetworkContext);
+  const promptsMissingResponses = [];
+
+  const allGoalsHavePromptResponses = (() => {
+    const goalsAndObjectives = getValues('goalsAndObjectives');
+    const curatedGoals = (goalsAndObjectives || []).filter((goal) => goal.isCurated);
+
+    if (!curatedGoals.length) return true;
+
+    return curatedGoals.every((goal) => goal.prompts
+      .every((prompt) => {
+        if (!prompt.allGoalsHavePromptResponse) {
+          promptsMissingResponses.push(prompt.title);
+        }
+
+        return prompt.allGoalsHavePromptResponse;
+      }));
+  })();
 
   const { user } = useContext(UserContext);
 
@@ -51,7 +72,7 @@ const Draft = ({
   };
 
   const onSubmit = (e) => {
-    if (!hasIncompletePages) {
+    if (allGoalsHavePromptResponses && !hasIncompletePages) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
@@ -137,6 +158,9 @@ const Draft = ({
           </FormItem>
         </Fieldset>
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        {!allGoalsHavePromptResponses && (
+        <SomeGoalsHaveNoPromptResponse promptsMissingResponses={promptsMissingResponses} />
+        )}
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>

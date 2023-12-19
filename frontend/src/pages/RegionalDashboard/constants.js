@@ -19,8 +19,7 @@ import {
   ttaTypeFilter,
   reportTextFilter,
   deliveryMethodFilter,
-  resourceAttachmentFilter,
-  resourceLinkFilter,
+  activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -28,6 +27,7 @@ import { groupsFilter } from '../../components/filter/grantFilters';
 const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   deliveryMethodFilter,
   grantNumberFilter,
   groupsFilter,
@@ -40,8 +40,6 @@ const DASHBOARD_FILTER_CONFIG = [
   regionFilter,
   reportIdFilter,
   reportTextFilter,
-  resourceAttachmentFilter,
-  resourceLinkFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,

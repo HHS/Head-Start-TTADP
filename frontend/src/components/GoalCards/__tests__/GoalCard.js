@@ -16,6 +16,7 @@ describe('GoalCard', () => {
     objectiveCount: 1,
     goalNumbers: ['G-1'],
     source: 'The inferno',
+    createdVia: 'rtr',
     objectives: [
       {
         id: 1,
@@ -50,11 +51,11 @@ describe('GoalCard', () => {
     hideGoalOptions: false,
   };
 
-  const renderGoalCard = (props = DEFAULT_PROPS) => {
+  const renderGoalCard = (props = DEFAULT_PROPS, defaultGoal = goal) => {
     render((
       <UserContext.Provider value={{ user: DEFAULT_USER }}>
         <GoalCard
-          goal={goal}
+          goal={defaultGoal}
           recipientId="1"
           regionId="1"
           showCloseSuspendGoalModal={() => {}}
@@ -106,5 +107,54 @@ describe('GoalCard', () => {
   it('can hide the goal options', () => {
     renderGoalCard({ ...DEFAULT_PROPS, hideGoalOptions: true });
     expect(screen.queryByTestId('ellipsis-button')).not.toBeInTheDocument();
+  });
+
+  it('display correct last tta date', () => {
+    const goalsWithMultipleObjectives = {
+      ...goal,
+      objectives: [
+        {
+          id: 1,
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          endDate: '2023-01-01',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'Closed',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [],
+        },
+        {
+          id: 2,
+          title: 'Objective 2',
+          arNumber: 'AR-2',
+          ttaProvided: 'TTA 2',
+          endDate: '2022-09-13',
+          reasons: ['Reason 3'],
+          status: 'Closed',
+          activityReports: [],
+          grantNumbers: ['G-2'],
+          topics: [],
+        },
+      ],
+    };
+
+    renderGoalCard({ ...DEFAULT_PROPS }, goalsWithMultipleObjectives);
+    expect(screen.getByText(/last tta/i)).toBeInTheDocument();
+    expect(screen.queryAllByText(/2023-01-01/i).length).toBe(2);
+  });
+
+  it('renders a merged goal', () => {
+    const mergedGoal = {
+      ...goal,
+      createdVia: 'merge',
+    };
+
+    renderGoalCard({ ...DEFAULT_PROPS }, mergedGoal);
+    const tags = document.querySelectorAll('.usa-tag');
+    expect(tags.length).toBe(1);
+    expect(tags[0].textContent).toBe('Merged');
+    expect(tags[0]).toBeVisible();
   });
 });

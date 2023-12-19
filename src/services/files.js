@@ -10,6 +10,8 @@ import {
   ObjectiveTemplateFile,
   ActivityReportObjective,
   SessionReportPilotFile,
+  CommunicationLogFile,
+  SessionReportPilotSupportingAttachment,
   sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
@@ -32,7 +34,17 @@ const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
   individualHooks: true,
 });
+const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
 const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
+
+// eslint-disable-next-line max-len
+const deleteSessionSupportingAttachment = async (id) => SessionReportPilotSupportingAttachment.destroy({
   where: { id },
   individualHooks: true,
 });
@@ -87,6 +99,18 @@ const getFileById = async (id) => File.findOne({
     {
       model: SessionReportPilotFile,
       as: 'sessionFiles',
+      required: false,
+      attributes: ['id', 'sessionReportPilotId'],
+    },
+    {
+      model: CommunicationLogFile,
+      as: 'communicationLogFiles',
+      required: false,
+      attributes: ['id', 'communicationLogId'],
+    },
+    {
+      model: SessionReportPilotSupportingAttachment,
+      as: 'supportingAttachments',
       required: false,
       attributes: ['id', 'sessionReportPilotId'],
     },
@@ -322,6 +346,56 @@ const createSessionObjectiveFileMetaData = async (
   return file.dataValues;
 };
 
+const createSessionSupportingAttachmentMetaData = async (
+  originalFileName,
+  s3FileName,
+  sessionReportPilotId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await SessionReportPilotSupportingAttachment.create({ sessionReportPilotId, fileId: file.id });
+  return file.dataValues;
+};
+
+const createCommunicationLogFileMetadata = async (
+  originalFileName,
+  s3FileName,
+  communicationLogId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await CommunicationLogFile.create({ communicationLogId, fileId: file.id });
+  return file.dataValues;
+};
+
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
   // Get ARO files to delete (destroy does NOT support join's).
   const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
@@ -363,6 +437,8 @@ export {
   deleteFile,
   deleteActivityReportFile,
   deleteActivityReportObjectiveFile,
+  deleteCommunicationLogFile,
+  deleteSessionSupportingAttachment,
   deleteObjectiveFile,
   deleteSessionFile,
   deleteObjectiveTemplateFile,
@@ -380,4 +456,6 @@ export {
   createObjectiveTemplateFileMetaData,
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
+  createCommunicationLogFileMetadata,
+  createSessionSupportingAttachmentMetaData,
 };
