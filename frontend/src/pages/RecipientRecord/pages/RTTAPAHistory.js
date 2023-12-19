@@ -6,7 +6,7 @@ import Container from '../../../components/Container';
 import { getRttapas } from '../../../fetchers/rttapa';
 import RTTAPAHistoryGoalCard from './components/RTTPAHistoryGoalCard';
 
-export default function RTTAPAHistory({ regionId, recipientId, recipientNameWithRegion }) {
+export default function RTTAPAHistory({ regionId, recipientId }) {
   const [sortConfig, setSortConfig] = useState({
     sortBy: 'reviewDate',
     direction: 'desc',
@@ -42,8 +42,7 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
     <>
       <Helmet>
         <title>
-          RTTAPA History -
-          {recipientNameWithRegion}
+          RTTAPA History
         </title>
       </Helmet>
       <Container className="margin-top-3" paddingX={3} paddingY={3}>
@@ -90,5 +89,4 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
 RTTAPAHistory.propTypes = {
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
-  recipientNameWithRegion: PropTypes.string.isRequired,
 };
