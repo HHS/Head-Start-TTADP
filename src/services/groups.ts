@@ -1,10 +1,11 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import db from '../models';
 
 const {
   Group,
   Grant,
   GroupGrant,
+  Recipient,
   User,
 } = db;
 
@@ -35,6 +36,55 @@ interface GroupResponse {
   grants: GrantsResponse[];
   userId: number;
   isPublic: boolean;
+}
+
+export async function groupsByRegion(region: number, userId?: number): Promise<GroupResponse[]> {
+  let where: WhereOptions = {
+    '$grants.regionId$': { [Op.eq]: region },
+  };
+
+  if (userId) {
+    where = {
+      ...where,
+      [Op.or]: [
+        { userId },
+        { isPublic: true },
+      ],
+    };
+  }
+
+  return Group.findAll({
+    attributes: [
+      'id',
+      'name',
+      'userId',
+    ],
+    where,
+    include: [
+      {
+        attributes: [
+          'regionId',
+          'recipientId',
+          'number',
+          'id',
+          'granteeName',
+          'recipientInfo',
+        ],
+        model: Grant,
+        as: 'grants',
+        include: [
+          {
+            attributes: [
+              'name',
+              'id',
+            ],
+            model: Recipient,
+            as: 'recipient',
+          },
+        ],
+      },
+    ],
+  });
 }
 
 export async function groups(userId: number, regions: number[] = []): Promise<GroupResponse[]> {

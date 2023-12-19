@@ -1,7 +1,8 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
+import crypto from 'crypto';
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
+import db, {
   Recipient,
   Grant,
   Program,
@@ -12,10 +13,16 @@ import {
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalFieldResponse,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
   Topic,
   ActivityReportGoal,
   Permission,
+  ProgramPersonnel,
   sequelize,
+  ActivityReportApprover,
+  ActivityReportCollaborator,
 } from '../models';
 import {
   allRecipients,
@@ -23,10 +30,12 @@ import {
   recipientsByName,
   recipientsByUserId,
   getGoalsByActivityRecipient,
+  recipientLeadership,
+  allArUserIdsByRecipientAndRegion,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { GOAL_STATUS, OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
 import { createReport, destroyReport } from '../testUtils';
 
 describe('Recipient DB service', () => {
@@ -683,6 +692,190 @@ describe('Recipient DB service', () => {
     });
   });
 
+  describe('de-duplicating on goal field responses', () => {
+    let recipient;
+    let goals;
+    let grant;
+    let template;
+
+    const region = 5;
+
+    beforeAll(async () => {
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        uei: faker.datatype.string(),
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      });
+
+      const goal = {
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+        status: GOAL_STATUS.IN_PROGRESS,
+      };
+
+      grant = await Grant.create({
+        status: 'Active',
+        regionId: region,
+        id: faker.datatype.number({ min: 1000 }),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        startDate: '2019-01-01',
+        endDate: '2024-01-01',
+      });
+
+      const secret = 'secret';
+      const hash = crypto
+        .createHmac('md5', secret)
+        .update(goal.name)
+        .digest('hex');
+
+      template = await GoalTemplate.create({
+        hash,
+        templateName: goal.name,
+        creationMethod: AUTOMATIC_CREATION,
+      });
+
+      const fieldPrompt = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        title: 'why do anything?',
+        prompt: 'why do anything?',
+        ordinal: 1,
+        hint: '',
+        caution: '',
+        fieldType: 'multiselect',
+        required: {},
+        options: [
+          'gotta',
+          'dont have to',
+          'not sure',
+          'too tired to answer',
+        ],
+      });
+
+      const goal1 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal2 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal3 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      const goal4 = await Goal.create({
+        name: goal.name,
+        status: goal.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+      });
+
+      goals = [goal1, goal2, goal3, goal4];
+
+      await GoalFieldResponse.create({
+        goalId: goal1.id,
+        goalTemplateFieldPromptId: fieldPrompt.id,
+        response: ['gotta'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal2.id,
+        goalTemplateFieldPromptId: fieldPrompt.id,
+        response: ['not sure', 'dont have to'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal3.id,
+        goalTemplateFieldPromptId: fieldPrompt.id,
+        response: ['not sure', 'dont have to'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await GoalTemplateFieldPrompt.destroy({
+        where: {
+          goalTemplateId: template.id,
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await GoalTemplate.destroy({
+        where: {
+          id: template.id,
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: goals.map((g) => g.grantId),
+        },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('properly de-duplicates based on responses', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(3);
+
+      const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
+      expect(doubler).toBeTruthy();
+
+      expect(doubler.ids.length).toBe(2);
+
+      const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
+      expect(singler).toBeTruthy();
+      expect(singler.ids.length).toBe(1);
+
+      const noResponse = goalRows.find((r) => r.responsesForComparison === '');
+      expect(noResponse).toBeTruthy();
+      expect(noResponse.ids.length).toBe(1);
+    });
+  });
+
   describe('reduceObjectivesForRecipientRecord', () => {
     let recipient;
     let goals;
@@ -829,12 +1022,14 @@ describe('Recipient DB service', () => {
           id: objectives.map((o) => o.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Goal.destroy({
         where: {
           id: goals.map((g) => g.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Grant.destroy({
         where: {
@@ -865,6 +1060,343 @@ describe('Recipient DB service', () => {
       expect(objective.topics.length).toBe(4);
       expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
       expect(objective.activityReports.length).toBe(1);
+    });
+  });
+
+  describe('recipientLeadership', () => {
+    const createProgramPersonnel = async (
+      grantId,
+      programId,
+      role = 'director',
+      active = true,
+      programType = 'HS',
+    ) => {
+      const personnel = await ProgramPersonnel.create({
+        grantId,
+        programId,
+        role,
+        title: '',
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        suffix: faker.name.suffix(),
+        prefix: faker.name.prefix(),
+        active,
+        effectiveDate: active ? new Date() : new Date('2020/01/01'),
+        mapsTo: null,
+        email: faker.internet.email(),
+      });
+
+      // no way to return associations on create
+      // https://github.com/sequelize/sequelize/discussions/15186
+
+      return ProgramPersonnel.findByPk(personnel.id, {
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+          },
+          {
+            model: Program,
+            as: 'program',
+          },
+        ],
+      });
+    };
+
+    const REGION_ID = 10;
+
+    const recipient = {
+      name: faker.datatype.string({ min: 10 }),
+      id: faker.datatype.number({ min: 10000 }),
+      uei: faker.datatype.string({ min: 10 }),
+    };
+    const grant = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const grant2 = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const irrelevantGrant = {
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      regionId: REGION_ID + 1,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    };
+
+    const dummyProgram = {
+      grantId: grant.id,
+      startYear: '2023',
+      startDate: '2023/01/01',
+      endDate: '2023/12/31',
+      status: 'Active',
+      name: `${faker.animal.type() + faker.company.companyName()} Program`,
+      programType: 'HS',
+    };
+
+    let activePersonnel;
+
+    beforeAll(async () => {
+      await db.Recipient.create(recipient);
+      await db.Grant.create(grant);
+      await db.Grant.create(grant2);
+      await db.Grant.create(irrelevantGrant);
+
+      const program1 = await db.Program.create({
+        ...dummyProgram,
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      const program2 = await db.Program.create({
+        ...dummyProgram,
+        grantId: grant2.id,
+        programType: 'EHS',
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      const irrelevantProgram = await db.Program.create({
+        ...dummyProgram,
+        grantId: irrelevantGrant.id,
+        id: faker.datatype.number({ min: 10000, max: 100000 }),
+      });
+
+      // Program personnel to ignore
+      // because it's on a different grant
+      await createProgramPersonnel(irrelevantGrant.id, irrelevantProgram.id, 'director', true, 'HS');
+
+      // Program personnel to ignore
+      // because it's inactive
+      await createProgramPersonnel(grant.id, program1.id, 'director', false, 'HS');
+
+      // program personnel to retrieve
+      activePersonnel = await Promise.all([
+        createProgramPersonnel(grant.id, program1.id, 'director', true, 'HS'),
+        createProgramPersonnel(grant2.id, program2.id, 'director', true, 'EHS'),
+        createProgramPersonnel(grant.id, program1.id, 'cfo', true, 'HS'),
+        createProgramPersonnel(grant2.id, program2.id, 'cfo', true, 'EHS'),
+      ]);
+    });
+    afterAll(async () => {
+      await db.ProgramPersonnel.destroy({
+        where: {
+          grantId: [grant.id, grant2.id, irrelevantGrant.id],
+        },
+      });
+
+      await db.Program.destroy({
+        where: {
+          grantId: [grant.id, grant2.id, irrelevantGrant.id],
+        },
+      });
+
+      await db.Grant.destroy({
+        where: {
+          id: [grant.id, grant2.id, irrelevantGrant.id],
+        },
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+    });
+
+    it('retrieves the correct program personnel', async () => {
+      const leadership = await recipientLeadership(recipient.id, REGION_ID);
+
+      expect(leadership.length).toBe(4);
+
+      activePersonnel.sort((a, b) => a.nameAndRole.localeCompare(b.nameAndRole));
+
+      const expectedNamesAndTitles = activePersonnel.map((p) => ({
+        fullName: `${p.firstName} ${p.lastName}`,
+        fullRole: p.fullRole,
+      }));
+
+      leadership.sort((a, b) => a.nameAndRole.localeCompare(b.nameAndRole));
+
+      leadership.forEach((p, i) => {
+        expect(p.fullName).toBe(expectedNamesAndTitles[i].fullName);
+        expect(p.fullRole).toBe(expectedNamesAndTitles[i].fullRole);
+      });
+    });
+  });
+
+  describe('allArUserIdsByRecipientAndRegion', () => {
+    let author;
+    let collaboratorOne;
+    let collaboratorTwo;
+    let approverOne;
+    let approverTwo;
+    let dummyUser;
+
+    let recipient;
+    let grant;
+    let report;
+
+    beforeAll(async () => {
+      author = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      collaboratorOne = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      collaboratorTwo = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      approverOne = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      approverTwo = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      dummyUser = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+        uei: faker.datatype.string(),
+      });
+
+      grant = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipient.id,
+        regionId: 1,
+        number: faker.datatype.string(),
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      report = await createReport({
+        activityRecipients: [
+          {
+            grantId: grant.id,
+          },
+        ],
+        reason: ['test'],
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        regionId: 1,
+        userId: author.id,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: collaboratorOne.id,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: collaboratorTwo.id,
+      });
+
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: approverOne.id,
+      });
+
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: approverTwo.id,
+      });
+    });
+
+    afterAll(async () => {
+      await ActivityReportApprover.destroy({
+        where: {
+          userId: [approverOne.id, approverTwo.id],
+        },
+      });
+
+      await ActivityReportCollaborator.destroy({
+        where: {
+          userId: [collaboratorOne.id, collaboratorTwo.id],
+        },
+      });
+
+      await destroyReport(report);
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+
+      await User.destroy({
+        where: {
+          id: [
+            author.id,
+            collaboratorOne.id,
+            collaboratorTwo.id,
+            approverOne.id,
+            approverTwo.id,
+            dummyUser.id,
+          ],
+        },
+      });
+    });
+
+    it('returns all user ids for a recipient and region', async () => {
+      const userIds = await allArUserIdsByRecipientAndRegion(recipient.id, 1);
+      expect(userIds.length).toBe(5);
+      expect(userIds).toContain(author.id);
+      expect(userIds).toContain(collaboratorOne.id);
+      expect(userIds).toContain(collaboratorTwo.id);
+      expect(userIds).toContain(approverOne.id);
+      expect(userIds).toContain(approverTwo.id);
     });
   });
 });

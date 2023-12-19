@@ -1,5 +1,6 @@
 import join from 'url-join';
-import { get, put } from './index';
+import { DECIMAL_BASE } from '@ttahub/common';
+import { get, put, destroy } from './index';
 
 const eventsUrl = join('/', 'api', 'events');
 
@@ -22,4 +23,8 @@ export const getEventsByStatus = async (status, filters) => {
   const url = join(eventsUrl, status, `?${filters}`);
   const res = await get(url);
   return res.json();
+};
+
+export const deleteEvent = async (eventId) => {
+  await destroy(join(eventsUrl, 'id', eventId.toString(DECIMAL_BASE)));
 };

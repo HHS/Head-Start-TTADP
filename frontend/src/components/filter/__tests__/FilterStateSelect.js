@@ -41,7 +41,7 @@ describe('FilterStateSelect', () => {
 
     renderStateSelect(user, onApply);
 
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Massachusetts (MA)']);
     expect(onApply).toHaveBeenCalledWith(['MA']);
   });
@@ -59,7 +59,7 @@ describe('FilterStateSelect', () => {
     };
 
     renderStateSelect(user, onApply);
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Puerto Rico (PR)', 'FC']);
     const options = document.querySelectorAll('div[class$="-option"]');
     expect(options.length).toBe(3);
@@ -80,7 +80,7 @@ describe('FilterStateSelect', () => {
     };
 
     renderStateSelect(user, onApply);
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Guam (GU)']);
     const options = document.querySelectorAll('div[class$="-option"]');
     expect(options.length).toBe(2);
@@ -100,7 +100,7 @@ describe('FilterStateSelect', () => {
     };
 
     renderStateSelect(user, onApply);
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Guam (GU)']);
     const options = document.querySelectorAll('div[class$="-option"]');
     expect(options.length).toBe(59);

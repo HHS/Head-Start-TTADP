@@ -189,7 +189,7 @@ export default function FilterStateSelect({
     <FilterSelect
       onApply={onApplyClick}
       inputId={inputId}
-      labelText="Select state to filter by"
+      labelText="Select state or territory to filter by"
       options={stateCodes}
       selectedValues={query}
       mapByValue

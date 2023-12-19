@@ -24,7 +24,7 @@ describe('ApproverSelect', () => {
     // eslint-disable-next-line react/jsx-props-no-spreading
       <FormProvider {...hookForm}>
         <FormItem
-          label="Approving manager"
+          label="Approving manager "
           name="approvers"
         >
           <ApproverSelect

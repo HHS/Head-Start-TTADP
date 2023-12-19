@@ -33,7 +33,7 @@ describe('Goals', () => {
       grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     });
     afterAll(async () => {
-      await Goal.destroy({ where: { grantId: grant.id } });
+      await Goal.destroy({ where: { grantId: grant.id }, force: true });
       await GoalTemplate.destroy({ where: { templateName: mockGoal.name } });
       await Grant.destroy({ where: { id: grant.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
@@ -42,7 +42,7 @@ describe('Goals', () => {
     it('goalNumber', async () => {
       const goal = await Goal.create({ ...mockGoal, grantId: grant.id });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
-      await Goal.destroy({ where: { id: goal.id } });
+      await Goal.destroy({ where: { id: goal.id }, force: true });
     });
   });
   it('autoPopulateOnApprovedAR', async () => {

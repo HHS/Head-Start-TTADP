@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
 import {
   Grant,
@@ -7,22 +7,72 @@ import {
   Program,
   sequelize,
   Goal,
+  GoalFieldResponse,
+  GoalTemplate,
   ActivityReport,
   Objective,
   ActivityRecipient,
   Topic,
   Permission,
+  ProgramPersonnel,
   User,
+  ActivityReportCollaborator,
+  ActivityReportApprover,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
   GOAL_STATUS,
+  CREATION_METHOD,
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+import {
+  findOrFailExistingGoal,
+  responsesForComparison,
+} from '../goalServices/helpers';
+
+export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
+  const reports = await ActivityReport.findAll({
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+      },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+      },
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId,
+          status: 'Active',
+        },
+        required: true,
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            where: {
+              id: recipientId,
+            },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
+
+  return uniq([
+    ...reports.map((r) => r.userId),
+    ...reports.map((r) => r.activityReportCollaborators.map((c) => c.userId)).flat(),
+    ...reports.map((r) => r.approvers.map((a) => a.userId)).flat(),
+  ]);
+}
 
 /**
  *
@@ -427,18 +477,40 @@ export async function getGoalsByActivityRecipient(
     [Op.or]: [
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
-      { createdVia: 'rtr' },
+      { createdVia: ['rtr', 'admin', 'merge'] },
+      { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
     ],
     [Op.and]: scopes,
   };
 
   // If we have specified goals only retrieve those else all for recipient.
-  if (goalIds && goalIds.length) {
+  if (sortBy !== 'mergedGoals' && goalIds && goalIds.length) {
     goalWhere = {
       id: goalIds,
       ...goalWhere,
     };
   }
+
+  // goal IDS can be a string or an array of strings
+  // or undefined
+  // we also want at least one value here
+  // so SQL doesn't have one of it's little meltdowns
+  const sanitizedIds = [
+    0,
+    ...(() => {
+      if (!goalIds) {
+        return [];
+      }
+
+      if (Array.isArray(goalIds)) {
+        return goalIds;
+      }
+
+      return [goalIds];
+    })(),
+  ].map((id) => parseInt(id, DECIMAL_BASE))
+    .filter((id) => !Number.isNaN(id))
+    .join(',');
 
   // Get Goals.
   const rows = await Goal.findAll({
@@ -447,15 +519,39 @@ export async function getGoalsByActivityRecipient(
       'name',
       'status',
       'createdAt',
+      'createdVia',
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
       'isRttapa',
       'source',
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
+      'goalTemplateId',
+      [sequelize.literal(`
+        CASE
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
+          WHEN "Goal"."status" = 'Draft' THEN 2
+          WHEN "Goal"."status" = 'Not Started' THEN 3
+          WHEN "Goal"."status" = 'In Progress' THEN 4
+          WHEN "Goal"."status" = 'Closed' THEN 5
+          WHEN "Goal"."status" = 'Suspended' THEN 6
+          ELSE 7 END`),
+      'status_sort'],
+      [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
     ],
     where: goalWhere,
     include: [
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['creationMethod', 'id'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -523,7 +619,7 @@ export async function getGoalsByActivityRecipient(
         ],
       },
     ],
-    order: orderGoalsBy(sortBy, sortDir),
+    order: orderGoalsBy(sortBy, sortDir, goalIds),
   });
 
   let sorted = rows;
@@ -551,13 +647,12 @@ export async function getGoalsByActivityRecipient(
   const allGoalIds = [];
 
   const r = sorted.reduce((previous, current) => {
-    const existingGoal = previous.goalRows.find(
-      (g) => g.goalStatus === current.status
-        && g.goalText.trim() === current.name.trim()
-        && g.source === current.source,
-    );
+    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
     allGoalIds.push(current.id);
+
+    const isCurated = current.goalTemplate
+      && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
@@ -569,6 +664,7 @@ export async function getGoalsByActivityRecipient(
         existingGoal.grantNumbers,
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.isCurated = isCurated || existingGoal.isCurated;
       return {
         goalRows: previous.goalRows,
       };
@@ -589,6 +685,9 @@ export async function getGoalsByActivityRecipient(
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
+      responsesForComparison: responsesForComparison(current),
+      isCurated,
+      createdVia: current.createdVia,
     };
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
@@ -626,4 +725,43 @@ export async function getGoalsByActivityRecipient(
     statuses,
     allGoalIds,
   };
+}
+
+export async function recipientLeadership(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      'grantId',
+      'firstName',
+      'lastName',
+      'email',
+      'effectiveDate',
+      'role',
+      // our virtual columns, which is why we fetch so much cruft above
+      'fullName',
+      'fullRole',
+      'nameAndRole',
+    ],
+    where: {
+      active: true,
+      role: ['director', 'cfo'],
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: ['recipientId', 'id', 'regionId'],
+        where: {
+          recipientId,
+          regionId,
+          status: 'Active',
+        },
+      },
+      {
+        required: true,
+        model: Program,
+        as: 'program',
+      },
+    ],
+  });
 }

@@ -2,21 +2,18 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
-import { Checkbox } from '@trussworks/react-uswds';
+import { Checkbox, Tag } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import StatusDropdown from './components/StatusDropdown';
 import ContextMenu from '../ContextMenu';
-import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
+import FlagStatus from './FlagStatus';
 import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
-import colors from '../../colors';
 import { goalPropTypes } from './constants';
+import colors from '../../colors';
 
 function GoalCard({
   goal,
@@ -41,9 +38,12 @@ function GoalCard({
     reasons,
     objectives,
     previousStatus,
+    createdVia,
   } = goal;
 
-  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
+  const isMerged = createdVia === 'merge';
+
+  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
   const goalNumbers = goal.goalNumbers.join(', ');
@@ -58,24 +58,6 @@ function GoalCard({
   };
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
-
-  const determineFlagStatus = () => {
-    const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
-    if (reasonsToWatch) {
-      return (
-        <>
-          <Tooltip
-            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
-            screenReadDisplayText={false}
-            buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`}
-            tooltipText="Related to monitoring"
-            hideUnderline
-          />
-        </>
-      );
-    }
-    return null;
-  };
 
   const closeOrOpenObjectives = () => {
     setObjectivesExpanded(!objectivesExpanded);
@@ -137,11 +119,19 @@ function GoalCard({
             Goal
             {' '}
             {goalNumbers}
+            {isMerged && (
+            <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
+              Merged
+            </Tag>
+            )}
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}
             {' '}
-            {determineFlagStatus()}
+            <FlagStatus
+              reasons={reasons}
+              goalNumbers={goalNumbers}
+            />
           </p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">

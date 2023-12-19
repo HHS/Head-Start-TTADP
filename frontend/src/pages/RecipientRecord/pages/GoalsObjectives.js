@@ -11,14 +11,19 @@ import { getUserRegions } from '../../../permissions';
 import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
-  recipientId, regionId, recipient, location, recipientName,
+  recipientId,
+  regionId,
+  recipient,
+  location,
+  recipientName,
+  canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
-    GOALS_OBJECTIVES_FILTER_KEY,
+    GOALS_OBJECTIVES_FILTER_KEY(recipientId),
     [],
   );
 
@@ -42,7 +47,7 @@ export default function GoalsObjectives({
     <>
       <Helmet>
         <title>
-          Goals and Objectives -
+          RTTAPA Goals and Objectives -
           {' '}
           {recipientName}
         </title>
@@ -64,6 +69,7 @@ export default function GoalsObjectives({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
           showNewGoals={showNewGoals || false}
+          canMergeGoals={canMergeGoals}
         />
       </div>
     </>
@@ -81,6 +87,7 @@ GoalsObjectives.propTypes = {
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
   recipientName: PropTypes.string,
+  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 GoalsObjectives.defaultProps = {

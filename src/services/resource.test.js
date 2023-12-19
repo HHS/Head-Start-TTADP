@@ -1989,6 +1989,7 @@ describe('resource', () => {
         await Goal.destroy({
           where: { id: goal.id },
           individualHooks: true,
+          force: true,
         });
       });
       it('expected usage, insert', async () => {
@@ -2244,6 +2245,7 @@ describe('resource', () => {
         await Goal.destroy({
           where: { id: goal.id },
           individualHooks: true,
+          force: true,
         });
       });
       it('expected usage, empty urls', async () => {
@@ -2437,6 +2439,7 @@ describe('resource', () => {
         await Objective.destroy({
           where: { id: objective.id },
           individualHooks: true,
+          force: true,
         });
       });
       it('expected usage, insert', async () => {
@@ -2692,6 +2695,7 @@ describe('resource', () => {
         await Objective.destroy({
           where: { id: objective.id },
           individualHooks: true,
+          force: true,
         });
       });
       it('expected usage, empty urls', async () => {
@@ -2960,6 +2964,7 @@ describe('resource', () => {
         await Objective.destroy({
           where: { id: objective.id },
           individualHooks: true,
+          force: true,
         });
       });
       it('expected usage, insert', async () => {
@@ -3237,6 +3242,7 @@ describe('resource', () => {
         await Objective.destroy({
           where: { id: objective.id },
           individualHooks: true,
+          force: true,
         });
       });
       it('expected usage, empty urls', async () => {

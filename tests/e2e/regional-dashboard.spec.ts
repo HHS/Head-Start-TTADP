@@ -24,7 +24,7 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'apply filters for regional dashboard' }).click();
 
   // remove the remaining filter
-  await page.getByRole('button', { name: 'This button removes the filter: State contains RI' }).click();
+  await page.getByRole('button', { name: 'This button removes the filter: State or territory contains RI' }).click();
 
   // switch the total training graph's display type back and forth
   await page.getByRole('button', { name: 'display total training and technical assistance hours as table' }).click();

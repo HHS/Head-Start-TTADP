@@ -1,5 +1,5 @@
 import React, {
-  useState, useMemo, useContext,
+  useState, useMemo, useContext, useRef,
 } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
@@ -26,6 +26,7 @@ import {
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
+import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 
 export default function Objective({
   objective,
@@ -40,6 +41,8 @@ export default function Objective({
   initialObjectiveStatus,
   reportId,
 }) {
+  const modalRef = useRef();
+
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
   const initialObjective = (() => ({
@@ -50,7 +53,7 @@ export default function Objective({
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
-  const { getValues } = useFormContext();
+  const { getValues, setError, clearErrors } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
@@ -169,6 +172,32 @@ export default function Objective({
     defaultValue: objective.status || 'Not Started',
   });
 
+  const {
+    field: {
+      onChange: onChangeSuspendReason,
+      value: objectiveSuspendReason,
+      name: objectiveSuspendInputName,
+    },
+  } = useController({
+    rules: {
+      required: objective.status === 'Suspended',
+    },
+    name: `${fieldArrayName}[${index}].closeSuspendReason`,
+    defaultValue: objective.closeSuspendReason || '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSuspendContext,
+      value: objectiveSuspendContext,
+      name: objectiveSuspendContextInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].closeSuspendContext`,
+    rules: { required: true },
+    defaultValue: objective.closeSuspendContext || '',
+  });
+
   const isOnApprovedReport = useMemo(() => objective.activityReports
     && objective.activityReports.some(
       (report) => report.status === REPORT_STATUSES.APPROVED,
@@ -200,7 +229,7 @@ export default function Objective({
     setStatusForCalculations(newObjective.status);
   };
 
-  const onUploadFile = async (files, _objective, setError) => {
+  const onUploadFile = async (files, _objective, setUploadError) => {
     // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
@@ -223,7 +252,7 @@ export default function Objective({
       const response = await uploadObjectivesFile(data);
       return response;
     } catch (error) {
-      setError('There was an error uploading your file(s).');
+      setUploadError('There was an error uploading your file(s).');
       return null;
     } finally {
       setIsAppLoading(false);
@@ -240,6 +269,30 @@ export default function Objective({
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
   const onRemove = () => remove(index);
+
+  const onUpdateStatus = (event) => {
+    const { value: updatedStatus } = event.target;
+
+    if (updatedStatus === 'Suspended') {
+      modalRef.current.toggleModal();
+      return;
+    }
+
+    onChangeSuspendContext('');
+    onChangeSuspendReason('');
+    onChangeStatus(updatedStatus);
+  };
+
+  const setStatusReasonError = (on) => {
+    if (on) {
+      setError(`${fieldArrayName}[${index}].closeSuspendReason`, {
+        type: 'required',
+        message: 'Reason for suspension is required',
+      });
+    } else {
+      clearErrors(`${fieldArrayName}[${index}].closeSuspendReason`);
+    }
+  };
 
   return (
     <>
@@ -329,6 +382,32 @@ export default function Objective({
           : NO_ERROR}
       />
 
+      <ObjectiveSuspendModal
+        objectiveId={selectedObjective.id}
+        modalRef={modalRef}
+        objectiveSuspendReason={objectiveSuspendReason}
+        onChangeSuspendReason={onChangeSuspendReason}
+        objectiveSuspendInputName={objectiveSuspendInputName}
+        objectiveSuspendContextInputName={objectiveSuspendContextInputName}
+        objectiveSuspendContext={objectiveSuspendContext}
+        onChangeSuspendContext={onChangeSuspendContext}
+        onChangeStatus={onChangeStatus}
+        setError={setStatusReasonError}
+        error={errors.closeSuspendReason
+          ? ERROR_FORMAT(errors.closeSuspendReason.message)
+          : NO_ERROR}
+      />
+
+      <ObjectiveStatus
+        onBlur={onBlurStatus}
+        inputName={objectiveStatusInputName}
+        status={objectiveStatus}
+        onChangeStatus={onUpdateStatus}
+        userCanEdit
+        closeSuspendContext={objectiveSuspendContext}
+        closeSuspendReason={objectiveSuspendReason}
+      />
+
       <div className="usa-form-group">
         <ObjectiveStatus
           onBlur={onBlurStatus}
@@ -362,6 +441,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     topics: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    closeSuspendReason: PropTypes.shape({
       message: PropTypes.string,
     }),
   }).isRequired,

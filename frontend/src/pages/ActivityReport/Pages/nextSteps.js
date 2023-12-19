@@ -77,6 +77,7 @@ const getNextStepsSections = (activityRecipientType) => {
       anchor: 'specialist-next-steps',
       items: [
         { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
+        { label: 'Anticipated completion', name: 'specialistNextSteps', path: 'completeDate' },
       ],
     },
     {
@@ -84,6 +85,7 @@ const getNextStepsSections = (activityRecipientType) => {
       anchor: 'recipient-next-steps',
       items: [
         { label: `What has the ${subtitleDisplayText} agreed to do next?`, name: 'recipientNextSteps', path: 'note' },
+        { label: 'Anticipated completion', name: 'recipientNextSteps', path: 'completeDate' },
       ],
     },
   ];

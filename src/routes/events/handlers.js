@@ -7,7 +7,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createEvent,
   findEventsByCollaboratorId,
-  findEventById,
+  findEventBySmartsheetIdSuffix,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
@@ -45,6 +45,7 @@ export const getByStatus = async (req, res) => {
       null,
       false,
       scopes,
+      auth.isAdmin(),
     );
 
     return res.status(httpCodes.OK).send(events);
@@ -78,7 +79,7 @@ export const getHandler = async (req, res) => {
     }
 
     if (eventId) {
-      event = await findEventById(eventId, scopes);
+      event = await findEventBySmartsheetIdSuffix(eventId, scopes);
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
     } else if (ownerId) {
@@ -96,7 +97,7 @@ export const getHandler = async (req, res) => {
     const auth = await getEventAuthorization(req, res, event);
 
     if (!auth.canRead() && !auth.isPoc()) {
-      return res.sendStatus(403);
+      return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
     return res.status(httpCodes.OK).send(event);
@@ -131,7 +132,12 @@ export const updateHandler = async (req, res) => {
     }
 
     // Get event to update.
-    const eventToUpdate = await findEventById(eventId);
+    const eventToUpdate = await findEventBySmartsheetIdSuffix(eventId);
+
+    if (!eventToUpdate) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
     const auth = await getEventAuthorization(req, res, eventToUpdate);
     if (!auth.canEditEvent()) { return res.status(403).send({ message: 'User is not authorized to update event' }); }
 
@@ -151,7 +157,7 @@ export const updateHandler = async (req, res) => {
       }
     }
 
-    const event = await updateEvent(eventId, req.body);
+    const event = await updateEvent(eventToUpdate.id, req.body);
 
     return res.status(httpCodes.CREATED).send(event);
   } catch (error) {
@@ -163,7 +169,7 @@ export const deleteHandler = async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const event = await findEventById(eventId);
+    const event = await findEventBySmartsheetIdSuffix(eventId);
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
@@ -171,8 +177,8 @@ export const deleteHandler = async (req, res) => {
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canDelete()) { return res.sendStatus(403); }
 
-    await destroyEvent(eventId);
-    return res.status(httpCodes.OK);
+    await destroyEvent(event.id);
+    return res.status(httpCodes.OK).send({ message: 'Event deleted' });
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

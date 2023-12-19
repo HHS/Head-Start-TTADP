@@ -76,28 +76,24 @@ const getClient = async () => new Client({
   Create an index that can have searchable documents assigned.
 */
 const createIndex = async (indexName, passedClient) => {
-  try {
-    // Initialize the client.
-    const client = passedClient || await getClient();
+  // Initialize the client.
+  const client = passedClient || await getClient();
 
-    // Create index.
-    const res = await client.indices.create({
-      index: indexName,
-    });
+  // Create index.
+  const res = await client.indices.create({
+    index: indexName,
+  });
 
-    logger.info(`AWS OpenSearch: Successfully created index ${indexName}`);
-    return res;
-  } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to create index '${indexName}': ${error.message}`);
-    throw error;
-  }
+  logger.info(`AWS OpenSearch: Successfully created index ${indexName}`);
+  return res;
 };
 /*
   Assign a searchable document to an index.
+  NOTE: We add a param called 'preventRethrow' in CircleCi as we don't have access to AWS ES.
 */
 const addIndexDocument = async (job) => {
   const {
-    indexName, id, document, passedClient,
+    indexName, id, document, passedClient, preventRethrow,
   } = job.data;
   let res;
   try {
@@ -113,10 +109,13 @@ const addIndexDocument = async (job) => {
     });
     logger.info(`AWS OpenSearch: Successfully added document ${id} to index ${indexName}`);
 
-    return { data: job.data, status: res.statusCode, res };
+    return { data: job.data, status: 200, res };
   } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to add document to index '${indexName}': ${error.message}`);
-    return { data: job.data, status: res?.statusCode, res };
+    if (preventRethrow) {
+      // This path is for running in CI.
+      return { data: job.data, status: 500, res };
+    }
+    throw error;
   }
 };
 /*
@@ -126,75 +125,65 @@ const addIndexDocument = async (job) => {
   { "title": "Prisoners", "year": 2013 }
 */
 const bulkIndex = async (documents, indexName, passedClient) => {
-  try {
-    // Initialize the client.
-    const client = passedClient || await getClient();
+  // Initialize the client.
+  const client = passedClient || await getClient();
 
-    // Add a document to an index.
-    const res = await client.bulk({
-      body: documents,
-      refresh: true, // triggers manual refresh.
-    });
-    logger.info(`AWS OpenSearch: Successfully added bulk document's to index ${indexName}`);
-    return res;
-  } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to add bulk document's to index '${indexName}': ${error.message}`);
-    throw error;
-  }
+  // Add a document to an index.
+  const res = await client.bulk({
+    body: documents,
+    refresh: true, // triggers manual refresh.
+  });
+  logger.info(`AWS OpenSearch: Successfully added bulk document's to index ${indexName}`);
+  return res;
 };
 /*
   Search index documents.
 */
 const search = async (indexName, fields, query, passedClient) => {
-  try {
-    // Initialize the client.
-    const client = passedClient || await getClient();
+  // Initialize the client.
+  const client = passedClient || await getClient();
 
-    // Create query section.
-    // ReadMe:
-    // If we have more than one word (term) then use phrase matching
-    // If we have only one word (term) use query string with wildcards.
-    // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
-    const queryBody = query.trim().split(' ').length <= 1
-      ? {
-        query_string: {
-          query: `*${query}*`,
-          fields,
-        },
-      }
-      : {
-        bool: {
-          should: [
-            { match_phrase: { context: { slop: 0, query } } },
-            { match_phrase: { nonECLKCResources: { slop: 0, query } } },
-            { match_phrase: { ECLKCResources: { slop: 0, query } } },
-            { match_phrase: { recipientNextSteps: { slop: 0, query } } },
-            { match_phrase: { specialistNextSteps: { slop: 0, query } } },
-            { match_phrase: { activityReportGoals: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectives: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
-          ],
-        },
-      };
-
-    // Create search body.
-    const body = {
-      size: 2001,
-      query: queryBody,
+  // Create query section.
+  // ReadMe:
+  // If we have more than one word (term) then use phrase matching
+  // If we have only one word (term) use query string with wildcards.
+  // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
+  const queryBody = query.trim().split(' ').length <= 1
+    ? {
+      query_string: {
+        query: `*${query}*`,
+        fields,
+      },
+    }
+    : {
+      bool: {
+        should: [
+          { match_phrase: { context: { slop: 0, query } } },
+          { match_phrase: { nonECLKCResources: { slop: 0, query } } },
+          { match_phrase: { ECLKCResources: { slop: 0, query } } },
+          { match_phrase: { recipientNextSteps: { slop: 0, query } } },
+          { match_phrase: { specialistNextSteps: { slop: 0, query } } },
+          { match_phrase: { activityReportGoals: { slop: 0, query } } },
+          { match_phrase: { activityReportObjectives: { slop: 0, query } } },
+          { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
+          { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
+        ],
+      },
     };
 
-    // Search an index.
-    const res = await client.search({
-      index: indexName,
-      body,
-    });
-    logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
-    return res.body.hits;
-  } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to search the index '${indexName}' with query '${query}': ${error.message}`);
-    throw error;
-  }
+  // Create search body.
+  const body = {
+    size: 2001,
+    query: queryBody,
+  };
+
+  // Search an index.
+  const res = await client.search({
+    index: indexName,
+    body,
+  });
+  logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
+  return res.body.hits;
 };
 /*
   Update index document.
@@ -211,26 +200,21 @@ const updateIndexDocument = async (job) => {
   const {
     indexName, id, body, passedClient,
   } = job.data;
-  let res;
-  try {
-    // Initialize the client.
-    const client = passedClient || await getClient();
 
-    // Update index document.
-    res = await client.update({
-      index: indexName,
-      id,
-      body,
-      doc_as_upsert: true, // create if doesn't exist.
-      refresh: true, // triggers manual refresh.
-    });
+  // Initialize the client.
+  const client = passedClient || await getClient();
 
-    logger.info(`AWS OpenSearch: Successfully updated document index ${indexName} for id ${id}`);
-    return { data: job.data, status: res.statusCode, res };
-  } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to update the index '${indexName} for id ${id}': ${error.message}`);
-    return { data: job.data, status: res.statusCode, res };
-  }
+  // Update index document.
+  const res = await client.update({
+    index: indexName,
+    id,
+    body,
+    doc_as_upsert: true, // create if doesn't exist.
+    refresh: true, // triggers manual refresh.
+  });
+
+  logger.info(`AWS OpenSearch: Successfully updated document index ${indexName} for id ${id}`);
+  return { data: job.data, status: 200, res };
 };
 
 /*
@@ -238,11 +222,13 @@ const updateIndexDocument = async (job) => {
 */
 const deleteIndexDocument = async (job) => {
   const {
-    indexName, id, passedClient,
+    indexName, id, passedClient, preventRethrow,
   } = job.data;
+
   let res;
+
   try {
-    // Initialize the client.
+  // Initialize the client.
     const client = passedClient || await getClient();
 
     // Delete index document.
@@ -254,10 +240,13 @@ const deleteIndexDocument = async (job) => {
     });
     logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
 
-    return { data: job.data, status: res.statusCode, res };
+    return { data: job.data, status: 200, res };
   } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to delete document '${id}' for index '${indexName}': ${error.message}`);
-    return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
+    if (preventRethrow) {
+      // This path is for running in CI.
+      return { data: job.data, status: 500, res };
+    }
+    throw error;
   }
 };
 
@@ -277,7 +266,7 @@ const deleteIndex = async (indexName, passedClient) => {
     logger.info(`AWS OpenSearch: Successfully deleted index '${indexName}'`);
     return res;
   } catch (error) {
-    const alreadyExisted = error.meta.body.error.type === 'index_not_found_exception';
+    const alreadyExisted = error?.meta?.body?.error?.type === 'index_not_found_exception';
     if (!alreadyExisted) {
       auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
       throw error;

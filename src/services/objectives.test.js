@@ -333,14 +333,16 @@ describe('Objectives DB service', () => {
             secondObjective.id,
             thirdObjective.id,
             findObjectiveById.id,
-            findObjectiveByTitle.id],
+            findObjectiveByTitle.id,
+          ],
       },
+      force: true,
     });
     await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
 
-    await Objective.destroy({ where: { id: objectiveInfo.id } });
-    await Goal.destroy({ where: { id: goalInfo.id } });
+    await Objective.destroy({ where: { id: objectiveInfo.id }, force: true });
+    await Goal.destroy({ where: { id: goalInfo.id }, force: true });
     await Grant.destroy({ where: { id: grantInfo.id } });
     await Recipient.destroy({ where: { id: recipientInfo.id } });
     await OtherEntity.destroy({ where: { id: otherEntity.id } });

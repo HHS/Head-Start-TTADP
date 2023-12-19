@@ -87,6 +87,7 @@ function ApproverSelect({
       closeMenuOnSelect={false}
       hideSelectedOptions
       placeholder=""
+      required
       isMulti
     />
   );

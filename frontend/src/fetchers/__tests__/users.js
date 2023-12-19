@@ -42,12 +42,12 @@ describe('users fetcher', () => {
   });
 
   it('calls /api/users/training-report-users', async () => {
-    const url = join('/', 'api', 'users', 'training-report-users', '?regionId=1');
+    const url = join('/', 'api', 'users', 'training-report-users', '?regionId=1&eventId=1');
     fetchMock.once(
       url, {},
     );
 
-    await getTrainingReportUsers(1);
+    await getTrainingReportUsers(1, 1);
 
     expect(fetchMock.called(url)).toBe(true);
   });

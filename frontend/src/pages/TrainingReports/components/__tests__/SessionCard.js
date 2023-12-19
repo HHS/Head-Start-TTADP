@@ -47,10 +47,17 @@ describe('SessionCard', () => {
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
-  it('hides edit link', () => {
+  it('hides edit link based on permissions', () => {
     renderSessionCard(defaultSession, false);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+  });
+
+  it('hides edit link if session is complete', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete session/i)).not.toBeInTheDocument();
   });
 
   it('shows the edit link with the correct permissions', () => {
@@ -69,5 +76,22 @@ describe('SessionCard', () => {
     renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'blah' } });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/not started/i)).toBeInTheDocument();
+  });
+
+  it('correctly renders with missing data', () => {
+    renderSessionCard({
+      ...defaultSession,
+      data: {
+        ...defaultSession.data,
+        startDate: null,
+        endDate: null,
+        objectiveTopics: [],
+        objectiveTrainers: [],
+      },
+    });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByText(/-/i)).toBeInTheDocument();
+    expect(screen.getByText(/topics/i)).toBeInTheDocument();
+    expect(screen.getByText(/trainers/i)).toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 import { Textarea } from '@trussworks/react-uswds';
@@ -10,9 +11,36 @@ import {
   pageTouched,
   pageComplete,
 } from '../constants';
+import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
+import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
+import UserContext from '../../../UserContext';
+import PocCompleteCheckbox from '../../../components/PocCompleteCheckbox';
+import ReadOnlyField from '../../../components/ReadOnlyField';
+import PocCompleteView from '../../../components/PocCompleteView';
 
-const VisionGoal = () => {
+const VisionGoal = ({ formData }) => {
   const { register } = useFormContext();
+  const { user } = useContext(UserContext);
+  const { isPoc } = useTrainingReportRole(formData, user.id);
+  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
+
+  if (showReadOnlyView) {
+    return (
+      <PocCompleteView formData={formData} userId={user.id} reportType="training">
+        <Helmet>
+          <title>Vision and goal</title>
+        </Helmet>
+        <>
+          <ReadOnlyField label="Event vision">
+            {formData.vision}
+          </ReadOnlyField>
+          <ReadOnlyField label="Event goal">
+            {formData.goal}
+          </ReadOnlyField>
+        </>
+      </PocCompleteView>
+    );
+  }
 
   return (
     <div className="padding-x-1">
@@ -23,13 +51,14 @@ const VisionGoal = () => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Event vision"
+          label="Event vision "
           name="vision"
           required
         >
           <Textarea
             id="vision"
             name="vision"
+            required
             inputRef={register({
               required: 'Descibe the event vision',
             })}
@@ -39,21 +68,37 @@ const VisionGoal = () => {
 
       <div className="margin-top-2">
         <FormItem
-          label="Event goal"
+          label="Event goal "
           name="goal"
           required
         >
           <Textarea
             id="goal"
             name="goal"
+            required
             inputRef={register({
               required: 'Describe the event goal',
             })}
           />
         </FormItem>
       </div>
+      <PocCompleteCheckbox
+        userId={user.id}
+        isPoc={isPoc}
+      />
     </div>
   );
+};
+
+VisionGoal.propTypes = {
+  formData: PropTypes.shape({
+    pocComplete: PropTypes.bool,
+    event: PropTypes.shape({
+      id: PropTypes.number,
+    }),
+    vision: PropTypes.string,
+    goal: PropTypes.string,
+  }).isRequired,
 };
 
 const ReviewSection = () => <><h2>Vision and goal</h2></>;
@@ -73,7 +118,7 @@ export default {
   review: false,
   render: (
     _additionalData,
-    _formData,
+    formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -85,7 +130,7 @@ export default {
     Alert,
   ) => (
     <>
-      <VisionGoal />
+      <VisionGoal formData={formData} />
       <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}

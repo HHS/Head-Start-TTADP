@@ -37,6 +37,7 @@ describe('convertGoalsToFormData', () => {
         id: 2,
         grantIds: [1, 2, 3],
         source: '',
+        prompts: [],
         objectives: [],
         activityReportGoals: [
           { id: 2, isActivelyEdited: false },
@@ -47,6 +48,7 @@ describe('convertGoalsToFormData', () => {
     expect(goalForEditing).toEqual({
       id: 1,
       source: '',
+      prompts: [],
       grantIds: [1, 2, 3],
       objectives: [],
       activityReportGoals: [
@@ -65,6 +67,7 @@ describe('convertGoalsToFormData', () => {
               isActivelyEdited: true,
             },
           ],
+          prompts: [],
         },
         {
           id: 2,
@@ -74,6 +77,7 @@ describe('convertGoalsToFormData', () => {
               isActivelyEdited: true,
             },
           ],
+          prompts: [],
         },
       ],
       [1, 2, 3],
@@ -91,6 +95,7 @@ describe('convertGoalsToFormData', () => {
           },
         ],
         source: '',
+        prompts: [],
       },
     ]);
 
@@ -104,6 +109,7 @@ describe('convertGoalsToFormData', () => {
           isActivelyEdited: true,
         },
       ],
+      prompts: [],
     });
   });
   it('returns an empty goalForEditing if no activityreportgoal has isActivelyEditing: true', () => {
@@ -117,6 +123,7 @@ describe('convertGoalsToFormData', () => {
               isActivelyEdited: false,
             },
           ],
+          prompts: [],
         },
         {
           id: 2,
@@ -126,6 +133,7 @@ describe('convertGoalsToFormData', () => {
               isActivelyEdited: false,
             },
           ],
+          prompts: [],
         },
       ],
       [1, 2, 3],
@@ -137,6 +145,7 @@ describe('convertGoalsToFormData', () => {
         id: 1,
         grantIds: [1, 2, 3],
         source: '',
+        prompts: [],
         activityReportGoals: [
           {
             id: 1,
@@ -147,6 +156,7 @@ describe('convertGoalsToFormData', () => {
       {
         id: 2,
         source: '',
+        prompts: [],
         grantIds: [1, 2, 3],
         activityReportGoals: [
           {
@@ -178,11 +188,13 @@ describe('convertGoalsToFormData', () => {
         id: 1,
         grantIds: [1, 2, 3],
         source: '',
+        prompts: [],
       },
       {
         id: 2,
         grantIds: [1, 2, 3],
         source: '',
+        prompts: [],
       },
     ]);
 
@@ -225,6 +237,7 @@ describe('convertGoalsToFormData', () => {
           },
         ],
         source: '',
+        prompts: [],
       },
       {
         id: 2,
@@ -236,6 +249,7 @@ describe('convertGoalsToFormData', () => {
           },
         ],
         source: '',
+        prompts: [],
       },
     ]);
 

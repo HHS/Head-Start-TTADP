@@ -83,3 +83,15 @@ export const validateGoals = (goals, setError = () => {}) => {
   }
   return true;
 };
+
+export const validatePrompts = async (promptTitles, trigger) => {
+  // attempt to validate prompts
+  if (promptTitles && promptTitles.length) {
+    const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
+    if (outputs.some((output) => output === false)) {
+      return false;
+    }
+  }
+
+  return true;
+};

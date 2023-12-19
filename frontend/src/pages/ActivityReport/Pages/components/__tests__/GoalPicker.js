@@ -8,10 +8,11 @@ import React from 'react';
 import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
+import userEvent from '@testing-library/user-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
-
 import GoalPicker from '../GoalPicker';
 import UserContext from '../../../../../UserContext';
+import { mockRSSData } from '../../../../../testHelpers';
 
 const defaultSelectedGoals = [
   {
@@ -21,13 +22,18 @@ const defaultSelectedGoals = [
   },
 ];
 
+const defaultGoalForEditing = {
+  objectives: [],
+  goalIds: [],
+};
+
 // eslint-disable-next-line react/prop-types
-const GP = ({ availableGoals, selectedGoals }) => {
+const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
       goals: selectedGoals,
-      goalForEditing: { objectives: [], goalIds: [] },
+      goalForEditing,
       author: {
         role: 'central office',
       },
@@ -62,7 +68,9 @@ const GP = ({ availableGoals, selectedGoals }) => {
 };
 
 const renderGoalPicker = (
-  availableGoals, selectedGoals = defaultSelectedGoals, goalForEditing = undefined,
+  availableGoals,
+  selectedGoals = defaultSelectedGoals,
+  goalForEditing = defaultGoalForEditing,
 ) => {
   render(
     <GP
@@ -77,6 +85,7 @@ describe('GoalPicker', () => {
   beforeEach(async () => {
     fetchMock.get('/api/topic', []);
     fetchMock.get('/api/goals?reportId=1&goalIds=1', [{ objectives: [] }]);
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
   });
 
   afterEach(() => fetchMock.restore());
@@ -98,6 +107,91 @@ describe('GoalPicker', () => {
 
     const input = document.querySelector('[name="goalForEditing"');
     expect(input.value).toBe(availableGoal.value.toString());
+  });
+
+  it('you can select a goal that has objectives, keeping the objectives', async () => {
+    const availableGoals = [{
+      label: 'Goal 1',
+      value: 1,
+      goalIds: [1],
+      name: 'Goal 1',
+    }];
+
+    const goalForEditing = {
+      objectives: [{
+        topics: [],
+        id: 1,
+        title: 'Objective 1',
+        resources: [],
+        ttaProvided: '',
+      }],
+      goalIds: [],
+    };
+
+    renderGoalPicker(
+      availableGoals,
+      defaultSelectedGoals,
+      goalForEditing,
+    );
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    expect(await screen.findByText('You have selected a different goal.')).toBeVisible();
+
+    const button = await screen.findByRole('button', { name: /keep objective/i });
+    userEvent.click(button);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+
+    const objective = await screen.findByText('Objective 1', { selector: 'textarea' });
+    expect(objective).toBeVisible();
+    expect(objective).toHaveAttribute('name', 'goalForEditing.objectives[0].title');
+  });
+
+  it('you can select a goal that has objectives, losing the objectives', async () => {
+    const availableGoals = [{
+      label: 'Goal 1',
+      value: 1,
+      goalIds: [1],
+      name: 'Goal 1',
+    }];
+
+    const goalForEditing = {
+      objectives: [{
+        topics: [],
+        id: 1,
+        title: 'Objective 1',
+        resources: [],
+        ttaProvided: '',
+      }],
+      goalIds: [],
+    };
+
+    renderGoalPicker(
+      availableGoals,
+      defaultSelectedGoals,
+      goalForEditing,
+    );
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    expect(await screen.findByText('You have selected a different goal.')).toBeVisible();
+
+    const button = await screen.findByRole('button', { name: /remove objective/i });
+    userEvent.click(button);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+
+    const objective = document.querySelector('[name="goalForEditing.objectives[0].title"]');
+    expect(objective).toBeNull();
   });
 
   it('you can select a goal with no selected goals', async () => {

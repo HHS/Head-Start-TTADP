@@ -9,15 +9,16 @@ import {
 } from './handlers';
 
 const router = express.Router();
+const context = 'events';
 
-router.get('/id/:eventId', transactionWrapper(getHandler));
-router.get('/regionId/:regionId', transactionWrapper(getHandler));
+router.get('/id/:eventId', transactionWrapper(getHandler, `${context} /id/:eventId`));
+router.get('/regionId/:regionId', transactionWrapper(getHandler, `${context} /regionId/:regionId`));
 router.get('/:status', transactionWrapper(getByStatus));
-router.get('/ownerId/:ownerId', transactionWrapper(getHandler));
-router.get('/pocId/:pocId', transactionWrapper(getHandler));
-router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler));
-router.post('/', transactionWrapper(createHandler));
-router.put('/id/:eventId', transactionWrapper(updateHandler));
-router.delete('/id/:eventId', transactionWrapper(deleteHandler));
+router.get('/ownerId/:ownerId', transactionWrapper(getHandler, `${context} /ownerId/:ownerId`));
+router.get('/pocId/:pocId', transactionWrapper(getHandler, `${context} /pocId/:pocId`));
+router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler, `${context} /collaboratorId/:collaboratorId`));
+router.post('/', transactionWrapper(createHandler, context));
+router.put('/id/:eventId', transactionWrapper(updateHandler, context));
+router.delete('/id/:eventId', transactionWrapper(deleteHandler, context));
 
 export default router;

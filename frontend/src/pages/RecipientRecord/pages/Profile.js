@@ -4,8 +4,15 @@ import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import RecipientSummary from '../components/RecipientSummary';
 import GrantList from '../components/GrantsList';
+import RecipientLeadership from '../components/RecipientLeadership';
+import './Profile.css';
 
-export default function Profile({ recipientSummary, regionId, recipientName }) {
+export default function Profile({
+  recipientSummary,
+  regionId,
+  recipientName,
+  recipientId,
+}) {
   return (
     <>
       <Helmet>
@@ -21,6 +28,7 @@ export default function Profile({ recipientSummary, regionId, recipientName }) {
             <RecipientSummary summary={recipientSummary} regionId={regionId} />
           </Grid>
           <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
+            <RecipientLeadership recipientId={recipientId} regionId={regionId} />
             <GrantList summary={recipientSummary} />
           </Grid>
         </Grid>
@@ -30,6 +38,7 @@ export default function Profile({ recipientSummary, regionId, recipientName }) {
 }
 
 Profile.propTypes = {
+  recipientId: PropTypes.number.isRequired,
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   recipientSummary:
     PropTypes.shape({

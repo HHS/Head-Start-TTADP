@@ -8,6 +8,8 @@ import {
   reasonsFilter,
   recipientFilter,
   reportIdFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
@@ -17,11 +19,13 @@ import {
   participantsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
 
 const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -31,6 +35,8 @@ const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   regionFilter,
   reportIdFilter,
   reportTextFilter,
+  resourceAttachmentFilter,
+  resourceLinkFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,

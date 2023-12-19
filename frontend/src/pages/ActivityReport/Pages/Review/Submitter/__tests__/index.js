@@ -25,6 +25,10 @@ const RenderSubmitter = ({
     defaultValues: formData,
   });
 
+  hookForm.register('goalsAndObjectives');
+  // eslint-disable-next-line react/prop-types
+  hookForm.setValue('goalsAndObjectives', formData.goalsAndObjectives || []);
+
   return (
     <FormProvider {...hookForm}>
       <Submitter
@@ -57,11 +61,12 @@ const renderReview = (
   calculatedStatus,
   onFormSubmit,
   complete = true,
-  onSave = () => { },
-  resetToDraft = () => { },
+  onSave = jest.fn(),
+  resetToDraft = jest.fn(),
   approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
   user = defaultUser,
   creatorRole = null,
+  hasIncompleteGoalPrompts = false,
 ) => {
   const formData = {
     approvers,
@@ -70,6 +75,16 @@ const renderReview = (
     id: 1,
     creatorRole,
   };
+
+  if (hasIncompleteGoalPrompts) {
+    formData.goalsAndObjectives = [{
+      isCurated: true,
+      prompts: [{
+        allGoalsHavePromptResponse: false,
+        title: 'FEI Goal',
+      }],
+    }];
+  }
 
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
@@ -117,6 +132,26 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
+    });
+
+    it('shows an error if goals are missing prompts', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        jest.fn(),
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        true,
+      );
+
+      const alert = await screen.findByText('Incomplete report');
+      expect(alert).toBeVisible();
+
+      expect(await screen.findByText(/some goals are incomplete/i)).toBeVisible();
+      expect(await screen.findByText(/fei goal/i)).toBeVisible();
     });
 
     it('fails to submit if there are pages that have not been completed', async () => {
@@ -184,7 +219,7 @@ describe('Submitter review page', () => {
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
-      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('displays approvers requesting action', async () => {
@@ -194,7 +229,7 @@ describe('Submitter review page', () => {
         { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', user: { fullName: 'Needs Action 2' } },
       ];
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
       expect(screen.getByText(
         /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i,
       )).toBeVisible();
@@ -230,7 +265,7 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }] });
 
       // Resubmit.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
@@ -244,7 +279,7 @@ describe('Submitter review page', () => {
       const roleSelector = await screen.findByRole('combobox');
 
       // Resubmit without selecting creator roles shows validation error.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /update/i });
       userEvent.click(reSubmit);
 
       // Verify validation message.
@@ -279,7 +314,7 @@ describe('Submitter review page', () => {
       expect(screen.queryByRole('combobox')).toBeNull();
 
       // Resubmit without validation error.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /Update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });

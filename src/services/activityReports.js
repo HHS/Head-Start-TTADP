@@ -37,7 +37,7 @@ import {
   saveGoalsForReport,
   removeRemovedRecipientsGoals,
   getGoalsForReport,
-} from './goals';
+} from '../goalServices/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
@@ -850,11 +850,16 @@ export async function activityReportAlerts(userId, {
         [Op.and]: scopes,
         [Op.or]: [
           {
-            [Op.or]: [
-              { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-              { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-            ],
-            '$approvers.userId$': userId,
+            calculatedStatus: {
+              [Op.in]: [
+                REPORT_STATUSES.SUBMITTED,
+                REPORT_STATUSES.NEEDS_ACTION,
+              ],
+            },
+            id: {
+              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara                
+                WHERE ara."userId" = ${userId} AND ara."activityReportId" = "ActivityReport"."id" AND ara."deletedAt" IS NULL)`),
+            },
           },
           {
             [Op.and]: [
@@ -866,7 +871,15 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$activityReportCollaborators->user.id$': userId }],
+                [Op.or]: [
+                  { userId },
+                  {
+                    id: {
+                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc                
+                      WHERE arc."userId" = ${userId} AND arc."activityReportId" = "ActivityReport"."id")`),
+                    },
+                  },
+                ],
               },
             ],
           },
@@ -895,9 +908,6 @@ export async function activityReportAlerts(userId, {
         sequelize.literal(
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
-
-        // eslint-disable-next-line quotes
-        [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
       ],
       include: [
         {
@@ -943,6 +953,7 @@ export async function activityReportAlerts(userId, {
             {
               model: User,
               as: 'user',
+              required: true,
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -1174,6 +1185,7 @@ async function getDownloadableActivityReports(where, separate = true) {
           include: [{
             model: Goal,
             as: 'goal',
+            required: false,
           },
           ],
           attributes: ['id', 'title', 'status'],
