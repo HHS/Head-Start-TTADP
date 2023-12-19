@@ -199,7 +199,35 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
   const columnName = 'flags';
 
   if (valuesToRemove && valuesToRemove.length) {
-    await Promise.all(valuesToRemove.map((value) => queryInterface.sequelize.query(`
+    const existingEnums = await Promise.all(
+      valuesToRemove.map(async (value) => {
+        /**
+         * because we run this function multiple times when setting up a test DB
+         * We need to check if the enum value exists before trying to remove it
+         * (it won't, if it's not in the constants.js FEATURE_FLAGS array)
+         */
+        const result = await queryInterface.sequelize.query(`
+          SELECT EXISTS(
+            SELECT 1
+            FROM pg_type t
+            JOIN pg_enum e ON t.oid = e.enumtypid
+            WHERE t.typname = '${enumName}' AND e.enumlabel = '${value}'
+          );
+        `, { transaction });
+
+        const enumIsValid = result[0][0].exists;
+
+        if (enumIsValid) {
+          return value;
+        }
+
+        return null;
+      }),
+    );
+
+    const validForRemove = existingEnums.filter((value) => value);
+
+    await Promise.all(validForRemove.map((value) => queryInterface.sequelize.query(`
       UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
         WHERE '${value}' = ANY(${columnName});
   `, { transaction })));

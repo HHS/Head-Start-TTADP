@@ -150,10 +150,23 @@ export default function TrainingReports({ match }) {
       console.log(e);
     }
   };
-
+  function convertToTitleCase(str) {
+    if (!str) {
+      return '';
+    }
+    return str.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase());
+  }
+  const statusForDisplay = tabValues.find((t) => t.value === status).key;
+  const titleCaseStatus = convertToTitleCase(statusForDisplay);
   return (
     <div className="ttahub-training-reports">
-      <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
+      <Helmet>
+        <title>
+          {titleCaseStatus}
+          {' '}
+          - Training Reports
+        </title>
+      </Helmet>
       <>
         <RegionPermissionModal
           filters={filters}
@@ -184,7 +197,6 @@ export default function TrainingReports({ match }) {
             {msg}
           </Alert>
         )}
-        <Helmet titleTemplate="%s - Training Reports - TTA Hub" defaultTitle="TTA Hub - Training Reports" />
         <Grid>
           <Grid row gap>
             <Grid>

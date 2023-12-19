@@ -230,9 +230,9 @@ describe('updateUsersFlagsEnum', () => {
 
   test('should update flags and recreate enum if valuesToRemove is provided', async () => {
     const valuesToRemove = ['value1', 'value2'];
+    queryInterface.sequelize.query.mockResolvedValue([[{ exists: true }]]);
     await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
-
-    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
+    expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(6);
   });
 });
 
