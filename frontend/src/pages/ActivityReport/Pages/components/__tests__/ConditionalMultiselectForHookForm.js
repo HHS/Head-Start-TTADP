@@ -14,7 +14,7 @@ describe('ConditionalMultiselectForHookForm', () => {
   let setError;
 
   // eslint-disable-next-line react/prop-types
-  const Rt = ({ isOnReport = false, isComplete = false }) => {
+  const Rt = ({ userCanEdit = true }) => {
     const hookForm = useForm({
       mode: 'onChange',
       defaultValues: {
@@ -56,8 +56,7 @@ describe('ConditionalMultiselectForHookForm', () => {
             validations={validations}
             fieldName="testField"
             defaultValue={[]}
-            isComplete={isComplete}
-            isOnReport={isOnReport}
+            userCanEdit={userCanEdit}
           />
         </FormProvider>
       </div>
@@ -78,7 +77,7 @@ describe('ConditionalMultiselectForHookForm', () => {
   });
 
   it('renders the prompt if read only', () => {
-    render(<Rt isOnReport isComplete />);
+    render(<Rt userCanEdit={false} />);
     expect(screen.getByText('Riddle')).toBeInTheDocument();
   });
 });

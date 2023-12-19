@@ -836,7 +836,6 @@ class Users{
 
 enum enum_Users_flags {
  anv_statistics
- communication_log
  goal_source
  merge_goals
  monitoring

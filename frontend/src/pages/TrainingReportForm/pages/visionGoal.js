@@ -28,7 +28,7 @@ const VisionGoal = ({ formData }) => {
     return (
       <PocCompleteView formData={formData} userId={user.id} reportType="training">
         <Helmet>
-          <title>Vision and goal</title>
+          <title>Vision and Goal</title>
         </Helmet>
         <>
           <ReadOnlyField label="Event vision">
@@ -45,7 +45,7 @@ const VisionGoal = ({ formData }) => {
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Vision and goal</title>
+        <title>Vision and Goal</title>
       </Helmet>
       <IndicatesRequiredField />
 
