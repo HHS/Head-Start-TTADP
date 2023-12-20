@@ -41,7 +41,7 @@ import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../.
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import '../../../components/GoalForm/ObjectiveSupportType.scss';
+import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -561,14 +561,9 @@ const SessionSummary = ({ datePickerKey }) => {
       </FormItem>
 
       <div className="margin-top-2">
-        <Drawer
-          triggerRef={supportTypeDrawerTriggerRef}
-          stickyHeader
-          stickyFooter
-          title="Support type guidance"
-        >
-          <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
-        </Drawer>
+        <SupportTypeDrawer
+          drawerTriggerRef={supportTypeDrawerTriggerRef}
+        />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
             <>
