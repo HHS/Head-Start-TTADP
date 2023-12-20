@@ -251,8 +251,8 @@ test.describe('Activity Report', () => {
 
     await page.waitForTimeout(10000);
 
-    await page.getByRole('combobox', { name: 'Support type*' }).selectOption('Implementing');;
-    await blur(page);
+    // await page.getByRole('combobox', { name: 'Support type*' }).selectOption('Implementing');
+    // await blur(page);
 
     await page.waitForTimeout(10000);
 
@@ -754,6 +754,7 @@ test.describe('Activity Report', () => {
 
     // const supportType = page.getByRole('combobox', { name: 'Support type*' });
     // await supportType.selectOption('Implementing');
+    await page.waitForTimeout(10000);
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1 o1 title');
@@ -776,9 +777,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(4).click();
-    await page.keyboard.type('g1 o2 tta');   
-    await page.waitForTimeout(10000);
+    // await page.waitForTimeout(10000);
     // await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
     await page.waitForTimeout(10000);
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
