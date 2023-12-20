@@ -13,8 +13,8 @@ import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
 
 describe('GoalForm', () => {
-  const Form = ({ id }) => {
-    const goal = {
+  const Form = ({ id, customGoal }) => {
+    const goal = customGoal || {
       id,
       isNew: id === 'new',
       goalIds: [123],
@@ -60,10 +60,40 @@ describe('GoalForm', () => {
       PropTypes.string,
       PropTypes.number,
     ]).isRequired,
+    customGoal: PropTypes.shape({
+      id: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+      ]).isRequired,
+      isNew: PropTypes.bool,
+      goalIds: PropTypes.arrayOf(PropTypes.number),
+      status: PropTypes.string,
+      prompts: PropTypes.arrayOf(PropTypes.shape({
+        fieldType: PropTypes.string,
+        title: PropTypes.string,
+        prompt: PropTypes.string,
+        options: PropTypes.arrayOf(PropTypes.string),
+        response: PropTypes.arrayOf(PropTypes.string),
+        validations: PropTypes.shape({
+          rules: PropTypes.arrayOf(PropTypes.shape({
+            name: PropTypes.string,
+            value: PropTypes.oneOfType([
+              PropTypes.string,
+              PropTypes.number,
+            ]),
+            message: PropTypes.string,
+          })),
+        }),
+      })),
+    }),
   };
 
-  const renderGoalForm = (id) => {
-    render(<Form id={id} />);
+  Form.defaultProps = {
+    customGoal: undefined,
+  };
+
+  const renderGoalForm = (id, customGoal = undefined) => {
+    render(<Form id={id} customGoal={customGoal} />);
   };
 
   beforeEach(async () => fetchMock.restore());
