@@ -280,6 +280,10 @@ describe('goalFieldResponseHooks', () => {
 
       // HOOK: Change goal response to trigger hook.
       goalFieldResponse.response = ['Updated Activity Report Goal Response'];
+
+      // Get the current time using moment.
+      const beforeGoalFieldResponseUpdate = new Date();
+
       await GoalFieldResponse.update(
         { response: ['Updated Goal Field Response'] },
         {
@@ -305,6 +309,30 @@ describe('goalFieldResponseHooks', () => {
       // Assert updated values.
       expect(goalFieldResponse.response).toEqual(['Updated Goal Field Response']);
       expect(activityReportGoalFieldResponse.response).toEqual(goalFieldResponse.response);
+
+      // Get the activity report associated with activityReportGoalFieldResponse.
+      const activityReportUpdatedAt = await ActivityReport.findOne({
+        where: {
+          id: report.id,
+        },
+      });
+
+      // Assert update date.
+      expect(activityReportUpdatedAt).not.toBeNull();
+      const activityReportUpdatedAtDate = new Date(activityReportUpdatedAt.updatedAt);
+      expect(activityReportUpdatedAtDate >= beforeGoalFieldResponseUpdate).toBeTruthy();
+
+      // Get report not to update.
+      const activityReportNotUpdatedAt = await ActivityReport.findOne({
+        where: {
+          id: reportNotToUpdate.id,
+        },
+      });
+
+      // Assert we didn't update anything we weren't supposed to.
+      expect(activityReportNotUpdatedAt).not.toBeNull();
+      const activityReportNotUpdatedAtDate = new Date(activityReportNotUpdatedAt.updatedAt);
+      expect(activityReportNotUpdatedAtDate < beforeGoalFieldResponseUpdate).toBeTruthy();
 
       // Assert no updated values.
       goalFieldResponseNotToUpdate = await GoalFieldResponse.findOne({

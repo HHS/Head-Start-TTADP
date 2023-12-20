@@ -179,9 +179,9 @@ export default function ViewTrainingReport({ match }) {
     <>
       <Helmet>
         <title>
-          {pageTitle}
+          Training Event Report
           {' '}
-          | TTA Hub
+          {(event && event.data) ? event.data.eventId : ''}
         </title>
       </Helmet>
       <BackLink to={backLinkUrl}>
