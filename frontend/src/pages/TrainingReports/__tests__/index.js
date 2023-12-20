@@ -7,7 +7,7 @@ import join from 'url-join';
 import { Router, MemoryRouter } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
-import { SCOPE_IDS, TRAINING_REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import TrainingReports from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -165,7 +165,7 @@ describe('TrainingReports', () => {
     fetchMock.get(completeUrl, completeEvents);
 
     // Suspended.
-    const suspendedUrl = join(eventUrl, `/${TRAINING_REPORT_STATUSES.SUSPENDED}?region.in[]=2`);
+    const suspendedUrl = join(eventUrl, `/${EVENT_STATUS.SUSPENDED}?region.in[]=2`);
     fetchMock.get(suspendedUrl, suspendedEvents);
   });
 
@@ -395,7 +395,7 @@ describe('TrainingReports', () => {
 
   it('renders the suspended events tab', async () => {
     act(() => {
-      renderTrainingReports(nonCentralOfficeUser, TRAINING_REPORT_STATUSES.SUSPENDED);
+      renderTrainingReports(nonCentralOfficeUser, EVENT_STATUS.SUSPENDED);
     });
 
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();

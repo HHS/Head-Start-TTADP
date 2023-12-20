@@ -17,7 +17,10 @@ import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString } from '../../../utils';
 import { mockWindowProperty, convertToResponse } from '../../../testHelpers';
 
-jest.mock('../../../fetchers/helpers');
+jest.mock('../../../fetchers/helpers', () => ({
+  ...jest.requireActual('../../../fetchers/helpers'),
+  getAllAlertsDownloadURL: jest.fn(),
+}));
 
 const mockAnnounce = jest.fn();
 
