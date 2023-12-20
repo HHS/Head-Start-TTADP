@@ -54,7 +54,6 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'IpdCourse',
     tableName: 'IpdCourses',
-    paranoid: true,
     freezeTableName: true,
   });
   return IpdCourse;
