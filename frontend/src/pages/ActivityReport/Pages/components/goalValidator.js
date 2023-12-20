@@ -36,10 +36,12 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
         incomplete = true;
       }
 
-      if (!objective.supportType) {
-        setError(`${fieldArrayName}[${index}].supportType`, { message: 'Select a support type' });
-        incomplete = true;
-      }
+      // TODO: Uncomment this when we have support types out from behind  "goal_source" feature flag
+      // if (!objective.supportType) {
+      // eslint-disable-next-line max-len
+      //   setError(`${fieldArrayName}[${index}].supportType`, { message: 'Select a support type' });
+      //   incomplete = true;
+      // }
 
       return incomplete;
     },
