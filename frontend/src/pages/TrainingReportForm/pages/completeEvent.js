@@ -165,7 +165,7 @@ const CompleteEvent = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete event</title>
+        <title>Complete Event</title>
       </Helmet>
 
       <IndicatesRequiredField />

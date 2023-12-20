@@ -24,6 +24,7 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  getReportsByManyIds,
   getGroups,
 } from './handlers';
 import {
@@ -771,6 +772,24 @@ describe('Activity Report handlers', () => {
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
+
+    it('accepts optional id query param', async () => {
+      const updatedMockRequest = {
+        session: {
+          userId: mockUser.id,
+        },
+        query: {
+          'region.in': '1',
+          id: [1],
+        },
+      };
+
+      getAllDownloadableActivityReports.mockResolvedValue([report]);
+      userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
+      setReadRegions.mockResolvedValue([1]);
+      await downloadAllReports(updatedMockRequest, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
+    });
   });
 
   describe('downloadAllAlerts', () => {
@@ -1006,5 +1025,56 @@ describe('Activity Report handlers', () => {
       );
       expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
     });
+  });
+});
+
+describe('getReportsByManyIds', () => {
+  const req = {
+    body: {
+      reportIds: [1, 2, 3],
+    },
+    session: {
+      userId: 1,
+    },
+  };
+
+  const res = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return reports with count if found', async () => {
+    const mockReportsWithCount = [{ id: 1, name: 'Report 1' }, { id: 2, name: 'Report 2' }];
+    activityReports.mockResolvedValue(mockReportsWithCount);
+    setReadRegions.mockResolvedValue({});
+    await getReportsByManyIds(req, res);
+
+    expect(activityReports).toHaveBeenCalledWith(
+      {},
+      false,
+      expect.anything(),
+      req.body.reportIds,
+    );
+    expect(res.json).toHaveBeenCalledWith(mockReportsWithCount);
+    expect(res.sendStatus).not.toHaveBeenCalled();
+  });
+
+  it('should send 404 status if reports not found', async () => {
+    activityReports.mockResolvedValue(null);
+    setReadRegions.mockResolvedValue({});
+    await getReportsByManyIds(req, res);
+
+    expect(activityReports).toHaveBeenCalledWith(
+      {},
+      false,
+      expect.anything(),
+      req.body.reportIds,
+    );
+    expect(res.json).not.toHaveBeenCalled();
+    expect(res.sendStatus).toHaveBeenCalledWith(404);
   });
 });
