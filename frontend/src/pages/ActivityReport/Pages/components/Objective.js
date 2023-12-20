@@ -407,16 +407,6 @@ export default function Objective({
         closeSuspendContext={objectiveSuspendContext}
         closeSuspendReason={objectiveSuspendReason}
       />
-
-      <div className="usa-form-group">
-        <ObjectiveStatus
-          onBlur={onBlurStatus}
-          inputName={objectiveStatusInputName}
-          status={objectiveStatus}
-          onChangeStatus={onChangeStatus}
-          userCanEdit
-        />
-      </div>
     </>
   );
 }
