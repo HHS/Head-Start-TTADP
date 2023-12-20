@@ -2,6 +2,7 @@ import React from 'react';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, fireEvent } from '@testing-library/react';
 import ObjectiveSupportType from '../ObjectiveSupportType';
+import UserContext from '../../UserContext';
 
 describe('ObjectiveSupportType', () => {
   const supportType = 'test support type';
@@ -10,16 +11,20 @@ describe('ObjectiveSupportType', () => {
   const inputName = 'testInput';
   const error = <div>Error message</div>;
 
-  it('calls onChangeSupportType when support type is changed', () => {
-    const { getByLabelText } = render(
+  const renderTest = () => render(
+    <UserContext.Provider value={{ user: { flags: ['goal_source'] } }}>
       <ObjectiveSupportType
         supportType={supportType}
         onChangeSupportType={onChangeSupportType}
         onBlurSupportType={onBlurSupportType}
         inputName={inputName}
         error={error}
-      />,
-    );
+      />
+    </UserContext.Provider>,
+  );
+
+  it('calls onChangeSupportType when support type is changed', () => {
+    const { getByLabelText } = renderTest();
 
     const dropdown = getByLabelText(/Support type/i);
     fireEvent.change(dropdown, { target: { value: SUPPORT_TYPES[3] } });
@@ -27,15 +32,7 @@ describe('ObjectiveSupportType', () => {
   });
 
   it('calls onBlurSupportType when support type dropdown loses focus', () => {
-    const { getByLabelText } = render(
-      <ObjectiveSupportType
-        supportType={supportType}
-        onChangeSupportType={onChangeSupportType}
-        onBlurSupportType={onBlurSupportType}
-        inputName={inputName}
-        error={error}
-      />,
-    );
+    const { getByLabelText } = renderTest();
 
     const dropdown = getByLabelText(/Support type/i);
     fireEvent.blur(dropdown);

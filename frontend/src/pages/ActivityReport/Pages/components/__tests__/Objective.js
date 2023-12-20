@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
   render, screen, within, act, fireEvent, waitFor,
@@ -9,6 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
 import AppLoadingContext from '../../../../../AppLoadingContext';
+import UserContext from '../../../../../UserContext';
 
 const defaultObjective = {
   id: 1,
@@ -73,56 +75,57 @@ const RenderObjective = ({
   };
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...hookForm}>
-      <AppLoadingContext.Provider value={
+    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+      <FormProvider {...hookForm}>
+        <AppLoadingContext.Provider value={
         {
           setAppLoadingText: jest.fn(),
           setIsAppLoading: jest.fn(),
         }
       }
-      >
-        <Objective
-          objective={defaultObjective}
-          topicOptions={[]}
-          options={[
-            {
-              label: 'Create a new objective',
-              value: 'Create a new objective',
-              topics: [],
-              resources: [],
-              files: [],
-              status: 'Not Started',
-              title: '',
-            },
-            {
-              label: 'Existing objective',
-              value: 123,
-              topics: [],
-              resources: [],
-              files: [],
-              status: 'Complete',
-              title: 'Existing objective',
-            }]}
-          index={1}
-          remove={onRemove}
-          fieldArrayName="objectives"
-          goalId={1}
-          onRemove={onRemove}
-          onUpdate={onUpdate}
-          parentLabel="goals"
-          objectiveAriaLabel="1 on goal 1"
-          goalIndex={0}
-          objectiveIndex={0}
-          errors={{}}
-          onObjectiveChange={jest.fn()}
-          onSaveDraft={jest.fn()}
-          parentGoal={{ status: 'In Progress' }}
-          initialObjectiveStatus="Not Started"
-          reportId={98123}
-        />
-      </AppLoadingContext.Provider>
-    </FormProvider>
+        >
+          <Objective
+            objective={defaultObjective}
+            topicOptions={[]}
+            options={[
+              {
+                label: 'Create a new objective',
+                value: 'Create a new objective',
+                topics: [],
+                resources: [],
+                files: [],
+                status: 'Not Started',
+                title: '',
+              },
+              {
+                label: 'Existing objective',
+                value: 123,
+                topics: [],
+                resources: [],
+                files: [],
+                status: 'Complete',
+                title: 'Existing objective',
+              }]}
+            index={1}
+            remove={onRemove}
+            fieldArrayName="objectives"
+            goalId={1}
+            onRemove={onRemove}
+            onUpdate={onUpdate}
+            parentLabel="goals"
+            objectiveAriaLabel="1 on goal 1"
+            goalIndex={0}
+            objectiveIndex={0}
+            errors={{}}
+            onObjectiveChange={jest.fn()}
+            onSaveDraft={jest.fn()}
+            parentGoal={{ status: 'In Progress' }}
+            initialObjectiveStatus="Not Started"
+            reportId={98123}
+          />
+        </AppLoadingContext.Provider>
+      </FormProvider>
+    </UserContext.Provider>
   );
 };
 

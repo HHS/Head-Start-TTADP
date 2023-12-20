@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
   render, screen, waitFor,
@@ -9,6 +10,7 @@ import selectEvent from 'react-select-event';
 import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
+import UserContext from '../../../../../UserContext';
 
 // eslint-disable-next-line react/prop-types
 const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] }) => {
@@ -49,19 +51,20 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   ];
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...hookForm}>
-      <Objectives
-        objectiveOptions={objectiveOptions}
-        topicOptions={topicOptions}
-        goalId={goalId}
-        noObjectiveError={<></>}
-        goalStatus="In Progress"
-        reportId={12}
-        onSaveDraft={jest.fn()}
-      />
-      <button type="button">blur me</button>
-    </FormProvider>
+    <UserContext.Provider value={{ user: { id: 1, flags: ['goal_source'] } }}>
+      <FormProvider {...hookForm}>
+        <Objectives
+          objectiveOptions={objectiveOptions}
+          topicOptions={topicOptions}
+          goalId={goalId}
+          noObjectiveError={<></>}
+          goalStatus="In Progress"
+          reportId={12}
+          onSaveDraft={jest.fn()}
+        />
+        <button type="button">blur me</button>
+      </FormProvider>
+    </UserContext.Provider>
   );
 };
 

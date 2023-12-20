@@ -126,8 +126,8 @@ test.describe('Activity Report Text Search Filter', () => {
 
     await blur(page);
 
-    const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    await supportType.selectOption('Implementing');
+    // const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    // await supportType.selectOption('Implementing');
     
     await blur(page);  
         
