@@ -86,7 +86,7 @@ export default function ObjectiveFiles({
                     {' '}
                     <ul className="usa-list">
                       <li>Presentation slides from PD events</li>
-                      <li>PDF&apos;s you created from multiple tta resources</li>
+                      <li>PDF&apos;s you created from multiple TTA resources</li>
                       <li>Other OHS-provided resources</li>
                     </ul>
                   </div>

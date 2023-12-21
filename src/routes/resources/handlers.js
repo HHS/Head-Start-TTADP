@@ -5,10 +5,12 @@ import { setReadRegions } from '../../services/accessValidation';
 import { resourceDashboardPhase1 } from '../../services/dashboards/resource';
 import getCachedResponse from '../../lib/cache';
 
+const RESOURCE_DATA_CACHE_VERSION = 1.5;
+
 export async function getResourcesDashboardData(req, res) {
   const userId = await currentUserId(req, res);
   const query = await setReadRegions(req.query, userId);
-  const key = `getResourcesDashboardData?${JSON.stringify(query)}`;
+  const key = `getResourcesDashboardData?v=${RESOURCE_DATA_CACHE_VERSION}&${JSON.stringify(query)}`;
 
   const response = await getCachedResponse(
     key,
@@ -19,6 +21,7 @@ export async function getResourcesDashboardData(req, res) {
         resourcesDashboardOverview: data.overview,
         resourcesUse: data.use,
         topicUse: data.topicUse,
+        reportIds: data.reportIds,
       });
     },
     JSON.parse,
