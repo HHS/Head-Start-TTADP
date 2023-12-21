@@ -3,9 +3,8 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class IpdCourse extends Model {
     static associate(models) {
-      // IpdCourse.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
-      // eslint-disable-next-line max-len
-      // IpdCourse.belongsTo(models.ActivityReportObjective, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjective' });
+      IpdCourse.hasMany(models.ObjectiveIpdCourse, { foreignKey: 'ipdCourseId', as: 'objectiveIpdCourses' });
+      IpdCourse.hasMany(models.ActivityReportObjectiveIpdCourse, { foreignKey: 'ipdCourseId', as: 'activityReportObjectiveIpdCourses' });
 
       IpdCourse.hasMany(models.IpdCourse, {
         foreignKey: 'mapsTo',
