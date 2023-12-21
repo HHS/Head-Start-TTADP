@@ -147,14 +147,15 @@ describe('ipdCourse', () => {
       status: objective.status,
     });
 
-    // Create IpdCourse.
     ipdCourse = await IpdCourse.create({
       name: 'Test IpdCourse',
+      nameLookUp: 'testipdCourse',
     });
 
     // Create another course.
     updateCourse = await IpdCourse.create({
       name: 'Test IpdCourse 2',
+      nameLookUp: 'testipdcourse2',
     });
 
     // Create ObjectiveIpdCourse.
@@ -258,7 +259,7 @@ describe('ipdCourse', () => {
   it('Update IpdCourse', async () => {
     const newIpdCourseName = 'Test IpdCourse Updated';
     ipdCourse.name = newIpdCourseName;
-    await IpdCourse.update({
+    await ipdCourse.update({
       name: newIpdCourseName,
     }, {
       where: {

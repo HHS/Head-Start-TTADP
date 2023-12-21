@@ -37,7 +37,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       references: {
         model: {
-          tableName: 'ValidFor',
+          tableName: 'IpdCourse',
         },
         key: 'id',
       },
