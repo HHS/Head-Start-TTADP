@@ -86,20 +86,20 @@ class ActivityReportGoals{
  timeframe : text
 }
 
+class ActivityReportObjectiveCourses{
+ * id : integer : <generated>
+ * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
+ * courseId : integer : REFERENCES "Courses".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class ActivityReportObjectiveFiles{
  * id : integer : <generated>
  * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
  * fileId : integer : REFERENCES "Files".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
-}
-
-class ActivityReportObjectiveIpdCourses{
- * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * ipdCourseId : integer : REFERENCES "IpdCourses".id
- * createdAt : timestamp with time zone : now()
- * updatedAt : timestamp with time zone : now()
 }
 
 class ActivityReportObjectiveResources{
@@ -231,6 +231,16 @@ class CommunicationLogs{
  * createdAt : timestamp with time zone
  * data : jsonb
  * updatedAt : timestamp with time zone
+}
+
+class Courses{
+ * id : integer : <generated>
+ mapsTo : integer : REFERENCES "Courses".id
+ * createdAt : timestamp with time zone : now()
+!issue='column type does not match model: varchar(255) != text' * name : <color:#d54309>varchar(255)</color>
+!issue='column type does not match model: varchar(255) != text' * nameLookUp : <color:#d54309>varchar(255)</color>
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
 }
 
 class EventReportPilots{
@@ -422,16 +432,6 @@ class Groups{
  isPublic : boolean
 }
 
-class IpdCourses{
- * id : integer : <generated>
- mapsTo : integer : REFERENCES "IpdCourses".id
- * createdAt : timestamp with time zone : now()
-!issue='column type does not match model: varchar(255) != text' * name : <color:#d54309>varchar(255)</color>
-!issue='column type does not match model: varchar(255) != text' * nameLookUp : <color:#d54309>varchar(255)</color>
- * updatedAt : timestamp with time zone : now()
- deletedAt : timestamp with time zone
-}
-
 class MailerLogs{
  * id : bigint : <generated>
  * action : enum
@@ -509,6 +509,14 @@ class ObjectiveCollaborators{
  linkBack : jsonb
 }
 
+class ObjectiveCourses{
+ * id : integer : <generated>
+ * courseId : integer : REFERENCES "Courses".id
+ * objectiveId : integer : REFERENCES "Objectives".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class ObjectiveFiles{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
@@ -517,14 +525,6 @@ class ObjectiveFiles{
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
-}
-
-class ObjectiveIpdCourses{
- * id : integer : <generated>
- * ipdCourseId : integer : REFERENCES "IpdCourses".id
- * objectiveId : integer : REFERENCES "Objectives".id
- * createdAt : timestamp with time zone : now()
- * updatedAt : timestamp with time zone : now()
 }
 
 class ObjectiveResources{
@@ -992,7 +992,7 @@ class ZALActivityReportGoals{
  session_sig : text
 }
 
-class ZALActivityReportObjectiveFiles{
+class ZALActivityReportObjectiveCourses{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1006,7 +1006,7 @@ class ZALActivityReportObjectiveFiles{
  session_sig : text
 }
 
-class ZALActivityReportObjectiveIpdCourses{
+class ZALActivityReportObjectiveFiles{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1133,6 +1133,20 @@ class ZALCommunicationLogFiles{
 }
 
 class ZALCommunicationLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCourses{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1341,20 +1355,6 @@ class ZALGroups{
  session_sig : text
 }
 
-class ZALIpdCourses{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
 class ZALMailerLogs{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1453,7 +1453,7 @@ class ZALObjectiveCollaborators{
  session_sig : text
 }
 
-class ZALObjectiveFiles{
+class ZALObjectiveCourses{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1467,7 +1467,7 @@ class ZALObjectiveFiles{
  session_sig : text
 }
 
-class ZALObjectiveIpdCourses{
+class ZALObjectiveFiles{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1934,9 +1934,9 @@ class ZALZAFilter{
 
 
 !issue='associations need to be defined both directions'
-ActivityReportObjectives "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveIpdCourses : activityReportObjective
+ActivityReportObjectives "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveCourses : activityReportObjective
 !issue='associations need to be defined both directions'
-Objectives "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveIpdCourses : objective
+Objectives "1" --[#d54309,plain,thickness=2]-- "1" ObjectiveCourses : objective
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -1956,6 +1956,9 @@ CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : 
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goalCollaborator, collaboratorType
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objectiveCollaborator, collaboratorType
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
+Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
+Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
+Courses "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCourses : objectiveCourses, course
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
@@ -1984,9 +1987,6 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
-IpdCourses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveIpdCourses : ipdCourse, activityReportObjectiveIpdCourses
-IpdCourses "1" --[#black,dashed,thickness=2]--{  "n" IpdCourses : mapsFromIpdCourse, mapsToIpdCourse
-IpdCourses "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveIpdCourses : objectiveIpdCourses, ipdCourse
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters

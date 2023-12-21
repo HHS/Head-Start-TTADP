@@ -1,7 +1,7 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
-  IpdCourse,
+  Course,
   Recipient,
   Grant,
   Goal,
@@ -9,8 +9,8 @@ import db, {
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
-  ObjectiveIpdCourse,
-  ActivityReportObjectiveIpdCourse,
+  ObjectiveCourse,
+  ActivityReportObjectiveCourse,
 } from '..';
 
 const mockUser = {
@@ -76,9 +76,9 @@ const sampleReport = {
   version: 2,
 };
 
-describe('ipdCourse', () => {
+describe('course', () => {
   let user;
-  let ipdCourse;
+  let course;
   let updateCourse;
   let report;
   let recipient;
@@ -87,8 +87,8 @@ describe('ipdCourse', () => {
   let objective;
   let activityReportGoal;
   let activityReportObjective;
-  let objectiveIpdCourses;
-  let activityReportObjectiveIpdCourse;
+  let objectiveCourses;
+  let activityReportObjectiveCourse;
 
   beforeAll(async () => {
     // Create mock user.
@@ -147,49 +147,49 @@ describe('ipdCourse', () => {
       status: objective.status,
     });
 
-    ipdCourse = await IpdCourse.create({
+    course = await Course.create({
       name: 'Test IpdCourse',
       nameLookUp: 'testipdCourse',
     });
 
     // Create another course.
-    updateCourse = await IpdCourse.create({
+    updateCourse = await Course.create({
       name: 'Test IpdCourse 2',
       nameLookUp: 'testipdcourse2',
     });
 
-    // Create ObjectiveIpdCourse.
-    objectiveIpdCourses = await ObjectiveIpdCourse.create({
+    // Create ObjectiveCourse.
+    objectiveCourses = await ObjectiveCourse.create({
       objectiveId: objective.id,
-      ipdCourseId: ipdCourse.id,
+      courseId: course.id,
     });
 
-    // Create ActivityReportObjectiveIpdCourse.
-    activityReportObjectiveIpdCourse = await ActivityReportObjectiveIpdCourse.create({
+    // Create ActivityReportObjectiveCourse.
+    activityReportObjectiveCourse = await ActivityReportObjectiveCourse.create({
       activityReportObjectiveId: activityReportObjective.id,
-      ipdCourseId: ipdCourse.id,
+      courseId: course.id,
     });
   });
 
   afterAll(async () => {
-    // Delete ActivityReportObjectiveIpdCourse.
-    await ActivityReportObjectiveIpdCourse.destroy({
+    // Delete ActivityReportObjectiveCourse.
+    await ActivityReportObjectiveCourse.destroy({
       where: {
-        id: activityReportObjectiveIpdCourse.id,
+        id: activityReportObjectiveCourse.id,
       },
     });
 
-    // Delete ObjectiveIpdCourse.
-    await ObjectiveIpdCourse.destroy({
+    // Delete ObjectiveCourse.
+    await ObjectiveCourse.destroy({
       where: {
-        id: objectiveIpdCourses.id,
+        id: objectiveCourses.id,
       },
     });
 
-    // Delete IpdCourse.
-    await IpdCourse.destroy({
+    // Delete Course.
+    await Course.destroy({
       where: {
-        id: [ipdCourse.id, updateCourse.id],
+        id: [course.id, updateCourse.id],
       },
       force: true,
     });
@@ -256,59 +256,59 @@ describe('ipdCourse', () => {
     await db.sequelize.close();
   });
 
-  it('Update IpdCourse', async () => {
-    const newIpdCourseName = 'Test IpdCourse Updated';
-    ipdCourse.name = newIpdCourseName;
-    await ipdCourse.update({
-      name: newIpdCourseName,
+  it('Update Course', async () => {
+    const newCourseName = 'Test IpdCourse Updated';
+    course.name = newCourseName;
+    await course.update({
+      name: newCourseName,
     }, {
       where: {
-        id: ipdCourse.id,
+        id: course.id,
       },
     });
-    ipdCourse = await IpdCourse.findByPk(ipdCourse.id);
-    expect(ipdCourse.name).toBe(newIpdCourseName);
+    course = await Course.findByPk(course.id);
+    expect(course.name).toBe(newCourseName);
   });
 
   it('Objective course', async () => {
-    const objectiveIpdCourse = await ObjectiveIpdCourse.findOne({
+    const objectiveCourse = await ObjectiveCourse.findOne({
       where: {
         objectiveId: objective.id,
       },
     });
-    expect(objectiveIpdCourse.ipdCourseId).toBe(ipdCourse.id);
+    expect(objectiveCourse.courseId).toBe(course.id);
 
     // Update objective course.
-    objectiveIpdCourse.ipdCourseId = updateCourse.id;
-    await ObjectiveIpdCourse.update({
-      ipdCourseId: updateCourse.id,
+    objectiveCourse.courseId = updateCourse.id;
+    await ObjectiveCourse.update({
+      courseId: updateCourse.id,
     }, {
       where: {
-        id: objectiveIpdCourse.id,
+        id: objectiveCourse.id,
       },
     });
-    const updatedObjectiveIpdCourse = await ObjectiveIpdCourse.findByPk(objectiveIpdCourse.id);
-    expect(updatedObjectiveIpdCourse.ipdCourseId).toBe(updateCourse.id);
+    const updatedObjectiveCourse = await ObjectiveCourse.findByPk(objectiveCourse.id);
+    expect(updatedObjectiveCourse.courseId).toBe(updateCourse.id);
   });
 
   it('ActivityReportObjective course', async () => {
-    const aroIpd = await ActivityReportObjectiveIpdCourse.findOne({
+    const aroCourse = await ActivityReportObjectiveCourse.findOne({
       where: {
         activityReportObjectiveId: activityReportObjective.id,
       },
     });
-    expect(aroIpd.ipdCourseId).toBe(ipdCourse.id);
+    expect(aroCourse.courseId).toBe(course.id);
 
     // Update activity report objective course.
-    aroIpd.ipdCourseId = updateCourse.id;
-    await ActivityReportObjectiveIpdCourse.update({
-      ipdCourseId: updateCourse.id,
+    aroCourse.courseId = updateCourse.id;
+    await ActivityReportObjectiveCourse.update({
+      courseId: updateCourse.id,
     }, {
       where: {
-        id: aroIpd.id,
+        id: aroCourse.id,
       },
     });
-    const updatedAroIpd = await ActivityReportObjectiveIpdCourse.findByPk(aroIpd.id);
-    expect(updatedAroIpd.ipdCourseId).toBe(updateCourse.id);
+    const updatedAroCourse = await ActivityReportObjectiveCourse.findByPk(aroCourse.id);
+    expect(updatedAroCourse.courseId).toBe(updateCourse.id);
   });
 });

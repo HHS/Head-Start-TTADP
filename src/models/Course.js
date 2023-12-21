@@ -1,22 +1,22 @@
 const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
-  class IpdCourse extends Model {
+  class Course extends Model {
     static associate(models) {
-      IpdCourse.hasMany(models.ObjectiveIpdCourse, { foreignKey: 'ipdCourseId', as: 'objectiveIpdCourses' });
-      IpdCourse.hasMany(models.ActivityReportObjectiveIpdCourse, { foreignKey: 'ipdCourseId', as: 'activityReportObjectiveIpdCourses' });
+      Course.hasMany(models.ObjectiveCourse, { foreignKey: 'courseId', as: 'objectiveCourses' });
+      Course.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'courseId', as: 'activityReportObjectiveCourses' });
 
-      IpdCourse.hasMany(models.IpdCourse, {
+      Course.hasMany(models.Course, {
         foreignKey: 'mapsTo',
-        as: 'mapsFromIpdCourse',
+        as: 'mapsFromCourse',
       });
-      IpdCourse.belongsTo(models.IpdCourse, {
+      Course.belongsTo(models.Course, {
         foreignKey: 'mapsTo',
-        as: 'mapsToIpdCourse',
+        as: 'mapsToCourse',
       });
     }
   }
-  IpdCourse.init({
+  Course.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       references: {
         model: {
-          tableName: 'IpdCourse',
+          tableName: 'Course',
         },
         key: 'id',
       },
@@ -55,9 +55,9 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'IpdCourse',
-    tableName: 'IpdCourses',
+    modelName: 'Course',
+    tableName: 'Courses',
     freezeTableName: true,
   });
-  return IpdCourse;
+  return Course;
 };
