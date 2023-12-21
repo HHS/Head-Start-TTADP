@@ -27,7 +27,7 @@
 
 ### Before merge to main
 
-- [ ] HHS demo complete
+- [ ] OHS demo complete
 - [ ] Ready to create production PR
 
 ### Production Deploy
