@@ -28,6 +28,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    nameLookUp: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,
