@@ -25,6 +25,11 @@
 - [ ] [Architectural Decision Records](https://adr.github.io/) written for major infrastructure decisions
 - [ ] UI review complete
 
+### Before merge to main
+
+- [ ] HHS demo complete
+- [ ] Ready to create production PR
+
 ### Production Deploy
 
 - [ ] Staging smoke test completed
