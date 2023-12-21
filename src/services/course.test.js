@@ -1,11 +1,11 @@
 import { Op } from 'sequelize';
 import { expect } from '@playwright/test';
-import db, { IpdCourse } from '../models';
+import db, { Course } from '../models';
 import {
   csvImport,
-} from './ipdCourse';
+} from './course';
 
-describe('ipdCourse', () => {
+describe('Course', () => {
   beforeAll(async () => {
 
   });
@@ -19,7 +19,7 @@ describe('ipdCourse', () => {
     const courseNamesToCleanup = [];
 
     afterEach(async () => {
-      await IpdCourse.destroy({
+      await Course.destroy({
         where: {
           nameLookUp:
           {
@@ -50,7 +50,7 @@ describe('ipdCourse', () => {
       expect(response.created[0].name).toBe(newCourseName);
 
       // Check database.
-      const course = await IpdCourse.findOne({
+      const course = await Course.findOne({
         where: {
           name: newCourseName,
         },
@@ -68,14 +68,14 @@ describe('ipdCourse', () => {
       const afterCreateDate = new Date();
 
       // Create the existing courses.
-      const course1 = await IpdCourse.create({
+      const course1 = await Course.create({
         name: existingCourse1,
         nameLookUp: existingCourse1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
       const originalUpdatedAt = course1.updatedAt;
       courseNamesToCleanup.push(course1.nameLookUp);
 
-      const course2 = await IpdCourse.create({
+      const course2 = await Course.create({
         name: existingCourse2,
         nameLookUp: existingCourse2.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
@@ -99,7 +99,7 @@ describe('ipdCourse', () => {
       expect(response.updated[0].name).toBe(existingCourse1);
 
       // Check the database.
-      const updateCourse = await IpdCourse.findOne({
+      const updateCourse = await Course.findOne({
         where: {
           id: course1.id,
         },
@@ -121,19 +121,19 @@ describe('ipdCourse', () => {
       const afterCreateDate = new Date();
 
       // Create the existing courses.
-      const course1 = await IpdCourse.create({
+      const course1 = await Course.create({
         name: existingCourse1,
         nameLookUp: existingCourse1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
       courseNamesToCleanup.push(course1.nameLookUp);
 
-      const course2 = await IpdCourse.create({
+      const course2 = await Course.create({
         name: existingCourse2,
         nameLookUp: existingCourse2.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
       courseNamesToCleanup.push(course2.nameLookUp);
 
-      const course3 = await IpdCourse.create({
+      const course3 = await Course.create({
         name: existingCourse3,
         nameLookUp: existingCourse3.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
@@ -162,7 +162,7 @@ describe('ipdCourse', () => {
       expect(updatedCourses.length).toBe(3);
 
       // Check the database.
-      const addedCourse = await IpdCourse.findOne({
+      const addedCourse = await Course.findOne({
         where: {
           name: courseToAdd,
         },
@@ -174,7 +174,7 @@ describe('ipdCourse', () => {
       expect(new Date(addedCourse.updatedAt) > afterCreateDate).toBe(true);
 
       // Get all the updated courses.
-      const mapsToCourses = await IpdCourse.findAll({
+      const mapsToCourses = await Course.findAll({
         where: {
           id: [course1.id, course2.id, course3.id],
         },
@@ -199,21 +199,21 @@ describe('ipdCourse', () => {
       const afterCreateDate = new Date();
 
       // Delete 1.
-      const courseDeleted1 = await IpdCourse.create({
+      const courseDeleted1 = await Course.create({
         name: courseToDelete1,
         nameLookUp: courseToDelete1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
       courseNamesToCleanup.push(courseDeleted1.nameLookUp);
 
       // Delete 2.
-      const courseDeleted2 = await IpdCourse.create({
+      const courseDeleted2 = await Course.create({
         name: courseToDelete2,
         nameLookUp: courseToDelete2.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
       courseNamesToCleanup.push(courseDeleted2.nameLookUp);
 
       // Delete 3.
-      const courseDeleted3 = await IpdCourse.create({
+      const courseDeleted3 = await Course.create({
         name: courseToDelete3,
         nameLookUp: courseToDelete3.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim(),
       });
@@ -248,7 +248,7 @@ describe('ipdCourse', () => {
       expect(deletedCourses.length).toBe(3);
 
       // Make sure the deleted courses are not in the database.
-      const notFoundInDb = await IpdCourse.findOne({
+      const notFoundInDb = await Course.findOne({
         where: {
           name: [courseToDelete1, courseToDelete2, courseToDelete3],
           deletedAt: {
@@ -260,7 +260,7 @@ describe('ipdCourse', () => {
       expect(notFoundInDb).toBeFalsy();
 
       // Check the database.
-      const updateCourse = await IpdCourse.findOne({
+      const updateCourse = await Course.findOne({
         where: {
           name: courseToAdd,
         },

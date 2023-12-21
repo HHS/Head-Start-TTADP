@@ -1,13 +1,13 @@
 const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
-  class ObjectiveIpdCourse extends Model {
+  class ObjectiveCourse extends Model {
     static associate(models) {
-      ObjectiveIpdCourse.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
-      ObjectiveIpdCourse.belongsTo(models.IpdCourse, { foreignKey: 'ipdCourseId', as: 'ipdCourse' });
+      ObjectiveCourse.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
+      ObjectiveCourse.belongsTo(models.Course, { foreignKey: 'courseId', as: 'course' });
     }
   }
-  ObjectiveIpdCourse.init({
+  ObjectiveCourse.init({
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -18,7 +18,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    ipdCourseId: {
+    courseId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -28,9 +28,9 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'ObjectiveIpdCourse',
-    tableName: 'ObjectiveIpdCourses',
+    modelName: 'ObjectiveCourse',
+    tableName: 'ObjectiveCourses',
     freezeTableName: true,
   });
-  return ObjectiveIpdCourse;
+  return ObjectiveCourse;
 };

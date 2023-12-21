@@ -2,7 +2,6 @@ const {
   prepMigration,
   removeTables,
 } = require('../lib/migration');
-const { GOAL_COLLABORATORS } = require('../constants');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -11,7 +10,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.createTable('IpdCourses', {
+      await queryInterface.createTable('Courses', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -49,7 +48,7 @@ module.exports = {
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'IpdCourses',
+              tableName: 'Courses',
             },
             key: 'id',
           },
@@ -58,7 +57,7 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.createTable('ObjectiveIpdCourses', {
+      await queryInterface.createTable('ObjectiveCourses', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -77,14 +76,14 @@ module.exports = {
             key: 'id',
           },
         },
-        ipdCourseId: {
+        courseId: {
           type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'IpdCourses',
+              tableName: 'Courses',
             },
             key: 'id',
           },
@@ -103,7 +102,7 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.createTable('ActivityReportObjectiveIpdCourses', {
+      await queryInterface.createTable('ActivityReportObjectiveCourses', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -122,14 +121,14 @@ module.exports = {
             key: 'id',
           },
         },
-        ipdCourseId: {
+        courseId: {
           type: Sequelize.INTEGER,
           allowNull: false,
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
           references: {
             model: {
-              tableName: 'IpdCourses',
+              tableName: 'Courses',
             },
             key: 'id',
           },
@@ -155,9 +154,9 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await removeTables(queryInterface, transaction, [
-        'ActivityReportObjectiveIpdCourses',
-        'ObjectiveIpdCourses',
-        'IpdCourses',
+        'ActivityReportObjectiveCourses',
+        'ObjectiveCourses',
+        'Courses',
       ]);
     });
   },

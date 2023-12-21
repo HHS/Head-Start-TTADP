@@ -3,13 +3,13 @@ import httpCodes from 'http-codes';
 import multiparty from 'multiparty';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
-import { csvImport } from '../../services/ipdCourse';
+import { csvImport } from '../../services/course';
 import { bufferFromPath } from './helpers';
 
-const namespace = 'ADMIN:IPD_COURSE';
+const namespace = 'ADMIN:COURSE';
 const logContext = { namespace };
 
-export async function importIpdCourse(req, res) {
+export async function importCourse(req, res) {
   try {
     const form = new multiparty.Form();
 
@@ -38,6 +38,6 @@ export async function importIpdCourse(req, res) {
 
 const router = express.Router();
 
-router.post('/', transactionWrapper(importIpdCourse));
+router.post('/', transactionWrapper(importCourse));
 
 export default router;

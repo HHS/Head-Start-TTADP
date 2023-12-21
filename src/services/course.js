@@ -4,7 +4,7 @@ import parse from 'csv-parse/lib/sync';
 import db, { sequelize } from '../models';
 
 const {
-  IpdCourse,
+  Course,
 } = db;
 
 export async function csvImport(buffer) {
@@ -35,7 +35,7 @@ export async function csvImport(buffer) {
       const cleanCourseName = rawCourseName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
       // Find all existing courses that match the clean course name regardless of case.
-      const existingCourses = await IpdCourse.findAll({
+      const existingCourses = await Course.findAll({
         where: {
           nameLookUp: {
             [Op.iLike]: cleanCourseName,
@@ -50,7 +50,7 @@ export async function csvImport(buffer) {
         if (exactMatch) {
           // Update the value for 'updatedAt' on the existing.
           await sequelize.query(`
-            UPDATE "IpdCourses"
+            UPDATE "Courses"
             SET "updatedAt" = '${new Date().toISOString()}'
             WHERE id = ${exactMatch.id}`);
           updated.push(exactMatch);
@@ -58,13 +58,13 @@ export async function csvImport(buffer) {
           importedCourseIds.push(...existingCourses.map((c) => c.id));
         } else {
           // Create a new course.
-          const replacementCourse = await IpdCourse.create({
+          const replacementCourse = await Course.create({
             name: rawCourseName, nameLookUp: cleanCourseName,
           });
           created.push(replacementCourse);
 
           // Set the 'mapsTo' for the existing courses to the new course id.
-          IpdCourse.update({
+          Course.update({
             mapsTo: replacementCourse.id,
           }, {
             where: {
@@ -82,7 +82,7 @@ export async function csvImport(buffer) {
         }
       } else {
         // Create a new course.
-        const newCourse = await IpdCourse.create({
+        const newCourse = await Course.create({
           name: rawCourseName, nameLookUp: cleanCourseName,
         });
 
@@ -93,7 +93,7 @@ export async function csvImport(buffer) {
       }
 
       // Mark missing courses as deleted.
-      const markedDeleted = await IpdCourse.update(
+      const markedDeleted = await Course.update(
         { deletedAt: new Date() },
         {
           where: {
