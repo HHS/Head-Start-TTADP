@@ -39,7 +39,6 @@ describe('ConditionalFieldsForHookForm', () => {
   const Rt = ({
     isMultiRecipientReport = false,
     prompts = DEFAULT_PROMPTS,
-    isOnReport = false,
     defaultValues = {},
   }) => {
     const hookForm = useForm({
@@ -54,7 +53,7 @@ describe('ConditionalFieldsForHookForm', () => {
           <ConditionalFieldsForHookForm
             prompts={prompts}
             isMultiRecipientReport={isMultiRecipientReport}
-            isOnReport={isOnReport}
+            userCanEdit
           />
         </FormProvider>
       </div>
@@ -72,7 +71,7 @@ describe('ConditionalFieldsForHookForm', () => {
     expect(screen.getByText('be careful')).toBeInTheDocument();
   });
 
-  it('renders nothing if a multirecipient report and no caution', () => {
+  it('renders nothing if a multi recipient report and no caution', () => {
     const prompts = [{
       response: ['test', 'rest'],
       fieldType: 'multiselect',

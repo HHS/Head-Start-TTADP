@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import './RecipientTabs.scss';
 import colors from '../../../colors';
-import FeatureFlag from '../../../components/FeatureFlag';
 
 export default function RecipientTabs({ region, recipientId, backLink }) {
   const linkClass = 'display-block padding-2 ttahub-recipient-record--tabs_link';
@@ -21,11 +20,9 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/rttapa`}>RTTAPA</NavLink>
           </li>
-          <FeatureFlag flag="communication_log">
-            <li className={liClass}>
-              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/communication`}>Communication</NavLink>
-            </li>
-          </FeatureFlag>
+          <li className={liClass}>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/communication`}>Communication</NavLink>
+          </li>
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/tta-history`}>TTA History</NavLink>
           </li>

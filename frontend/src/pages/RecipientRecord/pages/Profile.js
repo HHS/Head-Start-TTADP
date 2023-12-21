@@ -10,17 +10,12 @@ import './Profile.css';
 export default function Profile({
   recipientSummary,
   regionId,
-  recipientName,
   recipientId,
 }) {
   return (
     <>
       <Helmet>
-        <title>
-          Recipient Profile -
-          {' '}
-          {recipientName}
-        </title>
+        <title>Profile</title>
       </Helmet>
       <div className="maxw-widescreen">
         <Grid row gap={4}>
@@ -50,9 +45,4 @@ Profile.propTypes = {
         }),
       ),
     }).isRequired,
-  recipientName: PropTypes.string,
-};
-
-Profile.defaultProps = {
-  recipientName: '',
 };

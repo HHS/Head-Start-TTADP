@@ -282,7 +282,7 @@ export default function SessionForm({ match }) {
           {error}
         </Alert>
         )}
-      <Helmet titleTemplate="%s | TTA Hub" defaultTitle="Session | TTA Hub" />
+      <Helmet titleTemplate="%s - Training Report | TTA Hub" defaultTitle="Session - Training Report | TTA Hub" />
       <BackLink to="/training-reports/in-progress">
         Back to Training Reports
       </BackLink>

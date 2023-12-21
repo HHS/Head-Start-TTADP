@@ -6,8 +6,15 @@ describe('fetchResourceData', () => {
   it('fetches with the right params', async () => {
     const query = '&region.in[]=1';
     const resourcesUrl = join('/', 'api', 'resources', `?${query}`);
-    fetchMock.get(resourcesUrl, {});
-    await fetchResourceData(query);
+    fetchMock.get(resourcesUrl, {
+      activityReports: {
+        rows: [],
+        count: 0,
+        topics: [],
+        recipients: [],
+      },
+    });
+    await fetchResourceData(query, {});
     expect(fetchMock.called()).toBeTruthy();
   });
 

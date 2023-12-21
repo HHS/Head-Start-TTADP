@@ -76,7 +76,7 @@ const ReviewSubmit = ({
   return (
     <>
       <Helmet>
-        <title>Review and submit</title>
+        <title>Review and Submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
       {!isApprover
