@@ -21,6 +21,13 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsTo',
         as: 'mapsToCourse',
       });
+
+      Course.belongsToMany(models.Objective, {
+        through: models.ObjectiveCourse,
+        foreignKey: 'courseId',
+        otherKey: 'objectiveId',
+        as: 'objectives',
+      });
     }
   }
   Course.init({
