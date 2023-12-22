@@ -28,7 +28,7 @@ describe('Training Reports page', () => {
     render(<Router history={history}><TrainingReports /></Router>);
 
     // Assert Displays text 'Training Report Import'
-    const trainingReports = await screen.findByText(/Training Report Import/i);
+    const trainingReports = await screen.findByRole('heading', { name: /training reports import/i });
     expect(trainingReports).toBeVisible();
 
     // Assert text 'Input accepts a single file'.
@@ -78,7 +78,7 @@ describe('Training Reports page', () => {
     userEvent.upload(fileInput, file);
 
     // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
-    const error = await screen.findByText(/Duplicate Event IDs found. Please correct and try again./i);
+    const error = await screen.findByText(/Duplicate Event ID's found. Please correct and try again./i);
     expect(error).toBeVisible();
 
     // Assert button 'Upload training reports' is visible.
@@ -120,7 +120,7 @@ describe('Training Reports page', () => {
     userEvent.upload(fileInput, file);
 
     // Assert to see correct import count.
-    const error = await screen.findByText(/2 events will be imported./i);
+    const error = await screen.findByText(/2 training reports will be imported./i);
     expect(error).toBeVisible();
 
     // Assert button 'Upload training reports' is visible.
@@ -142,7 +142,7 @@ describe('Training Reports page', () => {
     userEvent.click(uploadButton);
 
     // Assert to see correct import count.
-    const success = await screen.findByText(/2 events imported successfully./i);
+    const success = await screen.findByText(/2 training reports imported successfully./i);
     expect(success).toBeVisible();
 
     // assert to see the text '2 skipped' and then check each skipped event in its own <li> element
@@ -164,7 +164,7 @@ describe('Training Reports page', () => {
     expect(uploadButton).toBeVisible();
 
     // Assert the text '2 events will be imported.' is no longer displayed.
-    const info = screen.queryAllByText(/2 events will be imported./i);
+    const info = screen.queryAllByText(/2 training reports will be imported./i);
     expect(info.length).toBe(0);
   });
 
@@ -181,7 +181,7 @@ describe('Training Reports page', () => {
     userEvent.upload(fileInput, file);
 
     // Assert to see correct import count.
-    const error = await screen.findByText(/2 events will be imported./i);
+    const error = await screen.findByText(/2 training reports will be imported./i);
     expect(error).toBeVisible();
 
     // Assert button 'Upload training reports' is visible.
@@ -221,7 +221,7 @@ describe('Training Reports page', () => {
     userEvent.upload(fileInput, file);
 
     // Assert to see correct import count.
-    const info = await screen.findByText(/2 events will be imported./i);
+    const info = await screen.findByText(/2 training reports will be imported./i);
     expect(info).toBeVisible();
 
     // Assert error message is no longer visible.

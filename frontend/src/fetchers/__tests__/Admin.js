@@ -18,6 +18,7 @@ import {
   getGroupsByRegion,
   createMultiRecipientGoalsFromAdmin,
   closeMultiRecipientGoalsFromAdmin,
+  importCsv,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -64,6 +65,15 @@ describe('Admin', () => {
       fetchMock.put(join('api', 'admin', 'users', '1'), user);
       const fetchedUser = await updateUser(1, {});
       expect(fetchedUser).toEqual(user);
+    });
+  });
+
+  describe('importCsv', () => {
+    it('calls the import path passed in', async () => {
+      const response = { name: 'training-reports' };
+      fetchMock.post(join('/', 'api', 'admin', 'training-reports'), response);
+      const importResponse = await importCsv('training-reports', {});
+      expect(importResponse).toEqual(response);
     });
   });
 
