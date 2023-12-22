@@ -40,12 +40,12 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, options
       // Get ids to update (sequelize update doesn't support joins...)
       const idsToUpdate = await sequelize.models.ActivityReportGoalFieldResponse.findAll(
         {
-          attributes: ['id'],
+          attributes: ['id', 'activityReportGoalId'],
           where: {
             goalTemplateFieldPromptId,
           },
           include: {
-            attributes: [],
+            attributes: ['id', 'activityReportId'],
             required: true,
             model: sequelize.models.ActivityReportGoal,
             as: 'activityReportGoal',
@@ -68,6 +68,13 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, options
           },
         },
       );
+
+      // Get a list of activity report ids from idsToUpdate.
+      const activityReportIds = idsToUpdate.map((item) => item.activityReportGoal.activityReportId);
+      // We need to update the AR createdAt so we don't pull from outdated local storage.
+      if (activityReportIds.length > 0) {
+        await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id IN (${activityReportIds.join(',')})`);
+      }
     }
   }
 };

@@ -409,7 +409,7 @@ function App() {
 
   return (
     <>
-      <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
+      <Helmet titleTemplate="%s | TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />

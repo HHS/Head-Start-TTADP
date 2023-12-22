@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 const { CronJob } = require('cron');
-const { default: newQueue } = require('../queue');
+const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
@@ -78,6 +78,7 @@ const processMaintenanceQueue = () => {
   maintenanceQueue.on('failed', onFailedMaintenance);
   // Attach event listener for completed tasks
   maintenanceQueue.on('completed', onCompletedMaintenance);
+  increaseListeners(maintenanceQueue, Object.entries(maintenanceQueueProcessors).length);
 
   // Process each category in the queue using its corresponding processor
   Object.entries(maintenanceQueueProcessors)
