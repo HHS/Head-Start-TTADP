@@ -41,10 +41,9 @@ const NeedsAction = ({
       setShowCreatorRoleError(true);
     } else if (!hasIncompletePages) {
       await onSubmit({
-        approvers: approverStatusList,
         additionalNotes: creatorNotes,
-        approverUserIds: approvers.map((a) => a.user.id),
         creatorRole: submitCR,
+        approvers,
       });
 
       // if successful, we should redirect to
