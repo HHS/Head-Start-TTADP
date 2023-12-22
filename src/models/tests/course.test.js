@@ -142,7 +142,7 @@ describe('course', () => {
     // Create activity report objective.
     activityReportObjective = await ActivityReportObjective.create({
       objectiveId: objective.id,
-      activityReportId: goal.id,
+      activityReportId: report.id,
       ttaProvided: 'ipd aro Goal',
       status: objective.status,
     });
