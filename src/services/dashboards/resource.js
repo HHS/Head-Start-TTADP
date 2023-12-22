@@ -7,12 +7,12 @@ import {
   ActivityReportObjective,
   ActivityRecipient,
   Grant,
-  NextStep,
+  // NextStep,
   Goal,
   Objective,
   Recipient,
   Resource,
-  Topic,
+  // Topic,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
@@ -975,6 +975,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   ]);
 
   let reportsMap = mergeInResources(new Map(), dbData.allReports);
+  const reportIds = Array.from(reportsMap.keys());
+
   delete dbData.allReports;
   /*
   let reportsMap = mergeInResources(new Map(), dbData.viaReport);
@@ -1000,7 +1002,12 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     ? []
     : switchToTopicCentric(reports);
 
-  return { resources, reports, topics };
+  return {
+    resources,
+    reports,
+    topics,
+    reportIds,
+  };
 }
 
 const generateResourceList = (
@@ -1584,6 +1591,7 @@ export async function resourceDashboardPhase1(scopes) {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
+    reportIds: data.reportIds,
   };
 }
 

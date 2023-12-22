@@ -1,6 +1,5 @@
 @use 'colors.scss' as *;
-
-@import './Grid.scss';
+@use './Grid.scss';
 
 @font-face {
   font-family: 'FontAwesome';
@@ -365,6 +364,18 @@ fill: #1B1B1B;
 .ttahub-app .usa-pagination .usa-pagination__button:hover {
   border-color: $ttahub-medium-blue;
   border-bottom: 1px solid;
+}
+
+/* ========== button overrides ========== */
+
+/**
+  * reset for "unstyled" buttons, like we use in the table headers
+  * different from .usa-button--unstyled
+  */
+
+.ttahub-button--unstyled {
+  background: transparent;
+  border: none;
 }
 
 /* Like .usa-button--unstyled, but preserves spacing and

@@ -258,7 +258,7 @@ function Landing() {
   return (
     <>
       <Helmet>
-        <title>Landing</title>
+        <title>Activity Reports</title>
       </Helmet>
       <>
         <RegionPermissionModal

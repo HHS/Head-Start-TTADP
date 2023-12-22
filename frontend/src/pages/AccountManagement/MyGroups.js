@@ -160,7 +160,7 @@ export default function MyGroups({ match }) {
   return (
     <>
       <Helmet>
-        <title>My groups</title>
+        <title>My Groups</title>
       </Helmet>
       <Link className="margin-top-0 margin-bottom-3 display-inline-block" to="/account">
         <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />

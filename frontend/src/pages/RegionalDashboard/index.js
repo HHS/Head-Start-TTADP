@@ -131,74 +131,73 @@ export default function RegionalDashboard() {
 
   return (
     <div className="ttahub-dashboard">
-      <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
-      <>
-        <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
-        <RegionPermissionModal
+      <Helmet>
+        <title>Regional Dashboard</title>
+      </Helmet>
+      <RegionPermissionModal
+        filters={filters}
+        user={user}
+        showFilterWithMyRegions={
+          () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        }
+      />
+      <h1 className="landing margin-top-0 margin-bottom-3">
+        {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
+        {' '}
+        TTA activity dashboard
+      </h1>
+      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+        <FilterPanel
+          applyButtonAria="apply filters for regional dashboard"
           filters={filters}
-          user={user}
-          showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
-          }
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filtersToUse}
+          allUserRegions={regions}
         />
-        <h1 className="landing margin-top-0 margin-bottom-3">
-          {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
-          {' '}
-          TTA activity dashboard
-        </h1>
-        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
-          <FilterPanel
-            applyButtonAria="apply filters for regional dashboard"
-            filters={filters}
-            onApplyFilters={onApplyFilters}
-            onRemoveFilter={onRemoveFilter}
-            filterConfig={filtersToUse}
-            allUserRegions={regions}
-          />
-        </Grid>
-        <GridContainer className="margin-0 padding-0">
-          <DashboardOverview
-            filters={filtersToApply}
-            fields={[
-              'Recipients served',
-              'Grants served',
-              'Activity reports',
-              'Participants',
-              'Hours of TTA',
-            ]}
-            showTooltips
-          />
-          <Grid row gap={2}>
-            <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
-              <ReasonList
-                filters={filtersToApply}
-              />
-            </Grid>
-            <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-              <TotalHrsAndRecipient
-                filters={filtersToApply}
-              />
-            </Grid>
-          </Grid>
-          <Grid row>
-            <TopicFrequencyGraph
+      </Grid>
+      <GridContainer className="margin-0 padding-0">
+        <DashboardOverview
+          filters={filtersToApply}
+          fields={[
+            'Recipients served',
+            'Grants served',
+            'Activity reports',
+            'Participants',
+            'Hours of TTA',
+          ]}
+          showTooltips
+        />
+        <Grid row gap={2}>
+          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
+            <ReasonList
               filters={filtersToApply}
             />
           </Grid>
-          <Grid row>
-            <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
-              <ActivityReportsTable
-                filters={filtersToApply}
-                showFilter={false}
-                tableCaption="Activity reports"
-                exportIdPrefix="rd-"
-                resetPagination={resetPagination}
-                setResetPagination={setResetPagination}
-              />
-            </FilterContext.Provider>
+          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
+            <TotalHrsAndRecipient
+              filters={filtersToApply}
+            />
           </Grid>
-        </GridContainer>
-      </>
+        </Grid>
+        <Grid row>
+          <TopicFrequencyGraph
+            filters={filtersToApply}
+          />
+        </Grid>
+        <Grid row>
+          <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+            <ActivityReportsTable
+              filters={filtersToApply}
+              showFilter={false}
+              tableCaption="Activity reports"
+              exportIdPrefix="rd-"
+              resetPagination={resetPagination}
+              setResetPagination={setResetPagination}
+            />
+          </FilterContext.Provider>
+        </Grid>
+      </GridContainer>
     </div>
 
   );
