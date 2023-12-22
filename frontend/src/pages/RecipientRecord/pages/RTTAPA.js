@@ -163,7 +163,7 @@ export default function RTTAPA({
     <>
       <Helmet>
         <title>
-          Create new RTTAPA report for
+          Create New RTTAPA Report for
           {recipientNameWithRegion}
         </title>
       </Helmet>

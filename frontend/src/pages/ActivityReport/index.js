@@ -40,6 +40,7 @@ import {
   getApprovers,
   reviewReport,
   resetToDraft,
+  getGroupsForActivityReport,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -75,6 +76,7 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
+  recipientGroup: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -181,6 +183,7 @@ function ActivityReport({
       },
       collaborators: [],
       availableApprovers: [],
+      groups: [],
     },
   );
   const [isApprover, updateIsApprover] = useState(false);
@@ -268,9 +271,10 @@ function ActivityReport({
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+          getGroupsForActivityReport(report.regionId),
         ];
 
-        const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
+        const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
 
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
@@ -289,6 +293,13 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
+        // Add recipientIds to groups.
+        const groupsWithRecipientIds = groups.map((group) => ({
+          ...group,
+          // Match groups to grants as recipients could have multiple grants.
+          recipients: group.grants.map((g) => g.id),
+        }));
+
         updateAdditionalData({
           recipients: recipients || {
             grants: [],
@@ -296,6 +307,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
+          groups: groupsWithRecipientIds || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -563,7 +575,7 @@ function ActivityReport({
         {error}
       </Alert>
       )}
-      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
+      <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">

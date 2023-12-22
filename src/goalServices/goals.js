@@ -5,12 +5,14 @@ import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
+  ObjectiveCollaborator,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -28,6 +30,7 @@ import {
   Topic,
   Program,
   File,
+  CollaboratorType,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -42,6 +45,9 @@ import {
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
+import {
+  mergeCollaborators,
+} from '../models/helpers/genericCollaborator';
 import { findOrFailExistingGoal, responsesForComparison } from './helpers';
 import Users from '../policies/user';
 
@@ -2592,9 +2598,21 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
   const newObjective = await Objective.create({
     ...data,
     goalId: parentGoalId,
-  }, { individualHooks: true });
+  }, {
+    ignoreHooks: { name: 'autoPopulateCreator' },
+    individualHooks: true,
+  });
 
   const updatesToRelatedModels = [];
+
+  updatesToRelatedModels.push(mergeCollaborators(
+    'objective',
+    sequelize,
+    null,
+    newObjective.id,
+    [id],
+    id,
+  ));
 
   updatesToRelatedModels.push(Objective.update({
     mapsToParentObjectiveId: newObjective.id,
@@ -2807,13 +2825,45 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
     grantId,
   }));
 
-  const newGoals = await Goal.bulkCreate(goalsToBulkCreate, { individualHooks: true });
+  const newGoals = await Goal.bulkCreate(
+    goalsToBulkCreate,
+    {
+      ignoreHooks: { name: 'autoPopulateCreator' },
+      individualHooks: true,
+    },
+  );
 
   // we will need these in a moment
   const grantToGoalDictionary = {};
   newGoals.forEach((goal) => {
     grantToGoalDictionary[goal.grantId] = goal.id;
   });
+
+  /* build goal sets for collaborator merge
+  {
+    newGoalId: number,
+    sourceGoalIds: number[],
+    selectedGoalId: number | null,
+  }[]
+  an array of objects, one for each grant
+  newGoalId - the new goal created for the grant
+  sourceGoalIds - an array of existing goals to be merged into the new goal
+  selectedGoalId - the goal from the sourceGoalIds list for the current grant with the chosen text
+  */
+  const goalSets = selectedGoals.reduce((acc, selectedGoal) => {
+    const goalSet = acc.find(({ newGoalId }) => newGoalId === grantToGoalDictionary[
+      grantsWithReplacementsDictionary[selectedGoal.grantId]
+    ]);
+    goalSet.sourceGoalIds.push(selectedGoal.id);
+    if (finalGoal.name === selectedGoal.name) {
+      goalSet.selectedGoalId = selectedGoal.id;
+    }
+    return acc;
+  }, newGoals.map((newGoal) => ({
+    newGoalId: newGoal.id,
+    sourceGoalIds: [],
+    selectedGoalId: null,
+  })));
 
   // update associated models
   // - update AR goals with originalGoalId and goalId with the new goalId
@@ -2832,6 +2882,22 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
     ]))));
 
   const updatesToRelatedModels = [];
+
+  goalSets.forEach(({
+    newGoalId,
+    sourceGoalIds,
+    selectedGoalId,
+  }) => {
+    updatesToRelatedModels.push(mergeCollaborators(
+      'goal',
+      sequelize,
+      null,
+      newGoalId,
+      sourceGoalIds,
+      selectedGoalId,
+    ));
+  });
+
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {

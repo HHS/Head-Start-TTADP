@@ -33,6 +33,15 @@ const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
+const GOAL_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a goal
+  EDITOR: 'Editor', // The user(s) who edits the text of a goal
+  LINKER: 'Linker', // The user who links the goal to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
+};
+
 const GRANT_PERSONNEL_ROLES = [
   'auth_official_contact',
   'ceo',
@@ -47,6 +56,15 @@ const OBJECTIVE_STATUS = {
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
   COMPLETE: 'Complete',
+};
+
+const OBJECTIVE_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a objective
+  EDITOR: 'Editor', // The user(s) who edits the text of a objective
+  LINKER: 'Linker', // The user who links the objective to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
 };
 
 const NEXTSTEP_NOTETYPE = {
@@ -204,7 +222,6 @@ const FEATURE_FLAGS = [
   'regional_goal_dashboard',
   'goal_source',
   'merge_goals',
-  'communication_log',
   'monitoring',
   'closed_goal_merge_override',
 ];
@@ -228,8 +245,10 @@ module.exports = {
   CURATED_CREATION,
   CREATION_METHOD,
   GOAL_STATUS,
+  GOAL_COLLABORATORS,
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
+  OBJECTIVE_COLLABORATORS,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
