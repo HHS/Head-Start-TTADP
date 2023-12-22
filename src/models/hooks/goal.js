@@ -194,6 +194,53 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
   return Promise.resolve();
 };
 
+/**
+ * This is really similar to propagateName, but for EventReportPilot.
+ */
+const updateTrainingReportGoalText = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('name')) {
+    const { id: goalId } = instance;
+
+    const events = await sequelize.models.EventReportPilot.findAll({
+      where: {
+        [Op.and]: [
+          {
+            data: {
+              [Op.contains]: { goals: [{ goalId: instance.id }] },
+            },
+          },
+          {
+            data: {
+              status: {
+                [Op.or]: ['In progress', 'Not started'],
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    // For each Event, update the `goal` property on the jsonb data blob.
+    await Promise.all(events.map(async (event) => {
+      const { data } = event;
+      const { goals } = data;
+      const goalIndex = goals.findIndex((g) => g.goalId === goalId);
+
+      if (goalIndex !== -1) {
+        event.data.goal = instance.name;
+      }
+
+      await sequelize.models.EventReportPilot.update(
+        { data },
+        { where: {id:event.id} }
+      );
+
+    }));
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -219,6 +266,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await invalidateSimilarityScores(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
+  await updateTrainingReportGoalText(sequelize, instance, options);
 };
 
 export {
