@@ -64,6 +64,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'files',
       });
+
       Objective.belongsTo(models.Objective, {
         foreignKey: 'mapsToParentObjectiveId',
         as: 'parentObjective',
