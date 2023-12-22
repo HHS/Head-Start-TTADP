@@ -3,7 +3,7 @@ import CsvImport from './components/CsvImport';
 
 function TrainingReports() {
   const primaryIdColumn = 'Event ID';
-  const typeName = 'Training Reports';
+  const typeName = 'training reports';
   const apiPathName = 'training-reports';
 
   const validCsvHeaders = [

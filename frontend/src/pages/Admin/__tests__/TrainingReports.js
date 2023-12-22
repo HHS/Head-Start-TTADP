@@ -168,6 +168,89 @@ describe('Training Reports page', () => {
     expect(info.length).toBe(0);
   });
 
+  it('displays optional summary results', async () => {
+    const history = createMemoryHistory();
+    render(<Router history={history}><TrainingReports /></Router>);
+
+    // Assert by data-testid 'file-input-input'.
+    const fileInput = await screen.findByTestId('file-input-input');
+    expect(fileInput).toBeVisible();
+
+    // Load 'TrainingReports_Duplicate_EventIds.csv' into a file object.
+    const file = new File([goodTrainingReportsCsv], 'TrainingReports_Duplicate_EventIds.csv', { type: 'text/csv' });
+    userEvent.upload(fileInput, file);
+
+    // Assert to see correct import count.
+    const error = await screen.findByText(/2 training reports will be imported./i);
+    expect(error).toBeVisible();
+
+    // Assert button 'Upload training reports' is visible.
+    const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
+    expect(uploadButton).toBeVisible();
+
+    // Mock fetch response for url 'trainingReportsUrl'.
+    fetchMock.post(trainingReportsUrl, {
+      status: 200,
+      body: {
+        success: true,
+        count: 2,
+        skipped: ['event id 1', 'event id 2'],
+        errors: ['event id 2', 'event id 3'],
+        updated: [{ name: 'updated course 1' }, { name: 'updated course 2' }],
+        created: [{ name: 'created course 1' }, { name: 'created course 2' }],
+        replaced: [{ name: 'replaced course 1' }, { name: 'replaced course 2' }],
+        deleted: [{ name: 'deleted course 1' }, { name: 'deleted course 2' }],
+      },
+    });
+
+    // Click button 'Upload training reports'.
+    userEvent.click(uploadButton);
+
+    // Assert to see correct import count.
+    const success = await screen.findByText(/2 training reports imported successfully./i);
+    expect(success).toBeVisible();
+
+    // assert to see the text '2 skipped' and then check each skipped event in its own <li> element
+    const skippedHeader = await screen.findByText(/2 skipped/i);
+    expect(skippedHeader).toBeVisible();
+    const eventId1 = within(skippedHeader).getByText(/event id 1/i);
+    expect(eventId1).toBeInTheDocument();
+    const eventId2 = within(skippedHeader).getByText(/event id 2/i);
+    expect(eventId2).toBeInTheDocument();
+
+    // assert to see the text '2 errors: event id 2, event id 3'.
+    const errorsHeader = await screen.findByText(/2 errors/i);
+    expect(errorsHeader).toBeVisible();
+    const errorEventId2 = within(errorsHeader).getByText(/event id 2/i);
+    expect(errorEventId2).toBeInTheDocument();
+    const errorEventId3 = within(errorsHeader).getByText(/event id 3/i);
+    expect(errorEventId3).toBeInTheDocument();
+
+    // assert to see the text '2 updated'.
+    const updatedHeader = await screen.findByText(/2 updated/i);
+    expect(updatedHeader).toBeVisible();
+    const updatedCourseId1 = within(updatedHeader).getByText(/updated course 1/i);
+    expect(updatedCourseId1).toBeInTheDocument();
+    const updatedCourseId2 = within(updatedHeader).getByText(/updated course 2/i);
+    expect(updatedCourseId2).toBeInTheDocument();
+
+    // assert to see the text '2 replaced'.
+    const replacedHeader = await screen.findByText(/2 replaced/i);
+    expect(replacedHeader).toBeVisible();
+    const replacedCourseId1 = within(replacedHeader).getByText(/replaced course 1/i);
+    expect(replacedCourseId1).toBeInTheDocument();
+    const replacedCourseId2 = within(replacedHeader).getByText(/replaced course 2/i);
+    expect(replacedCourseId2).toBeInTheDocument();
+
+    // assert to see the text '2 deleted'.
+    const deletedHeader = await screen.findByText(/2 deleted/i);
+    expect(deletedHeader).toBeVisible();
+    const deletedCourseId1 = within(deletedHeader).getByText(/deleted course 1/i);
+    expect(deletedCourseId1).toBeInTheDocument();
+    const deletedCourseId2 = within(deletedHeader).getByText(/deleted course 2/i);
+    expect(deletedCourseId2).toBeInTheDocument();
+  });
+
   it('displays bad import csv', async () => {
     const history = createMemoryHistory();
     render(<Router history={history}><TrainingReports /></Router>);

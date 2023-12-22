@@ -12,6 +12,7 @@ import NationalCenters from './NationalCenters';
 import Email from './Email';
 import Goals from './Goals';
 import TrainingReports from './TrainingReports';
+import Courses from './Courses';
 
 function Admin() {
   return (
@@ -39,6 +40,9 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
           Training Reports
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
+          Courses
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
@@ -93,6 +97,10 @@ function Admin() {
         <Route
           path="/admin/training-reports/"
           render={({ match }) => <TrainingReports match={match} />}
+        />
+        <Route
+          path="/admin/courses/"
+          render={({ match }) => <Courses match={match} />}
         />
       </Switch>
     </>

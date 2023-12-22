@@ -862,12 +862,16 @@ class Users{
 
 enum enum_Users_flags {
  anv_statistics
+ !issue='value missing from model enum: communication_log'
+ communication_log
  goal_source
  merge_goals
  monitoring
  regional_goal_dashboard
  resources_dashboard
  rttapa_form
+ !issue='value missing from model enum: training_reports'
+ training_reports
 }
 
 enum_Users_flags <|-- Users
