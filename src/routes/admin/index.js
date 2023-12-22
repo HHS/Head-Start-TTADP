@@ -11,7 +11,7 @@ import emailRouter from './email';
 import groupRouter from './group';
 import goalRouter from './goal';
 import trainingReportRouter from './trainingReport';
-import courseRouter from './Course';
+import courseRouter from './course';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
