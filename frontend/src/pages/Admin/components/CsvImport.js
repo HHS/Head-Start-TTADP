@@ -27,6 +27,9 @@ export default function CsvImport(
 
   const [skipped, setSkipped] = useState([]);
   const [errors, setErrors] = useState([]);
+  const [replaced, setReplaced] = useState([]);
+  const [updated, setUpdated] = useState([]);
+  const [deleted, setDeleted] = useState([]);
 
   const fileInputRef = useRef(null);
 
@@ -35,6 +38,9 @@ export default function CsvImport(
       // Reset summary info.
       setSkipped([]);
       setErrors([]);
+      setReplaced([]);
+      setUpdated([]);
+      setDeleted([]);
 
       // Get the file from the file input from ref.
       const { files } = fileInputRef.current;
@@ -53,6 +59,9 @@ export default function CsvImport(
       setSuccess(`${res.count} ${typeName} imported successfully.`);
       setSkipped(res.skipped);
       setErrors(res.errors);
+      setReplaced(res.replaced);
+      setUpdated(res.updated);
+      setDeleted(res.deleted);
       setError('');
     } catch (err) {
       setError(`Error attempting to import ${typeName}.`);
@@ -87,6 +96,7 @@ export default function CsvImport(
 
       // Get all headers.
       const headers = cleanCsv.split('\r\n')[0].split(',');
+      console.log('headers', headers);
 
       // Validate columns.
       const requiredHeaders = requiredCsvHeaders.filter((header) => !headers.includes(header));
@@ -103,7 +113,22 @@ export default function CsvImport(
       }
 
       // Get a distinct count of primary id column's.
-      const importIds = cleanCsv.split('\r\n').map((row) => row.split(',')[1]).filter((id) => id !== primaryIdColumn && id !== undefined);
+      console.log('cleanCsv', cleanCsv);
+      console.log('cleanCsv1', cleanCsv.split('\r\n'));
+      console.log('cleanCsv2', cleanCsv.split('\r\n').map((row) => row));
+
+      // Get all values from the column that is the primary id column.
+      let importIds = cleanCsv.split('\r\n').map((row) => {
+        const value = row.includes(',') ? row.split(',')[headers.indexOf(primaryIdColumn)] : row;
+        return value;
+      });
+
+      // Remove the first element which is the header.
+      importIds.shift();
+
+      // Remove any blank values.
+      importIds = importIds.filter((id) => id !== '');
+
       const distinctImportIds = [...new Set(importIds)];
 
       // Check if we have duplicate primary Id Column values.
@@ -128,7 +153,10 @@ export default function CsvImport(
       <Container paddingX={1} paddingY={1} className="smart-hub--overflow-auto">
         <div>
           <h2>
-            { typeName }
+            {
+                // Capitalize first letter of each word in typeName.
+                typeName.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+            }
             {' '}
             Import
           </h2>
@@ -167,6 +195,37 @@ export default function CsvImport(
                         <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
                       ))}
                     </li>
+                    {
+                        replaced && replaced.length > 0 && (
+                        <li>
+                          {`${replaced.length} replaced`}
+                          {replaced.map((r) => (
+                            <li key={r.name} style={{ marginLeft: '20px' }}>{r.name}</li>
+                          ))}
+                        </li>
+                        )
+                        }
+                    {
+                         updated && updated.length > 0 && (
+                         <li>
+                           {`${updated.length} updated`}
+                           {updated.map((u) => (
+                             <li key={u.name} style={{ marginLeft: '20px' }}>{u.name}</li>
+                           ))}
+                         </li>
+                         )
+                        }
+                    {
+                        deleted && deleted.length > 0 && (
+                        <li>
+                          {`${deleted.length} deleted`}
+                          {deleted.map((d) => (
+                            <li key={d.name} style={{ marginLeft: '20px' }}>{d.name}</li>
+                          ))}
+                        </li>
+                        )
+
+                    }
                   </ul>
                 </div>
               )}
@@ -182,7 +241,7 @@ export default function CsvImport(
       </Container>
     </>
   );
-};
+}
 
 CsvImport.propTypes = {
   validCsvHeaders: PropTypes.arrayOf(PropTypes.string).isRequired,
