@@ -76,7 +76,7 @@ const CompleteSession = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete session</title>
+        <title>Complete Session</title>
       </Helmet>
 
       <IndicatesRequiredField />

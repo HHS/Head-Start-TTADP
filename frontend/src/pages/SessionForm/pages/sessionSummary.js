@@ -70,7 +70,6 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
-  const sessionName = watch('sessionName');
 
   // ref for topics guidance drawer
   const drawerTriggerRef = useRef(null);
@@ -195,13 +194,11 @@ const SessionSummary = ({ datePickerKey }) => {
     }
   };
 
-  const pageTitle = `Session summary - ${sessionName && ` ${sessionName}`} ${eventName && ` - ${eventName}`}`;
-
   return (
     <>
       <Helmet>
         <title>
-          {pageTitle}
+          Session Summary
         </title>
       </Helmet>
       <IndicatesRequiredField />
@@ -501,7 +498,7 @@ const SessionSummary = ({ datePickerKey }) => {
                 {' '}
                 <ul className="usa-list">
                   <li>Presentation slides from PD events</li>
-                  <li>PDF&apos;s you created from multiple tta resources</li>
+                  <li>PDF&apos;s you created from multiple TTA resources</li>
                   <li>Other OHS-provided resources</li>
                 </ul>
               </div>
