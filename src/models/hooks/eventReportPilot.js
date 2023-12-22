@@ -98,11 +98,46 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
   }
 };
 
+/**
+ * This hook updates `Goal.name` for all goals that are associated with this training report.
+ */
+const updateGoalText = async (sequelize, instance) => {
+  const changed = instance.changed();
+
+  if (!changed || !changed.includes('data')) {
+    return;
+  }
+
+  const data = JSON.parse(instance.data.val);
+  const goal = data.goal;
+
+  /**
+   * @typedef {Object} BlobbyGoal
+   * @property {number} grantId
+   * @property {number} goalId
+   * @property {number} sessionId
+   */
+
+  /** @type {BlobbyGoal[]} */
+  const goals = data.goals;
+
+  if (!goal || !goals.length) {
+    return;
+  }
+
+  for (const g of goals) {
+    const foundGoal = await sequelize.models.Goal.findByPk(g.goalId, { transaction: instance.transaction });
+    foundGoal.name = goal;
+    await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction: instance.transaction });
+  }
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
   await notifyPocEventComplete(sequelize, instance, options);
   await notifyVisionAndGoalComplete(sequelize, instance, options);
   await notifyNewPoc(sequelize, instance, options);
+  await updateGoalText(sequelize, instance, options);
 };
 
 export {

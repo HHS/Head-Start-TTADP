@@ -130,15 +130,66 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
   }
 };
 
+const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, options) => {
+  try {
+    const { event, recipients } = JSON.parse(instance.data.val);
+    if (!event?.data?.goal || !event.id) return;
+
+    const eventId = Number(event.id);
+    const eventRecord = await sequelize.models.EventReportPilot.findByPk(eventId, { transaction: options.transaction });
+    if (!eventRecord) throw new Error('Event not found');
+
+    // The event blob is where we store information about goals created for sessions.
+    /**
+     * @typedef {Object} BlobbyGoal
+     * @property {number} grantId
+     * @property {number} goalId
+     * @property {number} sessionId
+     */
+
+    /** @type {BlobbyGoal[]} */
+    const currentGoals = Array.isArray(eventRecord.dataValues.data?.goals) ? eventRecord.dataValues.data.goals : [];
+    const newGoals = [];
+
+    for (const { value: grantValue } of recipients) {
+      const grantId = Number(grantValue);
+      if (!currentGoals.some(goal => goal.sessionId === instance.id && goal.grantId === grantId)) {
+        const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
+        if (!grant) throw new Error('Grant not found');
+
+        const newGoal = await sequelize.models.Goal.create({
+          name: event.data.goal,
+          grantId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: 'Not Started',
+          createdVia: 'tr'
+        }, { transaction: options.transaction });
+
+        newGoals.push({ grantId, goalId: newGoal.id, sessionId: instance.id });
+      }
+    }
+
+    if (newGoals.length > 0) {
+      const eventData = { ...eventRecord.dataValues.data, goals: [...currentGoals, ...newGoals] };
+      await sequelize.models.EventReportPilot.update({ data: eventData }, { where: { id: eventId }, transaction: options.transaction });
+    }
+  } catch (error) {
+    auditLogger.error(JSON.stringify({ error }));
+  }
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifySessionCreated(sequelize, instance, options);
+  await createGoalsForSessionRecipientsIfNecessary(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifyPocIfSessionComplete(sequelize, instance, options);
   await participantsAndNextStepsComplete(sequelize, instance, options);
+  await createGoalsForSessionRecipientsIfNecessary(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
