@@ -6,6 +6,13 @@ export default (sequelize, DataTypes) => {
       Course.hasMany(models.ObjectiveCourse, { foreignKey: 'courseId', as: 'objectiveCourses' });
       Course.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'courseId', as: 'activityReportObjectiveCourses' });
 
+      Course.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveCourse,
+        foreignKey: 'courseId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'reportObjectives',
+      });
+
       Course.hasMany(models.Course, {
         foreignKey: 'mapsTo',
         as: 'mapsFromCourse',
