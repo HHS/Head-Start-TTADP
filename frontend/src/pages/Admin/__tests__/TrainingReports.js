@@ -210,6 +210,14 @@ describe('Training Reports page', () => {
     const success = await screen.findByText(/2 training reports imported successfully./i);
     expect(success).toBeVisible();
 
+    // assert to see the text '2 crated' and then check each skipped event in its own <li> element
+    const crate3dHeader = await screen.findByText(/2 created/i);
+    expect(crate3dHeader).toBeVisible();
+    const createdEvent1 = within(crate3dHeader).getByText(/created course 1/i);
+    expect(createdEvent1).toBeInTheDocument();
+    const createdEvent2 = within(crate3dHeader).getByText(/created course 2/i);
+    expect(createdEvent2).toBeInTheDocument();
+
     // assert to see the text '2 skipped' and then check each skipped event in its own <li> element
     const skippedHeader = await screen.findByText(/2 skipped/i);
     expect(skippedHeader).toBeVisible();
