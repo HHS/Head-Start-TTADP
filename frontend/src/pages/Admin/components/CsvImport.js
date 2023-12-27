@@ -25,6 +25,7 @@ export default function CsvImport(
   const [success, setSuccess] = useState();
   const [info, setInfo] = useState();
 
+  const [created, setCreated] = useState();
   const [skipped, setSkipped] = useState([]);
   const [errors, setErrors] = useState([]);
   const [replaced, setReplaced] = useState([]);
@@ -36,6 +37,7 @@ export default function CsvImport(
   const importCsvFile = async () => {
     try {
       // Reset summary info.
+      setCreated([]);
       setSkipped([]);
       setErrors([]);
       setReplaced([]);
@@ -57,6 +59,7 @@ export default function CsvImport(
       data.append('file', file, { contentType: file.type });
       const res = await importCsv(apiPathName, data);
       setSuccess(`${res.count} ${typeName} imported successfully.`);
+      setCreated(res.created);
       setSkipped(res.skipped);
       setErrors(res.errors);
       setReplaced(res.replaced);
@@ -96,7 +99,6 @@ export default function CsvImport(
 
       // Get all headers.
       const headers = cleanCsv.split('\r\n')[0].split(',');
-      console.log('headers', headers);
 
       // Validate columns.
       const requiredHeaders = requiredCsvHeaders.filter((header) => !headers.includes(header));
@@ -111,11 +113,6 @@ export default function CsvImport(
         e.target.value = null;
         return;
       }
-
-      // Get a distinct count of primary id column's.
-      console.log('cleanCsv', cleanCsv);
-      console.log('cleanCsv1', cleanCsv.split('\r\n'));
-      console.log('cleanCsv2', cleanCsv.split('\r\n').map((row) => row));
 
       // Get all values from the column that is the primary id column.
       let importIds = cleanCsv.split('\r\n').map((row) => {
@@ -183,18 +180,36 @@ export default function CsvImport(
                 <div>
                   <h3>Import Summary:</h3>
                   <ul>
-                    <li>
-                      {`${skipped.length} skipped`}
-                      {skipped.map((item) => (
-                        <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
-                      ))}
-                    </li>
-                    <li>
-                      {`${errors.length} errors`}
-                      {errors.map((err) => (
-                        <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
-                      ))}
-                    </li>
+                    {
+                        created && created.length > 0 && (
+                        <li>
+                          {`${created.length} created`}
+                          {created.map((c) => (
+                            <li key={c.name} style={{ marginLeft: '20px' }}>{c.name}</li>
+                          ))}
+                        </li>
+                        )
+                        }
+                    {
+                        skipped && skipped.length > 0 && (
+                        <li>
+                          {`${skipped.length} skipped`}
+                          {skipped.map((item) => (
+                            <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
+                          ))}
+                        </li>
+                        )
+                      }
+                    {
+                        errors && errors.length > 0 && (
+                        <li>
+                          {`${errors.length} errors`}
+                          {errors.map((err) => (
+                            <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
+                          ))}
+                        </li>
+                        )
+                      }
                     {
                         replaced && replaced.length > 0 && (
                         <li>
