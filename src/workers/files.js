@@ -59,7 +59,7 @@ const processFile = async (key) => {
     await updateFileStatus(key, APPROVED);
   } catch (error) {
     // If the key couldn't be found, we can't update the status.
-    if (error.message == KEY_NOT_FOUND) {
+    if (error.message === KEY_NOT_FOUND) {
       throw error;
     }
 
