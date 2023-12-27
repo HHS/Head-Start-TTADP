@@ -19,6 +19,7 @@ const {
  */
 const getIdFromKey = async (key) => {
   const file = await File.findOne({ where: { key } });
+  if (!file) throw new Error(`File with key ${key} not found.`);
   return file.dataValues.id;
 };
 
