@@ -12,6 +12,8 @@ const {
   REJECTED,
 } = FILE_STATUSES;
 
+const KEY_NOT_FOUND = 'File with key not found.';
+
 /**
  * Get's file Id from DB using the s3 key
  * @param {string} key - uuid with a file extension representing the s3 key of the file
@@ -19,7 +21,7 @@ const {
  */
 const getIdFromKey = async (key) => {
   const file = await File.findOne({ where: { key } });
-  if (!file) throw new Error(`File with key ${key} not found.`);
+  if (!file) throw new Error(KEY_NOT_FOUND);
   return file.dataValues.id;
 };
 
@@ -56,6 +58,11 @@ const processFile = async (key) => {
     });
     await updateFileStatus(key, APPROVED);
   } catch (error) {
+    // If the key couldn't be found, we can't update the status.
+    if (error.message == KEY_NOT_FOUND) {
+      throw error;
+    }
+
     if (error.response && error.response.status === 406) {
       await updateFileStatus(key, REJECTED);
       return { status: error.response.status, data: error.response.data };
