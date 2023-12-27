@@ -19,9 +19,12 @@ export async function csvImport(buffer) {
 
   const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
   let rowCount = 1;
-  const results = parsed.map(async (course) => {
-    try {
-      let rawCourseName = course['course name'];
+  let results;
+  try {
+    results = await Promise.all(parsed.map(async (course) => {
+      // Get the first property value form course object.
+      let rawCourseName = Object.values(course)[0];
+
       if (!rawCourseName) {
         // Skip blank course name.
         skipped.push(`Row ${rowCount}: Blank course name`);
@@ -40,6 +43,7 @@ export async function csvImport(buffer) {
           nameLookUp: {
             [Op.iLike]: cleanCourseName,
           },
+          deletedAt: null,
         },
       });
 
@@ -71,6 +75,7 @@ export async function csvImport(buffer) {
               id: {
                 [Op.in]: existingCourses.map((c) => c.id),
               },
+              deletedAt: null,
             },
           });
 
@@ -92,27 +97,29 @@ export async function csvImport(buffer) {
         importedCourseIds.push(newCourse.id);
       }
 
-      // Mark missing courses as deleted.
-      const markedDeleted = await Course.update(
-        { deletedAt: new Date() },
-        {
-          where: {
-            id: {
-              [Op.notIn]: importedCourseIds,
-            },
-          },
-          returning: true,
-        },
-      );
-      deleted.push(...markedDeleted[1]);
       return true;
-    } catch (error) {
-      errors.push(`Row ${rowCount}: ${error.message}`);
-      return false;
-    } finally {
-      rowCount += 1;
-    }
-  });
+    }));
+    // Mark missing courses as deleted.
+    const markedDeleted = await Course.update(
+      { deletedAt: new Date() },
+      {
+        where: {
+          id: {
+            [Op.notIn]: importedCourseIds,
+          },
+          deletedAt: null,
+        },
+        returning: true,
+      },
+    );
+    deleted.push(...markedDeleted[1]);
+  } catch (error) {
+    errors.push(`Row ${rowCount}: ${error.message}`);
+    return false;
+  } finally {
+    rowCount += 1;
+  }
+
   const count = (await Promise.all(results)).filter(Boolean).length;
   return {
     count,
