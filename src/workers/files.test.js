@@ -64,4 +64,11 @@ describe('File Scanner tests', () => {
     const got = processFile(fileKey);
     await expect(got).rejects.toBe(axiosServerError);
   });
+  it('fails when the key could not be found', async () => {
+    mockFindOne.mockImplementationOnce(() => Promise.resolve(null));
+    const got = processFile(fileKey);
+    await expect(got).rejects.toThrow('File with key not found.');
+    expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
+    expect(mockUpdate).not.toBeCalled();
+  });
 });
