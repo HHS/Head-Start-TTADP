@@ -18,7 +18,6 @@ import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import RTTAPA from './pages/RTTAPA';
-import FeatureFlag from '../../components/FeatureFlag';
 import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
