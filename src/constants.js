@@ -223,6 +223,7 @@ const FEATURE_FLAGS = [
   'goal_source',
   'merge_goals',
   'monitoring',
+  'training_reports',
 ];
 
 const MAINTENANCE_CATEGORY = {
