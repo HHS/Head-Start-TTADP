@@ -368,5 +368,10 @@ describe('User route handler', () => {
 
       expect(userRoles.length).toBe(0);
     });
+
+    it('doesn\'t throw when requestUser has no roles', async () => {
+      await expect(createUserRoles({ roles: [] }, u.id)).resolves.not.toThrow();
+      await expect(createUserRoles({}, u.id)).resolves.not.toThrow();
+    });
   });
 });
