@@ -52,7 +52,7 @@ export default function ObjectiveCourseSelect({
           id={`${useCoursesInputName}-yes`}
           name={useCoursesInputName}
           onChange={() => onChangeUseIpdCourses(true)}
-          defaultValue={useIpdCourse === true}
+          checked={useIpdCourse === true}
           onBlur={onBlurUseIpdCourses}
         />
         <Radio
@@ -63,7 +63,7 @@ export default function ObjectiveCourseSelect({
             onChangeUseIpdCourses(false);
             onChange([]);
           }}
-          defaultValue={useIpdCourse === false}
+          checked={useIpdCourse === false}
           onBlur={onBlurUseIpdCourses}
         />
       </Fieldset>
