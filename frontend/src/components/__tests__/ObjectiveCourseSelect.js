@@ -3,11 +3,23 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import selectEvent from 'react-select-event';
 import userEvent from '@testing-library/user-event';
 import ObjectiveCourseSelect from '../ObjectiveCourseSelect';
 
+const courseResponse = [
+  { id: 1, name: 'Guiding Children\'s Behavior (BTS-P)' },
+  { id: 2, name: 'Setting Up the Classroom (BTS-P)' },
+  { id: 3, name: 'Social and Emotional Support (BTS-P)' },
+  { id: 4, name: 'Learning the Ropes (BTS-P)' },
+  { id: 5, name: 'Approaches to Individualizing (BTS-P)' },
+  { id: 6, name: 'Ongoing Assessment (BTS-P)' },
+  { id: 7, name: 'Families and Home Visiting (BTS-P)' },
+];
+
 describe('ObjectiveCourseSelect', () => {
+  afterEach(() => fetchMock.restore());
   const renderObjectiveCourseSelect = (
     onChange = jest.fn(),
     value = [],
@@ -29,6 +41,7 @@ describe('ObjectiveCourseSelect', () => {
   ));
 
   it('updates use courses', async () => {
+    fetchMock.get('/api/course', courseResponse);
     const onChangeUseIpdCourses = jest.fn();
     await act(() => waitFor(() => {
       renderObjectiveCourseSelect(
@@ -48,6 +61,7 @@ describe('ObjectiveCourseSelect', () => {
   });
 
   it('clears selection on "no"', async () => {
+    fetchMock.get('/api/course', courseResponse);
     const onChangeUseIpdCourses = jest.fn();
     const onChange = jest.fn();
 
@@ -70,6 +84,7 @@ describe('ObjectiveCourseSelect', () => {
   });
 
   it('updates course selection', async () => {
+    fetchMock.get('/api/course', courseResponse);
     const onChange = jest.fn();
     await act(() => waitFor(() => {
       renderObjectiveCourseSelect(
@@ -81,5 +96,19 @@ describe('ObjectiveCourseSelect', () => {
     const select = await screen.findByText(/iPD course name/i);
     await selectEvent.clearAll(select);
     expect(onChange).toHaveBeenCalled();
+  });
+
+  it('handles fetch error', async () => {
+    fetchMock.get('/api/course', 404);
+    const onChange = jest.fn();
+    await act(() => waitFor(() => {
+      renderObjectiveCourseSelect(
+        onChange,
+        [{ id: 6, name: 'Ongoing Assessment (BTS-P)' }],
+      );
+    }));
+
+    const select = screen.queryByText(/iPD course name/i);
+    expect(select).toBeNull();
   });
 });
