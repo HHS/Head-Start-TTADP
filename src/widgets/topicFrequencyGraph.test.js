@@ -17,7 +17,7 @@ import db, {
   Topic,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { topicFrequencyGraph } from './topicFrequencyGraph';
+import { topicFrequencyGraph, topicFrequencyGraphViaGoals } from './topicFrequencyGraph';
 
 jest.mock('bull');
 
@@ -1101,5 +1101,11 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
     ]);
+  });
+
+  it('doesn\'t throw when likely no results (TTAHUB-2172)', async () => {
+    const query = { 'region.in': [100], 'startDate.win': '2222/01/01-3000/01/01' };
+    const scopes = await filtersToScopes(query);
+    expect(() => topicFrequencyGraph(scopes)).not.toThrow();
   });
 });
