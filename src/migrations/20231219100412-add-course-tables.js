@@ -57,6 +57,12 @@ module.exports = {
         transaction,
       });
 
+      // Unique constraint on name.
+      await queryInterface.sequelize.query(`
+      ALTER TABLE "Courses"
+      ADD CONSTRAINT "Courses_name_unique" UNIQUE ("name");
+  `, { transaction });
+
       await queryInterface.createTable('ObjectiveCourses', {
         id: {
           allowNull: false,
@@ -102,6 +108,12 @@ module.exports = {
         transaction,
       });
 
+      // Unique constraint on objectiveId, courseId.
+      await queryInterface.sequelize.query(`
+      ALTER TABLE "ObjectiveCourses"
+      ADD CONSTRAINT "ObjectiveCourses_objectiveId_courseId_unique" UNIQUE ("objectiveId", "courseId");
+  `, { transaction });
+
       await queryInterface.createTable('ActivityReportObjectiveCourses', {
         id: {
           allowNull: false,
@@ -146,6 +158,12 @@ module.exports = {
       }, {
         transaction,
       });
+
+      // Unique constraint on activityReportObjectiveId, courseId.
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "ActivityReportObjectiveCourses"
+          ADD CONSTRAINT "ActivityReportObjectiveCourses_activityReportObjectiveId_courseId_unique" UNIQUE ("activityReportObjectiveId", "courseId");
+      `, { transaction });
     });
   },
 
