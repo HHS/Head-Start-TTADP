@@ -21,7 +21,12 @@ const KEY_NOT_FOUND = 'File with key not found.';
  */
 const getIdFromKey = async (key) => {
   const file = await File.findOne({ where: { key } });
-  if (!file) throw new Error(KEY_NOT_FOUND);
+  if (!file) {
+    throw Object.assign(
+      new Error(KEY_NOT_FOUND),
+      { key },
+    );
+  }
   return file.dataValues.id;
 };
 
@@ -58,9 +63,8 @@ const processFile = async (key) => {
     });
     await updateFileStatus(key, APPROVED);
   } catch (error) {
-    // If the key couldn't be found, we can't update the status.
     if (error.message === KEY_NOT_FOUND) {
-      throw error;
+      return { status: error.message, data: error.key };
     }
 
     if (error.response && error.response.status === 406) {
