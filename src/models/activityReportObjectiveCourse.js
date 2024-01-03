@@ -5,6 +5,14 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReportObjectiveCourse.belongsTo(models.ActivityReportObjective, { foreignKey: 'activityReportObjectiveId', onDelete: 'cascade', as: 'activityReportObjective' });
       ActivityReportObjectiveCourse.belongsTo(models.Course, { foreignKey: 'courseId', as: 'course' });
+      models.Course.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'courseId', as: 'activityReportObjectiveCourses' });
+
+      models.Course.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveCourse,
+        foreignKey: 'courseId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'reportObjectives',
+      });
     }
   }
   ActivityReportObjectiveCourse.init({
