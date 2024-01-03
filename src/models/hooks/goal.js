@@ -224,6 +224,7 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
       where: {
         goalSimilarityGroupId: similarityGroup.id,
       },
+      transaction: options.transaction,
     });
 
     await sequelize.models.GoalSimilarityGroup.destroy({
@@ -232,6 +233,7 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
         userHasInvalidated: false,
         finalGoalId: null,
       },
+      transaction: options.transaction,
     });
   }
 };
@@ -265,6 +267,7 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
       userHasInvalidated: false,
       finalGoalId: null,
     },
+    transaction: options.transaction,
   });
 
   if (groups.length === 0) return;
@@ -273,6 +276,7 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
     where: {
       goalSimilarityGroupId: groups.map((group) => group.id),
     },
+    transaction: options.transaction,
   });
 
   await sequelize.models.GoalSimilarityGroup.destroy({
@@ -281,6 +285,7 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
       userHasInvalidated: false,
       finalGoalId: null,
     },
+    transaction: options.transaction,
   });
 };
 
