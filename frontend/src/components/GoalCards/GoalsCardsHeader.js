@@ -198,16 +198,6 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
-        <FeatureFlag flag="rttapa_form">
-          <Button
-            unstyled
-            className="display-flex flex-align-center margin-left-3 margin-y-0"
-            onClick={createRttapa}
-            type="button"
-          >
-            Create RTTAPA
-          </Button>
-        </FeatureFlag>
         <Button
           unstyled
           className="display-flex flex-align-center margin-left-3 margin-y-0"
