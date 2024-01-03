@@ -128,9 +128,17 @@ export default function CsvImport(
 
       const distinctImportIds = [...new Set(importIds)];
 
+      // Get distinct all duplicate values from the primary id column.
+      const duplicateIds = distinctImportIds.filter((id) => {
+        const count = importIds.filter((i) => i === id).length;
+        return count > 1;
+      });
+      const distinctDuplicateImportIds = [...new Set(duplicateIds)];
+
       // Check if we have duplicate primary Id Column values.
-      if (distinctImportIds.length !== importIds.length) {
-        setError(`Duplicate ${primaryIdColumn}'s found. Please correct and try again.`);
+      if (distinctDuplicateImportIds.length > 0) {
+        setError(`Duplicate ${primaryIdColumn}s found. Please correct and try again. Duplicates:
+        ${distinctDuplicateImportIds.join(', ')}`);
         e.target.value = null;
         return;
       }
