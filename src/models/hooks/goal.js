@@ -247,6 +247,20 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
 
   if (!recipient) return;
 
+  const groups = await sequelize.models.GoalSimilarityGroup.findAll({
+    where: {
+      recipientId: recipient.id,
+      userHasInvalidated: false,
+      finalGoalId: null,
+    },
+  });
+
+  await sequelize.models.GoalSimilarityGroupGoal.destroy({
+    where: {
+      goalSimilarityGroupId: groups.map((group) => group.id),
+    },
+  });
+
   await sequelize.models.GoalSimilarityGroup.destroy({
     where: {
       recipientId: recipient.id,

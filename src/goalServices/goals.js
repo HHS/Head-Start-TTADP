@@ -2972,7 +2972,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGr
   await setSimilarityGroupAsUserMerged(
     goalSimiliarityGroupId,
     finalGoalId,
-    selectedGoalIds,
   );
 
   return newGoals;

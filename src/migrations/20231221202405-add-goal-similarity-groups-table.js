@@ -11,10 +11,6 @@ module.exports = {
       await queryInterface.createTable(
         'GoalSimilarityGroups',
         {
-          goals: {
-            type: Sequelize.ARRAY(Sequelize.INTEGER),
-            allowNull: false,
-          },
           userHasInvalidated: {
             type: Sequelize.BOOLEAN,
             allowNull: false,
@@ -22,10 +18,6 @@ module.exports = {
           },
           finalGoalId: {
             type: Sequelize.INTEGER,
-            allowNull: true,
-          },
-          goalsMerged: {
-            type: Sequelize.ARRAY(Sequelize.INTEGER),
             allowNull: true,
           },
           id: {
@@ -47,12 +39,44 @@ module.exports = {
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
       );
+      await queryInterface.createTable(
+        'GoalSimilarityGroupGoals',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          goalSimilarityGroupId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'GoalSimilarityGroups',
+              },
+            },
+          },
+          goalId: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+            references: {
+              model: {
+                tableName: 'Goals',
+              },
+            },
+          },
+          createdAt: { allowNull: false, type: Sequelize.DATE },
+          updatedAt: { allowNull: false, type: Sequelize.DATE },
+        },
+      );
     });
   },
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
+      await queryInterface.dropTable('GoalSimilarityGroupGoals', { transaction });
       await queryInterface.dropTable('GoalSimilarityGroups', { transaction });
     });
   },
