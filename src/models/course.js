@@ -72,6 +72,7 @@ export default (sequelize, DataTypes) => {
     modelName: 'Course',
     tableName: 'Courses',
     freezeTableName: true,
+    paranoid: true,
   });
   return Course;
 };
