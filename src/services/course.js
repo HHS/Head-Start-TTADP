@@ -20,10 +20,7 @@ export async function csvImport(buffer) {
   const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
   let rowCount = 1;
   let results;
-
-  let transaction;
   try {
-    transaction = await sequelize.transaction();
     results = await Promise.all(parsed.map(async (course) => {
       // Get the first property value form course object.
       let rawCourseName = course['course name'];
@@ -60,7 +57,7 @@ export async function csvImport(buffer) {
           await sequelize.query(`
             UPDATE "Courses"
             SET "updatedAt" = '${new Date().toISOString()}'
-            WHERE id = ${exactMatch.id}`, { transaction });
+            WHERE id = ${exactMatch.id}`);
           updated.push(exactMatch);
           // Add the course name to the importedCourseNames array.
           importedCourseIds.push(...existingCourses.map((c) => c.id));
@@ -68,7 +65,7 @@ export async function csvImport(buffer) {
           // Create a new course.
           const replacementCourse = await Course.create({
             name: rawCourseName, nameLookUp: cleanCourseName,
-          }, { transaction });
+          });
           created.push(replacementCourse);
 
           // Set the 'mapsTo' for the existing courses to the new course id.
@@ -81,7 +78,6 @@ export async function csvImport(buffer) {
               },
               deletedAt: null,
             },
-            transaction,
           });
 
           replaced.push(...existingCourses);
@@ -94,7 +90,7 @@ export async function csvImport(buffer) {
         // Create a new course.
         const newCourse = await Course.create({
           name: rawCourseName, nameLookUp: cleanCourseName,
-        }, { transaction });
+        });
 
         created.push(newCourse);
 
@@ -113,13 +109,10 @@ export async function csvImport(buffer) {
         deletedAt: null,
       },
       returning: true,
-      transaction,
     });
 
     deleted.push(...markedDeleted);
-    await transaction.commit();
   } catch (error) {
-    if (transaction) await transaction.rollback();
     errors.push(`Row ${rowCount}: ${error.message}`);
     return false;
   } finally {
