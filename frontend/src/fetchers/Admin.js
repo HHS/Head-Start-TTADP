@@ -140,3 +140,13 @@ export const importTrainingReports = async (data) => {
   }
   return res.json();
 };
+
+export const updateLegacyUsers = async (id, data) => {
+  const result = await put((join('/', 'api', 'admin', 'legacy-reports', id, 'users')), data);
+  return result.json();
+};
+
+export const synchronizeLegacyUsers = async () => {
+  const result = await post((join('/', 'api', 'admin', 'legacy-reports', 'users')));
+  return result.json();
+};

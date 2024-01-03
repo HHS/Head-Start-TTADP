@@ -1,19 +1,83 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Table } from '@trussworks/react-uswds';
-import { map } from 'lodash';
+import { map, uniqueId } from 'lodash';
 
 import Container from '../../components/Container';
 import FileReviewItem from '../ActivityReport/Pages/Review/FileReviewItem';
 import { legacyReportById } from '../../fetchers/activityReports';
+import { updateLegacyUsers } from '../../fetchers/Admin';
 import reportColumns from './reportColumns';
+import UserContext from '../../UserContext';
+import isAdmin from '../../permissions';
+
+const EditForm = ({ id, data }) => {
+  const [message, setMessage] = useState(null);
+  const fields = [
+    'createdBy',
+    'modifiedBy',
+    'manager',
+  ];
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+      const { messages } = await updateLegacyUsers(String(id), Object.fromEntries(formData));
+      setMessage({
+        type: 'success',
+        text: <ul className="usa-list margin-top-0">{messages.map((li) => <li key={uniqueId('message-')}>{li}</li>)}</ul>,
+      });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: `There was an error updating the report: ${err.message}`,
+      });
+    }
+  };
+
+  EditForm.propTypes = {
+    id: PropTypes.number.isRequired,
+    data: PropTypes.shape({
+      createdBy: PropTypes.string,
+      modifiedBy: PropTypes.string,
+      manager: PropTypes.string,
+    }).isRequired,
+  };
+
+  return (
+    <div>
+      {message ? <Alert type={message.type}>{message.text}</Alert> : null}
+      <form className="usa-form" onSubmit={onSubmit}>
+        <h3>Edit report users</h3>
+        {fields.map((field) => {
+          const value = data[field];
+          return (
+            <div key={field}>
+              <label className="usa-label" htmlFor={field}>{field}</label>
+              <input className="usa-input" type="text" name={field} id={field} defaultValue={value} />
+            </div>
+          );
+        })}
+
+        <button className="usa-button" type="submit">Save</button>
+
+      </form>
+    </div>
+  );
+};
 
 function LegacyReport({ match }) {
   const { params: { legacyId } } = match;
   const [legacyReport, updateLegacyReport] = useState();
   const [loading, updateLoading] = useState(true);
   const [error, updateError] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  const { user } = useContext(UserContext);
+  const hasAdminPermissions = isAdmin(user);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -72,12 +136,23 @@ function LegacyReport({ match }) {
       <Helmet>
         <title>Legacy Report</title>
       </Helmet>
-      <Container>
+      <Container positionRelative>
         <h2>
           Legacy report
           {' '}
           {legacyId}
         </h2>
+
+        {hasAdminPermissions ? (
+          <div className="position-absolute top-0 right-0 padding-2">
+            <button className="usa-button" type="button" onClick={() => setEditMode(!editMode)}>Edit report users</button>
+          </div>
+        ) : null}
+
+        {editMode
+          ? <EditForm id={legacyReport.id} data={legacyReport.imported} />
+          : null}
+
         <Table className="usa-table">
           <thead>
             <tr key="heading">
