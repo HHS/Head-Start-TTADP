@@ -11,13 +11,13 @@ export default (sequelize, DataTypes) => {
   class GoalSimilarityGroup extends Model {
     static associate(models) {
       GoalSimilarityGroup.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
-      GoalSimilarityGroup.hasMany(models.GoalSimilarityGroupGoal, { foreignKey: 'goalSimilarityGroupId', as: 'goalSimilarityGroups' });
-      GoalSimilarityGroup.belongsToMany(models.Goal, {
+      models.Goal.belongsToMany(models.GoalSimilarityGroup, {
         through: models.GoalSimilarityGroupGoal,
-        foreignKey: 'goalSimilarityGroupId',
-        otherKey: 'goalId',
-        as: 'goals',
+        foreignKey: 'goalId',
+        otherKey: 'goalSimilarityGroupId',
+        as: 'similarityGroups',
       });
+      models.Recipient.hasMany(models.GoalSimilarityGroup, { foreignKey: 'recipientId', as: 'goalSimilarityGroups' });
     }
   }
   GoalSimilarityGroup.init({
