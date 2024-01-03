@@ -48,7 +48,6 @@ describe('GoalDataController', () => {
     selectedGoalIds: [],
     perPageChange: jest.fn(),
     pageGoalIds: 1,
-    createRttapa: jest.fn(),
     showRttapaValidation: false,
     draftSelectedRttapa: [],
     shouldDisplayMergeSuccess: true,
