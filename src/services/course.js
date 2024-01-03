@@ -20,10 +20,13 @@ export async function csvImport(buffer) {
   const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
   let rowCount = 1;
   let results;
+
+  let transaction;
   try {
+    transaction = await sequelize.transaction();
     results = await Promise.all(parsed.map(async (course) => {
       // Get the first property value form course object.
-      let rawCourseName = Object.values(course)[0];
+      let rawCourseName = course['course name'];
 
       if (!rawCourseName) {
         // Skip blank course name.
@@ -51,12 +54,13 @@ export async function csvImport(buffer) {
       if (existingCourses.length) {
         // Check if any of the courses are exact match.
         const exactMatch = existingCourses.find((c) => c.name === rawCourseName);
+
         if (exactMatch) {
           // Update the value for 'updatedAt' on the existing.
           await sequelize.query(`
             UPDATE "Courses"
             SET "updatedAt" = '${new Date().toISOString()}'
-            WHERE id = ${exactMatch.id}`);
+            WHERE id = ${exactMatch.id}`, { transaction });
           updated.push(exactMatch);
           // Add the course name to the importedCourseNames array.
           importedCourseIds.push(...existingCourses.map((c) => c.id));
@@ -64,11 +68,11 @@ export async function csvImport(buffer) {
           // Create a new course.
           const replacementCourse = await Course.create({
             name: rawCourseName, nameLookUp: cleanCourseName,
-          });
+          }, { transaction });
           created.push(replacementCourse);
 
           // Set the 'mapsTo' for the existing courses to the new course id.
-          Course.update({
+          await Course.update({
             mapsTo: replacementCourse.id,
           }, {
             where: {
@@ -77,6 +81,7 @@ export async function csvImport(buffer) {
               },
               deletedAt: null,
             },
+            transaction,
           });
 
           replaced.push(...existingCourses);
@@ -89,7 +94,7 @@ export async function csvImport(buffer) {
         // Create a new course.
         const newCourse = await Course.create({
           name: rawCourseName, nameLookUp: cleanCourseName,
-        });
+        }, { transaction });
 
         created.push(newCourse);
 
@@ -99,21 +104,22 @@ export async function csvImport(buffer) {
 
       return true;
     }));
-    // Mark missing courses as deleted.
-    const markedDeleted = await Course.update(
-      { deletedAt: new Date() },
-      {
-        where: {
-          id: {
-            [Op.notIn]: importedCourseIds,
-          },
-          deletedAt: null,
+    // Delete all courses that were not imported.
+    const markedDeleted = await Course.destroy({
+      where: {
+        id: {
+          [Op.notIn]: importedCourseIds,
         },
-        returning: true,
+        deletedAt: null,
       },
-    );
-    deleted.push(...markedDeleted[1]);
+      returning: true,
+      transaction,
+    });
+
+    deleted.push(...markedDeleted);
+    await transaction.commit();
   } catch (error) {
+    if (transaction) await transaction.rollback();
     errors.push(`Row ${rowCount}: ${error.message}`);
     return false;
   } finally {
