@@ -78,10 +78,10 @@ describe('Training Reports page', () => {
     userEvent.upload(fileInput, file);
 
     // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
-    const error = await screen.findByText(/Duplicate Event ID's found. Please correct and try again./i);
+    const error = await screen.findByText(/duplicate event ids found\. please correct and try again\. duplicates: event test/i);
     expect(error).toBeVisible();
 
-    // Assert button 'Upload training reports' is visible.
+    // Assert button 'Upload training reports' is visible.f
     const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
     expect(uploadButton).toBeVisible();
   });
