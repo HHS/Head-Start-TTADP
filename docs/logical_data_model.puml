@@ -288,15 +288,21 @@ enum enum_GoalResources_sourceFields {
 
 enum_GoalResources_sourceFields <|-- GoalResources
 
+class GoalSimilarityGroupGoals{
+ * id : integer : <generated>
+ * goalId : integer : REFERENCES "Goals".id
+ * goalSimilarityGroupId : integer : REFERENCES "GoalSimilarityGroups".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class GoalSimilarityGroups{
  * id : integer : <generated>
  * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone
- * goals : integer[]
  * updatedAt : timestamp with time zone
  * userHasInvalidated : boolean : false
  finalGoalId : integer
- goalsMerged : integer[]
 }
 
 class GoalTemplateFieldPrompts{
@@ -1199,6 +1205,20 @@ class ZALGoalResources{
  session_sig : text
 }
 
+class ZALGoalSimilarityGroupGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGoalSimilarityGroups{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1915,6 +1935,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles,
 Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
+GoalSimilarityGroups "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goalSimilarityGroup, goalSimilarityGroups
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts : goalTemplate, prompts
@@ -1925,6 +1946,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, orig
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goal, goalCollaborators
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
+Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goal, goalSimilarityGroupGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
@@ -2020,6 +2042,7 @@ CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
+GoalSimilarityGroups "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, similarityGroups
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates

@@ -11,6 +11,13 @@ export default (sequelize, DataTypes) => {
   class GoalSimilarityGroup extends Model {
     static associate(models) {
       GoalSimilarityGroup.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
+      GoalSimilarityGroup.hasMany(models.GoalSimilarityGroupGoal, { foreignKey: 'goalSimilarityGroupId', as: 'goalSimilarityGroups' });
+      GoalSimilarityGroup.belongsToMany(models.Goal, {
+        through: models.GoalSimilarityGroupGoal,
+        foreignKey: 'goalSimilarityGroupId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
     }
   }
   GoalSimilarityGroup.init({
@@ -30,10 +37,6 @@ export default (sequelize, DataTypes) => {
         },
       },
     },
-    goals: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      allowNull: false,
-    },
     userHasInvalidated: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -43,10 +46,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
-    },
-    goalsMerged: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      allowNull: true,
     },
   }, {
     sequelize,

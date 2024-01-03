@@ -29,6 +29,13 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportId',
         as: 'activityReports',
       });
+      Goal.hasMany(models.GoalSimilarityGroupGoal, { foreignKey: 'goalId', as: 'goalSimilarityGroupGoals' });
+      Goal.belongsToMany(models.GoalSimilarityGroup, {
+        through: models.GoalSimilarityGroupGoal,
+        foreignKey: 'goalId',
+        otherKey: 'goalSimilarityGroupId',
+        as: 'similarityGroups',
+      });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
