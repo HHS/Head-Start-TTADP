@@ -203,16 +203,28 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
     if (!goalId) return;
 
     const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
-      attributes: ['recipientId', 'goals'],
-      where: {
-        goals: {
-          [Op.contains]: [goalId],
+      attributes: ['recipientId', 'id'],
+      include: [
+        {
+          model: sequelize.models.Goal,
+          as: 'goals',
+          attributes: ['id'],
+          required: true,
+          where: {
+            id: goalId,
+          },
         },
-      },
+      ],
       transaction: options.transaction,
     });
 
     if (!similarityGroup) return;
+
+    await sequelize.models.GoalSimilarityGroupGoal.destroy({
+      where: {
+        goalSimilarityGroupId: similarityGroup.id,
+      },
+    });
 
     await sequelize.models.GoalSimilarityGroup.destroy({
       where: {
