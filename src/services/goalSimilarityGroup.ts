@@ -90,11 +90,11 @@ export async function getSimilarityGroupByContainingGoalIds(
       id: {
         [Op.in]: db.sequelize.literal(
           `(
-            SELECT "goalSimilarityGroupId"
-            FROM "GoalSimilarityGroupGoals"
-            WHERE "goalId" IN (${goalIds.join(',')})
-            GROUP BY "goalSimilarityGroupId"
-            HAVING COUNT(DISTINCT "goalId") = ${goalIds.length}
+            SELECT gs."goalSimilarityGroupId"
+            FROM "GoalSimilarityGroupGoals" gs
+            WHERE gs."goalId" IN (${goalIds.join(',')})
+            GROUP BY gs."goalSimilarityGroupId" 
+            HAVING COUNT(DISTINCT gs."goalId") = ${goalIds.length}
           )`,
         ),
       },
@@ -106,32 +106,6 @@ export async function getSimilarityGroupByContainingGoalIds(
   }
 
   return flattenSimilarityGroupGoals(group);
-}
-
-export async function createSimilarityGroup(recipientId: number, goals: number[]) {
-  // check for existing similarity group
-
-  const group = await getSimilarityGroupByContainingGoalIds(
-    goals,
-    { recipientId },
-  );
-
-  if (group) {
-    return group;
-  }
-
-  const newGroup = await GoalSimilarityGroup.create({
-    recipientId,
-  });
-
-  await GoalSimilarityGroupGoal.bulkCreate(
-    goals.map((goalId) => ({
-      goalId,
-      goalSimilarityGroupId: newGroup.id,
-    })),
-  );
-
-  return getSimilarityGroupById(newGroup.id);
 }
 
 export async function getSimilarityGroupsByRecipientId(
@@ -198,4 +172,39 @@ export async function deleteSimilarityGroup(similarityGroupId: number) {
       id: similarityGroupId,
     },
   });
+}
+
+export async function createSimilarityGroup(recipientId: number, goals: number[]) {
+  // check for existing similarity group
+
+  let group;
+
+  if (goals && goals.length) {
+    group = await getSimilarityGroupByContainingGoalIds(
+      goals,
+      { recipientId },
+    );
+  } else {
+    [group] = await getSimilarityGroupsByRecipientId(
+      recipientId,
+      { finalGoalId: null, userHasInvalidated: false },
+    );
+  }
+
+  if (group) {
+    return group;
+  }
+
+  const newGroup = await GoalSimilarityGroup.create({
+    recipientId,
+  });
+
+  await GoalSimilarityGroupGoal.bulkCreate(
+    goals.map((goalId) => ({
+      goalId,
+      goalSimilarityGroupId: newGroup.id,
+    })),
+  );
+
+  return getSimilarityGroupById(newGroup.id);
 }

@@ -12,6 +12,7 @@ const {
   Recipient: RecipientModel,
   Goal: GoalModel,
   GoalSimilarityGroup: GoalSimilarityGroupModel,
+  GoalSimilarityGroupGoal: GoalSimilarityGroupGoalModel,
 } = require('..');
 
 jest.mock('../../services/resource');
@@ -33,7 +34,6 @@ describe('goal hooks', () => {
         recipientId: recipient.id,
         userHasInvalidated: false,
         finalGoalId: null,
-        goals: [],
       });
       await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
 
@@ -51,12 +51,15 @@ describe('goal hooks', () => {
     it('should invalidate similarity groups on goal name update', async () => {
       const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
 
-      await GoalSimilarityGroupModel.create({
+      const group = await GoalSimilarityGroupModel.create({
         recipientId: recipient.id,
         userHasInvalidated: false,
         finalGoalId: null,
-        goals: [goal.id],
+      });
 
+      await GoalSimilarityGroupGoalModel.create({
+        goalSimilarityGroupId: group.id,
+        goalId: goal.id,
       });
 
       await goal.update({ name: 'New Name' }, { individualHooks: true });
@@ -75,11 +78,15 @@ describe('goal hooks', () => {
     it('should invalidate similarity groups on goal destroy', async () => {
       const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
 
-      await GoalSimilarityGroupModel.create({
+      const group = await GoalSimilarityGroupModel.create({
         recipientId: recipient.id,
         userHasInvalidated: false,
         finalGoalId: null,
-        goals: [goal.id],
+      });
+
+      await GoalSimilarityGroupGoalModel.create({
+        goalSimilarityGroupId: group.id,
+        goalId: goal.id,
       });
 
       await GoalModel.destroy({
@@ -101,6 +108,14 @@ describe('goal hooks', () => {
     });
 
     afterAll(async () => {
+      const goals = await GoalModel.findAll({ where: { grantId: grant.id } });
+
+      await GoalSimilarityGroupGoalModel.destroy({
+        where: {
+          goalId: goals.map((goal) => goal.id),
+        },
+      });
+
       await GoalModel.destroy({
         where: {
           grantId: grant.id,

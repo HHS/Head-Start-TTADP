@@ -2604,6 +2604,7 @@ export async function getGoalIdsBySimilarity(recipientId) {
   // there should also always be an empty group
   // to signify that there are no similar goals
   // and that we've run these computations
+
   await Promise.all(
     [...groupsWithMoreThanOneGoal, []]
       .map((gg) => (

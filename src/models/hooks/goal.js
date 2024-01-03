@@ -255,6 +255,8 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
     },
   });
 
+  if (groups.length === 0) return;
+
   await sequelize.models.GoalSimilarityGroupGoal.destroy({
     where: {
       goalSimilarityGroupId: groups.map((group) => group.id),

@@ -8,6 +8,7 @@ import {
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
   GoalSimilarityGroup,
+  GoalSimilarityGroupGoal,
   sequelize,
 } from '../models';
 import {
@@ -338,6 +339,12 @@ describe('getGoalIdsBySimilarity', () => {
       force: true,
     });
 
+    await GoalSimilarityGroupGoal.destroy({
+      where: {
+        goalId: goals.map((g) => g.id),
+      },
+    });
+
     await Goal.destroy({
       where: {
         id: goals.map((g) => g.id),
@@ -418,7 +425,7 @@ describe('getGoalIdsBySimilarity', () => {
     expect(idsSets).toHaveLength(3);
 
     // we expect one empty set, removing it leaves two
-    const filteredSet = idsSets.filter((set) => set.goals.length).map((set) => set.toJSON());
+    const filteredSet = idsSets.filter((set) => set.goals.length);
     expect(filteredSet).toHaveLength(2);
 
     const [setOne, setTwo] = filteredSet;
