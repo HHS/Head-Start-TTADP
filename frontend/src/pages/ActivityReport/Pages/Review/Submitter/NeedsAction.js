@@ -4,8 +4,10 @@ import PropTypes from 'prop-types';
 import {
   FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
 } from '@trussworks/react-uswds';
+import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router';
 import RichEditor from '../../../../../components/RichEditor';
+import ApproverSelect from './components/ApproverSelect';
 import FormItem from '../../../../../components/FormItem';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
@@ -21,6 +23,7 @@ const NeedsAction = ({
   creatorRole,
   displayId,
   reportId,
+  availableApprovers,
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
@@ -29,15 +32,18 @@ const NeedsAction = ({
   const [creatorNotes, setCreatorNotes] = useState(additionalNotes);
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
   const history = useHistory();
+  const { watch } = useFormContext();
+
+  const approvers = watch('approvers');
 
   const submit = async () => {
     if (!submitCR) {
       setShowCreatorRoleError(true);
     } else if (!hasIncompletePages) {
       await onSubmit({
-        approvers: approverStatusList,
         additionalNotes: creatorNotes,
         creatorRole: submitCR,
+        approvers,
       });
 
       // if successful, we should redirect to
@@ -70,7 +76,8 @@ const NeedsAction = ({
           !userHasOneRole
             ? (
               <>
-                <span className="text-bold">Creator role</span>
+                { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
+                <label htmlFor="creatorRole" className="text-bold">Creator role</label>
                 <span className="smart-hub--form-required"> (Required)</span>
                 <FormGroup error={showCreatorRoleError}>
                   <Fieldset>
@@ -122,6 +129,23 @@ const NeedsAction = ({
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <div className="margin-top-3">
         <ApproverStatusList approverStatus={approverStatusList} />
+      </div>
+      <div className="margin-top-3">
+        <FormItem
+          label="Add additional approvers"
+          name="approvers"
+          htmlFor="approvers"
+        >
+          <ApproverSelect
+            name="approvers"
+            valueProperty="user.id"
+            labelProperty="user.fullName"
+            options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
+            lockExistingValues
+          />
+        </FormItem>
+      </div>
+      <div className="margin-top-3">
         <Button className="margin-bottom-4" onClick={submit}>Update report</Button>
       </div>
     </>
@@ -135,6 +159,10 @@ NeedsAction.propTypes = {
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
+  })).isRequired,
+  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
   })).isRequired,
   creatorRole: PropTypes.string,
   displayId: PropTypes.string.isRequired,
