@@ -11,6 +11,12 @@ module.exports = {
       await queryInterface.createTable(
         'GoalSimilarityGroups',
         {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
           userHasInvalidated: {
             type: Sequelize.BOOLEAN,
             allowNull: false,
@@ -19,12 +25,6 @@ module.exports = {
           finalGoalId: {
             type: Sequelize.INTEGER,
             allowNull: true,
-          },
-          id: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            primaryKey: true,
-            autoIncrement: true,
           },
           recipientId: {
             allowNull: false,
