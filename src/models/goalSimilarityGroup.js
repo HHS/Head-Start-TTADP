@@ -11,6 +11,7 @@ export default (sequelize, DataTypes) => {
   class GoalSimilarityGroup extends Model {
     static associate(models) {
       GoalSimilarityGroup.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
+      GoalSimilarityGroup.belongsTo(models.Goal, { foreignKey: 'finalGoalId', as: 'finalGoal' });
       models.Goal.belongsToMany(models.GoalSimilarityGroup, {
         through: models.GoalSimilarityGroupGoal,
         foreignKey: 'goalId',
@@ -18,6 +19,7 @@ export default (sequelize, DataTypes) => {
         as: 'similarityGroups',
       });
       models.Recipient.hasMany(models.GoalSimilarityGroup, { foreignKey: 'recipientId', as: 'goalSimilarityGroups' });
+      models.Goal.hasMany(models.GoalSimilarityGroup, { foreignKey: 'finalGoalId', as: 'goalSimilarityGroups' });
     }
   }
   GoalSimilarityGroup.init({
@@ -46,6 +48,12 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Goals',
+          key: 'id',
+        },
+      },
     },
   }, {
     sequelize,
