@@ -7,7 +7,7 @@ import {
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
   getMergeGoalPermissions,
-  getGoalsFromRecipientGroup,
+  getGoalsFromRecipientGoalSimilarityGroup,
   markRecipientGoalGroupInvalid,
 } from './handlers';
 import {
@@ -52,7 +52,7 @@ router.get(
   checkRecipientIdParam,
   checkRegionIdParam,
   checkGoalGroupIdParam,
-  transactionWrapper(getGoalsFromRecipientGroup),
+  transactionWrapper(getGoalsFromRecipientGoalSimilarityGroup),
 );
 router.put(
   '/:recipientId/region/:regionId/group/:goalGroupId/invalid',

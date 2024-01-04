@@ -14,7 +14,7 @@ import {
   getRecipientLeadership,
   getMergeGoalPermissions,
   markRecipientGoalGroupInvalid,
-  getGoalsFromRecipientGroup,
+  getGoalsFromRecipientGoalSimilarityGroup,
 } from './handlers';
 import {
   getGoalsByActivityRecipient,
@@ -834,7 +834,7 @@ describe('getGoalsByIdAndRecipient', () => {
   });
 });
 
-describe('getGoalsFromRecipientGroup', () => {
+describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
   const mockResponse = {
     json: jest.fn(),
     sendStatus: jest.fn(),
@@ -859,7 +859,7 @@ describe('getGoalsFromRecipientGroup', () => {
     getSimilarityGroupById.mockResolvedValue({ goals });
     getGoalsByActivityRecipient.mockResolvedValue(recipientGoals);
 
-    await getGoalsFromRecipientGroup(req, mockResponse);
+    await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
 
     expect(getSimilarityGroupById).toHaveBeenCalledWith(req.params.goalGroupId, {
       finalGoalId: null,
@@ -887,7 +887,7 @@ describe('getGoalsFromRecipientGroup', () => {
     recipientById.mockResolvedValue({});
     getSimilarityGroupById.mockResolvedValue(null);
 
-    await getGoalsFromRecipientGroup(req, mockResponse);
+    await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
 
     expect(getSimilarityGroupById).toHaveBeenCalledWith(req.params.goalGroupId, {
       finalGoalId: null,
@@ -908,7 +908,7 @@ describe('getGoalsFromRecipientGroup', () => {
     const error = new Error('Test error');
     recipientById.mockResolvedValue({});
     getSimilarityGroupById.mockRejectedValue(error);
-    await getGoalsFromRecipientGroup(req, mockResponse);
+    await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
