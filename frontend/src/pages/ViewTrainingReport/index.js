@@ -44,7 +44,7 @@ export default function ViewTrainingReport({ match }) {
     async function fetchEvent() {
       try {
         setIsAppLoading(true);
-        const e = await eventById(match.params.trainingReportId);
+        const e = await eventById(match.params.trainingReportId, true);
         setEvent(e);
       } catch (err) {
         let message = 'Sorry, something went wrong';
