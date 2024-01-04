@@ -10,7 +10,7 @@ import {
   File,
   Resource,
 } from '../models';
-import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
 import { cacheObjectiveMetadata } from './reportCache';
 
 export async function saveObjectivesForReport(objectives, report) {

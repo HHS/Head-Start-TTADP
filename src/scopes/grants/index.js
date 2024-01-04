@@ -8,6 +8,7 @@ import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGroup, withoutGroup } from './group';
+import { noActivityWithin } from './recipientsWithoutTTA';
 
 export const topicToQuery = {
   recipient: {
@@ -35,6 +36,10 @@ export const topicToQuery = {
     win: (query) => activeWithinDates(query),
     in: (query) => activeWithinDates(query),
   },
+  recipientsWithoutTTA: {
+    win: (query) => noActivityWithin(query),
+    in: (query) => noActivityWithin(query),
+  },
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
@@ -49,7 +54,6 @@ export function grantsFiltersToScopes(filters, options, userId) {
   const isSubset = options && options.subset;
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-
     if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
       return condition in topicToQuery.activeWithin;
     }

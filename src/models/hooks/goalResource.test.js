@@ -46,6 +46,7 @@ describe('goalResource hooks', () => {
     await Goal.destroy({
       where: { id: goalToDestroy.id },
       individualHooks: true,
+      force: true,
     });
 
     // Delete resource.

@@ -170,6 +170,7 @@ describe('activity report model hooks', () => {
         where: {
           id: [objective.id, objective2.id],
         },
+        force: true,
       });
 
       await ActivityReport.destroy({
@@ -182,6 +183,7 @@ describe('activity report model hooks', () => {
         where: {
           id: goal.id,
         },
+        force: true,
       });
 
       await Grant.unscoped().destroy({
@@ -286,8 +288,10 @@ describe('activity report model hooks', () => {
 
       await ActivityReportObjective.create({
         activityReportId: report2.id,
-        status: 'Complete',
+        status: 'Suspended',
         objectiveId: objective2.id,
+        closeSuspendReason: 'Recipient request',
+        closeSuspendContext: 'It was a request from the recipient',
       });
 
       let testGoal = await Goal.findByPk(goal.id);
@@ -318,8 +322,11 @@ describe('activity report model hooks', () => {
       testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');
 
+      // here we also verify that the suspend metadata was saved to the parent objective
       testObjective = await Objective.findByPk(objective2.id);
-      expect(testObjective.status).toEqual('Complete');
+      expect(testObjective.status).toEqual('Suspended');
+      expect(testObjective.closeSuspendReason).toEqual('Recipient request');
+      expect(testObjective.closeSuspendContext).toEqual('It was a request from the recipient');
     });
 
     it('unlocking report adjusts objective status', async () => {

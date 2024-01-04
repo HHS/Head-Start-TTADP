@@ -55,6 +55,8 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   id: `new-${l}`,
   status: 'Not Started',
   isNew: true,
+  closeSuspendReason: null,
+  closeSuspendContext: null,
 });
 
 export const OBJECTIVE_FORM_FIELD_INDEXES = {
@@ -62,9 +64,10 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
   TOPICS: 1,
   RESOURCES: 2,
   STATUS: 3,
+  STATUS_SUSPEND_REASON: 4,
 };
 
-export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>];
+export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>];
 
 export const TTA_OBJECTIVE_ERROR = 'Enter the TTA objective';
 export const OBJECTIVE_TOPIC_ERROR = 'Select at least one topic';

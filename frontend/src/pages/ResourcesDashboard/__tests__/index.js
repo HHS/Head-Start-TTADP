@@ -95,6 +95,7 @@ const resourcesDefault = {
     },
     ],
   },
+  reportIds: [1, 2, 3],
 };
 
 const resourcesRegion1 = {
@@ -161,6 +162,7 @@ const resourcesRegion1 = {
     },
     ],
   },
+  reportIds: [],
 };
 
 const resourcesRegion2 = {
@@ -227,6 +229,20 @@ const resourcesRegion2 = {
     },
     ],
   },
+  activityReports: {
+    count: 1,
+    rows: [],
+    topics: [],
+    recipients: [],
+  },
+  reportIds: [],
+};
+
+const reportResponse = {
+  count: 0,
+  rows: [],
+  topics: [],
+  recipients: [],
 };
 
 const allRegions = 'region.in[]=1&region.in[]=2';
@@ -234,6 +250,7 @@ const mockAnnounce = jest.fn();
 const regionInParams = 'region.in[]=1';
 const regionTwoInParams = 'region.in[]=2';
 const reportIdInParams = 'region.in[]=1&region.in[]=2&reportId.ctn[]=123';
+const reportPostUrl = '/api/activity-reports/reportsByManyIds';
 
 describe('Resources Dashboard page', () => {
   afterEach(() => fetchMock.restore());
@@ -262,6 +279,8 @@ describe('Resources Dashboard page', () => {
 
     // Report ID (non-region).
     fetchMock.get(`${resourcesUrl}?${reportIdInParams}`, resourcesRegion2);
+
+    fetchMock.post(reportPostUrl, reportResponse);
 
     const user = {
       homeRegionId: 14,
@@ -296,6 +315,18 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/262/i)).toBeInTheDocument();
+
+    // Resources Associated Default.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/https:\/\/official1\.gov/i)).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /773/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
 
     // Add region filter.
     let open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -336,6 +367,17 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
 
+    // Resources Region 1.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/https:\/\/official2\.gov/i)).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /111/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /222/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
     // Remove filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
@@ -366,6 +408,18 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/262/i)).toBeInTheDocument();
+
+    // Resources Associated Default.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/https:\/\/official1\.gov/)).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /773/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
 
     // Add region filter test pill remove.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -401,6 +455,18 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/19/i)).toBeInTheDocument();
+
+    // Resources Region 2.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/https:\/\/official3\.gov/i)).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /555/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
 
     // Test filter updates from region pill remove.
     let removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
@@ -438,7 +504,9 @@ describe('Resources Dashboard page', () => {
     act(() => userEvent.selectOptions(lastCondition, 'contains'));
 
     const reportIdText = await screen.findByRole('textbox', { name: /enter a report id/i });
-    act(() => fireEvent.change(reportIdText, { target: { value: '123' } }));
+    act(() => {
+      fireEvent.change(reportIdText, { target: { value: '123' } });
+    });
 
     apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
     act(() => userEvent.click(apply));
@@ -461,6 +529,18 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/19/i)).toBeInTheDocument();
+
+    // Resources Region 2.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/https:\/\/official3\.gov/i)).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /555/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
 
     // Test remove non-region filter pill.
     removePill = await screen.findByRole('button', { name: /this button removes the filter: report id contains 123/i });
@@ -486,11 +566,25 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/262/i)).toBeInTheDocument();
+
+    // Resources Associated Default.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Topics/i })).toBeInTheDocument();
+    expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/https:\/\/official1\.gov/i)).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /773/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
   });
 
   it('handles errors by displaying an error message', async () => {
     // Page Load.
     fetchMock.get(`${resourcesUrl}?${allRegions}`, 500, { overwriteRoutes: true });
+    fetchMock.post(reportPostUrl, reportResponse);
 
     const user = {
       homeRegionId: 14,
@@ -508,5 +602,90 @@ describe('Resources Dashboard page', () => {
     const [alert] = await screen.findAllByRole('alert');
     expect(alert).toBeVisible();
     expect(alert.textContent).toBe('Unable to fetch resources');
+  });
+
+  it('exports reports en masse', async () => {
+    // Page Load.
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
+    fetchMock.post(reportPostUrl, {
+      count: 1,
+      rows: [{
+        id: 1,
+        sortedTopics: [],
+        activityRecipients: [],
+        displayId: 'R-1-23',
+      }],
+      topics: [],
+      recipients: [],
+    });
+
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderResourcesDashboard(user);
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    const exportReportsMenu = await screen.findByRole('button', { name: /reports menu/i });
+    act(() => userEvent.click(exportReportsMenu));
+
+    const getAllUrl = '/api/activity-reports/download-all?id=1&id=2&id=3';
+    fetchMock.get(getAllUrl, 200);
+
+    const exportAllReportsButton = document.querySelector('#activity-reportsexport-table');
+    act(() => userEvent.click(exportAllReportsButton));
+
+    expect(fetchMock.called(getAllUrl)).toBe(true);
+  });
+  it('exports reports singly', async () => {
+    // Page Load.
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
+    fetchMock.post(reportPostUrl, {
+      count: 1,
+      rows: [{
+        id: 1,
+        sortedTopics: [],
+        activityRecipients: [],
+        displayId: 'R-1-23',
+      }],
+      topics: [],
+      recipients: [],
+    });
+
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderResourcesDashboard(user);
+
+    const checkbox = await screen.findByRole('checkbox', { name: /select R-1-23/i });
+    act(() => userEvent.click(checkbox));
+
+    const exportReportsMenu = await screen.findByRole('button', { name: /reports menu/i });
+    act(() => userEvent.click(exportReportsMenu));
+
+    const csvUrl = '/api/activity-reports/download?format=csv&report[]=1';
+    fetchMock.get(csvUrl, 200);
+
+    const exportSelectedReportsButton = document.querySelector('#activity-reportsexport-reports');
+    act(() => userEvent.click(exportSelectedReportsButton));
+
+    expect(fetchMock.called(csvUrl)).toBe(true);
   });
 });

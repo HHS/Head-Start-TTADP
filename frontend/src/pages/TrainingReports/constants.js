@@ -3,18 +3,24 @@ import PropTypes from 'prop-types';
 import {
   startDateFilter,
   regionFilter,
-  collaboratorFilter,
+  collaboratorsFilter,
+  creatorFilter,
+  eventIdFilter,
 } from '../../components/filter/trainingReportFilters';
 
 const TRAINING_REPORT_BASE_FILTER_CONFIG = [
   startDateFilter,
-  collaboratorFilter,
+  creatorFilter,
+  collaboratorsFilter,
+  eventIdFilter,
 ];
 
 const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
   startDateFilter,
   regionFilter,
-  collaboratorFilter,
+  creatorFilter,
+  collaboratorsFilter,
+  eventIdFilter,
 ];
 
 // sort both by display prop

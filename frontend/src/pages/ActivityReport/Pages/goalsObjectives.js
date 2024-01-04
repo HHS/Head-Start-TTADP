@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
 import { IN_PROGRESS } from '../../../components/Navigator/constants';
 import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
-import { validateGoals } from './components/goalValidator';
+import { validateGoals, validatePrompts } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
@@ -27,18 +27,6 @@ import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
-
-export const validatePrompts = async (promptTitles, trigger) => {
-  // attempt to validate prompts
-  if (promptTitles && promptTitles.length) {
-    const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
-    if (outputs.some((output) => output === false)) {
-      return false;
-    }
-  }
-
-  return true;
-};
 
 const GoalsObjectives = ({
   reportId,
@@ -252,7 +240,7 @@ const GoalsObjectives = ({
   return (
     <>
       <Helmet>
-        <title>Goals and objectives</title>
+        <title>Goals and Objectives</title>
       </Helmet>
       { isFormOpen && (
       <IndicatesRequiredField />

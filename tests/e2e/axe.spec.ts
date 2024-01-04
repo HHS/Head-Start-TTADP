@@ -16,9 +16,9 @@ const axeUrls = [
   'http://localhost:3000/recipient-tta-records',
   'http://localhost:3000/recipient-tta-records/9/region/1/profile',
   'http://localhost:3000/recipient-tta-records/9/region/1/tta-history',
-  'http://localhost:3000/recipient-tta-records/9/region/1/goals-objectives',
+  'http://localhost:3000/recipient-tta-records/9/region/1/rttapa',
   'http://localhost:3000/recipient-tta-records/9/region/1/goals/new',
-  'http://localhost:3000/recipient-tta-records/9/region/1/goals-objectives/print',
+  'http://localhost:3000/recipient-tta-records/9/region/1/rttapa/print',
 ];
 
 const testForAxeViolations = async (page: Page, url: string) => {

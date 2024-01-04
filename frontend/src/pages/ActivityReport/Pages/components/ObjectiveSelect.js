@@ -34,7 +34,8 @@ export default function ObjectiveSelect({
         )}
       </div>
       <Label>
-        Select TTA objective
+        Select TTA objective&nbsp;
+        {' '}
         <Req />
         {noObjectiveError}
         <Select
@@ -45,6 +46,7 @@ export default function ObjectiveSelect({
           styles={selectOptionsReset}
           placeholder="- Select -"
           value={selectedObjectives}
+          required
         />
       </Label>
 

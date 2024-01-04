@@ -307,8 +307,11 @@ describe('Objective status update hook', () => {
           reportOnlyUsingObjective.id],
       },
     });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] } });
-    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] } });
+    await Objective.destroy({
+      where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] },
+      force: true,
+    });
+    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] }, force: true });
     await Grant.destroy({ where: { id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id] } });
     await Recipient.destroy({
       where:

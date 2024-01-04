@@ -37,6 +37,16 @@ services:
       - "9443:9443"
     environment:
       - MAX_FILE_SIZE=30M
+  similarity_api:
+    build:
+      context: ./similarity_api
+    ports:
+      - "9100:8080"
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - "./similarity_api/src:/app:rw"
   redis:
     image: redis:5.0.6-alpine
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
@@ -50,6 +60,7 @@ services:
       - "1080:1080"
   opensearch-node1:
     image: opensearchproject/opensearch:1.3.2
+    env_file: .env
     container_name: opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
@@ -61,6 +72,19 @@ services:
     ports:
       - 9200:9200
       - 9600:9600 # required for Performance Analyzer
+  testingonly:
+    build:
+      context: .
+    ports:
+      - "9999:9999"
+    depends_on:
+      - db
+    volumes:
+      - ".:/app:rw"
+    command: yarn start:testingonly
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=development
 volumes:
   dbdata: {}
   miniodata: {}

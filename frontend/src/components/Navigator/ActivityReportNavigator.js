@@ -11,7 +11,7 @@ import moment from 'moment';
 import {
   IN_PROGRESS, COMPLETE,
 } from './constants';
-import { OBJECTIVE_RESOURCES, validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
+import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
@@ -139,6 +139,7 @@ const ActivityReportNavigator = ({
     watch,
     errors,
     reset,
+    trigger,
   } = hookForm;
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -542,6 +543,8 @@ const ActivityReportNavigator = ({
       objectives,
       regionId: formData.regionId,
     };
+
+    await validatePrompts(promptTitles, trigger);
 
     // validate goals will check the form and set errors
     // where appropriate

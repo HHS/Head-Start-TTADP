@@ -4,14 +4,18 @@ import {
   recipientById,
   recipientsByName,
   recipientsByUserId,
+  recipientLeadership,
+  allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
-import { goalsByIdAndRecipient } from '../../services/goals';
+import { goalsByIdAndRecipient } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import Recipient from '../../policies/recipient';
 import { userById } from '../../services/users';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
+import SCOPES from '../../middleware/scopeConstants';
+import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -107,25 +111,81 @@ export async function searchRecipients(req, res) {
 
 export async function getGoalsByRecipient(req, res) {
   try {
-    const { recipientId, regionId } = req.params;
-    // Check if user has access to this region.
-    const userId = await currentUserId(req, res);
-    const readRegions = await getUserReadRegions(userId);
-    if (!readRegions.includes(parseInt(regionId, 10))) {
-      res.sendStatus(403);
+    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+
+    if (!proceedQuestionMark) {
       return;
     }
 
-    // Check recipient exists.
-    const recipient = await recipientById(recipientId, []);
-    if (!recipient) {
-      res.sendStatus(404);
-      return;
-    }
+    const { recipientId, regionId } = req.params;
 
     // Get goals for recipient.
     const recipientGoals = await getGoalsByActivityRecipient(recipientId, regionId, req.query);
     res.json(recipientGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientLeadership(req, res) {
+  try {
+    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+
+    if (!proceedQuestionMark) {
+      return;
+    }
+
+    const { recipientId, regionId } = req.params;
+
+    // Get goals for recipient.
+    const leadership = await recipientLeadership(recipientId, regionId);
+    res.json(leadership);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function validateMergeGoalPermissions(req, res) {
+  const { recipientId, regionId } = req.params;
+
+  if (!recipientId || !regionId) {
+    res.sendStatus(httpCodes.BAD_REQUEST);
+    return false;
+  }
+
+  const recipient = await recipientById(recipientId, []);
+  if (!recipient) {
+    res.sendStatus(httpCodes.NOT_FOUND);
+    return false;
+  }
+
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const arUsers = await allArUserIdsByRecipientAndRegion(
+    Number(recipientId),
+    Number(regionId),
+  );
+
+  const userIsAdmin = user.permissions.some((p) => p.scopeId === SCOPES.ADMIN);
+
+  const policy = new Recipient(
+    user,
+    recipient,
+    arUsers.includes(userId),
+  );
+
+  return policy.canMergeGoals() || userIsAdmin;
+}
+
+export async function getMergeGoalPermissions(req, res) {
+  try {
+    const canMergeGoalsForRecipient = await validateMergeGoalPermissions(req, res);
+
+    if (!res.headersSent) {
+      res.json({
+        canMergeGoalsForRecipient,
+      });
+    }
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

@@ -624,10 +624,10 @@ describe('statisticsByUser', () => {
 
     // Delete objectives.
     await Objective.destroy({
-      where:
-      {
+      where: {
         id: [obj1.id, obj2.id, obj3.id, obj4.id, obj5.id],
       },
+      force: true,
     });
 
     // Delete goals.
@@ -635,6 +635,7 @@ describe('statisticsByUser', () => {
       where: {
         grantId: [grantOne.id, grantTwo.id, grantThree.id],
       },
+      force: true,
     });
 
     // Delete Grants.

@@ -16,6 +16,7 @@ import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
+import FilterActivityReportGoalResponseSelect from './FilterActivityReportGoalResponseSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
 import FilterProgramType from './FilterProgramType';
@@ -27,7 +28,8 @@ import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
-import { useDisplayGroups } from './utils';
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -49,13 +51,6 @@ const EMPTY_TEXT_INPUT = {
   'does not contain': '',
 };
 
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
-};
-
 const handleStringQuery = (q) => q;
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
@@ -65,13 +60,6 @@ const defaultDateValues = {
   'is within': '',
   'is on or after': '',
   'is on or before': '',
-};
-
-export const fixQueryWhetherStringOrArray = (query) => {
-  if (Array.isArray(query)) {
-    return query.join(', ');
-  }
-  return query;
 };
 
 export const startDateFilter = {
@@ -451,6 +439,22 @@ export const topicsFilter = {
       inputId={`topic-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
+    />
+  ),
+};
+
+export const activityReportGoalResponseFilter = {
+  id: 'activityReportGoalResponse',
+  display: 'FEI root cause',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterActivityReportGoalResponseSelect
+      inputId={`fei-root-cause-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      title="FEI root cause"
     />
   ),
 };

@@ -63,6 +63,8 @@ export default function ObjectiveTopics({
   }, { editableTopics: [], fixedTopics: [] });
 
   const savedTopicIds = fixedTopics ? fixedTopics.map(({ value }) => value) : [];
+
+  topicOptions.sort((a, b) => a.name.localeCompare(b.name));
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.id));
 
   return (
@@ -86,20 +88,22 @@ export default function ObjectiveTopics({
         <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
-        <Label htmlFor={inputName}>
-          <>
-            Topics
-            {' '}
-            <Req />
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled margin-left-1"
-              ref={drawerTriggerRef}
-            >
-              Get help choosing topics
-            </button>
-          </>
-        </Label>
+        <div className="display-flex">
+          <Label htmlFor={inputName}>
+            <>
+              Topics
+              {' '}
+              <Req />
+            </>
+          </Label>
+          <button
+            type="button"
+            className="usa-button__topics-drawer-trigger usa-button usa-button--unstyled margin-left-1"
+            ref={drawerTriggerRef}
+          >
+            Get help choosing topics
+          </button>
+        </div>
         {error}
         <Select
           inputName={inputName}
@@ -119,6 +123,7 @@ export default function ObjectiveTopics({
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}
           getOptionValue={(option) => option.id}
+          required
         />
       </FormGroup>
     </>

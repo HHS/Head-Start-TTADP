@@ -20,6 +20,8 @@ describe('ObjectiveForm', () => {
   const defaultObjective = {
     title: 'This is an objective',
     files: [],
+    closeSuspendReason: '',
+    closeSuspendContext: '',
     topics: [
       {
         id: 1,
@@ -50,7 +52,7 @@ describe('ObjectiveForm', () => {
         setObjectiveError={setObjectiveError}
         objective={objective}
         setObjective={setObjective}
-        errors={[<></>, <></>, <></>]}
+        errors={[<></>, <></>, <></>, <></>, <></>]}
         goalStatus={goalStatus}
         onUploadFiles={jest.fn()}
         topicOptions={[
@@ -79,7 +81,10 @@ describe('ObjectiveForm', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => {
+    fetchMock.restore();
+    jest.clearAllMocks();
+  });
 
   it('validates text and topics', async () => {
     const objective = {
@@ -103,19 +108,19 @@ describe('ObjectiveForm', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.click(resourceOne);
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>, <></>, <></>]);
 
     await selectEvent.select(topics, ['Coaching', 'Communication']);
 
     userEvent.click(topics);
     userEvent.click(resourceOne);
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>, <></>, <></>]);
 
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.click(objectiveText);
     userEvent.click(resourceOne);
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>, <></>, <></>]);
   });
 
   it('you can change status', async () => {

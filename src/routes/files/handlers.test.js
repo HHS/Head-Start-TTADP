@@ -174,9 +174,10 @@ describe('File Upload', () => {
             objective.dataValues.id, secondTestObjective.dataValues.id,
           ],
         },
+        force: true,
       },
     );
-    await Goal.destroy({ where: { id: goal.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
@@ -388,7 +389,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, or sessionId is required' });
+        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
       await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {

@@ -96,6 +96,7 @@ test.describe('get /users/training-report-users', () => {
     const schema = Joi.object({
       pointOfContact: Joi.array().items(Joi.any()),
       collaborators: Joi.array().items(Joi.any()),
+      creators: Joi.array().items(Joi.any()),
     });
     expect(response.status()).toBe(200);
     await validateSchema(response, schema, expect);

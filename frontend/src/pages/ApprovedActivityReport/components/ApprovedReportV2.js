@@ -88,6 +88,11 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Objective status': objective.status,
+        ...(objective.status === 'Suspended' ? {
+          'Reason suspended': (
+            objective.closeSuspendReason || ''
+          ) + (` - ${objective.closeSuspendContext}` || ''),
+        } : {}),
       },
       isStriped,
     };

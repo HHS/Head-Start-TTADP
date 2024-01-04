@@ -30,7 +30,6 @@ import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
 import useSocket, { publishLocation } from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
-
 import {
   submitReport,
   saveReport,
@@ -41,6 +40,7 @@ import {
   getApprovers,
   reviewReport,
   resetToDraft,
+  getGroupsForActivityReport,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -76,10 +76,58 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
+  recipientGroup: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
+
+export const formatReportWithSaveBeforeConversion = async (
+  data,
+  formData,
+  user,
+  userHasOneRole,
+  reportId,
+  approverIds,
+) => {
+  // if it isn't a new report, we compare it to the last response from the backend (formData)
+  // and pass only the updated to save report
+  const creatorRole = !data.creatorRole && userHasOneRole
+    ? user.roles[0].fullName
+    : data.creatorRole;
+
+  const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
+  const isEmpty = Object.keys(updatedFields).length === 0;
+
+  // save report returns dates in YYYY-MM-DD format, so we need to parse them
+  // formData stores them as MM/DD/YYYY so we are good in that instance
+  const thereIsANeedToParseDates = !isEmpty;
+
+  const updatedReport = isEmpty
+    ? { ...formData }
+    : await saveReport(
+      reportId.current, {
+        ...updatedFields,
+        version: 2,
+        approverUserIds: approverIds,
+        pageState: data.pageState,
+      }, {},
+    );
+
+  let reportData = {
+    ...updatedReport,
+  };
+
+  if (thereIsANeedToParseDates) {
+    reportData = {
+      ...reportData,
+      startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+      endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+    };
+  }
+
+  return reportData;
+};
 
 export function cleanupLocalStorage(id, replacementKey) {
   try {
@@ -135,6 +183,7 @@ function ActivityReport({
       },
       collaborators: [],
       availableApprovers: [],
+      groups: [],
     },
   );
   const [isApprover, updateIsApprover] = useState(false);
@@ -222,9 +271,10 @@ function ActivityReport({
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+          getGroupsForActivityReport(report.regionId),
         ];
 
-        const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
+        const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
 
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
@@ -243,6 +293,13 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
+        // Add recipientIds to groups.
+        const groupsWithRecipientIds = groups.map((group) => ({
+          ...group,
+          // Match groups to grants as recipients could have multiple grants.
+          recipients: group.grants.map((g) => g.id),
+        }));
+
         updateAdditionalData({
           recipients: recipients || {
             grants: [],
@@ -250,6 +307,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
+          groups: groupsWithRecipientIds || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -401,24 +459,11 @@ function ActivityReport({
     const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
-        const { startDate, endDate, ...fields } = data;
-        let startDateToSave = startDate;
-        if (startDateToSave === 'Invalid date' || startDateToSave === '' || !moment(startDateToSave, 'MM/DD/YYYY').isValid()) {
-          startDateToSave = null;
-        }
-
-        let endDateToSave = endDate;
-        if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
-          endDateToSave = null;
-        }
-
         const savedReport = await createReport(
           {
-            ...fields,
+            ...data,
             ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
-            startDate: startDateToSave,
-            endDate: endDateToSave,
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,
@@ -438,27 +483,16 @@ function ActivityReport({
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
       } else {
-        // if it isn't a new report, we compare it to the last response from the backend (formData)
-        // and pass only the updated to save report
-        const creatorRole = !data.creatorRole && userHasOneRole
-          ? user.roles[0].fullName
-          : data.creatorRole;
-        const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
-        const updatedReport = await saveReport(
-          reportId.current, {
-            ...updatedFields,
-            version: 2,
-            approverUserIds:
-            approverIds,
-            pageState: data.pageState,
-          }, {},
+        const updatedReport = await formatReportWithSaveBeforeConversion(
+          data,
+          formData,
+          user,
+          userHasOneRole,
+          reportId,
+          approverIds,
         );
 
-        let reportData = {
-          ...updatedReport,
-          startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-          endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-        };
+        let reportData = updatedReport;
 
         // if we are dealing with a recipient report, we need to do a little magic to
         // format the goals and objectives appropriately, as well as divide them
@@ -470,7 +504,7 @@ function ActivityReport({
           );
 
           reportData = {
-            ...reportData,
+            ...updatedReport,
             goalForEditing,
             goals,
           };
@@ -540,7 +574,7 @@ function ActivityReport({
         {error}
       </Alert>
       )}
-      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
+      <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">

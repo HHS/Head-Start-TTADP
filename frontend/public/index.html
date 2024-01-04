@@ -1,16 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <% if (process.env.REACT_APP_GTM_ENABLED === 'true') { %>
-    <!-- Google Tag Manager -->
-    <script nonce="__NONCE__">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl+ '&gtm_auth=%REACT_APP_GTM_AUTH%&gtm_preview=%REACT_APP_GTM_PREVIEW%&gtm_cookies_win=x';f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer', '%REACT_APP_GTM_ID%');</script>
-    <!-- End Google Tag Manager -->
-    <% } %>
-
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/logo64.png" />
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -26,6 +16,9 @@
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
+
+    <script src="https://kit.fontawesome.com/73bd30a032.js" crossorigin="anonymous"></script>
+
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
@@ -51,5 +44,15 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+
+    <% if (process.env.REACT_APP_GTM_ENABLED === 'true') { %>
+      <!-- Google Tag Manager -->
+      <script nonce="__NONCE__">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl+ '&gtm_auth=%REACT_APP_GTM_AUTH%&gtm_preview=%REACT_APP_GTM_PREVIEW%&gtm_cookies_win=x';f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer', '%REACT_APP_GTM_ID%');</script>
+      <!-- End Google Tag Manager -->
+    <% } %> 
   </body>
 </html>

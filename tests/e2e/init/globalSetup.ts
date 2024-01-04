@@ -1,10 +1,6 @@
-// @ts-ignore
-import { UserValidationStatus } from '../../../src/models';
-
 async function globalSetup() {
-  if (!process.env.CI) {
-    await UserValidationStatus.destroy({ where: {} });
-  }
+  // ...
+  process.env.SEND_NOTIFICATIONS = ''; 
 }
 
 export default globalSetup;

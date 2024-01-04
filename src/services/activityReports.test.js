@@ -976,6 +976,13 @@ describe('Activity report service', () => {
         });
       });
 
+      it('retrieves reports when directly provided with IDS', async () => {
+        const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude }, false, 0, [latestReport.id]);
+        expect(rows.length).toBe(1);
+        expect(count).toBeDefined();
+        expect(rows[0].id).toBe(latestReport.id);
+      });
+
       it('retrieves reports with default sort by updatedAt', async () => {
         const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude });
         expect(rows.length).toBe(5);
@@ -1134,6 +1141,18 @@ describe('Activity report service', () => {
         );
         expect(foundApprovedReports.length).toBe(1);
         expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
+      });
+
+      it('returns all approved reports when provided with IDs', async () => {
+        const rows = await getAllDownloadableActivityReports(
+          [14],
+          {},
+          0,
+          [approvedReport.id],
+        );
+        const ids = rows.map((row) => row.id);
+        expect(ids.length).toEqual(1);
+        expect(ids).toContain(approvedReport.id);
       });
 
       it('will return legacy reports', async () => {

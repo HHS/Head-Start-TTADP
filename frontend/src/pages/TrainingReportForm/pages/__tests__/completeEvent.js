@@ -3,6 +3,8 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -23,9 +25,10 @@ describe('completeEvent', () => {
       status: 'Not started',
       pageState: defaultPageState,
       ownerId: 1,
+      eventId: 'R01-PD-1234',
     };
 
-    const sessionsUrl = '/api/session-reports/eventId/1';
+    const sessionsUrl = '/api/session-reports/eventId/1234';
     const onSubmit = jest.fn();
     const onSaveForm = jest.fn();
     const onUpdatePage = jest.fn();
@@ -37,30 +40,34 @@ describe('completeEvent', () => {
         defaultValues,
       });
 
+      const history = createMemoryHistory();
+
       const formData = hookForm.watch();
 
       return (
-        <FormProvider {...hookForm}>
-          <UserContext.Provider value={{ user: { id: 1 } }}>
-            <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
-              <NetworkContext.Provider value={{ connectionActive: true }}>
-                {completeEvent.render(
-                  {},
-                  formData,
-                  1,
-                  false,
-                  jest.fn(),
-                  onSaveForm,
-                  onUpdatePage,
-                  false,
-                  '',
-                  onSubmit,
-                  () => <></>,
-                )}
-              </NetworkContext.Provider>
-            </AppLoadingContext.Provider>
-          </UserContext.Provider>
-        </FormProvider>
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            <UserContext.Provider value={{ user: { id: 1 } }}>
+              <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {completeEvent.render(
+                    {},
+                    formData,
+                    1,
+                    false,
+                    jest.fn(),
+                    onSaveForm,
+                    onUpdatePage,
+                    false,
+                    '',
+                    onSubmit,
+                    () => <></>,
+                  )}
+                </NetworkContext.Provider>
+              </AppLoadingContext.Provider>
+            </UserContext.Provider>
+          </FormProvider>
+        </Router>
       );
     };
 
@@ -91,7 +98,7 @@ describe('completeEvent', () => {
       expect(statusSelect).toHaveValue('Complete');
     });
 
-    it('not started is an option when there are no sessions', async () => {
+    it('not started and suspended are options when there are no sessions', async () => {
       fetchMock.getOnce(sessionsUrl, []);
 
       act(() => {
@@ -105,7 +112,30 @@ describe('completeEvent', () => {
 
       // but there should be no select
       const statusSelect = screen.queryByRole('combobox', { name: /status/i });
-      expect(statusSelect).toBeNull();
+      expect(statusSelect).not.toBeNull();
+      const options = screen.queryAllByRole('option');
+      const optionTexts = options.map((option) => option.textContent);
+      expect(optionTexts).toEqual(['Not started', 'Suspended']);
+    });
+
+    it('suspended events change the button text and call "onSave"', async () => {
+      fetchMock.getOnce(sessionsUrl, []);
+
+      act(() => {
+        render(<RenderCompleteEvent />);
+      });
+
+      const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+
+      act(() => {
+        userEvent.selectOptions(statusSelect, 'Suspended');
+      });
+
+      const submitButton = await screen.findByRole('button', { name: /suspend event/i });
+      userEvent.click(submitButton);
+
+      expect(onSaveForm).toHaveBeenCalled();
+      expect(onSubmit).not.toHaveBeenCalled();
     });
 
     it('handles an error fetching sessions', async () => {
@@ -122,9 +152,11 @@ describe('completeEvent', () => {
       const status = await screen.findByText('Not started');
       expect(status).toBeInTheDocument();
 
-      // but there should be no select
       const statusSelect = screen.queryByRole('combobox', { name: /status/i });
-      expect(statusSelect).toBeNull();
+      expect(statusSelect).not.toBeNull();
+      const options = screen.queryAllByRole('option');
+      const optionTexts = options.map((option) => option.textContent);
+      expect(optionTexts).toEqual(['Not started', 'Suspended']);
     });
 
     it('calls onUpdatePage when the back button is clicked', async () => {
@@ -170,9 +202,11 @@ describe('completeEvent', () => {
       const status = await screen.findByText('Not started');
       expect(status).toBeInTheDocument();
 
-      // there should be no select
       const statusSelect = screen.queryByRole('combobox', { name: /status/i });
-      expect(statusSelect).toBeNull();
+      expect(statusSelect).not.toBeNull();
+      const options = screen.queryAllByRole('option');
+      const optionTexts = options.map((option) => option.textContent);
+      expect(optionTexts).toEqual(['Not started', 'Suspended']);
 
       const submitButton = await screen.findByRole('button', { name: /submit/i });
       act(() => {
@@ -298,7 +332,7 @@ describe('completeEvent', () => {
       fetchMock.getOnce(sessionsUrl, []);
 
       act(() => {
-        render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState }} />);
+        render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState, eventId: 'R01-PD-1234' }} />);
       });
 
       const statusLabel = await screen.findByText('Event status');

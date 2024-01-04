@@ -105,7 +105,7 @@ describe('cachePrompts', () => {
     await destroyReport(report);
     await GoalFieldResponse.destroy({ where: { goalId } });
     await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id } });
-    await Goal.destroy({ where: { goalTemplateId: template.id } });
+    await Goal.destroy({ where: { goalTemplateId: template.id }, force: true });
     await GoalTemplate.destroy({ where: { id: template.id } });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });

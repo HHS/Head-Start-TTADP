@@ -58,6 +58,7 @@ export const formData = () => ({
   files: [],
   creatorNameWithRole: 'test',
   objectivesWithoutGoals: [],
+  recipientGroup: null,
 });
 
 export const ReportComponent = ({

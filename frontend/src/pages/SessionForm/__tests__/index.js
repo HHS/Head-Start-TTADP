@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SessionForm from '..';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -34,6 +35,7 @@ describe('SessionReportForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     fetchMock.reset();
 
     // the basic app before stuff
@@ -75,6 +77,7 @@ describe('SessionReportForm', () => {
   });
 
   it('fetches existing session report form', async () => {
+    jest.useFakeTimers();
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
@@ -86,7 +89,6 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-
     jest.advanceTimersByTime(30000);
 
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
@@ -288,7 +290,9 @@ describe('SessionReportForm', () => {
         1: IN_PROGRESS,
         2: COMPLETE,
         3: COMPLETE,
+        4: COMPLETE,
       },
+      'pageVisited-supporting-attachments': true,
       sessionName: 'Test session',
       endDate: '01/01/2024',
       startDate: '01/01/2024',
@@ -331,5 +335,49 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).toBe(true));
+  });
+  it('redirects if session is complete', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const formData = {
+      eventId: 1,
+      eventDisplayId: 'R-EVENT',
+      id: 1,
+      ownerId: 1,
+      eventName: 'Test event',
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
+      pageState: {
+        1: IN_PROGRESS,
+        2: COMPLETE,
+        3: COMPLETE,
+      },
+      sessionName: 'Test session',
+      endDate: '01/01/2024',
+      startDate: '01/01/2024',
+      duration: 1,
+      context: 'asasfdsafasdfsdaf',
+      objective: 'test objective',
+      objectiveTopics: ['topic'],
+      objectiveTrainers: ['DTL'],
+      objectiveResources: [],
+      files: [],
+      objectiveSupportType: 'Planning',
+      regionId: 1,
+      participants: [1],
+      recipients: [1],
+      deliveryMethod: 'In-person',
+      numberOfParticipants: 1,
+      ttaProvided: 'oH YEAH',
+      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+    };
+
+    fetchMock.get(url, formData);
+
+    act(() => {
+      renderSessionForm('1', 'complete-session', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+    expect(history.location.pathname).toBe('/training-report/view/1');
   });
 });

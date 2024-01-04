@@ -8,6 +8,7 @@ function PaginationCard({
   offset,
   perPage,
   handlePageChange,
+  className,
 }) {
   const getPageInfo = () => {
     const from = offset >= totalCount ? 0 : offset + 1;
@@ -27,7 +28,7 @@ function PaginationCard({
   };
 
   return (
-    <div className="smart-hub--pagination-card display-flex bg-white">
+    <div className={`smart-hub--pagination-card display-flex bg-white ${className}`}>
       <div className="display-flex flex-1 flex-align-center margin-left-4">{getPageInfo()}</div>
       <Pagination
         className="padding-1"
@@ -35,7 +36,7 @@ function PaginationCard({
         totalPages={getTotalPages()}
         onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
-        onClickPageNumber={(e, page) => handlePageChange(page)}
+        onClickPageNumber={(_e, page) => handlePageChange(page)}
       />
     </div>
   );
@@ -46,6 +47,7 @@ PaginationCard.propTypes = {
   offset: PropTypes.number,
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func.isRequired,
+  className: PropTypes.string,
 };
 
 PaginationCard.defaultProps = {
@@ -53,5 +55,6 @@ PaginationCard.defaultProps = {
   currentPage: 0,
   offset: 0,
   perPage: 10,
+  className: '',
 };
 export default PaginationCard;

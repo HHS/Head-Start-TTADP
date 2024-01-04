@@ -1,5 +1,10 @@
 import { Op } from 'sequelize';
-import { OBJECTIVE_STATUS } from '../../constants';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { validateChangedOrSetEnums } from '../helpers/enum';
+import { skipIf } from '../helpers/flowControl';
+import {
+  currentUserPopulateCollaboratorForType,
+} from '../helpers/genericCollaborator';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -268,6 +273,35 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
+const autoPopulateCreator = async (sequelize, instance, options) => {
+  if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
+  const { id: goalId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    'objective',
+    sequelize,
+    options.transaction,
+    goalId,
+    OBJECTIVE_COLLABORATORS.CREATOR,
+  );
+};
+
+const autoPopulateEditor = async (sequelize, instance, options) => {
+  const { id: goalId } = instance;
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('title')
+    && instance.previous('title') !== instance.title) {
+    return currentUserPopulateCollaboratorForType(
+      'objective',
+      sequelize,
+      options.transaction,
+      goalId,
+      OBJECTIVE_COLLABORATORS.EDITOR,
+    );
+  }
+  return Promise.resolve();
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -277,6 +311,7 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
+  validateChangedOrSetEnums(sequelize, instance);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
@@ -289,10 +324,12 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateEditor(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateCreator(sequelize, instance, options);
 };
 
 export {

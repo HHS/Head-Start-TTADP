@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -25,6 +26,10 @@ const RenderSubmitter = ({
     defaultValues: formData,
   });
 
+  hookForm.register('goalsAndObjectives');
+  // eslint-disable-next-line react/prop-types
+  hookForm.setValue('goalsAndObjectives', formData.goalsAndObjectives || []);
+
   return (
     <FormProvider {...hookForm}>
       <Submitter
@@ -33,7 +38,7 @@ const RenderSubmitter = ({
         onResetToDraft={onResetToDraft}
         onSaveForm={onSave}
         formData={formData}
-        availableApprovers={[{ name: 'test', id: 1 }]}
+        availableApprovers={[{ name: 'test', id: 1 }, { id: 2, name: 'Test2' }, { id: 3, name: 'Test3' }]}
       >
         <div />
       </Submitter>
@@ -57,11 +62,12 @@ const renderReview = (
   calculatedStatus,
   onFormSubmit,
   complete = true,
-  onSave = () => { },
-  resetToDraft = () => { },
+  onSave = jest.fn(),
+  resetToDraft = jest.fn(),
   approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
   user = defaultUser,
   creatorRole = null,
+  hasIncompleteGoalPrompts = false,
 ) => {
   const formData = {
     approvers,
@@ -70,6 +76,16 @@ const renderReview = (
     id: 1,
     creatorRole,
   };
+
+  if (hasIncompleteGoalPrompts) {
+    formData.goalsAndObjectives = [{
+      isCurated: true,
+      prompts: [{
+        allGoalsHavePromptResponse: false,
+        title: 'FEI Goal',
+      }],
+    }];
+  }
 
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
@@ -117,6 +133,26 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
+    });
+
+    it('shows an error if goals are missing prompts', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        jest.fn(),
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        true,
+      );
+
+      const alert = await screen.findByText('Incomplete report');
+      expect(alert).toBeVisible();
+
+      expect(await screen.findByText(/some goals are incomplete/i)).toBeVisible();
+      expect(await screen.findByText(/fei goal/i)).toBeVisible();
     });
 
     it('fails to submit if there are pages that have not been completed', async () => {
@@ -184,7 +220,7 @@ describe('Submitter review page', () => {
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
-      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('displays approvers requesting action', async () => {
@@ -194,7 +230,7 @@ describe('Submitter review page', () => {
         { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', user: { fullName: 'Needs Action 2' } },
       ];
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
       expect(screen.getByText(
         /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i,
       )).toBeVisible();
@@ -212,7 +248,7 @@ describe('Submitter review page', () => {
     it('fails to re-submit if there are pages that have not been completed', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: /update/i });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });
@@ -220,7 +256,19 @@ describe('Submitter review page', () => {
     it('allows the user to resubmit the report', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: /update/i });
+      userEvent.click(button);
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+
+    it('allows the user to add an approver', async () => {
+      const approvers = [
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
+      ];
+      const mockSubmit = jest.fn();
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, approvers);
+      await selectEvent.select(document.querySelector('#approvers'), ['Test2', 'Test3']);
+      const button = await screen.findByRole('button', { name: /update/i });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
@@ -230,7 +278,7 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }] });
 
       // Resubmit.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
@@ -241,10 +289,10 @@ describe('Submitter review page', () => {
 
       // Shows creator role.
       expect(await screen.findByText(/creator role/i)).toBeVisible();
-      const roleSelector = await screen.findByRole('combobox');
+      const roleSelector = await screen.findByLabelText(/creator role/i);
 
       // Resubmit without selecting creator roles shows validation error.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /update/i });
       userEvent.click(reSubmit);
 
       // Verify validation message.
@@ -276,10 +324,10 @@ describe('Submitter review page', () => {
       );
 
       // Hides creator role.
-      expect(screen.queryByRole('combobox')).toBeNull();
+      expect(screen.queryByRole('combobox', { name: /creator role/i })).toBeNull();
 
       // Resubmit without validation error.
-      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      const reSubmit = await screen.findByRole('button', { name: /Update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
