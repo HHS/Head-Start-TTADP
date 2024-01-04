@@ -43,6 +43,7 @@ module.exports = {
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
+        { transaction },
       );
       await queryInterface.createTable(
         'GoalSimilarityGroupGoals',
@@ -74,13 +75,12 @@ module.exports = {
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
+        { transaction },
       );
-    });
 
-    await queryInterface.addConstraint('GoalSimilarityGroupGoals', {
-      type: 'unique',
-      name: 'GoalSimilarityGroupGoals_goalSimilarityGroupId_goalId_unique',
-      fields: ['goalSimilarityGroupId', 'goalId'],
+      await queryInterface.sequelize.query(`
+      ALTER TABLE "GoalSimilarityGroupGoals" ADD CONSTRAINT "GoalSimilarityGroupGoals_goalSimilarityGroupId_goalId_unique" UNIQUE ("goalSimilarityGroupId", "goalId");
+    `, { transaction });
     });
   },
   async down(queryInterface) {
