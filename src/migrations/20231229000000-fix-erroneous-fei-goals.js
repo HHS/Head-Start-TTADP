@@ -244,6 +244,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- Delete duplicate objective files
+      DROP TABLE IF EXISTS deleted_objective_files;
       CREATE TEMP TABLE deleted_objective_files
       AS
       WITH updater AS (
