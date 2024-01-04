@@ -298,11 +298,11 @@ class GoalSimilarityGroupGoals{
 
 class GoalSimilarityGroups{
  * id : integer : <generated>
+ finalGoalId : integer : REFERENCES "Goals".id
  * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * userHasInvalidated : boolean : false
- finalGoalId : integer
 }
 
 class GoalTemplateFieldPrompts{
@@ -1947,6 +1947,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goal, goalCo
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goal, goalSimilarityGroupGoals
+Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : finalGoal, goalSimilarityGroups
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo

@@ -25,6 +25,11 @@ module.exports = {
           finalGoalId: {
             type: Sequelize.INTEGER,
             allowNull: true,
+            references: {
+              model: {
+                tableName: 'Goals',
+              },
+            },
           },
           recipientId: {
             allowNull: false,
@@ -70,6 +75,12 @@ module.exports = {
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
       );
+    });
+
+    await queryInterface.addConstraint('GoalSimilarityGroupGoals', {
+      type: 'unique',
+      name: 'GoalSimilarityGroupGoals_goalSimilarityGroupId_goalId_unique',
+      fields: ['goalSimilarityGroupId', 'goalId'],
     });
   },
   async down(queryInterface) {
