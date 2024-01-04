@@ -129,7 +129,7 @@ export async function getGoalsByRecipient(req, res) {
   }
 }
 
-export async function getGoalsFromRecipientGroup(req, res) {
+export async function getGoalsFromRecipientGoalSimilarityGroup(req, res) {
   try {
     const proceedQuestionMark = await checkAccessAndExistence(req, res);
 
