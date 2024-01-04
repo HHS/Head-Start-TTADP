@@ -40,7 +40,7 @@ export async function countOccurrences(scopes, column, possibilities) {
 
 export function countBySingleKey(data, key, results) {
   // Get counts for each key.
-  data.forEach((point) => {
+  data?.forEach((point) => {
     point[key].forEach((r) => {
       const obj = results.find((e) => e.name === r);
       if (obj) {
