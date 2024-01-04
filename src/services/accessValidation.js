@@ -28,6 +28,10 @@ async function getUserRegionsByPermissions(userId, scopeIds) {
 }
 
 export async function validateUserAuthForAccess(userId) {
+  if (!userId || typeof userId !== 'number') {
+    return false;
+  }
+
   const userPermission = await Permission.findOne({
     where: {
       userId,
@@ -63,8 +67,8 @@ export async function userIsPocRegionalCollaborator(userId) {
 }
 
 export async function validateUserAuthForAdmin(userId) {
-  if (typeof userId !== 'number' || Number.isNaN(userId)) {
-    throw new Error('Invalid userId: must be a number');
+  if (!userId || typeof userId !== 'number') {
+    return false;
   }
 
   try {
