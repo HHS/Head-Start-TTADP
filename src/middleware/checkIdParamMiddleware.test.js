@@ -542,7 +542,7 @@ describe('checkIdParamMiddleware', () => {
       const mockRequest = {
         path: '/api/endpoint',
         params: {
-          communicationLogId: '2D',
+          goalGroupId: '2D',
         },
       };
 
