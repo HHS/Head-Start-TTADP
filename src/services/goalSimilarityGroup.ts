@@ -47,21 +47,20 @@ export async function getSimilarityGroupById(
 
 export async function getSimilarityGroupsContainingGoalId(goalId: number) {
   const groups = await GoalSimilarityGroup.findAll({
-    where: {
-      id: {
-        [Op.in]: db.sequelize.literal(
-          `(
-            SELECT gsgg."goalSimilarityGroupId"
-            FROM "GoalSimilarityGroupGoals" gsgg
-            WHERE gsgg."goalId" = ${goalId}
-            GROUP BY gsgg."goalSimilarityGroupId"
-          )`,
-        ),
-      },
-    },
     attributes: similarityGroupAttributes,
     include: [
       {
+        model: GoalSimilarityGroupGoal,
+        as: 'goalSimilarityGroups',
+        where: {
+          goalId,
+        },
+        required: true,
+      },
+      {
+        through: {
+          attributes: [],
+        },
         model: Goal,
         as: 'goals',
         attributes: ['id'],
@@ -140,6 +139,7 @@ export async function setSimilarityGroupAsUserInvalidated(similarityGroupId: num
       where: {
         id: similarityGroupId,
       },
+      individualHooks: true,
     },
   );
 }
@@ -156,6 +156,7 @@ export async function setSimilarityGroupAsUserMerged(
       where: {
         id,
       },
+      individualHooks: true,
     },
   );
 }
@@ -165,12 +166,14 @@ export async function deleteSimilarityGroup(similarityGroupId: number) {
     where: {
       goalSimilarityGroupId: similarityGroupId,
     },
+    individualHooks: true,
   });
 
   return GoalSimilarityGroup.destroy({
     where: {
       id: similarityGroupId,
     },
+    individualHooks: true,
   });
 }
 
@@ -197,13 +200,14 @@ export async function createSimilarityGroup(recipientId: number, goals: number[]
 
   const newGroup = await GoalSimilarityGroup.create({
     recipientId,
-  });
+  }, { individualHooks: true });
 
   await GoalSimilarityGroupGoal.bulkCreate(
     goals.map((goalId) => ({
       goalId,
       goalSimilarityGroupId: newGroup.id,
     })),
+    { individualHooks: true },
   );
 
   return getSimilarityGroupById(newGroup.id);
