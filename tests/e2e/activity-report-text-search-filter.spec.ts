@@ -7,8 +7,8 @@ async function blur(page) {
 /**
  * This should be called before clicking the apply filters button, it returns three
  * "waitForRequest" promises that should be awaited before continuing.
- *
- * @param page
+ * 
+ * @param page 
  * @returns Array of three promises that can be awaited
  */
 const waitForLandingFilterRequests = (page: Page): Promise<any>[] => {
@@ -103,7 +103,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Objective.
     await page.getByText('Select TTA objective *- Select -').click();
     await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');  
     await blur(page);
     await page.waitForTimeout(10000);
 
@@ -192,7 +192,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
     // Doesn't contain context.
-    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
+    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();    
     await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
     await page.getByLabel('Enter report text').fill('the ocean is');
     prs = waitForLandingFilterRequests(page);
@@ -223,7 +223,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
     await page.getByLabel('Enter report text').fill('first meal');
     prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
+    await page.getByTestId('apply-filters-test-id').click();    
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
