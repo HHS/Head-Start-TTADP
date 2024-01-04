@@ -63,7 +63,7 @@ export async function userIsPocRegionalCollaborator(userId) {
 }
 
 export async function validateUserAuthForAdmin(userId) {
-  if (typeof userId !== 'number') {
+  if (typeof userId !== 'number' || Number.isNaN(userId)) {
     throw new Error('Invalid userId: must be a number');
   }
 
