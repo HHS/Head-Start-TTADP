@@ -63,6 +63,10 @@ export async function userIsPocRegionalCollaborator(userId) {
 }
 
 export async function validateUserAuthForAdmin(userId) {
+  if (typeof userId !== 'number') {
+    throw new Error('Invalid userId: must be a number');
+  }
+
   try {
     const userPermission = await Permission.findOne({
       where: {
