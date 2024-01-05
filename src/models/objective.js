@@ -32,6 +32,16 @@ export default (sequelize, DataTypes) => {
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
+
+      Objective.hasMany(models.ObjectiveCourse, { foreignKey: 'objectiveId', as: 'objectiveCourses' });
+
+      Objective.belongsToMany(models.Course, {
+        through: models.ObjectiveCourse,
+        foreignKey: 'objectiveId',
+        otherKey: 'courseId',
+        as: 'courses',
+      });
+
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
       Objective.belongsToMany(models.Resource, {
         through: models.ObjectiveResource,
@@ -54,6 +64,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'files',
       });
+
       Objective.belongsTo(models.Objective, {
         foreignKey: 'mapsToParentObjectiveId',
         as: 'parentObjective',
