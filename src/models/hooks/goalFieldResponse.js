@@ -1,3 +1,5 @@
+import { Op } from 'sequelize';
+
 const autoPopulateOnAR = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.onAR === undefined
@@ -43,16 +45,29 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, options
         where: {
           goalTemplateFieldPromptId,
         },
-        include: {
+        include: [{
           attributes: ['id', 'activityReportId'],
           required: true,
           model: sequelize.models.ActivityReportGoal,
           as: 'activityReportGoal',
           where: {
             goalId,
-            onApprovedAR: false, // Only update ActivityReportGoalFieldResponses on unapproved ARs.
           },
+          include: [
+            {
+              attributes: ['id', 'calculatedStatus'],
+              required: true,
+              model: sequelize.models.ActivityReport,
+              as: 'activityReport',
+              where: {
+                calculatedStatus: {
+                  [Op.ne]: 'approved', // Only update ActivityReportGoalFieldResponses on unapproved ARs.
+                },
+              },
+            },
+          ],
         },
+        ],
       },
     );
 
