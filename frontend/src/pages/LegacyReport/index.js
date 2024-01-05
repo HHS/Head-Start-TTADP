@@ -21,6 +21,10 @@ const EditForm = ({ id, data }) => {
     'manager',
   ];
 
+  const hints = {
+    manager: 'You can enter multiple by separating them with a semicolon (;)',
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -38,15 +42,6 @@ const EditForm = ({ id, data }) => {
     }
   };
 
-  EditForm.propTypes = {
-    id: PropTypes.number.isRequired,
-    data: PropTypes.shape({
-      createdBy: PropTypes.string,
-      modifiedBy: PropTypes.string,
-      manager: PropTypes.string,
-    }).isRequired,
-  };
-
   return (
     <div>
       {message ? <Alert type={message.type}>{message.text}</Alert> : null}
@@ -57,6 +52,9 @@ const EditForm = ({ id, data }) => {
           return (
             <div key={field}>
               <label className="usa-label" htmlFor={field}>{field}</label>
+              <span className="usa-hint">
+                {hints[field] || 'Enter one email address'}
+              </span>
               <input className="usa-input" type="text" name={field} id={field} defaultValue={value} />
             </div>
           );
@@ -67,6 +65,15 @@ const EditForm = ({ id, data }) => {
       </form>
     </div>
   );
+};
+
+EditForm.propTypes = {
+  id: PropTypes.number.isRequired,
+  data: PropTypes.shape({
+    createdBy: PropTypes.string,
+    modifiedBy: PropTypes.string,
+    manager: PropTypes.string,
+  }).isRequired,
 };
 
 function LegacyReport({ match }) {

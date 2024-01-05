@@ -1,11 +1,12 @@
 /* eslint-disable import/prefer-default-export */
 import express, { Response, Request } from 'express';
+import { Op } from 'sequelize';
+import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import db from '../../models';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { checkReportIdParam } from '../../middleware/checkIdParamMiddleware';
-import { synchonizeUserDataOnLegacyReports } from '../../services/activityReports';
 
 const namespace = 'ADMIN:LEGACY-REPORTS';
 const logContext = { namespace };
@@ -16,21 +17,6 @@ const {
   ActivityReportCollaborator,
   ActivityReportApprover,
 } = db;
-
-/**
- *
- * @param {Request} req - request
- * @param {Response} res - response
- */
-
-export async function updateAllLegacyReportUsers(req: Request, res: Response) {
-  try {
-    await synchonizeUserDataOnLegacyReports();
-    res.status(200).json({ message: 'All legacy reports updated successfully' });
-  } catch (err) {
-    await handleError(req, res, err, logContext);
-  }
-}
 
 /**
    *
@@ -45,7 +31,7 @@ export async function updateLegacyReportUsers(req: Request, res: Response) {
   try {
     const reportId = parseInt(req.params.reportId, DECIMAL_BASE);
     const data = req.body;
-    const { createdBy, modifiedBy, manager } = data;
+    const { createdBy, modifiedBy, manager: managers } = data;
 
     const report = await ActivityReport.findByPk(reportId);
 
@@ -63,7 +49,7 @@ export async function updateLegacyReportUsers(req: Request, res: Response) {
       ...imported,
       createdBy,
       modifiedBy,
-      manager,
+      manager: managers,
     });
 
     const promises = [];
@@ -99,24 +85,55 @@ export async function updateLegacyReportUsers(req: Request, res: Response) {
             userId: collaborator.id,
           },
         }));
-      }
-    }
-    if (manager) {
-      const approver = await User.findOne({
-        attributes: ['id', 'email'],
-        where: {
-          email: manager.trim(),
-        },
-      });
-
-      if (!approver) {
-        messages.push(`User with email ${manager} not found. Report approver not added.`);
-      } else {
-        promises.push(ActivityReportApprover.findOrCreate({
+        promises.push(ActivityReportCollaborator.destroy({
           where: {
             activityReportId: report.id,
-            userId: approver.id,
+            userId: {
+              [Op.not]: collaborator.id,
+            },
           },
+        }));
+      }
+    }
+    if (managers) {
+      const approverIds = [];
+      const managerialTalent = managers.split(';');
+      for (let i = 0; i < managerialTalent.length; i += 1) {
+        const manager = managerialTalent[i];
+        // eslint-disable-next-line no-await-in-loop
+        const approver = await User.findOne({
+          attributes: ['id', 'email'],
+          where: {
+            email: manager.trim(),
+          },
+        });
+
+        if (!approver) {
+          messages.push(`User with email ${manager} not found. Report approver not added.`);
+        } else {
+          approverIds.push(approver.id);
+          promises.push(ActivityReportApprover.findOrCreate({
+            where: {
+              activityReportId: report.id,
+              userId: approver.id,
+            },
+            // we do not want to run the hooks for this model
+            // we do not care about tracking the status of the approval
+            // for legacy reports
+            individualHooks: false,
+          }));
+        }
+
+        promises.push(ActivityReportApprover.destroy({
+          where: {
+            activityReportId: report.id,
+            userId: {
+              [Op.notIn]: approverIds,
+            },
+          },
+          // same as before, we don't want to
+          // be updating statuses of legacy reports
+          individualHooks: false,
         }));
       }
     }
@@ -124,7 +141,7 @@ export async function updateLegacyReportUsers(req: Request, res: Response) {
     promises.push(report.save());
     await Promise.all(promises);
 
-    res.status(200).json({ messages });
+    res.status(httpCodes.OK).json({ messages });
   } catch (err) {
     await handleError(req, res, err, logContext);
   }
@@ -132,7 +149,6 @@ export async function updateLegacyReportUsers(req: Request, res: Response) {
 
 const router = express.Router();
 
-router.post('/users', transactionWrapper(synchonizeUserDataOnLegacyReports));
 router.put('/:reportId/users', checkReportIdParam, transactionWrapper(updateLegacyReportUsers));
 
 export default router;
