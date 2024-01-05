@@ -136,7 +136,7 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].useIpdCourses`,
-    defaultValue: (objective.ipdCourses && objective.ipdCourses.length) || false,
+    defaultValue: (objective.courses && objective.courses.length) || false,
   });
 
   const {
@@ -147,7 +147,7 @@ export default function Objective({
       name: objectiveIpdCoursesInputName,
     },
   } = useController({
-    name: `${fieldArrayName}[${index}].ipdCourses`,
+    name: `${fieldArrayName}[${index}].courses`,
     defaultValue: objective.ipdCourses || [],
     rules: {
       required: objectiveUseIpdCourses === true,
@@ -240,8 +240,8 @@ export default function Objective({
     setStatusForCalculations(newObjective.status);
 
     // ipd course
-    onChangeUseIpdCourses(newObjective.useIpdCourses);
-    onChangeIpdCourses(newObjective.ipdCourses);
+    onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
+    onChangeIpdCourses(newObjective.courses);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {

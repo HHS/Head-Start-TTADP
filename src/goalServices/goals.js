@@ -5,14 +5,13 @@ import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
-  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
-  ObjectiveCollaborator,
+  ObjectiveCourse,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -20,6 +19,7 @@ import {
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveCourse,
   sequelize,
   Recipient,
   Resource,
@@ -28,9 +28,9 @@ import {
   ActivityRecipient,
   ActivityReportGoalFieldResponse,
   Topic,
+  Course,
   Program,
   File,
-  CollaboratorType,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -256,6 +256,7 @@ export async function saveObjectiveAssociations(
   resources = [],
   topics = [],
   files = [],
+  courses = [],
   deleteUnusedAssociations = false,
 ) {
   // We need to know if the objectiveTemplateId is populated to know if we
@@ -352,10 +353,48 @@ export async function saveObjectiveAssociations(
     });
   }
 
+  const objectiveCourses = await Promise.all(
+    courses.map(
+      async (course) => {
+        let ocourse = await ObjectiveCourse.findOne({
+          where: {
+            courseId: course.id,
+            objectiveId: objective.id,
+          },
+        });
+        if (!ocourse) {
+          ocourse = await ObjectiveCourse.create({
+            courseId: course.id,
+            objectiveId: objective.id,
+          }, {
+            // including this despite not really knowing why it's here
+            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+          });
+        }
+        return ocourse;
+      },
+    ),
+  );
+
+  if (deleteUnusedAssociations) {
+    // cleanup objective courses
+    await ObjectiveCourse.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveCourses && objectiveCourses.length
+            ? objectiveCourses.map((oc) => oc.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+      individualHooks: true,
+    });
+  }
+
   return {
     topics: objectiveTopics,
     resources: objectiveResources,
     files: objectiveFiles,
+    courses: objectiveCourses,
   };
 }
 
@@ -452,6 +491,15 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
           : []),
       ], (e) => e.id);
 
+      exists.courses = uniqBy([
+        ...exists.couses,
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveCourses
+            .map((c) => c.course.dataValues)
+          : []),
+      ], (e) => e.id);
+
       exists.files = uniqBy([
         ...exists.files,
         ...(objective.activityReportObjectives
@@ -518,6 +566,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
           .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+        : [],
+      courses: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveCourses
+          .map((c) => c.course.dataValues)
         : [],
     }];
   }, currentObjectives);
@@ -793,6 +846,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: Topic,
             as: 'topics',
+            required: false,
+          },
+          {
+            model: Course,
+            as: 'courses',
             required: false,
           },
           {
@@ -1333,6 +1391,7 @@ export async function createOrUpdateGoals(goals) {
           resources,
           topics,
           files,
+          [],
           deleteUnusedAssociations,
         );
 
@@ -1832,6 +1891,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     || o.ttaProvided
     || o.topics.length
     || o.resources.length
+    || o.courses.length
     || o.files.length).map(async (objective, index) => {
     const {
       id,
@@ -1843,6 +1903,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      courses,
       closeSuspendReason,
       closeSuspendContext,
       ...updatedFields
@@ -1907,6 +1968,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      courses,
       deleteUnusedAssociations,
     );
 
@@ -2230,6 +2292,18 @@ export async function getGoalsForReport(reportId) {
                   {
                     model: File,
                     as: 'file',
+                  },
+                ],
+              },
+              {
+                separate: true,
+                model: ActivityReportObjectiveCourse,
+                as: 'activityReportObjectiveCourses',
+                required: false,
+                include: [
+                  {
+                    model: Course,
+                    as: 'course',
                   },
                 ],
               },
