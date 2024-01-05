@@ -15,6 +15,14 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveCourses' });
+
+      ActivityReportObjective.belongsToMany(models.Course, {
+        through: models.ActivityReportObjectiveCourse,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'courseId',
+        as: 'courses',
+      });
 
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
