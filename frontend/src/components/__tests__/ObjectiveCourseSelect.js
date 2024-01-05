@@ -41,7 +41,7 @@ describe('ObjectiveCourseSelect', () => {
   ));
 
   it('updates use courses', async () => {
-    fetchMock.get('/api/course', courseResponse);
+    fetchMock.get('/api/courses', courseResponse);
     const onChangeUseIpdCourses = jest.fn();
     await act(() => waitFor(() => {
       renderObjectiveCourseSelect(
@@ -61,7 +61,7 @@ describe('ObjectiveCourseSelect', () => {
   });
 
   it('clears selection on "no"', async () => {
-    fetchMock.get('/api/course', courseResponse);
+    fetchMock.get('/api/courses', courseResponse);
     const onChangeUseIpdCourses = jest.fn();
     const onChange = jest.fn();
 
@@ -84,7 +84,7 @@ describe('ObjectiveCourseSelect', () => {
   });
 
   it('updates course selection', async () => {
-    fetchMock.get('/api/course', courseResponse);
+    fetchMock.get('/api/courses', courseResponse);
     const onChange = jest.fn();
     await act(() => waitFor(() => {
       renderObjectiveCourseSelect(
@@ -99,7 +99,7 @@ describe('ObjectiveCourseSelect', () => {
   });
 
   it('handles fetch error', async () => {
-    fetchMock.get('/api/course', 404);
+    fetchMock.get('/api/courses', 404);
     const onChange = jest.fn();
     await act(() => waitFor(() => {
       renderObjectiveCourseSelect(
