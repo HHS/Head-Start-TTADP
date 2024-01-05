@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import db, { Course } from '../models';
 import {
   csvImport,
+  getAllCourses,
 } from './course';
 
 describe('Course', () => {
@@ -59,6 +60,11 @@ describe('Course', () => {
       expect(course).toBeTruthy();
       expect(course.name).toBe(newCourseName);
       expect(course.nameLookUp).toBe('samplecoursenametocreate');
+
+      // test our find all
+      const courses = await getAllCourses();
+      expect(courses.length).toBe(1);
+      expect(courses[0].name).toBe(newCourseName);
     });
 
     it('existing course with exact match', async () => {
@@ -72,7 +78,7 @@ describe('Course', () => {
         name: existingCourse1,
         nameLookUp: existingCourse1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      const originalUpdatedAt = course1.updatedAt;
+
       courseNamesToCleanup.push(course1.nameLookUp);
 
       const course2 = await Course.create({
