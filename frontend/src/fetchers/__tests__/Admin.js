@@ -18,6 +18,7 @@ import {
   getGroupsByRegion,
   createMultiRecipientGoalsFromAdmin,
   closeMultiRecipientGoalsFromAdmin,
+  updateLegacyUsers,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -157,6 +158,15 @@ describe('Admin', () => {
       fetchMock.put(join('/', 'api', 'admin', 'goals', 'close'), res);
       const created = await closeMultiRecipientGoalsFromAdmin({});
       expect(created).toEqual(res);
+    });
+  });
+
+  describe('legacyReports', () => {
+    it('updateLegacyUsers', async () => {
+      const res = { updated: true };
+      fetchMock.put(join('/', 'api', 'admin', 'legacy-reports', '1', 'users'), res);
+      const updated = await updateLegacyUsers(1, {});
+      expect(updated).toEqual(res);
     });
   });
 
