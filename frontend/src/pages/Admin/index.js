@@ -12,7 +12,6 @@ import NationalCenters from './NationalCenters';
 import Email from './Email';
 import Goals from './Goals';
 import TrainingReports from './TrainingReports';
-import LegacyReports from './LegacyReports';
 
 function Admin() {
   return (
@@ -52,9 +51,6 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
           Redis info
-        </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/legacy-reports">
-          Legacy reports
         </NavLink>
       </div>
       <Switch>
@@ -97,10 +93,6 @@ function Admin() {
         <Route
           path="/admin/training-reports/"
           render={({ match }) => <TrainingReports match={match} />}
-        />
-        <Route
-          path="/admin/legacy-reports/"
-          render={({ match }) => <LegacyReports match={match} />}
         />
       </Switch>
     </>
