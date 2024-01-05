@@ -1,5 +1,4 @@
-/* eslint-disable import/prefer-default-export */
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
 import db, { sequelize } from '../models';
 
@@ -7,7 +6,24 @@ const {
   Course,
 } = db;
 
-export async function csvImport(buffer) {
+interface ICourse {
+  id: number;
+  name: string;
+}
+
+interface DecodedCSV {
+  'course name': string;
+}
+
+export async function getAllCourses(where: WhereOptions = {}) {
+  return Course.findAll({
+    where,
+    order: [['name', 'ASC']],
+    attributes: ['name', 'id'],
+  });
+}
+
+export async function csvImport(buffer: Buffer | string) {
   const created = [];
   const replaced = [];
   const updated = [];
@@ -21,7 +37,7 @@ export async function csvImport(buffer) {
   let rowCount = 1;
   let results;
   try {
-    results = await Promise.all(parsed.map(async (course) => {
+    results = await Promise.all(parsed.map(async (course: DecodedCSV) => {
       // Get the first property value form course object.
       let rawCourseName = course['course name'];
 
@@ -50,7 +66,7 @@ export async function csvImport(buffer) {
       // If exists.
       if (existingCourses.length) {
         // Check if any of the courses are exact match.
-        const exactMatch = existingCourses.find((c) => c.name === rawCourseName);
+        const exactMatch = existingCourses.find((c: ICourse) => c.name === rawCourseName);
 
         if (exactMatch) {
           // Update the value for 'updatedAt' on the existing.
@@ -60,7 +76,7 @@ export async function csvImport(buffer) {
             WHERE id = ${exactMatch.id}`);
           updated.push(exactMatch);
           // Add the course name to the importedCourseNames array.
-          importedCourseIds.push(...existingCourses.map((c) => c.id));
+          importedCourseIds.push(...existingCourses.map((c: ICourse) => c.id));
         } else {
           // Create a new course.
           const replacementCourse = await Course.create({
@@ -74,7 +90,7 @@ export async function csvImport(buffer) {
           }, {
             where: {
               id: {
-                [Op.in]: existingCourses.map((c) => c.id),
+                [Op.in]: existingCourses.map((c: ICourse) => c.id),
               },
               deletedAt: null,
             },
@@ -84,7 +100,7 @@ export async function csvImport(buffer) {
 
           // Add both the existing and new course names imported.
           importedCourseIds.push(replacementCourse.id);
-          importedCourseIds.push(...existingCourses.map((c) => c.id));
+          importedCourseIds.push(...existingCourses.map((c: ICourse) => c.id));
         }
       } else {
         // Create a new course.
