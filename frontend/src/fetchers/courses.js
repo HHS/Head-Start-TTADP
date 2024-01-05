@@ -3,9 +3,9 @@ import join from 'url-join';
 import { get } from './index';
 
 export async function getCourses() {
-  const courses = await get(join('/', 'api', 'course'));
+  const courses = await get(join('/', 'api', 'courses'));
   return courses.json();
-  // return [
+  // response like [
   //   { id: 1, name: 'Guiding Children\'s Behavior (BTS-P)' },
   //   { id: 2, name: 'Setting Up the Classroom (BTS-P)' },
   //   { id: 3, name: 'Social and Emotional Support (BTS-P)' },
