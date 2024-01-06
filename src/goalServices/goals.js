@@ -454,6 +454,24 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   return objectivesToSort;
 }
 
+const reduceRelationThroughActivityReportObjectives = (
+  objective,
+  join,
+  relation,
+  exists = {},
+) => {
+  const existingRelation = exists[relation] || [];
+  return uniqBy([
+    ...existingRelation,
+    ...(objective.activityReportObjectives
+      && objective.activityReportObjectives.length > 0
+      ? objective.activityReportObjectives[0][join]
+        .map((t) => t[relation].dataValues)
+        .filter((t) => t)
+      : []),
+  ], (e) => e.id);
+};
+
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
@@ -473,41 +491,33 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
-      exists.resources = uniqBy([
-        ...exists.resources,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.resource.dataValues)
-          : []),
-      ], (e) => e.value);
+      exists.resources = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+        exists,
+      );
 
-      exists.topics = uniqBy([
-        ...exists.topics,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic.dataValues)
-          : []),
-      ], (e) => e.id);
+      exists.topics = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+        exists,
+      );
 
-      exists.courses = uniqBy([
-        ...exists.couses,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveCourses
-            .map((c) => c.course.dataValues)
-          : []),
-      ], (e) => e.id);
+      exists.courses = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveCourses',
+        'course',
+        exists,
+      );
 
-      exists.files = uniqBy([
-        ...exists.files,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-          : []),
-      ], (e) => e.key);
+      exists.files = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveFiles',
+        'file',
+        exists,
+      );
 
       return objectives;
     }
@@ -551,27 +561,26 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => (t.topic ? t.topic.dataValues : null))
-          .filter((t) => t)
-        : [],
-      resources: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.resource.dataValues)
-        : [],
-      files: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-        : [],
-      courses: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveCourses
-          .map((c) => c.course.dataValues)
-        : [],
+      topics: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+      ),
+      resources: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+      ),
+      files: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveFiles',
+        'file',
+      ),
+      courses: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveCourses',
+        'course',
+      ),
     }];
   }, currentObjectives);
 
