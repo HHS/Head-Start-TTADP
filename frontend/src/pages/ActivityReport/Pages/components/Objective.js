@@ -136,7 +136,7 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].useIpdCourses`,
-    defaultValue: (objective.courses && objective.courses.length) || false,
+    defaultValue: !!(objective.courses && objective.courses.length) || false,
   });
 
   const {
@@ -148,7 +148,7 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].courses`,
-    defaultValue: objective.ipdCourses || [],
+    defaultValue: objective.courses || [],
     rules: {
       required: objectiveUseIpdCourses === true,
     },
