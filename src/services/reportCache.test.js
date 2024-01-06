@@ -19,9 +19,12 @@ import db, {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCourse,
   CollaboratorRole,
   Resource,
   Topic,
+  Course,
+  ObjectiveCourse,
 } from '../models';
 import {
   cacheGoalMetadata,
@@ -213,12 +216,6 @@ describe('cacheObjectiveMetadata', () => {
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2354.pdf',
     status: 'APPROVED',
     fileSize: 54417,
-  // }, {
-  //   id: 140000003,
-  //   originalFileName: 'test03.pdf',
-  //   key: '508bdc9e-8dec-4d64-b83d-59a72a4f2355.pdf',
-  //   status: 'APPROVED',
-  //   fileSize: 54417,
   }];
 
   let mockObjectiveTopics;
@@ -234,7 +231,6 @@ describe('cacheObjectiveMetadata', () => {
   let recipient;
   let grant;
   let report;
-  let activityRecipient;
   let goal;
   let objective;
   let files = [];
@@ -242,6 +238,8 @@ describe('cacheObjectiveMetadata', () => {
   const objectiveResources = [];
   const objectiveTopics = [];
   const topics = [];
+  let courseOne;
+  let courseTwo;
 
   beforeAll(async () => {
     [user] = await User.findOrCreate({ where: { ...mockUser } });
@@ -259,7 +257,7 @@ describe('cacheObjectiveMetadata', () => {
       },
     });
     [report] = await ActivityReport.findOrCreate({ where: { ...mockReport } });
-    [activityRecipient] = await ActivityRecipient.findOrCreate({
+    await ActivityRecipient.findOrCreate({
       where: {
         activityReportId: report.id,
         grantId: grant.id,
@@ -281,6 +279,28 @@ describe('cacheObjectiveMetadata', () => {
       objective.id,
       [mockObjectiveResources[0]],
     ));
+
+    courseOne = await Course.create({
+      name: faker.datatype.string(200),
+      nameLookUp: faker.datatype.string(200),
+    });
+
+    courseTwo = await Course.create({
+      name: faker.datatype.string(200),
+      nameLookUp: faker.datatype.string(200),
+    });
+
+    await ObjectiveCourse.bulkCreate([
+      {
+        objectiveId: objective.id,
+        courseId: courseOne.id,
+      },
+      {
+        objectiveId: objective.id,
+        courseId: courseTwo.id,
+      },
+    ]);
+
     topics.push((await Topic.findOrCreate({ where: { name: 'Coaching' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Communication' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } })));
@@ -294,6 +314,7 @@ describe('cacheObjectiveMetadata', () => {
     await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
+    await ObjectiveCourse.destroy({ where: { objectiveId: objective.id } });
     await ActivityRecipient.destroy({
       where: {
         [Op.or]: [
@@ -315,11 +336,16 @@ describe('cacheObjectiveMetadata', () => {
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
     await ActivityReportObjectiveTopic
       .destroy({ where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } } });
+    const aroCourses = await ActivityReportObjectiveCourse
+      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
+    await ActivityReportObjectiveTopic
+      .destroy({ where: { id: { [Op.in]: aroCourses.map((c) => c.id) } } });
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
     await Objective.destroy({ where: { id: objective.id }, force: true });
     await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: grant.id } });
+    await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({
       where: { roleId: role.id },
@@ -379,6 +405,13 @@ describe('cacheObjectiveMetadata', () => {
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
+          }, {
+            model: ActivityReportObjectiveCourse,
+            as: 'activityReportObjectiveCourses',
+            include: [{
+              model: Course,
+              as: 'course',
+            }],
           }],
         });
         expect(arg).toBeDefined();
@@ -386,6 +419,8 @@ describe('cacheObjectiveMetadata', () => {
         expect(aro.activityReportObjectiveFiles).toEqual([]);
         expect(aro.activityReportObjectiveResources).toEqual([]);
         expect(aro.activityReportObjectiveTopics).toEqual([]);
+        expect(aro.activityReportObjectiveTopics).toEqual([]);
+        expect(aro.activityReportObjectiveCourses).toEqual([]);
       }
       // });
       // i t('add to cache', async () => {
@@ -408,10 +443,17 @@ describe('cacheObjectiveMetadata', () => {
           },
         });
 
+        const coursesForThisObjective = await ObjectiveCourse.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
+
         const metadata = {
           files: filesForThisObjective,
           resources,
           topics: topicsForThisObjective,
+          courses: coursesForThisObjective,
           ttaProvided: null,
           order: 1,
         };
@@ -431,7 +473,12 @@ describe('cacheObjectiveMetadata', () => {
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
-          }],
+          },
+          {
+            model: ActivityReportObjectiveCourse,
+            as: 'activityReportObjectiveCourses',
+          },
+          ],
         });
         expect(aro).toBeDefined();
         expect(aro.activityReportObjectiveFiles.length).toEqual(1);
@@ -441,6 +488,7 @@ describe('cacheObjectiveMetadata', () => {
           .toEqual(mockObjectiveResources[0]);
 
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
+        expect(aro.activityReportObjectiveCourses.length).toEqual(2);
         expect(aro.arOrder).toEqual(2);
         expect(aro.activityReportObjectiveTopics[0].topicId)
           .toEqual(mockObjectiveTopics[0].topicId);
@@ -452,6 +500,7 @@ describe('cacheObjectiveMetadata', () => {
         await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
         await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
         await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
+        await ObjectiveCourse.destroy({ where: { courseId: courseOne.id } });
         objectiveFiles.push(await ObjectiveFile.findOrCreate({
           where: {
             objectiveId: objective.id,
@@ -483,11 +532,18 @@ describe('cacheObjectiveMetadata', () => {
             objectiveId: objective.id,
           },
         });
+
+        const coursesForThisObjective = await ObjectiveCourse.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
         // TODO: GH - fix
         const metadata = {
           files: filesForThisObjective,
           resources: [...resourcesForThisObjective, { url: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }], // TODO: GH - FIX
           topics: topicsForThisObjective,
+          courses: coursesForThisObjective,
           ttaProvided: null,
           order: 0,
         };
@@ -507,6 +563,9 @@ describe('cacheObjectiveMetadata', () => {
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
+          }, {
+            model: ActivityReportObjectiveCourse,
+            as: 'activityReportObjectiveCourses',
           }],
         });
         expect(aro).toBeDefined();
@@ -518,6 +577,7 @@ describe('cacheObjectiveMetadata', () => {
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
         expect(aro.activityReportObjectiveTopics[0].topicId)
           .toEqual(mockObjectiveTopics[1].topicId);
+        expect(aro.activityReportObjectiveCourses.length).toEqual(1);
       }
       // });
       // i t('remove from cache', async () => {
