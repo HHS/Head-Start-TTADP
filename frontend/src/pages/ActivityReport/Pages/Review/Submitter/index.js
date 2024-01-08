@@ -138,6 +138,7 @@ const Submitter = ({
               creatorRole={creatorRole}
               displayId={displayId}
               reportId={id}
+              availableApprovers={availableApprovers}
             />
           )}
         {approved
