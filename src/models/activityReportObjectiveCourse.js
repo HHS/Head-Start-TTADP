@@ -7,6 +7,13 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjectiveCourse.belongsTo(models.Course, { foreignKey: 'courseId', as: 'course' });
       models.Course.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'courseId', as: 'activityReportObjectiveCourses' });
 
+      models.ActivityReportObjective.belongsToMany(models.Course, {
+        through: models.ActivityReportObjectiveCourse,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'courseId',
+        as: 'courses',
+      });
+
       models.Course.belongsToMany(models.ActivityReportObjective, {
         through: models.ActivityReportObjectiveCourse,
         foreignKey: 'courseId',
