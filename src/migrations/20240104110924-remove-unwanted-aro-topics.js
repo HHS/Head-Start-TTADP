@@ -9,18 +9,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(
-        `DELETE FROM "ActivityReportObjectiveTopics"
-        WHERE "activityReportObjectiveId" IN (
-            SELECT aro."id"
-            FROM "ActivityReportObjectives" aro
-            INNER JOIN "ActivityReports" ar
-                ON aro."activityReportId" = ar.id
-            WHERE aro.id IN (
-                SELECT ("new_row_data"->'activityReportObjectiveId')::int
-                FROM "ZALActivityReportObjectiveTopics" where "dml_txid" = '00000000-0000-0000-0000-000002266502'
-            )
-            AND ar."version" = 1
-        );`,
+        `DELETE FROM  "ActivityReportObjectiveTopics" arot
+        USING "ActivityReportObjectives" aro
+        JOIN "ZALActivityReportObjectiveTopics" zaro
+          ON dml_txid = '00000000-0000-0000-0000-000002266502'
+          AND aro.id = (zaro.new_row_data->>'activityReportObjectiveId')::int
+        JOIN "ActivityReports" ar
+          ON aro."activityReportId" = ar.id
+          AND ar.version = 1
+        WHERE arot."activityReportObjectiveId" = aro.id;`,
         { transaction },
       );
     });
