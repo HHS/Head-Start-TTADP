@@ -20,7 +20,7 @@ describe('Course', () => {
     afterEach(async () => {
       await Course.destroy({
         where: {
-          nameLookUp:
+          name:
           {
             [Op.in]: courseNamesToCleanup,
           },
@@ -31,7 +31,7 @@ describe('Course', () => {
 
     it('creates a new course', async () => {
       const newCourseName = 'Sample Course Name to Create';
-      courseNamesToCleanup.push(newCourseName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
+      courseNamesToCleanup.push(newCourseName);
       const importData = `${headings}
       ${newCourseName}`;
 
@@ -57,7 +57,6 @@ describe('Course', () => {
 
       expect(course).toBeTruthy();
       expect(course.name).toBe(newCourseName);
-      expect(course.nameLookUp).toBe('samplecoursenametocreate');
     });
 
     it('existing course with exact match', async () => {
@@ -69,16 +68,14 @@ describe('Course', () => {
       // Create the existing courses.
       const course1 = await Course.create({
         name: existingCourse1,
-        nameLookUp: existingCourse1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
       const originalUpdatedAt = course1.updatedAt;
-      courseNamesToCleanup.push(course1.nameLookUp);
+      courseNamesToCleanup.push(course1.name);
 
       const course2 = await Course.create({
         name: existingCourse2,
-        nameLookUp: existingCourse2.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(course2.nameLookUp);
+      courseNamesToCleanup.push(course2.name);
 
       // Create data with exact match.
       const importData = `${headings}
@@ -105,13 +102,12 @@ describe('Course', () => {
       });
       expect(updateCourse).toBeTruthy();
       expect(updateCourse.name).toBe(existingCourse1);
-      expect(updateCourse.nameLookUp).toBe(existingCourse1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
       expect(new Date(updateCourse.updatedAt) > afterCreateDate).toBe(true);
     });
 
     it('existing courses without exact match', async () => {
       const courseToAdd = 'Existing course with exact match';
-      courseNamesToCleanup.push(courseToAdd.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
+      courseNamesToCleanup.push(courseToAdd);
 
       const existingCourse1 = 'Existing course with; exact\' match!';
       const existingCourse2 = ' Existing   course With EXAC T match ';
@@ -122,21 +118,18 @@ describe('Course', () => {
       // Create the existing courses.
       const course1 = await Course.create({
         name: existingCourse1,
-        nameLookUp: existingCourse1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(course1.nameLookUp);
+      courseNamesToCleanup.push(course1.name);
 
       const course2 = await Course.create({
         name: existingCourse2,
-        nameLookUp: existingCourse2.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(course2.nameLookUp);
+      courseNamesToCleanup.push(course2.name);
 
       const course3 = await Course.create({
         name: existingCourse3,
-        nameLookUp: existingCourse3.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(course3.nameLookUp);
+      courseNamesToCleanup.push(course3.name);
 
       // Create data with exact match.
       const importData = `${headings}
@@ -169,7 +162,6 @@ describe('Course', () => {
 
       expect(addedCourse).toBeTruthy();
       expect(addedCourse.name).toBe(courseToAdd);
-      expect(addedCourse.nameLookUp).toBe(courseToAdd.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
       expect(new Date(addedCourse.updatedAt) > afterCreateDate).toBe(true);
 
       // Get all the updated courses.
@@ -189,7 +181,7 @@ describe('Course', () => {
 
     it('deletes unused courses', async () => {
       const courseToAdd = 'Existing course with; exact\' match!';
-      courseNamesToCleanup.push(courseToAdd.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
+      courseNamesToCleanup.push(courseToAdd);
 
       const courseToDelete1 = 'Course to delete 1';
       const courseToDelete2 = 'Course to delete 2';
@@ -200,23 +192,20 @@ describe('Course', () => {
       // Delete 1.
       const courseDeleted1 = await Course.create({
         name: courseToDelete1,
-        nameLookUp: courseToDelete1.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(courseDeleted1.nameLookUp);
+      courseNamesToCleanup.push(courseDeleted1.name);
 
       // Delete 2.
       const courseDeleted2 = await Course.create({
         name: courseToDelete2,
-        nameLookUp: courseToDelete2.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(courseDeleted2.nameLookUp);
+      courseNamesToCleanup.push(courseDeleted2.name);
 
       // Delete 3.
       const courseDeleted3 = await Course.create({
         name: courseToDelete3,
-        nameLookUp: courseToDelete3.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
       });
-      courseNamesToCleanup.push(courseDeleted3.nameLookUp);
+      courseNamesToCleanup.push(courseDeleted3.name);
 
       // Create data with exact match.
       const importData = `${headings}
@@ -267,7 +256,6 @@ describe('Course', () => {
 
       expect(updateCourse).toBeTruthy();
       expect(updateCourse.name).toBe(courseToAdd);
-      expect(updateCourse.nameLookUp).toBe(courseToAdd.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
       expect(new Date(updateCourse.updatedAt) > afterCreateDate).toBe(true);
     });
   });

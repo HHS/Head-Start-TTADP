@@ -5,6 +5,21 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ObjectiveCourse.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
       ObjectiveCourse.belongsTo(models.Course, { foreignKey: 'courseId', as: 'course' });
+      models.Course.hasMany(models.ObjectiveCourse, { foreignKey: 'courseId', as: 'objectiveCourses' });
+
+      models.Course.belongsToMany(models.Objective, {
+        through: models.ObjectiveCourse,
+        foreignKey: 'courseId',
+        otherKey: 'objectiveId',
+        as: 'objectives',
+      });
+
+      models.Objective.belongsToMany(models.Course, {
+        through: models.ObjectiveCourse,
+        foreignKey: 'objectiveId',
+        otherKey: 'courseId',
+        as: 'courses',
+      });
     }
   }
   ObjectiveCourse.init({
