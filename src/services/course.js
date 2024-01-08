@@ -22,8 +22,13 @@ export async function csvImport(buffer) {
   let results;
   try {
     results = await Promise.all(parsed.map(async (course) => {
+      // Trim unexpected chars.
+      const trimmedKeys = Object.fromEntries(
+        Object.entries(course).map(([key, value]) => [key.trim(), value]),
+      );
+
       // Get the first property value form course object.
-      let rawCourseName = course['course name'];
+      let rawCourseName = trimmedKeys['course name'];
 
       if (!rawCourseName) {
         // Skip blank course name.
