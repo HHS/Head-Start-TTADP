@@ -237,8 +237,7 @@ class Courses{
  * id : integer : <generated>
  mapsTo : integer : REFERENCES "Courses".id
  * createdAt : timestamp with time zone : now()
- * name : varchar(255)
- * nameLookUp : varchar(255)
+ * name : text
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
 }
