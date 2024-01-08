@@ -22,9 +22,10 @@ services:
     env_file: .env
     ports:
       - "9000:9000"
+      - "9001:9001"
     volumes:
-      - miniodata:/data
-    command: server /data
+      - minio-data:/data
+    command: server /data --console-address ":9001"
   aws-cli:
     image: amazon/aws-cli
     env_file: .env
@@ -87,5 +88,5 @@ services:
       - NODE_ENV=development
 volumes:
   dbdata: {}
-  miniodata: {}
+  minio-data: {}
   opensearch-data1: {}
