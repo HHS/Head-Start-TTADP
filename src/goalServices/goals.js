@@ -2007,10 +2007,10 @@ export async function saveGoalsForReport(goals, report) {
         if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
+      }
 
-        if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
-          newOrUpdatedGoal.set({ endDate });
-        }
+      if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
+        newOrUpdatedGoal.set({ endDate });
       }
 
       if (status && status !== newOrUpdatedGoal.status) {
