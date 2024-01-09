@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -37,7 +38,7 @@ const RenderSubmitter = ({
         onResetToDraft={onResetToDraft}
         onSaveForm={onSave}
         formData={formData}
-        availableApprovers={[{ name: 'test', id: 1 }]}
+        availableApprovers={[{ name: 'test', id: 1 }, { id: 2, name: 'Test2' }, { id: 3, name: 'Test3' }]}
       >
         <div />
       </Submitter>
@@ -247,7 +248,7 @@ describe('Submitter review page', () => {
     it('fails to re-submit if there are pages that have not been completed', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: /update/i });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });
@@ -255,7 +256,19 @@ describe('Submitter review page', () => {
     it('allows the user to resubmit the report', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: /update/i });
+      userEvent.click(button);
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+
+    it('allows the user to add an approver', async () => {
+      const approvers = [
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
+      ];
+      const mockSubmit = jest.fn();
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, approvers);
+      await selectEvent.select(document.querySelector('#approvers'), ['Test2', 'Test3']);
+      const button = await screen.findByRole('button', { name: /update/i });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
@@ -276,7 +289,7 @@ describe('Submitter review page', () => {
 
       // Shows creator role.
       expect(await screen.findByText(/creator role/i)).toBeVisible();
-      const roleSelector = await screen.findByRole('combobox');
+      const roleSelector = await screen.findByLabelText(/creator role/i);
 
       // Resubmit without selecting creator roles shows validation error.
       const reSubmit = await screen.findByRole('button', { name: /update/i });
@@ -311,7 +324,7 @@ describe('Submitter review page', () => {
       );
 
       // Hides creator role.
-      expect(screen.queryByRole('combobox')).toBeNull();
+      expect(screen.queryByRole('combobox', { name: /creator role/i })).toBeNull();
 
       // Resubmit without validation error.
       const reSubmit = await screen.findByRole('button', { name: /Update/i });
