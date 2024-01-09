@@ -311,9 +311,9 @@ export async function setFieldPromptForCuratedTemplate(
         { response },
         {
           where: {
+            // GoalFieldResponses should always be updated regardless of on approved ar.
             goalTemplateFieldPromptId: promptId,
             goalId: goalIdsToUpdate,
-            onApprovedAR: false,
           },
           individualHooks: true,
         },
