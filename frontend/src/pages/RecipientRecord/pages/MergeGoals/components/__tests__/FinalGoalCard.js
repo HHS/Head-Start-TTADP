@@ -4,6 +4,7 @@ import { render, act } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FinalGoalCard from '../FinalGoalCard';
+import UserContext from '../../../../../../UserContext';
 
 const memoryHistory = createMemoryHistory();
 
@@ -87,13 +88,22 @@ describe('FinalGoalCard', () => {
   ];
 
   const renderTest = (goals = baseGoals, selectedGoalIds = ['4598', '4600'], finalGoalId = '4600') => {
+    const user = {
+      name: 'name',
+      id: 1,
+      flags: [],
+      roles: [],
+      permissions: [],
+    };
     render(
       <Router history={memoryHistory}>
-        <FinalGoalCard
-          goals={goals}
-          selectedGoalIds={selectedGoalIds}
-          finalGoalId={finalGoalId}
-        />
+        <UserContext.Provider value={{ user }}>
+          <FinalGoalCard
+            goals={goals}
+            selectedGoalIds={selectedGoalIds}
+            finalGoalId={finalGoalId}
+          />
+        </UserContext.Provider>
       </Router>,
     );
   };
