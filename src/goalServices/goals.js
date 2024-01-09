@@ -2402,15 +2402,18 @@ export async function destroyGoal(goalIds) {
 /**
  * @param {goals[]} include .activityReportGoals
  * @returns {
-*  reportId: countOfGoalsOnReport,
+*  reportId: { grantId: countOfGoalsOnReport },
 * }
 */
 export const getReportCountForGoals = (goals) => goals.reduce((acc, goal) => {
   (goal.activityReportGoals || []).forEach((arg) => {
     if (!acc[arg.activityReportId]) {
-      acc[arg.activityReportId] = 0;
+      acc[arg.activityReportId] = {};
     }
-    acc[arg.activityReportId] += 1;
+    if (!acc[arg.activityReportId][goal.grantId]) {
+      acc[arg.activityReportId][goal.grantId] = 0;
+    }
+    acc[arg.activityReportId][goal.grantId] += 1;
   });
 
   return acc;
@@ -2426,10 +2429,11 @@ const fieldMappingForDeduplication = {
 /**
 *
 * key is activityReportid, value is count of goals on that report
-* @param {{ number: number }} countObject
+* @param {{ number: { number: number } }} countObject
 */
 // eslint-disable-next-line max-len
-export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
+export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
+  .some((grants) => Object.values(grants).some((c) => c > 1));
 
 /**
 *
@@ -2471,9 +2475,16 @@ export async function getGoalIdsBySimilarity(similarityResponse = []) {
       [Op.or]: [
         {
           id: group,
-          '$"goalTemplate"."creationMethod"$': {
-            [Op.ne]: CREATION_METHOD.CURATED,
-          },
+          [Op.or]: [
+            {
+              '$"goalTemplate"."creationMethod"$': {
+                [Op.ne]: CREATION_METHOD.CURATED,
+              },
+            },
+            {
+              '$"goalTemplate"."id"$': null,
+            },
+          ],
         },
         {
           id: group,
@@ -2822,6 +2833,7 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
     grantId,
   }));
 
+  console.log(goalsToBulkCreate);
   const newGoals = await Goal.bulkCreate(
     goalsToBulkCreate,
     {
@@ -2938,11 +2950,15 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   });
 
   await Promise.all(updatesToRelatedModels);
-  await Promise.all(selectedGoals.map((g) => g.update({
-    mapsToParentGoalId: grantToGoalDictionary[
-      grantsWithReplacementsDictionary[g.grantId]
-    ],
-  }, { individualHooks: true })));
+  await Promise.all(selectedGoals.map((g) => {
+    console.log('####', g);
+    const u = g.update({
+      mapsToParentGoalId: grantToGoalDictionary[
+        grantsWithReplacementsDictionary[g.grantId]
+      ],
+    }, { individualHooks: true });
+    return u;
+  }));
 
   return newGoals;
 }
