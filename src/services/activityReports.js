@@ -126,7 +126,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
 
   if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
     // eslint-disable-next-line max-len
-    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
+    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all((collaborator?.user?.roles || []).map(async (role) => CollaboratorRole.findOrCreate({
       where: {
         activityReportCollaboratorId: collaborator.id,
         roleId: role.id,
