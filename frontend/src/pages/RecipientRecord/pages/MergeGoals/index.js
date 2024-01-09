@@ -28,6 +28,7 @@ import Modal from '../../../../components/VanillaModal';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../../../hooks/useSocket';
 import UserContext from '../../../../UserContext';
 import SocketAlert from '../../../../components/SocketAlert';
+import isAdmin from '../../../../permissions';
 
 const OFFSET = 0;
 const SELECT_GOALS_TO_MERGE = 1;
@@ -215,8 +216,17 @@ export default function MergeGoals({
 
     if (curatedSelectedGoals.length === 1) {
       hookForm.setValue('finalGoalId', curatedSelectedGoals[0].id.toString());
+    } else if (curatedSelectedGoals.length > 1) {
+      if (isAdmin(user) || (user.flags && user.flags.includes('closed_goal_merge_override'))) {
+        // use the newest goal id as the finalGoalId, because it is the latest
+        const maxGoalId = curatedSelectedGoals.reduce((max, g) => {
+          if (g.id > max) { return g.id; }
+          return max;
+        }, 0);
+        hookForm.setValue('finalGoalId', maxGoalId.toString());
+      }
     }
-  }, [activePage, finalGoalId, goals, hookForm, selectedGoalIds]);
+  }, [activePage, finalGoalId, goals, hookForm, selectedGoalIds, user]);
 
   if (error) {
     return (
