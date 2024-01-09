@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import GoalDataController from '../GoalDataController';
 import UserContext from '../../../UserContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 describe('GoalDataController', () => {
   const DEFAULT_USER = {
@@ -54,14 +55,38 @@ describe('GoalDataController', () => {
     history.location.state = locationState;
 
     render(
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
-        <Router history={history}>
-          {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-          <GoalDataController {...defaultProps} {...props} />
-        </Router>
-      </UserContext.Provider>,
+      <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
+        <UserContext.Provider value={{ user: DEFAULT_USER }}>
+          <Router history={history}>
+            {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+            <GoalDataController {...defaultProps} {...props} />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
+
+  beforeEach(async () => {
+    fetchMock.get(
+      `/api/communication-logs/region/${REGION_ID}/recipient/${RECIPIENT_ID}?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient`,
+      {
+        count: 1,
+        rows: [{
+          id: 1,
+          userId: 1,
+          recipientId: RECIPIENT_ID,
+          data: {
+            id: 0, files: [], notes: '', method: 'Phone', result: 'New TTA declined', userId: 355, purpose: 'RTTAPA Initial Plan / New Recipient', duration: 0.5, regionId: '1', pageState: { 1: 'Complete', 2: 'Not started', 3: 'Not started' }, pocComplete: false, recipientId: '', communicationDate: '11/23/2023', recipientNextSteps: [{ note: '', completeDate: '' }], specialistNextSteps: [{ note: '', completeDate: '' }],
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          authorName: 'Ted User',
+          author: { name: 'Ted User', id: 1 },
+        }],
+      },
+    );
+    fetchMock.get('/api/goals/similar/1?cluster=true', []);
+  });
 
   afterEach(async () => {
     fetchMock.restore();
@@ -81,6 +106,7 @@ describe('GoalDataController', () => {
 
     expect(fetchMock.called(url)).toBe(true);
   });
+
   it('fetches goals in the correct order if no location state specified', async () => {
     const url = ` /api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`;
     fetchMock.get(url, response);
@@ -91,5 +117,19 @@ describe('GoalDataController', () => {
     });
 
     expect(fetchMock.called(url)).toBe(true);
+  });
+
+  it('shows what tell it to', async () => {
+    const url = ` /api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`;
+    fetchMock.get(url, response);
+    act(() => {
+      renderTest(
+        {}, // props
+      );
+    });
+
+    expect(fetchMock.called(url)).toBe(true);
+
+    expect(await screen.findByText('RTTAPA Initial Plan / New Recipient')).toBeInTheDocument();
   });
 });

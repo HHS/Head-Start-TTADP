@@ -26,20 +26,20 @@ async function parseCsv(fileKey) {
  * A template for the common goal is created followed by goal creation for all of the recipients.
  */
 export default async function createGoal(fileKey) {
-  const recipients = await parseCsv(fileKey);
-  const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
-
-  const goal = {
-    name: goalName,
-    status: 'Not Started',
-    isRttapa: 'No',
-    onApprovedAR: false,
-    isFromSmartsheetTtaPlan: false,
-    createdVia: 'rtr',
-  };
-
-  let successRecipients = 0;
   try {
+    const recipients = await parseCsv(fileKey);
+    const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+
+    const goal = {
+      name: goalName,
+      status: 'Not Started',
+      isRttapa: 'No',
+      onApprovedAR: false,
+      isFromSmartsheetTtaPlan: false,
+      createdVia: 'rtr',
+    };
+
+    let successRecipients = 0;
     const [dbGoalTemplate] = await GoalTemplate.findOrCreate({
       where: { templateName: goalName },
       defaults: { templateName: goalName },
@@ -66,9 +66,10 @@ export default async function createGoal(fileKey) {
         logger.info(`Unable to find grant ${number}`);
       }
     }
+
+    return successRecipients;
   } catch (err) {
     logger.error(err);
-    return 0;
+    throw new Error(err);
   }
-  return successRecipients;
 }

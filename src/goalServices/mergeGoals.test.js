@@ -4,11 +4,13 @@ import db, {
   Recipient,
   Grant,
   Goal,
+  GoalCollaborator,
   GoalTemplate,
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   GoalResource,
   Objective,
+  ObjectiveCollaborator,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -17,6 +19,7 @@ import db, {
   Resource,
   Topic,
   File,
+  CollaboratorType,
 } from '../models';
 import {
   mergeGoals,
@@ -27,7 +30,19 @@ import {
   OBJECTIVE_STATUS,
   FILE_STATUSES,
   GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_COLLABORATORS,
 } from '../constants';
+
+// Mocking express-http-context
+jest.mock('express-http-context', () => {
+  const httpContext = jest.requireActual('express-http-context');
+
+  // Mock the get function to return 1
+  httpContext.get = jest.fn(() => 1);
+
+  return httpContext;
+});
 
 describe('mergeGoals', () => {
   let recipient;
@@ -42,6 +57,10 @@ describe('mergeGoals', () => {
   let goalThree;
 
   let objectiveOneForGoalOne;
+  let objectiveTwoForGoalOne;
+  let objectiveThreeForGoalOne;
+  let objectiveOneForGoalTwo;
+  let objectiveOneForGoalThree;
 
   const fileName = faker.system.fileName();
   const resourceUrl = faker.internet.url();
@@ -49,13 +68,15 @@ describe('mergeGoals', () => {
   let mergedGoals;
   let mergedGoalIds;
 
+  let oldGoal;
   let dummyGoal;
+  let dummyGoalObjective;
   const dummyGoalName = `dummy goal ${faker.animal.cetacean()} ${faker.datatype.string()}`;
 
   beforeAll(async () => {
     // Recipient.
     recipient = await Recipient.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       name: faker.name.firstName(),
       startDate: new Date(),
       endDate: new Date(),
@@ -63,7 +84,7 @@ describe('mergeGoals', () => {
 
     // Grant.
     grantOne = await Grant.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -73,7 +94,7 @@ describe('mergeGoals', () => {
     });
 
     grantTwo = await Grant.create({
-      id: faker.datatype.number({ min: grantOne.id + 1 }),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -83,7 +104,7 @@ describe('mergeGoals', () => {
     });
 
     grantThree = await Grant.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -108,8 +129,18 @@ describe('mergeGoals', () => {
       validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
     });
 
+    oldGoal = await Goal.create({
+      name: `old goal${faker.animal.dog() + faker.datatype.string(100)}}`,
+      status: GOAL_STATUS.IN_PROGRESS,
+      endDate: null,
+      isFromSmartsheetTtaPlan: false,
+      onApprovedAR: false,
+      grantId: grantOne.id,
+      createdVia: 'rtr',
+    });
+
     goalOne = await Goal.create({
-      name: `Selected goal 1${faker.animal.dog()}`,
+      name: `Selected goal 1${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -119,7 +150,7 @@ describe('mergeGoals', () => {
     });
 
     goalTwo = await Goal.create({
-      name: `Selected goal 2${faker.animal.dog()}`,
+      name: `Selected goal 2${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.NOT_STARTED,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -130,7 +161,7 @@ describe('mergeGoals', () => {
     });
 
     goalThree = await Goal.create({
-      name: `Selected goal 3${faker.animal.dog()}`,
+      name: `Selected goal 3${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.SUSPENDED,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -185,6 +216,12 @@ describe('mergeGoals', () => {
     await ActivityReportGoal.create({
       activityReportId: report.id,
       goalId: goalOne.id,
+      originalGoalId: oldGoal.id,
+    });
+
+    await ActivityReportGoal.create({
+      activityReportId: report.id,
+      goalId: goalTwo.id,
     });
 
     await ActivityReportGoal.create({
@@ -203,7 +240,7 @@ describe('mergeGoals', () => {
       objectiveId: objectiveOneForGoalOne.id,
     });
 
-    const dummyGoalObjective = await Objective.create({
+    dummyGoalObjective = await Objective.create({
       goalId: dummyGoal.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.NOT_STARTED,
@@ -214,7 +251,7 @@ describe('mergeGoals', () => {
       objectiveId: dummyGoalObjective.id,
     });
 
-    const objectiveTwoForGoalOne = await Objective.create({
+    objectiveTwoForGoalOne = await Objective.create({
       goalId: goalOne.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -225,7 +262,19 @@ describe('mergeGoals', () => {
       resourceId: resource.id,
     });
 
-    const objectiveOneForGoalTwo = await Objective.create({
+    objectiveThreeForGoalOne = await Objective.create({
+      goalId: goalOne.id,
+      title: faker.datatype.string(100),
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+    });
+
+    await ActivityReportObjective.create({
+      activityReportId: report.id,
+      objectiveId: objectiveThreeForGoalOne.id,
+      originalObjectiveId: dummyGoalObjective.id,
+    });
+
+    objectiveOneForGoalTwo = await Objective.create({
       goalId: goalTwo.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -241,7 +290,7 @@ describe('mergeGoals', () => {
       topicId: topic.id,
     });
 
-    const objectiveOneForGoalThree = await Objective.create({
+    objectiveOneForGoalThree = await Objective.create({
       goalId: goalThree.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -251,6 +300,37 @@ describe('mergeGoals', () => {
       objectiveId: objectiveOneForGoalThree.id,
       fileId: file.id,
     });
+
+    await GoalCollaborator.update(
+      { userId: 2 },
+      {
+        where: {
+          goalId: [
+            oldGoal.id,
+            goalOne.id,
+            goalTwo.id,
+            goalThree.id,
+            dummyGoal.id,
+          ],
+        },
+      },
+    );
+
+    await ObjectiveCollaborator.update(
+      { userId: 2 },
+      {
+        where: {
+          objectiveId: [
+            objectiveOneForGoalOne.id,
+            objectiveTwoForGoalOne.id,
+            objectiveThreeForGoalOne.id,
+            objectiveOneForGoalTwo.id,
+            objectiveOneForGoalThree.id,
+            dummyGoalObjective.id,
+          ],
+        },
+      },
+    );
 
     mergedGoals = await mergeGoals(goalOne.id, [goalOne.id, goalTwo.id, goalThree.id]);
     mergedGoalIds = mergedGoals.map((goal) => goal.id);
@@ -269,11 +349,31 @@ describe('mergeGoals', () => {
         id: [goalOne.id, goalTwo.id, goalThree.id],
       },
       attributes: ['id', 'mapsToParentGoalId'],
-      include: [{
-        model: Objective,
-        as: 'objectives',
-        attributes: ['id', 'mapsToParentObjectiveId', 'goalId'],
-      }],
+      include: [
+        {
+          model: GoalCollaborator,
+          as: 'goalCollaborators',
+          include: [{
+            model: CollaboratorType,
+            as: 'collaboratorType',
+          }],
+        },
+        {
+          model: Objective,
+          as: 'objectives',
+          attributes: ['id', 'mapsToParentObjectiveId', 'goalId'],
+          include: [
+            {
+              model: ObjectiveCollaborator,
+              as: 'objectiveCollaborators',
+              include: [{
+                model: CollaboratorType,
+                as: 'collaboratorType',
+              }],
+            },
+          ],
+        },
+      ],
     });
 
     expect(goalsThatAreMergedAway.length).toBe(3);
@@ -287,14 +387,58 @@ describe('mergeGoals', () => {
       [mergedGoalFromGrantOne.id, mergedGoalFromGrantOne.id, otherMergedGoal.id].sort(),
     ).toEqual(mapsToParentGoalIds);
 
+    goalsThatAreMergedAway.forEach((goal) => {
+      const creator = goal.goalCollaborators
+        .filter((gc) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.CREATOR);
+      const linkers = goal.goalCollaborators
+        .filter((gc) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.LINKER);
+      const mergeDeprecator = goal.goalCollaborators
+        .filter((
+          gc,
+        ) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.MERGE_DEPRECATOR);
+      /* eslint-disable jest/no-conditional-expect */
+      if (goal.id === goalOne.id || goal.id === goalTwo.id) {
+        expect(creator[0].dataValues.userId).toBe(2);
+        expect(linkers[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator[0].dataValues.userId).toBe(1);
+      } else if (goal.id === goalThree.id) {
+        expect(creator[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator[0].dataValues.userId).toBe(1);
+      }
+      /* eslint-enable jest/no-conditional-expect */
+    });
+
     const objectivesThatAreMergedAway = goalsThatAreMergedAway
       .map((g) => g.objectives).flat();
 
-    expect(objectivesThatAreMergedAway.length).toBe(4);
+    expect(objectivesThatAreMergedAway.length).toBe(5);
     objectivesThatAreMergedAway.forEach((objective) => {
       expect([goalOne.id, goalTwo.id, goalThree.id]).toContain(objective.goalId);
       expect(objective.mapsToParentObjectiveId).not.toBeNull();
       expect(objective.mapsToParentObjectiveId).not.toBe(objective.id);
+
+      const creator = objective.objectiveCollaborators
+        .filter((oc) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.CREATOR);
+      const linkers = objective.objectiveCollaborators
+        .filter((oc) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.LINKER);
+      const mergeDeprecator = objective.objectiveCollaborators
+        .filter((
+          oc,
+        ) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR);
+
+      /* eslint-disable jest/no-conditional-expect */
+      if (objective.id === objectiveOneForGoalOne.id
+        && objective.id === objectiveThreeForGoalOne.id) {
+        expect(creator?.[0].dataValues.userId).toBe(2);
+        expect(linkers?.[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator?.[0].dataValues.userId).toBe(1);
+      } else if (objective.id === objectiveTwoForGoalOne.id
+        && objective.id === objectiveOneForGoalTwo.id
+        && objective.id === objectiveOneForGoalThree.id) {
+        expect(creator?.[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator?.[0].dataValues.userId).toBe(1);
+      }
+      /* eslint-enable jest/no-conditional-expect */
     });
   });
 
@@ -306,6 +450,14 @@ describe('mergeGoals', () => {
         id: mergedGoalIds,
       },
       include: [
+        {
+          model: GoalCollaborator,
+          as: 'goalCollaborators',
+          include: [{
+            model: CollaboratorType,
+            as: 'collaboratorType',
+          }],
+        },
         {
           model: ActivityReportGoal,
           as: 'activityReportGoals',
@@ -322,6 +474,14 @@ describe('mergeGoals', () => {
           model: Objective,
           as: 'objectives',
           include: [
+            {
+              model: ObjectiveCollaborator,
+              as: 'objectiveCollaborators',
+              include: [{
+                model: CollaboratorType,
+                as: 'collaboratorType',
+              }],
+            },
             {
               model: ObjectiveFile,
               as: 'objectiveFiles',
@@ -351,20 +511,51 @@ describe('mergeGoals', () => {
 
     const goalForGrantOne = goalsWithData.find((g) => g.grantId === grantOne.id);
     expect(goalForGrantOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
-    expect(goalForGrantOne.objectives.length).toBe(3);
+    expect(goalForGrantOne.objectives.length).toBe(4);
     expect(goalForGrantOne.responses.length).toBe(0);
     expect(goalForGrantOne.goalResources.length).toBe(1);
-    expect(goalForGrantOne.activityReportGoals.length).toBe(1);
+    expect(goalForGrantOne.activityReportGoals.length).toBe(2);
 
-    const [arGoal] = goalForGrantOne.activityReportGoals;
-    expect(arGoal.activityReportId).toBe(report.id);
-    expect(arGoal.originalGoalId).toBe(goalOne.id);
+    const arGoalOne = goalForGrantOne.activityReportGoals.find((g) => g.goalId === goalOne.id);
+    expect(arGoalOne).toBe(undefined);
+    // eslint-disable-next-line max-len
+    const arOldGoal = goalForGrantOne.activityReportGoals.find((g) => g.originalGoalId === oldGoal.id);
+    expect(arOldGoal.activityReportId).toBe(report.id);
+    // eslint-disable-next-line max-len
+    const arGoalTwo = goalForGrantOne.activityReportGoals.find((g) => g.originalGoalId === goalTwo.id);
+    expect(arGoalTwo.activityReportId).toBe(report.id);
+
+    goalsWithData.forEach((goal) => {
+      const mergeCreator = goal.goalCollaborators
+        .filter((gc) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.MERGE_CREATOR);
+
+      expect(mergeCreator[0].dataValues.userId).toBe(1);
+    });
+
+    goalForGrantOne.objectives.forEach((objective) => {
+      const mergeCreator = objective.objectiveCollaborators
+        .filter((
+          oc,
+        ) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.MERGE_CREATOR);
+
+      expect(mergeCreator?.[0].dataValues.userId).toBe(1);
+    });
 
     const aroForGoalForGrantOne = goalForGrantOne.objectives
       .map((o) => o.activityReportObjectives).flat();
-    expect(aroForGoalForGrantOne.length).toBe(1);
-    expect(aroForGoalForGrantOne[0].activityReportId).toBe(report.id);
-    expect(aroForGoalForGrantOne[0].originalObjectiveId).toBe(objectiveOneForGoalOne.id);
+    expect(aroForGoalForGrantOne.length).toBe(2);
+
+    // eslint-disable-next-line max-len
+    const newlyMerged = aroForGoalForGrantOne.find((o) => o.originalObjectiveId === objectiveOneForGoalOne.id);
+    // eslint-disable-next-line max-len
+    const oldlyMerged = aroForGoalForGrantOne.find((o) => o.originalObjectiveId === dummyGoalObjective.id);
+
+    expect(newlyMerged).not.toBe(undefined);
+    expect(oldlyMerged).not.toBe(undefined);
+
+    expect(newlyMerged.activityReportId).toBe(report.id);
+    expect(newlyMerged.originalObjectiveId).toBe(objectiveOneForGoalOne.id);
+    expect(oldlyMerged.activityReportId).toBe(report.id);
 
     const objectiveResourcesForGoalForGrantOne = goalForGrantOne.objectives
       .map((o) => o.objectiveResources).flat();
@@ -381,7 +572,7 @@ describe('mergeGoals', () => {
     const goalForGrantTwo = goalsWithData.find((g) => g.grantId === grantThree.id);
     expect(goalForGrantTwo.status).toBe(GOAL_STATUS.IN_PROGRESS);
     expect(goalForGrantTwo.objectives.length).toBe(1);
-    expect(goalForGrantTwo.responses.length).toBe(1);
+    expect(goalForGrantTwo.responses.length).toBe(0);
     expect(goalForGrantTwo.goalResources.length).toBe(0);
     expect(goalForGrantTwo.activityReportGoals.length).toBe(0);
 

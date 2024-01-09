@@ -12,11 +12,20 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       SessionReportPilot.belongsTo(models.EventReportPilot, { foreignKey: 'eventId', as: 'event' });
       SessionReportPilot.hasMany(models.SessionReportPilotFile, { foreignKey: 'sessionReportPilotId', as: 'sessionFiles' });
+      // Files.
       SessionReportPilot.belongsToMany(models.File, {
         through: models.SessionReportPilotFile,
         foreignKey: 'sessionReportPilotId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      // Supporting attachments.
+      SessionReportPilot.hasMany(models.SessionReportPilotSupportingAttachment, { foreignKey: 'sessionReportPilotId', as: 'sessionSupportingAttachments' });
+      SessionReportPilot.belongsToMany(models.File, {
+        through: models.SessionReportPilotSupportingAttachment,
+        foreignKey: 'sessionReportPilotId',
+        otherKey: 'fileId',
+        as: 'supportingAttachments',
       });
     }
   }

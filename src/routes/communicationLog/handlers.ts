@@ -6,11 +6,14 @@ import {
   deleteLog,
   updateLog,
   createLog,
+  csvLogsByRecipientAndScopes,
 } from '../../services/communicationLog';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import Policy from '../../policies/communicationLog';
+import filtersToScopes from '../../scopes';
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
 
@@ -25,8 +28,8 @@ const getAuthorizationByRegion = async (req: Request, res: Response) => {
 };
 
 const getAuthorizationByLogId = async (req: Request, res: Response) => {
-  const { regionId, logId } = req.params;
-  const log = await logById(Number(logId));
+  const { regionId, id } = req.params;
+  const log = await logById(Number(id));
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
   return new Policy(user, Number(regionId), log);
@@ -58,7 +61,39 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
       return;
     }
 
-    const logs = await logsByRecipientAndScopes(Number(recipientId));
+    const userId = await currentUserId(req, res);
+    const {
+      sortBy,
+      offset,
+      direction,
+      limit,
+      format,
+    } = req.query;
+    const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
+    const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
+
+    const limitNumber = Number(limit) || false;
+
+    if (format === 'csv') {
+      const logs = await csvLogsByRecipientAndScopes(
+        Number(recipientId),
+        String(sortBy),
+        Number(offset),
+        String(direction),
+        scopes,
+      );
+      res.send(logs);
+      return;
+    }
+
+    const logs = await logsByRecipientAndScopes(
+      Number(recipientId),
+      String(sortBy),
+      Number(offset),
+      String(direction),
+      limitNumber,
+      scopes,
+    );
     res.status(httpCodes.OK).json(logs);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -111,8 +146,10 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     }
 
     const { recipientId } = req.params;
+    const userId = await currentUserId(req, res);
     const { data } = req.body;
-    const log = await createLog(Number(recipientId), 0, data);
+
+    const log = await createLog(Number(recipientId), userId, data);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

@@ -28,7 +28,8 @@ import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
-import { useDisplayGroups } from './utils';
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -50,13 +51,6 @@ const EMPTY_TEXT_INPUT = {
   'does not contain': '',
 };
 
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
-};
-
 const handleStringQuery = (q) => q;
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
@@ -66,13 +60,6 @@ const defaultDateValues = {
   'is within': '',
   'is on or after': '',
   'is on or before': '',
-};
-
-export const fixQueryWhetherStringOrArray = (query) => {
-  if (Array.isArray(query)) {
-    return query.join(', ');
-  }
-  return query;
 };
 
 export const startDateFilter = {

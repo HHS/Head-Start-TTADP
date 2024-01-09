@@ -240,7 +240,7 @@ const GoalsObjectives = ({
   return (
     <>
       <Helmet>
-        <title>Goals and objectives</title>
+        <title>Goals and Objectives</title>
       </Helmet>
       { isFormOpen && (
       <IndicatesRequiredField />

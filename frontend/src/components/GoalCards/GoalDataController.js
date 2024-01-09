@@ -3,11 +3,13 @@ import React, {
   useState,
   useMemo,
   useEffect,
-  useRef,
+  useContext,
   memo,
 } from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { useHistory } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
@@ -16,11 +18,28 @@ import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
-
+import { getCommunicationLogsByRecipientId } from '../../fetchers/communicationLog';
 import useSessionSort from '../../hooks/useSessionSort';
 import FilterContext from '../../FilterContext';
-
+import AppLoadingContext from '../../AppLoadingContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
+import RttapaUpdates from '../../widgets/RttapaUpdates';
+
+const COMMUNICATION_PURPOSES = ['RTTAPA updates', 'RTTAPA Initial Plan / New Recipient'];
+const COMMUNCATION_SORT = {
+  sortBy: 'communicationDate',
+  direction: 'desc',
+  limit: 5,
+  offset: 0,
+};
+
+const LOG_FILTERS = COMMUNICATION_PURPOSES.map((purpose) => ({
+  id: uniqueId('log-filters'),
+  display: '',
+  topic: 'purpose',
+  condition: 'is',
+  query: [purpose],
+}));
 
 const Graph = memo(GoalStatusChart);
 
@@ -45,13 +64,26 @@ function GoalDataController({
     count: 0,
   });
 
-  const queryString = useRef(filtersToQueryString(filters));
-
   // Page Behavior.
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
   const [shouldDisplayMergeSuccess, setShouldDisplayMergedSuccess] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [logsLoaded, setLogsLoaded] = useState(false);
+  const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+
+  useEffect(() => {
+    let isLoaded = false;
+
+    if (logsLoaded && !loading) {
+      isLoaded = true;
+    }
+
+    if (!isLoaded !== isAppLoading) {
+      setIsAppLoading(!isLoaded);
+    }
+  }, [isAppLoading, loading, logsLoaded, setIsAppLoading]);
 
   const history = useHistory();
 
@@ -72,7 +104,7 @@ function GoalDataController({
     offset: 0,
   }, `goalsTable/${recipientId}/${regionId}`);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchGoals(query) {
       setLoading(true);
       try {
@@ -111,11 +143,6 @@ function GoalDataController({
       }
     }
     const filterQuery = filtersToQueryString(filters);
-    if (filterQuery !== queryString.current) {
-      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
-      queryString.current = filterQuery;
-      return;
-    }
     fetchGoals(filterQuery);
   }, [
     sortConfig,
@@ -126,6 +153,33 @@ function GoalDataController({
     setSortConfig,
     goalsPerPage,
     history.location,
+  ]);
+
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        setError(null);
+        const { rows } = await getCommunicationLogsByRecipientId(
+          String(regionId),
+          String(recipientId),
+          COMMUNCATION_SORT.sortBy,
+          COMMUNCATION_SORT.direction,
+          COMMUNCATION_SORT.offset,
+          COMMUNCATION_SORT.limit,
+          LOG_FILTERS,
+        );
+
+        setLogs(rows);
+      } catch (err) {
+        setError('Error fetching communication logs');
+      } finally {
+        setLogsLoaded(true);
+      }
+    }
+    fetchLogs();
+  }, [
+    recipientId,
+    regionId,
   ]);
 
   const handlePageChange = (pageNumber) => {
@@ -172,9 +226,16 @@ function GoalDataController({
 
   return (
     <div>
-      <Grid row>
+      <Grid gap={5} row>
         <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
           <Graph data={data.statuses} loading={loading} />
+        </Grid>
+        <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
+          <RttapaUpdates
+            recipientId={recipientId}
+            regionId={regionId}
+            logs={logs}
+          />
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>

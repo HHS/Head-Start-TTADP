@@ -18,13 +18,14 @@ services:
       - dbdata:/var/lib/postgresql/data
     shm_size: 1g
   minio:
-    image: minio/minio:RELEASE.2021-01-16T02-19-44Z
+    image: minio/minio:RELEASE.2024-01-01T16-36-33Z
     env_file: .env
     ports:
       - "9000:9000"
+      - "9001:9001"
     volumes:
-      - miniodata:/data
-    command: server /data
+      - minio-data:/data
+    command: server /data --console-address ":9001"
   aws-cli:
     image: amazon/aws-cli
     env_file: .env
@@ -95,5 +96,5 @@ services:
     command: tta_ro:password:1001
 volumes:
   dbdata: {}
-  miniodata: {}
+  minio-data: {}
   opensearch-data1: {}

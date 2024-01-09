@@ -122,3 +122,21 @@ export const createMultiRecipientGoalsFromAdmin = async (data) => {
   const result = await post((join('/', 'api', 'admin', 'goals')), data);
   return result.json();
 };
+
+export const closeMultiRecipientGoalsFromAdmin = async (data) => {
+  const result = await put((join('/', 'api', 'admin', 'goals', 'close')), data);
+  return result.json();
+};
+
+export const importCsv = async (importType, data) => {
+  const adminImportUrl = join('/', 'api', 'admin', importType);
+  const res = await fetch(adminImportUrl, {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
+};

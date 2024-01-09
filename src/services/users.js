@@ -529,3 +529,18 @@ export async function getUserNamesByIds(ids) {
 
   return users.map((u) => u.name);
 }
+
+export async function findAllUsersWithScope(scope) {
+  if (!Object.values(SCOPES).includes(scope)) {
+    return [];
+  }
+  return User.findAll({
+    attributes: ['id', 'name'],
+    include: [{
+      attributes: [],
+      model: Permission,
+      as: 'permissions',
+      where: { scopeId: scope },
+    }],
+  });
+}

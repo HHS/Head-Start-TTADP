@@ -5,6 +5,13 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       CommunicationLog.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       CommunicationLog.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
+      CommunicationLog.hasMany(models.CommunicationLogFile, { foreignKey: 'communicationLogId', as: 'communicationLogFiles' });
+      CommunicationLog.belongsToMany(models.File, {
+        through: models.CommunicationLogFile,
+        foreignKey: 'communicationLogId',
+        otherKey: 'fileId',
+        as: 'files',
+      });
     }
   }
 

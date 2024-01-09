@@ -1,4 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import { OBJECTIVE_STATUS } from '../constants';
@@ -57,7 +58,7 @@ describe('createOrUpdateGoals', () => {
       grantId: grants[0].id,
       source: GOAL_SOURCES[0],
     });
-    topic = await Topic.findOne();
+    topic = await Topic.findOne({ where: { mapsTo: { [Op.eq]: null } } });
 
     objective = await Objective.create({
       goalId: goal.id,
@@ -522,8 +523,8 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: OBJECTIVE_STATUS.SUSPENDED,
-            suspendReason: 'Recipient request',
-            suspendContext: 'Yeah, they just asked',
+            closeSuspendReason: 'Recipient request',
+            closeSuspendContext: 'Yeah, they just asked',
             resources: [
               {
                 value: fakeUrl,
@@ -545,7 +546,7 @@ describe('createOrUpdateGoals', () => {
     const [updatedObjective2] = updatedGoal2.objectives;
     expect(updatedObjective2.id).toBe(updatedObjective.id);
     expect(updatedObjective2.status).toBe(OBJECTIVE_STATUS.SUSPENDED);
-    expect(updatedObjective2.suspendReason).toBe('Recipient request');
-    expect(updatedObjective2.suspendContext).toBe('Yeah, they just asked');
+    expect(updatedObjective2.closeSuspendReason).toBe('Recipient request');
+    expect(updatedObjective2.closeSuspendContext).toBe('Yeah, they just asked');
   });
 });

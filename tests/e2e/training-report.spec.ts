@@ -74,6 +74,9 @@ test('can fill out and complete a training and session report', async ({ page })
 
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
+  // supporting attachments.
+  await page.getByRole('button', { name: 'Save and continue' }).click();
+
   // next steps
   await page.getByTestId('specialistNextSteps-input').fill('Next step');
   await page.getByTestId('recipientNextSteps-input').fill('test ');

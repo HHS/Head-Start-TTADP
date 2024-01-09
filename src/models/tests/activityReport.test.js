@@ -20,6 +20,10 @@ import {
 import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
 jest.mock('../../lib/awsElasticSearch/queueManager');
+jest.mock('express-http-context', () => ({
+  get: jest.fn().mockReturnValue(1),
+  set: jest.fn(),
+}));
 
 const mockUser = {
   name: 'Joe Green',

@@ -165,11 +165,11 @@ const CompleteEvent = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete event</title>
+        <title>Complete Event</title>
       </Helmet>
 
       <IndicatesRequiredField />
-      <p className="usa-prose">Review the information in each section before subitting. Once submitted, the report will no longer be editable.</p>
+      <p className="usa-prose">Review the information in each section before submitting. Once submitted, the report will no longer be editable.</p>
       {error && (
         <div className="margin-top-4">
           <Alert type="error">

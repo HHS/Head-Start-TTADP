@@ -1,4 +1,5 @@
 import React from 'react';
+import { determineMergeGoalStatus } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { goalPropTypes } from '../../../../../components/GoalCards/constants';
 import GoalCard from './GoalCard';
@@ -38,25 +39,7 @@ function FinalGoalCard({
   // create an array of all goal statuses for comparison
   const mergedGoalStatuses = [...mergedGoals.map((g) => g.goalStatus), final.goalStatus];
 
-  const status = (() => {
-    if (mergedGoalStatuses.includes('In Progress')) {
-      return 'In Progress';
-    }
-
-    if (mergedGoalStatuses.includes('Closed')) {
-      return 'Closed';
-    }
-
-    if (mergedGoalStatuses.includes('Suspended')) {
-      return 'Suspended';
-    }
-
-    if (mergedGoalStatuses.includes('Not Started')) {
-      return 'Not Started';
-    }
-
-    return 'Draft';
-  })();
+  const status = determineMergeGoalStatus(mergedGoalStatuses);
 
   return (
     <>

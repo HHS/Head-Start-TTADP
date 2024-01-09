@@ -19,7 +19,7 @@ export const reasons = [
   'New Program Option',
   'New Staff / Turnover',
   'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
+  'Planning/Coordination',
   'School Readiness Goals',
   ...reasonsToMonitor,
 ];

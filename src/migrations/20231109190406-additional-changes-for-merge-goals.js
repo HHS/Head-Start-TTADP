@@ -8,7 +8,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await addValuesToEnumIfTheyDontExist(queryInterface, 'enum_Goals_createdVia', GOAL_CREATED_VIA);
+      await addValuesToEnumIfTheyDontExist(queryInterface, transaction, 'enum_Goals_createdVia', GOAL_CREATED_VIA);
 
       await queryInterface.addColumn('Objectives', 'mapsToParentObjectiveId', {
         type: Sequelize.INTEGER,
