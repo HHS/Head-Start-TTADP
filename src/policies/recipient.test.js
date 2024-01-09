@@ -76,6 +76,28 @@ describe('Recipient', () => {
       const recipientPolicy = new Recipient(user, recipient, false);
       expect(recipientPolicy.canMergeGoals()).toBe(false);
     });
+
+    const createRecipientWithUser = (user) => {
+      const recipient = { grants: [] };
+      return new Recipient(user, recipient);
+    };
+
+    it('doesn\'t throw when there are no roles', async () => {
+      const testCases = [
+        { user: undefined },
+        { user: { roles: undefined } },
+        { user: { roles: null } },
+        { user: { roles: 'not-an-array' } },
+      ];
+
+      testCases.forEach((testCase) => {
+        const recipient = createRecipientWithUser(testCase.user);
+
+        expect(() => {
+          recipient.canMergeGoals();
+        }).not.toThrow();
+      });
+    });
   });
   describe('canView', () => {
     it('returns false if there are no read permissions', async () => {
