@@ -1,5 +1,4 @@
 import { Op } from 'sequelize';
-import { expect } from '@playwright/test';
 import db, { Course } from '../models';
 import {
   csvImport,
