@@ -23,6 +23,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
+          Courses
+        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
           Diag
         </NavLink>
@@ -40,9 +43,6 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
           Training Reports
-        </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
-          Courses
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
