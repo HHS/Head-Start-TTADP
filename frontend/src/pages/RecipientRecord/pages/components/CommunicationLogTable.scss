@@ -1,0 +1,19 @@
+@use "../../../../colors.scss" as colors;
+
+.ttahub-communication-log-table .usa-table {
+    margin: 0;
+}
+
+.ttahub-communication-log-table .usa-table thead th[aria-sort] {
+    background: transparent;
+}
+
+.ttahub-communication-log-table .usa-table thead th[aria-sort] button{
+    color: colors.$text-ink;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.ttahub-communication-log-table .usa-table td {
+    border-top: 0;
+}

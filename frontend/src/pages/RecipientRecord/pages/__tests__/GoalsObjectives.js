@@ -14,6 +14,7 @@ import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
 import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -112,20 +113,22 @@ describe('Goals and Objectives', () => {
 
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user: userForContext }}>
-          <FilterContext.Provider value={{ filterKey: 'test' }}>
-            <GoalsObjectives
-              recipientId="401"
-              regionId="1"
-              recipient={recipient}
-              location={{
-                state: { ids }, hash: '', pathname: '', search: '',
-              }}
-              recipientName="test"
-              canMergeGoals={canMergeGoals}
-            />
-          </FilterContext.Provider>
-        </UserContext.Provider>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
+          <UserContext.Provider value={{ user: userForContext }}>
+            <FilterContext.Provider value={{ filterKey: 'test' }}>
+              <GoalsObjectives
+                recipientId="401"
+                regionId="1"
+                recipient={recipient}
+                location={{
+                  state: { ids }, hash: '', pathname: '', search: '',
+                }}
+                recipientName="test"
+                canMergeGoals={canMergeGoals}
+              />
+            </FilterContext.Provider>
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       </Router>,
     );
   };
@@ -151,6 +154,32 @@ describe('Goals and Objectives', () => {
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
+    const similarityResponse = [
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+          { ids: [3] },
+          { ids: [4] },
+          { ids: [5] },
+        ],
+        ids: [1, 2, 3, 4, 5],
+      },
+      {
+        goals: [
+          { ids: [1] },
+          { ids: [2] },
+        ],
+        ids: [1, 2],
+      },
+    ];
+
+    fetchMock.get('/api/goals/similar/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {
@@ -210,6 +239,11 @@ describe('Goals and Objectives', () => {
   it('will update goals status', async () => {
     fetchMock.restore();
 
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
+
     const response = [{
       id: 4598,
       ids: [4598],
@@ -249,6 +283,7 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     fetchMock.restore();
+
     fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
     const sortCreated = await screen.findByTestId('sortGoalsBy');
     userEvent.selectOptions(sortCreated, 'createdOn-asc');
@@ -276,6 +311,11 @@ describe('Goals and Objectives', () => {
   it('handles a fetch error', async () => {
     fetchMock.restore();
     // Created New Goal.
+
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
     const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
     fetchMock.get(newGoalsUrl, 500);
     act(() => renderGoalsAndObjectives([1]));
@@ -286,6 +326,10 @@ describe('Goals and Objectives', () => {
   it('adjusts items per page', async () => {
     fetchMock.restore();
 
+    fetchMock.get(
+      '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
+      { rows: [], count: 0 },
+    );
     const goalToUse = {
       id: 0,
       goalStatus: 'Not Started',

@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import reactSelectEvent from 'react-select-event';
@@ -40,6 +42,23 @@ describe('ActivityReport', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
+    fetchMock.get('/api/activity-reports/groups?region=1', [{
+      id: 110,
+      name: 'Group 1',
+      grants: [
+        { id: 1 },
+        { id: 2 },
+      ],
+    },
+    {
+      id: 111,
+      name: 'Group 2',
+      grants: [
+        { id: 3 },
+        { id: 4 },
+      ],
+    },
+    ]);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -48,7 +67,6 @@ describe('ActivityReport', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
-
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
     fetchMock.get('/api/activity-reports/1', async () => { throw e; });
@@ -114,6 +132,185 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', null, null, 2);
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+    });
+  });
+
+  describe('groups', () => {
+    it('recipients correctly update for groups', async () => {
+      const groupRecipients = {
+        grants: [
+          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+        ],
+        otherEntities: [],
+      };
+
+      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Page is done loading.
+      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
+
+      // Make sure 'recipient' is selected.
+      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
+      expect(recipient[0]).toBeChecked();
+
+      // Check use group.
+      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
+      });
+      expect(await screen.findByText(/Group name/i)).toBeVisible();
+
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 2');
+
+        await waitFor(() => {
+        // expect Group 2 to be visible.
+          expect(screen.getByText('Group 2')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+
+      // Change to group 1.
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 1');
+
+        await waitFor(() => {
+        // expect Group 1 to be visible.
+          expect(screen.getByText('Group 1')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 1 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 1 Grant B/i)).toBeVisible();
+
+      // Uncheck use group.
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).not.toBeChecked());
+      });
+
+      // Assert Group name is not visible.
+      expect(screen.queryByText(/Group name/i)).toBeNull();
+    });
+
+    it('modifying group recipients notifies the user', async () => {
+      const groupRecipients = {
+        grants: [
+          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+          { id: 13, name: 'Group 3 Recipients', grants: [{ activityRecipientId: 5, name: 'Group 3 Grant A' }, { activityRecipientId: 6, name: 'Group 3 Grant B' }] },
+        ],
+        otherEntities: [],
+      };
+
+      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Page is done loading.
+      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
+
+      // Make sure 'recipient' is selected.
+      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
+      expect(recipient[0]).toBeChecked();
+
+      // Check use group.
+      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
+      });
+      expect(await screen.findByText(/Group name/i)).toBeVisible();
+
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 2');
+
+        await waitFor(() => {
+        // expect Group 2 to be visible.
+          expect(screen.getByText('Group 2')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+
+      // Remove a recipient from the group.
+      await act(async () => {
+        const removeGrantButton = await screen.findByRole('button', { name: /remove group 2 grant a/i });
+        userEvent.click(removeGrantButton);
+        await waitFor(() => expect(removeGrantButton).not.toBeInTheDocument());
+      });
+
+      expect(await screen.findByText(
+        /you've successfully modified the group's recipients for this report\. changes here do not affect the group itself\./i,
+      )).toBeVisible();
+
+      // Click the reset link.
+      await act(async () => {
+        const resetLink = await screen.findByRole('button', { name: /reset or select a different group\./i });
+        userEvent.click(resetLink);
+        await waitFor(() => expect(resetLink).not.toBeInTheDocument());
+      });
+
+      // Assert use group checkbox is checked.
+      expect(useGroupCheckbox).toBeChecked();
+
+      // Select Group 2.
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 2');
+
+        await waitFor(() => {
+        // expect Group 2 to be visible.
+          expect(screen.getByText('Group 2')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+
+      // Add recipient 'Group 3 Grant A'.
+      const recipientName = await screen.findByText(/recipient names/i);
+      const recipientSelect = await within(recipientName).findByText(/Group 2 Grant A/i);
+      await reactSelectEvent.select(recipientSelect, ['Group 3 Grant A']);
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+      expect(await screen.findByText(/Group 3 Grant A/i)).toBeVisible();
+
+      expect(await screen.findByText(
+        /you've successfully modified the group's recipients for this report\. changes here do not affect the group itself\./i,
+      )).toBeVisible();
+
+      // Click the reset link.
+      await act(async () => {
+        const resetLink = await screen.findByRole('button', { name: /reset or select a different group\./i });
+        userEvent.click(resetLink);
+        await waitFor(() => expect(resetLink).not.toBeInTheDocument());
+      });
+
+      // Assert use group checkbox is checked.
+      expect(useGroupCheckbox).toBeChecked();
     });
   });
 

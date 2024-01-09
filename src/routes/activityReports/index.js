@@ -21,6 +21,8 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  getReportsByManyIds,
+  getGroups,
 } from './handlers';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -36,6 +38,7 @@ const router = express.Router();
 
 router.post('/', transactionWrapper(createReport));
 router.get('/approvers', transactionWrapper(getApprovers));
+router.get('/groups', transactionWrapper(getGroups));
 router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
 router.get('/goals', transactionWrapper(getGoals));
 router.post('/goals', transactionWrapper(createGoalsForReport));
@@ -49,6 +52,7 @@ router.get('/download-all', nameTransactionByPath, transactionWrapper(downloadAl
 router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, transactionWrapper(updateLegacyFields));
 router.get('/:activityReportId', nameTransactionByBase, checkActivityReportIdParam, transactionWrapper(getReport));
 router.get('/', transactionWrapper(getReports));
+router.post('/reportsByManyIds', transactionWrapper(getReportsByManyIds));
 router.put('/:activityReportId', checkActivityReportIdParam, transactionWrapper(saveReport));
 router.delete('/:activityReportId', checkActivityReportIdParam, transactionWrapper(softDeleteReport));
 router.put('/:activityReportId/reset', checkActivityReportIdParam, transactionWrapper(resetToDraft));

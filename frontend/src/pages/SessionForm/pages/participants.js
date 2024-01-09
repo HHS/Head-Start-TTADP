@@ -67,7 +67,7 @@ const Participants = ({ formData }) => {
     return (
       <PocCompleteView formData={formData} userId={user.id}>
         <Helmet>
-          <title>Session participants</title>
+          <title>Session Participants</title>
         </Helmet>
         <ReadOnlyField label="Recipients">
           {formData.recipients.map((r) => r.label).join('\n')}
@@ -99,7 +99,7 @@ const Participants = ({ formData }) => {
   return (
     <>
       <Helmet>
-        <title>Session participants</title>
+        <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
       <div className="margin-top-2">

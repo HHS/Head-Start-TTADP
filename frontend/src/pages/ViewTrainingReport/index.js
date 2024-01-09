@@ -13,6 +13,8 @@ import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
+import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
+import './index.css';
 
 const formatNextSteps = (nextSteps, heading, striped) => {
   const data = nextSteps.reduce((acc, step, index) => ({
@@ -42,7 +44,7 @@ export default function ViewTrainingReport({ match }) {
     async function fetchEvent() {
       try {
         setIsAppLoading(true);
-        const e = await eventById(match.params.trainingReportId);
+        const e = await eventById(match.params.trainingReportId, true);
         setEvent(e);
       } catch (err) {
         let message = 'Sorry, something went wrong';
@@ -177,29 +179,27 @@ export default function ViewTrainingReport({ match }) {
     <>
       <Helmet>
         <title>
-          {pageTitle}
+          Training Event Report
           {' '}
-          | TTA Hub
+          {(event && event.data) ? event.data.eventId : ''}
         </title>
       </Helmet>
       <BackLink to={backLinkUrl}>
         Back to Training Reports
       </BackLink>
-      <Container className="margin-top-2 maxw-tablet-lg">
+      <ApprovedReportSpecialButtons />
+      <Container className="margin-top-2 maxw-tablet-lg ttahub-completed-training-report-container">
         { error && (
         <Alert type="error">
           {error}
         </Alert>
         )}
         <h1 className="landing">{pageTitle}</h1>
-
         <ReadOnlyContent
           title="Event"
           sections={eventSummary}
         />
-
         { sessions }
-
       </Container>
     </>
   );

@@ -3,6 +3,7 @@ import { sequelize } from '../../models';
 import {
   logById,
   logsByRecipientAndScopes,
+  csvLogsByRecipientAndScopes,
   deleteLog,
   updateLog,
   createLog,
@@ -16,10 +17,12 @@ import {
   createLogByRecipientId,
 } from './handlers';
 import SCOPES from '../../middleware/scopeConstants';
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/communicationLog');
+jest.mock('../../services/accessValidation');
 
 describe('communicationLog handlers', () => {
   const REGION_ID = 15;
@@ -60,11 +63,12 @@ describe('communicationLog handlers', () => {
   };
 
   const statusJson = jest.fn();
+  const send = jest.fn();
 
   const mockResponse = {
     sendStatus: jest.fn(),
     end: jest.fn(),
-    send: jest.fn(),
+    send,
     status: jest.fn(() => ({
       end: jest.fn(),
       json: statusJson,
@@ -154,11 +158,63 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
       };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
+    it('with limit', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          id: 1,
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          limit: '20',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
+    it('csv', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          id: 1,
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          format: 'csv',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      csvLogsByRecipientAndScopes.mockImplementation(() => Promise.resolve('id\n1'));
+      await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
+      expect(send).toHaveBeenCalledWith('id\n1');
     });
 
     it('unauthorized', async () => {
@@ -170,8 +226,14 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
       };
       userById.mockImplementation(() => Promise.resolve(unauthorized));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
@@ -185,9 +247,15 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
       logsByRecipientAndScopes.mockRejectedValue(new Error('error'));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
@@ -201,9 +269,15 @@ describe('communicationLog handlers', () => {
           id: 1,
           regionId: REGION_ID,
         },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
       };
       userById.mockImplementation(() => Promise.resolve(admin));
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
     });

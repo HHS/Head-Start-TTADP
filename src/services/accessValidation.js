@@ -28,13 +28,22 @@ async function getUserRegionsByPermissions(userId, scopeIds) {
 }
 
 export async function validateUserAuthForAccess(userId) {
-  const userPermission = await Permission.findOne({
-    where: {
-      userId,
-      scopeId: SITE_ACCESS,
-    },
-  });
-  return userPermission !== null;
+  try {
+    if (!userId || typeof userId !== 'number') {
+      return false;
+    }
+
+    const userPermission = await Permission.findOne({
+      where: {
+        userId,
+        scopeId: SITE_ACCESS,
+      },
+    });
+    return userPermission !== null;
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
+    return false;
+  }
 }
 
 export async function userIsPocRegionalCollaborator(userId) {
@@ -47,9 +56,9 @@ export async function userIsPocRegionalCollaborator(userId) {
 
   // the user sees only reports where they are a collaborator
   // if they don't have the scope READ_WRITE_TRAINING_REPORTS
-  // and the scope READ_TRAINING_REPORTS
+  // and the scope READ_REPORTS
 
-  const hasReadReports = userPermissions.some((p) => p.scopeId === SCOPES.READ_TRAINING_REPORTS);
+  const hasReadReports = userPermissions.some((p) => p.scopeId === SCOPES.READ_REPORTS);
 
   const hasReadWriteReports = userPermissions.some(
     (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
@@ -63,6 +72,10 @@ export async function userIsPocRegionalCollaborator(userId) {
 }
 
 export async function validateUserAuthForAdmin(userId) {
+  if (!userId || typeof userId !== 'number') {
+    return false;
+  }
+
   try {
     const userPermission = await Permission.findOne({
       where: {
@@ -101,7 +114,7 @@ export async function getUserTrainingReportReadRegions(userId) {
   try {
     const readTrainingReportScopes = [
       SCOPES.READ_WRITE_TRAINING_REPORTS,
-      SCOPES.READ_TRAINING_REPORTS,
+      SCOPES.READ_REPORTS,
       SCOPES.POC_TRAINING_REPORTS,
     ];
 

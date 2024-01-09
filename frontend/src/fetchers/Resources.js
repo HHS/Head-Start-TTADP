@@ -4,7 +4,11 @@ import { TOPICS_PER_PAGE } from '../Constants';
 
 export const fetchResourceData = async (query) => {
   const res = await get(join('/', 'api', 'resources', `?${query}`));
-  return res.json();
+  const data = await res.json();
+
+  return {
+    ...data,
+  };
 };
 
 export const fetchTopicResources = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = TOPICS_PER_PAGE, filters) => {

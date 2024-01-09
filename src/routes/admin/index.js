@@ -10,6 +10,8 @@ import nationalCenterRouter from './nationalCenter';
 import emailRouter from './email';
 import groupRouter from './group';
 import goalRouter from './goal';
+import trainingReportRouter from './trainingReport';
+import courseRouter from './course';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -29,5 +31,7 @@ router.use('/alerts', siteAlertRouter);
 router.use('/redis', redisRouter);
 router.use('/national-center', nationalCenterRouter);
 router.use('/email', emailRouter);
+router.use('/training-reports', trainingReportRouter);
+router.use('/courses', courseRouter);
 
 export default router;

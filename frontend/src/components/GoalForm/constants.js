@@ -55,8 +55,8 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   id: `new-${l}`,
   status: 'Not Started',
   isNew: true,
-  suspendReason: null,
-  suspendContext: null,
+  closeSuspendReason: null,
+  closeSuspendContext: null,
 });
 
 export const OBJECTIVE_FORM_FIELD_INDEXES = {
