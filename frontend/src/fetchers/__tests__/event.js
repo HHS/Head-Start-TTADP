@@ -10,22 +10,31 @@ import {
 import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
 
 describe('eventById', () => {
-  beforeEach(() => {
-    fetchMock.get('/api/events/id/1', {
-      id: 1,
-      name: 'test event',
-    });
-  });
-
   afterEach(() => {
     fetchMock.reset();
   });
 
   it('fetches data from the server with the given id', async () => {
+    fetchMock.get('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+    });
     const event = await eventById(1);
 
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
+    expect(event).toEqual({ id: 1, name: 'test event' });
+  });
+
+  it('fetches data from the server with the given id and accepts query param', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true', {
+      id: 1,
+      name: 'test event',
+    });
+    const event = await eventById(1, true);
+
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1?readOnly=true');
     expect(event).toEqual({ id: 1, name: 'test event' });
   });
 });
