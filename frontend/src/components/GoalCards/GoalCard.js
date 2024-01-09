@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
-import { Checkbox } from '@trussworks/react-uswds';
+import { Checkbox, Tag } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import StatusDropdown from './components/StatusDropdown';
@@ -13,6 +13,7 @@ import FlagStatus from './FlagStatus';
 import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import { goalPropTypes } from './constants';
+import colors from '../../colors';
 
 function GoalCard({
   goal,
@@ -37,7 +38,10 @@ function GoalCard({
     reasons,
     objectives,
     previousStatus,
+    createdVia,
   } = goal;
+
+  const isMerged = createdVia === 'merge';
 
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
@@ -115,6 +119,11 @@ function GoalCard({
             Goal
             {' '}
             {goalNumbers}
+            {isMerged && (
+            <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
+              Merged
+            </Tag>
+            )}
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}

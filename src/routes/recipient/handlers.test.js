@@ -22,7 +22,7 @@ import {
   recipientsByUserId,
   allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
-import { goalsByIdAndRecipient } from '../../services/goals';
+import { goalsByIdAndRecipient } from '../../goalServices/goals';
 import SCOPES from '../../middleware/scopeConstants';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -42,7 +42,7 @@ jest.mock('../../services/recipient', () => ({
   allArUserIdsByRecipientAndRegion: jest.fn(),
 }));
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   goalsByIdAndRecipient: jest.fn(),
 }));
 

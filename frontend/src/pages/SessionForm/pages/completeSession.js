@@ -11,7 +11,7 @@ import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
-const position = 4;
+const position = 5;
 const path = 'complete-session';
 
 const pages = {
@@ -76,7 +76,7 @@ const CompleteSession = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete session</title>
+        <title>Complete Session</title>
       </Helmet>
 
       <IndicatesRequiredField />

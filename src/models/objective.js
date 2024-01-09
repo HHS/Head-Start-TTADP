@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
@@ -27,6 +27,9 @@ export default (sequelize, DataTypes) => {
       Objective.hasMany(models.ActivityReportObjective, {
         foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'originalObjectiveId', as: 'reassignedActivityReportObjectives',
+      });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
@@ -50,6 +53,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      Objective.belongsTo(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'parentObjective',
+      });
+      Objective.hasMany(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'childObjectives',
       });
     }
   }
@@ -126,12 +137,23 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
-    suspendReason: {
+    closeSuspendReason: {
       allowNull: true,
-      type: DataTypes.ENUM(SUSPEND_REASONS),
+      type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
     },
-    suspendContext: {
+    closeSuspendContext: {
       type: DataTypes.TEXT,
+    },
+    mapsToParentObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,

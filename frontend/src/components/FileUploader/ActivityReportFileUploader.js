@@ -8,66 +8,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { deleteReportFile, uploadFile } from '../../fetchers/File';
-import FileTable from './FileTable';
-import Dropzone from './Dropzone';
-
-import './FileUploader.scss';
-
-export const upload = async (file, reportId, setErrorMessage) => {
-  let res;
-
-  try {
-    const data = new FormData();
-    data.append('reportId', reportId);
-    data.append('file', file);
-    res = await uploadFile(data);
-    setErrorMessage(null);
-    return {
-      id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
-    };
-  } catch (error) {
-    setErrorMessage(`${file.name} failed to upload`);
-    // eslint-disable-next-line no-console
-    console.log(error);
-    return null;
-  }
-};
+import ReportFileUploader from './ReportFileUploader';
+import { deleteReportFile } from '../../fetchers/File';
 
 const ActivityReportFileUploader = ({
   onChange, files, reportId, id, setErrorMessage,
-}) => {
-  const onFileRemoved = async (removedFileIndex) => {
-    const file = files[removedFileIndex];
-    const remainingFiles = files.filter((f) => f.id !== file.id);
-    onChange(remainingFiles);
-    await deleteReportFile(file.id, reportId);
-  };
-
-  const handleDrop = async (e) => {
-    if (reportId === 'new') {
-      setErrorMessage('Cannot save attachments without a recipient or other entity selected');
-      return;
-    }
-
-    const newFiles = e.map((file) => upload(file, reportId, setErrorMessage));
-    Promise.all(newFiles).then((values) => {
-      onChange([...files, ...values.filter((file) => file)]);
-    });
-  };
-
-  return (
-    <>
-      <Dropzone inputName={id} handleDrop={handleDrop} />
-      <FileTable
-        onFileRemoved={onFileRemoved}
-        files={files.map((f) => (
-          { ...f, showDelete: true }
-        ))}
-      />
-    </>
-  );
-};
+}) => (
+  <ReportFileUploader
+    onChange={onChange}
+    files={files}
+    idKey="reportId"
+    idValue={reportId}
+    id={id}
+    setErrorMessage={setErrorMessage}
+    deleteFile={deleteReportFile}
+  />
+);
 
 ActivityReportFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,

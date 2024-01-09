@@ -181,8 +181,8 @@ export default function GoalForm({
 
       <ConditionalFields
         prompts={prompts}
-        isOnReport={goal.onApprovedAR || false}
         isMultiRecipientReport={isMultiRecipientReport}
+        userCanEdit
       />
 
       <FeatureFlag flag="goal_source">

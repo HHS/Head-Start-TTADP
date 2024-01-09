@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { AUTOMATIC_CREATION } from './constants';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -242,10 +244,12 @@ export async function createGoal(goal) {
     grant = await createGrant({});
   }
   const dg = defaultGoal();
-  const dbGoalTemplate = await GoalTemplate.findOrCreate({
-    where: { templateName: dg.name },
-    defaults: { templateName: dg.name },
-  });
+  const dbGoalTemplate = goal.goalTemplateId
+    ? { id: goal.goalTemplateId }
+    : (await GoalTemplate.findOrCreate({
+      where: { templateName: dg.name },
+      defaults: { templateName: dg.name },
+    }))[0];
   const dbGoal = await Goal.create({
     ...dg,
     ...goal,
@@ -261,5 +265,32 @@ export async function destroyGoal(goal) {
       id: goal.id,
     },
     force: true,
+  });
+}
+
+/**
+ *
+ * @param {string} name? template name
+ * @returns GoalTemplate sequelize.model object
+ */
+export async function createGoalTemplate({
+  name = null,
+  creationMethod = AUTOMATIC_CREATION,
+} = {
+  name: null,
+  creationMethod: AUTOMATIC_CREATION,
+}) {
+  const n = faker.lorem.sentence(5);
+  const varForNameOrN = name || n;
+  const secret = 'secret';
+  const hash = crypto
+    .createHmac('md5', secret)
+    .update(varForNameOrN)
+    .digest('hex');
+
+  return GoalTemplate.create({
+    hash,
+    templateName: varForNameOrN,
+    creationMethod,
   });
 }

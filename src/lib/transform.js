@@ -44,6 +44,32 @@ function transformSimpleValue(instance, field) {
  * @param {string} prop The key on the related model to transform
  * @returns {function} A function that will perform the transformation
  */
+function transformRelatedModelProp(field, prop) {
+  function transformer(instance) {
+    const obj = {};
+    let records = instance[field];
+    if (records) {
+      if (!Array.isArray(records)) {
+        records = [records];
+      }
+      // we sort the values
+      const value = records.map((r) => (r[prop] || '')).sort().join('\n');
+      Object.defineProperty(obj, prop, {
+        value,
+        enumerable: true,
+      });
+    }
+    return obj;
+  }
+  return transformer;
+}
+
+/*
+ * Generates a function that can transform values of a related model
+ * @param {string} field The field of the related model
+ * @param {string} prop The key on the related model to transform
+ * @returns {function} A function that will perform the transformation
+ */
 function transformRelatedModel(field, prop) {
   function transformer(instance) {
     const obj = {};
@@ -395,6 +421,20 @@ const arTransformers = [
   transformGrantModel('stateCode', 'recipientInfo'),
 ];
 
+const logTransformers = [
+  'id',
+  transformRelatedModel('author', 'name'),
+  transformRelatedModelProp('data', 'communicationDate'),
+  transformRelatedModelProp('data', 'duration'),
+  transformRelatedModelProp('data', 'method'),
+  transformRelatedModelProp('data', 'purpose'),
+  transformRelatedModelProp('data', 'notes'),
+  transformRelatedModelProp('data', 'result'),
+  transformRelatedModel('files', 'originalFileName'),
+  transformRelatedModel('recipientNextSteps', 'note'),
+  transformRelatedModel('specialistNextSteps', 'note'),
+];
+
 /**
    * csvRows is an array of objects representing csv data. Sometimes,
    * some objects can have keys that other objects will not.
@@ -455,7 +495,7 @@ function extractListOfGoalsAndObjectives(csvRows) {
   return goalsAndObjectives;
 }
 
-function activityReportToCsvRecord(report, transformers = arTransformers) {
+function toCSVRecord(report, transformers) {
   const callFunctionOrValueGetter = (x) => {
     if (typeof x === 'function') {
       return x(report);
@@ -471,7 +511,16 @@ function activityReportToCsvRecord(report, transformers = arTransformers) {
   return record;
 }
 
+function activityReportToCsvRecord(report, transformers = arTransformers) {
+  return toCSVRecord(report, transformers);
+}
+
+function communicationLogToCsvRecord(log) {
+  return toCSVRecord(log, logTransformers);
+}
+
 export {
+  communicationLogToCsvRecord,
   activityReportToCsvRecord,
   arTransformers,
   makeGoalsAndObjectivesObject,

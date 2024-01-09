@@ -21,6 +21,7 @@ export default (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
       Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'originalGoalId', as: 'reassignedActivityReportGoals' });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
@@ -51,6 +52,11 @@ export default (sequelize, DataTypes) => {
       Goal.hasMany(models.Goal, {
         foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
+      });
+      Goal.addScope('defaultScope', {
+        where: {
+          mapsToParentGoalId: null,
+        },
       });
       Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal1', as: 'scoreOne' });
       Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal2', as: 'scoreTwo' });
@@ -182,6 +188,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
   }, {
+
     sequelize,
     modelName: 'Goal',
     paranoid: true,

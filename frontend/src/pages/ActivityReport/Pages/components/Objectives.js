@@ -71,8 +71,8 @@ export default function Objectives({
     setValue(`${fieldArrayName}[${index}].value`, ObjId);
     setValue(`${fieldArrayName}[${index}].label`, objective.label);
     setValue(`${fieldArrayName}[${index}].ids`, objective.ids);
-    setValue(`${fieldArrayName}[${index}].suspendContext`, objective.suspendContext);
-    setValue(`${fieldArrayName}[${index}].suspendReason`, objective.suspendReason);
+    setValue(`${fieldArrayName}[${index}].closeSuspendContext`, objective.closeSuspendContext);
+    setValue(`${fieldArrayName}[${index}].closeSuspendReason`, objective.closeSuspendReason);
 
     // If fields have changed get updated list of used Objective ID's.
     setUpdatedUsedObjectiveIds();

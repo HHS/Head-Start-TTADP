@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
+import join from 'url-join';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
@@ -239,6 +240,8 @@ describe('Merge goals', () => {
   });
 
   it('you can click the submit button', async () => {
+    const oldPush = memoryHistory.push;
+    memoryHistory.push = jest.fn();
     fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
@@ -264,11 +267,65 @@ describe('Merge goals', () => {
     const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
     expect(label.textContent).toBe('In progress');
 
-    const submitButton = await screen.findByRole('button', { name: 'Merge goals' });
-    act(() => userEvent.click(submitButton));
+    const goalsUrl = join('api', 'goals', 'recipient', String(RECIPIENT_ID), 'region', String(REGION_ID), 'merge');
+    fetchMock.post(goalsUrl, [{ id: 1 }, { id: 2 }]);
+
+    const openModal = await screen.findByRole('button', { name: 'Merge goals' });
+    act(() => userEvent.click(openModal));
+
+    const confim = await screen.findByRole('button', { name: 'Yes, merge goals' });
+    act(() => userEvent.click(confim));
+
+    await waitFor(() => expect(fetchMock.called(goalsUrl, { method: 'POST' })).toBeTruthy());
+
+    expect(memoryHistory.push).toHaveBeenCalledWith(
+      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/rttapa`,
+      {
+        mergedGoals: [1, 2],
+      },
+    );
+
+    memoryHistory.push = oldPush;
+  });
+
+  it('handles submission errors', async () => {
+    fetchMock.get(idsToUrl(GOAL_IDS), { goalRows: goals });
+    renderTest();
+    await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
+
+    const selectAll = await screen.findByLabelText('Select all');
+    act(() => userEvent.click(selectAll));
+
+    let continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
+
+    let newPageHeadings = await screen.findAllByText(/Select goal to keep/i);
+    expect(newPageHeadings.length).toBeTruthy();
+
+    const [radioButton] = await screen.findAllByRole('radio');
+    userEvent.click(radioButton);
+
+    continueButton = await screen.findByRole('button', { name: 'Continue' });
+    act(() => userEvent.click(continueButton));
 
     newPageHeadings = await screen.findAllByText(/review merged goal/i);
     expect(newPageHeadings.length).toBeTruthy();
+
+    const label = document.querySelector('.ttahub-final-goal--status .ttahub-final-goal--status-label');
+    expect(label.textContent).toBe('In progress');
+
+    const goalsUrl = join('api', 'goals', 'recipient', String(RECIPIENT_ID), 'region', String(REGION_ID), 'merge');
+    fetchMock.post(goalsUrl, 500);
+
+    const openModal = await screen.findByRole('button', { name: 'Merge goals' });
+    act(() => userEvent.click(openModal));
+
+    const confim = await screen.findByRole('button', { name: 'Yes, merge goals' });
+    act(() => userEvent.click(confim));
+
+    await waitFor(() => expect(fetchMock.called(goalsUrl, { method: 'POST' })).toBeTruthy());
+
+    expect(await screen.findByText(/Unable to merge goals/)).toBeInTheDocument();
   });
 
   it('handles special baby curated goals', async () => {

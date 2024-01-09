@@ -133,12 +133,15 @@ describe('sessionSummary', () => {
         { id: 2, name: 'Complaint' },
       ]);
 
-      fetchMock.get('/api/national-center', [
-        { id: 1, name: 'DTL' },
-        { id: 2, name: 'HBHS' },
-        { id: 3, name: 'PFCE' },
-        { id: 4, name: 'PFMO' },
-      ]);
+      fetchMock.get('/api/national-center', {
+        centers: [
+          { id: 1, name: 'DTL' },
+          { id: 2, name: 'HBHS' },
+          { id: 3, name: 'PFCE' },
+          { id: 4, name: 'PFMO' },
+        ],
+        users: [],
+      });
 
       fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     });

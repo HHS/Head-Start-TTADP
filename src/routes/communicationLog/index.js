@@ -7,37 +7,39 @@ import {
   deleteLogById,
   createLogByRecipientId,
 } from './handlers';
-import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
+import {
+  checkIdIdParam, checkRecipientIdParam, checkRegionIdParam,
+} from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 const context = 'communicationLog';
 
 router.get(
   '/region/:regionId/log/:id',
-  (req, res, next) => checkIdParam(req, res, next, 'regionId'),
-  (req, res, next) => checkIdParam(req, res, next, 'id'),
+  checkRegionIdParam,
+  checkIdIdParam,
   transactionWrapper(communicationLogById, `${context} /id/:id`),
 );
 router.get(
   '/region/:regionId/recipient/:recipientId',
-  (req, res, next) => checkIdParam(req, res, next, 'regionId'),
-  (req, res, next) => checkIdParam(req, res, next, 'recipientId'),
+  checkRegionIdParam,
+  checkRecipientIdParam,
   transactionWrapper(communicationLogsByRecipientId, `${context} /recipient/:recipientId`),
 );
 router.put(
   '/log/:id',
-  (req, res, next) => checkIdParam(req, res, next, 'id'),
+  checkIdIdParam,
   transactionWrapper(updateLogById, `${context} /id/:id`),
 );
 router.delete(
   '/log/:id',
-  (req, res, next) => checkIdParam(req, res, next, 'id'),
+  checkIdIdParam,
   transactionWrapper(deleteLogById, `${context} /id/:id`),
 );
 router.post(
   '/region/:regionId/recipient/:recipientId',
-  (req, res, next) => checkIdParam(req, res, next, 'regionId'),
-  (req, res, next) => checkIdParam(req, res, next, 'recipientId'),
+  checkRegionIdParam,
+  checkRecipientIdParam,
   transactionWrapper(createLogByRecipientId, `${context} /recipient/:recipientId`),
 );
 

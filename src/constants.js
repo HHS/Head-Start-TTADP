@@ -33,6 +33,15 @@ const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
+const GOAL_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a goal
+  EDITOR: 'Editor', // The user(s) who edits the text of a goal
+  LINKER: 'Linker', // The user who links the goal to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
+};
+
 const GRANT_PERSONNEL_ROLES = [
   'auth_official_contact',
   'ceo',
@@ -47,6 +56,15 @@ const OBJECTIVE_STATUS = {
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
   COMPLETE: 'Complete',
+};
+
+const OBJECTIVE_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a objective
+  EDITOR: 'Editor', // The user(s) who edits the text of a objective
+  LINKER: 'Linker', // The user who links the objective to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
 };
 
 const NEXTSTEP_NOTETYPE = {
@@ -203,9 +221,8 @@ const FEATURE_FLAGS = [
   'anv_statistics',
   'regional_goal_dashboard',
   'goal_source',
-  'training_reports',
   'merge_goals',
-  'communication_log',
+  'monitoring',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -213,7 +230,7 @@ const MAINTENANCE_CATEGORY = {
   MAINTENANCE: 'MAINTENANCE',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
 module.exports = {
   FILE_STATUSES,
@@ -221,13 +238,16 @@ module.exports = {
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
+  GOAL_CREATED_VIA,
   SEARCH_RESULTS_PER_PAGE,
   AUTOMATIC_CREATION,
   CURATED_CREATION,
   CREATION_METHOD,
   GOAL_STATUS,
+  GOAL_COLLABORATORS,
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
+  OBJECTIVE_COLLABORATORS,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
@@ -244,5 +264,4 @@ module.exports = {
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
-  GOAL_CREATED_VIA,
 };

@@ -27,7 +27,7 @@ const NextSteps = ({ formData }) => {
     return (
       <PocCompleteView formData={formData} userId={user.id}>
         <Helmet>
-          <title>Next steps</title>
+          <title>Next Steps</title>
         </Helmet>
 
         <h2>Specialist&apos;s next steps</h2>
@@ -60,7 +60,7 @@ const NextSteps = ({ formData }) => {
   return (
     <>
       <Helmet>
-        <title>Next steps</title>
+        <title>Next Steps</title>
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
@@ -107,7 +107,7 @@ NextSteps.propTypes = {
 
 const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
-const position = 3;
+const position = 4;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {

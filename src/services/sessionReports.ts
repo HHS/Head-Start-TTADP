@@ -3,7 +3,12 @@ import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
-const { SessionReportPilot, EventReportPilot, SessionReportPilotFile } = db;
+const {
+  SessionReportPilot,
+  EventReportPilot,
+  SessionReportPilotFile,
+  SessionReportPilotSupportingAttachment,
+} = db;
 
 const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
@@ -14,10 +19,19 @@ const validateFields = (request, requiredFields) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
+  // Delete files.
   await SessionReportPilotFile.destroy(
     { where: { sessionReportPilotId: id } },
     { individualHooks: true },
   );
+
+  // Delete supporting attachments.
+  await SessionReportPilotSupportingAttachment.destroy(
+    { where: { sessionReportPilotId: id } },
+    { individualHooks: true },
+  );
+
+  // Delete session.
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
@@ -50,6 +64,10 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       {
         model: EventReportPilot,
         as: 'event',
+      },
+      {
+        model: db.File,
+        as: 'supportingAttachments',
       },
     ],
   };
@@ -84,6 +102,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     eventId,
     data: session?.data ?? {},
     files: session?.files ?? [],
+    supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
     event: session?.event ?? {},
   };

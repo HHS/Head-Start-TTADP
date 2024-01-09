@@ -4,24 +4,30 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   StepIndicatorStep,
   Button,
   Checkbox,
   Alert,
+  ModalToggleButton,
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../../../../components/Container';
 import StepIndicator from '../../../../components/StepIndicator';
 import { getRecipientGoals } from '../../../../fetchers/recipient';
+import { mergeGoals } from '../../../../fetchers/goals';
 import './index.css';
 import GoalCard from './components/GoalCard';
 import FinalGoalCard from './components/FinalGoalCard';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import GoalMergeGuidanceDrawer from './components/GoalMergeGuidanceDrawer';
+import Modal from '../../../../components/VanillaModal';
+import useSocket, { usePublishWebsocketLocationOnInterval } from '../../../../hooks/useSocket';
+import UserContext from '../../../../UserContext';
+import SocketAlert from '../../../../components/SocketAlert';
 
 const OFFSET = 0;
 const SELECT_GOALS_TO_MERGE = 1;
@@ -84,6 +90,8 @@ const stepIndicatorStatus = (position, activePage) => {
   return 'incomplete';
 };
 
+const INTERVAL_DELAY = 2500;
+
 export const navigate = (newPage, setActivePage) => {
   if (!pages.includes(newPage)) {
     return;
@@ -105,7 +113,9 @@ export default function MergeGoals({
   const [goals, setGoals] = useState([]);
   const [activePage, setActivePage] = useState(SELECT_GOALS_TO_MERGE);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
   const drawerTriggerRef = useRef(null);
+  const modalRef = useRef();
 
   const hookForm = useForm({
     mode: 'onSubmit',
@@ -118,6 +128,28 @@ export default function MergeGoals({
   const { register, watch } = hookForm;
   const selectedGoalIds = watch('selectedGoalIds');
   const finalGoalId = watch('finalGoalId');
+
+  const history = useHistory();
+
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket(user);
+
+  useEffect(() => {
+    const newPath = `/merge-goals/${new URLSearchParams(location.search).toString()}&recipientId=${recipientId}&regionId=${regionId}`;
+    setSocketPath(newPath);
+  }, [location.search, recipientId, regionId, setSocketPath]);
+
+  usePublishWebsocketLocationOnInterval(
+    socket,
+    socketPath,
+    user,
+    Date.now().toString(),
+    INTERVAL_DELAY,
+  );
 
   useEffect(() => {
     async function fetchGoals() {
@@ -256,9 +288,7 @@ export default function MergeGoals({
   const FirstButton = () => {
     if (activePage === REVIEW_AND_MERGE) {
       return (
-        <Button type="submit">
-          Merge goals
-        </Button>
+        <ModalToggleButton modalRef={modalRef}>Merge goals</ModalToggleButton>
       );
     }
 
@@ -281,8 +311,27 @@ export default function MergeGoals({
     </button>
   );
 
+  const onSubmit = async (data) => {
+    try {
+      setIsAppLoading(true);
+      const mergedGoals = await mergeGoals(
+        data.selectedGoalIds,
+        data.finalGoalId,
+        recipientId,
+        regionId,
+      );
+      const goalIds = mergedGoals.map((g) => g.id);
+      setIsAppLoading(false);
+      history.push(`${backPath}`, { mergedGoals: goalIds });
+    } catch (e) {
+      setValidation('Unable to merge goals');
+      setIsAppLoading(false);
+      modalRef.current.toggleModal(false);
+    }
+  };
+
   return (
-    <div className="padding-top-5">
+    <div className="padding-top-5 position-relative">
       <Link
         className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block"
         to={backPath}
@@ -291,11 +340,13 @@ export default function MergeGoals({
         {' '}
         {recipientNameWithRegion}
       </Link>
+      <SocketAlert store={messageStore} messageSubject="on this goal merge" />
       <h1 className="ttahub-recipient-record--heading merge-goals page-heading margin-top-0 margin-bottom-3">
         These goals might be duplicates
       </h1>
       <p className="usa-prose">
-        You can choose to merge 2 or more goals, or indicate that none are duplicates.
+        {/*  You can choose to merge 2 or more goals, or indicate that none are duplicates. */}
+        You can choose to merge 2 or more goals.
       </p>
       <Container className="ttahub-merge-goals-container">
         <StepIndicator helpLink={helpLink}>
@@ -324,8 +375,22 @@ export default function MergeGoals({
           be selected as the goal to keep, and other goals can&apos;t be selected.
         </Alert>
         )}
-        {/* eslint-disable-next-line no-console */}
-        <form onSubmit={hookForm.handleSubmit((data) => console.log(data))}>
+        <form onSubmit={hookForm.handleSubmit((data) => onSubmit(data))}>
+          <Modal
+            modalRef={modalRef}
+            heading="Permanently merge goals?"
+          >
+            <p>This action can&apos;t be undone.</p>
+
+            <Button
+              type="submit"
+              className="margin-right-1"
+              onClick={(e) => hookForm.handleSubmit((data) => onSubmit(data))(e)}
+            >
+              Yes, merge goals
+            </Button>
+            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, go back</ModalToggleButton>
+          </Modal>
           <fieldset className="margin-right-2 padding-0 border-0" hidden={activePage !== SELECT_GOALS_TO_MERGE}>
             {goals.map((goal) => (
               <GoalCard
