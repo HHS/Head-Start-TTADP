@@ -8,6 +8,7 @@ import {
   Grant,
   Topic,
   File,
+  Course,
   Resource,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
@@ -150,6 +151,11 @@ function reduceOtherEntityObjectives(newObjectives) {
         ...objective.topics,
       ], 'id');
 
+      exists.courses = uniqBy([
+        ...exists.courses,
+        ...objective.courses,
+      ], 'id');
+
       exists.files = uniqBy([
         ...exists.files,
         ...objective.files,
@@ -214,6 +220,10 @@ export async function getObjectivesByReportId(reportId) {
       {
         model: Topic,
         as: 'topics',
+      },
+      {
+        model: Course,
+        as: 'courses',
       },
       {
         model: Resource,
