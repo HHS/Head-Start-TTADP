@@ -3,7 +3,13 @@ import db from '../models';
 
 const { GoalSimilarityGroup, GoalSimilarityGroupGoal, Goal } = db;
 
-const similarityGroupAttributes = ['id', 'recipientId', 'userHasInvalidated', 'finalGoalId'];
+const similarityGroupAttributes = [
+  'id',
+  'recipientId',
+  'userHasInvalidated',
+  'finalGoalId',
+  'containsClosedCuratedGoal',
+];
 
 interface SimilarityGroup {
   id: number;
@@ -177,7 +183,11 @@ export async function deleteSimilarityGroup(similarityGroupId: number) {
   });
 }
 
-export async function createSimilarityGroup(recipientId: number, goals: number[]) {
+export async function createSimilarityGroup(
+  recipientId: number,
+  goals: number[],
+  containsClosedCuratedGoal = false,
+) {
   // check for existing similarity group
 
   let group;
@@ -200,6 +210,7 @@ export async function createSimilarityGroup(recipientId: number, goals: number[]
 
   const newGroup = await GoalSimilarityGroup.create({
     recipientId,
+    containsClosedCuratedGoal,
   }, { individualHooks: true });
 
   await GoalSimilarityGroupGoal.bulkCreate(
