@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Radio } from '@trussworks/react-uswds';
@@ -11,6 +11,8 @@ import { goalPropTypes } from '../../../../../components/GoalCards/constants';
 import FlagStatus from '../../../../../components/GoalCards/FlagStatus';
 import { STATUSES } from '../../../../../components/GoalCards/components/StatusDropdown';
 import './GoalCard.css';
+import UserContext from '../../../../../UserContext';
+import isAdmin from '../../../../../permissions';
 
 function GoalCard({
   goal,
@@ -48,6 +50,7 @@ function GoalCard({
   const formControlName = isRadio ? 'finalGoalId' : 'selectedGoalIds';
   const formControlLabel = isRadio ? `Merge ${id}` : `Select ${id}`;
   const registration = isRadio ? { required: true } : null;
+  const { user } = useContext(UserContext);
 
   let showFormControl = true;
 
@@ -55,8 +58,16 @@ function GoalCard({
     showFormControl = false;
   }
 
-  if (selectedGoalsIncludeCurated && !goal.isCurated) {
-    showFormControl = false;
+  let implicitCuratedGoalMerge = false;
+
+  const canMergeClosedCurated = () => isAdmin(user) || (user.flags && user.flags.includes('closed_goal_merge_override'));
+
+  if (register) {
+    showFormControl = !(
+      selectedGoalsIncludeCurated
+        && (!goal.isCurated || (goal.isCurated && canMergeClosedCurated()))
+    );
+    implicitCuratedGoalMerge = !showFormControl && goal.isCurated;
   }
 
   const internalLeftMargin = 'margin-left-5';
@@ -65,7 +76,7 @@ function GoalCard({
     const classNames = [];
     classNames.push('ttahub-goal-card--status');
 
-    if (!showFormControl) {
+    if (!showFormControl && !implicitCuratedGoalMerge) {
       classNames.push('margin-left-5');
     }
 
@@ -92,7 +103,18 @@ function GoalCard({
               className="margin-right-1"
               inputRef={register(registration)}
             />
-          ) : null }
+          ) : null}
+          {implicitCuratedGoalMerge && (
+            <FormControl
+              disabled
+              id={formControlId}
+              name={formControlName}
+              value={id}
+              aria-label={formControlLabel}
+              className="margin-right-1"
+              inputRef={register(registration)}
+            />
+          )}
           <div className={goalStatusClassNames}>
             {icon}
             <span className="ttahub-final-goal--status-label">

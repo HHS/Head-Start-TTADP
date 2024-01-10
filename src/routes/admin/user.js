@@ -47,7 +47,7 @@ export async function createUserRoles(requestUser, userId) {
   });
 
   const currentRoles = currentUserRoles.map((r) => r.get('fullName'));
-  const newRoles = requestUser.roles.map((r) => r.fullName);
+  const newRoles = requestUser?.roles?.map((r) => r.fullName) || [];
 
   const rolesToRemove = currentRoles.filter((r) => !newRoles.includes(r));
   const rolesToCreate = newRoles.filter((r) => !currentRoles.includes(r));
