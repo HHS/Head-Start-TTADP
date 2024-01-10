@@ -21,11 +21,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    nameLookUp: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     mapsTo: {

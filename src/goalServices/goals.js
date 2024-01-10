@@ -49,6 +49,7 @@ import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
 import { findOrFailExistingGoal, responsesForComparison } from './helpers';
+import Users from '../policies/user';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2540,12 +2541,16 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(similarityResponse = []) {
+export async function getGoalIdsBySimilarity(similarityResponse = [], user = null) {
   // convert the response to a group of IDs
   const goalIdGroups = similarityResponse.map((matchedGoals) => {
     const { id, matches } = matchedGoals;
     return uniq([id, ...matches.map((match) => match.id)]);
   });
+
+  const status = user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override')
+    ? {}
+    : { status: { [Op.not]: GOAL_STATUS.CLOSED } };
 
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
@@ -2563,9 +2568,7 @@ export async function getGoalIdsBySimilarity(similarityResponse = []) {
           '$"goalTemplate"."creationMethod"$': {
             [Op.eq]: CREATION_METHOD.CURATED,
           },
-          status: {
-            [Op.not]: GOAL_STATUS.CLOSED,
-          },
+          ...status,
         },
       ],
     },
@@ -2789,11 +2792,11 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
  * @param {number} finalGoalId
  * @param {number[]} selectedGoalIds
  */
-export async function mergeGoals(finalGoalId, selectedGoalIds) {
+export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
   // first thing we do is test elibility
   // in case something weird got into a URL on the frontend
   const mockResponse = [{ id: finalGoalId, matches: selectedGoalIds.map((id) => ({ id })) }];
-  const elibilityGroup = await getGoalIdsBySimilarity(mockResponse);
+  const elibilityGroup = await getGoalIdsBySimilarity(mockResponse, user);
   if (!elibilityGroup.length) {
     throw new Error('Cannot merge: goals ineligible for merge');
   }
@@ -3008,16 +3011,18 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       }));
     });
 
-    // copy the goal field responses
-    g.responses.forEach((gfr) => {
-      updatesToRelatedModels.push(GoalFieldResponse.create({
-        goalId: grantToGoalDictionary[
-          grantsWithReplacementsDictionary[g.grantId]
-        ],
-        goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
-        response: gfr.response,
-      }, { individualHooks: true }));
-    });
+    if (Number(g.id) === Number(finalGoalId)) {
+      // copy the goal field responses
+      g.responses.forEach((gfr) => {
+        updatesToRelatedModels.push(GoalFieldResponse.create({
+          goalId: grantToGoalDictionary[
+            grantsWithReplacementsDictionary[g.grantId]
+          ],
+          goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+          response: gfr.response,
+        }, { individualHooks: true }));
+      });
+    }
   });
 
   await Promise.all(updatesToRelatedModels);
