@@ -11,6 +11,7 @@ const memoryHistory = createMemoryHistory();
 describe('FinalGoalCard', () => {
   const baseGoals = [{
     id: 4598,
+    ids: [4598],
     goalStatus: 'Suspended',
     createdOn: '2021-06-15',
     goalText: 'This is goal text 1.',
@@ -59,6 +60,7 @@ describe('FinalGoalCard', () => {
   },
   {
     id: 4600,
+    ids: [4600],
     goalStatus: 'Not Started',
     createdOn: '2021-07-15',
     goalText: 'This is goal text 2.',
