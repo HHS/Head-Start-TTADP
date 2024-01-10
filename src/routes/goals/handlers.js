@@ -247,8 +247,10 @@ export async function mergeGoalHandler(req, res) {
     }
 
     const { finalGoalId, selectedGoalIds } = req.body;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
 
-    const mergedGoals = await mergeGoals(finalGoalId, selectedGoalIds);
+    const mergedGoals = await mergeGoals(finalGoalId, selectedGoalIds, user);
     res.json(mergedGoals);
   } catch (err) {
     await handleErrors(req, res, err, `${logContext}:MERGE_GOAL`);
@@ -282,7 +284,7 @@ export async function getSimilarGoalsForRecipient(req, res) {
     if (!canView.every((permission) => permission)) {
       return res.sendStatus(401).send();
     }
-    return res.json(await getGoalIdsBySimilarity(result));
+    return res.json(await getGoalIdsBySimilarity(result, user));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
   }

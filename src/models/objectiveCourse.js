@@ -13,6 +13,13 @@ export default (sequelize, DataTypes) => {
         otherKey: 'objectiveId',
         as: 'objectives',
       });
+
+      models.Objective.belongsToMany(models.Course, {
+        through: models.ObjectiveCourse,
+        foreignKey: 'objectiveId',
+        otherKey: 'courseId',
+        as: 'courses',
+      });
     }
   }
   ObjectiveCourse.init({
