@@ -6,7 +6,12 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext, Controller, useFieldArray } from 'react-hook-form';
+import {
+  useFormContext,
+  Controller,
+  useFieldArray,
+  useController,
+} from 'react-hook-form';
 import {
   TextInput,
   Fieldset,
@@ -30,6 +35,7 @@ import QuestionTooltip from '../../../components/GoalForm/QuestionTooltip';
 import {
   sessionSummaryFields,
   pageComplete,
+  NO_ERROR,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import FileTable from '../../../components/FileUploader/FileTable';
@@ -41,6 +47,7 @@ import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import '../../../components/GoalForm/ObjectiveSupportType.scss';
+import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -70,6 +77,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
+  const courses = watch('courses');
 
   // ref for topics guidance drawer
   const drawerTriggerRef = useRef(null);
@@ -135,6 +143,38 @@ const SessionSummary = ({ datePickerKey }) => {
     defaultValue: [
       DEFAULT_RESOURCE,
     ],
+  });
+
+  console.log('Courses: ', courses);
+  // Use courses.
+  const {
+    field: {
+      onChange: onChangeUseIpdCourses,
+      onBlur: onBlurUseIpdCourses,
+      value: objectiveUseIpdCourses,
+      name: objectiveUseIpdCoursesInputName,
+    },
+  } = useController({
+    name: 'useIpdCourses',
+    defaultValue: false,
+  });
+
+  console.log('objectiveUseIpdCoursesInputName: ', objectiveUseIpdCoursesInputName);
+
+  // Selected courses.
+  const {
+    field: {
+      onChange: onChangeIpdCourses,
+      onBlur: onBlurIpdCourses,
+      value: objectiveIpdCourses,
+      name: objectiveIpdCoursesInputName,
+    },
+  } = useController({
+    name: 'courses',
+    defaultValue: courses || [],
+    rules: {
+      required: objectiveUseIpdCourses === true,
+    },
   });
 
   useEffect(() => {
@@ -486,7 +526,17 @@ const SessionSummary = ({ datePickerKey }) => {
           <PlusButton text="Add new resource" onClick={() => appendResource(DEFAULT_RESOURCE)} />
         </div>
       </div>
-
+      <IpdCourseSelect
+        error={NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+      />
       <Fieldset className="ttahub-objective-files margin-top-1">
         <legend>
           Did you use any TTA resources that aren&apos;t available as a link?
