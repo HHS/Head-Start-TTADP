@@ -52,6 +52,7 @@ import {
   createSimilarityGroup,
   setSimilarityGroupAsUserMerged,
 } from '../services/goalSimilarityGroup';
+import Users from '../policies/user';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2447,12 +2448,14 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(recipientId) {
+export async function getGoalIdsBySimilarity(recipientId, user = null) {
+  const userHasClosedGoalMergeOverride = user && user.hasPermission('CLOSE_GOAL_MERGE_OVERRIDE');
+
   // first, we check for goal similarity groups that have already been created
   const existingRecipientGroups = await getSimilarityGroupsByRecipientId(recipientId, {
     userHasInvalidated: false,
     finalGoalId: null,
-  });
+  }, userHasClosedGoalMergeOverride);
 
   if (existingRecipientGroups.length) {
     return existingRecipientGroups;
@@ -2466,26 +2469,15 @@ export async function getGoalIdsBySimilarity(recipientId) {
     result = similarity.result;
   }
 
-  /*
-  *
-  * similarity response is an array of objects with the following structure:
-  * {
-      "id": number,
-      "name": string,
-      "matches": [{
-        "id": number,
-        "name": string,
-        "grantId": number,
-        "similarity": float,
-      }]
-    }
-  */
-
   // convert the response to a group of IDs
   const goalIdGroups = (result || []).map((matchedGoals) => {
     const { id, matches } = matchedGoals;
     return uniq([id, ...matches.map((match) => match.id)]);
   });
+
+  const status = userHasClosedGoalMergeOverride
+    ? {}
+    : { status: { [Op.not]: GOAL_STATUS.CLOSED } };
 
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
@@ -2503,9 +2495,7 @@ export async function getGoalIdsBySimilarity(recipientId) {
           '$"goalTemplate"."creationMethod"$': {
             [Op.eq]: CREATION_METHOD.CURATED,
           },
-          status: {
-            [Op.not]: GOAL_STATUS.CLOSED,
-          },
+          ...status,
         },
       ],
     },
@@ -2740,7 +2730,13 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
  * @param {number} finalGoalId
  * @param {number[]} selectedGoalIds
  */
-export async function mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGroupId) {
+
+export async function mergeGoals(
+  finalGoalId,
+  selectedGoalIds,
+  goalSimiliarityGroupId,
+  user = null,
+) {
   // create a new goal from "finalGoalId"
   // - update selectedGoalIds to point to newGoalId
   // - i.e. { parentGoalId: newGoalId }
@@ -2950,16 +2946,18 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGr
       }));
     });
 
-    // copy the goal field responses
-    g.responses.forEach((gfr) => {
-      updatesToRelatedModels.push(GoalFieldResponse.create({
-        goalId: grantToGoalDictionary[
-          grantsWithReplacementsDictionary[g.grantId]
-        ],
-        goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
-        response: gfr.response,
-      }, { individualHooks: true }));
-    });
+    if (Number(g.id) === Number(finalGoalId)) {
+      // copy the goal field responses
+      g.responses.forEach((gfr) => {
+        updatesToRelatedModels.push(GoalFieldResponse.create({
+          goalId: grantToGoalDictionary[
+            grantsWithReplacementsDictionary[g.grantId]
+          ],
+          goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+          response: gfr.response,
+        }, { individualHooks: true }));
+      });
+    }
   });
 
   await Promise.all(updatesToRelatedModels);

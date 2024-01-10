@@ -245,7 +245,6 @@ export async function mergeGoalHandler(req, res) {
     }
 
     const { finalGoalId, selectedGoalIds, goalSimilarityGroupId } = req.body;
-
     const mergedGoals = await mergeGoals(finalGoalId, selectedGoalIds, goalSimilarityGroupId);
     res.json(mergedGoals);
   } catch (err) {
@@ -267,7 +266,9 @@ export async function getSimilarGoalsForRecipient(req, res) {
   const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
 
   try {
-    res.json(await getGoalIdsBySimilarity(recipientId));
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    res.json(await getGoalIdsBySimilarity(recipientId, user));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
   }
