@@ -150,7 +150,7 @@ function calculateGoalsAndObjectives(report) {
       if (prompts && prompts.length) {
         const promptData = {};
         prompts.forEach((prompt) => {
-          promptData[prompt.title] = prompt.response.join(', ');
+          promptData[prompt.title] = prompt.reportResponse.join(', ');
         });
         goalSection.data = { ...goalSection.data, ...promptData };
       }
