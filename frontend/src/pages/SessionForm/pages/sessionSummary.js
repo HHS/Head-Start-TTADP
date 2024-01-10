@@ -170,7 +170,7 @@ const SessionSummary = ({ datePickerKey }) => {
     name: 'courses',
     defaultValue: courses || [],
     rules: {
-      required: objectiveUseIpdCourses === true,
+      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
     },
   });
 
@@ -524,7 +524,7 @@ const SessionSummary = ({ datePickerKey }) => {
         </div>
       </div>
       <IpdCourseSelect
-        error={NO_ERROR}
+        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
         inputName={objectiveIpdCoursesInputName}
         onChange={onChangeIpdCourses}
         onBlur={onBlurIpdCourses}
@@ -659,10 +659,13 @@ const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
-  const { objectiveTrainers, objectiveTopics } = hookForm.getValues();
+  const {
+    objectiveTrainers, objectiveTopics, courses, useIpdCourses,
+  } = hookForm.getValues();
 
   if (!objectiveTrainers || !objectiveTrainers.length
-    || !objectiveTopics || !objectiveTopics.length) {
+    || !objectiveTopics || !objectiveTopics.length
+    || (useIpdCourses && !courses.length)) {
     return false;
   }
 
