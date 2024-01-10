@@ -2435,6 +2435,10 @@ const fieldMappingForDeduplication = {
 // eslint-disable-next-line max-len
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
 
+function goalGroupContainsClosedCuratedGoal(goalGroup) {
+  return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
+}
+
 /**
 * @param {Number} recipientId
 * @returns {
@@ -2449,13 +2453,25 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 * }[]
 */
 export async function getGoalIdsBySimilarity(recipientId, user = null) {
-  const userHasClosedGoalMergeOverride = user && user.hasPermission('CLOSE_GOAL_MERGE_OVERRIDE');
+  /**
+   * if a user has the ability to merged closed curated goals, we will show them in the UI
+   */
+  const allowClosedCuratedGoal = user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override');
 
-  // first, we check for goal similarity groups that have already been created
-  const existingRecipientGroups = await getSimilarityGroupsByRecipientId(recipientId, {
+  const similiarityWhere = {
     userHasInvalidated: false,
     finalGoalId: null,
-  }, userHasClosedGoalMergeOverride);
+  };
+
+  if (!allowClosedCuratedGoal) {
+    similiarityWhere.containsClosedCuratedGoal = false;
+  }
+
+  // then, we check for goal similarity groups that have already been created
+  const existingRecipientGroups = await getSimilarityGroupsByRecipientId(
+    recipientId,
+    similiarityWhere,
+  );
 
   if (existingRecipientGroups.length) {
     return existingRecipientGroups;
@@ -2475,10 +2491,6 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     return uniq([id, ...matches.map((match) => match.id)]);
   });
 
-  const status = userHasClosedGoalMergeOverride
-    ? {}
-    : { status: { [Op.not]: GOAL_STATUS.CLOSED } };
-
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
@@ -2495,7 +2507,6 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
           '$"goalTemplate"."creationMethod"$': {
             [Op.eq]: CREATION_METHOD.CURATED,
           },
-          ...status,
         },
       ],
     },
@@ -2567,12 +2578,21 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
         return previous;
       }
 
+      // contains a curated goal with a closed status
+      const containsClosedCuratedGoal = (
+        current.goalTemplate.creationMethod === CREATION_METHOD.CURATED
+              && current.status === GOAL_STATUS.CLOSED
+      );
+
       // see if we can find an existing goal
       const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
       // if we found an existing goal,
       // we'll add the current goal's ID to the existing goal's ID array
       if (existingGoal) {
         existingGoal.ids.push(current.id);
+        existingGoal.containsClosedCuratedGoal = (
+          existingGoal.containsClosedCuratedGoal || containsClosedCuratedGoal
+        );
         return previous;
       }
 
@@ -2583,6 +2603,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
           source: current.source,
           status: current.status,
           responsesForComparison: responsesForComparison(current),
+          containsClosedCuratedGoal,
           ids: [current.id],
         },
       ];
@@ -2598,13 +2619,14 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   await Promise.all(
     [...groupsWithMoreThanOneGoal, []]
       .map((gg) => (
-        createSimilarityGroup(recipientId, uniq(gg.map((g) => g.ids).flat())))),
+        createSimilarityGroup(
+          recipientId,
+          uniq(gg.map((g) => g.ids).flat()),
+          goalGroupContainsClosedCuratedGoal(gg),
+        ))),
   );
 
-  return getSimilarityGroupsByRecipientId(recipientId, {
-    userHasInvalidated: false,
-    finalGoalId: null,
-  });
+  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere);
 }
 
 /**
@@ -2735,7 +2757,6 @@ export async function mergeGoals(
   finalGoalId,
   selectedGoalIds,
   goalSimiliarityGroupId,
-  user = null,
 ) {
   // create a new goal from "finalGoalId"
   // - update selectedGoalIds to point to newGoalId

@@ -31,6 +31,11 @@ module.exports = {
               },
             },
           },
+          containsClosedCuratedGoal: {
+            type: Sequelize.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+          },
           recipientId: {
             allowNull: false,
             type: Sequelize.INTEGER,

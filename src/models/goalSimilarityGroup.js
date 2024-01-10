@@ -44,6 +44,11 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    containsClosedCuratedGoal: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     finalGoalId: {
       type: DataTypes.INTEGER,
       allowNull: true,
