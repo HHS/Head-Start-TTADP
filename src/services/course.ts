@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import Sequelize, { Op, WhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
 import db, { sequelize } from '../models';
 
@@ -38,8 +38,13 @@ export async function csvImport(buffer: Buffer | string) {
   let results;
   try {
     results = await Promise.all(parsed.map(async (course: DecodedCSV) => {
+      // Trim unexpected chars.
+      const trimmedKeys = Object.fromEntries(
+        Object.entries(course).map(([key, value]) => [key.trim(), value]),
+      );
+
       // Get the first property value form course object.
-      let rawCourseName = course['course name'];
+      let rawCourseName = trimmedKeys['course name'];
 
       if (!rawCourseName) {
         // Skip blank course name.
@@ -56,10 +61,13 @@ export async function csvImport(buffer: Buffer | string) {
       // Find all existing courses that match the clean course name regardless of case.
       const existingCourses = await Course.findAll({
         where: {
-          nameLookUp: {
-            [Op.iLike]: cleanCourseName,
-          },
-          deletedAt: null,
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn('lower', Sequelize.fn('regexp_replace', Sequelize.col('name'), '[^a-zA-Z0-9]', '', 'g')),
+              { [Op.like]: cleanCourseName },
+            ),
+            { deletedAt: null },
+          ],
         },
       });
 
@@ -80,7 +88,7 @@ export async function csvImport(buffer: Buffer | string) {
         } else {
           // Create a new course.
           const replacementCourse = await Course.create({
-            name: rawCourseName, nameLookUp: cleanCourseName,
+            name: rawCourseName,
           });
           created.push(replacementCourse);
 
@@ -105,7 +113,7 @@ export async function csvImport(buffer: Buffer | string) {
       } else {
         // Create a new course.
         const newCourse = await Course.create({
-          name: rawCourseName, nameLookUp: cleanCourseName,
+          name: rawCourseName,
         });
 
         created.push(newCourse);
