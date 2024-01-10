@@ -140,3 +140,8 @@ export const importCsv = async (importType, data) => {
   }
   return res.json();
 };
+
+export const updateLegacyUsers = async (id, data) => {
+  const result = await put((join('/', 'api', 'admin', 'legacy-reports', String(id), 'users')), data);
+  return result.json();
+};
