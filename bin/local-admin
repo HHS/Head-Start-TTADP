@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-# WARNING: This will wipe the current data and load only the seed data
-
-# no more tables
+# Note: This will make the current user an admin
 export $(grep POSTGRES_PASSWORD   ./.env)
 export $(grep POSTGRES_USERNAME   ./.env)
 export $(grep CURRENT_USER_ID   ./.env)
