@@ -145,7 +145,6 @@ const SessionSummary = ({ datePickerKey }) => {
     ],
   });
 
-  console.log('Courses: ', courses);
   // Use courses.
   const {
     field: {
@@ -158,8 +157,6 @@ const SessionSummary = ({ datePickerKey }) => {
     name: 'useIpdCourses',
     defaultValue: false,
   });
-
-  console.log('objectiveUseIpdCoursesInputName: ', objectiveUseIpdCoursesInputName);
 
   // Selected courses.
   const {
