@@ -391,8 +391,28 @@ describe('getGoalIdsBySimilarity', () => {
     await sequelize.close();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     similarGoalsForRecipient.mockClear();
+
+    const goals = [
+      ...goalGroupOne,
+      ...goalGroupTwo,
+      ...goalGroupThree,
+      ...groupIneligibleForSimilarityForReportCount,
+      ...groupIneligibleForSimilarityViaResponse,
+    ];
+
+    await GoalSimilarityGroupGoal.destroy({
+      where: {
+        goalId: goals.map((g) => g.id),
+      },
+    });
+
+    await GoalSimilarityGroup.destroy({
+      where: {
+        recipientId: [recipient.id, recipientTwo.id],
+      },
+    });
   });
 
   it('handles undefined response', async () => {
@@ -421,17 +441,17 @@ describe('getGoalIdsBySimilarity', () => {
     similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
 
     const idsSets = await getGoalIdsBySimilarity(recipient.id);
+
     // we expect goal group three to be eliminated, so we should have two sets + an empty
-    expect(idsSets).toHaveLength(3);
+    expect(idsSets).toHaveLength(2);
 
     // we expect one empty set, removing it leaves two
     const filteredSet = idsSets.filter((set) => set.goals.length);
-    expect(filteredSet).toHaveLength(2);
+    expect(filteredSet).toHaveLength(1);
 
-    const [setOne, setTwo] = filteredSet;
+    const [setOne] = filteredSet;
 
     expect(setOne.goals.length).toBe(4);
-    expect(setTwo.goals.length).toBe(4);
 
     // test to make sure that we don't double tap the similarity API
     expect(similarGoalsForRecipient).toHaveBeenCalledTimes(1);
@@ -440,5 +460,46 @@ describe('getGoalIdsBySimilarity', () => {
     expect(similarGoalsForRecipient).toHaveBeenCalledTimes(1);
 
     expect(theSetsAgain).toEqual(idsSets);
+  });
+
+  it('shapes the similarity response when a user has the power to merge the closed', async () => {
+    const similarityResponse = [
+      goalGroupOne,
+      goalGroupTwo,
+      goalGroupThree,
+      groupIneligibleForSimilarityForReportCount,
+      groupIneligibleForSimilarityViaResponse,
+    ].map((group) => ({
+      id: group[0].id,
+      name: group[0].name,
+      matches: group.map((g) => ({
+        id: g.id,
+        name: g.name,
+      })),
+    }));
+
+    similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
+
+    const user = {
+      permissions: [],
+      flags: ['closed_goal_merge_override'],
+    };
+
+    const idsSets = await getGoalIdsBySimilarity(recipient.id, user);
+
+    // we expect goal group three to be eliminated, so we should have two sets + an empty
+    expect(idsSets).toHaveLength(3);
+
+    // we expect one empty set, removing it leaves two
+    const filteredSet = idsSets.filter((set) => set.goals.length);
+    expect(filteredSet).toHaveLength(2);
+
+    // sort set by goals length descending
+    filteredSet.sort((a, b) => b.goals.length - a.goals.length);
+
+    const [setOne, setTwo] = filteredSet;
+
+    expect(setOne.goals.length).toBe(5);
+    expect(setTwo.goals.length).toBe(4);
   });
 });

@@ -2495,20 +2495,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
     where: {
-      [Op.or]: [
-        {
-          id: group,
-          '$"goalTemplate"."creationMethod"$': {
-            [Op.ne]: CREATION_METHOD.CURATED,
-          },
-        },
-        {
-          id: group,
-          '$"goalTemplate"."creationMethod"$': {
-            [Op.eq]: CREATION_METHOD.CURATED,
-          },
-        },
-      ],
+      id: group,
     },
     include: [
       {
