@@ -15,6 +15,7 @@ import {
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import { DECIMAL_BASE } from '@ttahub/common/src/constants';
 import Container from '../../../../components/Container';
 import StepIndicator from '../../../../components/StepIndicator';
 import { getRecipientGoals } from '../../../../fetchers/recipient';
@@ -197,7 +198,7 @@ export default function MergeGoals({
   }, [location.search, recipientId, regionId, setIsAppLoading, canMergeGoals]);
 
   const selectedGoals = goals.filter((g) => (
-    selectedGoalIds.includes(g.id.toString())
+    selectedGoalIds.includes(g.ids.join(','))
   ));
 
   const selectedGoalsIncludeCurated = selectedGoals.some((g) => g.isCurated);
@@ -211,19 +212,17 @@ export default function MergeGoals({
 
     // if we have a single curated goal selected, then we should set it as the final goal
     const curatedSelectedGoals = goals.filter((g) => (
-      selectedGoalIds.includes(g.id.toString()) && g.isCurated
+      selectedGoalIds.includes(g.ids.join(',')) && g.isCurated
     ));
 
     if (curatedSelectedGoals.length === 1) {
-      hookForm.setValue('finalGoalId', curatedSelectedGoals[0].id.toString());
+      hookForm.setValue('finalGoalId', curatedSelectedGoals[0].ids.join(','));
     } else if (curatedSelectedGoals.length > 1) {
       if (isAdmin(user) || (user.flags && user.flags.includes('closed_goal_merge_override'))) {
-        // use the newest goal id as the finalGoalId, because it is the latest
-        const maxGoalId = curatedSelectedGoals.reduce((max, g) => {
-          if (g.id > max) { return g.id; }
-          return max;
-        }, 0);
-        hookForm.setValue('finalGoalId', maxGoalId.toString());
+        // use the highest goal id as the finalGoalId, because it is the latest
+        curatedSelectedGoals.sort((a, b) => b.id - a.id);
+        const maxGoalIds = curatedSelectedGoals[0].ids.join(',');
+        hookForm.setValue('finalGoalId', maxGoalIds);
       }
     }
   }, [activePage, finalGoalId, goals, hookForm, selectedGoalIds, user]);
@@ -239,7 +238,7 @@ export default function MergeGoals({
   const selectAll = (checked) => {
     let newSelectedGoalIds = [];
     if (checked) {
-      newSelectedGoalIds = goals.map((g) => g.id.toString());
+      newSelectedGoalIds = goals.map((g) => g.ids.join(','));
     }
 
     hookForm.setValue('selectedGoalIds', newSelectedGoalIds);
@@ -324,8 +323,10 @@ export default function MergeGoals({
   const onSubmit = async (data) => {
     try {
       setIsAppLoading(true);
+
+      const finalSelectedGoalIds = data.selectedGoalIds.map((ids) => ids.split(',')).flat().map((id) => parseInt(id, DECIMAL_BASE));
       const mergedGoals = await mergeGoals(
-        data.selectedGoalIds,
+        finalSelectedGoalIds,
         data.finalGoalId,
         recipientId,
         regionId,
