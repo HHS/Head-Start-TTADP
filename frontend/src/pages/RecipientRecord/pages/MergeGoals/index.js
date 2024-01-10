@@ -56,7 +56,9 @@ const validations = {
   [SELECT_GOALS_TO_MERGE]: {
     validator: (hookForm) => {
       const { selectedGoalIds } = hookForm.getValues();
-      if (selectedGoalIds.length < 2) {
+      const toValidate = [selectedGoalIds].flat();
+
+      if (toValidate.length < 2) {
         return false;
       }
       return true;
@@ -323,11 +325,15 @@ export default function MergeGoals({
   const onSubmit = async (data) => {
     try {
       setIsAppLoading(true);
-
+      // we need all the goals across the de-duplication process to be merged
       const finalSelectedGoalIds = data.selectedGoalIds.map((ids) => ids.split(',')).flat().map((id) => parseInt(id, DECIMAL_BASE));
+
+      // this is fine because we end up with a new goal for each grant at the end of the day
+      const finalFinalGoalId = parseInt(data.finalGoalId.split(',')[0], DECIMAL_BASE);
+
       const mergedGoals = await mergeGoals(
         finalSelectedGoalIds,
-        data.finalGoalId,
+        finalFinalGoalId,
         recipientId,
         regionId,
       );
