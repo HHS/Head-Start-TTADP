@@ -2925,6 +2925,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
           where: { id: g.activityReportGoals.map((arg) => arg.id) },
         },
       ));
+
+      // TODO: if the report is not approved, the name, resources and responses should also
+      // be updated
     }
 
     // copy the goal resources
@@ -2943,13 +2946,13 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
     if (Number(g.id) === Number(finalGoalId)) {
       // copy the goal field responses
       g.responses.forEach((gfr) => {
-        updatesToRelatedModels.push(GoalFieldResponse.create({
-          goalId: grantToGoalDictionary[
-            grantsWithReplacementsDictionary[g.grantId]
-          ],
-          goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
-          response: gfr.response,
-        }, { individualHooks: true }));
+        Object.values(grantToGoalDictionary).forEach((goalId) => {
+          updatesToRelatedModels.push(GoalFieldResponse.create({
+            goalId,
+            goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+            response: gfr.response,
+          }, { individualHooks: true }));
+        });
       });
     }
   });
