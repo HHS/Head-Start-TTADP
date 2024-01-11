@@ -85,7 +85,7 @@ describe('GoalDataController', () => {
         }],
       },
     );
-    fetchMock.get('/api/goals/similar/1?cluster=true', []);
+    fetchMock.get(`/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`, []);
   });
 
   afterEach(async () => {
