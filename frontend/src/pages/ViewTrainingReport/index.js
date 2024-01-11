@@ -140,7 +140,7 @@ export default function ViewTrainingReport({ match }) {
           'Session objective': session.data.objective,
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
-          Courses: session.data.courses ? session.data.courses.map((o) => o.name) : [],
+          'iPD Courses': session.data.courses ? session.data.courses.map((o) => o.name) : [],
           'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
           'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
           'Support type': session.data.objectiveSupportType,
