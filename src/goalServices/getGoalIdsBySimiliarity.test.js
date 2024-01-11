@@ -28,6 +28,7 @@ describe('getReportCountForGoals', () => {
   it('tallies the goals/report count, inluding goals without reports', () => {
     const goals = [
       {
+        grantId: 1,
         activityReportGoals: [
           {
             id: 1,
@@ -42,6 +43,7 @@ describe('getReportCountForGoals', () => {
         ],
       },
       {
+        grantId: 1,
         activityReportGoals: [
           {
             id: 3,
@@ -61,9 +63,9 @@ describe('getReportCountForGoals', () => {
     const counts = getReportCountForGoals(goals);
 
     expect(counts).toEqual({
-      1: 2,
-      2: 1,
-      3: 1,
+      1: { 1: 2 },
+      2: { 1: 1 },
+      3: { 1: 1 },
     });
 
     expect(hasMultipleGoalsOnSameActivityReport(counts)).toBe(true);
