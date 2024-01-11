@@ -5,7 +5,6 @@ import {
   recipientsByName,
   recipientsByUserId,
   recipientLeadership,
-  allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
 import { goalsByIdAndRecipient } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -14,8 +13,11 @@ import Recipient from '../../policies/recipient';
 import { userById } from '../../services/users';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
-import SCOPES from '../../middleware/scopeConstants';
-import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
+import { checkRecipientAccessAndExistence as checkAccessAndExistence, validateMergeGoalPermissions } from '../utils';
+import {
+  getSimilarityGroupById,
+  setSimilarityGroupAsUserInvalidated,
+} from '../../services/goalSimilarityGroup';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -127,6 +129,46 @@ export async function getGoalsByRecipient(req, res) {
   }
 }
 
+export async function getGoalsFromRecipientGoalSimilarityGroup(req, res) {
+  try {
+    const proceedQuestionMark = await checkAccessAndExistence(req, res);
+
+    // proceed ?
+    if (!proceedQuestionMark) {
+      return;
+    }
+
+    const { recipientId, regionId, goalGroupId } = req.params;
+
+    const response = await getSimilarityGroupById(goalGroupId, {
+      finalGoalId: null,
+      userHasInvalidated: false,
+    });
+
+    if (!response) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const { goals } = response;
+
+    // Get goals for recipient.
+    const recipientGoals = await getGoalsByActivityRecipient(
+      recipientId,
+      regionId,
+      {
+        goalIds: goals,
+        sortBy: 'goal',
+        sortDir: 'asc',
+        offset: 0,
+      },
+    );
+    res.json(recipientGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 export async function getRecipientLeadership(req, res) {
   try {
     const proceedQuestionMark = await checkAccessAndExistence(req, res);
@@ -145,38 +187,6 @@ export async function getRecipientLeadership(req, res) {
   }
 }
 
-export async function validateMergeGoalPermissions(req, res) {
-  const { recipientId, regionId } = req.params;
-
-  if (!recipientId || !regionId) {
-    res.sendStatus(httpCodes.BAD_REQUEST);
-    return false;
-  }
-
-  const recipient = await recipientById(recipientId, []);
-  if (!recipient) {
-    res.sendStatus(httpCodes.NOT_FOUND);
-    return false;
-  }
-
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-  const arUsers = await allArUserIdsByRecipientAndRegion(
-    Number(recipientId),
-    Number(regionId),
-  );
-
-  const userIsAdmin = user.permissions.some((p) => p.scopeId === SCOPES.ADMIN);
-
-  const policy = new Recipient(
-    user,
-    recipient,
-    arUsers.includes(userId),
-  );
-
-  return policy.canMergeGoals() || userIsAdmin;
-}
-
 export async function getMergeGoalPermissions(req, res) {
   try {
     const canMergeGoalsForRecipient = await validateMergeGoalPermissions(req, res);
@@ -186,6 +196,29 @@ export async function getMergeGoalPermissions(req, res) {
         canMergeGoalsForRecipient,
       });
     }
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function markRecipientGoalGroupInvalid(req, res) {
+  try {
+    const canMergeGoalsForRecipient = await validateMergeGoalPermissions(req, res);
+
+    if (res.headersSent) {
+      return;
+    }
+
+    if (!canMergeGoalsForRecipient) {
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+      return;
+    }
+
+    const { goalGroupId } = req.params;
+
+    await setSimilarityGroupAsUserInvalidated(goalGroupId);
+
+    res.json({ message: `Goal group ${goalGroupId} marked as invalid.` });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

@@ -13,6 +13,8 @@ import {
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
   getMergeGoalPermissions,
+  markRecipientGoalGroupInvalid,
+  getGoalsFromRecipientGoalSimilarityGroup,
 } from './handlers';
 import {
   getGoalsByActivityRecipient,
@@ -26,6 +28,12 @@ import { goalsByIdAndRecipient } from '../../goalServices/goals';
 import SCOPES from '../../middleware/scopeConstants';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
+import {
+  setSimilarityGroupAsUserInvalidated,
+  getSimilarityGroupById,
+} from '../../services/goalSimilarityGroup';
+
+jest.mock('../../services/goalSimilarityGroup');
 
 jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
@@ -683,5 +691,224 @@ describe('getGoalsByIdAndRecipient', () => {
       await getMergeGoalPermissions(req, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
     });
+  });
+  describe('markRecipientGoalGroupInvalid', () => {
+    it('handles success', async () => {
+      const req = {
+        params: {
+          goalGroupId: 1,
+          recipientId: 1,
+          regionId: 1,
+        },
+      };
+
+      const res = {
+        headersSent: false,
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+      };
+
+      currentUserId.mockResolvedValue(1000);
+      userById.mockResolvedValue({
+        id: 1000,
+        roles: [
+          {
+            name: 'Small',
+          },
+        ],
+        permissions: [],
+      });
+      recipientById.mockResolvedValue({ id: 1, grants: [] });
+      allArUserIdsByRecipientAndRegion.mockResolvedValue([1000]);
+
+      setSimilarityGroupAsUserInvalidated.mockResolvedValue();
+
+      await markRecipientGoalGroupInvalid(req, res);
+
+      expect(setSimilarityGroupAsUserInvalidated).toHaveBeenCalledWith(1);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Goal group 1 marked as invalid.' });
+    });
+
+    it('handles unauthorized', async () => {
+      const req = {
+        params: {
+          goalGroupId: 1,
+          recipientId: 1,
+          regionId: 1,
+        },
+      };
+
+      const res = {
+        headersSent: false,
+        sendStatus: jest.fn(),
+      };
+
+      currentUserId.mockResolvedValue(1000);
+      userById.mockResolvedValue({
+        id: 1000,
+        roles: [
+          {
+            name: 'Small',
+          },
+        ],
+        permissions: [],
+      });
+      recipientById.mockResolvedValue({ id: 1, grants: [] });
+      allArUserIdsByRecipientAndRegion.mockResolvedValue([1001]);
+
+      await markRecipientGoalGroupInvalid(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+    });
+
+    it('handles errors', async () => {
+      const req = {
+        params: {
+          goalGroupId: 1,
+          recipientId: 1,
+          regionId: 1,
+        },
+      };
+
+      const res = {
+        headersSent: false,
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+        json: jest.fn(),
+      };
+
+      currentUserId.mockResolvedValue(1000);
+      userById.mockResolvedValue({
+        id: 1000,
+        roles: [
+          {
+            name: 'Small',
+          },
+        ],
+        permissions: [],
+      });
+      recipientById.mockResolvedValue({ id: 1, grants: [] });
+      allArUserIdsByRecipientAndRegion.mockResolvedValue([1000]);
+
+      setSimilarityGroupAsUserInvalidated.mockRejectedValue(new Error('test error'));
+
+      await markRecipientGoalGroupInvalid(req, res);
+      expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+
+    it('does not execute if headers are already sent', async () => {
+      const req = {
+        params: {
+          goalGroupId: 1,
+        },
+      };
+
+      const res = {
+        headersSent: true,
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+      };
+
+      currentUserId.mockResolvedValue(1000);
+      userById.mockResolvedValue({
+        id: 1000,
+        roles: [
+          {
+            name: 'Small',
+          },
+        ],
+        permissions: [],
+      });
+      recipientById.mockResolvedValue({ id: 1, grants: [] });
+      allArUserIdsByRecipientAndRegion.mockResolvedValue([1000]);
+      const numberOfCalls = setSimilarityGroupAsUserInvalidated.mock.calls.length;
+      await markRecipientGoalGroupInvalid(req, res);
+
+      expect(setSimilarityGroupAsUserInvalidated.mock.calls.length).toEqual(numberOfCalls);
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
+  const mockResponse = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+    status: jest.fn(() => ({
+      end: jest.fn(),
+    })),
+  };
+
+  it('returns recipient goals', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+        regionId: 1,
+        goalGroupId: 12345,
+      },
+    };
+
+    const goals = [1, 2, 3];
+    const recipientGoals = [{ id: 1, name: 'Goal 1' }, { id: 2, name: 'Goal 2' }, { id: 3, name: 'Goal 3' }];
+    getUserReadRegions.mockResolvedValue([1]);
+    recipientById.mockResolvedValue({});
+    getSimilarityGroupById.mockResolvedValue({ goals });
+    getGoalsByActivityRecipient.mockResolvedValue(recipientGoals);
+
+    await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
+
+    expect(getSimilarityGroupById).toHaveBeenCalledWith(req.params.goalGroupId, {
+      finalGoalId: null,
+      userHasInvalidated: false,
+    });
+    expect(getGoalsByActivityRecipient)
+      .toHaveBeenCalledWith(req.params.recipientId, req.params.regionId, {
+        goalIds: goals,
+        sortBy: 'goal',
+        sortDir: 'asc',
+        offset: 0,
+      });
+    expect(mockResponse.json).toHaveBeenCalledWith(recipientGoals);
+  });
+
+  it('returns 404 when similarity group is not found', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+        regionId: 1,
+        goalGroupId: 12345,
+      },
+    };
+
+    recipientById.mockResolvedValue({});
+    getSimilarityGroupById.mockResolvedValue(null);
+
+    await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
+
+    expect(getSimilarityGroupById).toHaveBeenCalledWith(req.params.goalGroupId, {
+      finalGoalId: null,
+      userHasInvalidated: false,
+    });
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+
+  it('handles errors', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+        regionId: 1,
+        goalGroupId: 12345,
+      },
+    };
+
+    const error = new Error('Test error');
+    recipientById.mockResolvedValue({});
+    getSimilarityGroupById.mockRejectedValue(error);
+    await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
