@@ -455,6 +455,15 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   return objectivesToSort;
 }
 
+/**
+ * Reduces the relation through activity report objectives.
+ *
+ * @param {Object} objective - The objective object.
+ * @param {string} join tablename that joins aro <> relation. e.g. activityReportObjectiveResources
+ * @param {string} relation - The relation that will be returned. e.g. resource.
+ * @param {Object} [exists={}] - The existing relation object.
+ * @returns {Array} - The reduced relation array.
+ */
 const reduceRelationThroughActivityReportObjectives = (
   objective,
   join,
