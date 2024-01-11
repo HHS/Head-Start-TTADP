@@ -2406,15 +2406,18 @@ export async function destroyGoal(goalIds) {
 /**
  * @param {goals[]} include .activityReportGoals
  * @returns {
-*  reportId: countOfGoalsOnReport,
+*  reportId: { grantId: countOfGoalsOnReport },
 * }
 */
 export const getReportCountForGoals = (goals) => goals.reduce((acc, goal) => {
   (goal.activityReportGoals || []).forEach((arg) => {
     if (!acc[arg.activityReportId]) {
-      acc[arg.activityReportId] = 0;
+      acc[arg.activityReportId] = {};
     }
-    acc[arg.activityReportId] += 1;
+    if (!acc[arg.activityReportId][goal.grantId]) {
+      acc[arg.activityReportId][goal.grantId] = 0;
+    }
+    acc[arg.activityReportId][goal.grantId] += 1;
   });
 
   return acc;
@@ -2430,10 +2433,11 @@ const fieldMappingForDeduplication = {
 /**
 *
 * key is activityReportid, value is count of goals on that report
-* @param {{ number: number }} countObject
+* @param {{ number: { number: number } }} countObject
 */
 // eslint-disable-next-line max-len
-export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
+export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
+  .some((grants) => Object.values(grants).some((c) => c > 1));
 
 function goalGroupContainsClosedCuratedGoal(goalGroup) {
   return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
@@ -2925,6 +2929,9 @@ export async function mergeGoals(
           where: { id: g.activityReportGoals.map((arg) => arg.id) },
         },
       ));
+
+      // TODO: if the report is not approved, the name, resources and responses should also
+      // be updated
     }
 
     // copy the goal resources
@@ -2943,23 +2950,26 @@ export async function mergeGoals(
     if (Number(g.id) === Number(finalGoalId)) {
       // copy the goal field responses
       g.responses.forEach((gfr) => {
-        updatesToRelatedModels.push(GoalFieldResponse.create({
-          goalId: grantToGoalDictionary[
-            grantsWithReplacementsDictionary[g.grantId]
-          ],
-          goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
-          response: gfr.response,
-        }, { individualHooks: true }));
+        Object.values(grantToGoalDictionary).forEach((goalId) => {
+          updatesToRelatedModels.push(GoalFieldResponse.create({
+            goalId,
+            goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+            response: gfr.response,
+          }, { individualHooks: true }));
+        });
       });
     }
   });
 
   await Promise.all(updatesToRelatedModels);
-  await Promise.all(selectedGoals.map((g) => g.update({
-    mapsToParentGoalId: grantToGoalDictionary[
-      grantsWithReplacementsDictionary[g.grantId]
-    ],
-  }, { individualHooks: true })));
+  await Promise.all(selectedGoals.map((g) => {
+    const u = g.update({
+      mapsToParentGoalId: grantToGoalDictionary[
+        grantsWithReplacementsDictionary[g.grantId]
+      ],
+    }, { individualHooks: true });
+    return u;
+  }));
 
   // record the merge as complete
   await setSimilarityGroupAsUserMerged(
