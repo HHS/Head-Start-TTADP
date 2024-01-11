@@ -534,7 +534,7 @@ const SessionSummary = ({ datePickerKey }) => {
         useIpdCourse={objectiveUseIpdCourses}
         useCoursesInputName={objectiveUseIpdCoursesInputName}
       />
-      <Fieldset className="ttahub-objective-files margin-top-1">
+      <Fieldset className="ttahub-objective-files margin-top-3">
         <legend>
           Did you use any TTA resources that aren&apos;t available as a link?
           {' '}
