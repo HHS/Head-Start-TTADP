@@ -29,10 +29,117 @@ import db, {
 import {
   cacheGoalMetadata,
   cacheObjectiveMetadata,
+  cacheCourses,
 } from './reportCache';
 import { processObjectiveForResourcesById } from './resource';
-import { createReport, destroyReport } from '../testUtils';
+import {
+  createReport,
+  destroyReport,
+  createGrant,
+  createRecipient,
+  createGoal,
+} from '../testUtils';
 import { GOAL_STATUS } from '../constants';
+
+describe('cacheCourses', () => {
+  let courseOne;
+  let courseTwo;
+  let activityReport;
+  let grant;
+  let recipient;
+  let goal;
+  let objective;
+  let aro;
+
+  beforeAll(async () => {
+    recipient = await createRecipient({});
+    grant = await createGrant({ recipientId: recipient.id });
+
+    activityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId: grant.id,
+        },
+      ],
+    });
+
+    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+
+    objective = await Objective.create({
+      goalId: goal.id,
+      title: faker.datatype.string(200),
+      status: 'Not Started',
+    });
+
+    courseOne = await Course.create({
+      name: faker.datatype.string(200),
+    });
+
+    courseTwo = await Course.create({
+      name: faker.datatype.string(200),
+    });
+
+    await ObjectiveCourse.bulkCreate([
+      {
+        objectiveId: objective.id,
+        courseId: courseOne.id,
+        onAR: false,
+      },
+      {
+        objectiveId: objective.id,
+        courseId: courseTwo.id,
+        onAR: false,
+      },
+    ]);
+
+    aro = await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: activityReport.id,
+    });
+
+    await ActivityReportObjectiveCourse.create({
+      activityReportObjectiveId: aro.id,
+      courseId: courseOne.id,
+    });
+  });
+
+  afterAll(async () => {
+    await ActivityReportObjectiveCourse.destroy({
+      where: {
+        courseId: [courseOne.id, courseTwo.id],
+      },
+    });
+
+    await ObjectiveCourse.destroy({
+      where: {
+        courseId: [courseOne.id, courseTwo.id],
+      },
+    });
+
+    await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
+
+    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await destroyReport(activityReport);
+    await Grant.destroy({ where: { id: grant.id } });
+    await Recipient.destroy({ where: { id: recipient.id } });
+    await db.sequelize.close();
+  });
+
+  it('should cache courses', async () => {
+    await cacheCourses(objective.id, aro.id, [{ courseId: courseTwo.id }]);
+
+    const aroCourses = await ActivityReportObjectiveCourse.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(aroCourses).toHaveLength(1);
+    expect(aroCourses[0].courseId).toEqual(courseTwo.id);
+  });
+});
 
 describe('cacheGoalMetadata', () => {
   let activityReport;
@@ -282,12 +389,10 @@ describe('cacheObjectiveMetadata', () => {
 
     courseOne = await Course.create({
       name: faker.datatype.string(200),
-      nameLookUp: faker.datatype.string(200),
     });
 
     courseTwo = await Course.create({
       name: faker.datatype.string(200),
-      nameLookUp: faker.datatype.string(200),
     });
 
     await ObjectiveCourse.bulkCreate([
