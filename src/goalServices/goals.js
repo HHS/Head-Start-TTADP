@@ -2456,21 +2456,18 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   /**
    * if a user has the ability to merged closed curated goals, we will show them in the UI
    */
-  const allowClosedCuratedGoal = user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override');
+  const allowClosedCuratedGoal = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
 
   const similiarityWhere = {
     userHasInvalidated: false,
     finalGoalId: null,
   };
 
-  if (!allowClosedCuratedGoal) {
-    similiarityWhere.containsClosedCuratedGoal = false;
-  }
-
   // then, we check for goal similarity groups that have already been created
   const existingRecipientGroups = await getSimilarityGroupsByRecipientId(
     recipientId,
     similiarityWhere,
+    allowClosedCuratedGoal,
   );
 
   if (existingRecipientGroups.length) {
@@ -2565,21 +2562,12 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
         return previous;
       }
 
-      // contains a curated goal with a closed status
-      const containsClosedCuratedGoal = (
-        current.goalTemplate.creationMethod === CREATION_METHOD.CURATED
-              && current.status === GOAL_STATUS.CLOSED
-      );
-
       // see if we can find an existing goal
       const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
       // if we found an existing goal,
       // we'll add the current goal's ID to the existing goal's ID array
       if (existingGoal) {
         existingGoal.ids.push(current.id);
-        existingGoal.containsClosedCuratedGoal = (
-          existingGoal.containsClosedCuratedGoal || containsClosedCuratedGoal
-        );
         return previous;
       }
 
@@ -2590,7 +2578,6 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
           source: current.source,
           status: current.status,
           responsesForComparison: responsesForComparison(current),
-          containsClosedCuratedGoal,
           ids: [current.id],
         },
       ];
@@ -2609,11 +2596,10 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
         createSimilarityGroup(
           recipientId,
           uniq(gg.map((g) => g.ids).flat()),
-          goalGroupContainsClosedCuratedGoal(gg),
         ))),
   );
 
-  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere);
+  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere, allowClosedCuratedGoal);
 }
 
 /**

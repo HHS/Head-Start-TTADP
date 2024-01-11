@@ -317,7 +317,6 @@ class GoalSimilarityGroups{
  * id : integer : <generated>
  finalGoalId : integer : REFERENCES "Goals".id
  * recipientId : integer : REFERENCES "Recipients".id
- * containsClosedCuratedGoal : boolean : false
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * userHasInvalidated : boolean : false
