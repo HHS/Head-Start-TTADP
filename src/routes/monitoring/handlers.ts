@@ -13,7 +13,7 @@ export async function getMonitoringData(req: Request, res: Response) {
   const { recipientId, regionId } = req.params;
 
   try {
-    await checkRecipientAccessAndExistence(recipientId, req);
+    await checkRecipientAccessAndExistence(req, res);
     const data = await monitoringData(Number(recipientId), Number(regionId));
 
     res.status(200).json(data);
@@ -26,7 +26,7 @@ export async function getClassScore(req: Request, res: Response) {
   const { recipientId, regionId } = req.params;
 
   try {
-    await checkRecipientAccessAndExistence(recipientId, req);
+    await checkRecipientAccessAndExistence(req, res);
     const data = await classScore(Number(recipientId), Number(regionId));
 
     res.status(200).json(data);

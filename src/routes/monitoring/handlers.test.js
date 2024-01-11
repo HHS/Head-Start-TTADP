@@ -28,7 +28,7 @@ describe('getMonitoringData', () => {
   it('should call checkRecipientAccessAndExistence and monitoringData with correct arguments', async () => {
     await getMonitoringData(req, res);
 
-    expect(checkRecipientAccessAndExistence).toHaveBeenCalledWith('1', req);
+    expect(checkRecipientAccessAndExistence).toHaveBeenCalledWith(req, res);
     expect(monitoringData).toHaveBeenCalledWith(1, 2);
   });
 
@@ -73,7 +73,7 @@ describe('getClassScore', () => {
   it('should call checkRecipientAccessAndExistence and classScore with correct arguments', async () => {
     await getClassScore(req, res);
 
-    expect(checkRecipientAccessAndExistence).toHaveBeenCalledWith('1', req);
+    expect(checkRecipientAccessAndExistence).toHaveBeenCalledWith(req, res);
     expect(classScore).toHaveBeenCalledWith(1, 2);
   });
 
