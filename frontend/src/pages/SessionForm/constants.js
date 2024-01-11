@@ -1,4 +1,4 @@
-/* eslint-disable react/react-in-jsx-scope */
+import React from 'react';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 
 export const NO_ERROR = <></>;
