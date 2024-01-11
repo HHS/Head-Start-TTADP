@@ -150,7 +150,7 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].courses`,
     defaultValue: objective.courses || [],
     rules: {
-      required: objectiveUseIpdCourses === true,
+      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
     },
   });
 
@@ -360,7 +360,9 @@ export default function Objective({
         editingFromActivityReport
       />
       <IpdCourseSelect
-        error={NO_ERROR}
+        error={errors.courses
+          ? ERROR_FORMAT(errors.courses.message)
+          : NO_ERROR}
         inputName={objectiveIpdCoursesInputName}
         onChange={onChangeIpdCourses}
         onBlur={onBlurIpdCourses}
@@ -438,6 +440,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     resources: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    courses: PropTypes.shape({
       message: PropTypes.string,
     }),
     roles: PropTypes.shape({
