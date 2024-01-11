@@ -2836,7 +2836,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
     grantId,
   }));
 
-  console.log(goalsToBulkCreate);
   const newGoals = await Goal.bulkCreate(
     goalsToBulkCreate,
     {
@@ -2959,7 +2958,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds, user = null) {
 
   await Promise.all(updatesToRelatedModels);
   await Promise.all(selectedGoals.map((g) => {
-    console.log('####', g);
     const u = g.update({
       mapsToParentGoalId: grantToGoalDictionary[
         grantsWithReplacementsDictionary[g.grantId]
