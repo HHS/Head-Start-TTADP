@@ -166,7 +166,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
   ]);
 };
 
-const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
+export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
   const courseIds = courses.map((course) => course.courseId);
   const courseSet = new Set(courseIds);
   const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
@@ -193,30 +193,6 @@ const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []
         individualHooks: true,
         hookMetadata: { objectiveId },
       })
-      : Promise.resolve(),
-    newCourseIds.length > 0
-      ? ObjectiveCourse.update(
-        { onAR: true },
-        {
-          where: { courseId: { [Op.in]: newCourseIds } },
-          include: [
-            {
-              model: Objective,
-              as: 'objective',
-              required: true,
-              where: { id: objectiveId },
-              include: [
-                {
-                  model: ActivityReportObjective,
-                  as: 'activityReportObjectives',
-                  required: true,
-                  where: { id: activityReportObjectiveId },
-                },
-              ],
-            },
-          ],
-        },
-      )
       : Promise.resolve(),
   ]);
 };
