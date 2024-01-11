@@ -11,7 +11,7 @@
         display: grid;   
         grid-template-columns: 1fr 3fr;
         grid-template-areas: 
-            "grid-nav grid-content"
+            "grid-nav grid-content";
     }
 
     .ttahub-grid__container--gap-1 {
