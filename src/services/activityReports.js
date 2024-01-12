@@ -616,7 +616,6 @@ export async function activityReports(
         'approvedAt',
         'creatorRole',
         'creatorName',
-        'language',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),
