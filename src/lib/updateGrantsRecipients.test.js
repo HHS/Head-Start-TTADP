@@ -21,10 +21,11 @@ async function testStateCodeUpdate(grantId, incorrectStateCode, correctStateCode
   const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
   await grantBefore.update({ stateCode: incorrectStateCode }, { individualHooks: true });
   const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
-  expect(grantWithIncorrectStateCode.stateCode).toEqual(incorrectStateCode);
+
   await processFiles();
   const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
-  expect(grantWithCorrectStateCode.stateCode).toEqual(correctStateCode);
+
+  return { grantWithIncorrectStateCode, grantWithCorrectStateCode };
 }
 
 describe('Update HSES data', () => {
@@ -827,17 +828,22 @@ describe('Update grants, program personnel, and recipients', () => {
   });
 
   it('should set correct state code for grant 12128', async () => {
-    await testStateCodeUpdate(12128, 'PA', 'OH');
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(12128, 'PA', 'OH');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('PA');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('OH');
   });
-  
+
   it('should set correct state code for grant 10291', async () => {
-    await testStateCodeUpdate(10291, 'FC', 'PW');
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(10291, 'FC', 'PW');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('FC');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('PW');
   });
-  
+
   it('should set correct state code for grant 14869', async () => {
-    await testStateCodeUpdate(14869, 'FC', 'PW');
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(14869, 'FC', 'PW');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('FC');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('PW');
   });
-  
 
   it('should set correct state code for grants', async () => {
     const id = 12129;
