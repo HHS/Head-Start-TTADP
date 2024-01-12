@@ -24,7 +24,8 @@ router.post(
 );
 router.delete('/', transactionWrapper(deleteGoal));
 router.get(
-  '/similar/:recipientId',
+  '/similar/region/:regionId/recipient/:recipientId',
+  checkRegionIdParam,
   checkRecipientIdParam,
   transactionWrapper(getSimilarGoalsForRecipient),
 );

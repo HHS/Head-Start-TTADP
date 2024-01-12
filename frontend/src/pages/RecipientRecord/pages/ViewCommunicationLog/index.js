@@ -2,8 +2,8 @@ import React, { useEffect, useState, useContext } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import { Link } from 'react-router-dom';
 import Container from '../../../../components/Container';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -34,7 +34,6 @@ export default function ViewCommunicationLog({ match, recipientName }) {
     async function fetchLog() {
       try {
         setIsAppLoading(true);
-
         const response = await getCommunicationLogById(regionId, communicationLogId);
         setLog(response);
       } catch (err) {
@@ -44,12 +43,12 @@ export default function ViewCommunicationLog({ match, recipientName }) {
       }
     }
 
-    if (!log) {
+    if (!log && !error) {
       fetchLog();
     }
-  }, [communicationLogId, log, regionId, setIsAppLoading]);
+  }, [communicationLogId, error, log, regionId, setIsAppLoading]);
 
-  if (!log) {
+  if (!log && !error) {
     return null;
   }
 
