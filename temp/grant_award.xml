@@ -255,4 +255,36 @@
   <grantee_name>Government of Devon</grantee_name>
   <acquired_from_cdi>false</acquired_from_cdi>
 </grant_award>
+<grant_award>
+  <grant_award_id>10291</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <grant_number>09CH011111</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2018-08-01</grant_start_date>
+  <grant_end_date>2023-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Inactive</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date>2023-07-31T00:00:00-04:00</inactivation_date>
+  <inactivation_reason>Replaced</inactivation_reason>
+</grant_award>
+<grant_award>
+  <grant_award_id>14869</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <grant_number>09CH022222</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2023-08-01</grant_start_date>
+  <grant_end_date>2028-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Active</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
 </grant_awards>
