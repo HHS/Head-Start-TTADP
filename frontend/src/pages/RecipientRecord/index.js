@@ -250,8 +250,8 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge"
-          render={({ location }) => (
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
+          render={({ location, match: routeMatch }) => (
             <>
               <Helmet>
                 <title>These Goals Might Be Duplicates</title>
@@ -259,6 +259,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <MergeGoals
                 regionId={regionId}
                 recipientId={recipientId}
+                match={routeMatch}
                 location={location}
                 recipientNameWithRegion={recipientNameWithRegion}
                 canMergeGoals={canMergeGoals}
