@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable global-require */
 /* eslint-disable import/prefer-default-export */
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
@@ -109,23 +110,14 @@ const updateGoalText = async (sequelize, instance) => {
   }
 
   const data = JSON.parse(instance.data.val);
-  const goal = data.goal;
-
-  /**
-   * @typedef {Object} BlobbyGoal
-   * @property {number} grantId
-   * @property {number} goalId
-   * @property {number} sessionId
-   */
-
-  /** @type {BlobbyGoal[]} */
-  const goals = data.goals;
+  const { goal, goals } = data;
 
   if (!goal || !goals.length) {
     return;
   }
 
-  for (const g of goals) {
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const g of goals) {
     const foundGoal = await sequelize.models.Goal.findByPk(g.goalId, { transaction: instance.transaction });
     foundGoal.name = goal;
     await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction: instance.transaction });

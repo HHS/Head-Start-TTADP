@@ -224,19 +224,20 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
 
     // For each Event, update the `goal` property on the jsonb data blob.
     await Promise.all(events.map(async (event) => {
-      const { data } = event;
+      const ev = event;
+
+      const { data } = ev;
       const { goals } = data;
       const goalIndex = goals.findIndex((g) => g.goalId === goalId);
 
       if (goalIndex !== -1) {
-        event.data.goal = instance.name;
+        ev.data.goal = instance.name;
       }
 
       await sequelize.models.EventReportPilot.update(
         { data },
-        { where: {id:event.id} }
+        { where: { id: ev.id } },
       );
-
     }));
   }
 };
