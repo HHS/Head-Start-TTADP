@@ -58,7 +58,7 @@ export const otherEntityParticipants = [
   'Other',
 ];
 
-export const language = [
+export const languages = [
   'English',
   'Spanish',
 ];

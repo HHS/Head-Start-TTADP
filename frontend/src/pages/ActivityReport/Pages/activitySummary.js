@@ -27,7 +27,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import {
   otherEntityParticipants,
   recipientParticipants,
-  language,
+  languages,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
@@ -487,6 +487,27 @@ const ActivitySummary = ({
           >
             {renderCheckbox('ttaType', 'training', 'Training', 'Select at least one')}
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Select at least one')}
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
+            label="Language used"
+            name="language"
+            fieldSetWrapper
+          >
+            <Dropdown
+              required
+              control={control}
+              id="language"
+              name="language"
+              inputRef={register({ required: 'Select a language' })}
+            >
+              <option value="" disabled selected hidden>- Select -</option>
+              {languages.map((language) => (
+                <option key={language} value={language}>{language}</option>
+              ))}
+            </Dropdown>
+
           </FormItem>
         </div>
         <div className="margin-top-2">
