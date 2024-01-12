@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable global-require */
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
@@ -151,9 +152,10 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
     const currentGoals = Array.isArray(eventRecord.dataValues.data?.goals) ? eventRecord.dataValues.data.goals : [];
     const newGoals = [];
 
-    for (const { value: grantValue } of recipients) {
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const { value: grantValue } of recipients) {
       const grantId = Number(grantValue);
-      if (!currentGoals.some(goal => goal.sessionId === instance.id && goal.grantId === grantId)) {
+      if (!currentGoals.some((goal) => goal.sessionId === instance.id && goal.grantId === grantId)) {
         const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
         if (!grant) throw new Error('Grant not found');
 
@@ -163,7 +165,7 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
           createdAt: new Date(),
           updatedAt: new Date(),
           status: 'Not Started',
-          createdVia: 'tr'
+          createdVia: 'tr',
         }, { transaction: options.transaction });
 
         newGoals.push({ grantId, goalId: newGoal.id, sessionId: instance.id });
