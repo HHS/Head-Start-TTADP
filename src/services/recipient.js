@@ -710,6 +710,25 @@ export async function getGoalsByActivityRecipient(
     },
   });
 
+  // TODO - remove: this is for testing purposes only,
+  // and to demonstrate the schema required
+  // to be removed when the backend is complete or before merging, whichever is first
+
+  // r.goalRows[0].objectives = [
+  //   {
+  //     type: 'session',
+  //     title: 'To help recipients ensure that decisions are informed by data.',
+  //     trainingReportId: 'R01-TR-23-1037',
+  //     sessionName: 'Leadership and Governance: Managing Communication and Equity Considerations',
+  //     grantNumbers: [r.goalRows[0].grantNumbers[0]],
+  //     endDate: '09/20/2023',
+  //     topics: ['Change in Scope', 'Safety Practices', 'Teaching/Caregiving Practices'],
+  //   },
+  //   ...r.goalRows[0].objectives,
+  // ];
+
+  // r.goalRows[0].objectiveCount += 1;
+
   if (limitNum) {
     return {
       count: r.goalRows.length,
