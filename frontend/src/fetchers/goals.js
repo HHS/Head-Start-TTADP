@@ -48,7 +48,13 @@ export async function deleteGoal(goalIds, regionId) {
   return deleted.json();
 }
 
-export async function mergeGoals(selectedGoalIds, finalGoalId, recipientId, regionId) {
+export async function mergeGoals(
+  selectedGoalIds,
+  finalGoalId,
+  recipientId,
+  regionId,
+  goalSimilarityGroupId,
+) {
   const res = await post(join(
     goalsUrl,
     'recipient',
@@ -59,12 +65,21 @@ export async function mergeGoals(selectedGoalIds, finalGoalId, recipientId, regi
   ), {
     selectedGoalIds,
     finalGoalId,
+    goalSimilarityGroupId,
   });
   return res.json();
 }
 
-export async function similarity(recipientId) {
-  const url = join(goalsUrl, 'similar', String(recipientId), '?cluster=true');
+export async function similarity(regionId, recipientId) {
+  const url = join(
+    goalsUrl,
+    'similar',
+    'region',
+    String(regionId),
+    'recipient',
+    String(recipientId),
+    '?cluster=true',
+  );
   const response = await get(url);
   return response.json();
 }

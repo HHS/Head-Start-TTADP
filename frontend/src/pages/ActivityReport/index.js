@@ -464,7 +464,6 @@ function ActivityReport({
             ...data,
             ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
-
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,

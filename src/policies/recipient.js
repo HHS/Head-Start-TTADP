@@ -23,7 +23,7 @@ export default class Recipient {
   }
 
   canMergeGoals() {
-    if (this.canView() && this.user.roles.map((r) => r.name).includes('TTAC')) {
+    if (this.canView() && this.user?.roles?.some((r) => r.name === 'TTAC')) {
       return true;
     }
 

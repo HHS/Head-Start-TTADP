@@ -9,7 +9,7 @@ describe('rttapa service', () => {
   let reportId;
 
   afterAll(async () => {
-    await db.RttapaPilot.destroy({ where: { id: reportId } });
+    await db.RttapaPilot.destroy({ where: { id: reportId.id } });
     await db.sequelize.close();
   });
 

@@ -5,7 +5,7 @@ const {
 } = require('../helpers/genericCollaborator');
 const { skipIf } = require('../helpers/flowControl');
 
-const processForEmbeddedResources = async (sequelize, instance, options) => {
+const processForEmbeddedResources = async (_sequelize, instance) => {
   // eslint-disable-next-line global-require
   const { calculateIsAutoDetectedForGoal, processGoalForResourcesById } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
@@ -31,7 +31,7 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
   return { id: goalTemplate[0].id, name };
 };
 
-const autoPopulateOnAR = (sequelize, instance, options) => {
+const autoPopulateOnAR = (_sequelize, instance, options) => {
   if (instance.onAR === undefined
     || instance.onAR === null) {
     instance.set('onAR', false);
@@ -41,7 +41,7 @@ const autoPopulateOnAR = (sequelize, instance, options) => {
   }
 };
 
-const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
+const autoPopulateOnApprovedAR = (_sequelize, instance, options) => {
   if (instance.onApprovedAR === undefined
     || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
@@ -51,7 +51,7 @@ const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   }
 };
 
-const preventNameChangeWhenOnApprovedAR = (sequelize, instance) => {
+const preventNameChangeWhenOnApprovedAR = (_sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
     if (instance.id !== null
@@ -78,7 +78,7 @@ const invalidateSimilarityScores = async (sequelize, instance, options) => {
   }
 };
 
-const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
+const autoPopulateStatusChangeDates = (_sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('status')) {
@@ -194,6 +194,101 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
   return Promise.resolve();
 };
 
+const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, options) => {
+  const changed = Array.from(instance.changed());
+
+  if (changed.includes('name')) {
+    const { id: goalId } = instance;
+
+    if (!goalId) return;
+
+    const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
+      attributes: ['recipientId', 'id'],
+      include: [
+        {
+          model: sequelize.models.Goal,
+          as: 'goals',
+          attributes: ['id'],
+          required: true,
+          where: {
+            id: goalId,
+          },
+        },
+      ],
+      transaction: options.transaction,
+    });
+
+    if (!similarityGroup) return;
+
+    await sequelize.models.GoalSimilarityGroupGoal.destroy({
+      where: {
+        goalSimilarityGroupId: similarityGroup.id,
+      },
+      transaction: options.transaction,
+    });
+
+    await sequelize.models.GoalSimilarityGroup.destroy({
+      where: {
+        recipientId: similarityGroup.recipientId,
+        userHasInvalidated: false,
+        finalGoalId: null,
+      },
+      transaction: options.transaction,
+    });
+  }
+};
+
+const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, instance, options) => {
+  const { grantId } = instance;
+
+  if (!grantId) return;
+
+  const recipient = await sequelize.models.Recipient.findOne({
+    attributes: ['id'],
+    include: [
+      {
+        model: sequelize.models.Grant,
+        as: 'grants',
+        attributes: ['id'],
+        required: true,
+        where: {
+          id: grantId,
+        },
+      },
+    ],
+    transaction: options.transaction,
+  });
+
+  if (!recipient) return;
+
+  const groups = await sequelize.models.GoalSimilarityGroup.findAll({
+    where: {
+      recipientId: recipient.id,
+      userHasInvalidated: false,
+      finalGoalId: null,
+    },
+    transaction: options.transaction,
+  });
+
+  if (groups.length === 0) return;
+
+  await sequelize.models.GoalSimilarityGroupGoal.destroy({
+    where: {
+      goalSimilarityGroupId: groups.map((group) => group.id),
+    },
+    transaction: options.transaction,
+  });
+
+  await sequelize.models.GoalSimilarityGroup.destroy({
+    where: {
+      recipientId: recipient.id,
+      userHasInvalidated: false,
+      finalGoalId: null,
+    },
+    transaction: options.transaction,
+  });
+};
+
 /**
  * This is really similar to propagateName, but for EventReportPilot.
  */
@@ -260,6 +355,7 @@ const beforeUpdate = async (sequelize, instance, options) => {
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateCreator(sequelize, instance, options);
+  await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -267,6 +363,11 @@ const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await invalidateSimilarityScores(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
+  await invalidateGoalSimilarityGroupsOnUpdate(sequelize, instance, options);
+};
+
+const afterDestroy = async (sequelize, instance, options) => {
+  await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
   await updateTrainingReportGoalText(sequelize, instance, options);
 };
 
@@ -281,4 +382,5 @@ export {
   beforeUpdate,
   afterCreate,
   afterUpdate,
+  afterDestroy,
 };

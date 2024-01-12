@@ -128,9 +128,9 @@ export const closeMultiRecipientGoalsFromAdmin = async (data) => {
   return result.json();
 };
 
-export const importTrainingReports = async (data) => {
-  const adminTrUrl = join('/', 'api', 'admin', 'training-reports');
-  const res = await fetch(adminTrUrl, {
+export const importCsv = async (importType, data) => {
+  const adminImportUrl = join('/', 'api', 'admin', importType);
+  const res = await fetch(adminImportUrl, {
     method: 'POST',
     credentials: 'same-origin',
     body: data,
@@ -139,4 +139,9 @@ export const importTrainingReports = async (data) => {
     throw new Error(res.statusText);
   }
   return res.json();
+};
+
+export const updateLegacyUsers = async (id, data) => {
+  const result = await put((join('/', 'api', 'admin', 'legacy-reports', String(id), 'users')), data);
+  return result.json();
 };
