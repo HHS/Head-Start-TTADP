@@ -616,6 +616,7 @@ export async function activityReports(
         'approvedAt',
         'creatorRole',
         'creatorName',
+        'language',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),
@@ -901,6 +902,7 @@ export async function activityReportAlerts(userId, {
         'userId',
         'createdAt',
         'creatorRole',
+        'language',
         'creatorName',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
@@ -1175,7 +1177,7 @@ async function getDownloadableActivityReports(where, separate = true) {
   const query = {
     where,
     attributes: {
-      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'creatorName', 'submittedDate'],
+      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'language', 'creatorName', 'submittedDate'],
       exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
     },
     include: [

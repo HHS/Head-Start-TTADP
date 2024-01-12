@@ -180,6 +180,7 @@ class ActivityReports{
  ECLKCResourcesUsed : text[]
  endDate : date
  imported : jsonb
+ language : enum
  legacyId : varchar(255)
  nonECLKCResourcesUsed : text[]
  numberOfParticipants : integer
