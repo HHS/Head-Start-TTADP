@@ -16,6 +16,17 @@ jest.mock('./fileUtils', () => ({
 
 const SMALLEST_GRANT_ID = 1000;
 
+async function testStateCodeUpdate(grantId, incorrectStateCode, correctStateCode) {
+  await processFiles();
+  const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+  await grantBefore.update({ stateCode: incorrectStateCode }, { individualHooks: true });
+  const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+  expect(grantWithIncorrectStateCode.stateCode).toEqual(incorrectStateCode);
+  await processFiles();
+  const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+  expect(grantWithCorrectStateCode.stateCode).toEqual(correctStateCode);
+}
+
 describe('Update HSES data', () => {
   beforeEach(() => {
     const response = {
@@ -816,17 +827,17 @@ describe('Update grants, program personnel, and recipients', () => {
   });
 
   it('should set correct state code for grant 12128', async () => {
-    const id = 12128;
-    await processFiles();
-    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
-    // simulate updating an existing grant with incorrect state code
-    await grantBefore.update({ stateCode: 'PA' }, { individualHooks: true });
-    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
-    expect(grantWithIncorrectStateCode.stateCode).toEqual('PA');
-    await processFiles();
-    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
-    expect(grantWithCorrectStateCode.stateCode).toEqual('OH');
+    await testStateCodeUpdate(12128, 'PA', 'OH');
   });
+  
+  it('should set correct state code for grant 10291', async () => {
+    await testStateCodeUpdate(10291, 'FC', 'PW');
+  });
+  
+  it('should set correct state code for grant 14869', async () => {
+    await testStateCodeUpdate(14869, 'FC', 'PW');
+  });
+  
 
   it('should set correct state code for grants', async () => {
     const id = 12129;

@@ -21,6 +21,8 @@ const fs = require('mz/fs');
 // TTAHUB-2126
 const grantPatches = new Map([
   [12128, { stateCode: 'OH' }],
+  [10291, { stateCode: 'PW' }],
+  [14869, { stateCode: 'PW' }],
 ]);
 
 function valueFromXML(value) {
