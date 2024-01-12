@@ -1,12 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import moment from 'moment';
+import fetchMock from 'fetch-mock';
 import { render, screen, act } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import visionGoal, { isPageComplete } from '../visionGoal';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('visionGoal', () => {
   describe('isPageComplete', () => {
@@ -28,6 +30,8 @@ describe('visionGoal', () => {
     });
   });
   describe('render', () => {
+    afterEach(() => fetchMock.restore());
+
     const onSaveDraft = jest.fn();
     const userId = 1;
     const todaysDate = moment().format('YYYY-MM-DD');
@@ -35,6 +39,7 @@ describe('visionGoal', () => {
     const defaultFormValues = {
       vision: 'test vision',
       goal: 'test goal',
+      eventId: 'R01-TR-23-1111',
     };
 
     // eslint-disable-next-line react/prop-types
@@ -45,42 +50,45 @@ describe('visionGoal', () => {
       });
 
       return (
-        <UserContext.Provider value={{ user: { id: userId } }}>
-          <FormProvider {...hookForm}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              {visionGoal.render(
-                {
-                  users: {
-                    pointOfContact: [{
-                      id: 1,
-                      fullName: 'Ted User',
-                    }],
-                    collaborators: [
-                      {
-                        id: 2,
-                        fullName: 'Tedwina User',
-                      },
-                    ],
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user: { id: userId } }}>
+            <FormProvider {...hookForm}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                {visionGoal.render(
+                  {
+                    users: {
+                      pointOfContact: [{
+                        id: 1,
+                        fullName: 'Ted User',
+                      }],
+                      collaborators: [
+                        {
+                          id: 2,
+                          fullName: 'Tedwina User',
+                        },
+                      ],
+                    },
                   },
-                },
-                formValues,
-                1,
-                false,
-                jest.fn(),
-                onSaveDraft,
-                jest.fn(),
-                false,
-                'key',
-                jest.fn(),
-                () => <></>,
-              )}
-            </NetworkContext.Provider>
-          </FormProvider>
-        </UserContext.Provider>
+                  formValues,
+                  1,
+                  false,
+                  jest.fn(),
+                  onSaveDraft,
+                  jest.fn(),
+                  false,
+                  'key',
+                  jest.fn(),
+                  () => <></>,
+                )}
+              </NetworkContext.Provider>
+            </FormProvider>
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       );
     };
 
     it('renders vision & goal', async () => {
+      fetchMock.get('/api/session-reports/eventId/1111', []);
       act(() => {
         render(<RenderVisionGoal />);
       });
@@ -98,7 +106,9 @@ describe('visionGoal', () => {
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
     });
+
     it('renders checkbox for POC', async () => {
+      fetchMock.get('/api/session-reports/eventId/1111', []);
       const updatedValues = {
         ...defaultFormValues,
         pocIds: [userId],
@@ -137,7 +147,9 @@ describe('visionGoal', () => {
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
     });
+
     it('shows read only data', async () => {
+      fetchMock.get('/api/session-reports/eventId/1111', []);
       const updatedValues = {
         ...defaultFormValues,
         pocIds: [userId],
@@ -163,6 +175,33 @@ describe('visionGoal', () => {
 
       const vision = await screen.findByText('incredible new vision');
       expect(vision).toBeVisible();
+      const goal = await screen.findByText('thoughtful new goal');
+      expect(goal).toBeVisible();
+    });
+
+    it('shows the goal as read-only once the session is complete', async () => {
+      fetchMock.get('/api/session-reports/eventId/1111', [{
+        id: 1,
+        data: {
+          status: 'Complete',
+        },
+      }]);
+
+      const updatedValues = {
+        ...defaultFormValues,
+        goal: 'thoughtful new goal',
+      };
+
+      act(() => {
+        render(<RenderVisionGoal formValues={updatedValues} />);
+      });
+
+      const visionInput = await screen.findByLabelText(/vision/i);
+      expect(visionInput).toHaveValue('test vision');
+
+      const textareas = document.querySelectorAll('textarea');
+      expect(textareas.length).toBe(1);
+
       const goal = await screen.findByText('thoughtful new goal');
       expect(goal).toBeVisible();
     });
