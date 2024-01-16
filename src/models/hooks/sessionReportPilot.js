@@ -169,6 +169,13 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
         }, { transaction: options.transaction });
 
         newGoals.push({ grantId, goalId: newGoal.id, sessionId: instance.id });
+
+        await sequelize.models.EventReportPilotGoal.create({
+          goalId: newGoal.id,
+          eventId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }, { transaction: options.transaction });
       }
     }
 
