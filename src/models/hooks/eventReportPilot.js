@@ -135,6 +135,7 @@ const updateGoalText = async (sequelize, instance, options) => {
           },
         ],
       },
+      transaction,
     },
   );
 };
