@@ -8,6 +8,8 @@ export default (sequelize, DataTypes) => {
 
       models.Goal.hasMany(models.EventReportPilotGoal, { foreignKey: 'goalId', as: 'eventReportPilotGoals' });
       models.EventReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'eventId', as: 'eventReportPilotGoals' });
+      models.SessionReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'grantId', as: 'eventReportPilotGoals' });
+      models.Grant.hasMany(models.EventReportPilotGoal, { foreignKey: 'sessionId', as: 'eventReportPilotGoals' });
     }
   }
 
@@ -34,6 +36,26 @@ export default (sequelize, DataTypes) => {
       references: {
         model: {
           tableName: 'EventReportPilots',
+          key: 'id',
+        },
+      },
+    },
+    sessionId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'SessionReportPilots',
+          key: 'id',
+        },
+      },
+    },
+    grantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Grants',
           key: 'id',
         },
       },

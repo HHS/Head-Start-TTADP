@@ -35,6 +35,24 @@ module.exports = {
               },
             },
           },
+          sessionId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'SessionReportPilots',
+              },
+            },
+          },
+          grantId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'Grants',
+              },
+            },
+          },
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
