@@ -8,15 +8,35 @@ export default (sequelize, DataTypes) => {
       EventReportPilotGoals.belongsTo(models.SessionReportPilot, { foreignKey: 'sessionId', as: 'session' });
       EventReportPilotGoals.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
 
-      models.Goal.hasMany(models.EventReportPilotGoal, { foreignKey: 'goalId', as: 'eventReportPilotGoals' });
-      models.EventReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'eventId', as: 'eventReportPilotGoals' });
-      models.SessionReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'sessionId', as: 'eventReportPilotGoals' });
-      models.Grant.hasMany(models.EventReportPilotGoal, { foreignKey: 'grantId', as: 'eventReportPilotGoals' });
+      models.Goal.hasMany(EventReportPilotGoals, { foreignKey: 'goalId', as: 'eventReportPilotGoals' });
+      models.EventReportPilot.hasMany(EventReportPilotGoals, { foreignKey: 'eventId', as: 'eventReportPilotGoals' });
+      models.SessionReportPilot.hasMany(EventReportPilotGoals, { foreignKey: 'sessionId', as: 'eventReportPilotGoals' });
+      models.Grant.hasMany(EventReportPilotGoals, { foreignKey: 'grantId', as: 'eventReportPilotGoals' });
 
-      models.Goal.belongsToMany(models.EventReportPilot, { through: models.EventReportPilotGoal, foreignKey: 'goalId', as: 'eventReportPilots' });
-      models.EventReportPilot.belongsToMany(models.Goal, { through: models.EventReportPilotGoal, foreignKey: 'eventId', as: 'eventReportPilots' });
-      models.Grant.belongsToMany(models.EventReportPilot, { through: models.EventReportPilotGoal, foreignKey: 'grantId', as: 'eventReportPilots' });
-      models.EventReportPilot.belongsToMany(models.Grant, { through: models.EventReportPilotGoal, foreignKey: 'grantId', as: 'eventReportPilots' });
+      models.Goal.belongsToMany(models.EventReportPilot, {
+        through: EventReportPilotGoals,
+        foreignKey: 'goalId',
+        otherKey: 'eventId',
+        as: 'eventReportPilots',
+      });
+      models.EventReportPilot.belongsToMany(models.Goal, {
+        through: EventReportPilotGoals,
+        foreignKey: 'eventId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
+      models.Grant.belongsToMany(models.EventReportPilot, {
+        through: EventReportPilotGoals,
+        foreignKey: 'grantId',
+        otherKey: 'eventId',
+        as: 'eventReports',
+      });
+      models.EventReportPilot.belongsToMany(models.Grant, {
+        through: EventReportPilotGoals,
+        foreignKey: 'eventId',
+        otherKey: 'grantId',
+        as: 'grants',
+      });
     }
   }
 
