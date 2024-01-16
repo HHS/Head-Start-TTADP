@@ -120,8 +120,10 @@ const updateGoalText = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-restricted-syntax
   for await (const g of goals) {
     const foundGoal = await sequelize.models.Goal.findByPk(g.goalId, { transaction });
-    foundGoal.name = goal;
-    await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction });
+    // Check if the found goal's name is already the same as the new goal name to prevent recursive updates
+    if (foundGoal && foundGoal.name !== goal) {
+      await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction });
+    }
   }
 };
 
