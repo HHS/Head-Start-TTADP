@@ -167,7 +167,7 @@ function calculateGoalsAndObjectives(report) {
 
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, language, deliveryMethod, virtualDeliveryType,
+    reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
 
   // first table
