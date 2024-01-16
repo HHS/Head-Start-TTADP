@@ -9,7 +9,6 @@ import {
   Button,
   Radio,
   TextInput,
-  Dropdown,
 } from '@trussworks/react-uswds';
 import { capitalize } from 'lodash';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -78,7 +77,7 @@ const Participants = ({ formData }) => {
           {formData.participants.join('\n')}
         </ReadOnlyField>
         <ReadOnlyField label="Language used">
-          {formData.language}
+          {formData.language.join('\n')}
         </ReadOnlyField>
         <ReadOnlyField label="Delivery method">
           {capitalize(formData.deliveryMethod)}
@@ -147,19 +146,16 @@ const Participants = ({ formData }) => {
           name="language"
           fieldSetWrapper
         >
-          <Dropdown
-            required
-            control={control}
-            id="language"
+          <MultiSelect
             name="language"
-            inputRef={register({ required: 'Select a language' })}
-          >
-            <option value="" disabled selected hidden>- Select -</option>
-            {languages.map((language) => (
-              <option key={language} value={language}>{language}</option>
-            ))}
-          </Dropdown>
-
+            control={control}
+            placeholderText={placeholderText}
+            options={
+              languages
+                .map((language) => ({ value: language, label: language }))
+            }
+            required="Select at least one language"
+          />
         </FormItem>
       </div>
 
@@ -299,9 +295,10 @@ const position = 2;
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
   const { recipients, participants, language } = hookForm.getValues();
+
   if ((!recipients || !recipients.length)
       || (!participants || !participants.length)
-      || (!language || language === '')) {
+      || (!language || !language.length)) {
     return false;
   }
 

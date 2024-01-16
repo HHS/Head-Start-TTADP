@@ -171,6 +171,9 @@ export default (sequelize, DataTypes) => {
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    language: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
     virtualDeliveryType: {
       type: DataTypes.STRING,
     },
@@ -283,10 +286,6 @@ export default (sequelize, DataTypes) => {
     creatorRole: {
       allowNull: true,
       type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
-    },
-    language: {
-      allowNull: true,
-      type: DataTypes.STRING,
     },
     creatorName: {
       type: DataTypes.VIRTUAL,

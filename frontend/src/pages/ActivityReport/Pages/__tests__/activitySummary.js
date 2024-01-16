@@ -137,7 +137,7 @@ describe('isPageComplete', () => {
     numberOfParticipants: 3,
     startDate: '09/01/2020',
     endDate: '09/01/2020',
-    language: 'English',
+    language: ['English'],
   };
 
   it('returns true if validated by hook form', async () => {
@@ -171,7 +171,7 @@ describe('isPageComplete', () => {
   });
 
   it('validates language', async () => {
-    const result = isPageComplete({ ...FORM_DATA, language: null }, { isValid: false });
+    const result = isPageComplete({ ...FORM_DATA, language: [] }, { isValid: false });
     expect(result).toBe(false);
   });
 });

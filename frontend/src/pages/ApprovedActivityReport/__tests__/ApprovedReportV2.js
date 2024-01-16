@@ -62,7 +62,7 @@ describe('Approved Activity Report V2 component', () => {
       completeDate: '2021-01-01',
     }],
     participants: ['Commander of Pants', 'Princess of Castles'],
-    language: null,
+    language: [],
     numberOfParticipants: 3,
     reason: ['Needed it'],
     startDate: '1968-08-01',
@@ -207,7 +207,7 @@ describe('Approved Activity Report V2 component', () => {
 
   it('language', async () => {
     render(<ApprovedReportV2 data={{
-      ...report, language: 'Gobbledegook',
+      ...report, language: ['Gobbledegook'],
     }}
     />);
 
