@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
-const { NEXTSTEP_NOTETYPE, LANGUAGE } = require('../constants');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeCreate,
@@ -286,7 +286,7 @@ export default (sequelize, DataTypes) => {
     },
     language: {
       allowNull: true,
-      type: DataTypes.ENUM(Object.keys(LANGUAGE).map((l) => LANGUAGE[l])),
+      type: DataTypes.STRING,
     },
     creatorName: {
       type: DataTypes.VIRTUAL,

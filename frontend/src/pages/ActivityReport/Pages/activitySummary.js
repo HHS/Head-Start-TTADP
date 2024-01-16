@@ -749,6 +749,7 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
+    language,
 
     // arrays
     activityRecipients,
@@ -770,6 +771,7 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
+    language,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
