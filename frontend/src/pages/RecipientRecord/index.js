@@ -25,7 +25,7 @@ import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 
-function PageWithHeading({
+export function PageWithHeading({
   children,
   regionId,
   recipientId,
@@ -338,12 +338,10 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match: routerMatch }) => (
-
             <CommunicationLogForm
               recipientName={recipientName}
               match={routerMatch}
             />
-
           )}
         />
         <Route
