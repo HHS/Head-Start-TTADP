@@ -9,15 +9,13 @@ import {
   goalByIdAndRecipient,
   destroyGoal,
   mergeGoals,
-  goalRegionsById,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
-import { similarGoalsForRecipient } from '../../services/similarity';
-import { validateMergeGoalPermissions } from '../recipient/handlers';
+import { validateMergeGoalPermissions } from '../utils';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -246,9 +244,8 @@ export async function mergeGoalHandler(req, res) {
       return;
     }
 
-    const { finalGoalId, selectedGoalIds } = req.body;
-
-    const mergedGoals = await mergeGoals(finalGoalId, selectedGoalIds);
+    const { finalGoalId, selectedGoalIds, goalSimilarityGroupId } = req.body;
+    const mergedGoals = await mergeGoals(finalGoalId, selectedGoalIds, goalSimilarityGroupId);
     res.json(mergedGoals);
   } catch (err) {
     await handleErrors(req, res, err, `${logContext}:MERGE_GOAL`);
@@ -256,36 +253,23 @@ export async function mergeGoalHandler(req, res) {
 }
 
 export async function getSimilarGoalsForRecipient(req, res) {
+  const canMergeGoalsForRecipient = await validateMergeGoalPermissions(req, res);
+
+  if (res.headersSent) {
+    return;
+  }
+
+  if (!canMergeGoalsForRecipient) {
+    res.sendStatus(401);
+    return;
+  }
   const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
 
   try {
-    const { result } = await similarGoalsForRecipient(recipientId, true);
-
-    const ids = Array.from((result || []).reduce((acc, resp) => {
-      const goals = (resp.matches || []).map((match) => match.id);
-      goals.forEach((goal) => acc.add(goal));
-
-      return acc;
-    }, new Set()));
-
-    const canView = await Promise.all(ids.map(async (id) => {
-      const goal = await goalByIdWithActivityReportsAndRegions(id);
-      // this can be null after we start merging goals
-      if (!goal) {
-        return true;
-      }
-      return new Goal(user, goal).canView();
-    }));
-
-    if (!canView.every((permission) => permission)) {
-      return res.sendStatus(401).send();
-    }
-    return res.json(await getGoalIdsBySimilarity(result));
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    res.json(await getGoalIdsBySimilarity(recipientId, user));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
   }
-
-  return null;
 }
