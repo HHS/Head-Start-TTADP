@@ -12,7 +12,7 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
 
   const valueToUse = parseFloat(cleanValue, 10) === 0 ? 0 : parseFloat(cleanValue, 10);
 
-  res.forEach((responseObject, index) => {
+  res?.forEach((responseObject, index) => {
     if (index === traceIndex) {
       if (responseObject.x.includes(xValue)) {
         // Update existing x value.
@@ -111,7 +111,7 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
 
   const arDates = [];
 
-  reports.forEach((r) => {
+  reports?.forEach((r) => {
     if (r.startDate && r.startDate !== null) {
       // Get X Axis value to use.
       let xValue;

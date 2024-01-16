@@ -5,14 +5,13 @@ import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
-  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
-  ObjectiveCollaborator,
+  ObjectiveCourse,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -20,6 +19,7 @@ import {
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveCourse,
   sequelize,
   Recipient,
   Resource,
@@ -28,9 +28,9 @@ import {
   ActivityRecipient,
   ActivityReportGoalFieldResponse,
   Topic,
+  Course,
   Program,
   File,
-  CollaboratorType,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -49,6 +49,13 @@ import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
 import { findOrFailExistingGoal, responsesForComparison } from './helpers';
+import { similarGoalsForRecipient } from '../services/similarity';
+import {
+  getSimilarityGroupsByRecipientId,
+  createSimilarityGroup,
+  setSimilarityGroupAsUserMerged,
+} from '../services/goalSimilarityGroup';
+import Users from '../policies/user';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -256,6 +263,7 @@ export async function saveObjectiveAssociations(
   resources = [],
   topics = [],
   files = [],
+  courses = [],
   deleteUnusedAssociations = false,
 ) {
   // We need to know if the objectiveTemplateId is populated to know if we
@@ -352,10 +360,48 @@ export async function saveObjectiveAssociations(
     });
   }
 
+  const objectiveCourses = await Promise.all(
+    courses.map(
+      async (course) => {
+        let ocourse = await ObjectiveCourse.findOne({
+          where: {
+            courseId: course.id,
+            objectiveId: objective.id,
+          },
+        });
+        if (!ocourse) {
+          ocourse = await ObjectiveCourse.create({
+            courseId: course.id,
+            objectiveId: objective.id,
+          }, {
+            // including this despite not really knowing why it's here
+            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+          });
+        }
+        return ocourse;
+      },
+    ),
+  );
+
+  if (deleteUnusedAssociations) {
+    // cleanup objective courses
+    await ObjectiveCourse.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveCourses && objectiveCourses.length
+            ? objectiveCourses.map((oc) => oc.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+      individualHooks: true,
+    });
+  }
+
   return {
     topics: objectiveTopics,
     resources: objectiveResources,
     files: objectiveFiles,
+    courses: objectiveCourses,
   };
 }
 
@@ -415,6 +461,33 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   return objectivesToSort;
 }
 
+/**
+ * Reduces the relation through activity report objectives.
+ *
+ * @param {Object} objective - The objective object.
+ * @param {string} join tablename that joins aro <> relation. e.g. activityReportObjectiveResources
+ * @param {string} relation - The relation that will be returned. e.g. resource.
+ * @param {Object} [exists={}] - The existing relation object.
+ * @returns {Array} - The reduced relation array.
+ */
+const reduceRelationThroughActivityReportObjectives = (
+  objective,
+  join,
+  relation,
+  exists = {},
+) => {
+  const existingRelation = exists[relation] || [];
+  return uniqBy([
+    ...existingRelation,
+    ...(objective.activityReportObjectives
+      && objective.activityReportObjectives.length > 0
+      ? objective.activityReportObjectives[0][join]
+        .map((t) => t[relation].dataValues)
+        .filter((t) => t)
+      : []),
+  ], (e) => e.id);
+};
+
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
@@ -434,32 +507,33 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
-      exists.resources = uniqBy([
-        ...exists.resources,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.resource.dataValues)
-          : []),
-      ], (e) => e.value);
+      exists.resources = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+        exists,
+      );
 
-      exists.topics = uniqBy([
-        ...exists.topics,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic.dataValues)
-          : []),
-      ], (e) => e.id);
+      exists.topics = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+        exists,
+      );
 
-      exists.files = uniqBy([
-        ...exists.files,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-          : []),
-      ], (e) => e.key);
+      exists.courses = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveCourses',
+        'course',
+        exists,
+      );
+
+      exists.files = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveFiles',
+        'file',
+        exists,
+      );
 
       return objectives;
     }
@@ -508,22 +582,26 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => (t.topic ? t.topic.dataValues : null))
-          .filter((t) => t)
-        : [],
-      resources: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.resource.dataValues)
-        : [],
-      files: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-        : [],
+      topics: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+      ),
+      resources: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+      ),
+      files: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveFiles',
+        'file',
+      ),
+      courses: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveCourses',
+        'course',
+      ),
     }];
   }, currentObjectives);
 
@@ -798,6 +876,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: Topic,
             as: 'topics',
+            required: false,
+          },
+          {
+            model: Course,
+            as: 'courses',
             required: false,
           },
           {
@@ -1338,6 +1421,7 @@ export async function createOrUpdateGoals(goals) {
           resources,
           topics,
           files,
+          [],
           deleteUnusedAssociations,
         );
 
@@ -1837,6 +1921,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     || o.ttaProvided
     || o.topics.length
     || o.resources.length
+    || o.courses.length
     || o.files.length).map(async (objective, index) => {
     const {
       id,
@@ -1849,6 +1934,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       topics,
       files,
       supportType,
+      courses,
       closeSuspendReason,
       closeSuspendContext,
       ...updatedFields
@@ -1913,6 +1999,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      courses,
       deleteUnusedAssociations,
     );
 
@@ -2014,10 +2101,10 @@ export async function saveGoalsForReport(goals, report) {
         if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
+      }
 
-        if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
-          newOrUpdatedGoal.set({ endDate });
-        }
+      if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
+        newOrUpdatedGoal.set({ endDate });
       }
 
       if (status && status !== newOrUpdatedGoal.status) {
@@ -2242,6 +2329,18 @@ export async function getGoalsForReport(reportId) {
               },
               {
                 separate: true,
+                model: ActivityReportObjectiveCourse,
+                as: 'activityReportObjectiveCourses',
+                required: false,
+                include: [
+                  {
+                    model: Course,
+                    as: 'course',
+                  },
+                ],
+              },
+              {
+                separate: true,
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
@@ -2409,15 +2508,18 @@ export async function destroyGoal(goalIds) {
 /**
  * @param {goals[]} include .activityReportGoals
  * @returns {
-*  reportId: countOfGoalsOnReport,
+*  reportId: { grantId: countOfGoalsOnReport },
 * }
 */
 export const getReportCountForGoals = (goals) => goals.reduce((acc, goal) => {
   (goal.activityReportGoals || []).forEach((arg) => {
     if (!acc[arg.activityReportId]) {
-      acc[arg.activityReportId] = 0;
+      acc[arg.activityReportId] = {};
     }
-    acc[arg.activityReportId] += 1;
+    if (!acc[arg.activityReportId][goal.grantId]) {
+      acc[arg.activityReportId][goal.grantId] = 0;
+    }
+    acc[arg.activityReportId][goal.grantId] += 1;
   });
 
   return acc;
@@ -2433,26 +2535,18 @@ const fieldMappingForDeduplication = {
 /**
 *
 * key is activityReportid, value is count of goals on that report
-* @param {{ number: number }} countObject
+* @param {{ number: { number: number } }} countObject
 */
 // eslint-disable-next-line max-len
-export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
+export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
+  .some((grants) => Object.values(grants).some((c) => c > 1));
+
+function goalGroupContainsClosedCuratedGoal(goalGroup) {
+  return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
+}
 
 /**
-*
-* similarity response is an array of objects with the following structure:
-* {
-     "id": number,
-     "name": string,
-     "matches": [{
-       "id": number,
-       "name": string,
-       "grantId": number,
-       "similarity": float,
-     }]
-  }
-*
-* @param {[]} similarityResponse
+* @param {Number} recipientId
 * @returns {
 *  goals: [{
 *    name: string,
@@ -2464,9 +2558,38 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(similarityResponse = []) {
+export async function getGoalIdsBySimilarity(recipientId, user = null) {
+  /**
+   * if a user has the ability to merged closed curated goals, we will show them in the UI
+   */
+  const allowClosedCuratedGoal = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
+
+  const similiarityWhere = {
+    userHasInvalidated: false,
+    finalGoalId: null,
+  };
+
+  // then, we check for goal similarity groups that have already been created
+  const existingRecipientGroups = await getSimilarityGroupsByRecipientId(
+    recipientId,
+    similiarityWhere,
+    allowClosedCuratedGoal,
+  );
+
+  if (existingRecipientGroups.length) {
+    return existingRecipientGroups;
+  }
+
+  // otherwise, we'll create the groups
+  // with a little if just in case the similarity API craps out on us (technical term)
+  const similarity = await similarGoalsForRecipient(recipientId, true);
+  let result = [];
+  if (similarity) {
+    result = similarity.result;
+  }
+
   // convert the response to a group of IDs
-  const goalIdGroups = similarityResponse.map((matchedGoals) => {
+  const goalIdGroups = (result || []).map((matchedGoals) => {
     const { id, matches } = matchedGoals;
     return uniq([id, ...matches.map((match) => match.id)]);
   });
@@ -2475,23 +2598,7 @@ export async function getGoalIdsBySimilarity(similarityResponse = []) {
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
     where: {
-      [Op.or]: [
-        {
-          id: group,
-          '$"goalTemplate"."creationMethod"$': {
-            [Op.ne]: CREATION_METHOD.CURATED,
-          },
-        },
-        {
-          id: group,
-          '$"goalTemplate"."creationMethod"$': {
-            [Op.eq]: CREATION_METHOD.CURATED,
-          },
-          status: {
-            [Op.not]: GOAL_STATUS.CLOSED,
-          },
-        },
-      ],
+      id: group,
     },
     include: [
       {
@@ -2584,10 +2691,21 @@ export async function getGoalIdsBySimilarity(similarityResponse = []) {
 
   const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
 
-  return groupsWithMoreThanOneGoal.map((gg) => ({
-    ids: uniq(gg.map((g) => g.ids).flat()),
-    goals: gg,
-  }));
+  // save the groups to the database
+  // there should also always be an empty group
+  // to signify that there are no similar goals
+  // and that we've run these computations
+
+  await Promise.all(
+    [...groupsWithMoreThanOneGoal, []]
+      .map((gg) => (
+        createSimilarityGroup(
+          recipientId,
+          uniq(gg.map((g) => g.ids).flat()),
+        ))),
+  );
+
+  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere, allowClosedCuratedGoal);
 }
 
 /**
@@ -2713,15 +2831,12 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
  * @param {number} finalGoalId
  * @param {number[]} selectedGoalIds
  */
-export async function mergeGoals(finalGoalId, selectedGoalIds) {
-  // first thing we do is test elibility
-  // in case something weird got into a URL on the frontend
-  const mockResponse = [{ id: finalGoalId, matches: selectedGoalIds.map((id) => ({ id })) }];
-  const elibilityGroup = await getGoalIdsBySimilarity(mockResponse);
-  if (!elibilityGroup.length) {
-    throw new Error('Cannot merge: goals ineligible for merge');
-  }
 
+export async function mergeGoals(
+  finalGoalId,
+  selectedGoalIds,
+  goalSimiliarityGroupId,
+) {
   // create a new goal from "finalGoalId"
   // - update selectedGoalIds to point to newGoalId
   // - i.e. { parentGoalId: newGoalId }
@@ -2905,7 +3020,6 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
   selectedGoals.forEach((g) => {
     // update the activity report goal
     if (g.activityReportGoals.length) {
-      // originalGoalId: g.id,
       updatesToRelatedModels.push(ActivityReportGoal.update(
         {
           originalGoalId: sequelize.fn('COALESCE', sequelize.col('originalGoalId'), g.id),
@@ -2917,6 +3031,9 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
           where: { id: g.activityReportGoals.map((arg) => arg.id) },
         },
       ));
+
+      // TODO: if the report is not approved, the name, resources and responses should also
+      // be updated
     }
 
     // copy the goal resources
@@ -2932,24 +3049,35 @@ export async function mergeGoals(finalGoalId, selectedGoalIds) {
       }));
     });
 
-    // copy the goal field responses
-    g.responses.forEach((gfr) => {
-      updatesToRelatedModels.push(GoalFieldResponse.create({
-        goalId: grantToGoalDictionary[
-          grantsWithReplacementsDictionary[g.grantId]
-        ],
-        goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
-        response: gfr.response,
-      }, { individualHooks: true }));
-    });
+    if (Number(g.id) === Number(finalGoalId)) {
+      // copy the goal field responses
+      g.responses.forEach((gfr) => {
+        Object.values(grantToGoalDictionary).forEach((goalId) => {
+          updatesToRelatedModels.push(GoalFieldResponse.create({
+            goalId,
+            goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+            response: gfr.response,
+          }, { individualHooks: true }));
+        });
+      });
+    }
   });
 
   await Promise.all(updatesToRelatedModels);
-  await Promise.all(selectedGoals.map((g) => g.update({
-    mapsToParentGoalId: grantToGoalDictionary[
-      grantsWithReplacementsDictionary[g.grantId]
-    ],
-  }, { individualHooks: true })));
+  await Promise.all(selectedGoals.map((g) => {
+    const u = g.update({
+      mapsToParentGoalId: grantToGoalDictionary[
+        grantsWithReplacementsDictionary[g.grantId]
+      ],
+    }, { individualHooks: true });
+    return u;
+  }));
+
+  // record the merge as complete
+  await setSimilarityGroupAsUserMerged(
+    goalSimiliarityGroupId,
+    finalGoalId,
+  );
 
   return newGoals;
 }
