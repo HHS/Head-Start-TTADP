@@ -80,10 +80,19 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-11-option-0').click();
     await blur(page);
+
+    // Language.
+    await page.getByRole('group', { name: 'Language used required' }).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
     // Number of participants.
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
     await page.getByLabel('Number of participants involved *').click();
     await page.getByLabel('Number of participants involved *').fill('5');
+
+    // Save and Continue.
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     await page.waitForNavigation({ waitUntil: 'networkidle' });
