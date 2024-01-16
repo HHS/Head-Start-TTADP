@@ -1,5 +1,5 @@
 const {
-  prepMigration,
+  prepMigration, removeTables,
 } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
