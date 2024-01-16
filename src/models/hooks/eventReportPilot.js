@@ -102,7 +102,8 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
 /**
  * This hook updates `Goal.name` for all goals that are associated with this training report.
  */
-const updateGoalText = async (sequelize, instance) => {
+const updateGoalText = async (sequelize, instance, options) => {
+  const { transaction } = options;
   const changed = instance.changed();
 
   if (!changed || !changed.includes('data')) {
@@ -118,9 +119,9 @@ const updateGoalText = async (sequelize, instance) => {
 
   // eslint-disable-next-line no-restricted-syntax
   for await (const g of goals) {
-    const foundGoal = await sequelize.models.Goal.findByPk(g.goalId, { transaction: instance.transaction });
+    const foundGoal = await sequelize.models.Goal.findByPk(g.goalId, { transaction });
     foundGoal.name = goal;
-    await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction: instance.transaction });
+    await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction });
   }
 };
 
