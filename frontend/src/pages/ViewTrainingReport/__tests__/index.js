@@ -68,6 +68,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
       objectiveSupportType: 'Implementing',
+      language: 'Klingon',
     },
     createdAt: '2023-06-27T13:48:31.490Z',
     updatedAt: '2023-06-27T13:49:18.579Z',
@@ -182,6 +183,7 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
     expect(screen.getByText('Implementing')).toBeInTheDocument();
+    expect(screen.getByText('Klingon')).toBeInTheDocument();
 
     // expect 2 of these (1 for each session)
     expect(screen.getAllByText('PFCE')).toHaveLength(2);

@@ -150,6 +150,7 @@ export default function ViewTrainingReport({ match }) {
         data: {
           Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
           'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
+          'Language used': session.data.language || '',
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
           'Number of participants': String((
             session.data.numberOfParticipants || 0

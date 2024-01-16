@@ -17,6 +17,11 @@ export const sessionSummaryFields = {
   ttaProvided: '',
 };
 
+export const languages = [
+  'English',
+  'Spanish',
+];
+
 export const participantsFields = {
   participants: [],
   deliveryMethod: '',
