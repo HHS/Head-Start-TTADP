@@ -10,8 +10,8 @@ export default (sequelize, DataTypes) => {
 
       models.Goal.hasMany(models.EventReportPilotGoal, { foreignKey: 'goalId', as: 'eventReportPilotGoals' });
       models.EventReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'eventId', as: 'eventReportPilotGoals' });
-      models.SessionReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'grantId', as: 'eventReportPilotGoals' });
-      models.Grant.hasMany(models.EventReportPilotGoal, { foreignKey: 'sessionId', as: 'eventReportPilotGoals' });
+      models.SessionReportPilot.hasMany(models.EventReportPilotGoal, { foreignKey: 'sessionId', as: 'eventReportPilotGoals' });
+      models.Grant.hasMany(models.EventReportPilotGoal, { foreignKey: 'grantId', as: 'eventReportPilotGoals' });
 
       models.Goal.belongsToMany(models.EventReportPilot, { through: models.EventReportPilotGoal, foreignKey: 'goalId', as: 'eventReportPilots' });
       models.EventReportPilot.belongsToMany(models.Goal, { through: models.EventReportPilotGoal, foreignKey: 'eventId', as: 'eventReportPilots' });
