@@ -128,6 +128,7 @@ async function activitySummary(
   await page.keyboard.type('Change in scope');
   await page.keyboard.press('Enter');
   await blur(page);
+
   await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
   await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
   await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
@@ -137,13 +138,14 @@ async function activitySummary(
   await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
+  await blur(page);
 
-  await page.getByText('Language used *- Select -').click();
+  // await page.getByText('Language used *- Select -').click();
+  await page.getByRole('group', { name: 'Language used required' }).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
 
-  await blur(page);
   await page.getByLabel('Number of participants involved *').fill('5');
 }
 
