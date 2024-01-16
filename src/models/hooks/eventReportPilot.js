@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
 /* eslint-disable import/prefer-default-export */
+const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
@@ -106,25 +107,36 @@ const updateGoalText = async (sequelize, instance, options) => {
   const { transaction } = options;
   const changed = instance.changed();
 
-  if (!changed || !changed.includes('data')) {
+  if (!changed || !changed.includes('name')) {
     return;
   }
 
-  const data = JSON.parse(instance.data.val);
-  const { goal, goals } = data;
+  const { name } = instance;
 
-  if (!goal || !goals || !goals.length) {
-    return;
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  for await (const g of goals) {
-    const foundGoal = await sequelize.models.Goal.findByPk(g.goalId, { transaction });
-    // Check if the found goal's name is already the same as the new goal name to prevent recursive updates
-    if (foundGoal && foundGoal.name !== goal) {
-      await sequelize.models.Goal.update({ name: goal }, { where: { id: g.goalId }, transaction });
-    }
-  }
+  await sequelize.models.Goal.update(
+    { name },
+    {
+      where: {
+        [Op.and]: [
+          { name: { [Op.ne]: name } },
+          {
+            id: {
+              [Op.in]: sequelize.literal(`(
+                SELECT "goalId"
+                FROM "EventReportPilotGoals"
+                WHERE "eventId" = ${instance.id}
+                AND "sessionId" NOT IN (
+                  SELECT "id"
+                  FROM "SessionReportPilots"
+                  WHERE "data"->>'status' = '${TRAINING_REPORT_STATUSES.COMPLETE}'
+                )
+              )`),
+            },
+          },
+        ],
+      },
+    },
+  );
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
