@@ -138,6 +138,11 @@ async function activitySummary(
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
+  await page.getByText('Language used *- Select -').click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await blur(page);
+
   await blur(page);
   await page.getByLabel('Number of participants involved *').fill('5');
 }
