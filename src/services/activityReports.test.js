@@ -139,7 +139,7 @@ const reportObject = {
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
   version: 2,
-  language: 'English',
+  language: ['English', 'Spanish'],
 };
 
 const submittedReport = {
@@ -438,7 +438,7 @@ describe('Activity report service', () => {
         expect(report.activityRecipientType).toEqual('recipient');
         expect(report.calculatedStatus).toEqual('draft');
         expect(report.ECLKCResourcesUsed).toEqual(['updated']);
-        expect(report.language).toEqual('English');
+        expect(report.language).toStrictEqual(['English', 'Spanish']);
         expect(report.id).toEqual(3334);
       });
 

@@ -495,19 +495,13 @@ const ActivitySummary = ({
             name="language"
             fieldSetWrapper
           >
-            <Dropdown
-              required
-              control={control}
-              id="language"
+            <MultiSelect
               name="language"
-              inputRef={register({ required: 'Select a language' })}
-            >
-              <option value="" disabled selected hidden>- Select -</option>
-              {languages.map((language) => (
-                <option key={language} value={language}>{language}</option>
-              ))}
-            </Dropdown>
-
+              control={control}
+              options={languages.map((language) => ({ value: language, label: language }))}
+              required="Select at least one"
+              placeholderText={placeholderText}
+            />
           </FormItem>
         </div>
         <div className="margin-top-2">
@@ -750,7 +744,6 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
-    language,
 
     // arrays
     activityRecipients,
@@ -758,6 +751,7 @@ export const isPageComplete = (formData, formState) => {
     reason,
     ttaType,
     participants,
+    language,
 
     // numbers
     duration,
@@ -772,7 +766,6 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
-    language,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -785,6 +778,7 @@ export const isPageComplete = (formData, formState) => {
     reason,
     ttaType,
     participants,
+    language,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {

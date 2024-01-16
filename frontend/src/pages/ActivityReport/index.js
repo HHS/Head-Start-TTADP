@@ -77,7 +77,7 @@ const defaultValues = {
   topics: [],
   approvers: [],
   recipientGroup: null,
-  language: null,
+  language: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);

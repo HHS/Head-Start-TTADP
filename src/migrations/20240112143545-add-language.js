@@ -8,7 +8,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
 
       await queryInterface.addColumn('ActivityReports', 'language', {
-        type: Sequelize.STRING,
+        type: Sequelize.ARRAY(Sequelize.STRING),
         allowNull: true,
       }, { transaction });
     });

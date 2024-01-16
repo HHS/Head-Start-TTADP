@@ -48,7 +48,7 @@ describe('participants', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({
-        getValues: jest.fn(() => ({ recipients: [1], participants: [1], language: 'Mermish' })),
+        getValues: jest.fn(() => ({ recipients: [1], participants: [1], language: ['Mermish'] })),
       })).toBe(true);
     });
 
@@ -133,8 +133,6 @@ describe('participants', () => {
       });
       await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
       await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
-      await selectEvent.select(screen.getByLabelText(/Recipient participants/i), 'Home Visitor');
-
       act(() => {
         userEvent.click(
           screen.getByLabelText(/in person/i),
@@ -186,6 +184,7 @@ describe('participants', () => {
         deliveryMethod: 'in-person',
         numberOfParticipants: 1,
         participants: ['Home Visitor'],
+        language: ['English'],
       };
 
       act(() => {
@@ -222,6 +221,7 @@ describe('participants', () => {
         numberOfParticipantsInPerson: 1,
         numberOfParticipantsVirtually: 1,
         participants: ['Home Visitor'],
+        language: ['English'],
       };
 
       act(() => {
