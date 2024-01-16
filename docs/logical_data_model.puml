@@ -246,6 +246,8 @@ class EventReportPilotGoals{
  * id : integer : <generated>
  * eventId : integer : REFERENCES "EventReportPilots".id
  * goalId : integer : REFERENCES "Goals".id
+ * grantId : integer : REFERENCES "Grants".id
+ * sessionId : integer : REFERENCES "SessionReportPilots".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
@@ -2048,6 +2050,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
+Grants "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : grant, eventReportPilotGoals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
@@ -2098,6 +2101,7 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collab
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : session, eventReportPilotGoals
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : sessionReport, sessionSupportingAttachments
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
@@ -2139,6 +2143,8 @@ CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objecti
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Users : usersThroughGoalCollaborators, usersThroughObjectiveCollaborators, collaboratorTypesThroughGoalCollaborator, collaboratorTypesThroughObjectiveCollaborator
 CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
 Courses "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, courses
+EventReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, eventReportPilots
+EventReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, eventReports
 Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
