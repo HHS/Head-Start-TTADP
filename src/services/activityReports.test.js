@@ -798,6 +798,17 @@ describe('Activity report service', () => {
         expect(reportTwo.approvers[0].user.id).toEqual(mockUserTwo.id);
         expect(reportTwo.regionId).toEqual(3);
       });
+
+      it('works when no collaborator user roles (branch coverage)', async () => {
+        const report = await createOrUpdate({
+          ...reportObject,
+          activityReportCollaborators: [
+            { user: { id: mockUser.id } },
+          ],
+        });
+        expect(report.activityReportCollaborators.length).toBe(1);
+        expect(report.activityReportCollaborators[0].user.id).toBe(mockUser.id);
+      });
     });
 
     describe('activityReportByLegacyId', () => {

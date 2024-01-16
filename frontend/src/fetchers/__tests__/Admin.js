@@ -18,6 +18,8 @@ import {
   getGroupsByRegion,
   createMultiRecipientGoalsFromAdmin,
   closeMultiRecipientGoalsFromAdmin,
+  updateLegacyUsers,
+  importCsv,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -64,6 +66,15 @@ describe('Admin', () => {
       fetchMock.put(join('api', 'admin', 'users', '1'), user);
       const fetchedUser = await updateUser(1, {});
       expect(fetchedUser).toEqual(user);
+    });
+  });
+
+  describe('importCsv', () => {
+    it('calls the import path passed in', async () => {
+      const response = { name: 'training-reports' };
+      fetchMock.post(join('/', 'api', 'admin', 'training-reports'), response);
+      const importResponse = await importCsv('training-reports', {});
+      expect(importResponse).toEqual(response);
     });
   });
 
@@ -157,6 +168,15 @@ describe('Admin', () => {
       fetchMock.put(join('/', 'api', 'admin', 'goals', 'close'), res);
       const created = await closeMultiRecipientGoalsFromAdmin({});
       expect(created).toEqual(res);
+    });
+  });
+
+  describe('legacyReports', () => {
+    it('updateLegacyUsers', async () => {
+      const res = { updated: true };
+      fetchMock.put(join('/', 'api', 'admin', 'legacy-reports', '1', 'users'), res);
+      const updated = await updateLegacyUsers(1, {});
+      expect(updated).toEqual(res);
     });
   });
 
