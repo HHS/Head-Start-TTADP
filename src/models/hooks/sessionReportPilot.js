@@ -140,25 +140,24 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
     const eventRecord = await sequelize.models.EventReportPilot.findByPk(eventId, { transaction: options.transaction });
     if (!eventRecord) throw new Error('Event not found');
 
-    // The event blob is where we store information about goals created for sessions.
-    /**
-     * @typedef {Object} BlobbyGoal
-     * @property {number} grantId
-     * @property {number} goalId
-     * @property {number} sessionId
-     */
-
-    /** @type {BlobbyGoal[]} */
-    const currentGoals = Array.isArray(eventRecord.dataValues.data?.goals) ? eventRecord.dataValues.data.goals : [];
-    const newGoals = [];
-
     // eslint-disable-next-line no-restricted-syntax
     for await (const { value: grantValue } of recipients) {
       const grantId = Number(grantValue);
-      if (!currentGoals.some((goal) => goal.sessionId === instance.id && goal.grantId === grantId)) {
-        const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
-        if (!grant) throw new Error('Grant not found');
+      const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
+      if (!grant) throw new Error('Grant not found');
 
+      const sessionId = instance.id;
+
+      const existing = await sequelize.models.EventReportPilotGoal.findOne({
+        where: {
+          sessionId,
+          eventId,
+          grantId,
+        },
+        transaction: options.transaction,
+      });
+
+      if (!existing) {
         const newGoal = await sequelize.models.Goal.create({
           name: event.data.goal,
           grantId,
@@ -168,20 +167,40 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
           createdVia: 'tr',
         }, { transaction: options.transaction });
 
-        newGoals.push({ grantId, goalId: newGoal.id, sessionId: instance.id });
-
         await sequelize.models.EventReportPilotGoal.create({
           goalId: newGoal.id,
           eventId,
+          sessionId,
+          grantId,
           createdAt: new Date(),
           updatedAt: new Date(),
         }, { transaction: options.transaction });
       }
     }
+  } catch (error) {
+    auditLogger.error(JSON.stringify({ error }));
+  }
+};
 
-    if (newGoals.length > 0) {
-      const eventData = { ...eventRecord.dataValues.data, goals: [...currentGoals, ...newGoals] };
-      await sequelize.models.EventReportPilot.update({ data: eventData }, { where: { id: eventId }, transaction: options.transaction });
+const destroyAssociatedGoals = async (sequelize, instance, options) => {
+  try {
+    const { EventReportPilotGoal } = sequelize.models;
+    const goals = await EventReportPilotGoal.findAll({
+      where: {
+        sessionId: instance.id,
+        eventId: instance.eventId,
+      },
+      transaction: options.transaction,
+    });
+
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const goal of goals) {
+      await sequelize.models.Goal.destroy({
+        where: {
+          id: goal.goalId,
+        },
+        transaction: options.transaction,
+      });
     }
   } catch (error) {
     auditLogger.error(JSON.stringify({ error }));
@@ -211,6 +230,7 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const beforeDestroy = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  await destroyAssociatedGoals(sequelize, instance, options);
 };
 
 export {
