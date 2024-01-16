@@ -9,6 +9,7 @@ import {
   Button,
   Radio,
   TextInput,
+  Dropdown,
 } from '@trussworks/react-uswds';
 import { capitalize } from 'lodash';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
@@ -16,6 +17,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import {
   participantsFields,
   pageComplete,
+  languages,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import FormItem from '../../../components/FormItem';
@@ -75,6 +77,9 @@ const Participants = ({ formData }) => {
         <ReadOnlyField label="Recipient participants">
           {formData.participants.join('\n')}
         </ReadOnlyField>
+        <ReadOnlyField label="Language used">
+          {formData.language}
+        </ReadOnlyField>
         <ReadOnlyField label="Delivery method">
           {capitalize(formData.deliveryMethod)}
         </ReadOnlyField>
@@ -133,6 +138,28 @@ const Participants = ({ formData }) => {
             }
             required="Select at least one participant"
           />
+        </FormItem>
+      </div>
+
+      <div className="margin-top-2">
+        <FormItem
+          label="Language used"
+          name="language"
+          fieldSetWrapper
+        >
+          <Dropdown
+            required
+            control={control}
+            id="language"
+            name="language"
+            inputRef={register({ required: 'Select a language' })}
+          >
+            <option value="" disabled selected hidden>- Select -</option>
+            {languages.map((language) => (
+              <option key={language} value={language}>{language}</option>
+            ))}
+          </Dropdown>
+
         </FormItem>
       </div>
 
@@ -271,8 +298,10 @@ const position = 2;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
-  const { recipients, participants } = hookForm.getValues();
-  if (!recipients || !recipients.length || !participants || !participants.length) {
+  const { recipients, participants, language } = hookForm.getValues();
+  if ((!recipients || !recipients.length)
+      || (!participants || !participants.length)
+      || (!language || language === '')) {
     return false;
   }
 

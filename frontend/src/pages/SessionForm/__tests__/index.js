@@ -13,6 +13,7 @@ import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
+import { lang } from 'moment';
 
 describe('SessionReportForm', () => {
   const sessionsUrl = join('/', 'api', 'session-reports');
@@ -312,6 +313,7 @@ describe('SessionReportForm', () => {
       ttaProvided: 'oH YEAH',
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: 'Gobbledegook',
     };
 
     fetchMock.get(url, formData);

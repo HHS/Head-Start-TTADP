@@ -48,7 +48,7 @@ describe('participants', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({
-        getValues: jest.fn(() => ({ recipients: [1], participants: [1] })),
+        getValues: jest.fn(() => ({ recipients: [1], participants: [1], language: 'Mermish' })),
       })).toBe(true);
     });
 

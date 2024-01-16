@@ -167,7 +167,7 @@ function calculateGoalsAndObjectives(report) {
 
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, deliveryMethod, virtualDeliveryType,
+    reportId, ttaType, language, deliveryMethod, virtualDeliveryType,
   } = data;
 
   // first table
@@ -300,6 +300,7 @@ export default function ApprovedReportV2({ data }) {
             heading: 'Training or technical assistance',
             data: {
               'TTA provided': formatTtaType(ttaType),
+              'Language used': language,
               'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
             },
             striped: true,
