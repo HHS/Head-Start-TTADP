@@ -42,4 +42,5 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'EventReportPilotGoal',
   });
+  return EventReportPilotGoals;
 };
