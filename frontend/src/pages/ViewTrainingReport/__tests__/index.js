@@ -69,6 +69,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
       objectiveSupportType: SUPPORT_TYPES[2],
+      courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
     createdAt: '2023-06-27T13:48:31.490Z',
     updatedAt: '2023-06-27T13:49:18.579Z',
@@ -103,6 +104,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
       objectiveSupportType: SUPPORT_TYPES[1],
+      courses: [{ id: 3, name: 'course 3' }],
     },
     createdAt: '2023-06-27T13:49:23.985Z',
     updatedAt: '2023-06-27T13:49:59.039Z',
@@ -128,7 +130,7 @@ describe('ViewTrainingReport', () => {
   });
 
   it('renders a basic report with sessions', async () => {
-    fetchMock.getOnce('/api/events/id/1', mockEvent());
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent());
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -182,7 +184,9 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('s-step1session1')).toBeInTheDocument();
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
-    expect(screen.getByText(SUPPORT_TYPES[2])).toBeInTheDocument();
+    expect(screen.getByText('Implementing')).toBeInTheDocument();
+    expect(screen.getByText('course 1')).toBeInTheDocument();
+    expect(screen.getByText('course 2')).toBeInTheDocument();
 
     // expect 2 of these (1 for each session)
     expect(screen.getAllByText('PFCE')).toHaveLength(2);
@@ -204,13 +208,14 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('s1s2')).toBeInTheDocument();
     expect(screen.getByText('06/29/2027')).toBeInTheDocument();
     expect(screen.getByText(SUPPORT_TYPES[1])).toBeInTheDocument();
+    expect(screen.getByText('course 3')).toBeInTheDocument();
   });
 
   it('renders the necessary buttons', async () => {
     global.navigator.clipboard = jest.fn();
     global.navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
 
-    fetchMock.getOnce('/api/events/id/1', mockEvent());
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent());
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -224,7 +229,7 @@ describe('ViewTrainingReport', () => {
   });
 
   it('handles an error fetching event', async () => {
-    fetchMock.getOnce('/api/events/id/1', 500);
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', 500);
 
     renderTrainingReport();
 
@@ -232,7 +237,7 @@ describe('ViewTrainingReport', () => {
   });
 
   it('handles a permissions error', async () => {
-    fetchMock.getOnce('/api/events/id/1', 403);
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', 403);
 
     renderTrainingReport();
 
@@ -240,7 +245,7 @@ describe('ViewTrainingReport', () => {
   });
 
   it('handles an error fetching collaborators', async () => {
-    fetchMock.getOnce('/api/events/id/1', mockEvent());
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent());
 
     fetchMock.getOnce('/api/users/names?ids=1', 500);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -251,7 +256,7 @@ describe('ViewTrainingReport', () => {
   });
 
   it('handles an error fetching points of contact', async () => {
-    fetchMock.getOnce('/api/events/id/1', mockEvent());
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent());
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', 500);
@@ -268,7 +273,7 @@ describe('ViewTrainingReport', () => {
       status: 'Complete',
     };
 
-    fetchMock.getOnce('/api/events/id/1', e);
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -284,7 +289,7 @@ describe('ViewTrainingReport', () => {
     const e = mockEvent();
     delete e.sessionReports;
 
-    fetchMock.getOnce('/api/events/id/1', e);
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -312,7 +317,7 @@ describe('ViewTrainingReport', () => {
       },
     ];
 
-    fetchMock.getOnce('/api/events/id/1', e);
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);

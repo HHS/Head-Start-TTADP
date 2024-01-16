@@ -53,6 +53,7 @@ const RenderGoalsObjectives = ({
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }],
       objectivesWithoutGoals: [],
@@ -256,6 +257,7 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }];
 
@@ -394,6 +396,7 @@ describe('goals objectives', () => {
           resources: [],
           roles: ['Chief Inspector'],
           supportType: SUPPORT_TYPES[1],
+          courses: [],
         },
         {
           id: 2,
@@ -404,6 +407,7 @@ describe('goals objectives', () => {
           resources: [],
           roles: ['Chief Inspector'],
           supportType: SUPPORT_TYPES[1],
+          courses: [],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
@@ -439,6 +443,7 @@ describe('goals objectives', () => {
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
             supportType: SUPPORT_TYPES[1],
+            courses: [],
           },
           {
             id: 2,
@@ -450,6 +455,7 @@ describe('goals objectives', () => {
             roles: ['Chief Inspector'],
             files: [],
             supportType: SUPPORT_TYPES[1],
+            courses: [],
           },
         ]}
       />);
@@ -475,6 +481,7 @@ describe('goals objectives', () => {
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
           files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+          courses: [],
         }],
       }]}
       />);

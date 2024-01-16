@@ -44,7 +44,7 @@ export default function ViewTrainingReport({ match }) {
     async function fetchEvent() {
       try {
         setIsAppLoading(true);
-        const e = await eventById(match.params.trainingReportId);
+        const e = await eventById(match.params.trainingReportId, true);
         setEvent(e);
       } catch (err) {
         let message = 'Sorry, something went wrong';
@@ -141,6 +141,7 @@ export default function ViewTrainingReport({ match }) {
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
           'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
+          'iPD Courses': session.data.courses ? session.data.courses.map((o) => o.name) : [],
           'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
           'Support type': session.data.objectiveSupportType,
         },

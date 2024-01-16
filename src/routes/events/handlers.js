@@ -71,10 +71,12 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
+    const { readOnly } = req.query;
+
     // Check if user is a collaborator.
     const userId = await currentUserId(req, res);
     const scopes = [];
-    if (await userIsPocRegionalCollaborator(userId)) {
+    if (!readOnly && await userIsPocRegionalCollaborator(userId)) {
       scopes.push({ pocIds: { [Op.contains]: [userId] } });
     }
 

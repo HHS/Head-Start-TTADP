@@ -85,6 +85,7 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'TTA objective': objective.title,
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
+        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
@@ -150,7 +151,7 @@ function calculateGoalsAndObjectives(report) {
       if (prompts && prompts.length) {
         const promptData = {};
         prompts.forEach((prompt) => {
-          promptData[prompt.title] = prompt.response.join(', ');
+          promptData[prompt.title] = prompt.reportResponse.join(', ');
         });
         goalSection.data = { ...goalSection.data, ...promptData };
       }
