@@ -845,7 +845,7 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('An unlikely statement');
-    
+
     // save draft
     await blur(page);
     const p2 = page.waitForResponse('/api/activity-reports/goals');
@@ -854,10 +854,11 @@ test.describe('Activity Report', () => {
     await p2;
 
     await page.getByTestId('form').locator('div').filter({ hasText: 'Create new goal' }).nth(3).click();
-    await page.locator('#react-select-13-option-1').getByText('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the ').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Keep objective' }).click();
     await blur(page);
-  
+
     expect(page.getByRole('textbox', { name: /TTA provided for objective/i }).getByText('An unlikely statement')).toBeVisible();
   });
 });

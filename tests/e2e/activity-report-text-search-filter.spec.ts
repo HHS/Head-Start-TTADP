@@ -76,13 +76,18 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('textbox', { name: 'Context' }).locator('div').nth(2).fill('The sky is blue. The ocean is deep.');
     // Type of tta.
     await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText('Training').click();
-    await page.getByText('In Person').click();
-    await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.locator('#react-select-11-option-0').click();
-    await blur(page);
 
     // Language.
     await page.getByRole('group', { name: 'Language used required' }).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
+    // How was the activity conducted.
+    await page.getByText('In Person').click();
+
+    // Participants.
+    await page.getByText('Recipient participants *- Select -').click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
