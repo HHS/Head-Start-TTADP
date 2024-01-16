@@ -112,7 +112,7 @@ const updateGoalText = async (sequelize, instance) => {
   const data = JSON.parse(instance.data.val);
   const { goal, goals } = data;
 
-  if (!goal || !goals.length) {
+  if (!goal || !goals || !goals.length) {
     return;
   }
 
