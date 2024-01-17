@@ -4,6 +4,7 @@ import React, {
   useContext,
 } from 'react';
 import { Helmet } from 'react-helmet';
+import { LANGUAGES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import {
   Button,
@@ -16,7 +17,6 @@ import MultiSelect from '../../../components/MultiSelect';
 import {
   participantsFields,
   pageComplete,
-  languages,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import FormItem from '../../../components/FormItem';
@@ -150,7 +150,7 @@ const Participants = ({ formData }) => {
             control={control}
             placeholderText={placeholderText}
             options={
-              languages
+              LANGUAGES
                 .map((language) => ({ value: language, label: language }))
             }
             required="Select at least one language"
