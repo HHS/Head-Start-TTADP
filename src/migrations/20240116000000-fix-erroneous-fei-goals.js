@@ -77,6 +77,39 @@ module.exports = {
           donor_gid
       ) SELECT * FROM updater
       ;
+      
+      -- Merge goal collaborators
+      DROP TABLE IF EXISTS relinked_goal_collaborators;
+      CREATE TEMP TABLE relinked_goal_collaborators
+      AS
+      WITH updater AS (
+        WITH unmatched AS (
+          SELECT
+            donor_gid,
+            "userId" uid
+          FROM goal_merges gm
+          JOIN "GoalCollaborators" gc
+            ON gm.donor_gid = gc."goalId"
+          EXCEPT
+          SELECT
+            donor_gid,
+            "userId"
+          FROM goal_merges gm
+          JOIN "GoalCollaborators" gc
+            ON gm.target_gid = gc."goalId"
+        )
+        UPDATE "GoalCollaborators" AS gc
+        SET "goalId" = target_gid
+        FROM goal_merges gm
+        JOIN unmatched u
+          ON u.donor_gid = gm.donor_gid
+        WHERE gc."userId" = u.uid
+          AND gc."goalId" = u.donor_gid
+        RETURNING
+          id gcid,
+          gm.donor_gid original_gid
+      ) SELECT * FROM updater
+      ;
 
       DROP TABLE IF EXISTS objective_merges;
       CREATE TEMP TABLE objective_merges
@@ -359,6 +392,19 @@ module.exports = {
           donor_gid
       ) SELECT * FROM updater
       ;
+      -- Delete duplicate goal collaborators
+      DROP TABLE IF EXISTS deleted_goal_collaborators;
+      CREATE TEMP TABLE deleted_goal_collaborators
+      AS
+      WITH updater AS (
+        DELETE FROM "GoalCollaborators"
+        USING goal_merges
+        WHERE "goalId" = donor_gid
+        RETURNING
+          id gcid,
+          donor_gid
+      ) SELECT * FROM updater
+      ;
 
       SELECT
         1 op_order,
@@ -377,6 +423,8 @@ module.exports = {
       UNION SELECT 11,'relinked_args', COUNT(*) FROM relinked_args
       UNION SELECT 12,'deleted_args', COUNT(*) FROM deleted_args
       UNION SELECT 13,'deleted_goals', COUNT(*) FROM deleted_goals
+      UNION SELECT 14,'relinked_goal_collaborators', COUNT(*) FROM relinked_goal_collaborators
+      UNION SELECT 15,'deleted_goal_collaborators', COUNT(*) FROM deleted_goal_collaborators
       ORDER BY 1
       ;
 
