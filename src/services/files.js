@@ -178,7 +178,8 @@ const updateStatus = async (fileId, fileStatus) => {
  * Updates the status of a file in the database based on its key.
  * @param {string} key - The key of the file to update.
  * @param {string} fileStatus - The new status of the file.
- * @returns {Promise<Object|Error>} - A promise that resolves to the updated file object or an error object if an error occurs.
+ * @returns {Promise<Object|Error>} - A promise that resolves to the updated file object or
+ * an error object if an error occurs.
  */
 const updateStatusByKey = async (key, fileStatus) => {
   let file;
