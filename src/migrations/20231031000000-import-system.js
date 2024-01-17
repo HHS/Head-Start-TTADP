@@ -94,7 +94,12 @@ module.exports = {
           allowNull: false,
           defaultValue: IMPORT_STATUSES.IDENTIFIED,
         },
-        attempts: {
+        downloadAttempts: {
+          type: Sequelize.INT,
+          allowNull: false,
+          defaultValue: 0,
+        },
+        processAttempts: {
           type: Sequelize.INT,
           allowNull: false,
           defaultValue: 0,
