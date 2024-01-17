@@ -493,7 +493,7 @@ const ActivitySummary = ({
           <FormItem
             label="Language used"
             name="language"
-            fieldSetWrapper
+            required
           >
             <MultiSelect
               name="language"

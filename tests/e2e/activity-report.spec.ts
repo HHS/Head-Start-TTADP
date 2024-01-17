@@ -140,8 +140,7 @@ async function activitySummary(
   await page.keyboard.press('Enter');
   await blur(page);
 
-  // await page.getByText('Language used *- Select -').click();
-  await page.getByRole('group', { name: 'Language used required' }).click();
+  await page.getByText('Language used *- Select -').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);

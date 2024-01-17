@@ -68,7 +68,7 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.keyboard.press('Enter');
   await blur(page);
 
-  await page.getByRole('group', { name: 'Language used required' }).click();
+  await page.getByText(/Language used/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
