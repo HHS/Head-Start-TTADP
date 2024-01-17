@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import XMLStream from './XMLStream';
+import XMLStream from '../xml';
 
 describe('XMLStream', () => {
   let xmlStream;
