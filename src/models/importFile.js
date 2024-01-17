@@ -48,7 +48,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: IMPORT_STATUSES.IDENTIFIED,
     },
-    attempts: {
+    downloadAttempts: {
+      type: DataTypes.INT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    processAttempts: {
       type: DataTypes.INT,
       allowNull: false,
       defaultValue: 0,
