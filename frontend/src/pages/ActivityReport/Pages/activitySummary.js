@@ -21,13 +21,13 @@ import {
   TARGET_POPULATIONS as targetPopulations,
   REASONS as reasons,
   DECIMAL_BASE,
+  LANGUAGES,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
   otherEntityParticipants,
   recipientParticipants,
-  languages,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
@@ -498,7 +498,7 @@ const ActivitySummary = ({
             <MultiSelect
               name="language"
               control={control}
-              options={languages.map((language) => ({ value: language, label: language }))}
+              options={LANGUAGES.map((language) => ({ value: language, label: language }))}
               required="Select at least one"
               placeholderText={placeholderText}
             />

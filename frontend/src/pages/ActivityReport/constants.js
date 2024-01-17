@@ -58,11 +58,6 @@ export const otherEntityParticipants = [
   'Other',
 ];
 
-export const languages = [
-  'English',
-  'Spanish',
-];
-
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const topics = [

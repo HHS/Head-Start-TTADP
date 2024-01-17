@@ -33,11 +33,6 @@ const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
-const LANGUAGE = {
-  ENGLISH: 'English',
-  SPANISH: 'Spanish',
-};
-
 const GOAL_COLLABORATORS = {
   CREATOR: 'Creator', // The user who creates a goal
   EDITOR: 'Editor', // The user(s) who edits the text of a goal
@@ -270,5 +265,4 @@ module.exports = {
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
-  LANGUAGE,
 };
