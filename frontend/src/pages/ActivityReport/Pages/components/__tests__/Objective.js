@@ -96,8 +96,12 @@ const RenderObjective = ({
                 files: [],
                 status: 'Not Started',
                 title: '',
+                courses: [],
+                supportType: '',
               },
               {
+                courses: [],
+                supportType: '',
                 label: 'Existing objective',
                 value: 123,
                 topics: [],
@@ -131,11 +135,15 @@ const RenderObjective = ({
 
 describe('Objective', () => {
   afterEach(() => fetchMock.restore());
-  beforeEach(() => fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  beforeEach(async () => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <title>Whats New</title>
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`));
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+
+    fetchMock.get('/api/courses', [{ id: 1, name: 'Course 1' }, { id: 2, name: 'Course 2' }]);
+  });
 
   it('renders an objective', async () => {
     render(<RenderObjective />);
@@ -220,6 +228,15 @@ describe('Objective', () => {
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
     expect(await screen.findByText(/reason suspended/i)).toBeVisible();
     expect(await screen.findByText(/recipient request - this is the context/i)).toBeVisible();
+  });
+
+  it('you can change status to in progress', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'In Progress');
+
+    expect(await screen.findByLabelText(/objective status/i)).toHaveValue('In Progress');
   });
 
   it('when changing status to suspended, you can cancel', async () => {
