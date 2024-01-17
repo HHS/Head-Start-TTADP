@@ -105,7 +105,7 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
  */
 const updateGoalText = async (sequelize, instance, options) => {
   const { transaction } = options;
-  const changed = instance.changed();
+  const changed = instance?.changed();
 
   if (!changed || !changed.includes('name')) {
     return;
