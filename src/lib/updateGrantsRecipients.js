@@ -20,7 +20,7 @@ const fs = require('mz/fs');
 
 // TTAHUB-2126 TTAHUB-2334
 // Update the specific attribute (e.g., state code) for each grant,
-// identified by its grant number, in the map below. 
+// identified by its grant number, in the map below.
 // This patch sets the new value for the grant to ensure data accuracy.
 const grantPatches = new Map([
   [12128, { stateCode: 'OH' }],
