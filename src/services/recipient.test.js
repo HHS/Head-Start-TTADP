@@ -977,6 +977,7 @@ describe('Recipient DB service', () => {
       const aro = await ActivityReportObjective.create({
         activityReportId: report.id,
         objectiveId: objective1.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjectiveTopic.create({
@@ -1059,6 +1060,8 @@ describe('Recipient DB service', () => {
       const objective = goal.objectives[0];
       expect(objective.topics.length).toBe(4);
       expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
+      expect(objective.supportTypes.length).toBe(1);
+      expect(objective.supportTypes[0]).toBe('Planning');
       expect(objective.activityReports.length).toBe(1);
     });
   });
