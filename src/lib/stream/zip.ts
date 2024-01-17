@@ -1,5 +1,6 @@
 import { Readable } from 'stream';
 import * as unzipper from 'unzipper';
+import * as path from 'path';
 
 class ZipStream {
   private readonly zipStream: Readable;
@@ -52,8 +53,12 @@ class ZipStream {
       return null;
     }
 
+    const fileName = path.basename(entry.path);
+    const fileDir = path.dirname(entry.path);
+
     return {
-      name: entry.path,
+      name: fileName,
+      path: fileDir,
       type: entry.type,
       size: entry.vars.uncompressedSize,
       date: entry.vars.lastModifiedTime,
@@ -92,6 +97,7 @@ class ZipStream {
  */
 interface FileInfo {
   name: string;
+  path: string;
   type: string;
   size: number;
   date: Date;
