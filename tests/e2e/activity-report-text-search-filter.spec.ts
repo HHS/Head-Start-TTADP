@@ -78,7 +78,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText('Training').click();
 
     // Language.
-    await page.getByRole('group', { name: 'Language used required' }).click();
+    await page.locator('#language div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);

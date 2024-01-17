@@ -144,7 +144,6 @@ const Participants = ({ formData }) => {
         <FormItem
           label="Language used"
           name="language"
-          fieldSetWrapper
         >
           <MultiSelect
             name="language"
