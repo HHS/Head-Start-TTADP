@@ -286,7 +286,7 @@ module.exports = {
       //-----------------------------------------------------------------------------------------
 
       const ftpSettings = {
-        host: 'sftp.ams20.com', // TODO: need host
+        host: 'sftp.ams20.gov', // TODO: need host
         port: 22, // TODO: need port
         username: 'tta_ro', // TODO: need username
         password: '', // THE name of the ENV that holds the password
@@ -397,6 +397,10 @@ module.exports = {
         'MonitoringReviewGrantees',
         'MonitoringFindingHistories',
       ]);
+      await await queryInterface.sequelize.query(/* sql */`
+      DELETE FROM "Imports"
+      WHERE "name" = 'ITAMS Monitoring Data';
+      `, { transaction });
     });
   },
 };
