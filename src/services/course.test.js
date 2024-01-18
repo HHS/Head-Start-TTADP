@@ -2,10 +2,13 @@ import { Op } from 'sequelize';
 import db, { Course } from '../models';
 import {
   csvImport,
-  getAllCourses,
 } from './course';
 
 describe('Course', () => {
+  beforeAll(async () => {
+
+  });
+
   afterAll(async () => {
     await db.sequelize.close();
   });
@@ -54,11 +57,6 @@ describe('Course', () => {
 
       expect(course).toBeTruthy();
       expect(course.name).toBe(newCourseName);
-
-      // test our find all
-      const courses = await getAllCourses();
-      expect(courses.length).toBe(1);
-      expect(courses[0].name).toBe(newCourseName);
     });
 
     it('existing course with exact match', async () => {
@@ -71,7 +69,7 @@ describe('Course', () => {
       const course1 = await Course.create({
         name: existingCourse1,
       });
-
+      const originalUpdatedAt = course1.updatedAt;
       courseNamesToCleanup.push(course1.name);
 
       const course2 = await Course.create({

@@ -1,4 +1,5 @@
-import Sequelize, { Op, WhereOptions } from 'sequelize';
+/* eslint-disable import/prefer-default-export */
+import Sequelize, { Op } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
 import db, { sequelize } from '../models';
 
@@ -6,24 +7,7 @@ const {
   Course,
 } = db;
 
-interface ICourse {
-  id: number;
-  name: string;
-}
-
-interface DecodedCSV {
-  'course name': string;
-}
-
-export async function getAllCourses(where: WhereOptions = {}) {
-  return Course.findAll({
-    where,
-    order: [['name', 'ASC']],
-    attributes: ['name', 'id'],
-  });
-}
-
-export async function csvImport(buffer: Buffer | string) {
+export async function csvImport(buffer) {
   const created = [];
   const replaced = [];
   const updated = [];
@@ -37,7 +21,7 @@ export async function csvImport(buffer: Buffer | string) {
   let rowCount = 1;
   let results;
   try {
-    results = await Promise.all(parsed.map(async (course: DecodedCSV) => {
+    results = await Promise.all(parsed.map(async (course) => {
       // Trim unexpected chars.
       const trimmedKeys = Object.fromEntries(
         Object.entries(course).map(([key, value]) => [key.trim(), value]),
@@ -74,7 +58,7 @@ export async function csvImport(buffer: Buffer | string) {
       // If exists.
       if (existingCourses.length) {
         // Check if any of the courses are exact match.
-        const exactMatch = existingCourses.find((c: ICourse) => c.name === rawCourseName);
+        const exactMatch = existingCourses.find((c) => c.name === rawCourseName);
 
         if (exactMatch) {
           // Update the value for 'updatedAt' on the existing.
@@ -84,7 +68,7 @@ export async function csvImport(buffer: Buffer | string) {
             WHERE id = ${exactMatch.id}`);
           updated.push(exactMatch);
           // Add the course name to the importedCourseNames array.
-          importedCourseIds.push(...existingCourses.map((c: ICourse) => c.id));
+          importedCourseIds.push(...existingCourses.map((c) => c.id));
         } else {
           // Create a new course.
           const replacementCourse = await Course.create({
@@ -98,7 +82,7 @@ export async function csvImport(buffer: Buffer | string) {
           }, {
             where: {
               id: {
-                [Op.in]: existingCourses.map((c: ICourse) => c.id),
+                [Op.in]: existingCourses.map((c) => c.id),
               },
               deletedAt: null,
             },
@@ -108,7 +92,7 @@ export async function csvImport(buffer: Buffer | string) {
 
           // Add both the existing and new course names imported.
           importedCourseIds.push(replacementCourse.id);
-          importedCourseIds.push(...existingCourses.map((c: ICourse) => c.id));
+          importedCourseIds.push(...existingCourses.map((c) => c.id));
         }
       } else {
         // Create a new course.
