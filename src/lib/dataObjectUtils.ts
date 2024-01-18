@@ -105,6 +105,8 @@ const remapPrune = (
   }
   return prune;
 };
+type TargetFunction = (input: string | object) => Record<string, any>;
+type TargetFunctions = { [key:string]: TargetFunction };
 
 /**
  * Remaps the data based on the provided remapping definition.
@@ -121,6 +123,7 @@ const remap = (
     keepUnmappedValues?: boolean,
     deleteMappedValues?: boolean,
     deleteEmptyParents?: boolean,
+    targetFunctions?: TargetFunctions,
   } = {},
 ): {
   mapped: object | object[] | null,
@@ -133,6 +136,7 @@ const remap = (
     deleteMappedValues = true,
     deleteEmptyParents = true,
     keepUnmappedValues = true,
+    targetFunctions = {},
   } = options;
 
   let remappedData;
@@ -184,8 +188,6 @@ const remap = (
       sourcePath,
     );
 
-    console.log(sourceValue, targetActions);
-
     // If the source value exists
     if (sourceValue !== undefined || sourceValue !== null) {
       targetActions.forEach((targetAction) => {
@@ -196,18 +198,21 @@ const remap = (
         } else */ if (Array.isArray(sourceValue) && targetAction.includes('*')) {
           sourceValue.forEach((value, index) => {
             const updatedTargetAction = targetAction.replace('*', index.toString());
-            console.log(remappedData);
             remappedData = dotWild.set(remappedData, updatedTargetAction, value);
-            console.log(remappedData);
           });
         } else {
-          console.log(remappedData);
-          remappedData = dotWild.set(remappedData, targetAction, sourceValue);
-          console.log(remappedData);
+          const targetFunction = targetFunctions[targetAction];
+
+          if (targetFunction) {
+            const modifiedRecords = targetFunction(sourceValue);
+            Object.entries(modifiedRecords).forEach(([recordKey, recordValue]) => {
+              remappedData = dotWild.set(remappedData, recordKey, recordValue);
+            });
+          } else {
+            remappedData = dotWild.set(remappedData, targetAction, sourceValue);
+          }
         }
       });
-
-      console.log(remappedData);
 
       // if keepUnmappedValues && deleteMappedValues, remove sourcePath and empty parent structures
       if (keepUnmappedValues && deleteMappedValues) {
@@ -218,7 +223,6 @@ const remap = (
   });
   remappedData = removeUndefined(remappedData);
   unmappedData = removeUndefined(unmappedData);
-  console.log(remappedData);
 
   return { mapped: remappedData, unmapped: unmappedData };
 };
