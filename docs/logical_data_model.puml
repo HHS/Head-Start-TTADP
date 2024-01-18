@@ -8,19 +8,19 @@
   ' Classes
   class ActivityRecipients{
  * id : integer : <generated>
- grantId : integer : REFERENCES "Grants".id
- otherEntityId : integer : REFERENCES "OtherEntities".id
- * activityReportId : integer : REFERENCES "ActivityReports".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ grantId : integer
+ otherEntityId : integer
 }
 
 class ActivityReportApprovers{
  * id : integer : <generated>
- * activityReportId : integer : REFERENCES "ActivityReports".id
- * userId : integer : REFERENCES "Users".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ * userId : integer
  deletedAt : timestamp with time zone
  note : text
  status : enum
@@ -28,34 +28,34 @@ class ActivityReportApprovers{
 
 class ActivityReportCollaborators{
  * id : integer : <generated>
- * activityReportId : integer : REFERENCES "ActivityReports".id
- * userId : integer : REFERENCES "Users".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ * userId : integer
 }
 
 class ActivityReportFiles{
  * id : integer : <generated>
- * activityReportId : integer : REFERENCES "ActivityReports".id
- * fileId : integer : REFERENCES "Files".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone
+ * fileId : integer
  * updatedAt : timestamp with time zone
 }
 
 class ActivityReportGoalFieldResponses{
  * id : integer : <generated>
- * activityReportGoalId : integer : REFERENCES "ActivityReportGoals".id
- * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
+ * activityReportGoalId : integer
  * createdAt : timestamp with time zone
+ * goalTemplateFieldPromptId : integer
  * updatedAt : timestamp with time zone
  response : text[]
 }
 
 class ActivityReportGoalResources{
  * id : integer : <generated>
- * activityReportGoalId : integer : REFERENCES "ActivityReportGoals".id
- * resourceId : integer : REFERENCES "Resources".id
+ * activityReportGoalId : integer
  * createdAt : timestamp with time zone
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -70,10 +70,9 @@ enum_ActivityReportGoalResources_sourceFields <|-- ActivityReportGoalResources
 
 class ActivityReportGoals{
  * id : integer : <generated>
- originalGoalId : integer : REFERENCES "Goals".id
- * activityReportId : integer : REFERENCES "ActivityReports".id
- * goalId : integer : REFERENCES "Goals".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone
+ * goalId : integer
  * updatedAt : timestamp with time zone
  closeSuspendContext : text
  closeSuspendReason : enum
@@ -81,6 +80,7 @@ class ActivityReportGoals{
  isActivelyEdited : boolean : false
  isRttapa : enum
  name : text
+ originalGoalId : integer
  source : enum
  status : varchar(255)
  timeframe : text
@@ -88,25 +88,25 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCourses{
  * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * courseId : integer : REFERENCES "Courses".id
+ * activityReportObjectiveId : integer
+ * courseId : integer
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
 
 class ActivityReportObjectiveFiles{
  * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * fileId : integer : REFERENCES "Files".id
+ * activityReportObjectiveId : integer
  * createdAt : timestamp with time zone
+ * fileId : integer
  * updatedAt : timestamp with time zone
 }
 
 class ActivityReportObjectiveResources{
  * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * resourceId : integer : REFERENCES "Resources".id
+ * activityReportObjectiveId : integer
  * createdAt : timestamp with time zone
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -121,22 +121,22 @@ enum_ActivityReportObjectiveResources_sourceFields <|-- ActivityReportObjectiveR
 
 class ActivityReportObjectiveTopics{
  * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * topicId : integer : REFERENCES "Topics".id
+ * activityReportObjectiveId : integer
  * createdAt : timestamp with time zone
+ * topicId : integer
  * updatedAt : timestamp with time zone
 }
 
 class ActivityReportObjectives{
  * id : integer : <generated>
- originalObjectiveId : integer : REFERENCES "Objectives".id
- * activityReportId : integer : REFERENCES "ActivityReports".id
- * objectiveId : integer : REFERENCES "Objectives".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone : now()
+ * objectiveId : integer
  * updatedAt : timestamp with time zone : now()
  arOrder : integer : 1
  closeSuspendContext : text
  closeSuspendReason : enum
+ originalObjectiveId : integer
  status : varchar(255)
  title : text
  ttaProvided : text
@@ -144,9 +144,9 @@ class ActivityReportObjectives{
 
 class ActivityReportResources{
  * id : integer : <generated>
- * activityReportId : integer : REFERENCES "ActivityReports".id
- * resourceId : integer : REFERENCES "Resources".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -163,10 +163,8 @@ enum_ActivityReportResources_sourceFields <|-- ActivityReportResources
 
 class ActivityReports{
  * id : integer : <generated>
- lastUpdatedById : integer : REFERENCES "Users".id
- userId : integer : REFERENCES "Users".id
- * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
+ * regionId : integer
  * updatedAt : timestamp with time zone : now()
  * version : integer : 2
  activityRecipientType : varchar(255)
@@ -180,6 +178,7 @@ class ActivityReports{
  ECLKCResourcesUsed : text[]
  endDate : date
  imported : jsonb
+ lastUpdatedById : integer
  legacyId : varchar(255)
  nonECLKCResourcesUsed : text[]
  numberOfParticipants : integer
@@ -194,52 +193,53 @@ class ActivityReports{
  targetPopulations : varchar(255)[]
  topics : varchar(255)[]
  ttaType : varchar(255)[]
+ userId : integer
  virtualDeliveryType : varchar(255)
 }
 
 class CollaboratorRoles{
  * id : integer : <generated>
- * activityReportCollaboratorId : integer : REFERENCES "ActivityReportCollaborators".id
- * roleId : integer : REFERENCES "Roles".id
+ * activityReportCollaboratorId : integer
  * createdAt : timestamp with time zone
+ * roleId : integer
  * updatedAt : timestamp with time zone
 }
 
 class CollaboratorTypes{
  * id : integer : <generated>
- mapsTo : integer : REFERENCES "CollaboratorTypes".id
- * validForId : integer : REFERENCES "ValidFor".id
  * createdAt : timestamp with time zone : now()
  * name : varchar(255)
  * propagateOnMerge : boolean : true
  * updatedAt : timestamp with time zone : now()
+ * validForId : integer
  deletedAt : timestamp with time zone
+ mapsTo : integer
 }
 
 class CommunicationLogFiles{
  * id : integer : <generated>
- * communicationLogId : integer : REFERENCES "CommunicationLogs".id
- * fileId : integer : REFERENCES "Files".id
+ * communicationLogId : integer
  * createdAt : timestamp with time zone
+ * fileId : integer
  * updatedAt : timestamp with time zone
 }
 
 class CommunicationLogs{
  * id : integer : <generated>
- * recipientId : integer : REFERENCES "Recipients".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * data : jsonb
+ * recipientId : integer
  * updatedAt : timestamp with time zone
+ * userId : integer
 }
 
 class Courses{
  * id : integer : <generated>
- mapsTo : integer : REFERENCES "Courses".id
  * createdAt : timestamp with time zone : now()
  * name : text
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
+ mapsTo : integer
 }
 
 class EventReportPilots{
@@ -266,20 +266,20 @@ class Files{
 
 class GoalCollaborators{
  * id : integer : <generated>
- * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
- * goalId : integer : REFERENCES "Goals".id
- * userId : integer : REFERENCES "Users".id
+ * collaboratorTypeId : integer
  * createdAt : timestamp with time zone : now()
+ * goalId : integer
  * updatedAt : timestamp with time zone : now()
+ * userId : integer
  deletedAt : timestamp with time zone
  linkBack : jsonb
 }
 
 class GoalFieldResponses{
  * id : integer : <generated>
- * goalId : integer : REFERENCES "Goals".id
- * goalTemplateFieldPromptId : integer : REFERENCES "GoalTemplateFieldPrompts".id
  * createdAt : timestamp with time zone
+ * goalId : integer
+ * goalTemplateFieldPromptId : integer
  * onApprovedAR : boolean
  * onAR : boolean
  * updatedAt : timestamp with time zone
@@ -288,11 +288,11 @@ class GoalFieldResponses{
 
 class GoalResources{
  * id : integer : <generated>
- * goalId : integer : REFERENCES "Goals".id
- * resourceId : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
+ * goalId : integer
  * onApprovedAR : boolean : false
  * onAR : boolean : false
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -307,25 +307,25 @@ enum_GoalResources_sourceFields <|-- GoalResources
 
 class GoalSimilarityGroupGoals{
  * id : integer : <generated>
- * goalId : integer : REFERENCES "Goals".id
- * goalSimilarityGroupId : integer : REFERENCES "GoalSimilarityGroups".id
  * createdAt : timestamp with time zone
+ * goalId : integer
+ * goalSimilarityGroupId : integer
  * updatedAt : timestamp with time zone
 }
 
 class GoalSimilarityGroups{
  * id : integer : <generated>
- finalGoalId : integer : REFERENCES "Goals".id
- * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone
+ * recipientId : integer
  * updatedAt : timestamp with time zone
  * userHasInvalidated : boolean : false
+ finalGoalId : integer
 }
 
 class GoalTemplateFieldPrompts{
  * id : integer : <generated>
- * goalTemplateId : integer : REFERENCES "GoalTemplates".id
  * createdAt : timestamp with time zone
+ * goalTemplateId : integer
  * ordinal : integer
  * prompt : text
  * title : text
@@ -339,17 +339,17 @@ class GoalTemplateFieldPrompts{
 
 class GoalTemplateObjectiveTemplates{
  * id : integer : <generated>
- * goalTemplateId : integer : REFERENCES "GoalTemplates".id
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
  * createdAt : timestamp with time zone
+ * goalTemplateId : integer
+ * objectiveTemplateId : integer
  * updatedAt : timestamp with time zone
 }
 
 class GoalTemplateResources{
  * id : integer : <generated>
- * goalTemplateId : integer : REFERENCES "GoalTemplates".id
- * resourceId : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
+ * goalTemplateId : integer
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -363,7 +363,6 @@ enum_GoalTemplateResources_sourceFields <|-- GoalTemplateResources
 
 class GoalTemplates{
  * id : integer : <generated>
- regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone
  * creationMethod : enum
  * hash : text
@@ -371,14 +370,13 @@ class GoalTemplates{
  * templateNameModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
+ regionId : integer
 }
 
 class Goals{
  * id : integer : <generated>
- goalTemplateId : integer : REFERENCES "GoalTemplates".id
- mapsToParentGoalId : integer : REFERENCES "Goals".id
- * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
+ * grantId : integer
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
@@ -392,6 +390,7 @@ class Goals{
  firstCompletedAt : timestamp with time zone
  firstInProgressAt : timestamp with time zone
  firstNotStartedAt : timestamp with time zone
+ goalTemplateId : integer
  isFromSmartsheetTtaPlan : boolean
  isRttapa : enum
  lastCeasedSuspendedAt : timestamp with time zone
@@ -399,6 +398,7 @@ class Goals{
  lastCompletedAt : timestamp with time zone
  lastInProgressAt : timestamp with time zone
  lastNotStartedAt : timestamp with time zone
+ mapsToParentGoalId : integer
  name : text
  previousStatus : text
  rtrOrder : integer : 1
@@ -409,11 +409,9 @@ class Goals{
 
 class Grants{
  * id : integer
- oldGrantId : integer : REFERENCES "Grants".id
- regionId : integer : REFERENCES "Regions".id
- * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone : now()
  * number : varchar(255)
+ * recipientId : integer
  * updatedAt : timestamp with time zone : now()
  annualFundingMonth : varchar(255)
  cdi : boolean : false
@@ -424,8 +422,10 @@ class Grants{
  grantSpecialistName : varchar(255)
  inactivationDate : timestamp with time zone
  inactivationReason : enum
+ oldGrantId : integer
  programSpecialistEmail : varchar(255)
  programSpecialistName : varchar(255)
+ regionId : integer
  startDate : timestamp with time zone
  stateCode : varchar(255)
  status : varchar(255)
@@ -433,18 +433,18 @@ class Grants{
 
 class GroupGrants{
  * id : integer : <generated>
- * grantId : integer : REFERENCES "Grants".id
- * groupId : integer : REFERENCES "Groups".id
  * createdAt : timestamp with time zone
+ * grantId : integer
+ * groupId : integer
  * updatedAt : timestamp with time zone
 }
 
 class Groups{
  * id : integer : <generated>
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * name : text
  * updatedAt : timestamp with time zone
+ * userId : integer
  isPublic : boolean
 }
 
@@ -463,36 +463,36 @@ class MailerLogs{
 
 class MaintenanceLogs{
  * id : bigint : <generated>
- triggeredById : bigint : REFERENCES "MaintenanceLogs".id
  * category : enum
  * createdAt : timestamp with time zone
  * data : json
  * type : enum
  * updatedAt : timestamp with time zone
  isSuccessful : boolean
+ triggeredById : bigint
 }
 
 class NationalCenterUsers{
  * id : integer : <generated>
- * nationalCenterId : integer : REFERENCES "NationalCenters".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
+ * nationalCenterId : integer
  * updatedAt : timestamp with time zone
+ * userId : integer
 }
 
 class NationalCenters{
  * id : integer : <generated>
- mapsTo : integer : REFERENCES "NationalCenters".id
  * createdAt : timestamp with time zone
  * name : text
  * updatedAt : timestamp with time zone
+ mapsTo : integer
 }
 
 class NextStepResources{
  * id : integer : <generated>
- * nextStepId : integer : REFERENCES "NextSteps".id
- * resourceId : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
+ * nextStepId : integer
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -506,7 +506,7 @@ enum_NextStepResources_sourceFields <|-- NextStepResources
 
 class NextSteps{
  * id : integer : <generated>
- * activityReportId : integer : REFERENCES "ActivityReports".id
+ * activityReportId : integer
  * createdAt : timestamp with time zone
  * note : text
  * noteType : enum
@@ -516,28 +516,28 @@ class NextSteps{
 
 class ObjectiveCollaborators{
  * id : integer : <generated>
- * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
- * objectiveId : integer : REFERENCES "Objectives".id
- * userId : integer : REFERENCES "Users".id
+ * collaboratorTypeId : integer
  * createdAt : timestamp with time zone : now()
+ * objectiveId : integer
  * updatedAt : timestamp with time zone : now()
+ * userId : integer
  deletedAt : timestamp with time zone
  linkBack : jsonb
 }
 
 class ObjectiveCourses{
  * id : integer : <generated>
- * courseId : integer : REFERENCES "Courses".id
- * objectiveId : integer : REFERENCES "Objectives".id
+ * courseId : integer
  * createdAt : timestamp with time zone : now()
+ * objectiveId : integer
  * updatedAt : timestamp with time zone : now()
 }
 
 class ObjectiveFiles{
  * id : integer : <generated>
- * fileId : integer : REFERENCES "Files".id
- * objectiveId : integer : REFERENCES "Objectives".id
  * createdAt : timestamp with time zone
+ * fileId : integer
+ * objectiveId : integer
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
@@ -545,11 +545,11 @@ class ObjectiveFiles{
 
 class ObjectiveResources{
  * id : integer : <generated>
- * objectiveId : integer : REFERENCES "Objectives".id
- * resourceId : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
+ * objectiveId : integer
  * onApprovedAR : boolean : false
  * onAR : boolean : false
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -563,17 +563,17 @@ enum_ObjectiveResources_sourceFields <|-- ObjectiveResources
 
 class ObjectiveTemplateFiles{
  * id : integer : <generated>
- * fileId : integer : REFERENCES "Files".id
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
  * createdAt : timestamp with time zone
+ * fileId : integer
+ * objectiveTemplateId : integer
  * updatedAt : timestamp with time zone
 }
 
 class ObjectiveTemplateResources{
  * id : integer : <generated>
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * resourceId : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
+ * objectiveTemplateId : integer
+ * resourceId : integer
  * updatedAt : timestamp with time zone
  sourceFields : enum[]
 }
@@ -587,15 +587,14 @@ enum_ObjectiveTemplateResources_sourceFields <|-- ObjectiveTemplateResources
 
 class ObjectiveTemplateTopics{
  * id : integer : <generated>
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * topicId : integer : REFERENCES "Topics".id
  * createdAt : timestamp with time zone
+ * objectiveTemplateId : integer
+ * topicId : integer
  * updatedAt : timestamp with time zone
 }
 
 class ObjectiveTemplates{
  * id : integer : <generated>
- regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone
  * creationMethod : enum
  * hash : text
@@ -603,24 +602,21 @@ class ObjectiveTemplates{
  * templateTitleModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
+ regionId : integer
 }
 
 class ObjectiveTopics{
  * id : integer : <generated>
- * objectiveId : integer : REFERENCES "Objectives".id
- * topicId : integer : REFERENCES "Topics".id
  * createdAt : timestamp with time zone
+ * objectiveId : integer
  * onApprovedAR : boolean : false
  * onAR : boolean : false
+ * topicId : integer
  * updatedAt : timestamp with time zone
 }
 
 class Objectives{
  * id : integer : <generated>
- goalId : integer : REFERENCES "Goals".id
- mapsToParentObjectiveId : integer : REFERENCES "Objectives".id
- objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- otherEntityId : integer : REFERENCES "OtherEntities".id
  * createdAt : timestamp with time zone : now()
  * onApprovedAR : boolean : false
  * onAR : boolean : false
@@ -633,10 +629,14 @@ class Objectives{
  firstInProgressAt : timestamp with time zone
  firstNotStartedAt : timestamp with time zone
  firstSuspendedAt : timestamp with time zone
+ goalId : integer
  lastCompleteAt : timestamp with time zone
  lastInProgressAt : timestamp with time zone
  lastNotStartedAt : timestamp with time zone
  lastSuspendedAt : timestamp with time zone
+ mapsToParentObjectiveId : integer
+ objectiveTemplateId : integer
+ otherEntityId : integer
  rtrOrder : integer : 1
  status : varchar(255)
  title : text
@@ -651,16 +651,15 @@ class OtherEntities{
 
 class Permissions{
  * id : integer : <generated>
- * regionId : integer : REFERENCES "Regions".id
- * scopeId : integer : REFERENCES "Scopes".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone : now()
+ * regionId : integer
+ * scopeId : integer
  * updatedAt : timestamp with time zone : now()
+ * userId : integer
 }
 
 class ProgramPersonnel{
  * id : integer : <generated>
- mapsTo : integer : REFERENCES "ProgramPersonnel".id
  * active : boolean
  * createdAt : timestamp with time zone : now()
  * grantId : integer
@@ -671,6 +670,7 @@ class ProgramPersonnel{
  email : varchar(255)
  firstName : varchar(255)
  lastName : varchar(255)
+ mapsTo : integer
  prefix : varchar(255)
  suffix : varchar(255)
  title : varchar(255)
@@ -678,8 +678,8 @@ class ProgramPersonnel{
 
 class Programs{
  * id : integer
- * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone : now()
+ * grantId : integer
  * updatedAt : timestamp with time zone : now()
  endDate : varchar(255)
  name : varchar(255)
@@ -731,9 +731,9 @@ class Resources{
 
 class RoleTopics{
  * id : integer : <generated>
- * roleId : integer : REFERENCES "Roles".id
- * topicId : integer : REFERENCES "Topics".id
  * createdAt : timestamp with time zone
+ * roleId : integer
+ * topicId : integer
  * updatedAt : timestamp with time zone
 }
 
@@ -750,12 +750,12 @@ class Roles{
 
 class RttapaPilots{
  * id : integer : <generated>
- * recipientId : integer : REFERENCES "Recipients".id
- * regionId : integer : REFERENCES "Regions".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
+ * recipientId : integer
+ * regionId : integer
  * reviewDate : timestamp with time zone
  * updatedAt : timestamp with time zone
+ * userId : integer
  goals : jsonb
  notes : text
 }
@@ -770,25 +770,25 @@ class Scopes{
 
 class SessionReportPilotFiles{
  * id : integer : <generated>
- * fileId : integer : REFERENCES "Files".id
- * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
  * createdAt : timestamp with time zone
+ * fileId : integer
+ * sessionReportPilotId : integer
  * updatedAt : timestamp with time zone
 }
 
 class SessionReportPilotSupportingAttachments{
  * id : integer : <generated>
- * fileId : integer : REFERENCES "Files".id
- * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
  * createdAt : timestamp with time zone
+ * fileId : integer
+ * sessionReportPilotId : integer
  * updatedAt : timestamp with time zone
 }
 
 class SessionReportPilots{
  * id : integer : <generated>
- * eventId : integer : REFERENCES "EventReportPilots".id
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
+ * eventId : integer
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
 }
 
@@ -804,7 +804,6 @@ class SimScoreGoalCaches{
 
 class SiteAlerts{
  * id : integer : <generated>
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * endDate : timestamp with time zone
  * message : text
@@ -812,6 +811,7 @@ class SiteAlerts{
  * startDate : timestamp with time zone
  * title : text
  * updatedAt : timestamp with time zone
+ * userId : integer
  status : enum
  variant : enum
 }
@@ -827,18 +827,18 @@ class Topics{
 
 class UserRoles{
  * id : integer : <generated>
- * roleId : integer : REFERENCES "Roles".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
+ * roleId : integer
  * updatedAt : timestamp with time zone
+ * userId : integer
 }
 
 class UserSettingOverrides{
  * id : integer : <generated>
- * userId : integer : REFERENCES "Users".id
- * userSettingId : integer : REFERENCES "UserSettings".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ * userId : integer
+ * userSettingId : integer
  * value : jsonb
 }
 
@@ -853,23 +853,23 @@ class UserSettings{
 
 class UserValidationStatus{
  * id : integer : <generated>
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * token : varchar(255)
  * type : varchar(255)
  * updatedAt : timestamp with time zone
+ * userId : integer
  validatedAt : timestamp with time zone
 }
 
 class Users{
  * id : integer : <generated>
- homeRegionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
  * hsesUsername : varchar(255)
  * lastLogin : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  email : varchar(255)
  flags : enum[] : ARRAY[]::"enum_Users_flags"[]
+ homeRegionId : integer
  hsesAuthorities : varchar(255)[]
  hsesUserId : varchar(255)
  name : varchar(255)
@@ -891,12 +891,12 @@ enum_Users_flags <|-- Users
 
 class ValidFor{
  * id : integer : <generated>
- mapsTo : integer : REFERENCES "ValidFor".id
  * createdAt : timestamp with time zone : now()
  * isReport : boolean : false
  * name : text
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
+ mapsTo : integer
 }
 
 class ZADescriptor{
