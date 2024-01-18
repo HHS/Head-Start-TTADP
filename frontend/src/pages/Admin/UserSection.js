@@ -31,7 +31,7 @@ function UserSection({ user, onSave, features }) {
   }, [user]);
 
   const impersonateUserId = () => {
-    if (!haveStorage || !formUser || typeof formUser.id !== 'number') return;
+    if (!haveStorage) return;
     window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, formUser.id);
     window.location.href = '/';
   };
