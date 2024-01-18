@@ -23,6 +23,18 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
+        sourceCreatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceUpdatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceDeletedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -88,6 +100,18 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
+        sourceCreatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceUpdatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceDeletedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -147,6 +171,18 @@ module.exports = {
           allowNull: false,
           type: Sequelize.TEXT,
         },
+        sourceCreatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceUpdatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceDeletedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -195,6 +231,18 @@ module.exports = {
         hash: {
           type: Sequelize.TEXT,
           allowNull: true,
+        },
+        sourceCreatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceUpdatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceDeletedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
         },
         createdAt: {
           allowNull: false,
@@ -256,6 +304,18 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
+        sourceCreatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceUpdatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        sourceDeletedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -306,6 +366,7 @@ module.exports = {
       definitions.push({
         fileName: 'AMS_ReviewStatus.xml',
         tableName: 'MonitoringReviewStatuses',
+        keys: ['status_id'],
         remapDef: {
           StatusId: 'status_id',
           Name: 'name',
@@ -315,6 +376,7 @@ module.exports = {
         fileName: 'AMS_Review.xml',
         encoding: 'utf16le',
         tableName: 'MonitoringReviews',
+        keys: ['reviewId'],
         remapDef: {
           ReviewId: 'reviewId',
           ContentId: 'contentId',
@@ -331,6 +393,7 @@ module.exports = {
         fileName: 'AMS_ReviewGrantee.xml',
         encoding: 'utf16le',
         tableName: 'MonitoringReviewGrantees',
+        keys: ['reviewId', 'granteeId'],
         remapDef: {
           ReviewId: 'reviewId',
           GranteeId: 'granteeId',
@@ -344,6 +407,7 @@ module.exports = {
         fileName: 'AMS_FindingHistory.xml',
         encoding: 'utf16le',
         tableName: 'MonitoringFindingHistories',
+        keys: 'findingHistoryId',
         remapDef: {
           FindingHistoryId: 'findingHistoryId',
           ReviewId: 'reviewId',
@@ -354,6 +418,7 @@ module.exports = {
         fileName: 'AMS_CLASS_SUMMARYGrants.xml',
         encoding: 'utf16le',
         tableName: 'MonitoringClassSummaries',
+        keys: ['reviewId'],
         remapDef: {
           ReviewId: 'reviewId',
           GrantNumber: 'grantNumber',
