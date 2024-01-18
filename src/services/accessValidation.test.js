@@ -175,9 +175,8 @@ describe('accessValidation', () => {
       expect(valid).toBe(false);
     });
 
-    it('false on invalid', async () => {
-      const invalid = await validateUserAuthForAdmin(undefined);
-      expect(invalid).toBe(false);
+    it('Throws on error', async () => {
+      await expect(validateUserAuthForAdmin(undefined)).rejects.toThrow();
     });
   });
 
