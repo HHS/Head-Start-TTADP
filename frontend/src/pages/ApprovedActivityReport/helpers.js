@@ -49,20 +49,18 @@ export function renderData(heading, data) {
 }
 
 export function formatSimpleArray(arr) {
-  return arr ? arr.sort().join(', ') : [];
+  return arr.sort().join(', ');
 }
 
 export function mapAttachments(attachments) {
-  console.log('attach: ', attachments);
   if (Array.isArray(attachments) && attachments.length > 0) {
-    const url = attachments && attachments.url && attachments.url.url ? attachments.url.url : '';
     return (
       <ul>
         {
             attachments.map((attachment) => (
-              <li key={url}>
+              <li key={attachments.url.url}>
                 <a
-                  href={url}
+                  href={attachments.url.url}
                   target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
                   rel="noreferrer"
                 >
