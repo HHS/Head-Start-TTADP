@@ -1,5 +1,6 @@
+import { Op } from 'sequelize';
 import { validateChangedOrSetEnums } from '../helpers/enum';
-import { OBJECTIVE_COLLABORATORS } from '../../constants';
+import { OBJECTIVE_COLLABORATORS, OBJECTIVE_STATUS } from '../../constants';
 import {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
@@ -65,8 +66,33 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
   );
 };
 
+const propagateSupportTypeToObjective = async (sequelize, instance, options) => {
+  const { objectiveId, supportType } = instance;
+  const objective = await sequelize.models.Objective.findOne({
+    where: {
+      id: objectiveId,
+      status: {
+        [Op.notIn]: [
+          OBJECTIVE_STATUS.CLOSED,
+          OBJECTIVE_STATUS.SUSPENDED,
+        ],
+      },
+    },
+    transaction: options.transaction,
+  });
+
+  if (!objective) return;
+
+  await objective.update({ supportType }, { transaction: options.transaction });
+};
+
+const afterUpdate = async (sequelize, instance, options) => {
+  await propagateSupportTypeToObjective(sequelize, instance, options);
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await autoPopulateLinker(sequelize, instance, options);
+  await propagateSupportTypeToObjective(sequelize, instance, options);
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
@@ -89,4 +115,5 @@ export {
   beforeValidate,
   beforeDestroy,
   afterDestroy,
+  afterUpdate,
 };
