@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 import { remap, collectChangedValues } from '../dataObjectUtils';
 import { filterDataToModel } from '../modelUtils';
 import EncodingConverter from '../stream/encoding';
-import Hasher from '../stream/hasher';
+import Hasher, { getHash } from '../stream/hasher';
 import S3Client from '../stream/s3';
 import XMLStream from '../stream/xml';
 import ZipStream, { FileInfo as ZipFileInfo } from '../stream/zip';
@@ -21,20 +21,38 @@ const {
   ImportFile,
 } = db;
 
+type ProcessDefinition = {
+  fileName: string,
+  encoding: string,
+  tableName: string,
+  keys: string[],
+  remapDef: Record<string, string>;
+};
+
+const modelForTable = (tableName: string) => Object.values(db.sequelize.models)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  .find((m: typeof Model) => m.getTableName() === tableName);
+
 /**
  * Process records according to the given process definition and XML client.
  * @param processDefinition - The process definition object.
  * @param xmlClient - The XML client object.
+ * @param fileDate -  the data the file was modified
  * @param recordActions - The record actions object containing arrays of promises for
  * inserts, updates, and deletes.
- * @returns A promise that resolves to the updated recordActions object.
+ * @param schema - the name of each of the columns within the data
+ * @returns A promise that resolves to the updated recordActions object and schema.
  */
 const processRecords = async (
-  processDefinition,
-  xmlClient,
+  processDefinition: ProcessDefinition,
+  xmlClient: XMLStream,
+  fileDate: Date,
   recordActions: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     inserts: Promise<any>[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updates: Promise<any>[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deletes: Promise<any>[],
   } = {
     inserts: [],
@@ -44,11 +62,25 @@ const processRecords = async (
   schema: string[] = [],
 ): Promise<{
   schema: string[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inserts: Promise<any>[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updates: Promise<any>[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deletes: Promise<any>[],
 }> => {
-  const record = await xmlClient.getNextRecord();
+  const record = await xmlClient.getNextObject();
+  // @ts-ignore
+  const model: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    findOne: (...args: any[]) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    create: (...args: any[]) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    update: (...args: any[]) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    destroy: (...args: any[]) => any,
+  } = modelForTable(processDefinition.tableName);
   let newSchema = schema;
   if (record) {
     // TODO: column/key alpha sort to retain order
@@ -68,26 +100,40 @@ const processRecords = async (
     ])];
 
     // Format the record data using the remap method
-    const data = remap(record, processDefinition.remapDefs);
+    const data = remap(
+      record,
+      processDefinition.remapDef,
+      {
+        targetFunctions: {
+          'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
+        },
+      },
+    );
 
     // Filter the data to match the expected model
-    const filteredData = await filterDataToModel(data, processDefinition.model);
+    const filteredData = await filterDataToModel(data, model as typeof Model);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recordKey: Record<string, any> = {};
+    processDefinition.keys.forEach((key) => {
+      recordKey[key] = filteredData[key];
+    });
 
     // Check if there is an existing record with the same key value
-    const currentData = await processDefinition.model.findOne({
+    const currentData = await model.findOne({
       where: {
-        data: {
-          [Op.contains]: {
-            [processDefinition.key]: filteredData[processDefinition.key],
-          },
-        },
+        ...recordKey,
       },
     });
 
     if (currentData === null || currentData === undefined) {
       // If the record already exists, insert it
-      const insert = processDefinition.model.create(
-        filteredData,
+      const insert = model.create(
+        {
+          ...filteredData,
+          sourceCreatedAt: fileDate,
+          sourceUpdatedAt: fileDate,
+        },
         {
           independentHooks: true,
           returning: true,
@@ -98,10 +144,13 @@ const processRecords = async (
     } else {
       // If the record is new, update it
       const delta = collectChangedValues(filteredData, currentData);
-      const update = processDefinition.model.update(
-        delta,
+      const update = model.update(
         {
-          where: { id: delta.id },
+          ...delta,
+          sourceUpdatedAt: fileDate,
+        },
+        {
+          where: { id: currentData.id },
           independentHooks: true,
           returning: true,
           plain: true,
@@ -112,8 +161,8 @@ const processRecords = async (
   } else {
     // 1. Find all records not in recordActions.inserts and recordActions.update
     // 2. delete
-    // 3. recordActions.delete.push(uuid)
-    // 4. save data - recordActions
+    // 3. recordActions.delete.push(promises)
+    // 4. pass back recordActions
 
     // Get all the affected data from inserts and updates
     const affectedData = await Promise.all([
@@ -121,8 +170,19 @@ const processRecords = async (
       ...recordActions.updates,
     ]);
 
+    // mark the source date when the records no longer are present in the processed file
+    await model.update(
+      {
+        sourceDeletedAt: fileDate,
+      },
+      {
+        where: { id: { [Op.not]: affectedData.map(({ id }) => id) } },
+        independentHooks: true,
+      },
+    );
+
     // Delete all records that are not in the affectedData array
-    const destroys = processDefinition.model.destroy({
+    const destroys = model.destroy({
       where: { id: { [Op.not]: affectedData.map(({ id }) => id) } },
       independentHooks: true,
     });
@@ -139,6 +199,7 @@ const processRecords = async (
   return processRecords(
     processDefinition,
     xmlClient,
+    fileDate,
     recordActions,
     newSchema,
   );
@@ -158,38 +219,44 @@ const processRecords = async (
  * @throws An error if the key property is not found in the processDefinition.
  */
 const processFile = async (
-  processDefinition,
+  processDefinition: ProcessDefinition,
   fileInfo: ZipFileInfo,
   fileStream: Readable,
 ): Promise<{
   hash: string,
   schema: string[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inserts: Promise<any>[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updates: Promise<any>[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deletes: Promise<any>[],
 }> => {
   // Check if remapDefs property exists in processDefinition, if not throw an error
-  if (!processDefinition?.remapDefs) throw new Error(`Remapping definitions not found for '${fileInfo.name}'`);
+  if (!processDefinition?.remapDef) throw new Error(`Remapping definitions not found for '${fileInfo.name}'`);
   // Check if model property exists in processDefinition, if not throw an error
-  if (!processDefinition?.model) throw new Error(`Model not found for '${fileInfo.name}'`);
+  if (!processDefinition?.tableName) throw new Error(`Model not found for '${fileInfo.name}'`);
   // Check if key property exists in processDefinition, if not throw an error
-  if (!processDefinition?.key) throw new Error(`Key not found for '${fileInfo.name}'`);
+  if (!processDefinition?.keys) throw new Error(`Keys not found for '${fileInfo.name}'`);
+  // Check if key property exists in processDefinition, if not throw an error
+  if (!processDefinition?.encoding) throw new Error(`Encoding not found for '${fileInfo.name}'`);
 
   const hashStream = new Hasher('sha256');
   fileStream.pipe(hashStream);
 
+  const encodingConverter = new EncodingConverter('utf8', processDefinition.encoding);
   // Convert the fileStream to a usable stream with UTF-8 encoding
-  const usableStream = await EncodingConverter.forceStreamEncoding(hashStream, 'utf8');
+  const usableStream = await EncodingConverter.forceStreamEncoding(hashStream, 'utf8'); // TODO - FIX
 
   // Create a new instance of XMLStream using the usableStream
   const xmlClient = new XMLStream(usableStream);
 
-  const results = processRecords(processDefinition, xmlClient);
+  const processedRecords = await processRecords(processDefinition, xmlClient, fileInfo.date);
   const hash = await hashStream.getHash();
 
   return {
     hash,
-    ...results,
+    ...processedRecords,
   };
   // Process the records using the processDefinition and xmlClient and return the result
 };
