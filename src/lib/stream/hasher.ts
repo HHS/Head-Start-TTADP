@@ -53,10 +53,23 @@ class Hasher extends PassThrough {
   }
 }
 
+const getHash = (
+  data: string | Record<string, any>,
+  algorithm: Algorithm = Algorithms.SHA256,
+) => {
+  const inputData = typeof data === 'string'
+    ? Buffer.from(data)
+    : Buffer.from(JSON.stringify(data));
+  const hash = crypto.createHash(algorithm);
+  hash.update(inputData);
+  return hash.digest('hex');
+};
+
 export default Hasher;
 export {
   Algorithms,
   Algorithm,
+  getHash,
 };
 
 // // Usage example:
