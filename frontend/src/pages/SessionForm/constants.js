@@ -1,7 +1,5 @@
-import React from 'react';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 
-export const NO_ERROR = <></>;
 export const sessionSummaryFields = {
   // not including start date or end date
   // because when I do, it seems to befuddle the
@@ -17,7 +15,6 @@ export const sessionSummaryFields = {
   files: [],
   regionId: '',
   ttaProvided: '',
-  courses: [],
 };
 
 export const participantsFields = {

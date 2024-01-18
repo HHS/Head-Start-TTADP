@@ -912,7 +912,7 @@ describe('ActivityReport', () => {
       'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
     ));
 
-    const radio = document.querySelector('#add-objective-files-yes-95297-0'); // yes radio button
+    const radio = screen.getByLabelText(/Yes/i);
     act(() => {
       userEvent.click(radio);
     });
