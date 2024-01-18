@@ -143,7 +143,8 @@ module.exports = {
         },
         processed: {
           type: Sequelize.BOOLEAN,
-          allowNull: true,
+          allowNull: false,
+          defaultValue: false,
         },
         hash: {
           type: Sequelize.TEXT,
