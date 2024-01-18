@@ -51,7 +51,7 @@ export default async function authMiddleware(req, res, next) {
 
   if (!userId) {
     res.sendStatus(401);
-  } else if (await validateUserAuthForAccess(Number(userId))) {
+  } else if (await validateUserAuthForAccess(userId)) {
     next();
   } else {
     auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
