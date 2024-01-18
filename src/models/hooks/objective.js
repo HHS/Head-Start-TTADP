@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
 import { skipIf } from '../helpers/flowControl';
@@ -302,6 +303,36 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
   return Promise.resolve();
 };
 
+const propagateSupportTypeToActivityReportObjective = async (sequelize, instance, options) => {
+  const { id: objectiveId, supportType } = instance;
+  const activityReportObjectives = await sequelize.models.ActivityReportObjective.findAll({
+    where: {
+      objectiveId,
+    },
+    include: [
+      {
+        model: sequelize.models.ActivityReport,
+        as: 'activityReport',
+        where: {
+          calculatedStatus: {
+            [Op.notIn]: [
+              REPORT_STATUSES.DRAFT,
+              REPORT_STATUSES.APPROVED,
+            ],
+          },
+        },
+        required: true,
+      },
+    ],
+    transaction: options.transaction,
+  });
+  await Promise.all(activityReportObjectives.map(async (aro) => aro.update({
+    supportType,
+  }, {
+    transaction: options.transaction,
+  })));
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -325,6 +356,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
+  await propagateSupportTypeToActivityReportObjective(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {

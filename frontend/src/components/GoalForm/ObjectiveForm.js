@@ -16,6 +16,7 @@ import ObjectiveStatus from './ObjectiveStatus';
 import AppLoadingContext from '../../AppLoadingContext';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
 import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
+import ObjectiveSupportType from '../ObjectiveSupportType';
 
 const [
   objectiveTitleError,
@@ -37,7 +38,12 @@ export default function ObjectiveForm({
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status, files,
+    title,
+    topics,
+    resources,
+    status,
+    files,
+    supportType,
   } = objective;
 
   const isOnReport = useMemo(() => (
@@ -62,6 +68,12 @@ export default function ObjectiveForm({
     setObjective({ ...objective, files: e });
   };
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
+  const onChangeSupportType = (newSupportType) => setObjective(
+    {
+      ...objective,
+      supportType: newSupportType,
+    },
+  );
 
   const onUpdateStatus = (newStatus) => {
     if (newStatus === 'Suspended') {
@@ -83,6 +95,8 @@ export default function ObjectiveForm({
       setObjectiveError(index, newErrors);
     }
   };
+
+  const validateSupportType = () => {};
 
   const validateObjectiveTopics = () => {
     if (!topics.length) {
@@ -192,6 +206,14 @@ export default function ObjectiveForm({
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.STATUS_SUSPEND_REASON]}
       />
 
+      <ObjectiveSupportType
+        onBlurSupportType={validateSupportType}
+        supportType={supportType}
+        onChangeSupportType={onChangeSupportType}
+        inputName={`objective-support-type-${index}`}
+        error={<></>}
+      />
+
       <ObjectiveStatus
         status={status}
         goalStatus={goalStatus}
@@ -222,6 +244,7 @@ ObjectiveForm.propTypes = {
     closeSuspendReason: PropTypes.string,
     closeSuspendContext: PropTypes.string,
     isNew: PropTypes.bool,
+    supportType: PropTypes.string,
     id: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
@@ -269,5 +292,6 @@ ObjectiveForm.defaultProps = {
     resources: [],
     files: [],
     status: '',
+    supportType: '',
   },
 };
