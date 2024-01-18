@@ -57,7 +57,7 @@ export async function currentUserId(req, res) {
         // Verify admin access.
         try {
           const userId = idFromSessionOrLocals();
-          if (!(await validateUserAuthForAdmin(Number(userId)))) {
+          if (!(await validateUserAuthForAdmin(userId))) {
             auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }

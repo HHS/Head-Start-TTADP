@@ -72,10 +72,6 @@ export async function userIsPocRegionalCollaborator(userId) {
 }
 
 export async function validateUserAuthForAdmin(userId) {
-  if (!userId || typeof userId !== 'number') {
-    return false;
-  }
-
   try {
     const userPermission = await Permission.findOne({
       where: {
