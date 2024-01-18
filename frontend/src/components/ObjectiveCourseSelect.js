@@ -35,7 +35,7 @@ export default function ObjectiveCourseSelect({
     fetchCourses();
   }, []);
 
-  if (!options || options.length === 0) {
+  if (!options) {
     return null;
   }
 

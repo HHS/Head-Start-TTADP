@@ -111,18 +111,4 @@ describe('ObjectiveCourseSelect', () => {
     const select = screen.queryByText(/iPD course name/i);
     expect(select).toBeNull();
   });
-
-  it('handles no options', async () => {
-    fetchMock.get('/api/courses', []);
-    const onChange = jest.fn();
-    await act(() => waitFor(() => {
-      renderObjectiveCourseSelect(
-        onChange,
-        [{ id: 6, name: 'Ongoing Assessment (BTS-P)' }],
-      );
-    }));
-
-    const select = screen.queryByText(/iPD course name/i);
-    expect(select).toBeNull();
-  });
 });
