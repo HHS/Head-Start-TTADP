@@ -1,7 +1,7 @@
-import { Model, Op } from 'sequelize';
+import { Op } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
-import FtpClient, { FileInfo as FTPFileInfo, FTPSettings } from '../stream/ftp';
+import { FileInfo as FTPFileInfo } from '../stream/ftp';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
 import db, { Sequelize } from '../../models';
 import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
@@ -41,6 +41,48 @@ const getPriorFile = async (
   });
   // Return the name of the prior file
   return priorFile;
+};
+
+/**
+ * Checks if there are more files to download for a given import.
+ *
+ * @param importId - The ID of the import.
+ * @returns A boolean indicating if there are more files to download.
+ */
+const importHasMoreToDownload = async (
+  importId: number,
+) => {
+  const pendingFiles = await ImportFile.findAll({
+    attributes: ['id'],
+    where: {
+      importId,
+      downloadAttempts: { [Op.lt]: 5 },
+      status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
+    },
+  });
+
+  return pendingFiles?.length || 0 >= 1;
+};
+
+/**
+ * Checks if there are more files to download for a given import.
+ *
+ * @param importId - The ID of the import.
+ * @returns A boolean indicating if there are more files to download.
+ */
+const importHasMoreToProcess = async (
+  importId: number,
+) => {
+  const pendingFiles = await ImportFile.findAll({
+    attributes: ['id'],
+    where: {
+      importId,
+      processAttempts: { [Op.lt]: 5 },
+      status: [IMPORT_STATUSES.COLLECTED, IMPORT_STATUSES.PROCESSING_FAILED],
+    },
+  });
+
+  return pendingFiles?.length || 0 >= 1;
 };
 
 /**
@@ -306,7 +348,7 @@ const recordAvailableDataFiles = async (
 
 const updateAvailableDataFileMetadata = async (
   importFileId: number,
-  fileInfo: ZipFileInfo,
+  fileInfo: ZipFileInfo | { name: string },
   metadata: Record<
   string,
   string | number | string[] | Record<
@@ -483,6 +525,8 @@ const setImportFileStatus = async (
 
 export {
   getPriorFile,
+  importHasMoreToDownload,
+  importHasMoreToProcess,
   getNextFileToProcess,
   recordAvailableFiles,
   recordAvailableDataFiles,
