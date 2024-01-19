@@ -14,7 +14,6 @@ describe('Approved Activity Report V2 component', () => {
       ActivityReportObjective: {
         ttaProvided: 'All of it',
       },
-      courses: [],
       topics: [{ label: 'being fancy' }],
       resources: [{ value: 'http://www.website.com', url: 'http://www.OtherEntity.com' }],
       status: 'Test status',
@@ -138,7 +137,6 @@ describe('Approved Activity Report V2 component', () => {
       resources: [{ value: 'http://www.website.com' }],
       status: 'Test status',
       files: [],
-      courses: [],
     }];
 
     render(<ApprovedReportV2 data={{
@@ -158,7 +156,6 @@ describe('Approved Activity Report V2 component', () => {
       resources: [],
       status: 'Test status',
       files: [],
-      courses: [],
     }];
 
     render(<ApprovedReportV2 data={{
