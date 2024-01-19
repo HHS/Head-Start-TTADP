@@ -267,7 +267,7 @@ const recordAvailableDataFiles = async (
       ? ImportFile.bulkCreate(
         newfiles.map((newFile) => ({
           importFileId,
-          zipFileInfo: newFile,
+          fileInfo: newFile,
           status: IMPORT_STATUSES.IDENTIFIED,
         })),
         { independentHooks: true },
@@ -278,14 +278,14 @@ const recordAvailableDataFiles = async (
       ? matchedFiles.map(async (matchedFile) => ImportFile.update(
         {
           importFileId,
-          ftpFileInfo: matchedFile,
+          fileInfo: matchedFile,
         },
         {
           where: {
             importFileId,
             [Op.and]: [
-              Sequelize.literal(`"ftpFileInfo" -> 'path' = '${matchedFile.path}'`),
-              Sequelize.literal(`"ftpFileInfo" -> 'name' = '${matchedFile.name}'`),
+              Sequelize.literal(`"fileInfo" -> 'path' = '${matchedFile.path}'`),
+              Sequelize.literal(`"fileInfo" -> 'name' = '${matchedFile.name}'`),
             ],
           },
         },
@@ -302,6 +302,42 @@ const recordAvailableDataFiles = async (
       })
       : Promise.resolve()),
   ]);
+};
+
+const updateAvailableDataFileMetadata = async (
+  importFileId: number,
+  fileInfo: ZipFileInfo,
+  metadata: Record<
+  string,
+  string | number | string[] | Record<
+  string,
+  string | number | Record<
+  string,
+  string | number
+  >
+  >
+  >,
+) => {
+  const isProcessed = !!metadata?.hash;
+
+  const result = ImportDataFile.update(
+    {
+      ...metadata,
+      processed: isProcessed,
+    },
+    {
+      where: {
+        importFileId,
+        fileInfo: {
+          name: fileInfo.name,
+          path: fileInfo.path,
+        },
+        independentHooks: true,
+      },
+    },
+  );
+
+  return result;
 };
 
 /**
@@ -453,4 +489,5 @@ export {
   logFileToBeCollected,
   setImportFileHash,
   setImportFileStatus,
+  updateAvailableDataFileMetadata,
 };
