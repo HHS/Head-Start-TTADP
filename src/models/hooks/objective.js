@@ -305,9 +305,17 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
 
 const propagateSupportTypeToActivityReportObjective = async (sequelize, instance, options) => {
   const { id: objectiveId, supportType } = instance;
+  // no support type? get outta here
+  if (!supportType) return;
+
+  // find all activity report objectives that are not the same support type
+  // and are not on an approved or deleted activity report
   const activityReportObjectives = await sequelize.models.ActivityReportObjective.findAll({
     where: {
       objectiveId,
+      supportType: {
+        [Op.not]: supportType,
+      },
     },
     include: [
       {
@@ -316,8 +324,8 @@ const propagateSupportTypeToActivityReportObjective = async (sequelize, instance
         where: {
           calculatedStatus: {
             [Op.notIn]: [
-              REPORT_STATUSES.DRAFT,
               REPORT_STATUSES.APPROVED,
+              REPORT_STATUSES.DELETED,
             ],
           },
         },
