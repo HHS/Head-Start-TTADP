@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
 import Req from './Req';
+import SupportTypeDrawer from './SupportTypeDrawer';
 
 export default function ObjectiveSupportType({
   supportType,
@@ -11,9 +12,13 @@ export default function ObjectiveSupportType({
   inputName,
   error,
 }) {
+  const supportTypeDrawerTriggerRef = useRef(null);
   const hasError = !!(error.props.children);
   return (
     <FormGroup error={hasError}>
+      <SupportTypeDrawer
+        drawerTriggerRef={supportTypeDrawerTriggerRef}
+      />
       <Label htmlFor={inputName}>
         Support type
         <Req />

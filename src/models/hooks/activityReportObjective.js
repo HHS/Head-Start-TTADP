@@ -68,12 +68,14 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
 
 const propagateSupportTypeToObjective = async (sequelize, instance, options) => {
   const { objectiveId, supportType } = instance;
+
+  if (!supportType) return;
   const objective = await sequelize.models.Objective.findOne({
     where: {
       id: objectiveId,
       status: {
         [Op.notIn]: [
-          OBJECTIVE_STATUS.CLOSED,
+          OBJECTIVE_STATUS.COMPLETE,
           OBJECTIVE_STATUS.SUSPENDED,
         ],
       },
@@ -81,7 +83,7 @@ const propagateSupportTypeToObjective = async (sequelize, instance, options) => 
     transaction: options.transaction,
   });
 
-  if (!objective) return;
+  if (!objective || (objective.supportType === supportType)) return;
 
   await objective.update({ supportType }, { transaction: options.transaction });
 };

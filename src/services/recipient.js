@@ -350,9 +350,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
     .reduce((acc, objective) => {
       // we grab the support types from the activity report objectives,
       // filtering out empty strings
-      const supportTypes = (objective.activityReportObjectives || [])
-        .map((aro) => aro.supportType)
-        .filter(Boolean);
+      const { supportType } = objective;
 
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
@@ -375,11 +373,12 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
       const objectiveTopics = (objective.topics || []);
 
       const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle && o.status === objectiveStatus
+        o.title === objectiveTitle
+        && o.status === objectiveStatus
+        && o.supportType === supportType
       ));
 
       if (existing) {
-        existing.supportTypes = uniq([...existing.supportTypes, ...supportTypes]);
         existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
         existing.reasons = uniq([...existing.reasons, ...reportReasons]);
         existing.reasons.sort();
@@ -405,7 +404,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
-        supportTypes: uniq(supportTypes),
+        supportType: supportType || null,
       };
 
       formattedObjective.topics.sort();
@@ -579,16 +578,12 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
         required: false,
         include: [
-          {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            attributes: ['activityReportId', 'objectiveId', 'supportType'],
-          },
           {
             model: Topic,
             as: 'topics',

@@ -497,6 +497,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       && objective.activityReportObjectives[0].status
       ? objective.activityReportObjectives[0].status : objective.status;
 
+    const objectiveSupportType = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].supportType
+      ? objective.activityReportObjectives[0].supportType : objective.supportType;
+
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
@@ -546,10 +551,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0]
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
-    const supportType = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].supportType
-      ? objective.activityReportObjectives[0].supportType : null;
     const arOrder = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
@@ -571,7 +572,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
-      supportType,
+      supportType: objectiveSupportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
@@ -840,6 +841,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'title',
           'status',
           'goalId',
+          'supportType',
         ],
         required: false,
         include: [
@@ -991,6 +993,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
           'title',
           'title',
           'status',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -1986,6 +1989,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
+          supportType,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
           createdVia: 'activityReport',
