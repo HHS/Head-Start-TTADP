@@ -58,9 +58,9 @@ export function mapAttachments(attachments) {
       <ul>
         {
             attachments.map((attachment) => (
-              <li key={attachments.url.url}>
+              <li key={attachment.url.url}>
                 <a
-                  href={attachments.url.url}
+                  href={attachment.url.url}
                   target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
                   rel="noreferrer"
                 >
