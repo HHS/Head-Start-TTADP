@@ -1,7 +1,7 @@
 import { Model, Op } from 'sequelize';
 import { Readable } from 'stream';
 import { remap, collectChangedValues } from '../dataObjectUtils';
-import { filterDataToModel } from '../modelUtils';
+import { filterDataToModel, modelForTable } from '../modelUtils';
 import EncodingConverter from '../stream/encoding';
 import Hasher, { getHash } from '../stream/hasher';
 import S3Client from '../stream/s3';
@@ -11,15 +11,10 @@ import {
   getNextFileToProcess,
   recordAvailableDataFiles,
   setImportFileStatus,
+  updateAvailableDataFileMetadata,
 } from './record';
-import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
-import db, { Sequelize } from '../../models';
-
-const {
-  File,
-  Import,
-  ImportFile,
-} = db;
+import { IMPORT_STATUSES } from '../../constants';
+import db from '../../models';
 
 type ProcessDefinition = {
   fileName: string,
@@ -28,10 +23,6 @@ type ProcessDefinition = {
   keys: string[],
   remapDef: Record<string, string>;
 };
-
-const modelForTable = (tableName: string) => Object.values(db.sequelize.models)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  .find((m: typeof Model) => m.getTableName() === tableName);
 
 /**
  * Process records according to the given process definition and XML client.
@@ -54,10 +45,13 @@ const processRecords = async (
     updates: Promise<any>[],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deletes: Promise<any>[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    errors: Promise<any>[],
   } = {
     inserts: [],
     updates: [],
     deletes: [],
+    errors: [],
   },
   schema: string[] = [],
 ): Promise<{
@@ -68,6 +62,8 @@ const processRecords = async (
   updates: Promise<any>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deletes: Promise<any>[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errors: Promise<any>[],
 }> => {
   const record = await xmlClient.getNextObject();
   // @ts-ignore
@@ -80,114 +76,130 @@ const processRecords = async (
     update: (...args: any[]) => any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     destroy: (...args: any[]) => any,
-  } = modelForTable(processDefinition.tableName);
+  } = modelForTable(db, processDefinition.tableName);
   let newSchema = schema;
   if (record) {
-    // TODO: column/key alpha sort to retain order
-    // 1. use the remap method to format data to structure needed
-    // 2. use the filterDataToModel to match what is expected
-    // 3. check for existing record
-    // 4a. if new
-    //   1. insert
-    //   2. recordActions.inserts.push(uuid)
-    // 4b. if found
-    //   1. use the collectChangedValues to find the values to update
-    //   2. update
-    //   2. recordActions.update.push(uuid)
-    newSchema = [...new Set([
-      ...schema,
-      ...Object.keys(record),
-    ])];
+    try {
+      // TODO: column/key alpha sort to retain order
+      // 1. use the remap method to format data to structure needed
+      // 2. use the filterDataToModel to match what is expected
+      // 3. check for existing record
+      // 4a. if new
+      //   1. insert
+      //   2. recordActions.inserts.push(uuid)
+      // 4b. if found
+      //   1. use the collectChangedValues to find the values to update
+      //   2. update
+      //   2. recordActions.update.push(uuid)
+      newSchema = [...new Set([
+        ...schema,
+        ...Object.keys(record),
+      ])];
 
-    // Format the record data using the remap method
-    const data = remap(
-      record,
-      processDefinition.remapDef,
-      {
-        targetFunctions: {
-          'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
-        },
-      },
-    );
-
-    // Filter the data to match the expected model
-    const filteredData = await filterDataToModel(data, model as typeof Model);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recordKey: Record<string, any> = {};
-    processDefinition.keys.forEach((key) => {
-      recordKey[key] = filteredData[key];
-    });
-
-    // Check if there is an existing record with the same key value
-    const currentData = await model.findOne({
-      where: {
-        ...recordKey,
-      },
-    });
-
-    if (currentData === null || currentData === undefined) {
-      // If the record already exists, insert it
-      const insert = model.create(
+      // Format the record data using the remap method
+      // This changes the attribute names and structure into what will be saved
+      const data = remap(
+        record,
+        processDefinition.remapDef,
         {
-          ...filteredData,
-          sourceCreatedAt: fileDate,
-          sourceUpdatedAt: fileDate,
-        },
-        {
-          independentHooks: true,
-          returning: true,
-          plain: true,
+          // defines a custom fuction that will replace the resulting structure
+          // with the result of each function.
+          targetFunctions: {
+            // take in an object and generate a hash of that object
+            'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
+          },
         },
       );
-      recordActions.inserts.push(insert);
-    } else {
-      // If the record is new, update it
-      const delta = collectChangedValues(filteredData, currentData);
-      const update = model.update(
-        {
-          ...delta,
-          sourceUpdatedAt: fileDate,
+
+      // Filter the data to match the expected model
+      const filteredData = await filterDataToModel(data, model as typeof Model);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recordKey: Record<string, any> = {};
+      processDefinition.keys.forEach((key) => {
+        recordKey[key] = filteredData[key];
+      });
+
+      // Check if there is an existing record with the same key value
+      const currentData = await model.findOne({
+        where: {
+          ...recordKey,
         },
-        {
-          where: { id: currentData.id },
-          independentHooks: true,
-          returning: true,
-          plain: true,
-        },
-      );
-      recordActions.updates.push(update);
+      });
+
+      if (currentData === null || currentData === undefined) {
+        // If the record is new, create it
+        const insert = model.create(
+          {
+            ...filteredData,
+            sourceCreatedAt: fileDate,
+            sourceUpdatedAt: fileDate,
+          },
+          {
+            independentHooks: true,
+            returning: true,
+            plain: true,
+          },
+        );
+        recordActions.inserts.push(insert);
+      } else {
+        // If the record already exists, find the delta then update it
+        const delta = collectChangedValues(filteredData, currentData);
+        const update = model.update(
+          {
+            ...delta,
+            sourceUpdatedAt: fileDate,
+          },
+          {
+            where: { id: currentData.id },
+            independentHooks: true,
+            returning: true,
+            plain: true,
+          },
+        );
+        recordActions.updates.push(update);
+      }
+    } catch (err) {
+      // record the error into the recordActions
+      recordActions.errors.push(err.message);
     }
   } else {
-    // 1. Find all records not in recordActions.inserts and recordActions.update
-    // 2. delete
-    // 3. recordActions.delete.push(promises)
-    // 4. pass back recordActions
+    try {
+      // 1. Find all records not in recordActions.inserts and recordActions.update
+      // 2. delete
+      // 3. recordActions.delete.push(promises)
+      // 4. pass back recordActions
 
-    // Get all the affected data from inserts and updates
-    const affectedData = await Promise.all([
-      ...recordActions.inserts,
-      ...recordActions.updates,
-    ]);
+      // Get all the affected data from inserts and updates
+      const affectedData = await Promise.all([
+        ...recordActions.inserts,
+        ...recordActions.updates,
+      ]);
 
-    // mark the source date when the records no longer are present in the processed file
-    await model.update(
-      {
-        sourceDeletedAt: fileDate,
-      },
-      {
-        where: { id: { [Op.not]: affectedData.map(({ id }) => id) } },
+      const affectedDataIds = affectedData.map(({ id }) => id);
+
+      // mark the source date when the records no longer are present in the processed file
+      await model.update(
+        {
+          sourceDeletedAt: fileDate,
+        },
+        {
+          where: { id: { [Op.not]: affectedDataIds } },
+          independentHooks: true,
+        },
+      );
+
+      // Delete all records that are not in the affectedData array
+      const destroys = model.destroy({
+        where: { id: { [Op.not]: affectedDataIds } },
         independentHooks: true,
-      },
-    );
+      });
 
-    // Delete all records that are not in the affectedData array
-    const destroys = model.destroy({
-      where: { id: { [Op.not]: affectedData.map(({ id }) => id) } },
-      independentHooks: true,
-    });
-
-    recordActions.deletes.push(destroys);
+      recordActions.deletes.push(destroys);
+    } catch (err) {
+      // record the error into the recordActions
+      recordActions.deletes.push(err.message);
+    }
 
     return Promise.resolve({
       schema: newSchema,
@@ -223,42 +235,70 @@ const processFile = async (
   fileInfo: ZipFileInfo,
   fileStream: Readable,
 ): Promise<{
-  hash: string,
-  schema: string[],
+  hash?: string,
+  schema?: string[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  inserts: Promise<any>[],
+  inserts?: Promise<any>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updates: Promise<any>[],
+  updates?: Promise<any>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deletes: Promise<any>[],
+  deletes?: Promise<any>[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errors: Promise<any>[],
 }> => {
-  // Check if remapDefs property exists in processDefinition, if not throw an error
-  if (!processDefinition?.remapDef) throw new Error(`Remapping definitions not found for '${fileInfo.name}'`);
-  // Check if model property exists in processDefinition, if not throw an error
-  if (!processDefinition?.tableName) throw new Error(`Model not found for '${fileInfo.name}'`);
-  // Check if key property exists in processDefinition, if not throw an error
-  if (!processDefinition?.keys) throw new Error(`Keys not found for '${fileInfo.name}'`);
-  // Check if key property exists in processDefinition, if not throw an error
-  if (!processDefinition?.encoding) throw new Error(`Encoding not found for '${fileInfo.name}'`);
-
-  const hashStream = new Hasher('sha256');
-  fileStream.pipe(hashStream);
-
-  const encodingConverter = new EncodingConverter('utf8', processDefinition.encoding);
-  // Convert the fileStream to a usable stream with UTF-8 encoding
-  const usableStream = await EncodingConverter.forceStreamEncoding(hashStream, 'utf8'); // TODO - FIX
-
-  // Create a new instance of XMLStream using the usableStream
-  const xmlClient = new XMLStream(usableStream);
-
-  const processedRecords = await processRecords(processDefinition, xmlClient, fileInfo.date);
-  const hash = await hashStream.getHash();
-
-  return {
-    hash,
-    ...processedRecords,
+  let result: {
+    hash?: string,
+    schema?: string[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    inserts?: Promise<any>[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updates?: Promise<any>[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    deletes?: Promise<any>[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    errors: Promise<any>[],
+  } = {
+    errors: [],
   };
-  // Process the records using the processDefinition and xmlClient and return the result
+
+  try {
+    // Check if remapDefs property exists in processDefinition, if not throw an error
+    if (!processDefinition?.remapDef) throw new Error('Remapping definitions not found');
+    // Check if model property exists in processDefinition, if not throw an error
+    if (!processDefinition?.tableName) throw new Error('Model not found');
+    // Check if key property exists in processDefinition, if not throw an error
+    if (!processDefinition?.keys) throw new Error('Keys not found');
+    // Check if key property exists in processDefinition, if not throw an error
+    if (!processDefinition?.encoding) throw new Error('Encoding not found');
+
+    const hashStream = new Hasher('sha256');
+
+    const encodingConverter = new EncodingConverter('utf8', processDefinition.encoding);
+
+    // Convert the fileStream to a usable stream while also calculation the hash
+    const usableStream = fileStream.pipe(hashStream).pipe(encodingConverter);
+
+    // Create a new instance of XMLStream using the usableStream
+    const xmlClient = new XMLStream(usableStream);
+
+    // Check if key property exists in processDefinition, if not throw an error
+    if (!xmlClient) throw new Error('XMLStream failed');
+
+    const processedRecords = await processRecords(processDefinition, xmlClient, fileInfo.date);
+    // hash needs to be collected after processRecords returns to make sure all the data has
+    // been processed for all records in the file
+    const hash = await hashStream.getHash();
+
+    result = {
+      hash,
+      ...processedRecords,
+    };
+  } catch (err) {
+    // TODO: add some logging of error to console
+    result.errors.push(err.message);
+  }
+
+  return result;
 };
 
 /**
@@ -272,87 +312,152 @@ const processFile = async (
  * @throws - If there is an error while processing a file.
  */
 const processFilesFromZip = async (
-  zipClient: ZipStream,
-  filesToProcess: (ZipFileInfo)[],
-  processDefinitions: string[],
-) => {
+  importFileId, // The ID of the import file
+  zipClient: ZipStream, // The client for working with ZIP files
+  filesToProcess: (ZipFileInfo)[], // An array of files to process
+  processDefinitions: ProcessDefinition[], // An array of process definitions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> => {
   // If there are no more files to process, exit the function
-  if (processDefinitions.length === 0) return;
+  if (processDefinitions.length === 0) return Promise.resolve;
+
   // Get the next file to process from the end of the processDefinitions array
   const nextToProcess = processDefinitions.pop();
 
   try {
     const fileInfoToProcess = filesToProcess
       // Find the ZipFileInfo object that matches the next file to process
-      .find(({ name }) => name === nextToProcess);
+      .find(({ name }) => name === nextToProcess.fileName);
+
     if (fileInfoToProcess) { // If the file to process is found
       // Get the file stream for the file to process from the zipClient
       const fileStream = await zipClient.getFileStream(fileInfoToProcess.name);
+
       // Throw an error if the file stream is not available
       if (!fileStream) throw new Error(`Failed to get stream from ${fileInfoToProcess.name}`);
+
       const processingData = await processFile(
         nextToProcess, // Pass the name of the file to process
         fileInfoToProcess, // Pass the ZipFileInfo object of the file to process
         fileStream, // Pass the file stream of the file to process
       );
 
+      const {
+        schema = null, // The schema of the processed file
+        hash = null, // The hash of the processed file
+      } = processingData;
+
       const [
-        inserts,
-        updates,
-        deletes,
+        inserts, // An array of insert operations
+        updates, // An array of update operations
+        deletes, // An array of delete operations
+        errors = [], // An array of errors
       ] = await Promise.all([
-        Promise.all(processingData.inserts),
-        Promise.all(processingData.updates),
-        Promise.all(processingData.deletes),
+        Promise.all(processingData?.inserts),
+        Promise.all(processingData?.updates),
+        Promise.all(processingData?.deletes),
+        Promise.all(processingData.errors),
       ]);
+
       const [
-        insertCount,
-        updateCount,
-        deleteCount,
+        insertCount, // The number of insert operations
+        updateCount, // The number of update operations
+        deleteCount, // The number of delete operations
+        errorCounts, // An object containing the count of each error
       ] = [
         inserts?.length || 0,
         updates?.length || 0,
         deletes?.length || 0,
+        errors.reduce((acc, error) => {
+          if (!acc[error]) {
+            acc[error] = 0;
+          }
+          acc[error] += 1;
+          return acc;
+        }, {}),
       ];
-      // TODO - save/log file processing data
+
+      // save/log file processing data
+      await updateAvailableDataFileMetadata(
+        importFileId, // Pass the import file ID
+        fileInfoToProcess, // Pass the ZipFileInfo object of the processed file
+        {
+          schema,
+          hash,
+          recordCounts: {
+            inserts: insertCount,
+            updates: updateCount,
+            deletes: deleteCount,
+            errors: errorCounts,
+          },
+        },
+      );
     } else {
-      // TODO - save/log that file to process was not found
+      // save/log file not processed
+      await updateAvailableDataFileMetadata(
+        importFileId, // Pass the import file ID
+        fileInfoToProcess, // Pass the ZipFileInfo object of the unprocessed file
+        {},
+      );
     }
   } catch (err) {
-    // TODO: error handler
+    await updateAvailableDataFileMetadata(
+      importFileId, // Pass the import file ID
+      {
+        name: nextToProcess.fileName, // Pass the name of the file that caused the error
+      },
+      {
+        recordCounts: {
+          errors: {
+            [err.message]: 1, // Add the error message to the error count object
+          },
+        },
+      },
+    );
   }
+
   // Recursively call the processFilesFromZip function to process the remaining files
-  await processFilesFromZip(zipClient, filesToProcess, processDefinitions);
+  return processFilesFromZip(
+    importFileId, // Pass the import file ID
+    zipClient, // Pass the zip client
+    filesToProcess, // Pass the array of files to process
+    processDefinitions, // Pass the array of process definitions
+  );
 };
 
+/**
+ * Processes a zip file from S3.
+ * @param importId - The ID of the import.
+ * @throws {Error} If an error occurs while processing the zip file.
+ * @returns {Promise<void>} A promise that resolves when the zip file has been processed
+ * successfully.
+ */
 const processZipFileFromS3 = async (
   importId: number,
-  // zipPassword?: string,
-  // fileProcessDefinition: {
-  //   remapDefs,
-  //   model,
-  //   importFileId: number,
-  //   key: string,
-  // }
 ) => {
+  // Get the next file to process based on the importId
   const importFile = await getNextFileToProcess(importId);
   if (!importFile) return;
 
+  // Destructure properties from the importFile object
   const {
     dataValues: { importFileId, processAttempts = 0 },
     file: { key },
     import: { definitions: processDefinitions },
   } = importFile;
+
   let s3Client;
   let s3FileStream;
 
+  // Set the import file status to PROCESSING and increment the processAttempts count
   await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING, null, processAttempts + 1);
 
   try {
+    // Create a new S3Client instance and download the file as a stream
     s3Client = new S3Client();
     s3FileStream = await s3Client.downloadFileAsStream(key);
   } catch (err) {
-    // TODO - log error
+    // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     return;
   }
@@ -361,33 +466,40 @@ const processZipFileFromS3 = async (
   let fileDetails;
 
   try {
+    // Create a new ZipStream instance using the downloaded file stream
     zipClient = new ZipStream(s3FileStream);
+    // Get details of all files in the zip archive
     fileDetails = await zipClient.getAllFileDetails();
+    // Record the available data files in the importFile
     await recordAvailableDataFiles(importFileId, fileDetails);
   } catch (err) {
-    // TODO - log error
+    // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     return;
   }
 
+  // Filter out null file details and cast the remaining ones as ZipFileInfo type
   const filteredFileDetails = fileDetails
-    // remove nulls and cast as type
     .filter((fileDetail) => fileDetail) as ZipFileInfo[];
 
   let results;
 
   try {
+    // Process files from the zip archive using the importFileId, zipClient, filteredFileDetails,
+    // and processDefinitions
     results = processFilesFromZip(
+      importFileId,
       zipClient,
       filteredFileDetails,
       processDefinitions,
     );
   } catch (err) {
-    // TODO - log error
+    // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     return;
   }
 
+  // Set the import file status to PROCESSED
   await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSED);
 };
 
