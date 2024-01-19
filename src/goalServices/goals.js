@@ -1841,7 +1841,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       id,
       isNew,
       ttaProvided,
-      activityReportObjectives: aro,
+      ActivityReportObjective: aro,
       title,
       status,
       resources,
@@ -1901,10 +1901,13 @@ async function createObjectivesForGoal(goal, objectives, report) {
     }
     return {
       ...savedObjective.toJSON(),
+      status,
       topics,
       resources,
       files,
       ttaProvided: objective.ttaProvided,
+      closeSuspendReason,
+      closeSuspendContext,
       index,
     };
   }));
@@ -2013,6 +2016,7 @@ export async function saveGoalsForReport(goals, report) {
         isActivelyBeingEditing,
         prompts || null,
       );
+
       // and pass the goal to the objective creation function
       const newGoalObjectives = await createObjectivesForGoal(newOrUpdatedGoal, objectives, report);
       currentObjectives = [...currentObjectives, ...newGoalObjectives];
