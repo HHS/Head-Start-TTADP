@@ -11,6 +11,8 @@ import {
 import {
   download as downloadImport,
   process as processImport,
+  moreToDownload,
+  moreToProcess,
 } from '../importSystem';
 
 const {
@@ -86,6 +88,13 @@ const importDownload = async (id) => maintenanceCommand(
   async (logMessages, logBenchmarks, triggeredById) => {
     try {
       const downloadResults = await downloadImport(id);
+      const more = await moreToDownload(id);
+      if (more) {
+        // TODO: requeue import download
+      }
+      if (downloadResults?.length) {
+        // TODO: queue import process
+      }
       return {
         isSuccessful: !Object.keys(downloadResults).includes('error'),
         ...downloadResults,
@@ -103,6 +112,10 @@ const importProcess = async (id) => maintenanceCommand(
   async (logMessages, logBenchmarks, triggeredById) => {
     try {
       const processResults = await processImport(id);
+      const more = await moreToProcess(id);
+      if (more) {
+        // TODO: requeue import process
+      }
       return {
         isSuccessful: !Object.keys(processResults).includes('error'),
         ...processResults,
