@@ -2,7 +2,7 @@ import { Readable } from 'stream';
 import FtpClient, { FileInfo as FTPFileInfo, FTPSettings } from '../stream/ftp';
 import Hasher from '../stream/hasher';
 import S3Client from '../stream/s3';
-import db, { Sequelize } from '../../models';
+import db from '../../models';
 import {
   getPriorFile,
   recordAvailableFiles,
@@ -15,9 +15,7 @@ import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
 import addToScanQueue from '../../services/scanQueue';
 
 const {
-  File,
   Import,
-  ImportFile,
 } = db;
 
 /**
