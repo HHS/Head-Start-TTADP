@@ -15,6 +15,7 @@ import {
 } from './record';
 import { IMPORT_STATUSES } from '../../constants';
 import db from '../../models';
+import { auditLogger } from '../../logger';
 
 type ProcessDefinition = {
   fileName: string,
@@ -160,8 +161,10 @@ const processRecords = async (
         recordActions.updates.push(update);
       }
     } catch (err) {
-      // record the error into the recordActions
+      // record the error into the recordActions and continue on successfully as
+      // other entries may be process successfully
       recordActions.errors.push(err.message);
+      auditLogger.log('error', err.message);
     }
   } else {
     try {
@@ -199,6 +202,7 @@ const processRecords = async (
     } catch (err) {
       // record the error into the recordActions
       recordActions.deletes.push(err.message);
+      auditLogger.log('error', err.message);
     }
 
     return Promise.resolve({
@@ -294,8 +298,8 @@ const processFile = async (
       ...processedRecords,
     };
   } catch (err) {
-    // TODO: add some logging of error to console
     result.errors.push(err.message);
+    auditLogger.log('error', err.message);
   }
 
   return result;
@@ -319,7 +323,7 @@ const processFilesFromZip = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
   // If there are no more files to process, exit the function
-  if (processDefinitions.length === 0) return Promise.resolve;
+  if (processDefinitions.length === 0) return Promise.resolve();
 
   // Get the next file to process from the end of the processDefinitions array
   const nextToProcess = processDefinitions.pop();
@@ -414,6 +418,7 @@ const processFilesFromZip = async (
         },
       },
     );
+    auditLogger.log('error', err.message);
   }
 
   // Recursively call the processFilesFromZip function to process the remaining files
@@ -437,7 +442,7 @@ const processZipFileFromS3 = async (
 ) => {
   // Get the next file to process based on the importId
   const importFile = await getNextFileToProcess(importId);
-  if (!importFile) return;
+  if (!importFile) return Promise.resolve();
 
   // Destructure properties from the importFile object
   const {
@@ -446,6 +451,7 @@ const processZipFileFromS3 = async (
     import: { definitions: processDefinitions },
   } = importFile;
 
+  // These must be let to properly wrap the population in a try/catch
   let s3Client;
   let s3FileStream;
 
@@ -459,9 +465,11 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    return;
+    auditLogger.log('error', err.message);
+    return Promise.resolve;
   }
 
+  // These must be let to properly wrap the population in a try/catch
   let zipClient;
   let fileDetails;
 
@@ -475,7 +483,8 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    return;
+    auditLogger.log('error', err.message);
+    return Promise.resolve;
   }
 
   // Filter out null file details and cast the remaining ones as ZipFileInfo type
@@ -496,11 +505,13 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    return;
+    auditLogger.log('error', err.message);
+    return Promise.resolve;
   }
 
   // Set the import file status to PROCESSED
   await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSED);
+  return results;
 };
 
 export {
