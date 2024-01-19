@@ -353,10 +353,10 @@ const processFilesFromZip = async (
         deletes, // An array of delete operations
         errors = [], // An array of errors
       ] = await Promise.all([
-        Promise.all(processingData?.inserts),
-        Promise.all(processingData?.updates),
-        Promise.all(processingData?.deletes),
-        Promise.all(processingData.errors),
+        Promise.all(processingData?.inserts.map(async (i) => Promise.resolve(i))),
+        Promise.all(processingData?.updates.map(async (i) => Promise.resolve(i))),
+        Promise.all(processingData?.deletes.map(async (i) => Promise.resolve(i))),
+        Promise.all(processingData.errors.map(async (i) => Promise.resolve(i))),
       ]);
 
       const [
