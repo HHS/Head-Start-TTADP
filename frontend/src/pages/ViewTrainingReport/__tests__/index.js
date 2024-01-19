@@ -68,6 +68,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
       objectiveSupportType: 'Implementing',
+      courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
     createdAt: '2023-06-27T13:48:31.490Z',
     updatedAt: '2023-06-27T13:49:18.579Z',
@@ -102,6 +103,7 @@ const mockEvent = (data = {}) => ({
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
       objectiveSupportType: 'Planning',
+      courses: [{ id: 3, name: 'course 3' }],
     },
     createdAt: '2023-06-27T13:49:23.985Z',
     updatedAt: '2023-06-27T13:49:59.039Z',
@@ -182,6 +184,8 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
     expect(screen.getByText('Implementing')).toBeInTheDocument();
+    expect(screen.getByText('course 1')).toBeInTheDocument();
+    expect(screen.getByText('course 2')).toBeInTheDocument();
 
     // expect 2 of these (1 for each session)
     expect(screen.getAllByText('PFCE')).toHaveLength(2);
@@ -203,6 +207,7 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('s1s2')).toBeInTheDocument();
     expect(screen.getByText('06/29/2027')).toBeInTheDocument();
     expect(screen.getByText('Planning')).toBeInTheDocument();
+    expect(screen.getByText('course 3')).toBeInTheDocument();
   });
 
   it('renders the necessary buttons', async () => {
