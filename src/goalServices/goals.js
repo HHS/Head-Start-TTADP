@@ -1841,7 +1841,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       id,
       isNew,
       ttaProvided,
-      ActivityReportObjective: aro,
+      activityReportObjectives: aro,
       title,
       status,
       resources,
@@ -1899,37 +1899,14 @@ async function createObjectivesForGoal(goal, objectives, report) {
         savedObjective = existingObjective;
       }
     }
-
-    // this will save all our objective join table data
-    // however, in the case of the Activity Report, we can't really delete
-    // unused join table data, so we'll just create any missing links
-    // so that the metadata is saved properly
-
-    const deleteUnusedAssociations = false;
-    const metadata = await saveObjectiveAssociations(
-      savedObjective,
-      resources,
+    return {
+      ...savedObjective.toJSON(),
       topics,
+      resources,
       files,
-      deleteUnusedAssociations,
-    );
-
-    // this will link our objective to the activity report through
-    // activity report objective and then link all associated objective data
-    // to the activity report objective to capture this moment in time
-    await cacheObjectiveMetadata(
-      savedObjective,
-      report.id,
-      {
-        ...metadata,
-        status,
-        closeSuspendContext,
-        closeSuspendReason,
-        ttaProvided: objective.ttaProvided,
-        order: index,
-      },
-    );
-    return savedObjective;
+      ttaProvided: objective.ttaProvided,
+      index,
+    };
   }));
 }
 
@@ -2036,13 +2013,55 @@ export async function saveGoalsForReport(goals, report) {
         isActivelyBeingEditing,
         prompts || null,
       );
-
       // and pass the goal to the objective creation function
       const newGoalObjectives = await createObjectivesForGoal(newOrUpdatedGoal, objectives, report);
       currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
       return newOrUpdatedGoal;
     }));
+  }));
+
+  const uniqueObjectives = uniqBy(currentObjectives, 'id');
+  await Promise.all(uniqueObjectives.map(async (savedObjective) => {
+    const {
+      status,
+      index,
+      topics,
+      files,
+      resources,
+      closeSuspendContext,
+      closeSuspendReason,
+      ttaProvided,
+    } = savedObjective;
+
+    // this will save all our objective join table data
+    // however, in the case of the Activity Report, we can't really delete
+    // unused join table data, so we'll just create any missing links
+    // so that the metadata is saved properly
+    const deleteUnusedAssociations = false;
+    const metadata = await saveObjectiveAssociations(
+      savedObjective,
+      resources,
+      topics,
+      files,
+      deleteUnusedAssociations,
+    );
+
+    // this will link our objective to the activity report through
+    // activity report objective and then link all associated objective data
+    // to the activity report objective to capture this moment in time
+    return cacheObjectiveMetadata(
+      savedObjective,
+      report.id,
+      {
+        ...metadata,
+        status,
+        closeSuspendContext,
+        closeSuspendReason,
+        ttaProvided,
+        order: index,
+      },
+    );
   }));
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
