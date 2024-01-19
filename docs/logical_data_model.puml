@@ -640,6 +640,7 @@ class Objectives{
  lastSuspendedAt : timestamp with time zone
  rtrOrder : integer : 1
  status : varchar(255)
+ supportType : enum
  title : text
 }
 

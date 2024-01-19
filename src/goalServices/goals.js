@@ -95,6 +95,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'status',
         'onApprovedAR',
         'rtrOrder',
+        'supportType',
         [
           'onAR',
           'onAnyReport',
@@ -1330,6 +1331,7 @@ export async function createOrUpdateGoals(goals) {
           id: objectiveIdsMayContainStrings,
           closeSuspendContext,
           closeSuspendReason,
+          supportType,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1388,6 +1390,7 @@ export async function createOrUpdateGoals(goals) {
               title,
               goalId: newGoal.id,
               createdVia: 'rtr',
+              supportType,
             });
           }
         }
@@ -1402,6 +1405,10 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
           rtrOrder: index + 1,
         });
+
+        if (objective.supportType !== supportType) {
+          objective.set({ supportType });
+        }
 
         // if the objective has been suspended, a reason and context should have been collected
         if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
