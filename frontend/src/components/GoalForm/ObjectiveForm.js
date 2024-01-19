@@ -22,6 +22,7 @@ const [
   objectiveTitleError,
   objectiveTopicsError,
   objectiveResourcesError,
+  objectiveSupportTypeError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -96,7 +97,17 @@ export default function ObjectiveForm({
     }
   };
 
-  const validateSupportType = () => {};
+  const validateSupportType = () => {
+    if (!supportType) {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE, 1, <span className="usa-error-message">{objectiveSupportTypeError}</span>);
+      setObjectiveError(index, newErrors);
+    } else {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE, 1, <></>);
+      setObjectiveError(index, newErrors);
+    }
+  };
 
   const validateObjectiveTopics = () => {
     if (!topics.length) {
@@ -211,7 +222,7 @@ export default function ObjectiveForm({
         supportType={supportType}
         onChangeSupportType={onChangeSupportType}
         inputName={`objective-support-type-${index}`}
-        error={<></>}
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}
       />
 
       <ObjectiveStatus

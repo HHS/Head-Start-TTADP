@@ -11,11 +11,13 @@ export default function ObjectiveSupportType({
   inputName,
   error,
 }) {
+  const hasError = !!(error.props.children);
   return (
-    <FormGroup error={error.props.children}>
+    <FormGroup error={hasError}>
       <Label htmlFor={inputName}>
         Support type
         <Req />
+        {error}
         <Dropdown
           onChange={(e) => onChangeSupportType(e.target.value)}
           id={inputName}
