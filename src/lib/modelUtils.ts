@@ -86,6 +86,19 @@ const dataTypeMapping = {
 };
 
 /**
+ * Retrieves the model for a given table name from a database object.
+ *
+ * @param db - The database object containing the models.
+ * @param tableName - The name of the table for which to retrieve the model.
+ * @returns The model corresponding to the given table name.
+ * @throws If no model is found for the given table name.
+ */
+const modelForTable = (db, tableName: string) => Object.values(db.sequelize.models)
+  // Retrieve all models from the database object and convert them into an array
+  // Find the model whose table name matches the given table name
+  .find((m: typeof Model) => m.getTableName() === tableName);
+
+/**
  * Retrieves column information for a given model.
  * @param model - The model to retrieve column information from.
  * @returns An array of objects representing the columns, each containing the column name,
@@ -227,6 +240,7 @@ const nestedRawish = (
 
 export {
   dataTypeMapping,
+  modelForTable,
   getColumnInformation,
   getColumnNamesFromModelForType,
   filterDataToModel,
