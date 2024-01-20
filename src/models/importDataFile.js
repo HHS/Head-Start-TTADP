@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
-    zipFileInfo: {
+    fileInfo: {
       type: DataTypes.JSONB,
       allowNull: true,
     },
@@ -36,7 +36,8 @@ export default (sequelize, DataTypes) => {
     },
     processed: {
       type: DataTypes.BOOLEAN,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: false,
     },
     schema: {
       type: DataTypes.JSONB,
