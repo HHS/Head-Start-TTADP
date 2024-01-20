@@ -10,7 +10,7 @@ module.exports = {
 
       await queryInterface.createTable('MonitoringReviewStatuses', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -32,7 +32,7 @@ module.exports = {
           type: Sequelize.DATE,
         },
         sourceDeletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
         createdAt: {
@@ -44,22 +44,23 @@ module.exports = {
           type: Sequelize.DATE,
         },
         deletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
       }, {
-        indexes: [
-          {
-            unique: true,
-            fields: ['statusId'],
-          },
-        ],
         transaction,
       });
 
+      await queryInterface.sequelize.query(`
+          CREATE UNIQUE INDEX "MonitoringReviewStatuses_statusId"
+          ON "MonitoringReviewStatuses"
+          ("statusId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
       await queryInterface.createTable('MonitoringReviews', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -109,7 +110,7 @@ module.exports = {
           type: Sequelize.DATE,
         },
         sourceDeletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
         createdAt: {
@@ -121,53 +122,62 @@ module.exports = {
           type: Sequelize.DATE,
         },
         deletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
       }, {
-        indexes: [
-          {
-            unique: true,
-            fields: ['review_id'],
-          },
-          {
-            fields: ['status_id'],
-          },
-          {
-            fields: ['review_id', 'status_id'],
-          },
-        ],
         transaction,
       });
 
+      await queryInterface.sequelize.query(`
+          CREATE UNIQUE INDEX "MonitoringReviews_reviewId"
+          ON "MonitoringReviews"
+          ("reviewId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringReviews_statusId"
+          ON "MonitoringReviews"
+          ("statusId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringReviews_reviewId_statusId"
+          ON "MonitoringReviews"
+          ("reviewId", "statusId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
       await queryInterface.createTable('MonitoringReviewGrantees', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
-        review_id: {
+        reviewId: {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        grantee_id: {
+        granteeId: {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        create_time: {
+        createTime: {
           allowNull: false,
           type: Sequelize.DATE,
         },
-        update_time: {
+        updateTime: {
           allowNull: false,
           type: Sequelize.DATE,
         },
-        update_by: {
+        updateBy: {
           allowNull: false,
           type: Sequelize.DATE,
         },
-        grant_number: {
+        grantNumber: {
           allowNull: false,
           type: Sequelize.TEXT,
         },
@@ -180,7 +190,7 @@ module.exports = {
           type: Sequelize.DATE,
         },
         sourceDeletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
         createdAt: {
@@ -192,39 +202,53 @@ module.exports = {
           type: Sequelize.DATE,
         },
         deletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
       }, {
-        indexes: [
-          {
-            fields: ['review_id'],
-          },
-          {
-            fields: ['grantee_id'],
-          },
-          {
-            fields: ['grant_number'],
-          },
-          {
-            fields: ['review_id', 'grant_number'],
-          },
-        ],
         transaction,
       });
 
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringReviewGrantees_reviewId"
+          ON "MonitoringReviewGrantees"
+          ("reviewId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringReviewGrantees_granteeId"
+          ON "MonitoringReviewGrantees"
+          ("granteeId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringReviewGrantees_grantNumber"
+          ON "MonitoringReviewGrantees"
+          ("grantNumber")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE UNIQUE INDEX "MonitoringReviewGrantees_reviewId_grantNumber"
+          ON "MonitoringReviewGrantees"
+          ("reviewId", "grantNumber")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
       await queryInterface.createTable('MonitoringFindingHistories', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
-        review_id: {
+        reviewId: {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        finding_history_id: {
+        findingHistoryId: {
           type: Sequelize.TEXT,
           allowNull: true,
         },
@@ -241,7 +265,7 @@ module.exports = {
           type: Sequelize.DATE,
         },
         sourceDeletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
         createdAt: {
@@ -253,30 +277,42 @@ module.exports = {
           type: Sequelize.DATE,
         },
         deletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
       }, {
-        indexes: [
-          {
-            unique: true,
-            fields: ['review_id'],
-          },
-          {
-            unique: true,
-            fields: ['finding_history_id'],
-          },
-        ],
         transaction,
       });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringFindingHistories_reviewId"
+          ON "MonitoringFindingHistories"
+          ("reviewId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringFindingHistories_findingHistoryId"
+          ON "MonitoringFindingHistories"
+          ("findingHistoryId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE UNIQUE INDEX "MonitoringFindingHistories_reviewId_findingHistoryId"
+          ON "MonitoringFindingHistories"
+          ("reviewId", "findingHistoryId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
       await queryInterface.createTable('MonitoringClassSummaries', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
         },
-        review_id: {
+        reviewId: {
           type: Sequelize.TEXT,
           allowNull: true,
         },
@@ -313,7 +349,7 @@ module.exports = {
           type: Sequelize.DATE,
         },
         sourceDeletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
         createdAt: {
@@ -325,23 +361,33 @@ module.exports = {
           type: Sequelize.DATE,
         },
         deletedAt: {
-          allowNull: false,
+          allowNull: true,
           type: Sequelize.DATE,
         },
       }, {
-        indexes: [
-          {
-            fields: ['review_id'],
-          },
-          {
-            fields: ['grantNumber'],
-          },
-          {
-            fields: ['review_id', 'grantNumber'],
-          },
-        ],
         transaction,
       });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringClassSummaries_reviewId"
+          ON "MonitoringClassSummaries"
+          ("reviewId")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE INDEX "MonitoringClassSummaries_grantNumber"
+          ON "MonitoringClassSummaries"
+          ("grantNumber")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          CREATE UNIQUE INDEX "MonitoringClassSummaries_reviewId_grantNumber"
+          ON "MonitoringClassSummaries"
+          ("reviewId", "grantNumber")
+          WHERE "deletedAt" IS NULL;
+      `, { transaction });
 
       //-----------------------------------------------------------------------------------------
 
@@ -365,6 +411,7 @@ module.exports = {
       const definitions = [];
       definitions.push({
         fileName: 'AMS_ReviewStatus.xml',
+        encoding: 'utf16le',
         tableName: 'MonitoringReviewStatuses',
         keys: ['status_id'],
         remapDef: {
@@ -407,7 +454,7 @@ module.exports = {
         fileName: 'AMS_FindingHistory.xml',
         encoding: 'utf16le',
         tableName: 'MonitoringFindingHistories',
-        keys: 'findingHistoryId',
+        keys: ['findingHistoryId'],
         remapDef: {
           FindingHistoryId: 'findingHistoryId',
           ReviewId: 'reviewId',
@@ -435,18 +482,22 @@ module.exports = {
         "name",
         "ftpSettings",
         "path",
-        "file",
+        "fileMask",
         "schedule",
         "enabled",
         "definitions",
+        "createdAt",
+        "updatedAt"
       ) values (
-        'ITAMS Monitoring Data'
+        'ITAMS Monitoring Data',
         '${JSON.stringify(ftpSettings)}',
         '/ProdTTAHome',
         '[0-9]{4}_[0-9]{2}_[0-9]{2}_XML[.]zip',
         '${schedule}',
         true,
-        '${JSON.stringify(definitions)}'
+        '${JSON.stringify(definitions)}',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
       );
       `, { transaction });
     });
